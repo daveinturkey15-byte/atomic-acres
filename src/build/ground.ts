@@ -6,39 +6,46 @@
  * kerbs, pavements, lawns, back yards, garage aprons and the perimeter.
  *
  * The town stands on a TIGHT paved apron in open desert. The apron runs only
- * APRON_MARGIN past the bounds - far enough that the berm and the fences hide
- * its edge from inside the map, near enough that the aerial reads as a test town
- * in the desert rather than an architectural model on a white table.
+ * APRON_MARGIN past the bounds, and ends on a RAGGED edge rather than a ruled
+ * rectangle - far enough out that the berm and the fences hide it from inside
+ * the map, near enough that the aerial reads as a test town in the desert
+ * rather than an architectural model on a white table.
  *
  * -------------------------------------------------------------- y ladder
  * Nothing shares a y with anything it overlaps. Abutting (edge-to-edge)
  * surfaces MAY share a y - only overlapping footprints need separating.
  *
  *   0.000  desert floor .................... dirt     (abuts the apron and the tail)
- *   0.000  base apron plane ................ paving   (bounds + APRON_MARGIN)
- *   0.030  road strip ...................... asphalt  (apron edge -> bulb centre)
- *   0.030  desert road tail (slab top) ..... asphalt  (apron edge -> ROAD_TAIL_X)
+ *   0.000  desert fringe ................... dirt     (abuts the ragged edge)
+ *   0.000  base apron ...................... paving   (ragged, inside the fringe)
+ *   0.030  road strip ...................... asphalt  (apron rect -> bulb centre)
+ *   0.030  desert road tail (slab top) ..... asphalt  (apron rect -> ROAD_TAIL_X)
  *   0.044  turning-head disc ............... asphalt  (sits over the strip end)
- *   0.050  sand drifts ..................... sand     (straddle the paving edge)
  *   0.058  manhole covers .................. painted steel
  *   0.138  circular kerb + circular pavement          (overlap the straight run)
  *   0.140  straight kerb + straight pavement = KERB_HEIGHT
  *   0.141  front lawns, frontage corner pads, house band, back yards
- *   0.144  garage aprons ................... concrete (overlay lawn + head pavement)
+ *   0.144  house interior floors ........... concrete (over the lawn pad)
+ *   0.146  garage aprons ................... concrete (overlay lawn + head pavement)
  *   0.000..0.550  out-of-bounds perimeter berm
  *
- * The rungs have to clear the DEPTH BUFFER, not just each other. With 24 bits,
- * near 0.08 and far 1400, the resolvable step is about z^2 * 7.5e-7 m: 2 mm at
- * 50 m, 7 mm at 100 m, 17 mm at 150 m. The aerial station reads the street from
- * 85-115 m, so the old 8 mm road rung was already inside the noise - the town
- * only had to move for the asphalt to break out in paving-coloured stipple.
- * Every rung that overlaps another is now >= 14 mm, the drifts are 50 mm up,
- * and the desert is CUT around the road tail so that pair never overlaps at all.
+ * A rung has to clear the DEPTH BUFFER, not just the rung below. With 24 bits,
+ * near 0.08 and far 1400, the resolvable step is about z^2 * 7.5e-7 m: 7 mm at
+ * 100 m, 17 mm at 150 m. The aerial reads the street from 85-115 m, so the old
+ * 8 mm road rung was already inside the noise and the map only had to move for
+ * the asphalt to break out in paving-coloured stipple. The road rungs are now
+ * >= 14 mm apart, and the three y=0 surfaces never overlap at all: apron and
+ * fringe are cut from one contour, and the desert is cut around the road tail.
+ * The PLATEAU rungs are still inside the noise and do fight at aerial range -
+ * the 3 mm between a garage apron and the lawn under it puts a wedge of green
+ * dither on the white house's drive at ~95 m. Raising T_DRIVE alone would lift
+ * the cars off it: vehicles.ts hardcodes KERB_HEIGHT + 0.004 to track it, so
+ * that pair has to move together.
  *
  * Collider tops all sit at KERB_HEIGHT (or the pad's own top) - the player
  * controller derives floor height from collider tops, so the whole plateau is
- * collided even though it is only a 0.14 m step. The desert and the apron are
- * both y=0, which is groundUnder()'s default, so neither needs one.
+ * collided even though it is only a 0.14 m step. Everything at y=0 is already
+ * groundUnder()'s default and needs none.
  *
  * Every raised surface is a SLAB (box) rising from y=0, never a floating
  * plane, so the 0.14 m plateau edge is always closed by its own side face.
@@ -51,8 +58,9 @@ import type { AABB, BuildResult, Builder } from '../core/kit';
 import { aabb, aabbSlab, group, slab } from '../core/kit';
 import { PAL } from '../core/palette';
 import {
-  BACK_FENCE, BOUND_X_MAX, BOUND_X_MIN, BOUND_Z, FRONT_LAWN_OUTER, GARAGE_LEN,
-  HEAD_CENTER_X, HEAD_RADIUS, HOUSES, HOUSE_BACK, KERB_HEIGHT, KERB_WIDTH,
+  BACK_FENCE, BOUND_X_MAX, BOUND_X_MIN, BOUND_Z, FRONT_LAWN_OUTER, GARAGE_DEPTH,
+  GARAGE_LEN, HEAD_CENTER_X, HEAD_RADIUS, HOUSES, HOUSE_BACK, HOUSE_HALF_LEN,
+  KERB_HEIGHT, KERB_WIDTH,
   PAVEMENT_OUTER, ROAD_HALF_WIDTH, ROAD_X_MAX, ROAD_X_MIN, YARD_X_MAX, YARD_X_MIN,
 } from '../core/layout';
 
@@ -61,11 +69,11 @@ const Y_BASE = 0.0;
 const Y_ROAD = 0.030;                // 30 mm over the apron: resolves out to 200 m
 const Y_HEAD = 0.044;
 const Y_MANHOLE = 0.058;
-const T_DUNE = 0.05;                 // drift slabs: 50 mm still resolves at 250 m
 const T_ARC = KERB_HEIGHT - 0.002;   // circular kerb + circular pavement
 const T_PAVE = KERB_HEIGHT;          // straight kerb + straight pavement
 const T_LAWN = KERB_HEIGHT + 0.001;  // lawns and yards, flush with the pavement
-const T_DRIVE = KERB_HEIGHT + 0.004; // garage aprons ride over whatever is beneath
+const T_FLOOR = KERB_HEIGHT + 0.004; // house interior floor, over the lawn pad
+const T_DRIVE = KERB_HEIGHT + 0.006; // garage aprons ride over whatever is beneath
 
 // ---------------------------------------------------------------- tiling
 // Shared textures carry a fixed `repeat`, so world-consistent tiling has to come
@@ -78,28 +86,31 @@ const UV_FLAT = 1.0;                 // materials with no map
 
 // ---------------------------------------------------------------- derived plan
 /**
- * How far the PAVING runs past the bounds. Tight on purpose: the berm, the back
- * fences and the boundary fence hide the edge from every ground-level view
- * except straight out of the -x street mouth, where the road tail and the drifts
- * carry the eye across it. Anything past this is desert.
+ * The nominal paving rectangle: bounds + APRON_MARGIN. Tight on purpose. The
+ * berm, the back fences and the boundary fence hide the edge from every
+ * ground-level view but two - the -x street mouth, and the two gaps the skyline
+ * leaves in its pavilion row - and from those it is 15 m or more away.
+ *
+ * The concrete does not reach that rectangle: RAGGED_* pulls the edge back by a
+ * multi-scale wobble, so the paving runs out between 14.8 and 21.4 m past the
+ * bounds and the desert bites into it irregularly. Harmonics are whole numbers
+ * of waves per perimeter, so the edge closes instead of stepping at the corner.
  */
-const APRON_MARGIN = 20.0;
+const APRON_MARGIN = 22.0;
 const APRON_X_MIN = BOUND_X_MIN - APRON_MARGIN;
 const APRON_X_MAX = BOUND_X_MAX + APRON_MARGIN;
 const APRON_Z = BOUND_Z + APRON_MARGIN;
+const RAGGED_MEAN = 3.4;
+const RAGGED_MIN = 0.6;              // never 0: the fringe must stay a closed ring
+const RAGGED_MAX = 7.2;
+const EDGE_STEP = 2.5;               // metres of apron edge per outline sample
+const RAGGED_WAVES: [number, number][] = [[7, 2.0], [17, 1.3], [41, 0.7]];
 
-/**
- * Desert reach. The skyline module rings its mountains at 300-500 m, so the
- * floor has to run comfortably past them; the scene fog is fully saturated long
- * before this, so the far edge can never be seen from anywhere in the map.
- */
+/** Desert reach. The skyline rings its mountains at 300-500 m; the floor has to
+ *  run well past them, and the fog saturates long before it ends. */
 const DESERT_R = 900.0;
-/** The road tail ends past the fog's far distance from any point inside the map. */
+/** The road tail runs until the haze and the skyline's city band swallow it. */
 const ROAD_TAIL_X = BOUND_X_MIN - 640.0;
-
-const DRIFT_COUNT = 180;             // sand blobs breaking the paving edge
-const DRIFT_IN = 9.0;                // how far a drift may bite back onto the paving
-const DRIFT_OUT = 58.0;              // ...and how far out it may blow
 
 const JOIN = 0.05;                   // overlap at the straight/curved junction
 const DRIVE_FLARE = 0.6;             // apron is a little wider than the garage
@@ -212,11 +223,9 @@ function pad(
   return flat(m);
 }
 
-/**
- * A point at arc length `s` round the apron's edge, with its outward normal,
- * as [x, z, nx, nz]. Scattering the drifts along the EDGE rather than inside a
- * box is what makes them break the paving line instead of dusting the desert.
- */
+/** A point at arc length `s` round the nominal apron rectangle, with its
+ *  outward normal, as [x, z, nx, nz]. */
+const APRON_PERIM = 2 * (APRON_X_MAX - APRON_X_MIN) + 4 * APRON_Z;
 function edgeSample(s: number): [number, number, number, number] {
   const w = APRON_X_MAX - APRON_X_MIN;
   const d = 2 * APRON_Z;
@@ -224,6 +233,44 @@ function edgeSample(s: number): [number, number, number, number] {
   if (s < w + d) return [APRON_X_MAX, -APRON_Z + (s - w), 1, 0];
   if (s < 2 * w + d) return [APRON_X_MAX - (s - w - d), APRON_Z, 0, 1];
   return [APRON_X_MIN, APRON_Z - (s - 2 * w - d), -1, 0];
+}
+
+/**
+ * The ragged paving edge, as a closed contour in SHAPE space (x, -z), wound
+ * counter-clockwise so that after rotateX(-90) the face points up. ONE point
+ * list builds both the concrete and the desert fringe that fills the rest of
+ * the rectangle, so they abut exactly: no coplanar overlap to z-fight, no crack
+ * between them, and no extra y rung. Patches laid ON the paving need all three,
+ * and read as spilled paint from above besides.
+ */
+function raggedOutline(rand: () => number): THREE.Vector2[] {
+  const waves = RAGGED_WAVES.map(([n, amp]) => ({
+    k: (Math.PI * 2 * n) / APRON_PERIM, amp, phase: rand() * Math.PI * 2,
+  }));
+  const pts: THREE.Vector2[] = [];
+  const steps = Math.round(APRON_PERIM / EDGE_STEP);
+  for (let i = 0; i < steps; i++) {
+    const s = (i / steps) * APRON_PERIM;
+    let bite = RAGGED_MEAN;
+    for (const w of waves) bite += w.amp * Math.sin(w.k * s + w.phase);
+    bite = Math.min(RAGGED_MAX, Math.max(RAGGED_MIN, bite));
+    const [x, z, nx, nz] = edgeSample(s);
+    pts.push(new THREE.Vector2(x - nx * bite, -(z - nz * bite)));
+  }
+  if (THREE.ShapeUtils.isClockWise(pts)) pts.reverse();
+  return pts;
+}
+
+/** A flat shape on the xz plane, UV-scaled to the shared texture's world scale. */
+function shapeMesh(
+  shape: THREE.Shape, y: number, material: THREE.Material, uvM: number,
+): THREE.Mesh {
+  const g = new THREE.ShapeGeometry(shape);
+  scaleUV(g, 1 / uvM, 1 / uvM);   // ShapeGeometry emits UVs in metres
+  g.rotateX(-Math.PI / 2);        // shape (x, y) -> world (x, -z)
+  const m = new THREE.Mesh(g, material);
+  m.position.y = y;
+  return flat(m);
 }
 
 /**
@@ -259,12 +306,12 @@ function arcPad(
 export const buildGround: Builder = (ctx) => {
   const g = group('ground');
   const colliders: AABB[] = [];
+  const desert = ctx.mat.painted(PAL.dirt, 0.98, 0);
 
   // ---- 1. desert floor: everything outside the apron, out past the mountains.
-  // Six rects that ABUT the apron and the road tail rather than running under
-  // them, so they can share y=0 with no z-fighting at any range.
+  // Six rects that ABUT the apron rectangle and the road tail rather than
+  // running under them, so they can share y=0 with no z-fighting at any range.
   {
-    const desert = ctx.mat.painted(PAL.dirt, 0.98, 0);
     const R = DESERT_R;
     const rects: [number, number, number, number][] = [
       [-R, APRON_X_MIN, -R, -ROAD_HALF_WIDTH],                // -x, -z of the tail
@@ -279,44 +326,23 @@ export const buildGround: Builder = (ctx) => {
     }
   }
 
-  // ---- 2. base apron: the pale concrete surround everything sits in
-  g.add(quad(
-    APRON_X_MIN, APRON_X_MAX, -APRON_Z, APRON_Z,
-    Y_BASE, ctx.mat.paving, UV_PAVING,
-  ));
-
-  // ---- 2b. sand drifts over the apron edge, so the paving stops raggedly
-  // instead of as a rectangle. Slabs rising from y=0, never floating planes;
-  // no colliders, because every one of them is 11 m or more outside the hard
-  // shell and the player can never stand on one.
+  // ---- 2. base apron: the pale concrete surround everything sits in, ending
+  // on a ragged edge, plus the desert fringe that fills the rest of the
+  // rectangle. Same contour, opposite sides of it - they cannot come apart.
   {
-    const perim = 2 * (APRON_X_MAX - APRON_X_MIN) + 4 * APRON_Z;
-    const xf: THREE.Matrix4[] = [];
-    const p = new THREE.Vector3();
-    const q = new THREE.Quaternion();
-    const s = new THREE.Vector3();
-    const up = new THREE.Vector3(0, 1, 0);
-    for (let i = 0; i < DRIFT_COUNT; i++) {
-      const [ex, ez, nx, nz] = edgeSample(ctx.rand() * perim);
-      // biased to the edge: most drifts land just outside it, a third bite in
-      const t = -DRIFT_IN + (DRIFT_IN + DRIFT_OUT) * Math.pow(ctx.rand(), 1.7);
-      const z = ez + nz * t;
-      // sand lying across the tail reads as a bug, not as weather - keep it clear
-      if (nx < 0 && Math.abs(z) < ROAD_HALF_WIDTH + 6) continue;
-      p.set(ex + nx * t, T_DUNE / 2, z);
-      q.setFromAxisAngle(up, ctx.rand() * Math.PI);
-      s.set(2.5 + ctx.rand() * 9.5, T_DUNE, 2.5 + ctx.rand() * 9.5);
-      xf.push(new THREE.Matrix4().compose(p, q, s));
-    }
-    const drifts = new THREE.InstancedMesh(
-      new THREE.CylinderGeometry(0.5, 0.5, 1, 7), ctx.mat.sand, xf.length,
-    );
-    for (let i = 0; i < xf.length; i++) drifts.setMatrixAt(i, xf[i]);
-    drifts.instanceMatrix.needsUpdate = true;
-    // without this the cull test uses the UNIT cylinder's bounds at the world
-    // origin, and the whole ring vanishes whenever x=0,z=0 is off screen
-    drifts.computeBoundingSphere();
-    g.add(flat(drifts));
+    const edge = raggedOutline(ctx.rand);
+    g.add(shapeMesh(new THREE.Shape(edge), Y_BASE, ctx.mat.paving, UV_PAVING));
+
+    const rect = [
+      new THREE.Vector2(APRON_X_MIN, -APRON_Z),
+      new THREE.Vector2(APRON_X_MAX, -APRON_Z),
+      new THREE.Vector2(APRON_X_MAX, APRON_Z),
+      new THREE.Vector2(APRON_X_MIN, APRON_Z),
+    ];
+    if (THREE.ShapeUtils.isClockWise(rect)) rect.reverse();
+    const fringe = new THREE.Shape(rect);
+    fringe.holes.push(new THREE.Path(edge.slice().reverse()));
+    g.add(shapeMesh(fringe, Y_BASE, desert, UV_FLAT));
   }
 
   // ---- 3. road strip along z=0, carried right across the paving at -x...
@@ -407,11 +433,28 @@ export const buildGround: Builder = (ctx) => {
       T_LAWN, ctx.mat.paving, UV_PAVING,
     ));
 
-    // ground under the house and its side strips, front wall to rear wall
+    // ground beside the house, front wall to rear wall. This is the SIDE STRIPS -
+    // the house footprint itself gets a floor below, because a lawn running through
+    // the interior is exactly what you see from inside otherwise.
     g.add(pad(
       colliders, YARD_X_MIN, YARD_X_MAX,
       s * FRONT_LAWN_OUTER, s * HOUSE_BACK,
       T_LAWN, ctx.mat.lawn, UV_LAWN,
+    ));
+
+    // interior floor: main block, laid just over the lawn pad
+    g.add(pad(
+      colliders, -HOUSE_HALF_LEN, HOUSE_HALF_LEN,
+      s * FRONT_LAWN_OUTER, s * HOUSE_BACK,
+      T_FLOOR, ctx.mat.concrete, UV_PAVING,
+    ));
+
+    // interior floor: garage wing, read off the house descriptor
+    g.add(pad(
+      colliders,
+      h.garageX - GARAGE_LEN / 2, h.garageX + GARAGE_LEN / 2,
+      s * FRONT_LAWN_OUTER, s * (FRONT_LAWN_OUTER + GARAGE_DEPTH),
+      T_FLOOR, ctx.mat.concrete, UV_PAVING,
     ));
 
     // back yard, rear wall out to the timber back fence

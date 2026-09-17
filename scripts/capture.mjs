@@ -71,8 +71,12 @@ if (!up) {
 }
 
 mkdirSync(OUT, { recursive: true });
-// clear only PNGs from a previous run so a failed station cannot leave a stale image
+// Clear only THIS run's own outputs. Wiping the whole directory means two concurrent
+// runs silently delete each other's frames - which happened.
+const PREFIX = tag ? tag + '-' : '';
 for (const f of readdirSync(OUT)) {
+  if (!f.startsWith(PREFIX)) continue;
+  if (tag === '' && f.includes('-')) continue;   // untagged run owns untagged files only
   if (f.endsWith('.png') || f.endsWith('.json')) rmSync(join(OUT, f), { force: true });
 }
 
@@ -113,14 +117,16 @@ try {
 // Dismiss the click-to-play overlay. Without this EVERY screenshot is the overlay -
 // the renderer stats still look perfectly healthy, which is exactly how a capture set
 // can be green and show nothing.
-await page.evaluate(() => {
+const stripChrome = () => page.evaluate(() => {
   const el = document.getElementById('start');
   if (el) el.remove();
   const hud = document.getElementById('hud');
   if (hud) hud.style.display = 'none';
   const ch = document.getElementById('crosshair');
   if (ch) ch.style.display = 'none';
+  return !document.getElementById('start');
 });
+await stripChrome();
 
 // let a few frames run so the renderer info is populated and textures have uploaded
 await page.waitForTimeout(1200);
@@ -137,6 +143,11 @@ for (const name of names) {
   const ok = await page.evaluate((n) => window.__NT.goto(n), name);
   if (!ok) { console.warn('[capture] goto failed: ' + name); continue; }
   await page.waitForTimeout(260);
+  // an HMR reload mid-run restores the overlay; strip it again every time
+  if (!await stripChrome()) {
+    console.error('    !! overlay could not be removed at ' + name);
+    process.exitCode = 2;
+  }
   await page.evaluate(() => window.__NT.render());
   const file = join(OUT, (tag ? tag + '-' : '') + name + '.png');
   await page.screenshot({ path: file });

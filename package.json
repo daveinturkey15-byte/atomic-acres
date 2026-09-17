@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview --port 4173",
     "capture": "node scripts/capture.mjs",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "traverse": "node scripts/traverse.mjs",
+    "verify": "npm run check && npm run capture && npm run traverse"
   },
   "dependencies": {
     "three": "^0.180.0"

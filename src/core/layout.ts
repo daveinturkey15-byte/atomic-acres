@@ -68,8 +68,11 @@ export const THIRD_HOUSE_X = 40.0;        // beyond the head, past the boundary 
 // Camera forward is (-sin(yaw), 0, -cos(yaw)): yaw 0 faces -z, yaw PI faces +z.
 // A spawn stands in its own back yard and must look AT its own house, i.e. inward
 // toward z=0 - spawn A from -z looks +z (PI), spawn B from +z looks -z (0).
-export const SPAWN_A = { x: 0, y: 0, z: -29.0, yaw: Math.PI }; // orange team, faces +z
-export const SPAWN_B = { x: 0, y: 0, z: 29.0, yaw: 0 };        // white team, faces -z
+// Stand back near the fence, not under the deck: at z=+/-29 the spawn was ~3 m from
+// the rear deck's outer edge and the whole frame was stair. Offset in x away from each
+// house's deck (ORANGE.deckX is +x, WHITE.deckX is -x) so the house reads on spawn.
+export const SPAWN_A = { x: -4.0, y: 0, z: -31.8, yaw: Math.PI }; // orange, faces +z
+export const SPAWN_B = { x: 4.0, y: 0, z: 31.8, yaw: 0 };         // white,  faces -z
 
 export const EYE_HEIGHT = 1.68;
 

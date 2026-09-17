@@ -62,8 +62,10 @@ await page.waitForTimeout(600);
 const ROUTES = [
   { name: 'spawnA -> spawnB, west flank',
     pts: [[0, -29], [-13, -27], [-20, -16], [-20, 0], [-20, 16], [-13, 27], [0, 29]] },
+  // crosses the verge at x=18, which the verge scan below confirms is open on both
+  // sides. x=16 lands on a 1.15 m hedge - correct cover, not a defect.
   { name: 'spawnA -> spawnB, east flank',
-    pts: [[0, -29], [13, -27], [16, -16], [16, -8], [16, 8], [16, 16], [13, 27], [0, 29]] },
+    pts: [[0, -29], [13, -27], [18, -16], [18, -8], [18, 8], [18, 16], [13, 27], [0, 29]] },
   { name: 'spawnA -> cul-de-sac turning head',
     pts: [[0, -29], [13, -27], [16, -16], [16, -8], [20, -1], [26, -0.5]] },
   { name: 'spawnA -> open end of the street',
@@ -126,6 +128,30 @@ const doors = await page.evaluate(() => {
   };
 });
 
+/**
+ * Verge scan. A continuous hedge along a front lawn would wall a team into its own
+ * half without any single collider looking wrong. Walk lawn -> street at intervals
+ * and report where the boundary is actually permeable.
+ */
+const verge = await page.evaluate(() => {
+  const nt = window.__NT;
+  const scan = (side) => {
+    const open = [];
+    for (let x = -19; x <= 19; x += 0.5) {
+      nt.probeReset(x, side * 11.0);
+      if (nt.probeWalkTo(x, side * 5.5, 420)) open.push(+x.toFixed(1));
+    }
+    const spans = [];
+    for (const v of open) {
+      const last = spans[spans.length - 1];
+      if (last && Math.abs(v - last[1]) < 0.75) last[1] = v;
+      else spans.push([v, v]);
+    }
+    return spans;
+  };
+  return { orangeVerge: scan(-1), whiteVerge: scan(1) };
+});
+
 await browser.close();
 server.kill();
 
@@ -150,6 +176,16 @@ for (const [k, spans] of Object.entries(doors)) {
   console.log('  ' + k.padEnd(14) + txt);
 }
 
+console.log('\n[traverse] verge scan - x spans where lawn -> street is passable:');
+let walled = 0;
+for (const [k, spans] of Object.entries(verge)) {
+  const total = spans.reduce((a, v) => a + (v[1] - v[0]) + 0.5, 0);
+  if (total < 8) walled++;
+  console.log('  ' + k.padEnd(14) + (spans.length
+    ? spans.map((v) => v[0] + '..' + v[1]).join(',  ') + '   (' + total.toFixed(1) + ' m open)'
+    : 'NONE - this team is walled into its own half'));
+}
+
 console.log('\n[traverse] ' + (results.length - bad) + '/' + results.length
   + ' routes passed;  ' + (4 - faceless) + '/4 house faces enterable');
-process.exit(bad || faceless ? 1 : 0);
+process.exit(bad || faceless || walled ? 1 : 0);

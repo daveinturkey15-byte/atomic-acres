@@ -78,7 +78,7 @@ export function createWorld(canvasParent: HTMLElement): World {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.04;
+  renderer.toneMappingExposure = 1.09;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   canvasParent.appendChild(renderer.domElement);
 

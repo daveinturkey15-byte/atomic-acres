@@ -161,9 +161,15 @@ export class Player {
     const len = Math.hypot(wx, wz);
     if (len > 0) { wx /= len; wz /= len; }
 
+    // Rotate the wish vector into the yaw frame. This MUST agree with the camera:
+    // the camera looks down its local -z, so its world forward is (-sin, 0, -cos)
+    // and its right is forward x up = (cos, 0, -sin). Getting the x term's sign wrong
+    // mirrors movement about the z axis - identical at yaw 0 and PI, exactly backwards
+    // at +/-PI/2 - so it looks fine facing up or down the street and is unplayable
+    // facing across it.
     const sin = Math.sin(st.yaw), cos = Math.cos(st.yaw);
-    let dirX = wx * cos - wz * sin;
-    let dirZ = wx * sin + wz * cos;
+    let dirX = wx * cos + wz * sin;
+    let dirZ = wz * cos - wx * sin;
     let moving = len > 0;
 
     if (this.probeWish) {

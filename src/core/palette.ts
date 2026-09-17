@@ -59,14 +59,14 @@ export const PAL = {
   mannequin:     0xd9cfc0,
 
   // --- sky / atmosphere
-  skyTop:        0x9dbcdd,
-  skyHorizon:    0xdfe8ee,
+  skyTop:        0xa7c3de,
+  skyHorizon:    0xe4e9ea,
   sunColor:      0xfff2dc,
   bounce:        0xa8a08c,   // ground bounce into shadow
   mountain:      0xa6b4c4,
   mountainFar:   0xc6d0dc,
   cityFar:       0xc6cfd9,
-  fog:           0xd5dee6,
+  fog:           0xdbdfdd,
 } as const;
 
 export type PaletteKey = keyof typeof PAL;

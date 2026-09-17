@@ -311,7 +311,7 @@ export const buildVehicles: Builder = (ctx) => {
     ));
   };
 
-  const APRON_Y = KERB_HEIGHT + 0.004; // must track ground.ts T_DRIVE
+  const APRON_Y = KERB_HEIGHT + 0.006; // must track ground.ts T_DRIVE
 
   // 1. the hero coach: turning head, orange (-z) half, nose down the stem
   park(makeCoach(ctx),

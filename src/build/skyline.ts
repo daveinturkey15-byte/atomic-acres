@@ -1,24 +1,24 @@
 /**
- * SKYLINE - everything beyond the playable area: the entrance-plaza pylon sign
- * and its atom finial, the retro-futurist landmarks ringed outside the fences,
- * the desert mountains and the hazy city band. This is what makes the map read
- * as NUKETOWN 2025 rather than a generic suburb.
+ * SKYLINE - everything beyond the playable area: the entrance-plaza pylon sign and
+ * its atom finial, the retro-futurist landmarks ringed outside the fences, the
+ * desert mountains and the hazy city band. This is what makes the map read as
+ * NUKETOWN 2025 rather than a generic suburb.
  *
- * Seen from 40-400 m: silhouette and colour only. NOTHING here gets a collider
- * (the ground module's boundary keeps the player in) and NOTHING casts or
- * receives a shadow - it is all far outside the cascade and would only waste it.
+ * Seen from 40-400 m: silhouette and colour only. NOTHING here gets a collider (the
+ * ground module's boundary keeps the player in) and NOTHING casts or receives a
+ * shadow - it is all far outside the cascade and would only waste it.
  * References: NT05 load screen (sign, saucer, dome, needle, flags), NT03 (hypar).
  *
- * BACKDROP MATERIALS. Measured off captures/turningHead.png: PAL.mountain at
- * roughness 1 / metalness 0 rendered (205,206,204) and PAL.cityFar rendered
- * (206,207,205) - flat white, no blue left at all. The rig's sun is warm
- * (PAL.sunColor) and strong (3.05), so on a matt distant surface the diffuse term
- * swamps the albedo and ACES compresses what is left to white. Every backdrop ring
- * here is therefore roughness 1 with HIGH metalness: that drops the diffuse lobe
- * and leaves the surface lit by the sky environment, which is physically what an
- * atmospheric backdrop is, and it lets the palette's blue survive to the frame.
- * The fog (130 m -> 620 m) then does the aerial perspective on top, so ring RADIUS
- * is a colour decision as much as a layout one - see MTN_R.
+ * BACKDROP MATERIALS, fitted to measured capture pixels - do not "tidy" these.
+ * At metalness 0 the mountains measured (205,206,204) and the city (206,207,205):
+ * flat white, no blue left. The sun here is warm and strong, so the diffuse gain on
+ * a distant matt surface came out (2.00, 1.30, 0.76) - it SUPPRESSES blue - and ACES
+ * compresses what survives to white. So every backdrop ring is roughness 1 with high
+ * metalness, which drops the diffuse lobe the warm sun rides in on and lets the
+ * palette and the haze set the colour. Metalness is the aerial-perspective dial,
+ * graded per ring, and it only works while the fog is dense (FogExp2): under thin
+ * fog these rings go near-black at the frame EDGE, because three.js fogs on view
+ * depth, not on distance to the camera.
  */
 import * as THREE from 'three';
 import type { Builder } from '../core/kit';
@@ -31,13 +31,9 @@ import {
 /** half the playable footprint - every horizon ring is a multiple of this */
 const MAP_R = (BOUND_X_MAX - BOUND_X_MIN) / 2;
 const CITY_R = MAP_R * 3.7;
-/**
- * Three overlapping massif rings, near -> far. Kept CLOSE on purpose: linear fog
- * reaches 56 % of the haze colour by 400 m, so a range ringed at 500 m can only
- * ever render as white no matter what albedo it is given. At 265 m the near layer
- * keeps two thirds of its own colour and reads blue-grey; the 405 m layer is
- * meant to be nearly gone.
- */
+/** Three overlapping massif rings, near -> far (265 / 330 / 405 m). Kept close on
+ *  purpose: the haze buries anything much beyond this, so a ring at 500 m renders
+ *  as white whatever albedo it is given. The 405 m layer is meant to be nearly gone. */
 const MTN_R = [MAP_R * 5.3, MAP_R * 6.6, MAP_R * 8.1];
 /** mountains are sunk so no base rim shows where the ground plane ends */
 const MTN_SINK = 12;
@@ -126,9 +122,9 @@ function faceted(g: THREE.BufferGeometry): THREE.BufferGeometry {
   return n;
 }
 
-/** Script-wordmark silhouette; monotone in x so it can never self-intersect.
- *  At 60 m a LOW ribbon with a tall initial and small bumps reads as script: a
- *  tall deep-toothed one reads as a comb, and lifting both ends as a bowl. */
+/** Script-wordmark silhouette; monotone in x so it can never self-intersect. At 60 m
+ *  a LOW ribbon with a tall initial and small bumps reads as script; a tall
+ *  deep-toothed one reads as a comb, and lifting both ends as a bowl. */
 function ribbon(halfW: number, thick: number, cap: number, wob: number, freq = 4.5) {
   const N = 44;
   const top: [number, number][] = [], bot: [number, number][] = [];
@@ -183,36 +179,34 @@ function hyparGeo(half: number, rise: number, thick: number, seg: number) {
 }
 
 /**
- * One desert massif. Unit space is x in [-1,1], crest at y <= ~1, base skirt
- * either side of z = 0, so the instance scale sets width / height / depth
- * independently and the height-to-width ratio can stay near 0.4 - a single cone
- * at ratio 1.0 is what made the old ring read as ice-cream cones.
- *
- * The crest carries several summits over a broad body, with coherent undulation
- * rather than per-vertex noise (at 300 m per-vertex jitter reads as a comb). Both
- * ends fall to y = 0, so a sunk instance melts into the haze with no base line and
+ * One desert massif. Unit space is x in [-1,1], crest at y <= ~1, base skirt either
+ * side of z = 0, so the instance scale sets width / height / depth independently and
+ * the height-to-width ratio can stay near 0.4 - one cone at ratio 1.0 is what made
+ * the old ring read as ice-cream cones. Several summits ride a broad body, undulating
+ * coherently (per-vertex jitter at 300 m reads as a comb, not as strata). Both ends
+ * fall to y = 0, so a sunk instance melts into the haze with no base line and
  * neighbours overlap into a continuous, irregular range.
  */
 function ridgeGeo(rand: () => number, seg: number): THREE.BufferGeometry {
-  const nSum = 2 + Math.floor(rand() * 3);
-  const sums: [number, number, number][] = [];
+  const nSum = 2 + Math.floor(rand() * 2);
+  const sums: [number, number, number][] = [];   // [along the ridge, height, half-width]
   for (let i = 0; i < nSum; i++) {
-    sums.push([
-      (i + 0.5) / nSum + (rand() - 0.5) * 0.26,   // where along the ridge
-      0.50 + rand() * 0.44,                       // summit height
-      0.09 + rand() * 0.13,                       // how sharp
-    ]);
+    sums.push([(i + 0.5) / nSum + (rand() - 0.5) * 0.26,
+      0.46 + rand() * 0.40, 0.30 + rand() * 0.28]);
   }
   const f1 = 3 + rand() * 3, p1 = rand() * 6.28;
   const f2 = 8 + rand() * 6, p2 = rand() * 6.28;
   const fz = 1.2 + rand() * 1.6, pz = rand() * 6.28;
   const pb1 = rand() * 6.28, pb2 = rand() * 6.28;
-
   const cr: number[][] = [], fb: number[][] = [], bb: number[][] = [];
   for (let i = 0; i <= seg; i++) {
     const t = i / seg;
-    let h = 0.30 * Math.pow(Math.sin(Math.PI * t), 0.55);          // the massif body
-    for (const [p, a, w] of sums) h = Math.max(h, a * Math.exp(-(((t - p) / w) ** 2)));
+    let h = 0.36 * Math.pow(Math.sin(Math.PI * t), 0.5);           // the massif body
+    // exponent 2.6, not 2: a gaussian summit comes to a POINT, and a point at this
+    // horizontal scale IS the white ice-cream cone. 2.6 gives a mesa crown instead.
+    for (const [p, a, w] of sums) {
+      h = Math.max(h, a * Math.exp(-(Math.abs((t - p) / w) ** 2.6)));
+    }
     h *= 1 + 0.11 * Math.sin(t * Math.PI * f1 + p1)
            + 0.05 * Math.sin(t * Math.PI * f2 + p2);               // ridge strata
     h *= Math.min(1, t / 0.12, (1 - t) / 0.12);                    // ends into the floor
@@ -326,10 +320,9 @@ export const buildSkyline: Builder = (ctx) => {
   }
 
   // --- 4. space-needle on a two-step circular plaza. Glazed band INSET under the
-  // roof lip; flush with it the deck reads as a black tyre on a stick instead of
-  // an observation disc. The plinth is what stops the AERIAL station - which looks
-  // almost straight down the mast - reading the shaft as a loose white tube: from
-  // above you now see a tower standing in a plaza, not a cone lying on paving.
+  // roof lip; flush with it the deck reads as a black tyre on a stick. The plinth is
+  // what stops the AERIAL station - which looks almost down the mast - reading the
+  // shaft as a loose white tube: from above it is now a tower standing in a plaza.
   {
     const x = NEEDLE_X;
     const z = NEEDLE_Z;
@@ -380,62 +373,64 @@ export const buildSkyline: Builder = (ctx) => {
     }
   }
 
-  // --- 7. perimeter ring: a CONTINUOUS terrace of low show pavilions just outside
-  // the boundary, so the player never looks over the fence into nothing.
-  //
-  // The old version read from the aerial as thin white cards at odd angles. The
-  // cause was value, not geometry: the blocks were PAL.concrete, the same as the
-  // paving they stand on, and nothing out here casts a shadow - so the roof melted
-  // into the ground and only the two shaded flanks survived, as an L of grey. Pale
-  // walls over a mid-blue roof cap fixes it from every angle. Blocks are pitched
-  // to touch or slightly overlap: a terrace reads as buildings, a scatter does not.
+  // --- 7. perimeter fringe: low show pavilions scattered just outside the boundary,
+  // so the player never looks over the fence into nothing. Two measured failures are
+  // encoded here. (a) All in PAL.concrete they read from the AERIAL as thin white
+  // cards: the roof was the same value as the paving and nothing out here casts a
+  // shadow, so the top plane melted into the ground and only the two shaded flanks
+  // survived, as an L of grey. (b) Fixing that with a saturated roof cap overshot -
+  // the ring became rows of blue panels and pulled the eye off the town. So bleached
+  // walls, a roof one step darker in the SAME concrete family, and the only colour is
+  // a thin glazing band. Spacing, size and yaw are jittered and one slot in six is
+  // dropped: an even pitch at a fixed angle reads as a car park from 78 m up.
   {
     const walls: THREE.Matrix4[] = [];
     const roofs: THREE.Matrix4[] = [];
     const bands: THREE.Matrix4[] = [];
-    const OUT = 14;            // how far past the boundary the terrace stands
-    const ROOF_T = 0.8;
-    const OVER = 0.65;         // roof overhang: the eave line is what reads at 60 m
+    const ROOF_T = 0.7;
+    const OVER = 0.5;          // roof overhang: the eave line is what reads at 60 m
     // every block's local +z faces the map, so the window-band offset is free
     const add = (x: number, z: number, ry: number) => {
-      const w = 10 + r() * 8, d = 8 + r() * 5, h = 3.6 + r() * 3.2;
-      walls.push(mtx(x, h / 2, z, ry, w, h, d));
-      roofs.push(mtx(x, h + ROOF_T / 2, z, ry, w + OVER * 2, ROOF_T, d + OVER * 2));
+      if (r() < 0.16) return;                                   // break the rhythm
+      const yaw = ry + (r() - 0.5) * 0.7 + (r() < 0.22 ? Math.PI / 2 : 0);
+      const w = 7 + r() * 13, d = 7 + r() * 9, h = 3.2 + r() * 4.3;
+      walls.push(mtx(x, h / 2, z, yaw, w, h, d));
+      roofs.push(mtx(x, h + ROOF_T / 2, z, yaw, w + OVER * 2, ROOF_T, d + OVER * 2));
       // half-buried in the wall, so it is a glazing band and never a loose card
       const off = d / 2 - 0.06;
-      bands.push(mtx(x + Math.sin(ry) * off, h * 0.55, z + Math.cos(ry) * off, ry,
-        w * 0.72, 0.95, 0.3));
+      bands.push(mtx(x + Math.sin(yaw) * off, h * 0.55, z + Math.cos(yaw) * off, yaw,
+        w * 0.66, 0.8, 0.28));
     };
     // each run breaks where a landmark stands behind it, so the sightline out
     // over the back fence actually reaches the landmark
     const clear = (x: number, at: number, gap: number) => Math.abs(x - at) > gap;
-    const zRow = BOUND_Z + OUT;
-    for (let x = BOUND_X_MIN - 26; x <= BOUND_X_MAX - 2; x += 15) {
-      if (clear(x, SAUCER_X, 15)) add(x + (r() - 0.5) * 2.5, -zRow - r() * 3, 0);
-      if (clear(x, DOME_X, DOME_R + 5)) add(x + (r() - 0.5) * 2.5, zRow + r() * 3, Math.PI);
+    const zRow = BOUND_Z + 13;
+    for (let x = BOUND_X_MIN - 28; x <= BOUND_X_MAX - 2; x += 12 + r() * 11) {
+      if (clear(x, SAUCER_X, 15)) add(x, -zRow - r() * 11, 0);
+      if (clear(x, DOME_X, DOME_R + 5)) add(x, zRow + r() * 11, Math.PI);
     }
     // the +x run must clear the third house, which another module owns
     const xRow = Math.max(BOUND_X_MAX + 13, THIRD_HOUSE_X + 19);
-    for (let z = -BOUND_Z - 6; z <= BOUND_Z + 6; z += 14) {
-      add(xRow + r() * 3, z + (r() - 0.5) * 2.5, -Math.PI / 2);
+    for (let z = -BOUND_Z - 8; z <= BOUND_Z + 8; z += 11 + r() * 10) {
+      add(xRow + r() * 9, z, -Math.PI / 2);
     }
-    // the -x side only closes past |z| = 30: the road stem, the pylon sign and the
+    // the -x side only closes past |z| = 28: the road stem, the pylon sign and the
     // needle all sit inside that corridor and the plaza vista must stay open
     for (const s of [-1, 1]) {
-      for (let z = 30; z <= BOUND_Z + 16; z += 13) {
-        add(BOUND_X_MIN - 24 - r() * 5, s * (z + (r() - 0.5) * 2.5), s * Math.PI / 2);
+      for (let z = 28; z <= BOUND_Z + 20; z += 11 + r() * 9) {
+        add(BOUND_X_MIN - 22 - r() * 12, s * z, s * Math.PI / 2);
       }
     }
     g.add(inst(unit, m.painted(PAL.thirdWall, 0.9, 0), walls));
-    g.add(inst(unit, m.painted(PAL.capsuleTrim, 0.75, 0.06), roofs));
-    // distant glazing is pale haze, never a black slot
+    g.add(inst(unit, m.painted(PAL.concreteDark, 0.93, 0), roofs));
+    // the one accent, and distant glazing is pale haze, never a black slot
     g.add(inst(unit, m.painted(PAL.roofGlazing, 0.3, 0.2), bands));
   }
 
-  // --- 8. hazy city band between the map and the mountains. Haze, not
-  // architecture: low enough that the mountains always read above it, and with
-  // enough spread in all three dimensions that no two blocks share a silhouette.
-  // A second, lower, tighter ring in front thickens the band without a draw call.
+  // --- 8. hazy city band between the map and the mountains. Haze, not architecture:
+  // low enough that the mountains always read above it, with enough spread in all
+  // three dimensions that no two blocks share a silhouette. A second, lower ring in
+  // front thickens the band for free.
   {
     const city: THREE.Matrix4[] = [];
     const place = (rad: number, hMin: number, hSpan: number, n: number, tower: number) => {
@@ -457,17 +452,16 @@ export const buildSkyline: Builder = (ctx) => {
     g.add(inst(unit, m.painted(PAL.cityFar, 1, 0.7), city));
   }
 
-  // --- 9. mountains: three overlapping ridge layers, each paler and bluer than
-  // the one in front. Two silhouettes per layer so the instances are not all the
-  // same massif, and the far layer sits close to the sky horizon colour so it
-  // reads as the last thing before the haze rather than as geometry.
+  // --- 9. mountains: three overlapping ridge layers, each paler than the one in
+  // front. Two silhouettes per layer so the instances are not all the same massif;
+  // the far layer sits at the sky horizon colour and should barely read as geometry.
   {
     // [count, ring index, half-width min/span, height min/span, half-depth min/span]
     const layers: [number, number, number, number, number, number, number, number,
       THREE.Material][] = [
-      [9, 0, 110, 80, 46, 34, 17, 9, m.painted(PAL.mountain, 1, 1)],
-      [10, 1, 130, 95, 56, 40, 20, 11, m.painted(PAL.mountainFar, 1, 1)],
-      [10, 2, 150, 110, 66, 46, 23, 13, m.painted(PAL.skyHorizon, 1, 0.9)],
+      [9, 0, 110, 80, 38, 46, 17, 9, m.painted(PAL.mountain, 1, 1)],
+      [10, 1, 130, 95, 46, 54, 20, 11, m.painted(PAL.mountainFar, 1, 1)],
+      [10, 2, 150, 110, 54, 58, 23, 13, m.painted(PAL.skyHorizon, 1, 0.9)],
     ];
     for (const [n, ring, wMin, wSpan, hMin, hSpan, dMin, dSpan, mat] of layers) {
       const buckets: THREE.Matrix4[][] = [[], []];

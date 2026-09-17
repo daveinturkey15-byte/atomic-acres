@@ -125,6 +125,7 @@ interface QA {
   probeReset: (x: number, z: number) => void;
   probeWalkTo: (tx: number, tz: number, maxSteps: number) => boolean;
   probePos: () => [number, number, number];
+  collidersAt: (x: number, z: number, y?: number) => unknown[];
 }
 
 const qa: QA = {
@@ -198,6 +199,23 @@ const qa: QA = {
   probePos() {
     const p = player.state.pos;
     return [p.x, p.y, p.z];
+  },
+  /** Which module owns the collider blocking this spot? Answers "what IS that?". */
+  collidersAt(x, z, y = 1.0) {
+    const hits: unknown[] = [];
+    for (let i = 0; i < colliders.length; i++) {
+      const c = colliders[i];
+      if (x < c.min.x - 0.35 || x > c.max.x + 0.35) continue;
+      if (z < c.min.z - 0.35 || z > c.max.z + 0.35) continue;
+      if (y < c.min.y || y > c.max.y) continue;
+      hits.push({
+        i,
+        min: [+c.min.x.toFixed(2), +c.min.y.toFixed(2), +c.min.z.toFixed(2)],
+        max: [+c.max.x.toFixed(2), +c.max.y.toFixed(2), +c.max.z.toFixed(2)],
+        height: +(c.max.y - c.min.y).toFixed(2),
+      });
+    }
+    return hits;
   },
 };
 

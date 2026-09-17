@@ -114,8 +114,8 @@ export const STATIONS: Record<string, Station> = {
     note: 'Standing in the middle of the road looking at the white house.',
   },
   interiorOrange: {
-    pos: [0, EYE_HEIGHT, -17],
-    yaw: 0,
+    pos: [0, EYE_HEIGHT, -18.5],
+    yaw: Math.PI,
     pitch: 0,
     ref: null,
     note: 'Inside the orange house ground floor looking toward the street. Checks the '
