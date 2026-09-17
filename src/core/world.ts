@@ -35,6 +35,7 @@ import {
 import { PAL } from './palette';
 import { BOUND_X_MIN, BOUND_X_MAX, BOUND_Z } from './layout';
 import { bootRenderer, type BackendKind, type WorldRenderer } from './renderer';
+import { buildPost, type PostBackend } from './post';
 
 export interface World {
   renderer: WorldRenderer;
@@ -45,6 +46,12 @@ export interface World {
   backend: BackendKind;
   /** Resolves to the backend that actually came up. */
   backendReady: Promise<BackendKind>;
+  /** Post-chain frame render (GTAO/SSR/bloom/vignette, or direct fallback). */
+  render: () => void;
+  /** False when post degraded to direct rendering. */
+  postEnabled: boolean;
+  /** Which path the post chain took. */
+  postBackend: PostBackend;
   resize: () => void;
   dispose: () => void;
 }
@@ -189,13 +196,16 @@ export function createWorld(canvasParent: HTMLElement): World {
   const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.08, 1400);
 
   // ---- sun. High and slightly behind the +x end so the houses catch a raking light.
-  const sun = new THREE.DirectionalLight(PAL.sunColor, 3.05);
+  // Harsh desert noon: the key stays warm (a nudge warmer than PAL.sunColor) and a
+  // touch stronger than before; shadow interiors go dark by starving the fills,
+  // never by touching exposure (still 1.09 in renderer.ts).
+  const sunTint = new THREE.Color(PAL.sunColor).offsetHSL(-0.008, 0.05, -0.004);
+  const sun = new THREE.DirectionalLight(sunTint, 3.2);
   sun.position.set(58, 72, -92);
   sun.castShadow = true;
   sun.shadow.mapSize.set(4096, 4096);
   sun.shadow.bias = -0.00022;
   sun.shadow.normalBias = 0.055;
-
   // Fit the shadow camera to the playable area only. A shadow camera sized to the
   // skyline would waste almost all of its texels on empty desert.
   const cx = (BOUND_X_MIN + BOUND_X_MAX) / 2;
@@ -210,39 +220,46 @@ export function createWorld(canvasParent: HTMLElement): World {
   sun.target.position.set(cx, 0, 0);
   scene.add(sun);
   scene.add(sun.target);
-
-  // ---- fill. Sky above, warm bleached-concrete bounce below.
-  const hemi = new THREE.HemisphereLight(PAL.skyHorizon, PAL.bounce, 1.15);
+  // ---- fill. Cool sky above (skyTop family), warm bleached-concrete bounce below.
+  // Kept at 1.05, below the old 1.15, so occlusion — not ambient wash — carries
+  // the shadow interiors.
+  const hemi = new THREE.HemisphereLight(PAL.skyTop, PAL.bounce, 1.05);
   hemi.position.set(0, 60, 0);
   scene.add(hemi);
-
   // A weak opposing fill so north-facing walls do not go to mud, kept low so that
-  // occlusion still does the work.
-  const fill = new THREE.DirectionalLight(PAL.skyTop, 0.34);
+  // occlusion still does the work. Cooled a step past skyTop, capped at 0.30.
+  const fillTint = new THREE.Color(PAL.skyTop).offsetHSL(0.02, 0.04, -0.02);
+  const fill = new THREE.DirectionalLight(fillTint, 0.3);
   fill.position.set(-70, 40, 80);
   fill.castShadow = false;
   scene.add(fill);
 
+  // ---- post. Built once: buildPost probes the backend synchronously and lands
+  // on the direct-render fallback (enabled:false) wherever the chain cannot run,
+  // so main.ts keeps calling renderer.render safely and render() here is the
+  // post path. post.setSize forwards to the renderer, preserving resize.
+  const post = buildPost(renderer, scene, camera);
+  const render = () => {
+    post.render();
+  };
   const resize = () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(innerWidth, innerHeight);
+    post.setSize(innerWidth, innerHeight);
   };
   addEventListener('resize', resize);
-
   const dispose = () => {
     removeEventListener('resize', resize);
+    post.dispose();
     sky.geometry.dispose();
     (sky.material as THREE.Material).dispose();
     envTex.dispose();
     renderer.dispose();
   };
-
   // Surface the boot failure loudly: ready rejects only when NO backend can
   // render. The rejection is the QA signal; main.ts keeps running its loop.
   boot.ready.catch(() => {
     /* already console.error'd in renderer.ts — this catch marks it handled */
   });
-
-  return { renderer, scene, camera, sun, backend: boot.requested, backendReady: boot.ready, resize, dispose };
+  return { renderer, scene, camera, sun, backend: boot.requested, backendReady: boot.ready, render, postEnabled: post.enabled, postBackend: post.backend, resize, dispose };
 }

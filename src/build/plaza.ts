@@ -20,9 +20,9 @@
  */
 import * as THREE from 'three';
 import type { BuildContext, Builder, BuildResult } from '../core/kit';
-import { group } from '../core/kit';
+import { group, aabbSlab, type AABB } from '../core/kit';
 import { PAL } from '../core/palette';
-import { BOUND_X_MIN, BOUND_Z, ROAD_HALF_WIDTH } from '../core/layout';
+import { BOUND_X_MIN, BOUND_Z, PAVEMENT_OUTER, ROAD_HALF_WIDTH } from '../core/layout';
 
 // ---------------------------------------------------------------- derived frame
 const NEAR_X = BOUND_X_MIN - 2;          // nothing here comes nearer the map
@@ -40,6 +40,12 @@ const DAIS_TOP = 0.62;                   // deck: deep enough that the kerb read
 const KIOSK_X = BOUND_X_MIN - 6, KIOSK_Z = ROAD_HALF_WIDTH + 5.0;
 // radial inlay, +z side: centre and radius clear the ragged concrete edge above
 const INLAY_X = BOUND_X_MIN - 9.5, INLAY_Z = ROAD_HALF_WIDTH + 8.0, INLAY_R = 7.0;
+// pylon island: foot of skyline.ts's pylon sign (SX/SZ shared seam, do not move)
+const ISL_X = BOUND_X_MIN - 12, ISL_Z = -(PAVEMENT_OUTER + 1.6);
+const ISL_W = 7.6, ISL_D = 5.6, ISL_H = 0.18;
+// entrance-rhythm line on the +z half: continues the verge planter row west of the
+// inlay disc, staying clear of BOUND_X_MIN, the flag row and the hypar footprint
+const RHY_Z = VERGE_Z + 0.8;
 
 // ---------------------------------------------------------------- instancer
 const UP = new THREE.Vector3(0, 1, 0);
@@ -124,7 +130,10 @@ export const buildPlaza: Builder = (ctx: BuildContext): BuildResult => {
   const IRON = pnt(PAL.rooftopDrum, 0.5, 0.35), CREAM = pnt(PAL.coachCream, 0.6, 0.08);
   const TEAL = pnt(PAL.signTeal, 0.55, 0.12), MAROON = pnt(PAL.signMaroon, 0.55, 0.12);
   const TIMB = pnt(PAL.timber, 0.88), SOIL = pnt(PAL.dirt, 1), TYRE = pnt(PAL.asphalt, 0.9);
+  const FLAG = pnt(PAL.flagstone, 0.95), WARM = pnt(PAL.pavingWarm, 0.95);
+  const STAIN = pnt(PAL.pavingStain, 0.95), BRONZE = pnt(PAL.fenceRail, 0.5, 0.45);
   const CORD = pnt(PAL.timberDark, 0.95);
+  const colliders: AABB[] = [];
 
   // ---------------------------------------------------------------- show car
   /** Blocky 1950s finned saloon, ~4.9 x 1.95 x 1.7 m, authored for a 60 m read:
@@ -268,6 +277,7 @@ export const buildPlaza: Builder = (ctx: BuildContext): BuildResult => {
       S.put(mat.leaf, q * 2, q * 1.7, q * 2,
         x + Math.cos(a) * d, 0.70 + q * 0.72, z + Math.sin(a) * d);
     }
+    colliders.push(aabbSlab(x, 0, z, 1.7, 0.75, 1.7));
   }
   // Rows along both edges, stopping before the ragged concrete edge: a bench
   // standing in open sand reads as a mistake.
@@ -338,6 +348,99 @@ export const buildPlaza: Builder = (ctx: BuildContext): BuildResult => {
     }
   }
 
+  // ---------------------------------------------------------------- 8. pylon island
+  // Paved pad at the foot of skyline.ts's pylon sign (SX/SZ seam, do not move):
+  // flagstone deck with a pavingStain kerb, a maroon/teal base plinth echoing the
+  // sign bands, a small atom-motif sculpture, and two bronze interpretive boards
+  // with illegible body lines (in-world text in the same spirit, never a copy).
+  // Planter pair at the west corners; the centre strip stays open so a mannequin
+  // vignette at the base never blocks the pad. Pad edge |z| >= 5.0: clear of the
+  // carriageway (|z| < ROAD_HALF_WIDTH).
+  {
+    B.put(FLAG, ISL_W, ISL_H, ISL_D, ISL_X, ISL_H / 2, ISL_Z);
+    B.put(WARM, ISL_W - 1.4, 0.03, ISL_D - 1.4, ISL_X, ISL_H + 0.005, ISL_Z);
+    colliders.push(aabbSlab(ISL_X, 0, ISL_Z, ISL_W, ISL_H, ISL_D));
+    // kerb ring: long sides overlap the short sides at the corners
+    for (const s of [-1, 1]) {
+      B.put(STAIN, ISL_W + 0.6, 0.24, 0.3, ISL_X, 0.12, ISL_Z + s * (ISL_D / 2 + 0.15));
+      B.put(STAIN, 0.3, 0.24, ISL_D, ISL_X + s * (ISL_W / 2 + 0.15), 0.12, ISL_Z);
+    }
+    // maroon base plinth with a teal cap band, under the sign between its legs
+    const bx = ISL_X - 0.6;
+    B.put(MAROON, 4.6, 0.85, 2.6, bx, ISL_H + 0.425, ISL_Z);
+    B.put(TEAL, 4.8, 0.16, 2.8, bx, ISL_H + 0.93, ISL_Z);
+    colliders.push(aabbSlab(bx, ISL_H, ISL_Z, 4.8, 1.01, 2.8));
+    // atom motif: maroon nucleus on a steel mast over the cap, teal orbit chord
+    // ring (an octagon of spans - no new geometry) with two cream electrons
+    const ax = bx, az = ISL_Z, ay = ISL_H + 2.35;
+    C.put(mat.steel, 0.12, 1.35, 0.12, ax, ISL_H + 1.0 + 0.675, az);
+    S.put(MAROON, 1.1, 1.1, 1.1, ax, ay, az);
+    const tilt = 0.5, ro = 1.0;
+    const op = (t: number): [number, number, number] => [
+      ax + Math.cos(t) * ro, ay + Math.sin(t) * ro * Math.sin(tilt),
+      az + Math.sin(t) * ro * Math.cos(tilt)];
+    for (let k = 0; k < 8; k++) {
+      const [x0, y0, z0] = op((k / 8) * Math.PI * 2);
+      const [x1, y1, z1] = op(((k + 1) / 8) * Math.PI * 2);
+      C.span(TEAL, 0.035, x0, y0, z0, x1, y1, z1);
+    }
+    for (const t of [0.6, 2.7]) {
+      const [ex, ey, ez] = op(t);
+      S.put(CREAM, 0.22, 0.22, 0.22, ex, ey, ez);
+    }
+    // interpretive boards: 0.6 x 0.9 m bronze-look panels on posts at the east
+    // edge, facing back down the street (+x); three pale lines stand in for the
+    // illegible body text
+    for (const s of [-1, 1]) {
+      const px = ISL_X + 2.7, pz = ISL_Z + s * 1.3;
+      C.put(IRON, 0.1, 1.0, 0.1, px, 0.5, pz);
+      B.put(BRONZE, 0.62, 0.92, 0.08, px, 1.15, pz, Math.PI / 2, -0.3);
+      for (let k = 0; k < 3; k++) {
+        B.put(CREAM, 0.44 - k * 0.06, 0.07, 0.1, px + 0.05, 1.28 - k * 0.2, pz, Math.PI / 2, -0.3);
+      }
+      colliders.push(aabbSlab(px, 0, pz, 0.5, 1.5, 0.9));
+    }
+    planter(ISL_X - 2.5, ISL_Z - 1.8);
+    planter(ISL_X - 2.5, ISL_Z + 1.8);
+  }
+
+  // ---------------------------------------------------------------- 9. entrance rhythm
+  // Planter / AC-louvred-box / twin-head-plinth + placard stations continuing the
+  // verge row west past the kiosk on the +z half. All west of the inlay disc
+  // (KIOSK_X offsets clear its radius), south of the flag row (|z| = 12.7) and on
+  // the +z half, so the hypar footprint (-z) is never touched. The plinths carry
+  // paired steel stubs: footings a twin-head column can reuse, not columns
+  // themselves (columns are the ground lane's).
+  {
+    const acBox = (x: number, z: number): void => {
+      B.put(SLAB, 1.7, 0.16, 1.1, x, 0.08, z);
+      B.put(PAVE, 1.5, 0.95, 0.9, x, 0.635, z);
+      for (let k = 0; k < 4; k++) {
+        B.put(IRON, 1.54, 0.07, 0.05, x, 0.42 + k * 0.18, z + 0.45);
+      }
+      colliders.push(aabbSlab(x, 0, z, 1.7, 1.15, 1.1));
+    };
+    const lampPlinth = (x: number, z: number): void => {
+      B.put(SLAB, 1.0, 0.5, 1.0, x, 0.25, z);
+      for (const s of [-1, 1]) C.put(mat.steel, 0.09, 0.35, 0.09, x + s * 0.22, 0.675, z);
+      colliders.push(aabbSlab(x, 0, z, 1.0, 0.85, 1.0));
+    };
+    const placard = (x: number, z: number): void => {
+      C.put(IRON, 0.1, 1.1, 0.1, x, 0.55, z);
+      B.put(CREAM, 0.85, 0.6, 0.08, x, 1.25, z - 0.05, 0, -0.35);
+      B.put(TEAL, 0.7, 0.12, 0.1, x, 1.42, z - 0.08, 0, -0.35);
+      B.put(STAIN, 0.6, 0.07, 0.1, x, 1.2, z - 0.03, 0, -0.35);
+      B.put(STAIN, 0.44, 0.07, 0.1, x, 1.06, z - 0.01, 0, -0.35);
+    };
+    for (const dx of [12, 16, 20]) {
+      const x = KIOSK_X - dx;
+      planter(x - 2.9, RHY_Z);
+      acBox(x, RHY_Z);
+      lampPlinth(x + 2.9, RHY_Z);
+      placard(x + 2.9, RHY_Z - 1.15);
+    }
+  }
+
   B.flush(g, 'plazaBox');
   C.flush(g, 'plazaCyl');
   S.flush(g, 'plazaSph');
@@ -352,5 +455,5 @@ export const buildPlaza: Builder = (ctx: BuildContext): BuildResult => {
     o.matrixAutoUpdate = false;
   });
 
-  return { group: g, colliders: [] };
+  return { group: g, colliders };
 };

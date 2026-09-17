@@ -120,9 +120,26 @@ The best close look at materials:
 - a **grey concrete pilaster** breaks the elevation;
 - the **appliance bank** is at ground level on the lawn: a tall red/pink cabinet with
   white panels and chrome trim — retro fridge/cooker styling, about chest height;
-- **bright green lawn** meets **pale concrete paving with big slabs**;
-- **chain-and-post edging** (short dark posts with slack chain) along the lawn edge;
-- a **tan timber picket fence** and clipped dark hedges behind;
+- **bright green lawn** meets **warm-tan concrete paving with big slabs** — FOOTAGE
+  CORRECTION (gameplay, not wiki stills): sunlit patios/pavements/driveways read warm
+  tan/cream/sand, not cool pale grey; roads stay dark grey asphalt
+  (f-FKQOEO-1ceE-055.jpg patio; f-FKQOEO-1ceE-195.jpg slabs; f-FKQOEO-1ceE-205.jpg driveway;
+  f-aICKIbuo8zQ-175.jpg stained slabs + tar strips);
+- **chain-and-post edging** (short dark posts with slack chain) along the lawn edge —
+  KEPT from the wiki still; seen in NO gameplay frame in 60 (chain never resolves), do not expand;
+- **timber fences are TWO builds on a stone plinth, not one picket run** — FOOTAGE
+  CORRECTION: low front runs ~1.1–1.3 m read vertical boards with a scalloped/dipped top rail
+  (f-aICKIbuo8zQ-120.jpg; f-aICKIbuo8zQ-175.jpg 2 m bays; f-aICKIbuo8zQ-190.jpg), taller
+  side/rear runs ~1.8–2.0 m read horizontal stacked boards (f-FKQOEO-1ceE-075.jpg;
+  f-aICKIbuo8zQ-085.jpg; f-aICKIbuo8zQ-090.jpg); several mid-distance runs are genuinely
+  unresolvable (f-FKQOEO-1ceE-055.jpg; f-FKQOEO-1ceE-160.jpg smear) and f-FKQOEO-1ceE-205.jpg
+  is contested (full-frame horizontal vs vision-crop vertical); every run sits on a low
+  stone/block plinth ~0.3–0.6 m with square posts; clipped dark hedges behind and above;
+- **random rubble/ashlar masonry veneer on every low wall** — FOOTAGE CORRECTION, missing from
+  the wiki reads: irregular polygons with dark/wide-pale mortar on house bases/skirts, porch
+  piers, fence plinths and boundary/cover walls, warm cream in sun else grey-tan
+  (f-FKQOEO-1ceE-055.jpg; f-FKQOEO-1ceE-045.jpg; f-FKQOEO-1ceE-115.jpg; f-aICKIbuo8zQ-045.jpg +
+  f-aICKIbuo8zQ-075.jpg close-ups); no PAL key covers it yet;
 - to the right a **deep flat cantilevered eave** over a concrete deck — the porch canopy.
   Build it as a **cantilever off the house**, not a canopy on two posts.
 
@@ -131,28 +148,64 @@ The atmosphere reference:
 - the **"Nuketown" pylon sign**: pink/maroon neon script over
   *Discover the City of the Future*, on a two-post trapezoid frame, topped with a
   **maroon atom-and-orbit sphere**; a **teal oval badge** hangs below the script;
-- a **cream-and-maroon vintage tour coach**, chrome trim, riveted panels;
+- a **cream-and-maroon vintage tour coach**, chrome trim, riveted panels — FOOTAGE CONFIRMED:
+  cream/ivory + deep maroon swoosh/skirt/roof band + 4x chrome rub-rails + rivet rows +
+  dark tinted rectangles + whitewalls + `Nuke…` script, ~3.0–3.2 x 2.5 x 10–12 m, parked ON
+  the street/bulb as a blocker (f-FKQOEO-1ceE-105.jpg; f-FKQOEO-1ceE-135.jpg;
+  f-aICKIbuo8zQ-105.jpg); a SECOND black-upper/cream-swoosh/navy-lower bus with
+  `BUILDING YOUR FUTURE WORLD` + mascot also blocks the street (f-FKQOEO-1ceE-150.jpg);
 - a **teal/turquoise 1950s classic car** with heavy chrome and whitewall tyres on a
-  display plinth with an info placard; a maroon 50s car behind it;
-- a **flying-saucer house** on legs, cream with a dark window band;
+  display plinth with an info placard; a maroon 50s car behind it — FOOTAGE CONFIRMED with
+  additions: display green reads deeper/bluer than carTeal on a ~6x2.5x0.4 m plinth with an
+  angled ~1.0x0.7 m placard at a black steel gate closing the road stem (f-FKQOEO-1ceE-212.jpg;
+  f-FKQOEO-1ceE-160.jpg); maroon/brown convertible wreck with fins, doors open, ~4.2–5 m, recurs
+  on driveways (f-FKQOEO-1ceE-205.jpg; f-aICKIbuo8zQ-030.jpg); rigid RL-livery box truck
+  (cream ribbed + blue-grey + mascot, ~9–10 m) and a SEPARATE cream/blue-grey corrugated towed
+  trailer (open door, louvers, markers, dualies) form the mid-street chicane with the buses
+  (f-aICKIbuo8zQ-030.jpg truck; f-FKQOEO-1ceE-085.jpg + f-aICKIbuo8zQ-045.jpg trailer);
+- a **flying-saucer house** on legs, cream with a dark window band — FOOTAGE EXTENDED: cream
+  curved shell + full ribbon glazing confirmed (f-FKQOEO-1ceE-075.jpg; f-aICKIbuo8zQ-060.jpg);
+  close under-lip view adds a mauve/brown soffit band with recessed circular downlights
+  ~1.0–1.5 m apart on slim white splayed legs, walk-under >2.0 m likely 2.5–3.0 m
+  (f-FKQOEO-1ceE-165.jpg, foreshortened +-0.5 m);
 - a **geodesic dome**, a **space-needle tower**, rows of **flags on poles**;
-- **mannequins** — one in a purple/magenta shift dress on the pavement;
-- street lamps with curved orange tops; manhole covers; tan picket fencing.
+- **mannequins** — one in a purple/magenta shift dress on the pavement — FOOTAGE CONFIRMED and
+  extended: purple-dress + tan-dress + torsos recur at cars, counters and yards, with CRT TVs,
+  lava lamps, plants, pendants, rugs and two-tone kitchens dressing every interior; interiors are
+  NOT bare shells (f-aICKIbuo8zQ-010.jpg teal living; f-aICKIbuo8zQ-135.jpg purple-diamond bedroom;
+  f-FKQOEO-1ceE-001.jpg spawn living; f-FKQOEO-1ceE-190.jpg striped `No Hassle Car Wash` room);
+  orange stripe bands live ONLY in the prefab cell (f-aICKIbuo8zQ-210.jpg), one garage pillar
+  (f-FKQOEO-1ceE-060.jpg) and one striped room (f-FKQOEO-1ceE-190.jpg), never globally;
+- street lamps with curved orange tops; manhole covers; tan picket fencing — FOOTAGE REFINES:
+  twin/multi-head lamp columns recur ~1 group/8–15 m with plinths, notice/interpretive boards,
+  planters/AC boxes and a curved riveted steel blast barrier (f-FKQOEO-1ceE-160.jpg;
+  f-aICKIbuo8zQ-175.jpg; f-aICKIbuo8zQ-075.jpg barrier ~1.3–1.5 x 2.5–3 m); garage faces carry an
+  open flat translucent canopy + columns + `Welcome to NUKETOWN / See the homes of the future!`
+  banner + door `13` (f-aICKIbuo8zQ-030.jpg; f-FKQOEO-1ceE-205.jpg).
 
 ### NT07 `Nuketown_2025_review_photo_BOII.jpg` — the coach
 Cream/silver body with a **maroon swoosh** along the flank, chrome belt trim, riveted
 panels, round headlights, chromed wheel arches, "Nuketown" script on the side. A 1950s
-Greyhound-style intercity coach — **not** a yellow school bus (that is BO1).
+Greyhound-style intercity coach — **not** a yellow school bus (that is BO1). FOOTAGE CONFIRMS
+this livery (f-FKQOEO-1ceE-105.jpg; f-FKQOEO-1ceE-135.jpg side + front cap) AND a second
+black/navy livery with `BUILDING YOUR FUTURE WORLD` (f-FKQOEO-1ceE-150.jpg); full side script
+is occluded in every gameplay frame, so transcribe no more than `Nuke…`/`…etown` from footage.
 
 ### OPEN items — do not invent
 - Exact hex colours. Nothing above is colour-calibrated. `palette.ts` picks *within*
   the observed families.
 - The under-window **front ledge** on the street elevation — no BO2-2025 frame in the
   set shows a house street face at eye level other than NT04, which does not resolve it.
-- **Mailboxes** — not visible along either verge in the aerial at native resolution.
-- Exact inset of the turning head from the map edge.
-
----
+  Gameplay adds f-FKQOEO-1ceE-205.jpg (door 13 + open door + stone pier) but not the ledge profile.
+  Still OPEN.
+- **Mailboxes** — PARTIALLY RESOLVED by footage: one yellow box on a stone pillar by a rear
+  doorway (f-FKQOEO-1ceE-100.jpg); no verge row along either street side in any of 60 gameplay
+  frames. Keep the wiki-read OPEN for a verge row; build at most the single pier box.
+- Exact inset of the turning head from the map edge — still OPEN: f-FKQOEO-1ceE-035.jpg is a
+  blown-out killcam and f-aICKIbuo8zQ-002.jpg a smoke-obscured Hellstorm aerial; neither measures.
+- Gates/holes in fence runs — still OPEN: continuous 12–18 m street run (f-FKQOEO-1ceE-160.jpg)
+  and 6–8 m yard run (f-FKQOEO-1ceE-190.jpg) show none; `yards.ts` holes stay gameplay
+  concessions, not footage truth.
 
 ## 4. Module contract
 

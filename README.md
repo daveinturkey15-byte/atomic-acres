@@ -1,8 +1,14 @@
-# Nuketown 2025
+# Atomic Acres
 
-A from-scratch, code-only recreation of **Black Ops 2 `Nuketown 2025`** in Three.js.
-Every mesh and every texture is generated procedurally at load — nothing is downloaded,
-and nothing is carried over from any previous project.
+A from-scratch, code-only fan project inspired by **Black Ops 2 `Nuketown 2025`**
+in Three.js. It starts close to BO2's Nuketown 2025 and diverges from there —
+**Nuketown 2025** is the name of the map inside the game. Every mesh and every
+texture is generated procedurally at load — nothing is downloaded, and nothing
+is carried over from any previous project.
+
+Unofficial fan project — not affiliated with Activision or Treyarch.
+
+Play it live at `https://daveinturkey15-byte.github.io/atomic-acres/`.
 
 ## Play it
 
@@ -48,6 +54,7 @@ src/core/player.ts      first-person controller
 src/core/stations.ts    camera stations, each paired to its reference frame
 src/core/kit.ts         the Builder type and geometry helpers
 src/build/*.ts          one file per feature, each exporting a single Builder
+src/ui/*.ts             HUD, menus, settings (wired from main.ts via initUI)
 src/main.ts             the only file that touches the scene
 ```
 

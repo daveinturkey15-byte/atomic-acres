@@ -399,7 +399,9 @@ export const buildSkyline: Builder = (ctx) => {
   }
 
   // --- 5. flying-saucer house, beyond team A's back fence. Window band inset
-  // into the upper hull: wider than the body it reads as a black brim.
+  // into the upper hull: wider than the body it reads as a black brim. Under the
+  // lip a mauve soffit ring carries recessed downlights on the map-facing arc,
+  // on four slim splayed legs with open walk-under (f-FKQOEO-1ceE-165.jpg read).
   {
     const Y = 8.0;
     const topY = Y - 1.4;
@@ -411,6 +413,26 @@ export const buildSkyline: Builder = (ctx) => {
     put(g, new THREE.LatheGeometry(profile, 22), cream, SAUCER_X, Y, SAUCER_Z);
     put(g, new THREE.CylinderGeometry(4.3, 4.45, 0.62, 22, 1, true), m.windowDark,
       SAUCER_X, Y + 0.34, SAUCER_Z);
+    // mauve soffit band tucked under the lip: tapered ring, widest at the lip so
+    // the cream shell overhangs it. Radii derive from the lathe lip (4.9) above.
+    const LIP_R = 4.9;
+    const SOF_T = 0.55;
+    put(g, new THREE.CylinderGeometry(LIP_R - 0.05, LIP_R - 0.9, SOF_T, 22),
+      m.painted(PAL.saucerSoffit, 0.8, 0.05), SAUCER_X, Y - SOF_T / 2, SAUCER_Z);
+    // recessed downlights: warm discs just proud of the soffit underside, spaced
+    // ~1.25 m apart along the map-side arc. Instanced; pitched to face straight down.
+    const dlQ = new THREE.Quaternion()
+      .setFromEuler(new THREE.Euler(Math.PI / 2, 0, 0));
+    const dls: THREE.Matrix4[] = [];
+    for (const a of [-0.45, -0.15, 0.15, 0.45]) {
+      dls.push(new THREE.Matrix4().compose(
+        new THREE.Vector3(
+          SAUCER_X + Math.sin(a) * (LIP_R - 0.7), Y - SOF_T - 0.02,
+          SAUCER_Z + Math.cos(a) * (LIP_R - 0.7)),
+        dlQ, new THREE.Vector3(1, 1, 1)));
+    }
+    g.add(inst(new THREE.CircleGeometry(0.16, 12),
+      m.emissive(PAL.windowBand, 1.1), dls));
     g.add(inst(new THREE.BoxGeometry(0.38, legLen(topY, 5.4, 2.0), 0.38), cream,
       splayLegs(SAUCER_X, SAUCER_Z, 4, topY, 5.4, 2.0, Math.PI / 4)));
   }

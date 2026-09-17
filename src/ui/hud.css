@@ -1,0 +1,208 @@
+/* NUKETOWN 2025 - HUD styles. BO2-ish: thin sans, tight tracking,
+   high-contrast white with soft shadow, one restrained amber accent. */
+
+/* debug gate: hides ONLY the pre-existing debug divs tagged .hud-debug */
+#hud.hud-debug-hidden .hud-debug {
+  display: none !important;
+}
+
+#hud .hud-own {
+  font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+  letter-spacing: 0.06em;
+  color: #f2f6fb;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* --- crosshair: hide the index.html plus, use our 4 dynamic lines --- */
+#crosshair.xh-lines::before,
+#crosshair.xh-lines::after {
+  display: none;
+}
+#crosshair.xh-lines {
+  --xh-gap: 3px;
+  width: 0;
+  height: 0;
+  margin: 0;
+  opacity: 1;
+}
+#crosshair.xh-hidden {
+  visibility: hidden;
+}
+#crosshair .xh {
+  position: absolute;
+  background: #eaf4ff;
+  box-shadow: 0 0 2px #000;
+}
+#crosshair .xh-n {
+  left: -1px; top: calc(-7px - var(--xh-gap));
+  width: 2px; height: 7px;
+}
+#crosshair .xh-s {
+  left: -1px; top: var(--xh-gap);
+  width: 2px; height: 7px;
+}
+#crosshair .xh-e {
+  top: -1px; left: var(--xh-gap);
+  height: 2px; width: 7px;
+}
+#crosshair .xh-w {
+  top: -1px; left: calc(-7px - var(--xh-gap));
+  height: 2px; width: 7px;
+}
+
+/* --- ammo bottom-right --- */
+#hud .hud-ammo {
+  position: fixed;
+  right: 22px;
+  bottom: 18px;
+  font-size: 30px;
+  font-weight: 600;
+}
+#hud .hud-ammo .hud-reserve {
+  font-size: 17px;
+  opacity: 0.75;
+}
+#hud .hud-ammo .hud-ammo-sep {
+  font-size: 20px;
+  opacity: 0.6;
+}
+#hud .hud-ammo.hud-low .hud-mag {
+  color: #ff5d4d;
+}
+
+/* --- health bottom-left --- */
+#hud .hud-health {
+  position: fixed;
+  left: 22px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+#hud .hud-hp-track {
+  width: 170px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+#hud .hud-hp-fill {
+  height: 100%;
+  width: 100%;
+  background: #f2f6fb;
+}
+#hud .hud-health.hud-low .hud-hp-fill {
+  background: #ff5d4d;
+}
+#hud .hud-hp-label {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+/* --- damage vignette --- */
+#hud .hud-vignette {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, transparent 52%, rgba(200, 20, 10, 0.55) 100%);
+}
+#hud .hud-vignette.hud-flash {
+  animation: hud-dmg 0.45s ease-out;
+}
+@keyframes hud-dmg {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* --- hitmarker: centered X --- */
+#hud .hud-hitmarker {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  opacity: 0;
+}
+#hud .hud-hitmarker.hm-show {
+  opacity: 1;
+}
+#hud .hud-hitmarker .hm-a {
+  position: absolute;
+  left: 10px;
+  top: 1px;
+  width: 2px;
+  height: 8px;
+  background: #fff;
+  box-shadow: 0 0 2px #000;
+}
+#hud .hud-hitmarker .hm-0 { transform: rotate(45deg) translateY(-7px); }
+#hud .hud-hitmarker .hm-1 { transform: rotate(135deg) translateY(-7px); }
+#hud .hud-hitmarker .hm-2 { transform: rotate(225deg) translateY(-7px); }
+#hud .hud-hitmarker .hm-3 { transform: rotate(315deg) translateY(-7px); }
+#hud .hud-hitmarker.hm-kill .hm-a {
+  background: #ffd25c;
+  height: 10px;
+}
+
+/* --- killfeed top-right --- */
+#hud .hud-killfeed {
+  position: fixed;
+  right: 22px;
+  top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  font-size: 13px;
+}
+#hud .hud-feed-row {
+  background: rgba(0, 0, 0, 0.55);
+  border-right: 2px solid #ffd25c;
+  padding: 2px 8px;
+}
+
+/* --- minimap top-left --- */
+#hud .hud-minimap {
+  position: fixed;
+  left: 22px;
+  top: 44px;
+}
+#hud .hud-map-title {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-bottom: 3px;
+}
+#hud .hud-map-canvas {
+  width: 148px;
+  height: 148px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+}
+
+/* --- scoreboard --- */
+#hud .hud-score {
+  position: fixed;
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+  min-width: 300px;
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 10px 14px;
+  font-size: 14px;
+}
+#hud .hud-score.hud-score-hidden {
+  display: none;
+}
+#hud .hud-score-title {
+  font-size: 12px;
+  color: #ffd25c;
+  margin-bottom: 6px;
+}
+#hud .hud-score-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 2px 0;
+}

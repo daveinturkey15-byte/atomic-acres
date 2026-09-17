@@ -1,0 +1,164 @@
+/* Atomic Acres menus — BO2-ish thin sans, no Activision branding.
+ * All selectors are scoped under #start so nothing leaks onto the HUD canvas. */
+
+#start .aa-root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 24px 16px;
+  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+#start .aa-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+#start .aa-hidden { display: none; }
+
+#start .aa-eyebrow {
+  font-size: 12px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #9fb4c8;
+}
+
+#start .aa-title {
+  margin: 0;
+  font-size: 52px;
+  font-weight: 200;
+  letter-spacing: 8px;
+  color: #f2f6fb;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+}
+
+#start .aa-sub {
+  font-size: 15px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: #ffb37a;
+}
+
+#start .aa-h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 200;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: #f2f6fb;
+}
+
+#start .aa-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+#start .aa-btn {
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #e8eef7;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 10px 26px;
+  cursor: pointer;
+}
+
+#start .aa-btn:hover { background: rgba(255, 255, 255, 0.16); }
+
+#start .aa-btn.aa-primary {
+  background: rgba(255, 138, 92, 0.18);
+  border-color: #ff8a5c;
+  color: #ffd9a8;
+}
+
+#start .aa-btn.aa-primary:hover { background: rgba(255, 138, 92, 0.32); }
+
+#start .aa-maphead {
+  margin-top: 8px;
+  font-size: 12px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: #9fb4c8;
+}
+
+#start .aa-maps {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#start .aa-map {
+  font: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 8px;
+  cursor: pointer;
+  width: 216px;
+}
+
+#start .aa-map:hover { background: rgba(255, 255, 255, 0.11); }
+
+#start .aa-map.aa-selected {
+  border-color: #ff8a5c;
+  box-shadow: 0 0 0 1px #ff8a5c;
+}
+
+#start .aa-thumb {
+  display: block;
+  width: 200px;
+  height: 120px;
+}
+
+#start .aa-mapname {
+  margin-top: 6px;
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: #f2f6fb;
+}
+
+#start .aa-maptag {
+  font-size: 12px;
+  color: #9fb4c8;
+}
+
+#start .aa-fan {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(232, 238, 247, 0.55);
+}
+
+#start .aa-setting {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 320px;
+  font-size: 14px;
+  color: #e8eef7;
+}
+
+#start .aa-setting-head {
+  display: flex;
+  justify-content: space-between;
+}
+
+#start .aa-val { color: #ffd9a8; }
+
+#start .aa-setting input[type="range"] { width: 100%; }
+
+#start .aa-select {
+  font: inherit;
+  font-size: 14px;
+  color: #e8eef7;
+  background: #1b2430;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 6px 10px;
+}

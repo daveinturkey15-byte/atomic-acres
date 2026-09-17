@@ -11,6 +11,7 @@ import { makeRng, type AABB, type BuildContext, type Builder } from './core/kit'
 import { Player, type MoveMode } from './core/player';
 import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core/layout';
 import { STATIONS, type Station } from './core/stations';
+import { WeaponsController } from './weapons/controller';
 
 import { buildGround } from './build/ground';
 import { buildOrangeHouse } from './build/orange-house';
@@ -51,6 +52,7 @@ const player = new Player(world.camera, world.renderer.domElement);
 
 const colliders: AABB[] = [];
 const moduleStats: Record<string, { objects: number; colliders: number; ms: number }> = {};
+const worldTargets: THREE.Object3D[] = [];
 
 for (const [name, build] of BUILDERS) {
   const t0 = performance.now();
@@ -64,6 +66,7 @@ for (const [name, build] of BUILDERS) {
   }
   res.group.name = name;
   world.scene.add(res.group);
+  worldTargets.push(res.group);
   colliders.push(...res.colliders);
   let objects = 0;
   res.group.traverse(() => objects++);
@@ -75,6 +78,14 @@ for (const [name, build] of BUILDERS) {
 }
 player.setColliders(colliders);
 player.teleport(SPAWN_A.x, 0, SPAWN_A.z, SPAWN_A.yaw);
+const ammoDiv = document.createElement('div');
+const weapons = new WeaponsController({
+  camera: world.camera,
+  scene: world.scene,
+  mat,
+  targets: worldTargets,
+  onHud: (line) => { ammoDiv.textContent = line; },
+});
 
 // ---------------------------------------------------------------- HUD
 // All overlay UI lives in #hud and #start: scripts/capture.mjs removes #start and
@@ -86,8 +97,9 @@ const hudMode = document.createElement('div');
 const hudHelp = document.createElement('div');
 hudHelp.textContent =
   'WASD move · SHIFT sprint/boost · SPACE jump/up · E up · Q/X down · ' +
-  'F fly · C noclip · wheel/[ ] speed · H help · Esc free mouse';
-hud.append(hudStats, hudMode, hudHelp);
+  'F fly · C noclip · wheel/[ ] speed · H help · Esc free mouse · ' +
+  'LMB fire · RMB aim · R reload · 1/2 or wheel weapons';
+hud.append(hudStats, hudMode, hudHelp, ammoDiv);
 const startOverlay = document.getElementById('start')!;
 // The first click lands on the overlay (it covers the canvas), so dismiss and lock
 // here; later clicks hit the canvas and re-lock via Player. Esc releases (browser
@@ -105,6 +117,30 @@ addEventListener('keydown', (e) => {
     hudHelp.style.display = hudHelp.style.display === 'none' ? '' : 'none';
   }
 });
+// Weapon input. Every handler is headless-safe (try/catch, no direct
+// requestPointerLock) so capture-harness probes never trip on missing APIs.
+const canvas = world.renderer.domElement;
+canvas.addEventListener('mousedown', (e) => {
+  try {
+    if (e.button === 0 || e.button === 2) weapons.pointerDown(e.button);
+  } catch { /* headless: no pointer, no weapon input */ }
+});
+addEventListener('mouseup', (e) => {
+  try {
+    if (e.button === 0 || e.button === 2) weapons.pointerUp(e.button);
+  } catch { /* headless: no pointer, no weapon input */ }
+});
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+addEventListener('keydown', (e) => {
+  if (e.repeat) return;
+  if (e.code === 'KeyR' || e.code === 'Digit1' || e.code === 'Digit2') {
+    try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
+  }
+});
+canvas.addEventListener('wheel', (e) => {
+  if (player.getMode() !== 'walk') return;
+  try { weapons.wheel(e.deltaY); } catch { /* headless-safe */ }
+}, { passive: true });
 
 let frames = 0;
 let fps = 0;
@@ -130,7 +166,18 @@ function frame(): void {
 
   if (!cameraHeldByQA) {
     player.update(dt);
+    const speed = Math.hypot(player.state.vel.x, player.state.vel.z);
+    weapons.update(dt, now / 1000, {
+      speed,
+      sprinting: speed > 6.5,
+      grounded: player.state.grounded,
+    });
     world.renderer.render(world.scene, world.camera);
+    world.renderer.clearDepth();
+    const ac = world.renderer.autoClear;
+    world.renderer.autoClear = false;
+    world.renderer.render(weapons.overlay, world.camera);
+    world.renderer.autoClear = ac;
   }
 
   frames++;
@@ -181,12 +228,14 @@ interface QA {
   mode: () => MoveMode;
   teleport: (x: number, y: number, z: number, yaw?: number, pitch?: number) => void;
   setFlySpeed: (v: number) => void;
+  weaponCmd: (cmd: string, arg?: string | number | boolean) => unknown;
 }
 
 const qa: QA = {
   ready: true,
   stations: STATIONS,
   goto(name) {
+    weapons.setVisible(false);
     const s = STATIONS[name];
     if (!s) return false;
     cameraHeldByQA = true;
@@ -202,6 +251,7 @@ const qa: QA = {
   spawn(team) {
     const s = team === 'a' ? SPAWN_A : SPAWN_B;
     cameraHeldByQA = false;
+    weapons.setVisible(true);
     // The probe and the player loop assume walk physics (gravity, step-up). A
     // leftover noclip here would silently fly later checks through walls.
     player.setMode('walk');
@@ -209,6 +259,7 @@ const qa: QA = {
   },
   release() {
     cameraHeldByQA = false;
+    weapons.setVisible(true);
   },
   setMode(m) {
     player.setMode(m);
@@ -221,6 +272,9 @@ const qa: QA = {
   },
   setFlySpeed(v) {
     player.setFlySpeed(v);
+  },
+  weaponCmd(cmd, arg) {
+    return weapons.command(cmd, arg);
   },
   stats() {
     const i = world.renderer.info;

@@ -229,6 +229,15 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const gndD = HOUSE_DEPTH - RECESS;
   g.add(slab(HHL * 2, 0.12, gndD, mat.concrete, 0, -0.09, gndCz));
   g.add(box(HHL * 2 - 0.1, 0.08, gndD - 0.1, mat.stuccoCream, 0, FLOOR_H - 0.05, gndCz));
+  // rubble base course where the house meets the ground: painted() geometry only,
+  // no colliders (inside the wall-collider line) — wants a proper veneer material later.
+  const stoneM = mat.painted(PAL.rubbleStone, 0.9, 0);
+  const skirt = (z: number, c0: number, c1: number): void => {
+    g.add(box(c1 - c0, 0.4, 0.08, stoneM, (c0 + c1) / 2, 0.2, z));
+    g.add(box(c1 - c0, 0.06, 0.1, mat.painted(PAL.rubbleMortar, 0.9, 0), (c0 + c1) / 2, 0.43, z));
+  };
+  skirt(GND_FRONT + OUT * 0.05, GE * HHL, porchX - 0.85); skirt(GND_FRONT + OUT * 0.05, porchX + 0.85, FE * HHL);
+  skirt(backZ + S * 0.05, GE * HHL, backDoorX - 0.85); skirt(backZ + S * 0.05, backDoorX + 0.85, FE * HHL);
   // -------------------------------------------------- interior dressing (ground floor)
   // Blocky set dressing inside the walkable ground floor. Traverse probes start at
   // (x,-16)/(x,-20.4) and walk straight out through each real door, so the front
@@ -286,6 +295,35 @@ export const buildOrangeHouse: Builder = (ctx) => {
     put(0.1, 0.08, 0.1, darkIn, lx, FLOOR_H - 0.1, lz);
     g.add(box(0.55, 0.05, 0.55, glowM, lx, FLOOR_H - 0.15, lz));
   }
+  // teal living/dining + white/blue kitchen (f-aICKIbuo8zQ-010); clear of door lanes.
+  const tealM = mat.painted(PAL.interiorTeal, 0.85, 0);
+  g.add(box(3.0, 1.1, 0.06, tealM, -0.7, 1.35, backZ - S * (WALL_T / 2 + 0.06)));
+  g.add(box(2.4, 0.62, 0.04, mat.painted(PAL.applianceBlue, 0.6, 0.05), -0.6, 0.42, kCZ - S * 0.32));
+  g.add(box(2.5, 0.05, 0.72, mat.painted(PAL.capsuleWhite, 0.7, 0), -0.6, 0.96, kCZ));
+  const tblX = 0.9, tblZ = midZ + S * 1.6;
+  const tblTop = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 0.06, 20), mat.painted(PAL.applianceRed, 0.55, 0.05)); tblTop.position.set(tblX, 0.74, tblZ); g.add(tblTop);
+  const tblPed = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.16, 0.72, 10), darkIn); tblPed.position.set(tblX, 0.37, tblZ); g.add(tblPed); colliders.push(aabb(tblX, 0.37, tblZ, 0.5, 0.74, 0.5));
+  const shellM = mat.painted(PAL.lawn, 0.7, 0);
+  const chairAt = (cx: number, cz: number, ry: number): void => {
+    const seat = box(0.45, 0.07, 0.45, shellM, cx, 0.46, cz); seat.rotation.y = ry; g.add(seat);
+    const back = box(0.45, 0.5, 0.07, shellM, cx - Math.sin(ry) * 0.2, 0.75, cz - Math.cos(ry) * 0.2); back.rotation.y = ry; g.add(back);
+    const trumpet = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.2, 0.44, 10), darkIn); trumpet.position.set(cx, 0.22, cz); g.add(trumpet);
+    colliders.push(aabb(cx, 0.4, cz, 0.5, 0.8, 0.5));
+  };
+  chairAt(tblX - 1.3, tblZ + 0.1, Math.PI / 2);
+  chairAt(tblX + 0.2, tblZ - 1.25, -Math.PI / 2);
+  const saucer = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.42, 0.14, 20), mat.emissive(PAL.sunColor)); saucer.position.set(tblX, FLOOR_H - 0.25, tblZ - 0.6); g.add(saucer);
+  for (const [px, pz] of [[tblX, tblZ], [-0.6, kCZ - S * 1.2]] as P2[]) {
+    g.add(box(0.04, 0.7, 0.04, darkIn, px, FLOOR_H - 0.4, pz));
+    const globe = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), mat.emissive(PAL.sunColor)); globe.position.set(px, FLOOR_H - 0.85, pz); g.add(globe);
+  }
+  g.add(box(2.8, 0.03, 2.0, mat.painted(PAL.coachMaroon, 0.9, 0), tblX, 0.035, tblZ));
+  for (const s of [-1, 1]) g.add(box(0.5, 2.0, 0.08, tealM, FE * HHL * 0.1 + s * 1.35, 1.5, GND_FRONT + S * 0.12));
+  g.add(box(1.6, 0.06, 0.35, darkIn, -0.7, 1.95, backZ - S * 0.35));
+  g.add(box(0.55, 0.4, 0.4, mat.windowDark, -1.1, 2.2, backZ - S * 0.35));
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.11, 0.28, 10), mat.painted(PAL.trailerTrim, 0.7, 0)); pot.position.set(1.7, 0.14, midZ + S * 1.3); g.add(pot);
+  const shrub = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.22, 0.7, 8), mat.painted(PAL.hedge, 0.9, 0)); shrub.position.set(1.7, 0.6, midZ + S * 1.3); g.add(shrub);
+  colliders.push(aabb(1.7, 0.4, midZ + S * 1.3, 0.4, 0.8, 0.4));
 
   // -------------------------------------------------- upper storey (solid, wrapped corner)
   const wallPts = outline(GE * HHL, GE * HHL, CORNER_R, 5).map(([x, z]) => [x, -z] as P2);
@@ -425,22 +463,43 @@ export const buildOrangeHouse: Builder = (ctx) => {
   }
   g.add(barrels);
 
-  // street face: two vehicle doors and a service door
+  // garage face: 3 ribbed bays (middle one open) + canopy + welcome cloth.
+  // f-FKQOEO-1ceE-060 ribs/cabinets/pillar stripe; f-FKQOEO-1ceE-205 open bay + shelving + numbered pier; f-aICKIbuo8zQ-030/-055/-115 canopy + banner.
   const doorMat = mat.painted(PAL.concreteDark, 0.6, 0.05);
-  const bayW = 2.3, bayH = GARAGE_H * 0.7;
-  const bay0 = gx - GARAGE_LEN / 2 + 0.4 + bayW / 2;
+  const bayW = 2.0, bayH = GARAGE_H * 0.7, bayGap = 0.4, OPEN_BAY = 1;
+  const bayX = (d: number): number => gx - GARAGE_LEN / 2 + 0.45 + bayW / 2 + d * (bayW + bayGap);
   const ribs = inst(unit, mat.painted(PAL.concrete, 0.7, 0), 10);
   let bi = 0;
-  for (let d = 0; d < 2; d++) {
-    const dxp = bay0 + d * (bayW + 0.45);
-    g.add(box(bayW, bayH, 0.1, doorMat, dxp, bayH / 2, frontZ));
-    for (let r = 0; r < 5; r++) {
-      ribs.setMatrixAt(bi++, m4.compose(
-        v.set(dxp, bayH * ((r + 0.5) / 5), frontZ + OUT * 0.055),
-        NOROT, sc.set(bayW - 0.1, 0.05, 0.04)));
+  for (let d = 0; d < GARAGE_BAYS; d++) {
+    const dxp = bayX(d);
+    if (d === OPEN_BAY) {
+      g.add(box(bayW, bayH, 0.06, mat.windowDark, dxp, bayH / 2, frontZ + OUT * 0.02));
+      g.add(box(bayW - 0.3, 0.06, 0.3, mat.timberDark, dxp, 1.05, frontZ + OUT * 0.14));
+      g.add(box(bayW - 0.3, 0.06, 0.3, mat.timberDark, dxp, 1.62, frontZ + OUT * 0.14));
+      g.add(box(0.5, 0.35, 0.28, mat.painted(PAL.pavingWarm, 0.9, 0), dxp - 0.55, 1.28, frontZ + OUT * 0.14));
+      g.add(box(0.45, 0.3, 0.28, mat.painted(PAL.trailerTrim, 0.7, 0), dxp + 0.55, 1.25, frontZ + OUT * 0.14));
+    } else {
+      g.add(box(bayW, bayH, 0.1, doorMat, dxp, bayH / 2, frontZ));
+      for (let r = 0; r < 5; r++) {
+        ribs.setMatrixAt(bi++, m4.compose(v.set(dxp, bayH * ((r + 0.5) / 5), frontZ + OUT * 0.055), NOROT, sc.set(bayW - 0.1, 0.05, 0.04)));
+      }
     }
   }
   g.add(ribs);
+  // flat canopy slab on slim columns; pale painted() stands in for glazing (wants glass later).
+  g.add(box(GARAGE_LEN + 0.8, 0.12, 3.2, mat.painted(PAL.glass, 0.35, 0.1), gx, GARAGE_H - 0.35, frontZ + OUT * 2.1));
+  for (const cx of [gx - GARAGE_LEN / 2 - 0.2, gx + GARAGE_LEN / 2 + 0.2]) {
+    put(0.14, GARAGE_H - 0.41, 0.14, mat.steel, cx, (GARAGE_H - 0.41) / 2, frontZ + OUT * 3.5, true);
+  }
+  g.add(box(3.6, 0.6, 0.05, mat.signText({ text: 'Hail, wayfarer! Tour the homes of tomorrow', color: PAL.signMaroon, background: PAL.houseCream, aspect: 6 }), gx, 2.9, frontZ + OUT * 3.68));
+  const pierX = bayX(OPEN_BAY) + (bayW + bayGap) / 2;
+  g.add(box(0.34, 0.45, 0.05, mat.signText({ text: '13', color: PAL.signMaroon, background: PAL.houseCream, aspect: 0.75 }), pierX, 1.7, frontZ + OUT * 0.06));
+  // one 0.4 m band + pinstripe + plaque on the numbered pier ONLY (f-FKQOEO-1ceE-060, f-FKQOEO-1ceE-190) — nowhere else in this house.
+  g.add(box(0.46, 0.4, 0.04, mat.painted(PAL.terracotta, 0.8, 0), pierX, 2.52, frontZ + OUT * 0.05));
+  g.add(box(0.46, 0.05, 0.04, mat.painted(PAL.hazardYellow, 0.6, 0), pierX, 2.76, frontZ + OUT * 0.05));
+  g.add(box(0.4, 0.24, 0.03, mat.signText({ text: 'Wash bay — leave it tidy', color: PAL.signTeal, background: PAL.houseCream, aspect: 1.7 }), pierX, 1.02, frontZ + OUT * 0.05));
+  put(0.6, 1.9, 1.1, mat.steel, gx - GARAGE_LEN / 2 - 0.35, 0.95, gz - 1.4, true);
+  put(0.6, 1.9, 1.1, mat.steel, gx - GARAGE_LEN / 2 - 0.35, 0.95, gz + 1.4, true);
 
   // every timberDark post and the garage service door share one InstancedMesh
   const postRows: Row[] = [[1.0, 2.1, 0.1, gx + GARAGE_LEN / 2 - 1.35, 1.05, frontZ, 0]];

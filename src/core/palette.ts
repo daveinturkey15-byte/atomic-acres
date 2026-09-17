@@ -67,6 +67,26 @@ export const PAL = {
   mountainFar:   0xc6d0dc,
   cityFar:       0xc6cfd9,
   fog:           0xccd4d4,
+
+  // --- FOOTAGE CORRECTIONS (docs/REAL-REFERENCE.md, from 422 gameplay frames).
+  // Added centrally so the implementation lanes never contend on this file.
+  rubbleStone:   0x9d9384,   // random polygonal masonry veneer - skirts, piers, plinths
+  rubbleMortar:  0xc2bcae,
+  pavingWarm:    0xcfc4ad,   // sunlit slabs read warm tan, not cool grey
+  pavingStain:   0xb3a894,
+  flagstone:     0xc6bba6,
+  fenceRail:     0xb98a52,   // scalloped top rail on the low front runs
+  busNavy:       0x27354d,   // the second, building-liveried bus
+  busBlack:      0x22242a,
+  trailerBody:   0xd8d4c8,   // towed trailer: cream body, blue-grey roof, red trim
+  trailerRoof:   0x8f9aa4,
+  trailerTrim:   0xa8392f,
+  interiorTeal:  0x6d8d8b,   // signature living/dining room
+  interiorPlum:  0x5b3f63,   // signature bedroom
+  interiorGold:  0xc9a24a,
+  interiorMint:  0x9dc7b4,
+  saucerSoffit:  0x7a6783,   // mauve underside with recessed downlights
+  hazardYellow:  0xd8b23a,   // mailbox, markings, DO NOT STACK crates
 } as const;
 
 export type PaletteKey = keyof typeof PAL;

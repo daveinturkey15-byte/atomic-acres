@@ -1,4 +1,8 @@
-# Play / publish Nuketown 2025
+# Play / publish Atomic Acres
+
+Live site: `https://daveinturkey15-byte.github.io/atomic-acres/`.
+
+Unofficial fan project — not affiliated with Activision or Treyarch.
 
 ## Play locally right now (no terminal)
 
@@ -50,7 +54,7 @@ gh auth status
 https://<user>.github.io/<repo>/
 ```
 
-Example: `https://daveinturkey15-byte.github.io/nuketown-2025/`
+Example: `https://daveinturkey15-byte.github.io/atomic-acres/`
 
 ### How the subpath build works
 

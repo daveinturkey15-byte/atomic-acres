@@ -61,7 +61,7 @@
  */
 import * as THREE from 'three';
 import type { AABB, BuildResult, Builder } from '../core/kit';
-import { aabb, aabbSlab, group, slab } from '../core/kit';
+import { aabb, aabbSlab, box, group, slab } from '../core/kit';
 import { PAL } from '../core/palette';
 import {
   BACK_FENCE, BOUND_X_MAX, BOUND_X_MIN, BOUND_Z, FRONT_LAWN_OUTER, GARAGE_DEPTH,
@@ -130,6 +130,16 @@ const PERIM_W = 0.6;
 const WALL_H = 12.0;                 // invisible out-of-bounds collider height
 const WALL_T = 1.2;
 const MANHOLE_R = 0.42;
+/** Black steel gate closing the -x carriageway mouth: full 2.2 m leaf. */
+const GATE_H = 2.2;
+const GATE_BAR_STEP = 0.32;
+/** Twin-head verge lamps: plinth + ~5 m steel column, arms reaching roadward. */
+const LAMP_PLINTH = 0.5;
+const LAMP_H = 5.0;
+const LAMP_ARM = 1.5;
+const LAMP_SPLAY = 0.42;
+/** Verge furniture line all stands on the pavement, just inside the lawn edge. */
+const VERGE_Z = PAVEMENT_OUTER - 0.4;
 const RING_SECTORS = 32;             // AABBs approximating the bulb's kerb + pavement
 const RING_SAMPLES = 4;              // arc samples per sector when fitting each AABB
 
@@ -347,6 +357,12 @@ function decalMesh(material: THREE.Material, specs: DecalSpec[], y: number): THR
 export const buildGround: Builder = (ctx) => {
   const g = group('ground');
   const colliders: AABB[] = [];
+  // Warm tan paving family (REAL-REFERENCE paving): straight runs, bulb ring,
+  // frontage wedges and garage aprons all read sunlit tan against the dark road.
+  // Kerbs stay pale (ctx.mat.kerb) and every asphalt surface stays dark neutral.
+  const warmPave = ctx.mat.painted(PAL.pavingWarm, 0.95, 0);
+  const warmFlag = ctx.mat.painted(PAL.flagstone, 0.95, 0);
+  const warmStain = ctx.mat.painted(PAL.pavingStain, 0.95, 0);
   const desert = ctx.mat.painted(PAL.dirt, 0.98, 0);
 
   // ---- 1. desert floor: everything outside the apron, out past the mountains.
@@ -424,11 +440,11 @@ export const buildGround: Builder = (ctx) => {
     g.add(pad(
       colliders, ROAD_X_MIN, PAVE_END_X,
       s * (ROAD_HALF_WIDTH + KERB_WIDTH), s * PAVEMENT_OUTER,
-      T_PAVE, ctx.mat.paving, UV_PAVING,
+      T_PAVE, warmPave, UV_PAVING,
     ));
   }
   g.add(arcPad(HEAD_RADIUS, HEAD_RADIUS + KERB_WIDTH, T_ARC, ctx.mat.kerb, UV_FLAT));
-  g.add(arcPad(HEAD_RADIUS + KERB_WIDTH, HEAD_PAVE_R, T_ARC, ctx.mat.paving, UV_PAVING));
+  g.add(arcPad(HEAD_RADIUS + KERB_WIDTH, HEAD_PAVE_R, T_ARC, warmPave, UV_PAVING));
 
   // Colliders for the bulb's kerb + pavement band: one tight AABB per annular
   // sector, sampled off the true arc rather than a naive chord box so the step
@@ -466,12 +482,12 @@ export const buildGround: Builder = (ctx) => {
     g.add(pad(
       colliders, LAWN_X_MAX, CORNER_X,
       s * PAVEMENT_OUTER, s * FRONT_LAWN_OUTER,
-      T_LAWN, ctx.mat.paving, UV_PAVING,
+      T_LAWN, warmPave, UV_PAVING,
     ));
     g.add(pad(
       colliders, CORNER_X, YARD_X_MAX,
       s * CORNER_Z, s * FRONT_LAWN_OUTER,
-      T_LAWN, ctx.mat.paving, UV_PAVING,
+      T_LAWN, warmPave, UV_PAVING,
     ));
 
     // ground beside the house, front wall to rear wall. This is the SIDE STRIPS -
@@ -505,13 +521,14 @@ export const buildGround: Builder = (ctx) => {
       T_LAWN, ctx.mat.lawn, UV_LAWN,
     ));
 
-    // garage apron: read the garage end off the house descriptor, never assumed
+    // garage apron: read the garage end off the house descriptor, never assumed.
+    // Warm flagstone, not cool concrete, so the drive reads as part of the paving.
     g.add(pad(
       colliders,
       h.garageX - GARAGE_LEN / 2 - DRIVE_FLARE,
       h.garageX + GARAGE_LEN / 2 + DRIVE_FLARE,
       s * PAVEMENT_OUTER, s * FRONT_LAWN_OUTER,
-      T_DRIVE, ctx.mat.concrete, UV_FLAT,
+      T_DRIVE, warmFlag, UV_FLAT,
     ));
   }
 
@@ -555,6 +572,8 @@ export const buildGround: Builder = (ctx) => {
       [HEAD_CENTER_X, 0],
       [ROAD_X_MIN + (ROAD_X_MAX - ROAD_X_MIN) * 0.12, ROAD_HALF_WIDTH * 0.35],
       [HEAD_CENTER_X + HEAD_RADIUS * 0.45, -HEAD_RADIUS * 0.4],
+      // boundary cover on the -x mouth, 0.8 m dia at (ROAD_X_MIN + 1.2, 0)
+      [ROAD_X_MIN + 1.2, 0],
     ];
     // A disc at Y_MANHOLE would be a plane hovering over the asphalt; a short
     // cylinder rising from y=0 is buried in the road and stands a couple of
@@ -589,17 +608,16 @@ export const buildGround: Builder = (ctx) => {
     const paintWhite = ctx.mat.painted(PAL.windowBand, 0.6, 0);
     const gutterMat = ctx.mat.painted(PAL.asphaltLight, 0.96, 0);
     const ironMat = ctx.mat.painted(PAL.steel, 0.72, 0.45);
-    const jointMat = ctx.mat.painted(PAL.concreteDark, 0.95, 0);
+    const jointMat = warmStain;
     const scuffMat = ctx.mat.painted(PAL.truckCab, 0.97, 0);
     const tactileMat = ctx.mat.painted(PAL.sand, 0.9, 0);
-
-    // Centre dashes down the stem, kept off the manhole x positions.
-    const lineSpecs: DecalSpec[] = [];
     const coverKeep: [number, number][] = [
       [ROAD_X_MIN + (ROAD_X_MAX - ROAD_X_MIN) * 0.34, -ROAD_HALF_WIDTH * 0.5],
       [ROAD_X_MIN + (ROAD_X_MAX - ROAD_X_MIN) * 0.72, ROAD_HALF_WIDTH * 0.42],
       [ROAD_X_MIN + (ROAD_X_MAX - ROAD_X_MIN) * 0.12, ROAD_HALF_WIDTH * 0.35],
+      [ROAD_X_MIN + 1.2, 0],
     ];
+    const lineSpecs: DecalSpec[] = [];
     for (let x = ROAD_X_MIN + 1.5; x < ROAD_X_MAX - 1.0; x += 5.0) {
       let clear = true;
       for (const s of coverKeep) {
@@ -683,31 +701,89 @@ export const buildGround: Builder = (ctx) => {
     }
     if (scuffSpecs.length) g.add(decalMesh(scuffMat, scuffSpecs, Y_SCUFF));
 
-    // Paving joints across both straight bands, skipping the driveway spans.
+    // Paving joints across both straight bands, skipping the driveway spans,
+    // plus radial control joints fanning across the bulb's pavement ring.
     const paveSpecs: DecalSpec[] = [];
     const bandMid = (ROAD_HALF_WIDTH + KERB_WIDTH + PAVEMENT_OUTER) / 2;
     const bandD = PAVEMENT_OUTER - (ROAD_HALF_WIDTH + KERB_WIDTH);
+    const overDrive = (s: -1 | 1, x: number, pad: number): boolean => {
+      for (const h of HOUSES) {
+        if (h.side !== s) continue;
+        if (Math.abs(x - h.garageX) < GARAGE_LEN / 2 + DRIVE_FLARE + pad) return true;
+      }
+      return false;
+    };
     for (const s of [-1, 1] as const) {
       for (let x = ROAD_X_MIN + 1.0; x < KERB_JOIN_X; x += 3.0) {
-        let overDrive = false;
-        for (const h of HOUSES) {
-          if (h.side !== s) continue;
-          if (Math.abs(x - h.garageX) < GARAGE_LEN / 2 + DRIVE_FLARE + 0.4) { overDrive = true; break; }
-        }
-        if (overDrive) continue;
+        if (overDrive(s, x, 0.4)) continue;
         paveSpecs.push({ x: x + (ctx.rand() - 0.5) * 0.15, z: s * bandMid, w: 0.09, d: bandD });
       }
     }
-    // A few jittered cracks on the straight pavements.
-    for (let i = 0; i < 12; i++) {
-      const s = i % 2 === 0 ? 1 : -1;
+    const ringMid = HEAD_RADIUS + KERB_WIDTH + (HEAD_PAVE_R - HEAD_RADIUS - KERB_WIDTH) / 2;
+    const ringD = HEAD_PAVE_R - HEAD_RADIUS - KERB_WIDTH;
+    const ringJoints = 14;
+    for (let i = 0; i < ringJoints; i++) {
+      const a = ARC_START + ARC_SPAN * ((i + 0.5) / ringJoints);
       paveSpecs.push({
-        x: ROAD_X_MIN + ctx.rand() * (KERB_JOIN_X - ROAD_X_MIN),
-        z: s * (bandMid + (ctx.rand() - 0.5) * bandD * 0.5),
-        w: 0.07, d: 0.8 + ctx.rand() * 1.0, rot: (ctx.rand() - 0.5) * 1.2,
+        x: HEAD_CENTER_X + Math.cos(a) * ringMid, z: Math.sin(a) * ringMid,
+        w: 0.09, d: ringD - 0.15, rot: -a + Math.PI / 2,
       });
     }
+    // Stained-slab variation + tar strips: one cell-centred slab per 3 m bay,
+    // half-grid off the joints so footprints never share the rung.
+    const stainSpecs: DecalSpec[] = [];
+    const flagSpecs: DecalSpec[] = [];
+    const tarSpecs: DecalSpec[] = [];
+    const stainRects: [number, number, number, number][] = [];
+    for (const s of [-1, 1] as const) {
+      const h = HOUSES.find((hh) => hh.side === s)!;
+      const inward = h.garageX > 0 ? -1 : 1;
+      const utilX = h.garageX + inward * (GARAGE_LEN / 2 + DRIVE_FLARE + 2.5);
+      for (let jx = ROAD_X_MIN + 1.0; jx < KERB_JOIN_X - 1.5; jx += 3.0) {
+        const cx = jx + 1.5 + (ctx.rand() - 0.5) * 0.3;
+        if (overDrive(s, cx, 1.3)) continue;
+        if (Math.abs(cx - utilX) < 1.3) continue;
+        if (ctx.rand() < 0.25) continue;
+        const w = 1.1 + ctx.rand() * 0.5;
+        const cz = s * (bandMid + (ctx.rand() - 0.5) * 0.4);
+        const spec = { x: cx, z: cz, w, d: bandD * 0.62 };
+        if (ctx.rand() < 0.5) stainSpecs.push(spec); else flagSpecs.push(spec);
+        stainRects.push([cx, cz, w / 2 + 0.15, (bandD * 0.62) / 2 + 0.15]);
+        // tar strip: short transverse bead tucked against the bay's joint end,
+        // clear of the stained slab in the same bay and the utility cover.
+        let tx = jx + 0.3 + ctx.rand() * 2.2;
+        if (tx > cx - w / 2 - 0.15 && tx < cx + w / 2 + 0.15) tx = jx + 0.32;
+        const tz = s * (bandMid + (ctx.rand() - 0.5) * bandD * 0.4);
+        if (Math.abs(tx - utilX) < 0.6 && Math.abs(tz - s * bandMid) < 0.7) continue;
+        if (!overDrive(s, tx, 0.6)) {
+          tarSpecs.push({ x: tx, z: tz, w: 0.13, d: 0.9 + ctx.rand() * 1.0 });
+        }
+      }
+    }
+    // A few jittered cracks on the straight pavements, kept off the stained
+    // slabs and the driveway spans.
+    let placed = 0;
+    for (let i = 0; i < 24 && placed < 12; i++) {
+      const s = placed % 2 === 0 ? 1 : -1;
+      const cx = ROAD_X_MIN + ctx.rand() * (KERB_JOIN_X - ROAD_X_MIN);
+      const cz = s * (bandMid + (ctx.rand() - 0.5) * bandD * 0.5);
+      let hit = overDrive(s, cx, 0.5);
+      if (!hit) {
+        for (const r of stainRects) {
+          if (Math.abs(cx - r[0]) < r[2] + 0.5 && Math.abs(cz - r[1]) < r[3] + 0.5) { hit = true; break; }
+        }
+      }
+      if (hit) continue;
+      paveSpecs.push({
+        x: cx, z: cz,
+        w: 0.07, d: 0.8 + ctx.rand() * 1.0, rot: (ctx.rand() - 0.5) * 1.2,
+      });
+      placed++;
+    }
     if (paveSpecs.length) g.add(decalMesh(jointMat, paveSpecs, Y_PAVE_MARK));
+    if (stainSpecs.length) g.add(decalMesh(warmStain, stainSpecs, Y_PAVE_MARK));
+    if (flagSpecs.length) g.add(decalMesh(warmFlag, flagSpecs, Y_PAVE_MARK));
+    if (tarSpecs.length) g.add(decalMesh(scuffMat, tarSpecs, Y_PAVE_MARK));
 
     // Dropped kerbs: one quad per garage over the kerb strip, abutting the apron.
     const dropSpecs: DecalSpec[] = [];
@@ -737,6 +813,170 @@ export const buildGround: Builder = (ctx) => {
       utilSpecs.push({ x: clearX, z: s * bandMid, w: 0.7, d: 0.7, rot: (ctx.rand() - 0.5) * 0.4 });
     }
     if (utilSpecs.length) g.add(decalMesh(ironMat, utilSpecs, Y_PAVE_MARK));
+  }
+
+  // ---- 13. -x street closure + verge rhythm: a black steel gate across the
+  // carriageway mouth, then twin-head lamps alternating with planter / AC /
+  // placard boxes down both verges. Everything stands on the pavement plateau
+  // at VERGE_Z or the kerb line, so the carriageway stays clear for large
+  // vehicles. Repeated parts go out as InstancedMesh families, one per
+  // geometry/material pair; every piece gets an aabb/aabbSlab collider.
+  {
+    const iron = ctx.mat.painted(PAL.busBlack, 0.62, 0.35);
+    const steel = ctx.mat.steel;
+    const paleHead = ctx.mat.painted(PAL.windowBand, 0.55, 0.05);
+    const lampLens = ctx.mat.emissive(PAL.sunColor, 1.1);
+    const kerbPale = ctx.mat.kerb;
+    const soil = ctx.mat.painted(PAL.dirt, 1, 0);
+    const shrub = ctx.mat.painted(PAL.hedge, 0.95, 0);
+    const boardFace = ctx.mat.painted(PAL.coachCream, 0.7, 0);
+
+    interface Item { p: [number, number, number]; ry?: number; s?: [number, number, number] }
+    const unitBox = new THREE.BoxGeometry(1, 1, 1);
+    const inst = (geo: THREE.BufferGeometry, mat: THREE.Material, list: Item[]): void => {
+      if (!list.length) return;
+      const im = new THREE.InstancedMesh(geo, mat, list.length);
+      const m4 = new THREE.Matrix4();
+      const q = new THREE.Quaternion();
+      const e = new THREE.Euler();
+      const v = new THREE.Vector3();
+      const sv = new THREE.Vector3();
+      const one = new THREE.Vector3(1, 1, 1);
+      list.forEach((it, i) => {
+        q.setFromEuler(e.set(0, it.ry ?? 0, 0));
+        if (it.s) sv.set(it.s[0], it.s[1], it.s[2]); else sv.copy(one);
+        im.setMatrixAt(i, m4.compose(v.set(it.p[0], it.p[1], it.p[2]), q, sv));
+      });
+      im.instanceMatrix.needsUpdate = true;
+      im.computeBoundingSphere();
+      im.castShadow = true;
+      im.receiveShadow = true;
+      g.add(im);
+    };
+
+    // Gate across the carriageway at the -x mouth: posts, rails, bars + mesh.
+    const gateX = ROAD_X_MIN + 0.15;
+    const gateSpan = ROAD_HALF_WIDTH * 2 + 0.7;
+    for (const s of [-1, 1] as const) {
+      const pz = s * (ROAD_HALF_WIDTH + 0.35);
+      g.add(slab(0.18, GATE_H + 0.2, 0.18, iron, gateX, T_PAVE, pz));
+      colliders.push(aabbSlab(gateX, T_PAVE, pz, 0.3, GATE_H + 0.2, 0.3));
+    }
+    for (const ry of [0.35, 1.2, GATE_H]) {
+      g.add(box(0.1, 0.09, gateSpan, iron, gateX, ry, 0));
+    }
+    const barH = GATE_H - 0.17;
+    const barN = Math.floor(gateSpan / GATE_BAR_STEP);
+    const bars: Item[] = [];
+    for (let i = 0; i <= barN; i++) {
+      bars.push({ p: [gateX, 0.12 + barH / 2, -gateSpan / 2 + ((i + 0.5) * gateSpan) / (barN + 1)] });
+    }
+    inst(new THREE.BoxGeometry(0.05, barH, 0.05), iron, bars);
+    g.add(box(0.03, 0.9, gateSpan - 0.3, steel, gateX, 0.62, 0));
+    colliders.push(aabbSlab(gateX, Y_BASE, 0, 0.7, GATE_H + 0.2, gateSpan + 0.4));
+
+    // Twin-head lamp columns + alternating verge boxes, both sides.
+    const plinths: Item[] = [];
+    const columns: Item[] = [];
+    const arms: Item[] = [];
+    const heads: Item[] = [];
+    const lenses: Item[] = [];
+    const planterBodies: Item[] = [];
+    const soils: Item[] = [];
+    const shrubs: Item[] = [];
+    const acBodies: Item[] = [];
+    const trim: Item[] = [];
+    const posts: Item[] = [];
+    const boards: Item[] = [];
+    const colGeo = new THREE.CylinderGeometry(0.07, 0.11, LAMP_H, 10);
+    const armGeo = new THREE.BoxGeometry(0.09, 0.09, LAMP_ARM);
+    const headGeo = new THREE.BoxGeometry(0.22, 0.12, 0.55);
+    const lensGeo = new THREE.BoxGeometry(0.16, 0.04, 0.4);
+    for (const s of [-1, 1] as const) {
+      const h = HOUSES.find((hh) => hh.side === s)!;
+      const lampXs: number[] = [];
+      for (let x = ROAD_X_MIN + 2.0; x < KERB_JOIN_X - 1.0;) {
+        let lx = x + (ctx.rand() - 0.5) * 1.0;
+        const half = GARAGE_LEN / 2 + DRIVE_FLARE + 0.8;
+        if (Math.abs(lx - h.garageX) < half) {
+          lx = h.garageX + (lx >= h.garageX ? half : -half);
+        }
+        lampXs.push(lx);
+        x += 8.0 + ctx.rand() * 7.0;
+      }
+      const topY = T_PAVE + LAMP_PLINTH + LAMP_H - 0.15;
+      for (const lx of lampXs) {
+        const pz = s * (VERGE_Z + (ctx.rand() - 0.5) * 0.2);
+        plinths.push({ p: [lx, T_PAVE + LAMP_PLINTH / 2, pz], s: [0.55, LAMP_PLINTH, 0.55] });
+        columns.push({ p: [lx, T_PAVE + LAMP_PLINTH + LAMP_H / 2, pz] });
+        colliders.push(aabbSlab(lx, T_PAVE, pz, 0.6, LAMP_PLINTH + LAMP_H + 0.2, 0.6));
+        for (const sg of [-1, 1]) {
+          const a = sg * LAMP_SPLAY + (ctx.rand() - 0.5) * 0.08;
+          const dx = Math.sin(a);
+          const dz = -s * Math.cos(a);
+          arms.push({ p: [lx + dx * LAMP_ARM * 0.45, topY, pz + dz * LAMP_ARM * 0.45], ry: Math.atan2(dx, dz) });
+          heads.push({ p: [lx + dx * (LAMP_ARM - 0.1), topY - 0.08, pz + dz * (LAMP_ARM - 0.1)], ry: Math.atan2(dx, dz) });
+          lenses.push({ p: [lx + dx * (LAMP_ARM - 0.1), topY - 0.16, pz + dz * (LAMP_ARM - 0.1)], ry: Math.atan2(dx, dz) });
+        }
+      }
+      // furniture between the lamps: planter -> AC utility -> placard, cycling
+      let bi = 0;
+      for (let li = 0; li + 1 < lampXs.length; li++) {
+        const a = lampXs[li];
+        const b = lampXs[li + 1];
+        const cands = [(a + b) / 2, a + 2.4, b - 2.4];
+        let cx = 0;
+        let found = false;
+        for (const c of cands) {
+          if (c < a + 1.3 || c > b - 1.3) continue;
+          if (Math.abs(c - h.garageX) < GARAGE_LEN / 2 + DRIVE_FLARE + 1.3) continue;
+          cx = c;
+          found = true;
+          break;
+        }
+        if (!found) continue;
+        const cz = s * (VERGE_Z - 0.05 + (ctx.rand() - 0.5) * 0.2);
+        const kind = bi % 3;
+        bi++;
+        if (kind === 0) {
+          planterBodies.push({ p: [cx, T_PAVE + 0.275, cz], s: [1.7, 0.55, 0.7] });
+          soils.push({ p: [cx, T_PAVE + 0.58, cz], s: [1.5, 0.1, 0.5] });
+          for (let k = 0; k < 3; k++) {
+            const sh = 0.3 + ctx.rand() * 0.18;
+            shrubs.push({
+              p: [cx - 0.5 + k * 0.5 + (ctx.rand() - 0.5) * 0.12, T_PAVE + 0.63 + sh / 2, cz + (ctx.rand() - 0.5) * 0.2],
+              s: [sh, sh, sh],
+            });
+          }
+          colliders.push(aabbSlab(cx, T_PAVE, cz, 1.7, 0.95, 0.7));
+        } else if (kind === 1) {
+          acBodies.push({ p: [cx, T_PAVE + 0.525, cz], s: [1.3, 1.05, 0.75] });
+          trim.push({ p: [cx, T_PAVE + 1.08, cz], s: [1.36, 0.06, 0.81] });
+          for (let k = 0; k < 4; k++) {
+            trim.push({ p: [cx, T_PAVE + 0.3 + k * 0.2, cz - s * 0.395], s: [1.1, 0.05, 0.04] });
+          }
+          colliders.push(aabbSlab(cx, T_PAVE, cz, 1.3, 1.15, 0.75));
+        } else {
+          posts.push({ p: [cx - 0.4, T_PAVE + 0.85, cz], s: [0.07, 1.7, 0.07] });
+          posts.push({ p: [cx + 0.4, T_PAVE + 0.85, cz], s: [0.07, 1.7, 0.07] });
+          boards.push({ p: [cx, T_PAVE + 1.45, cz], s: [1.0, 0.7, 0.06] });
+          trim.push({ p: [cx, T_PAVE + 1.84, cz], s: [1.06, 0.08, 0.1] });
+          colliders.push(aabbSlab(cx, T_PAVE, cz, 1.0, 1.9, 0.3));
+        }
+      }
+    }
+    inst(colGeo, steel, columns);
+    inst(armGeo, steel, arms);
+    inst(headGeo, paleHead, heads);
+    inst(lensGeo, lampLens, lenses);
+    inst(unitBox, kerbPale, plinths);
+    inst(unitBox, kerbPale, planterBodies);
+    inst(unitBox, soil, soils);
+    inst(unitBox, shrub, shrubs);
+    inst(unitBox, steel, acBodies);
+    inst(unitBox, iron, trim);
+    inst(unitBox, iron, posts);
+    inst(unitBox, boardFace, boards);
   }
 
   const result: BuildResult = { group: g, colliders };

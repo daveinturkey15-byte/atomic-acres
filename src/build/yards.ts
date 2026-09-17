@@ -199,9 +199,29 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   };
 
   // ---------------------------------------------------------------- fences
-  const BOARD_P = 0.2, BOARD_W = 0.17, BOARD_T = 0.06, POST_P = 2.45;
+  // REAL-REFERENCE item 1 / SPEC NT03: TWO builds on a stone plinth, not one
+  // picket run. Tall side/rear runs (~1.8-2.0 m total) read as HORIZONTAL stacked
+  // boards (f-FKQOEO-1ceE-075.jpg; f-FKQOEO-1ceE-205.jpg left run;
+  // f-aICKIbuo8zQ-085.jpg; f-aICKIbuo8zQ-090.jpg) over a 0.35-0.6 m rubble/stone
+  // plinth with square posts ~2 m apart, slightly proud. Low front runs
+  // (~1.1-1.3 m) read as VERTICAL boards + scalloped/dipped top rail
+  // (f-aICKIbuo8zQ-120.jpg; f-aICKIbuo8zQ-175.jpg 2 m bays; f-aICKIbuo8zQ-190.jpg).
+  // Current layout has NO street-facing fence run: pavement meets open lawn edged
+  // only by the chain-and-post verge, so every run below takes the tall build and
+  // no low/scalloped variant is emitted.
+  // Rubble is geometry + painted() only (plinth box + wider coping course): there
+  // is no masonry veneer in materials.ts yet, so this wants a proper procedural
+  // veneer material later (REAL-REFERENCE missing-prop 1).
+  // Total height stays <= FENCE_H 2.1, so the traverse/collider contract is
+  // unchanged in height. Every gameplay Hole stays open at the same t/w (holes
+  // are gameplay concessions, not footage truth); plinth, coping, boards and cap
+  // all segment like the back rails and NEVER bridge a hole; colliders split into
+  // solid segs only, same aabbSlab pattern; posts skip holed positions.
+  const PLINTH_H = 0.5, COPING_H = 0.08, BOARD_TOP = 1.91, POST_TOP = 2.04;
+  const PLINTH = mat.painted(PAL.rubbleStone, 0.95, 0);
+  const COPING = mat.painted(PAL.rubbleMortar, 0.95, 0);
 
-  /** tan board fence between two points, with holes punched clean through it */
+  /** tall horizontal-board fence on a rubble plinth, holes punched clean through */
   function fence(ax: number, az: number, bx: number, bz: number, holes: Hole[]): void {
     const L = Math.hypot(bx - ax, bz - az);
     const ux = (bx - ax) / L, uz = (bz - az) / L;
@@ -210,27 +230,7 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     const holed = (t: number, pad: number): boolean =>
       holes.some((o) => Math.abs(t - o.t * L) < o.w / 2 + pad);
 
-    const nb = Math.floor(L / BOARD_P);
-    const off = (L - (nb - 1) * BOARD_P) / 2;
-    for (let i = 0; i < nb; i++) {
-      const d = off + i * BOARD_P;
-      if (holed(d, 0)) continue;
-      const bh = FENCE_H * rr(0.955, 1);
-      const [x, z] = at(d);
-      B.put(mat.timber, BOARD_T, bh, BOARD_W, x, bh / 2, z, ry);
-    }
-    const np = Math.max(2, Math.round(L / POST_P));
-    for (let j = 0; j <= np; j++) {
-      const d = (j / np) * L;
-      if (holed(d, BOARD_P)) continue;
-      const [x, z] = at(d);
-      B.put(mat.timberDark, 0.16, FENCE_H + 0.18, 0.16, x, (FENCE_H + 0.18) / 2, z, ry);
-    }
-    // the cap rail runs straight over the holes, so each hole reads as knocked-out boards
-    const [mx, mz] = at(L / 2);
-    B.put(mat.timber, 0.27, 0.08, L, mx, FENCE_H + 0.06, mz, ry);
-
-    // solid runs -> back rails and colliders; the holes are left open for traversal
+    // solid runs -> plinth/coping/boards/cap/colliders; the holes are left open
     const segs: [number, number][] = [];
     let cur = 0;
     for (const o of holes.slice().sort((p, q) => p.t - q.t)) {
@@ -239,15 +239,30 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
       cur = Math.max(cur, o.t * L + o.w / 2);
     }
     if (cur < L) segs.push([cur, L]);
+    const y0 = PLINTH_H + COPING_H;
     for (const [s0, s1] of segs) {
       const len = s1 - s0;
       const [cx, cz] = at((s0 + s1) / 2);
-      for (const y of [FENCE_H * 0.27, FENCE_H * 0.74]) {
+      B.put(PLINTH, 0.28, PLINTH_H, len, cx, PLINTH_H / 2, cz, ry);
+      B.put(COPING, 0.36, COPING_H, len, cx, PLINTH_H + COPING_H / 2, cz, ry);
+      for (let c = 0; c < 5; c++) {   // 5 stacked courses, 0.25 boards + 0.02 gaps
+        const y = y0 + 0.125 + c * 0.27;
+        B.put(mat.timber, 0.06, 0.25, len, cx, y, cz, ry);
+      }
+      B.put(mat.timberDark, 0.2, 0.08, len, cx, BOARD_TOP + 0.04, cz, ry);  // cap: segmented
+      for (const y of [y0 + 0.42, y0 + 1.02]) {   // back rails behind the boards
         B.put(mat.timberDark, 0.08, 0.1, len, cx - uz * 0.07, y, cz + ux * 0.07, ry);
       }
       colliders.push(aabbSlab(cx, 0, cz,
-        Math.abs(ux) * len + Math.abs(uz) * 0.24, FENCE_H,
-        Math.abs(uz) * len + Math.abs(ux) * 0.24));
+        Math.abs(ux) * len + Math.abs(uz) * 0.36, FENCE_H,
+        Math.abs(uz) * len + Math.abs(ux) * 0.36));
+    }
+    const np = Math.max(2, Math.round(L / 2.0));   // square posts ~2 m, proud of the cap
+    for (let j = 0; j <= np; j++) {
+      const d = (j / np) * L;
+      if (holed(d, 0.2)) continue;
+      const [x, z] = at(d);
+      B.put(mat.timberDark, 0.16, POST_TOP, 0.16, x, POST_TOP / 2, z, ry);
     }
   }
 
@@ -284,15 +299,15 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   for (const h of HOUSES) {
     const zin = h.side * (BACK_FENCE - 0.9);
     const [a, b] = h.side === ORANGE.side ? [0.40, 0.68] : [0.28, 0.50];
-    hedge(yx(a), zin, yx(b), zin, rr(1.0, 1.2));                              // inside back fence
-    hedge(YARD_X_MIN + 0.9, zin, YARD_X_MIN + 0.9, yz(h, 0.45), 1.15);        // yard edges
-    hedge(YARD_X_MAX - 0.9, zin, YARD_X_MAX - 0.9, yz(h, 0.35), 1.05);
+    // footage box hedge 1.2-1.4 m (f-FKQOEO-1ceE-100.jpg); verge gaps untouched so
+    // the traverse verge scan stays permeable on both sides.
+    hedge(yx(a), zin, yx(b), zin, rr(1.2, 1.4));                              // inside back fence
+    hedge(YARD_X_MIN + 0.9, zin, YARD_X_MIN + 0.9, yz(h, 0.45), 1.3);         // yard edges
+    hedge(YARD_X_MAX - 0.9, zin, YARD_X_MAX - 0.9, yz(h, 0.35), 1.25);
     const ve = -h.garageEnd;                                                  // never the drive side
     hedge(ve * (HOUSE_HALF_LEN + GARAGE_LEN * 0.1), fz(h, 0.08),
-      ve * (HOUSE_HALF_LEN + GARAGE_LEN), fz(h, 0.08), rr(0.95, 1.1));
+      ve * (HOUSE_HALF_LEN + GARAGE_LEN), fz(h, 0.08), rr(1.2, 1.4));
   }
-
-  // ---------------------------------------------------------------- chain-and-post edging
   function chain(ax: number, az: number, bx: number, bz: number): void {
     const L = Math.hypot(bx - ax, bz - az);
     const n = Math.max(2, Math.round(L / 2.3));
@@ -622,6 +637,89 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     B.put(SLAB, 0.25, 0.85, 3.0, yx(0.9125), T_LAWN + 0.425, yz(H, 0.464)); // east windbreak
     B.put(PAVE, 0.4, 0.1, 3.2, yx(0.9125), T_LAWN + 0.9, yz(H, 0.464));
     colliders.push(aabbSlab(yx(0.9125), T_LAWN, yz(H, 0.464), 0.4, 1.0, 3.2));
+  }
+
+  // ---------------------------------------------------------------- yard cover clusters
+  // REAL-REFERENCE item 10 (yards side): DESIGNED cover at 3-4 m rhythm, not
+  // scatter - every piece instanced via B/C/S, founded on the T_* ladder, honest
+  // aabbSlab colliders for anything knee-high+. Placed clear of the spawn
+  // sightlines (SPAWN_A/B), deck/stair landings, glasshouse/carport/pod/sandpit/
+  // court footprints, the stone runs and every existing collider; nothing inside
+  // house footprints. Frames: f-FKQOEO-1ceE-100.jpg (mailbox on stone pier),
+  // f-FKQOEO-1ceE-055.jpg (dome bins + stepping pads), f-aICKIbuo8zQ-055.jpg
+  // (DO NOT STACK boxes), f-aICKIbuo8zQ-175.jpg (turf rolls),
+  // f-FKQOEO-1ceE-115.jpg (hydrant-ish + round vent).
+  const YELLOW = mat.painted(PAL.hazardYellow, 0.6, 0.05);
+  const CANGREY = mat.painted(PAL.steel, 0.45, 0.6);
+  const CANGREEN = mat.painted(PAL.lawn, 1, 0);
+  const CANRED = mat.painted(PAL.applianceRed, 0.5, 0.3);
+  /** trash can 0.9-1.0 m: body + lid + knob, standing on rung y0 */
+  const trashCan = (m: THREE.Material, x: number, z: number, y0: number): void => {
+    C.put(m, 0.55, 0.9, 0.55, x, y0 + 0.45, z);
+    C.put(WHITEP, 0.62, 0.08, 0.62, x, y0 + 0.94, z);
+    S.put(WHITEP, 0.14, 0.12, 0.14, x, y0 + 1.02, z);
+    colliders.push(aabbSlab(x, y0, z, 0.62, 1.05, 0.62));
+  };
+  /** dome bin: olive/pale body + white dome lid (f-FKQOEO-1ceE-055.jpg) */
+  const domeBin = (m: THREE.Material, x: number, z: number): void => {
+    C.put(m, 0.55, 0.72, 0.55, x, T_LAWN + 0.36, z);
+    S.put(WHITEP, 0.58, 0.34, 0.58, x, T_LAWN + 0.82, z);
+    colliders.push(aabbSlab(x, T_LAWN, z, 0.6, 0.95, 0.6));
+  };
+  /** yellow mailbox on a stone pier (f-FKQOEO-1ceE-100.jpg) */
+  const mailbox = (x: number, z: number): void => {
+    B.put(PLINTH, 0.4, 1.0, 0.4, x, T_LAWN + 0.5, z);
+    B.put(COPING, 0.48, 0.08, 0.48, x, T_LAWN + 1.04, z);
+    B.put(YELLOW, 0.52, 0.24, 0.3, x, T_LAWN + 1.2, z);
+    B.put(YELLOW, 0.04, 0.22, 0.2, x + 0.28, T_LAWN + 1.32, z);  // flag
+    colliders.push(aabbSlab(x, T_LAWN, z, 0.55, 1.35, 0.5));
+  };
+  /** turf roll: horizontal cylinder lying along x (f-aICKIbuo8zQ-175.jpg) */
+  const turfRoll = (x: number, z: number): void => {
+    C.put(mat.leaf, 1.8, 0.6, 0.6, x, T_LAWN + 0.3, z, Math.PI / 2, Math.PI / 2);
+    colliders.push(aabbSlab(x, T_LAWN, z, 1.8, 0.6, 0.6));
+  };
+  /** hydrant-ish: body + cap + side lug, painted only (f-FKQOEO-1ceE-115.jpg) */
+  const hydrant = (x: number, z: number): void => {
+    C.put(CANRED, 0.24, 0.62, 0.24, x, T_LAWN + 0.31, z);
+    S.put(CANRED, 0.26, 0.2, 0.26, x, T_LAWN + 0.68, z);
+    C.put(CANRED, 0.36, 0.12, 0.12, x, T_LAWN + 0.42, z, Math.PI / 2, Math.PI / 2);
+    colliders.push(aabbSlab(x, T_LAWN, z, 0.4, 0.75, 0.4));
+  };
+  /** round vent: low drum + cap (f-FKQOEO-1ceE-115.jpg) */
+  const vent = (x: number, z: number): void => {
+    C.put(mat.steel, 0.5, 0.5, 0.5, x, T_LAWN + 0.25, z);
+    S.put(mat.steel, 0.54, 0.22, 0.54, x, T_LAWN + 0.56, z);
+    colliders.push(aabbSlab(x, T_LAWN, z, 0.55, 0.65, 0.55));
+  };
+
+  { // ORANGE back yard cover (-z): mailbox + discs west, cans south of carport,
+    // turf rolls along the east fence, hydrant + vent near the back fence
+    const H = ORANGE;
+    mailbox(yx(0.3375), yz(H, 0.12));                            // clear of crate store + run
+    for (let i = 0; i < 3; i++)                                  // discs mailbox -> walk
+      padDisc(STONE, 0.7, yx(0.3375), yz(H, 0.12) - 1.1 - i * 0.9, T_STEP);
+    trashCan(CANGREY, yx(0.8125), yz(H, 0.768), T_LAWN);          // clear of hole + hedge
+    trashCan(CANGREEN, yx(0.8325), yz(H, 0.75), T_LAWN);
+    turfRoll(yx(0.9475), yz(H, 0.12));                           // clear of carport posts
+    turfRoll(yx(0.9475), yz(H, 0.185));
+    hydrant(yx(0.2125), yz(H, 0.85));
+    vent(yx(0.235), yz(H, 0.85));
+  }
+
+  { // WHITE back yard cover (+z): lettered crates west of the pod, dome bins by
+    // the court, discs on the pod approach - all clear of pod/court/pit/run
+    const H = WHITE;
+    const qx = yx(0.06), qz = yz(H, 0.55);
+    B.put(YELLOW, 0.72, 0.72, 0.72, qx, T_LAWN + 0.36, qz);
+    B.put(YELLOW, 0.66, 0.66, 0.66, qx + 0.15, T_LAWN + 1.05, qz - 0.1, 0.18);
+    B.put(mat.signText({ text: 'DO NOT STACK', color: PAL.busBlack, background: PAL.hazardYellow, aspect: 1.7 }),
+      0.62, 0.36, 0.03, qx, T_LAWN + 0.75, qz - 0.38);            // the one signText
+    colliders.push(aabbSlab(qx, T_LAWN, qz, 1.0, 1.4, 1.0));
+    domeBin(mat.hedge, yx(0.7625), yz(H, 0.80));                 // olive ...
+    domeBin(WHITEP, yx(0.785), yz(H, 0.80));                     // ... and pale
+    padDisc(STONE, 0.7, yx(0.125), yz(H, 0.28), T_STEP);          // pod approach discs
+    padDisc(STONE, 0.7, yx(0.1475), yz(H, 0.28), T_STEP);
   }
 
   B.flush(g, 'yard-box');

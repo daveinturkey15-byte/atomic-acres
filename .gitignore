@@ -11,3 +11,6 @@ docs/reference/concept/*.jpg
 tmp-*.mjs
 bak-gpu/
 probe.mjs
+docs/reference/gameplay/*.jpg
+docs/reference/gameplay/*.mp4
+docs/reference/gameplay/*.log

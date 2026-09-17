@@ -114,6 +114,7 @@ export const buildWhiteHouse: Builder = (ctx) => {
   const colliders: AABB[] = [];
   const bWall = new Batch(), bGlaz = new Batch(), bTrim = new Batch();
   const bDark = new Batch(), bWood = new Batch(), bSteel = new Batch(), bGlow = new Batch();
+  const bPlum = new Batch(), bGold = new Batch(), bMint = new Batch(), bRubble = new Batch();
 
   /** One wall/glass/trim chunk along a chord, pushed `out` proud of the face. */
   const run = (b: Batch, a: THREE.Vector2, c: THREE.Vector2, p: Plan,
@@ -240,15 +241,79 @@ export const buildWhiteHouse: Builder = (ctx) => {
     if (bay) run(bWall, a, c, GAR_PLAN, bayTop, GARAGE_H, WALL_T, 0);
     else run(bWall, a, c, GAR_PLAN, 0, GARAGE_H, WALL_T, 0);
   }
+  // Garage face reads from the street per f-FKQOEO-1ceE-060 (ribbed sectionals +
+  // beams + cabinets), f-aICKIbuo8zQ-190 (blank vs ribbed bays, one open bay with
+  // shelving), f-aICKIbuo8zQ-055/115 (flat canopy + cloth banner + mint doors) and
+  // f-FKQOEO-1ceE-205 (numbered door + open glazed bay). Plausible in-world text
+  // only, never Treyarch wording.
+  const OPEN_BAY = 1; // middle bay stands open; the other two stay shut
+  const bayZ = Z_FRONT + S * 0.44; // recessed dark bay plane behind the face
+  const bayFaceZ = Z_FRONT - S * 0.06; // pier/header plane on the street face
   for (let k = 0; k < GARAGE_BAYS; k++) {
     const bx = GAR_CX + (k - (GARAGE_BAYS - 1) * 0.5) * bayPitch;
-    bDark.add(bayHalf * 2, bayTop, 0.14, bx, bayTop * 0.5, Z_FRONT + S * 0.44);
-    bTrim.add(bayHalf * 2 + 0.3, 0.18, 0.2, bx, bayTop + 0.09, Z_FRONT - S * 0.06);
-    for (const s of [-1, 1]) bTrim.add(0.16, bayTop, 0.2, bx + s * (bayHalf + 0.07), bayTop * 0.5, Z_FRONT - S * 0.06);
+    const open = k === OPEN_BAY;
+    bDark.add(bayHalf * 2, bayTop, 0.14, bx, bayTop * 0.5, bayZ);
+    bTrim.add(bayHalf * 2 + 0.3, 0.18, 0.2, bx, bayTop + 0.09, bayFaceZ);
+    for (const s of [-1, 1]) bTrim.add(0.16, bayTop, 0.2, bx + s * (bayHalf + 0.07), bayTop * 0.5, bayFaceZ);
+    if (!open) {
+      // Closed ribbed sectional: thin repeated slats proud of the dark plane.
+      for (let r = 0; r < 7; r++) {
+        bTrim.add(bayHalf * 2 - 0.06, 0.09, 0.06, bx, 0.32 + r * (bayTop - 0.5) / 6, bayZ - S * 0.1);
+      }
+    } else {
+      // Open bay: slab stack parked under the header, dark throat left clear.
+      for (let r = 0; r < 3; r++) {
+        bTrim.add(bayHalf * 2 - 0.06, 0.09, 0.06, bx, bayTop - 0.18 - r * 0.16, bayZ - S * 0.1);
+      }
+    }
   }
+  // Open flat translucent canopy slab on slim columns forward of the bays.
+  const gCanZ = Z_FRONT - S * 1.55, gCanY = GARAGE_H * 0.82;
+  const gCanopy = box(GARAGE_LEN + 1.2, 0.1, 2.3, ctx.mat.glass, GAR_CX, gCanY, gCanZ);
+  gCanopy.castShadow = true; g.add(gCanopy);
+  bTrim.add(GARAGE_LEN + 1.2, 0.1, 0.14, GAR_CX, gCanY - 0.08, gCanZ - S * 1.15);
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+    const px = GAR_CX + sx * (GARAGE_LEN * 0.5 + 0.35), pz = gCanZ + sz * 0.95;
+    bSteel.add(0.14, gCanY, 0.14, px, gCanY * 0.5, pz);
+    colliders.push(aabbSlab(px, 0, pz, 0.16, gCanY, 0.16));
+  }
+  // Cloth banner hung under the canopy lip; welcome-style wording in-world.
+  g.add(box(3.4, 0.62, 0.05,
+    ctx.mat.signText({ text: 'Welcome to Future Homes', color: PAL.rooftopDrum, background: PAL.capsuleWhite, aspect: 5.5 }),
+    GAR_CX, gCanY - 0.48, gCanZ - S * 1.12));
+  // Bay number on the pier between the open bay and its neighbour.
+  g.add(box(0.4, 0.5, 0.05,
+    ctx.mat.signText({ text: '13', color: PAL.capsuleWhite, background: PAL.rooftopDrum, aspect: 0.8 }),
+    GAR_CX + bayPitch * 0.5, 1.7, bayFaceZ - S * 0.12));
+  // Open-bay interior: shelf uprights + boards + stored boxes, offset so the
+  // drive-in lane through the middle bay stays passable.
+  const shX = GAR_CX + 0.85, shZ = GAR_CZ + GARAGE_DEPTH * 0.28;
+  for (const sx of [-0.8, 0.8]) bWood.add(0.08, 1.9, 0.5, shX + sx, 0.95, shZ);
+  for (const sy of [0.5, 1.05, 1.6]) bWood.add(1.7, 0.07, 0.55, shX, sy, shZ);
+  bWood.add(0.55, 0.42, 0.4, shX - 0.45, 0.78, shZ);
+  bWood.add(0.5, 0.35, 0.38, shX + 0.4, 0.7, shZ);
+  bWood.add(0.6, 0.4, 0.42, shX + 0.1, 1.31, shZ);
+  colliders.push(aabbSlab(shX, 0, shZ, 1.8, 1.9, 0.6));
+  // Cabinet run along the west garage side wall, clear of the open-bay lane.
+  const cabX = GAR_CX - GARAGE_LEN * 0.5 + 0.42;
+  for (let ci = 0; ci < 3; ci++) {
+    const cz = GAR_CZ - 1.2 + ci * 1.25;
+    bWood.add(0.6, 1.85, 1.05, cabX, 0.925, cz);
+  }
+  colliders.push(aabbSlab(cabX, 0, GAR_CZ + 0.05, 0.65, 1.85, 3.9));
   bWall.add(LINK_W, GARAGE_H, LINK_D, LINK_CX, GARAGE_H * 0.5, REAR.cz);
   colliders.push(aabbSlab(LINK_CX, 0, REAR.cz, LINK_W, GARAGE_H, LINK_D));
-  colliders.push(aabbSlab(GAR_CX, 0, GAR_CZ, GARAGE_LEN, GARAGE_H, GARAGE_DEPTH));
+  // Honest garage shell: rear + side strips solid, street face blocked at the
+  // two shut bays only so the open bay stays walkable into the wing.
+  colliders.push(aabbSlab(GAR_CX, 0, GAR_CZ + S * GARAGE_DEPTH * 0.5 - S * 0.2, GARAGE_LEN, GARAGE_H, 0.4));
+  for (const sx of [-1, 1]) {
+    colliders.push(aabbSlab(GAR_CX + sx * (GARAGE_LEN * 0.5 - 0.15), 0, GAR_CZ, 0.3, GARAGE_H, GARAGE_DEPTH));
+  }
+  for (let k = 0; k < GARAGE_BAYS; k++) {
+    if (k === OPEN_BAY) continue;
+    const bx = GAR_CX + (k - (GARAGE_BAYS - 1) * 0.5) * bayPitch;
+    colliders.push(aabbSlab(bx, 0, bayZ, bayHalf * 2, bayTop, 0.3));
+  }
   const rHalf = GARAGE_LEN * 0.5 + 0.22, rise = HOUSE_DEPTH * 0.02, rT = 0.22;
   const roofPts: [number, number][] = [[-rHalf, 0], [rHalf, 0]];
   for (let i = 0; i <= 10; i++) {
@@ -344,6 +409,48 @@ export const buildWhiteHouse: Builder = (ctx) => {
     bSteel.add(0.34, 0.16, 0.34, lx, FLOOR_H - 0.72, lz);
     bGlow.add(0.16, 0.1, 0.16, lx, FLOOR_H - 0.82, lz);
   }
+  // --- purple-diamond/gold bedroom + mustard bunks + mint ensuite ---------------
+  // West end of REAR, clear of FRONT_DOOR_X/YARD_DOOR_X lanes. Reads per
+  // f-aICKIbuo8zQ-135 (plum + gold diamonds, mustard bunks, purple shag, ring art,
+  const BX = -HOUSE_HALF_LEN + 3.0, BZ = REAR.cz + 0.3;
+  bPlum.add(0.12, 2.5, 3.4, BX - 2.4, 1.25, BZ - 0.2); // plum accent leaf on west wall
+  colliders.push(aabbSlab(BX - 2.4, 0, BZ - 0.2, 0.12, 2.5, 3.4));
+  for (let di = 0; di < 8; di++) { // gold diamond decals, plum wall only
+    const dz = -1.2 + (di % 4) * 0.8, dy = 1.25 + Math.floor(di / 4) * 0.65;
+    bGold.add(0.05, 0.24, 0.24, BX - 2.32, dy, BZ - 0.2 + dz, Math.PI * 0.25);
+  }
+  for (const by of [0.5, 1.4]) bGold.add(0.9, 0.18, 1.9, BX - 1.6, by, BZ - 0.8); // bunk slabs
+  for (const px of [BX - 2.0, BX - 1.2]) for (const pz of [BZ - 1.7, BZ + 0.1]) {
+    bGold.add(0.09, 1.7, 0.09, px, 0.85, pz); // bunk posts
+  }
+  colliders.push(aabbSlab(BX - 1.6, 0, BZ - 0.8, 0.95, 1.7, 1.95));
+  bPlum.add(2.3, 0.05, 1.7, BX + 0.2, 0.13, BZ - 0.1); // purple shag rug plane, walk-over
+  bWall.add(0.05, 0.72, 0.72, BX - 2.3, 1.72, BZ + 0.95); // target-art poster, no letters
+  bDark.add(0.05, 0.5, 0.5, BX - 2.28, 1.72, BZ + 0.95);
+  bGold.add(0.05, 0.24, 0.24, BX - 2.26, 1.72, BZ + 0.95);
+  bWood.add(0.3, 0.06, 1.0, BX - 2.3, 1.5, BZ - 1.7); // small shelf on the plum leaf
+  bSteel.add(0.06, 1.1, 0.06, BX - 0.6, 0.55, BZ + 0.4); // floor-lamp stem by the bunks
+  bGlow.add(0.26, 0.22, 0.26, BX - 0.6, 1.2, BZ + 0.4); // lamp shade, no scene light
+  bDark.add(0.3, 0.35, 0.3, BX + 1.4, 0.175, BZ + 1.5); // plant pot in the corner
+  colliders.push(aabbSlab(BX + 1.4, 0, BZ + 1.5, 0.3, 0.35, 0.3));
+  const leaf = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.7, 10),
+    ctx.mat.painted(PAL.hedge, 0.9, 0));
+  leaf.position.set(BX + 1.4, 0.7, BZ + 1.5); leaf.castShadow = true; g.add(leaf);
+  bMint.add(0.14, 2.1, 1.6, -3.4, 1.05, BZ + 0.6);
+  bMint.add(1.5, 2.1, 0.14, -2.95, 1.05, BZ + 1.5);
+  colliders.push(aabbSlab(-2.95, 0, BZ + 1.5, 1.5, 2.1, 0.14));
+  colliders.push(aabbSlab(-3.4, 0, BZ + 0.6, 0.14, 2.1, 1.6));
+  // Single-wall station cluster + 0.4 m band + pinstripe + plaque, and nowhere
+  // else: local striped-room nod per f-FKQOEO-1ceE-190 (band + pinstripe +
+  // intercom + wall plaque). No global striping.
+  g.add(box(0.06, 0.4, 1.6, ctx.mat.painted(PAL.trailerTrim, 0.7, 0), -3.31, 1.5, BZ + 0.6));
+  bGold.add(0.05, 0.06, 1.6, -3.31, 1.74, BZ + 0.6); // pinstripe above the band
+  bDark.add(0.1, 0.22, 0.16, -3.3, 1.35, BZ + 0.15); // intercom box
+  bWall.add(0.06, 0.12, 0.09, -3.3, 1.2, BZ + 0.45); // switch plate
+  for (let v = 0; v < 3; v++) bDark.add(0.06, 0.04, 0.4, -3.3, 1.85 + v * 0.09, BZ + 0.9);
+  g.add(box(0.04, 0.32, 0.5,
+    ctx.mat.signText({ text: 'House Care', color: PAL.rooftopDrum, background: PAL.capsuleWhite, aspect: 1.6 }),
+    -3.3, 1.05, BZ + 0.95));
 
   // --- exterior close-up detail ----------------------------------------------------
   const gut = (p: Plan, top: number): void => {
@@ -353,6 +460,28 @@ export const buildWhiteHouse: Builder = (ctx) => {
     }
   };
   gut(REAR, H_REAR); gut(FRONT, H_FRONT);
+  // Rubble skirt: thin stone base course where capsule walls meet the ground.
+  // Geometry + painted(PAL.rubbleStone) stand-in per brief; wants a proper
+  // rubble-veneer material (random polygons + PAL.rubbleMortar joints) later.
+  // Seen as ashlar/rubble bases and piers in f-FKQOEO-1ceE-055/085/115/205 and
+  // f-aICKIbuo8zQ-045/075/100/115.
+  const skirt = (p: Plan, isGarage: boolean): void => {
+    const loop = planLoop(p, 2.4);
+    for (let i = 0; i < loop.length; i++) {
+      const a = loop[i], c = loop[(i + 1) % loop.length];
+      if (isGarage) { // leave the three drive-in mouths without a step
+        const mx = (a.x + c.x) * 0.5, mz = (a.y + c.y) * 0.5;
+        let mouth = false;
+        for (let k = 0; k < GARAGE_BAYS; k++) {
+          const bx = GAR_CX + (k - (GARAGE_BAYS - 1) * 0.5) * bayPitch;
+          if (S * (mz - GAR_CZ) < 0 && Math.abs(mx - bx) < bayHalf + 0.3) mouth = true;
+        }
+        if (mouth) continue;
+      }
+      run(bRubble, a, c, p, 0, 0.45, WALL_T + 0.1, 0.03);
+    }
+  };
+  skirt(REAR, false); skirt(FRONT, false); skirt(GAR_PLAN, true);
   const stFace = Z_FRONT - S * 0.2, ydFace = Z_BACK + S * 0.2; // proud of the faces
   bSteel.add(0.12, H_FRONT, 0.12, FRONT_DOOR_X + 2.2, H_FRONT * 0.5, Z_FRONT - S * 0.18);
   bSteel.add(0.12, H_REAR, 0.12, YARD_DOOR_X - 2.4, H_REAR * 0.5, Z_BACK + S * 0.18);
@@ -383,6 +512,10 @@ export const buildWhiteHouse: Builder = (ctx) => {
     [bDark, ctx.mat.painted(PAL.rooftopDrum, 0.6, 0.1), 'wh-recess'],
     [bWood, ctx.mat.deckBoards, 'wh-deck'], [bSteel, ctx.mat.steel, 'wh-balusters'],
     [bGlow, ctx.mat.emissive(PAL.sunColor, 1.3), 'wh-glow'],
+    [bPlum, ctx.mat.painted(PAL.interiorPlum, 0.85, 0), 'wh-plum'],
+    [bGold, ctx.mat.painted(PAL.interiorGold, 0.7, 0), 'wh-gold'],
+    [bMint, ctx.mat.painted(PAL.interiorMint, 0.8, 0), 'wh-mint'],
+    [bRubble, ctx.mat.painted(PAL.rubbleStone, 0.95, 0), 'wh-rubble'],
   ];
   for (const [b, m, n] of batched) { const im = b.mesh(m, n); if (im) g.add(im); }
   return { group: g, colliders };

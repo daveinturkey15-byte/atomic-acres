@@ -387,6 +387,161 @@ export const buildSurround: Builder = (ctx: BuildContext): BuildResult => {
     bin(cx - 4.4, cz + 3.5, y0);
     signpost(cx + 5.6, cz + 0.6, y0);
   }
+  // ====================== PLACE 4: fringe / street cover (REAL-REFERENCE 8/9/10)
+  // Designed cover rhythm on the paved flanks, never a wall: barrier-plus-plaque
+  // pairs, planter/louvre/bin groupings and crate/turf pairs at 8-15 m rhythm
+  // with permeable slots between pieces. Every piece sits on surfaceY();
+  // nothing enters the carriageway (|z| < ROAD_HALF_WIDTH), the bulb's pavement
+  // ring, or the yards band (YARD_X_MIN..YARD_X_MAX x PAVEMENT_OUTER..BACK_FENCE,
+  // which is yards.ts territory - the fringe stays west of YARD_X_MIN and east
+  // of YARD_X_MAX toward the boundary). One signText face for the whole file.
+  {
+    const STONE = mat.painted(PAL.rubbleStone, 0.95, 0);
+    const BRONZE = mat.painted(PAL.interiorGold, 0.5, 0.6);
+    const YEL = mat.painted(PAL.hazardYellow, 0.7, 0.05);
+    const NOTICE = mat.signText({ text: 'NOTICE', color: PAL.busBlack,
+      background: PAL.interiorGold, aspect: 1.4 });
+    const rot = (ry: number): [number, number] => [Math.abs(Math.cos(ry)), Math.abs(Math.sin(ry))];
+
+    /** Curved steel blast barrier ~1.3 h x ~2.4 chord on a concrete foot. */
+    function barrierArc(x: number, z: number, a0: number, y0: number): void {
+      const A1 = a0 + 2.3;
+      g.add(arcWall(x, y0, z, 1.15, 1.45, 1.32, a0, A1, mat.steel));
+      g.add(arcWall(x, y0, z, 1.05, 1.55, 0.16, a0 - 0.08, A1 + 0.08, PAVE));
+      arcColliders(colliders, x, z, 1.05, 1.55, y0, 1.32, a0, A1, 4);
+    }
+
+    /** Straight concrete barrier 2.8 x 1.3 with coping and foot. Real cover. */
+    function barrierStraight(x: number, z: number, ry: number, y0: number): void {
+      const L = 2.8;
+      B.put(PAVE, L + 0.3, 0.16, 0.6, x, y0 + 0.08, z, ry);
+      B.put(SLAB, L, 1.16, 0.34, x, y0 + 0.58, z, ry);
+      B.put(PAVE, L + 0.16, 0.14, 0.48, x, y0 + 1.23, z, ry);
+      const [c, t] = rot(ry);
+      colliders.push(aabbSlab(x, y0, z, c * (L + 0.3) + t * 0.6, 1.3, t * (L + 0.3) + c * 0.6));
+    }
+
+    /** Stone pier + bronze plaque; only the west-south pier carries NOTICE. */
+    function plaquePier(x: number, z: number, ry: number, y0: number, withNotice: boolean): void {
+      B.put(STONE, 0.52, 1.06, 0.52, x, y0 + 0.53, z, ry);
+      B.put(STONE, 0.66, 0.12, 0.66, x, y0 + 1.12, z, ry);
+      const [px, pz] = l2w(x, z, ry, 0, 0.28);
+      B.put(BRONZE, 0.50, 0.40, 0.05, px, y0 + 0.72, pz, ry);
+      if (withNotice) {
+        const [fx, fz] = l2w(x, z, ry, 0, 0.315);
+        B.put(NOTICE, 0.44, 0.34, 0.02, fx, y0 + 0.72, fz, ry);
+      }
+      colliders.push(aabbSlab(x, y0, z, 0.66, 1.18, 0.66));
+    }
+
+    /** Louvred utility box: body, 3 vent slats, cap. Street-furniture cover. */
+    function louvreBox(x: number, z: number, ry: number, y0: number): void {
+      B.put(mat.steel, 1.40, 0.95, 0.80, x, y0 + 0.475, z, ry);
+      for (let i = 0; i < 3; i++) {
+        const [sx, sz] = l2w(x, z, ry, 0, 0.42);
+        B.put(IRON, 1.10, 0.06, 0.06, sx, y0 + 0.35 + i * 0.18, sz, ry);
+      }
+      B.put(PAVE, 1.52, 0.08, 0.92, x, y0 + 0.99, z, ry);
+      const [c, t] = rot(ry);
+      colliders.push(aabbSlab(x, y0, z, c * 1.52 + t * 0.92, 1.03, t * 1.52 + c * 0.92));
+    }
+
+    /** Crate pair, side by side and NEVER stacked: painted boxes, no text. */
+    function crates(x: number, z: number, ry: number, y0: number): void {
+      const [ax, az] = l2w(x, z, ry, -0.55, 0);
+      const [bx, bz] = l2w(x, z, ry, 0.55, 0.1);
+      B.put(YEL, 1.0, 0.85, 0.9, ax, y0 + 0.425, az, ry);
+      B.put(YEL, 0.9, 0.65, 0.8, bx, y0 + 0.325, bz, ry);
+      colliders.push(aabbSlab(ax, y0, az, 1.0, 0.85, 0.9));
+      colliders.push(aabbSlab(bx, y0, bz, 0.9, 0.65, 0.8));
+    }
+
+    /** Turf rolls: low leaf blobs, walkable (under the 0.38 m step), no collider. */
+    function turfRolls(x: number, z: number, ry: number, y0: number): void {
+      const [ax, az] = l2w(x, z, ry, -0.6, 0);
+      const [bx, bz] = l2w(x, z, ry, 0.6, 0.15);
+      S.put(mat.leaf, 1.15, 0.38, 0.52, ax, y0 + 0.19, az, ry);
+      S.put(mat.leaf, 1.0, 0.34, 0.48, bx, y0 + 0.17, bz, ry);
+    }
+
+    /** Hydrant, 5 instanced primitives, existing materials only. */
+    function hydrant(x: number, z: number, y0: number): void {
+      C.put(PAVE, 0.34, 0.14, 0.34, x, y0 + 0.07, z);
+      C.put(MAROON, 0.26, 0.62, 0.26, x, y0 + 0.45, z);
+      S.put(MAROON, 0.30, 0.30, 0.30, x, y0 + 0.82, z);
+      S.put(mat.chrome, 0.13, 0.13, 0.13, x - 0.17, y0 + 0.52, z);
+      S.put(mat.chrome, 0.13, 0.13, 0.13, x + 0.17, y0 + 0.52, z);
+      colliders.push(aabbSlab(x, y0, z, 0.4, 1.0, 0.4));
+    }
+
+    /** Round vent: concrete curb, steel drum, dark cap. 3 primitives. */
+    function vent(x: number, z: number, y0: number): void {
+      C.put(PAVE, 0.80, 0.30, 0.80, x, y0 + 0.15, z);
+      C.put(mat.steel, 0.62, 0.18, 0.62, x, y0 + 0.39, z);
+      C.put(mat.windowDark, 0.50, 0.06, 0.50, x, y0 + 0.51, z);
+      colliders.push(aabbSlab(x, y0, z, 0.8, 0.54, 0.8));
+    }
+
+    /** Stepping discs, 0.07 proud and walkable. 3 primitives, no collider. */
+    function stepDiscs(x: number, z: number, ry: number, y0: number): void {
+      for (let i = 0; i < 3; i++) {
+        const [dx, dz] = l2w(x, z, ry, (i - 1) * 0.95, (i % 2) * 0.25);
+        C.put(PAVE, 0.70, 0.07, 0.70, dx, y0 + 0.035, dz);
+      }
+    }
+
+    /** Shelter-mound hint: flattened soil mound with a grass cap. */
+    function mound(x: number, z: number, y0: number): void {
+      S.put(SOIL, 3.4, 0.75, 2.6, x, y0 + 0.18, z);
+      S.put(mat.leaf, 2.9, 0.55, 2.2, x, y0 + 0.42, z);
+      colliders.push(aabbSlab(x, y0, z, 3.4, 0.7, 2.6));
+    }
+
+    /** Trefoil-ish warning board: yellow plate + dark hub on a post, no text. */
+    function trefoil(x: number, z: number, ry: number, y0: number): void {
+      C.put(IRON, 0.12, 1.70, 0.12, x, y0 + 0.85, z);
+      B.put(YEL, 0.52, 0.52, 0.06, x, y0 + 1.62, z, ry);
+      B.put(IRON, 0.18, 0.18, 0.10, x, y0 + 1.62, z, ry);
+      colliders.push(aabbSlab(x, y0, z, 0.55, 1.9, 0.55));
+    }
+
+    /** Blank Security board: twin posts + dark plate. Text skipped - the file's
+     *  single signText face is spent on the NOTICE pier. */
+    function security(x: number, z: number, ry: number, y0: number): void {
+      for (const s of [-1, 1]) {
+        const [px, pz] = l2w(x, z, ry, s * 0.55, 0);
+        B.put(TIMB, 0.10, 1.50, 0.10, px, y0 + 0.75, pz, ry);
+      }
+      B.put(mat.windowDark, 1.30, 0.70, 0.06, x, y0 + 1.25, z, ry);
+      B.put(TIMB, 1.42, 0.08, 0.10, x, y0 + 1.64, z, ry);
+      const [c, t] = rot(ry);
+      colliders.push(aabbSlab(x, y0, z, c * 1.42 + t * 0.2, 1.68, t * 1.42 + c * 0.2));
+    }
+
+    // West flank, south: curved barrier + NOTICE pier, ~12 m off the walk corner.
+    barrierArc(-42, -14, 2.4, surfaceY(-42, -14));
+    plaquePier(-39.4, -12.8, -0.5, surfaceY(-39.4, -12.8), true);
+    // West flank, north: straight barrier + blank pier, ~5 m off the plaza disc.
+    barrierStraight(-43, 12.5, 0.35, surfaceY(-43, 12.5));
+    plaquePier(-40.3, 13.1, -0.4, surfaceY(-40.3, 13.1), false);
+    // West rhythm south: louvre box + bin + planter, 12 m east of the barrier.
+    louvreBox(-30, -13, 0.1, surfaceY(-30, -13));
+    bin(-27.2, -11.2, surfaceY(-27.2, -11.2));
+    planter(-30.4, -9.6, 1.8, 1.3, surfaceY(-30.4, -9.6));
+    // West rhythm north: crates + turf rolls, 13 m east of the barrier.
+    crates(-30, 13, -0.15, surfaceY(-30, 13));
+    turfRolls(-29.4, 16.0, 0.2, surfaceY(-29.4, 16.0));
+    stepDiscs(-36.5, 9.5, 0.5, surfaceY(-36.5, 9.5));
+    // East flank, north: shelter mound + trefoil + blank Security board.
+    mound(32.5, 14, surfaceY(32.5, 14));
+    trefoil(28.9, 14.8, 0.5, surfaceY(28.9, 14.8));
+    security(33.1, 17.2, -0.3, surfaceY(33.1, 17.2));
+    // East flank, south: planter + bin + hydrant + vent, clear of terrace + bulb.
+    planter(32.5, -13.5, 2.0, 1.4, surfaceY(32.5, -13.5));
+    bin(35.1, -14.7, surfaceY(35.1, -14.7));
+    hydrant(29.6, -12.9, surfaceY(29.6, -12.9));
+    vent(31.9, -16.9, surfaceY(31.9, -16.9));
+  }
 
   const batches: [Batch, string][] = [[B, 'surroundBox'], [C, 'surroundCyl'],
     [S, 'surroundSph'], [K, 'surroundCone']];
