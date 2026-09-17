@@ -140,9 +140,9 @@ export function createWorld(canvasParent: HTMLElement): World {
   const sun = new THREE.DirectionalLight(PAL.sunColor, 3.05);
   sun.position.set(58, 72, -92);
   sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.bias = -0.0006;
-  sun.shadow.normalBias = 0.035;
+  sun.shadow.mapSize.set(4096, 4096);
+  sun.shadow.bias = -0.00022;
+  sun.shadow.normalBias = 0.055;
 
   // Fit the shadow camera to the playable area only. A shadow camera sized to the
   // skyline would waste almost all of its texels on empty desert.

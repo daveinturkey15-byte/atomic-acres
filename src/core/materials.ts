@@ -74,6 +74,19 @@ export interface MaterialLibrary {
   steel: THREE.Material;
   painted: (color: number, rough?: number, metal?: number) => THREE.Material;
   emissive: (color: number, strength?: number) => THREE.Material;
+  /**
+   * Lettering drawn on a canvas - still procedural, nothing downloaded.
+   * For sign faces that need to actually read as a word. `aspect` is width/height
+   * of the plane it will be mapped onto, so the glyphs are not stretched.
+   */
+  signText: (opts: {
+    text: string;
+    color: number;
+    background?: number;
+    aspect?: number;
+    script?: boolean;
+    glow?: boolean;
+  }) => THREE.Material;
   dispose: () => void;
 }
 
@@ -233,6 +246,64 @@ export function buildMaterials(): MaterialLibrary {
         m = std({ color, roughness: rough, metalness: metal });
         cache.set(key, m);
       }
+      return m;
+    },
+    signText({ text, color, background, aspect = 4, script = false, glow = false }) {
+      const key = 's' + text + color + background + aspect + script + glow;
+      const hit = cache.get(key);
+      if (hit) return hit;
+      const H = 256;
+      const W = Math.max(64, Math.round(H * aspect));
+      const cv = document.createElement('canvas');
+      cv.width = W;
+      cv.height = H;
+      const c = cv.getContext('2d')!;
+      if (background === undefined) {
+        c.clearRect(0, 0, W, H);
+      } else {
+        c.fillStyle = hex(background);
+        c.fillRect(0, 0, W, H);
+      }
+      // A script face if the host has one, otherwise an italic serif - both read as
+      // period signwriting at the distances this is seen from.
+      const family = script
+        ? '"Brush Script MT","Segoe Script","Lucida Handwriting",cursive'
+        : '"Futura","Century Gothic","Segoe UI",sans-serif';
+      let size = Math.round(H * (script ? 0.74 : 0.5));
+      c.textAlign = 'center';
+      c.textBaseline = 'middle';
+      const weight = script ? '' : '600 ';
+      for (let i = 0; i < 24; i++) {
+        c.font = weight + (script ? 'italic ' : '') + size + 'px ' + family;
+        if (c.measureText(text).width <= W * 0.9) break;
+        size -= Math.max(1, Math.round(size * 0.06));
+      }
+      if (glow) {
+        c.shadowColor = hex(color);
+        c.shadowBlur = H * 0.12;
+      }
+      c.fillStyle = hex(color);
+      c.fillText(text, W / 2, H * 0.54);
+      if (glow) {
+        c.shadowBlur = 0;
+        c.strokeStyle = 'rgba(255,255,255,0.35)';
+        c.lineWidth = Math.max(1, H * 0.006);
+        c.strokeText(text, W / 2, H * 0.54);
+      }
+      const t = new THREE.CanvasTexture(cv);
+      t.colorSpace = THREE.SRGBColorSpace;
+      t.anisotropy = 8;
+      const m = std({
+        map: t,
+        transparent: background === undefined,
+        roughness: 0.42,
+        metalness: 0.05,
+        emissive: glow ? color : 0x000000,
+        emissiveMap: glow ? t : null,
+        emissiveIntensity: glow ? 0.85 : 0,
+        side: THREE.DoubleSide,
+      });
+      cache.set(key, m);
       return m;
     },
     emissive(color: number, strength = 1.4) {
