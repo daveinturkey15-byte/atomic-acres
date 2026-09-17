@@ -446,10 +446,10 @@ function makeCoach(ctx: BuildContext): Vehicle {
   g.add(box(0.16, 0.045, 0.05, trim, 4.47, 1.28, 1.345));
 
   // wing mirrors flanking the split screen: each stalk rises from a sill-frame
-  // end (5.48, 1.87, +/-0.96), so base and head are one connected fitting with
+  // end (5.45, 1.55, +/-0.96), so base and head are one connected fitting with
   // a chrome head and its glass facing the driver (-x)
   for (const s of [-1, 1]) {
-    g.add(box(0.05, 0.46, 0.05, shadowGap, 5.476, 2.08, s * 0.955));
+    g.add(box(0.05, 0.76, 0.05, shadowGap, 5.446, 1.93, s * 0.955));
     g.add(box(0.06, 0.26, 0.16, ctx.mat.chrome, 5.476, 2.38, s * 0.99));
     g.add(box(0.02, 0.22, 0.12, glazing, 5.44, 2.38, s * 0.99));
   }

@@ -3,3 +3,8 @@ dist
 captures/*.png
 captures/*.json
 docs/reference/img
+
+# 43MB of generated concept reference - local only, never shipped
+docs/reference/concept/*.png
+docs/reference/concept/*.jpg
+tmp-*.mjs

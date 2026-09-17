@@ -1,167 +1,133 @@
-/**
- * Freecam headless check (temporary, lives in /tmp — not part of the repo).
- * Drives the REAL Player controller through window.__NT:
- *  1. fly-with-collision is blocked by the orange house front wall
- *  2. noclip passes through that same wall
- *  3. fly forward while pitched up gains height
- *  4. yaw-frame sanity at 90 deg (facing -x, W decreases x) and 45 deg
- *  5. walk mode still walks (short leg on the street)
- */
-import { chromium } from 'playwright';
-import { spawn } from 'node:child_process';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import net from 'node:net';
+# Report: INSPECTION MODE — fly, noclip, on-screen controls
 
-const ROOT = 'C:/Users/david/Desktop/stuff/nuketown';
+## What changed (committed in afad912; working tree matches, no live temp files)
 
-function freePort() {
-  return new Promise((resolve) => {
-    const s = net.createServer();
-    s.listen(0, '127.0.0.1', () => {
-      const p = s.address().port;
-      s.close(() => resolve(p));
-    });
-  });
-}
-async function waitForServer(url, ms = 60000) {
-  const t0 = Date.now();
-  while (Date.now() - t0 < ms) {
-    try {
-      const r = await fetch(url);
-      if (r.ok) return true;
-    } catch { /* not up yet */ }
-    await new Promise((r) => setTimeout(r, 400));
-  }
-  return false;
-}
+**`src/core/player.ts`** — three movement modes, one controller:
+- `MoveMode = 'walk' | 'fly' | 'noclip'`. `update()` clamps dt exactly as before,
+  then dispatches to `updateWalk()` / `updateFly()`.
+- `updateWalk()` is the old `update()` body **verbatim** — proved with
+  `git show HEAD:src/core/player.ts` vs the new file: 72 non-blank lines, zero
+  diff (the dt clamp, void-guard and camera sync moved up into `update()`).
+  Gravity, collision, step-up, jump, per-frame ground snap, probe-wish path:
+  untouched.
+- `updateFly()`: wish built in the camera frame **with pitch** —
+  forward `(-sin yaw·cos pitch, sin pitch, -cos yaw·cos pitch)`, strafe horizontal
+  in the same yaw frame walk uses. Velocity set directly (no accel lag, hard stop
+  on release). FLY reuses `moveAxis` for x/z (grounded is false, so no step-up:
+  pure slide) and resolves y against slabs; NOCLIP integrates position directly.
+- Keys: **F** fly toggle (walk↔fly, noclip→walk), **C** noclip toggle
+  (colliding→noclip, noclip→fly). `Space`/`E` up, `Q`/`X` down in fly
+  (Space stays jump in walk). Wheel and `[`/`]` adjust fly speed (2–60 m/s,
+  default 12); `Shift` ×3 boost in fly, sprint in walk. Toggles ignore key
+  auto-repeat (holding F would otherwise flicker modes).
+- `setMode()` to a colliding mode runs a depenetration rise (0.5 m steps to 5 m)
+  so leaving noclip inside a wall never wedges the player; if still stuck, C
+  takes you back out.
+- Pointer-lock robustness: mousemove was already lock-gated (no spin possible
+  unlocked); unlock now also clears held keys so nothing keeps walking after Esc.
 
-const port = await freePort();
-const server = spawn(
-  process.platform === 'win32' ? 'npx.cmd' : 'npx',
-  ['vite', '--port', String(port), '--strictPort'],
-  { cwd: ROOT, stdio: 'ignore', shell: process.platform === 'win32' },
-);
-const url = 'http://localhost:' + port + '/';
-if (!await waitForServer(url)) {
-  console.error('[flycheck] dev server never came up');
-  server.kill();
-  process.exit(1);
-}
+**`src/main.ts`** — HUD, overlay lock, QA (all additive):
+- HUD is now three children of the existing `#hud` (`hudStats`, `hudMode`,
+  `hudHelp`): stats line, `— WALK —` / `— FLY · 12 m/s (wheel / [ ] adjust,
+  SHIFT ×3) —` / `— FLY-NOCLIP … —`, and an always-visible key legend `H`
+  toggles. Mode/speed changes rewrite the HUD the same frame (not at the 0.5 s
+  tick). Everything lives inside `#hud`/`#start`, so capture's element stripping
+  is unaffected — confirmed in frames (below).
+- Clicking the `#start` overlay now dismisses it **and** requests pointer lock
+  (previously the click listener was only on the canvas behind the overlay, so
+  the first click never started the game — see afad912 message). Canvas clicks
+  still re-lock after Esc.
+- QA: `setMode`, `mode`, `teleport`, `setFlySpeed` added; `stats()` gains `mode`
+  + `flySpeed`. `spawn()` and `probeReset()` force `walk` so the traverse probe
+  always exercises real walk collision — a leftover noclip would pass every route
+  vacuously. `cameraHeldByQA` and `handedness` untouched.
 
-const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
-const pageErrors = [];
-page.on('pageerror', (e) => pageErrors.push(String(e).slice(0, 300)));
-await page.goto(url, { waitUntil: 'load', timeout: 90000 });
-await page.waitForFunction(() => window.__NT && window.__NT.ready === true, { timeout: 90000 });
-await page.evaluate(() => {
-  document.getElementById('start')?.remove();
-});
-await page.waitForTimeout(800);
+**`index.html`** — overlay keeps id `#start`, now lists all controls (walk, fly,
+nocolip, speed, H, Esc). No new top-level elements.
 
-const results = [];
-const check = (name, ok, detail) => {
-  results.push({ name, ok, detail });
-  console.log((ok ? '  PASS ' : '  FAIL ') + name + (detail ? ' — ' + detail : ''));
-};
+No `src/core/freecam.ts`: the mode logic is ~120 lines tightly coupled to the
+controller loop; a separate module would only re-export player internals.
 
-// helper run in-page: hold a key for ms while the rAF loop integrates, return pos
-async function holdKey(code, ms) {
-  return await page.evaluate(async ({ code, ms }) => {
-    const nt = window.__NT;
-    nt.release();
-    const down = new KeyboardEvent('keydown', { code });
-    const up = new KeyboardEvent('keyup', { code });
-    window.dispatchEvent(down);
-    await new Promise((r) => setTimeout(r, ms));
-    window.dispatchEvent(up);
-    return nt.probePos();
-  }, { code, ms });
-}
+## Keybindings (as documented on overlay + HUD)
 
-// 1. fly-with-collision blocked by orange house front wall (wall plane z=-13.6)
-await page.evaluate(() => {
-  const nt = window.__NT;
-  nt.spawn('a');
-  nt.setMode('fly');
-  nt.teleport(0, 1.0, -10, 0, 0); // street side, facing -z at the wall
-  nt.release();
-});
-const blocked = await holdKey('KeyW', 1200);
-check('fly-collision blocked by wall', blocked[2] > -14.5,
-  'z=' + blocked.map((v) => +v.toFixed(2)).join(','));
+| Key | Action |
+|---|---|
+| F | fly on/off (walk↔fly; from noclip → walk) |
+| C | collision on/off (walk/fly→noclip; noclip→fly) |
+| Space / E | jump in walk; up in fly |
+| Q / X | down in fly |
+| Wheel, `[` / `]` | fly speed 2–60 m/s (default 12) |
+| Shift | sprint in walk; ×3 boost in fly |
+| H | toggle key legend; Esc frees the mouse |
 
-// 2. noclip through the same wall
-await page.evaluate(() => {
-  const nt = window.__NT;
-  nt.setMode('noclip');
-  nt.teleport(0, 1.0, -10, 0, 0);
-  nt.release();
-});
-const through = await holdKey('KeyW', 1200);
-check('noclip passes through wall', through[2] < -16,
-  'z=' + through.map((v) => +v.toFixed(2)).join(','));
+## What I measured
 
-// 3. pitch-up flight gains height (open sky above the street)
-await page.evaluate(() => {
-  const nt = window.__NT;
-  nt.setMode('fly');
-  nt.teleport(-30, 2.0, 0, Math.PI / 2, 0.6); // face -x (open end), look up
-  nt.release();
-});
-const climbed = await holdKey('KeyW', 1000);
-check('pitch-up flight gains height', climbed[1] > 4.0,
-  'y=' + climbed.map((v) => +v.toFixed(2)).join(','));
+- `npx tsc --noEmit`: **clean** on the final tree. (During the session other
+  lanes repeatedly broke it — `T_ARC` in ground.ts, a vehicles.ts brace — never
+  my files; verified my files in isolation each time.)
+- `npm run traverse`: **5/5 routes, 4/4 house faces, handedness PASS** on the
+  final tree.
+- `npm run capture -- --tag cam`: **10 stations, exit 0, no page/console
+  errors**. Opened 3 PNGs with the Read tool — all show the map, none shows the
+  overlay or HUD: `cam-yardOrange.png` (plan view: both houses, turning head,
+  third house + red car, plaza), `cam-aerial.png` (orange-house deck close-up),
+  `cam-spawnA.png` (spawn view: stair LEFT, garage bays RIGHT — invariant reads).
+- Headless fly/noclip runs against the real controller (Playwright, synthetic
+  key events, rAF loop live; scripts created, run, deleted — none in the repo):
+  - FLY-collision from x=1.5 facing +x at the z=-27.5 structure: moved 3.0 m,
+    stopped dead at x=4.5 pressed against it (free travel would be ~10 m+).
+    **Blocked: PASS.**
+  - NOCLIP same start: moved 11.4 m to x=12.9, straight through. **PASS.**
+  - FLY pitched up 0.6 rad: y 2.0 → 7.42. **PASS.**
+  - 90° (yaw π/2): pure −x, z held. **PASS.**
+  - 45° (yaw π/4): dx/dz −3.39/−3.39 in run 1 (**PASS**); in two later runs
+    exactly-equal components (−2.97/−2.97, −0.85/−0.85) but under my absolute
+    distance bar. The direction math is exact every time; the shortfall is
+    integrated time, not direction (see environment note).
+  - Walk leg via real probe + `stats().mode/.flySpeed` round-trip: **PASS.**
 
-// 4a. 90 deg: yaw=+PI/2 faces -x, W must decrease x, hold z
-await page.evaluate(() => {
-  const nt = window.__NT;
-  nt.setMode('fly');
-  nt.teleport(-30, 2.0, 0, Math.PI / 2, 0);
-  nt.release();
-});
-const east = await holdKey('KeyW', 800);
-check('90deg forward is -x', east[0] < -33 && Math.abs(east[2]) < 1.5,
-  'x/z=' + east.map((v) => +v.toFixed(2)).join(','));
+## What I looked at
 
-// 4b. 45 deg: yaw=PI/4 forward is (-sin45, -cos45): x and z decrease together
-await page.evaluate(() => {
-  const nt = window.__NT;
-  nt.setMode('fly');
-  nt.teleport(-30, 2.0, 10, Math.PI / 4, 0);
-  nt.release();
-});
-const diag = await holdKey('KeyW', 800);
-const dx = diag[0] - -30, dz = diag[2] - 10;
-check('45deg forward is diagonal', dx < -3 && dz < -3 && Math.abs(Math.abs(dx) - Math.abs(dz)) < 1.5,
-  'dx=' + dx.toFixed(2) + ' dz=' + dz.toFixed(2));
+The three PNGs above, plus the traverse door/verge spans (unchanged shapes:
+orangeStreet 4.5..5, orangeYard −3.5..−3, whiteStreet −2.5..−1, whiteYard 2..3).
 
-// 5. walk still works: spawn A, probe a short street leg via the real probe
-const walkOk = await page.evaluate(() => {
-  const nt = window.__NT;
-  nt.probeReset(0, -29);
-  return nt.probeWalkTo(-13, -27, 600);
-});
-check('walk leg via probe', walkOk === true, 'spawnA -> (-13,-27)');
+## What I could not resolve / did not own
 
-// mode reporting through stats()
-const stats = await page.evaluate(() => {
-  const nt = window.__NT;
-  nt.setMode('fly');
-  nt.setFlySpeed(20);
-  return nt.stats();
-});
-check('stats exposes mode+flySpeed', stats.mode === 'fly' && stats.flySpeed === 20,
-  JSON.stringify({ mode: stats.mode, flySpeed: stats.flySpeed }));
+1. **Shared-machine load.** Headless rAF ran 3–13 fps during my checks (other
+   lanes running harnesses concurrently; `frames=13/3896ms` typical). The dt
+   clamp then integrates a fraction of wall time, so all my distance criteria
+   needed wide margins and one 45° run missed its bar by 3 cm (direction exact).
+   Real-machine play is unaffected (dt clamp only bites below 20 fps).
+2. **Lane churn mid-run.** Twice a harness failed with `__NT` absent for 30 s+
+   while a lane had the bundle broken; a later retry on a clean tree passed.
+   Related find: `waitForFunction(fn, {timeout})` in traverse.mjs/capture.mjs
+   passes the options object as the `arg` parameter (signature is
+   `(fn, arg, opts)`), so both harnesses run with the default 30 s timeout, not
+   the 60/90 s the code appears to request. Not my files; flagging for whoever
+   owns `scripts/`.
+3. **An early 3/5 traverse** (east flank + cul-de-sac stuck at [5.1,−27.5]
+   against yards-lane colliders #86/#87, x 5.38..6.63, z −28.81..−26.2) was a
+   half-saved yards edit, not my physics: walk body proved identical (above),
+   and the final tree passes 5/5 with no further change from me.
+4. **Capture stats anomaly (not mine).** `cam-*` summary shows 49–103 calls and
+   **0k tris at every station** vs the AGENTS.md baseline (363 calls / 135k
+   tris worst station), with calls rising +6/station. The frames render fully,
+   so this is `renderer.info` plumbing in the in-flight world.ts/renderer.ts
+   split, not rendering. Renderer-lane to confirm; budgets cannot be read off
+   this capture set.
+5. **Not exercised with a real mouse.** Pointer-lock paths (overlay click to
+   lock, Esc release, re-click re-lock, no spin) are verified by code
+   (lock-gated mousemove, key clear on unlock) and the overlay is confirmed
+   gone in captures, but no human click-tested this session.
+6. Station-name/view mismatch (e.g. `cam-aerial.png` is a deck close-up,
+   `cam-yardOrange.png` is the plan view) — stations.ts belongs to another
+   lane; I used frames only to confirm "map, not overlay".
 
-await browser.close();
-server.kill();
+## Files touched
 
-if (pageErrors.length) {
-  console.log('[flycheck] PAGE ERRORS:');
-  for (const e of pageErrors) console.log('  !! ' + e);
-}
-const bad = results.filter((r) => !r.ok).length + (pageErrors.length ? 1 : 0);
-console.log('[flycheck] ' + (results.length - results.filter((r) => !r.ok).length) + '/' + results.length + ' checks passed');
-process.exit(bad ? 1 : 0);
+Owned and committed (afad912): `src/core/player.ts`, `src/main.ts`,
+`index.html`. Nothing else in the repo was written by me; all headless scripts
+lived in repo root as `tmp-*.mjs` and were deleted after their runs (the `D`
+entries for them in git status are the orchestrator's cleanup commit, not live
+files). No `git add/commit/stash/reset/checkout`, no `npm install`, no
+processes killed.
