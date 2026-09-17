@@ -2,7 +2,7 @@
  * NUKETOWN 2025 - GROUND
  *
  * Every horizontal surface in the map: the desert floor, the concrete surround,
- * the street and its off-map tail, the lollipop turning head at the +x end,
+ * the street and its off-map tail, the central turning circle,
  * kerbs, pavements, lawns, back yards, garage aprons and the perimeter.
  *
  * The town stands on a TIGHT paved apron in open desert. The apron runs only
@@ -56,8 +56,8 @@
  * Every raised surface is a SLAB (box) rising from y=0, never a floating
  * plane, so the 0.14 m plateau edge is always closed by its own side face.
  *
- * The turning head is at +x. The road stem runs off-map at -x. Nothing here
- * is centred on x=0.
+ * The turning circle is centred on x=0: a single road stem runs off-map
+ * at -x, and the east side is bulb tangent + driveway apron, not a road.
  */
 import * as THREE from 'three';
 import type { AABB, BuildResult, Builder } from '../core/kit';
@@ -154,23 +154,26 @@ const PAVE_JOIN_X =
   HEAD_CENTER_X - Math.sqrt(HEAD_PAVE_R * HEAD_PAVE_R - PAVEMENT_OUTER * PAVEMENT_OUTER);
 
 /**
- * The bulb eats the +x corner of the frontage: past this x the lawn band would
- * land on the turning head's pavement, so the front lawns stop here.
+ * The ring overlaps the frontage on the circle side: past this x the lawn
+ * band would land on the turning head's pavement, so the front lawns stop here.
  */
 const LAWN_X_MAX = PAVE_JOIN_X;
 
 /**
- * ...which leaves a wedge of frontage between the lawn edge and the bulb that
- * the ring only partly covers. Two paving pads fill it, each sized so its
+ * ...which leaves a wedge of frontage between the lawn edge and the circle
+ * that the ring only partly covers. Two paving pads fill it, each sized so its
  * corner nearest the bulb still clears the kerb (r >= HEAD_RADIUS + KERB_WIDTH).
+ * When the yard edge sits outside the kerb circle the far pad spans the full
+ * frontage depth instead of stepping in to a crossing that is not there.
  */
 const BULB_KERB_R = HEAD_RADIUS + KERB_WIDTH;
 const CORNER_X = HEAD_CENTER_X - Math.sqrt(BULB_KERB_R * BULB_KERB_R - PAVEMENT_OUTER * PAVEMENT_OUTER);
-const CORNER_Z = Math.sqrt(
-  BULB_KERB_R * BULB_KERB_R - (HEAD_CENTER_X - YARD_X_MAX) * (HEAD_CENTER_X - YARD_X_MAX),
+const CORNER_Z = Math.max(
+  PAVEMENT_OUTER,
+  Math.sqrt(Math.max(0, BULB_KERB_R * BULB_KERB_R - (HEAD_CENTER_X - YARD_X_MAX) * (HEAD_CENTER_X - YARD_X_MAX))),
 );
 
-/** The strip is carried past ROAD_X_MAX to the bulb centre so the join has no seam. */
+/** The strip runs under the disc to ROAD_X_MAX (the bulb's east tangent) with no seam. */
 const ROAD_STRIP_X_MAX = Math.max(ROAD_X_MAX, HEAD_CENTER_X);
 
 /** Angular gap in the ring where the road stem enters, centred on -x. */
@@ -416,9 +419,8 @@ export const buildGround: Builder = (ctx) => {
     Y_ROAD, ctx.mat.asphalt, UV_ASPHALT,
   ));
 
-  // ---- 4. lollipop turning head: a filled disc fused onto the strip end.
-  // The strip is carried to HEAD_CENTER_X so the crescent either side of
-  // ROAD_X_MAX where the bulb has not yet widened to ROAD_HALF_WIDTH is covered.
+  // ---- 4. central turning circle: a filled disc fused over the strip, which
+  // runs beneath it to ROAD_X_MAX (the bulb's east tangent) so the join has no seam.
   {
     const geo = new THREE.CircleGeometry(HEAD_RADIUS, ARC_SEGS);
     scaleUV(geo, (2 * HEAD_RADIUS) / UV_ASPHALT, (2 * HEAD_RADIUS) / UV_ASPHALT);
@@ -470,15 +472,16 @@ export const buildGround: Builder = (ctx) => {
     const s = h.side;
 
     // front lawn, pavement edge out to the house front wall. Stops short of the
-    // bulb's pavement ring at +x rather than climbing onto it.
+    // circle's pavement ring on the circle side rather than climbing onto it.
     g.add(pad(
       colliders, YARD_X_MIN, LAWN_X_MAX,
       s * PAVEMENT_OUTER, s * FRONT_LAWN_OUTER,
       T_LAWN, ctx.mat.lawn, UV_LAWN,
     ));
 
-    // frontage wedge between the lawn edge and the bulb, stepped in twice so
-    // neither pad climbs onto the turning head's kerb
+    // frontage wedge between the lawn edge and the circle, stepped in twice;
+    // the near pad clears the turning head's kerb, the far pad rides over the
+    // ring where the circle overlaps the frontage.
     g.add(pad(
       colliders, LAWN_X_MAX, CORNER_X,
       s * PAVEMENT_OUTER, s * FRONT_LAWN_OUTER,

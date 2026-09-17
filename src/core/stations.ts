@@ -35,9 +35,9 @@ export const STATIONS: Record<string, Station> = {
     pitch: -57 * D,
     fov: 58,
     ref: 'NT02 Nuketown_2025_Aerial_View_BOII.jpg',
-    note: 'Whole-map plan read. Check: turning head is a CIRCLE at +x, third house '
-      + 'beyond it, mow-stripe lawns, two houses of DIFFERENT architecture, and the '
-      + 'town sitting in desert rather than on an endless concrete slab.',
+    note: 'Whole-map plan read. Check: turning head is a CIRCLE at the map centre, '
+      + 'third house beyond it to the east, mow-stripe lawns, two houses of DIFFERENT '
+      + 'architecture, and the town sitting in desert rather than on an endless concrete slab.',
   },
   yardOrange: {
     pos: [10, 8.5, -(BACK_FENCE + 1)],
@@ -71,7 +71,7 @@ export const STATIONS: Record<string, Station> = {
       + 'must reflect sky, not read as black holes.',
   },
   plaza: {
-    pos: [6, 2.6, -1.0],
+    pos: [-14, 2.6, -1.0],
     yaw: 90 * D,
     pitch: -1 * D,
     fov: 72,
@@ -81,14 +81,15 @@ export const STATIONS: Record<string, Station> = {
       + 'hazy blue-grey mountains behind.',
   },
   turningHead: {
-    pos: [6, 2.6, 1.0],
+    pos: [-14, 2.6, 1.0],
     yaw: -90 * D,
     pitch: -1 * D,
     fov: 72,
     ref: 'NT02 Nuketown_2025_Aerial_View_BOII.jpg',
-    note: 'Along the street toward the CUL-DE-SAC. Check: circular kerbed head, coach '
-      + 'on the -z side, box truck + dark saloon on the +z side, boundary fence and '
-      + 'the third house with its red car beyond.',
+    note: 'From the west stem looking +x at the CENTRAL circle. Check: circular kerbed '
+      + 'head at the map centre, coach on the -z side, second bus / saloon on the +z '
+      + 'side, driveway apron and boundary fence east with the third house and its '
+      + 'red car beyond.',
   },
 
   // ---- gameplay stations. NOT fidelity evidence.

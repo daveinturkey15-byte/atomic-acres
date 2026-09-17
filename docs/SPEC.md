@@ -28,7 +28,7 @@ y-up, right-handed. Plan seen from above: **+x right of page, +z down the page**
 
 ```
       -x  <==================  STREET AXIS  ==================>  +x
- (road stem runs off-map,                          (CUL-DE-SAC end: turning head,
+ (road stem runs off-map,                          (driveway apron to the
   open end, toward the plaza)                       boundary fence, THIRD HOUSE beyond)
 
  ~~~~~~~~~~~~~~~~~~~~~~ out of bounds ~~~~~~~~~~~~~~~~~+--------------+
@@ -45,10 +45,11 @@ y-up, right-handed. Plan seen from above: **+x right of page, +z down the page**
   +-----------+------------------------------------------+---+
     apron           [RED 3-unit appliance bank]    porch canopy
  ------------------------ kerb / pavement ----------------------------
-                                        [ COACH ]        _ - - - _
-  ROAD  [green classic car]                             /  TURNING \
-                                        [ TRUCK ]      |    HEAD    |
-                                        [dk saloon]     \ _ - - - _/
+                                        _ - - - _
+  ROAD STEM (off-map to plaza, -x)     /  CENTRAL \
+  [green classic car]    [ COACH ]    |   CIRCLE   |  apron (driveway
+                         [ 2nd BUS ]   \ _ - - - _/   to fence, +x)
+                         [ saloon ]
  ------------------------ kerb / pavement ----------------------------
                   [BLUE 3-unit appliance bank]                 apron
   +---+------------------------------------------+-----------+
@@ -61,6 +62,19 @@ y-up, right-handed. Plan seen from above: **+x right of page, +z down the page**
   +z    TEAM B BACK YARD  =  SPAWN B
  ========== back fence (holes) =======================================
 ```
+
+### CORRECTION — the circle is central (was: lollipop cul-de-sac at +x)
+
+CORRECTED ERROR: earlier revisions described a straight street running the full
+length with a lollipop cul-de-sac bolted on the `+x` end (inherited from the old
+project's `FINDINGS.md` "lollipop cul-de-sac at one end" claim). That claim is
+WRONG. Re-verified against the official minimap (clean 512x512 top-down: circle
+dead-centre with two elongated vehicle capsules lying on it, notched/stepped house
+footprints above and below) and the official aerial (central circle with vehicles
+on it, a house either side, the third house beyond, one road leaving): the turning
+circle is the CENTRE of the map between the houses. Exactly ONE road stem leaves
+it westward off-map to the plaza; the east side is a driveway apron to the
+boundary fence (third house beyond), NOT a through road.
 
 ### The one invariant
 
@@ -75,8 +89,8 @@ This is a **180-degree rotational pair, not a mirror pair**. `layout.ts` derives
 - The two back yards are **different, not mirrored dressing**: orange gets
   glasshouse + cold frames + curved-roof carport + crate store + circular patio;
   white gets garden pod + sand pit + shuffleboard court.
-- The **third house with the red car on its drive** sits past the boundary fence at the
-  `+x` cul-de-sac end. It is the single best landmark for telling the ends apart.
+- The **third house with the red car on its drive** sits past the east boundary fence,
+  beyond the circle's driveway apron. It is the single best landmark for telling the ends apart.
 
 ---
 

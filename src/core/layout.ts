@@ -2,8 +2,10 @@
  * NUKETOWN 2025 - LAYOUT CONTRACT (single source of truth)
  *
  * Frame: y-up, right-handed. Plan view looks down -y; +x is right of page, +z is down.
- *   +x end of street = CUL-DE-SAC (turning head, boundary fence, THIRD HOUSE beyond)
- *   -x end of street = OPEN end (road stem runs off-map to the entrance plaza)
+ *   Street = CENTRAL turning circle between the houses (BO2 minimap/aerial): the bulb
+ *   is the middle of the map, with a single road stem leaving it westward (-x) off-map
+ *   to the entrance plaza. The east side is the bulb tangent + driveway apron to the
+ *   boundary fence, NOT a through road; +x beyond the fence = THIRD HOUSE end.
  *   -z house = ORANGE  (terracotta upper / cream lower, butterfly roof). Garage at its -x end.
  *   +z house = WHITE   (rounded modernist capsules). Garage at its +x end.
  *
@@ -19,12 +21,12 @@ export const ROAD_HALF_WIDTH = 4.6;
 export const KERB_HEIGHT = 0.15;
 export const KERB_WIDTH = 0.3;
 export const PAVEMENT_OUTER = 7.2;        // |z| where pavement ends and lawn begins
-export const ROAD_X_MIN = -52;            // runs off-map toward the plaza
-export const ROAD_X_MAX = 17.0;           // meets the turning-head bulb
+export const ROAD_X_MIN = -52;            // single west stem off-map to the plaza (preserved end)
+export const ROAD_X_MAX = 10.5;           // = HEAD_CENTER_X + HEAD_RADIUS, bulb east tangent + driveway apron to fence, no through road (same construction as before)
 
-// lollipop turning head at the +x end
-export const HEAD_CENTER_X = 26.0;
-export const HEAD_RADIUS = 9.6;
+// central turning circle between the houses per BO2 minimap/aerial (was lollipop at +x end - corrected error inherited from FINDINGS.md cul-de-sac claim)
+export const HEAD_CENTER_X = 0.0;
+export const HEAD_RADIUS = 10.5;          // 85px diameter x 0.25m/px = 21.25m diameter = 86% of 99px house gap, large fraction per minimap
 
 // ---------------------------------------------------------------- houses
 export const FRONT_LAWN_OUTER = 13.6;     // |z| of the house front wall
@@ -62,10 +64,11 @@ export const YARD_X_MAX = 20.0;
 export const BOUND_X_MIN = -54;
 export const BOUND_X_MAX = 46;
 export const BOUND_Z = 38;
-// Far enough out that the house body clears the turning head's pavement ring
-// (HEAD_CENTER_X + HEAD_RADIUS + kerb + pavement). At 40 the gable face landed at
-// x 36.7, standing ON the ring.
-export const THIRD_HOUSE_X = 44.5;        // beyond the head, past the boundary fence
+// Far enough east that the house body clears the central turning head's pavement ring
+// (HEAD_CENTER_X + HEAD_RADIUS + kerb + pavement ~ 10.5 + kerb + pavement, ring edge ~18).
+// At 40 the gable face landed at x 36.7, clear of the recentred ring; kept at 44.5.
+// Ends preserved: road -x/plaza, third house +x (kept to avoid blast radius).
+export const THIRD_HOUSE_X = 44.5;        // east of the central head, past the boundary fence
 
 // ---------------------------------------------------------------- spawns
 // Camera forward is (-sin(yaw), 0, -cos(yaw)): yaw 0 faces -z, yaw PI faces +z.
