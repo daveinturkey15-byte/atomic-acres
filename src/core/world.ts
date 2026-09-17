@@ -179,7 +179,11 @@ export function createWorld(canvasParent: HTMLElement): World {
   canvasParent.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(PAL.fog, 0.0031);
+  // Fog density. 0.0031 was tuned before the post chain existed; with GTAO,
+  // SSR and bloom layered on top the mid-distance went milky and the mountain
+  // ring all but vanished, which is the opposite of the aerial-perspective the
+  // reference shows. Pulled back so the backdrop reads again.
+  scene.fog = new THREE.FogExp2(PAL.fog, 0.0016);
 
   const sky = makeSky();
   scene.add(sky);
