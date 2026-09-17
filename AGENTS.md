@@ -71,8 +71,14 @@ right. Compare each fidelity station against the reference named in `core/statio
 ## Budgets
 
 - under 1200 draw calls and 900k triangles at any fidelity station
-- 60 fps at 1600x900 on this machine
 - no page errors, no console errors
+
+Measured 2026-09-17 at 1600x900, headless Chromium on ANGLE/D3D11, frame-rate cap off:
+worst station **363 calls / 135k tris**; **573-586 fps** standing at either spawn with
+the player loop running; **18 shader programs** total. The program count is the one to
+watch - it stays small only because every material is a singleton built once in
+`core/materials.ts`. A builder that constructs its own material adds programs, and a
+builder that constructs one per frame is what made the previous project stutter.
 
 ## References
 
