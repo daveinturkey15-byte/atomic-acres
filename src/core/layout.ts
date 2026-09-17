@@ -62,7 +62,10 @@ export const YARD_X_MAX = 20.0;
 export const BOUND_X_MIN = -54;
 export const BOUND_X_MAX = 46;
 export const BOUND_Z = 38;
-export const THIRD_HOUSE_X = 40.0;        // beyond the head, past the boundary fence
+// Far enough out that the house body clears the turning head's pavement ring
+// (HEAD_CENTER_X + HEAD_RADIUS + kerb + pavement). At 40 the gable face landed at
+// x 36.7, standing ON the ring.
+export const THIRD_HOUSE_X = 44.5;        // beyond the head, past the boundary fence
 
 // ---------------------------------------------------------------- spawns
 // Camera forward is (-sin(yaw), 0, -cos(yaw)): yaw 0 faces -z, yaw PI faces +z.

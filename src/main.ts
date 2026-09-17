@@ -21,6 +21,7 @@ import { buildYards } from './build/yards';
 import { buildSkyline } from './build/skyline';
 import { buildPlaza } from './build/plaza';
 import { buildMannequins } from './build/mannequins';
+import { buildSurround } from './build/surround';
 
 const BUILDERS: [string, Builder][] = [
   ['ground', buildGround],
@@ -32,6 +33,7 @@ const BUILDERS: [string, Builder][] = [
   ['skyline', buildSkyline],
   ['plaza', buildPlaza],
   ['mannequins', buildMannequins],
+  ['surround', buildSurround],
 ];
 
 // The one invariant, asserted rather than commented. From either back yard, facing

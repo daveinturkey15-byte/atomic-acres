@@ -16,7 +16,7 @@ import { PAL } from '../core/palette';
 import {
   WHITE, HOUSE_HALF_LEN, HOUSE_DEPTH, FLOOR_H, UPPER_H, EAVE_Y,
   GARAGE_LEN, GARAGE_DEPTH, GARAGE_H, GARAGE_BAYS,
-  DECK_Y, DECK_LEN, DECK_OUT, RAIL_H,
+  DECK_Y, DECK_LEN, DECK_OUT, RAIL_H, KERB_HEIGHT,
   CANOPY_Y, CANOPY_LEN, CANOPY_OUT,
 } from '../core/layout';
 import { aabb, aabbSlab, box, extrude, group, slab } from '../core/kit';
@@ -118,6 +118,13 @@ const WALL_T = 0.26;
 const CHORD = 0.55;
 const COARSE = 1.2;
 
+// Glazing. A pane flush with the wall face has no reveal, so a whole band reads as
+// one dark slab whatever the material does. These set the pane back far enough that
+// the head soffit and the cill throw a shadow line across every bay.
+const GLAZ_IN = WALL_T * 0.32;   // setback of the pane behind the outer wall face
+const GLAZ_T = WALL_T * 0.3;     // pane leaf thickness
+const PIER_EVERY = 6;            // chords between the solid piers that break the ribbon
+
 const REAR_D = HOUSE_DEPTH * 0.72;
 const FRONT_D = HOUSE_DEPTH * 0.56;
 const REAR: Plan = {
@@ -158,6 +165,7 @@ const DECK_EDGE_X = DECK_CX + DECK_END * DECK_LEN * 0.5;
 const STEPS = 13;
 const STEP_RISE = DECK_Y / STEPS;
 const STEP_GOING = 0.29;
+const DECK_T = KERB_HEIGHT + 0.1;   // entry-deck top, standing clear of the lawn plateau
 
 /** Door hole on a chord, expressed in the plan's own street(-1)/yard(+1) face sign. */
 interface Hole { x: number; face: -1 | 1; y0: number; y1: number }
@@ -201,19 +209,32 @@ export const buildWhiteHouse: Builder = (ctx) => {
       for (const h of holes) {
         if (flat && h.face === face && Math.abs(mx - h.x) < DOOR_HALF) hole = h;
       }
+      // a solid pier every few chords, so neither band can read as one long void
+      const pierChord = i % PIER_EVERY === 0;
       const put = (y0: number, y1: number, glass: boolean): void => {
-        const b = glass ? bGlaz : bWall;
-        const t = glass ? WALL_T * 0.55 : WALL_T;
-        const o = glass ? -WALL_T * 0.16 : 0;
-        if (hole && y1 > hole.y0 && y0 < hole.y1) {
+        // only the band the door actually crosses loses its pier and its frame;
+        // treating the whole chord as holed left a bare slab of glass over every door
+        const cut = hole !== null && y1 > hole.y0 && y0 < hole.y1;
+        const pier = pierChord && !cut;
+        const glazed = glass && !pier;
+        const b = glazed ? bGlaz : bWall;
+        const t = glazed ? GLAZ_T : WALL_T;
+        const o = glazed ? -GLAZ_IN : 0;
+        if (cut && hole) {
           if (y0 < hole.y0) run(b, a, c, p, y0, hole.y0, t, o);
           if (y1 > hole.y1) run(b, a, c, p, hole.y1, y1, t, o);
         } else {
           run(b, a, c, p, y0, y1, t, o);
         }
-        // blue window frame: a mullion every third chord inside a glazing band
-        if (glass && !hole && i % 3 === 0) {
-          run(bTrim, a, c, p, y0, y1, WALL_T * 0.75, WALL_T * 0.18, -CHORD + 0.1);
+        if (!glazed || cut) return;
+        // frame the bay: blue head drip, white projecting cill, blue transom, and a
+        // mullion every other chord standing proud of the glass inside the reveal.
+        run(bTrim, a, c, p, y1 - 0.06, y1 + 0.08, WALL_T + 0.12, 0);
+        run(bWall, a, c, p, y0 - 0.1, y0 + 0.06, WALL_T + 0.2, 0);
+        const ym = y0 + (y1 - y0) * 0.61;
+        run(bTrim, a, c, p, ym - 0.05, ym + 0.05, WALL_T * 0.8, -GLAZ_IN * 0.5);
+        if (i % 2 === 0) {
+          run(bTrim, a, c, p, y0, y1, WALL_T * 0.7, -GLAZ_IN * 0.45, -CHORD + 0.12);
         }
       };
       put(0, G_SILL, false);
@@ -336,8 +357,12 @@ export const buildWhiteHouse: Builder = (ctx) => {
     FRONT_DOOR_X, CANOPY_Y - 0.13, canZ));
   bTrim.add(CANOPY_LEN + 0.12, 0.16, 0.18, FRONT_DOOR_X, CANOPY_Y - 0.3,
     Z_FRONT - S * (CANOPY_OUT - 0.1));
-  g.add(slab(CANOPY_LEN + 1.2, 0.12, CANOPY_OUT, ctx.mat.concrete,
-    FRONT_DOOR_X, 0, Z_FRONT - S * (CANOPY_OUT * 0.5 - 0.15)));
+  // The entry deck under the eave. It has to clear the lawn plateau ground.ts tops
+  // out at KERB_HEIGHT + 0.001 - at 0.12 m thick it was buried and read as bare lawn.
+  const entryZ = Z_FRONT - S * (CANOPY_OUT * 0.5 - 0.15);
+  const entryW = CANOPY_LEN + 1.2;
+  g.add(slab(entryW, DECK_T, CANOPY_OUT, ctx.mat.concrete, FRONT_DOOR_X, 0, entryZ));
+  colliders.push(aabbSlab(FRONT_DOOR_X, 0, entryZ, entryW, DECK_T, CANOPY_OUT));
 
   // --- rear deck at upper-floor level + exterior stair down to the lawn -------
   bWood.add(DECK_LEN, 0.22, DECK_OUT, DECK_CX, DECK_Y - 0.11, DECK_CZ);

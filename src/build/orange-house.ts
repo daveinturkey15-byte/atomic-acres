@@ -13,11 +13,15 @@ import { PAL } from '../core/palette';
 import {
   CANOPY_LEN, CANOPY_OUT, CANOPY_Y, DECK_LEN, DECK_OUT, DECK_Y, EAVE_Y, FLOOR_H,
   GARAGE_BAYS, GARAGE_DEPTH, GARAGE_H, GARAGE_LEN, HOUSE_DEPTH, HOUSE_HALF_LEN,
-  ORANGE, RAIL_H, UPPER_H,
+  KERB_HEIGHT, ORANGE, RAIL_H, UPPER_H,
 } from '../core/layout';
 
 type P2 = [number, number];
 interface Hole { c: number; w: number; sill: number; head: number }
+/** A hole resolved onto the wall that carries it, so it can be glazed afterwards. */
+interface Opening extends Hole { along: 'x' | 'z'; fixed: number; out: number }
+/** [w, h, d, x, y, z, rotY] - one oriented box for a shared InstancedMesh. */
+type Row = [number, number, number, number, number, number, number];
 
 // ---------------------------------------------------------------- frame
 const H = ORANGE;
@@ -49,6 +53,13 @@ const BAND_HEAD = EAVE_Y - UPPER_H * 0.21;
 const GND_FRONT = frontZ + S * RECESS;      // recessed ground-floor street plane
 const STAIR_W = 1.25;
 const STEPS = 14;
+
+// glazing: a pane sits BEHIND the outer wall face so the jamb casts a reveal shadow
+const PANE_T = 0.04;                        // leaf thickness
+const REVEAL = 0.075;                       // setback of the pane from the outer face
+const FRAME_W = 0.11;                       // frame face width around an aperture
+const FRAME_D = 0.1;                        // frame depth (0.075 of it stands proud)
+const DECK_T = KERB_HEIGHT + 0.1;           // entry deck top, clear of the lawn plateau
 
 const UP = new THREE.Vector3(0, 1, 0);
 const NOROT = new THREE.Quaternion();
@@ -108,8 +119,23 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const v = new THREE.Vector3();
   const sc = new THREE.Vector3();
 
+  const frameMat = mat.painted(PAL.houseCream, 0.6, 0.05);
+
+  /** Emit one InstancedMesh from collected rows. Panes never cast shadow. */
+  const emit = (rows: Row[], m: THREE.Material, shadow: boolean) => {
+    if (!rows.length) return;
+    const im = inst(unit, m, rows.length);
+    im.castShadow = shadow;
+    rows.forEach((r, i) => im.setMatrixAt(i, m4.compose(
+      v.set(r[3], r[4], r[5]), q.setFromAxisAngle(UP, r[6]), sc.set(r[0], r[1], r[2]))));
+    g.add(im);
+  };
+
   // -------------------------------------------------- ground floor, walls + holes
-  const wallRun = (along: 'x' | 'z', fixed: number, a: number, b: number, holes: Hole[]) => {
+  const openings: Opening[] = [];
+  const wallRun = (
+    along: 'x' | 'z', fixed: number, a: number, b: number, out: number, holes: Hole[],
+  ) => {
     const add = (p0: number, p1: number, y0: number, y1: number, solid: boolean) => {
       if (p1 - p0 < 0.02 || y1 - y0 < 0.02) return;
       const c = (p0 + p1) / 2, cy = (y0 + y1) / 2, L = p1 - p0, hh = y1 - y0;
@@ -124,8 +150,11 @@ export const buildOrangeHouse: Builder = (ctx) => {
     let cur = Math.min(a, b);
     for (const h of [...holes].sort((p, r) => p.c - r.c)) {
       add(cur, h.c - h.w / 2, 0, FLOOR_H, true);                    // pier (solid)
-      add(h.c - h.w / 2, h.c + h.w / 2, 0, h.sill, false);          // sill, no collider
-      add(h.c - h.w / 2, h.c + h.w / 2, h.head, FLOOR_H, false);    // lintel, no collider
+      // The spandrel under a sill is WALL. Leaving it hollow let the player walk
+      // through every window and made the traverse door scan count one as a door.
+      add(h.c - h.w / 2, h.c + h.w / 2, 0, h.sill, true);
+      add(h.c - h.w / 2, h.c + h.w / 2, h.head, FLOOR_H, false);    // lintel, overhead
+      openings.push({ ...h, along, fixed, out });
       cur = h.c + h.w / 2;
     }
     add(cur, Math.max(a, b), 0, FLOOR_H, true);
@@ -135,14 +164,56 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const WIN: Omit<Hole, 'c'> = { w: 2.1, sill: 0.95, head: 2.45 };
   const porchX = FE * (HHL - CORNER_R - CANOPY_LEN / 2);
 
-  wallRun('x', GND_FRONT + S * WALL_T / 2, GE * HHL, FE * HHL, [
+  wallRun('x', GND_FRONT + S * WALL_T / 2, GE * HHL, FE * HHL, OUT, [
     { c: porchX, ...DOOR }, { c: FE * HHL * 0.1, ...WIN }, { c: GE * HHL * 0.34, ...WIN },
   ]);
-  wallRun('x', backZ + OUT * WALL_T / 2, GE * HHL, FE * HHL, [
+  wallRun('x', backZ + OUT * WALL_T / 2, GE * HHL, FE * HHL, S, [
     { c: GE * HHL * 0.32, ...DOOR }, { c: FE * HHL * 0.2, ...WIN }, { c: FE * HHL * 0.74, ...WIN },
   ]);
-  wallRun('z', FE * (HHL - WALL_T / 2), GND_FRONT, backZ, [{ c: midZ, ...WIN }]);
-  wallRun('z', GE * (HHL - WALL_T / 2), GND_FRONT, backZ, []);
+  wallRun('z', FE * (HHL - WALL_T / 2), GND_FRONT, backZ, FE, [{ c: midZ, ...WIN }]);
+  wallRun('z', GE * (HHL - WALL_T / 2), GND_FRONT, backZ, GE, []);
+
+  // -------------------------------------------------- ground-floor glazing
+  // Every aperture was an empty cut: the street read straight through the house to
+  // the back fence. Each window now carries a pane set back in a reveal behind a
+  // cream frame with a cill, two mullions and a transom; doors get the frame only.
+  const paneRows: Row[] = [];
+  const frameRows: Row[] = [];
+  for (const o of openings) {
+    const hh = o.head - o.sill, cy = (o.sill + o.head) / 2;
+    const faceN = o.fixed + o.out * WALL_T / 2;          // outer plane of this wall
+    const rot = o.along === 'x' ? 0 : Math.PI / 2;
+    const at = (rows: Row[], u: number, y: number, n: number, w: number, t: number, d: number) => {
+      rows.push(o.along === 'x' ? [w, t, d, u, y, n, rot] : [w, t, d, n, y, u, rot]);
+    };
+    const frameN = faceN + o.out * (FRAME_D / 2 - 0.025);
+    at(frameRows, o.c, o.head + FRAME_W / 2, frameN, o.w + 2 * FRAME_W, FRAME_W, FRAME_D);
+    for (const s of [-1, 1]) {
+      at(frameRows, o.c + s * (o.w + FRAME_W) / 2, cy, frameN, FRAME_W, hh, FRAME_D);
+    }
+    if (o.sill < 0.05) continue;                         // a door: frame, no glass
+    const paneN = faceN - o.out * (REVEAL + PANE_T / 2);
+    at(paneRows, o.c, cy, paneN, o.w - 0.015, hh - 0.015, PANE_T);
+    at(frameRows, o.c, o.sill - 0.06, frameN + o.out * 0.03,
+      o.w + 2 * FRAME_W, 0.12, FRAME_D + 0.06);          // projecting cill
+    const barN = faceN - o.out * 0.035;                  // bars ride inside the reveal
+    for (const s of [-1, 1]) at(frameRows, o.c + s * o.w / 6, cy, barN, 0.075, hh, 0.11);
+    at(frameRows, o.c, o.sill + hh * 0.62, barN, o.w, 0.08, 0.11);
+  }
+
+  // upper-storey glazed door onto the rear deck, filling the spandrel under the band
+  const ddH = BAND_SILL - DECK_Y - 0.05, ddY = (DECK_Y + 0.05 + BAND_SILL) / 2;
+  const ddZ = backZ + S * 0.03;
+  g.add(box(1.7, ddH, 0.06, mat.windowDark, H.deckX, ddY, ddZ));
+  frameRows.push([1.94, 0.12, 0.13, H.deckX, ddY + ddH / 2 + 0.06, ddZ + S * 0.03, 0]);
+  frameRows.push([1.94, 0.1, 0.13, H.deckX, ddY - ddH / 2 - 0.05, ddZ + S * 0.03, 0]);
+  for (const s of [-1, 1]) {
+    frameRows.push([0.12, ddH, 0.13, H.deckX + s * 0.91, ddY, ddZ + S * 0.03, 0]);
+  }
+  frameRows.push([0.08, ddH, 0.1, H.deckX, ddY, ddZ + S * 0.015, 0]);
+
+  emit(paneRows, mat.glass, false);
+  emit(frameRows, frameMat, true);
 
   const gndCz = (GND_FRONT + backZ) / 2;
   const gndD = HOUSE_DEPTH - RECESS;
@@ -195,11 +266,11 @@ export const buildOrangeHouse: Builder = (ctx) => {
   // -------------------------------------------------- clerestory band, wrapped corner
   const bandPts = outline(GE * HHL * 0.55, GE * HHL * 0.85, CORNER_R, 5);
   const nSeg = bandPts.length - 1;
-  const frameMat = mat.painted(PAL.houseCream, 0.6, 0.05);
   const glass = inst(unit, mat.windowDark, nSeg);
-  const rails = inst(unit, frameMat, nSeg * 2);
+  const rails = inst(unit, frameMat, nSeg * 3);
   const bandCy = (BAND_SILL + BAND_HEAD) / 2;
   const bandH = BAND_HEAD - BAND_SILL;
+  const TRANSOM_Y = BAND_SILL + bandH * 0.62;   // splits the band so it is not one void
   const stations: { x: number; z: number; a: number }[] = [];
   let ri = 0;
   for (let i = 0; i < nSeg; i++) {
@@ -214,9 +285,10 @@ export const buildOrangeHouse: Builder = (ctx) => {
     q.setFromAxisAngle(UP, a);
     glass.setMatrixAt(i, m4.compose(
       v.set(mx + nx * 0.01, bandCy, mz + nz * 0.01), q, sc.set(len, bandH, 0.09)));
-    for (const yy of [BAND_HEAD + 0.07, BAND_SILL - 0.07]) {
+    for (const [yy, th] of [[BAND_HEAD + 0.07, 0.14], [BAND_SILL - 0.07, 0.14],
+      [TRANSOM_Y, 0.11]] as P2[]) {
       rails.setMatrixAt(ri++, m4.compose(
-        v.set(mx + nx * 0.05, yy, mz + nz * 0.05), q, sc.set(len, 0.14, 0.17)));
+        v.set(mx + nx * 0.05, yy, mz + nz * 0.05), q, sc.set(len, th, 0.17)));
     }
     const nm = Math.max(1, Math.round(len / 0.62));
     for (let k = i === 0 ? 0 : 1; k <= nm; k++) {
@@ -226,16 +298,14 @@ export const buildOrangeHouse: Builder = (ctx) => {
   }
   g.add(glass, rails);
 
+  // every fourth station is a wide pier, so the band reads as bays, not one ribbon
   const mullions = inst(new THREE.BoxGeometry(0.08, bandH + 0.14, 0.13), frameMat, stations.length);
   stations.forEach((s, i) => {
-    mullions.setMatrixAt(i, m4.compose(
-      v.set(s.x, bandCy, s.z), q.setFromAxisAngle(UP, s.a), sc.set(1, 1, 1)));
+    const pier = i % 4 === 0;
+    mullions.setMatrixAt(i, m4.compose(v.set(s.x, bandCy, s.z),
+      q.setFromAxisAngle(UP, s.a), sc.set(pier ? 3.1 : 1, 1, pier ? 1.6 : 1)));
   });
   g.add(mullions);
-
-  // upper-storey glazed door onto the rear deck, filling the spandrel under the band
-  g.add(box(1.7, BAND_SILL - DECK_Y - 0.05, 0.08, mat.windowDark,
-    H.deckX, (DECK_Y + 0.05 + BAND_SILL) / 2, backZ + S * 0.02));
 
   // -------------------------------------------------- panelising fins
   const finN = 7;
@@ -304,8 +374,9 @@ export const buildOrangeHouse: Builder = (ctx) => {
     }
   }
   g.add(ribs);
-  g.add(box(1.0, 2.1, 0.1, mat.timberDark,
-    gx + GARAGE_LEN / 2 - 1.35, 1.05, frontZ));
+
+  // every timberDark post and the garage service door share one InstancedMesh
+  const postRows: Row[] = [[1.0, 2.1, 0.1, gx + GARAGE_LEN / 2 - 1.35, 1.05, frontZ, 0]];
 
   // -------------------------------------------------- porch canopy (cantilevered eave)
   const canZ = frontZ + OUT * (CANOPY_OUT / 2 - 0.06);
@@ -314,6 +385,14 @@ export const buildOrangeHouse: Builder = (ctx) => {
   g.add(box(CANOPY_LEN, 0.36, 0.12, mat.roofWhite,
     porchX, CANOPY_Y - 0.18, frontZ + OUT * CANOPY_OUT));
 
+  // NT04: the eave cantilevers over a CONCRETE DECK, not bare lawn. ground.ts tops
+  // the lawn plateau at KERB_HEIGHT + 0.001, so the slab rises from y=0 and stands
+  // proud of it; its collider gives the player a step, well inside STEP_UP.
+  const pdW = CANOPY_LEN + 1.2;
+  const pdZ = frontZ + OUT * (CANOPY_OUT / 2 - 0.15);
+  g.add(slab(pdW, DECK_T, CANOPY_OUT, mat.concrete, porchX, 0, pdZ));
+  colliders.push(aabbSlab(porchX, 0, pdZ, pdW, DECK_T, CANOPY_OUT));
+
   // -------------------------------------------------- rear deck at upper-floor level
   const dX = H.deckX;
   const dOut = backZ + S * DECK_OUT;
@@ -321,7 +400,7 @@ export const buildOrangeHouse: Builder = (ctx) => {
   g.add(box(DECK_LEN, 0.18, DECK_OUT + 0.1, mat.deckBoards, dX, DECK_Y - 0.09, dCz));
   colliders.push(aabb(dX, DECK_Y - 0.09, dCz, DECK_LEN, 0.18, DECK_OUT + 0.1));
   for (const px of [dX - DECK_LEN / 2 + 0.3, dX, dX + DECK_LEN / 2 - 0.3]) {
-    g.add(slab(0.2, DECK_Y - 0.18, 0.2, mat.timberDark, px, 0, dOut + OUT * 0.18));
+    postRows.push([0.2, DECK_Y - 0.18, 0.2, px, (DECK_Y - 0.18) / 2, dOut + OUT * 0.18, 0]);
   }
 
   const dL = dX - DECK_LEN / 2, dR = dX + DECK_LEN / 2;
@@ -356,7 +435,7 @@ export const buildOrangeHouse: Builder = (ctx) => {
   });
   g.add(balusters);
   for (const [nx, nz] of [[dL, dOut], [dR, dOut], [dR, backZ]] as P2[]) {
-    g.add(box(0.14, RAIL_H + 0.1, 0.14, mat.timberDark, nx, DECK_Y + (RAIL_H + 0.1) / 2, nz));
+    postRows.push([0.14, RAIL_H + 0.1, 0.14, nx, DECK_Y + (RAIL_H + 0.1) / 2, nz, 0]);
   }
 
   // -------------------------------------------------- exterior timber stair
@@ -385,10 +464,9 @@ export const buildOrangeHouse: Builder = (ctx) => {
   hr.rotation.z = slopeA;
   g.add(hr);
   for (const t of [0.14, 0.5, 0.86]) {
-    const hx = botX + (topX - botX) * t;
-    const hy = DECK_Y * t;
-    g.add(box(0.07, RAIL_H, 0.07, mat.timberDark, hx, hy + RAIL_H / 2, hrZ));
+    postRows.push([0.07, RAIL_H, 0.07, botX + (topX - botX) * t, DECK_Y * t + RAIL_H / 2, hrZ, 0]);
   }
+  emit(postRows, mat.timberDark, true);
   for (let i = 0; i < 3; i++) {
     const xa = botX + (topX - botX) * (i / 3);
     const xb = botX + (topX - botX) * ((i + 1) / 3);

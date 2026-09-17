@@ -3,11 +3,32 @@
  *
  * The two back yards are deliberately DIFFERENT, not mirrored dressing (SPEC s2):
  *   ORANGE (-z): glasshouse, propped cold frames + red flowers, white curved-roof carport,
- *                crate store, circular patio at the stair foot, STRAIGHT stone run, 2 holes.
- *   WHITE  (+z): rounded garden pod, sand pit, green shuffleboard court, CURVED stone run,
- *                3 holes. Front lawns: RED bank on orange, BLUE on white.
+ *                crate store, circular patio off the deck, STRAIGHT stone run, 2 holes.
+ *   WHITE  (+z): rounded garden pod, sand pit, aqua shuffleboard court, CURVED stone run
+ *                out to the near gate, 3 holes. Front lawns: RED bank on orange, BLUE on white.
  * Everything goes through three instancers (box / cylinder / icosphere), so the module
  * costs one draw call per geometry+material pair.
+ *
+ * -------------------------------------------------------------- y ladder
+ * ground.ts stands the lawns and both back yards on a plateau whose TOP is
+ * KERB_HEIGHT + 0.001. Every flat feature here was once authored from y=0 as a
+ * 60-140 mm THICKNESS, so patio, slab ring, court, markings, sand fill and both
+ * stone runs were all built inside the grass: every measurement fine, every frame
+ * bare striped lawn. A flat feature is now a TOP, not a thickness - a slab rising
+ * from y=0 to its rung, never a floating plate, so the step down to the lawn is
+ * always closed by the slab's own side face.
+ *
+ *   0.141  T_LAWN ... ground.ts's plateau. NOT ours - it is the floor we dress.
+ *   0.171  T_STEP ... stepping stones, and the pale surrounds (patio ring, court apron)
+ *   0.186  T_SAND ... sand pit fill, held 114 mm below its timber kerb
+ *   0.201  T_SURF ... what those surrounds frame: the patio disc and the court bed
+ *   0.226  T_MARK ... court markings, over the bed
+ *
+ * Rungs are >= 15 mm apart: the aerial reads this yard from ~95 m, where a 24-bit
+ * buffer resolves about 7 mm (ground.ts derives it), so 15 mm is two resolvable
+ * steps. Overlapping footprints never share a rung; things that only abut (the sand
+ * fill and its kerb) may. Nothing flat here is collided - the player's floor is the
+ * plateau top at KERB_HEIGHT, and a 60 mm patio is dressing, not a step.
  */
 import * as THREE from 'three';
 import type { AABB, BuildContext, Builder, BuildResult } from '../core/kit';
@@ -17,8 +38,8 @@ import type { HouseSide } from '../core/layout';
 import {
   BACK_FENCE, BOUND_X_MIN, BOUND_Z, CANOPY_LEN, DECK_LEN, DECK_OUT, FENCE_H,
   FRONT_LAWN_OUTER, GARAGE_LEN, HEAD_CENTER_X, HEAD_RADIUS, HOUSES, HOUSE_BACK,
-  HOUSE_HALF_LEN, KERB_WIDTH, ORANGE, PAVEMENT_OUTER, ROAD_HALF_WIDTH, ROAD_X_MAX,
-  ROAD_X_MIN, THIRD_HOUSE_X, WHITE, YARD_X_MAX, YARD_X_MIN,
+  HOUSE_HALF_LEN, KERB_HEIGHT, KERB_WIDTH, ORANGE, PAVEMENT_OUTER, ROAD_HALF_WIDTH,
+  ROAD_X_MAX, ROAD_X_MIN, WHITE, YARD_X_MAX, YARD_X_MIN,
 } from '../core/layout';
 
 // ---------------------------------------------------------------- derived frame
@@ -26,8 +47,20 @@ const YARD_W = YARD_X_MAX - YARD_X_MIN;
 const YARD_D = BACK_FENCE - HOUSE_BACK;
 const LAWN_D = FRONT_LAWN_OUTER - PAVEMENT_OUTER;
 const PAVE_MID = (ROAD_HALF_WIDTH + KERB_WIDTH + PAVEMENT_OUTER) / 2;
-/** boundary fence sits between the turning head and the third house's plot */
-const BOUNDARY_X = (HEAD_CENTER_X + HEAD_RADIUS + THIRD_HOUSE_X) / 2;
+
+// ---------------------------------------------------------------- y ladder
+const T_LAWN = KERB_HEIGHT + 0.001;   // ground.ts's lawn / yard plateau top
+const T_STEP = T_LAWN + 0.030;        // stepping stones, patio ring, court apron
+const T_SAND = T_LAWN + 0.045;        // sand pit fill
+const T_SURF = T_LAWN + 0.060;        // patio disc, court bed
+const T_MARK = T_LAWN + 0.085;        // court markings
+
+/**
+ * Boundary fence at the cul-de-sac, hard against the turning head's kerb ring.
+ * Halfway to THIRD_HOUSE_X put it at x 37.8, inside that house's body (36.69-43.31):
+ * the aerial had the fence going into the roof one side and out the other.
+ */
+const BOUNDARY_X = HEAD_CENTER_X + HEAD_RADIUS + KERB_WIDTH;
 
 /** x at fraction t across a back yard */
 const yx = (t: number): number => YARD_X_MIN + t * YARD_W;
@@ -110,12 +143,24 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   const SLAB = mat.painted(PAL.concrete, 0.95, 0);        // pale dwarf walls / plinths
   const SOIL = mat.painted(PAL.dirt, 1, 0);
   const FLOWER = mat.painted(PAL.carRed, 0.8, 0);
-  const COURT = mat.painted(PAL.treeLeaf, 0.88, 0);       // painted shuffleboard green
+  // treeLeaf (0x3f6b30) on lawn (0x4c7a33) was the same hue at the same value -
+  // invisible even raised. carTeal is the greenest blue-green in the palette: still
+  // SPEC's "green court", but it separates from mown grass in hue AND value, and
+  // unlike a darker green it survives the tree shadow across this yard.
+  const COURT = mat.painted(PAL.carTeal, 0.85, 0);        // painted shuffleboard surface
   const LAMP = mat.painted(PAL.terracotta, 0.45, 0.2);    // orange lamp head
 
   /** rotate a local offset into world space about (x,z) by yaw ry */
   const l2w = (x: number, z: number, ry: number, ox: number, oz: number): [number, number] =>
     [x + ox * Math.cos(ry) + oz * Math.sin(ry), z - ox * Math.sin(ry) + oz * Math.cos(ry)];
+
+  /** A flat feature: a slab from y=0 to a rung. `top` is a T_* rung, NOT a thickness. */
+  const padBox = (m: THREE.Material, w: number, d: number,
+                  x: number, z: number, top: number, ry = 0): void =>
+    B.put(m, w, top, d, x, top / 2, z, ry);
+  const padDisc = (m: THREE.Material, dia: number,
+                   x: number, z: number, top: number): void =>
+    C.put(m, dia, top, dia, x, top / 2, z);
 
   // ---------------------------------------------------------------- fences
   const BOARD_P = 0.2, BOARD_W = 0.17, BOARD_T = 0.06, POST_P = 2.45;
@@ -324,21 +369,23 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     h.side > 0 ? Math.PI : 0, h.side === ORANGE.side ? PAL.applianceRed : PAL.applianceBlue);
 
   // ---------------------------------------------------------------- stepping stones
+  /** a run of n stones along f(u); instanced, never collided, sits on T_STEP */
   function stones(n: number, f: (u: number) => [number, number]): void {
     for (let i = 0; i < n; i++) {
-      const [sx, sz] = f(i / (n - 1));                     // instanced, never collided
-      C.put(PAVE, rr(0.62, 0.8), 0.08, rr(0.56, 0.72), sx, 0.04, sz, rand() * Math.PI);
+      const [sx, sz] = f(i / (n - 1));
+      C.put(PAVE, rr(0.62, 0.8), T_STEP, rr(0.56, 0.72), sx, T_STEP / 2, sz,
+        rand() * Math.PI);
     }
   }
 
   // ================================ ORANGE back yard (-z) ================================
   {
     const H = ORANGE;
-    // circular patio at the foot of the rear stair (the stair itself is another module)
+    // circular patio off the rear deck (the deck and its stair are another module)
     const pr = DECK_LEN * 0.36;
     const pxx = H.deckX, pzz = yz(H, (DECK_OUT + pr * 1.12) / YARD_D);  // clear of the deck
-    C.put(PAVE, pr * 2, 0.1, pr * 2, pxx, 0.05, pzz);
-    C.put(SLAB, pr * 2.2, 0.06, pr * 2.2, pxx, 0.03, pzz);
+    padDisc(SLAB, pr * 2.2, pxx, pzz, T_STEP);   // pale kerb ring, 30 mm proud of the lawn
+    padDisc(PAVE, pr * 2, pxx, pzz, T_SURF);     // the terrace itself, 30 mm over the ring
 
     // glasshouse, tucked behind the garage end
     const gxx = yx(0.16), gzz = yz(H, 0.62), gw = 3.5, gd = 2.7, gwall = 1.75, grise = 1.0;
@@ -392,8 +439,15 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     }
     colliders.push(aabbSlab(cxx, 0, czz, cu * 2.2, cu * 3, cu * 2.2));
 
-    // a straight stone run: patio -> glasshouse door
-    stones(15, (u) => [pxx + (gxx - pxx) * u, pzz + (gzz + gd / 2 + 0.7 - pzz) * u]);
+    // a straight stone run: patio rim -> glasshouse door. It starts OUTSIDE the ring,
+    // not at the disc centre, so no stone is ever laid on top of the patio.
+    const dx0 = gxx - pxx, dz0 = (gzz + gd / 2 + 0.7) - pzz;
+    const run = Math.hypot(dx0, dz0);
+    const u0 = (pr * 1.1 + 0.65) / run;
+    stones(15, (u) => {
+      const t = u0 + (1 - u0) * u;
+      return [pxx + dx0 * t, pzz + dz0 * t];
+    });
   }
 
   // ================================ WHITE back yard (+z) ================================
@@ -408,24 +462,27 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     B.put(mat.windowDark, 0.92, 1.4, 0.14, pxx, 1.06, pzz - pr * 0.97);
     colliders.push(aabbSlab(pxx, 0, pzz, pr * 2.1, 2.65, pr * 2.1));
 
-    // sand pit with a low timber kerb
+    // sand pit: fill on T_SAND, kerb still founded at y=0 so it frames the sand
     const sx0 = yx(0.62), sz0 = yz(H, 0.78), sw = 4.0, sd = 3.0, kb = 0.24;
-    B.put(mat.sand, sw, 0.14, sd, sx0, 0.07, sz0);
+    padBox(mat.sand, sw, sd, sx0, sz0, T_SAND);
     for (const s of [-1, 1]) {
       B.put(mat.timber, kb, 0.3, sd + kb * 2, sx0 + s * (sw / 2 + kb / 2), 0.15, sz0);
       B.put(mat.timber, sw, 0.3, kb, sx0, 0.15, sz0 + s * (sd / 2 + kb / 2));
     }
 
-    // shuffleboard court, long axis along x
-    const qx = yx(0.5), qz = yz(H, 0.44), qL = 10.4, qW = 2.3;
-    B.put(COURT, qL, 0.07, qW, qx, 0.035, qz);
+    // shuffleboard court, long axis along x: pale apron, aqua bed, white markings
+    const qx = yx(0.5), qz = yz(H, 0.44), qL = 10.4, qW = 2.3, qIn = 0.09;
+    padBox(SLAB, qL + 0.7, qW + 0.7, qx, qz, T_STEP);
+    padBox(COURT, qL, qW, qx, qz, T_SURF);
+    /** a painted line; inset from the bed edge so no face is coplanar with it */
     const seg = (x0: number, z0: number, x1: number, z1: number, wdt: number): void => {
-      B.put(LINE, wdt, 0.025, Math.hypot(x1 - x0, z1 - z0), (x0 + x1) / 2, 0.08, (z0 + z1) / 2,
-            Math.atan2(x1 - x0, z1 - z0));
+      padBox(LINE, wdt, Math.hypot(x1 - x0, z1 - z0), (x0 + x1) / 2, (z0 + z1) / 2,
+        T_MARK, Math.atan2(x1 - x0, z1 - z0));
     };
+    const qHL = qL / 2 - qIn, qHW = qW / 2 - qIn;
     for (const s of [-1, 1]) {
-      seg(qx - qL / 2, qz + s * qW / 2, qx + qL / 2, qz + s * qW / 2, 0.08);   // side lines
-      seg(qx + s * qL * 0.49, qz - qW / 2, qx + s * qL * 0.49, qz + qW / 2, 0.08);
+      seg(qx - qHL, qz + s * qHW, qx + qHL, qz + s * qHW, 0.08);   // side lines
+      seg(qx + s * qL * 0.49, qz - qHW, qx + s * qL * 0.49, qz + qHW, 0.08);
       const tip = qx + s * qL * 0.29, bse = qx + s * qL * 0.47, hw = qW * 0.4;
       seg(tip, qz, bse, qz - hw, 0.07);
       seg(tip, qz, bse, qz + hw, 0.07);
@@ -435,11 +492,14 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
       }
     }
 
-    // a curved stone run: deck foot -> past the sand pit -> the far fence hole
-    const ax = H.deckX, az = yz(H, (DECK_OUT + 0.9) / YARD_D);
-    const bx = yx(0.86), bz = yz(H, 0.97);
-    stones(17, (u) => {
-      const mx = yx(0.45), mz = yz(H, 0.86);                       // bezier control
+    // A curved stone run: deck foot -> round the garden pod -> the NEAR fence hole.
+    // Aimed at the FAR hole it crossed the court and stood in the sand pit - invisible
+    // while everything was buried, a row of slabs in the sand once it is not, and the
+    // corridor between court apron and pit kerb is only 0.57 m. So it goes the other way.
+    const ax = H.deckX - DECK_LEN * 0.15, az = yz(H, (DECK_OUT + 0.9) / YARD_D);
+    const bx = yx(0.21), bz = yz(H, 0.94);
+    stones(9, (u) => {
+      const mx = yx(0.30), mz = yz(H, 0.79);                       // bezier control
       const k = (1 - u) * (1 - u), j = 2 * (1 - u) * u, i2 = u * u;
       return [k * ax + j * mx + i2 * bx, k * az + j * mz + i2 * bz];
     });
