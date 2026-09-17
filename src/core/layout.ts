@@ -16,7 +16,7 @@
 
 // ---------------------------------------------------------------- street
 export const ROAD_HALF_WIDTH = 4.6;
-export const KERB_HEIGHT = 0.14;
+export const KERB_HEIGHT = 0.15;
 export const KERB_WIDTH = 0.3;
 export const PAVEMENT_OUTER = 7.2;        // |z| where pavement ends and lawn begins
 export const ROAD_X_MIN = -52;            // runs off-map toward the plaza

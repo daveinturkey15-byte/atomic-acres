@@ -20,10 +20,15 @@ import { EYE_HEIGHT, SPAWN_A } from './layout';
 const HALF_W = 0.3;          // player half-width (0.6 m capsule)
 const BODY_H = 1.78;         // full standing height
 const STEP_UP = 0.38;        // kerbs, stair treads, low ledges
-const GRAVITY = 24.0;
-const JUMP_V = 7.4;
-const WALK = 5.0;
-const SPRINT = 8.1;
+// Movement tuned to Black Ops 2 rather than picked by feel. BO2 is a Quake-lineage
+// engine where 1 unit = 1 inch, gravity is 800 units/s^2 = 20.32 m/s^2, and a jump
+// clears roughly 0.6 m - CoD jumps are LOW, which is a large part of why the games
+// feel grounded. The previous numbers gave a 1.14 m leap, closer to an arena shooter.
+//   jump speed for height h under g:  v = sqrt(2*g*h)  ->  sqrt(2*20.32*0.6) = 4.94
+const GRAVITY = 20.32;
+const JUMP_V = 4.94;         // ~0.60 m apex
+const WALK = 4.8;            // ~190 units/s, CoD base
+const SPRINT = 6.6;          // ~1.37x base, BO2 sprint multiplier
 const ACCEL = 62.0;
 const FRICTION = 11.5;
 const MAX_DT = 1 / 20;       // clamp: never integrate more than a 50 ms step
