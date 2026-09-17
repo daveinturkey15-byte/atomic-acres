@@ -107,7 +107,7 @@ export function buildMaterials(): MaterialLibrary {
       c.beginPath(); c.moveTo(i * cell, 0); c.lineTo(i * cell, s); c.stroke();
       c.beginPath(); c.moveTo(0, i * cell); c.lineTo(s, i * cell); c.stroke();
     }
-    speckle(c, s, 2200, 0.09);
+    speckle(c, s, 900, 0.045);
   });
 
   // ---- mown lawn with alternating stripes (very visible in the aerial)
@@ -120,8 +120,8 @@ export function buildMaterials(): MaterialLibrary {
     c.globalAlpha = 0.35;
     for (let i = 0; i < 8; i += 2) c.fillRect(0, i * band, s, band);
     c.globalAlpha = 1;
-    speckle(c, s, 3000, 0.22);
-    speckle(c, s, 1200, 0.1, false);
+    speckle(c, s, 1500, 0.11);
+    speckle(c, s, 900, 0.07, false);
   });
 
   const asphaltTex = tex(512, 22, (c, s) => {
@@ -214,7 +214,9 @@ export function buildMaterials(): MaterialLibrary {
       color: PAL.glass, roughness: 0.06, metalness: 0,
       transparent: true, opacity: 0.42, envMapIntensity: 1.4,
     }),
-    windowDark: std({ color: 0x1d2730, roughness: 0.16, metalness: 0.25 }),
+    windowDark: std({
+      color: 0x56707e, roughness: 0.11, metalness: 0.68, envMapIntensity: 1.7,
+    }),
     timber: std({ map: boardTex(PAL.timber, PAL.timberDark, 8), roughness: 0.9, metalness: 0 }),
     timberDark: std({ map: boardTex(PAL.timberDark, 0x4d3116, 8), roughness: 0.92, metalness: 0 }),
     deckBoards: std({ map: boardTex(0xc08a50, PAL.timberDark, 10), roughness: 0.86, metalness: 0 }),

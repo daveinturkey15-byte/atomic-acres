@@ -36,6 +36,8 @@ export class Player {
   private keys = new Set<string>();
   private colliders: AABB[] = [];
   private locked = false;
+  /** world-space wish direction injected by the traversability probe, or null */
+  private probeWish: { x: number; z: number } | null = null;
 
   constructor(private camera: THREE.PerspectiveCamera, private dom: HTMLElement) {
     this.state = {
@@ -50,6 +52,15 @@ export class Player {
 
   setColliders(list: AABB[]): void {
     this.colliders = list;
+  }
+
+  /**
+   * Drive the controller from a script in WORLD space. The probe must exercise the
+   * real movement code - collision, step-up, gravity and all - because an approximation
+   * would pass exactly the routes the real controller fails.
+   */
+  setProbeWish(x: number | null, z = 0): void {
+    this.probeWish = x === null ? null : { x, z };
   }
 
   teleport(x: number, y: number, z: number, yaw = 0, pitch = 0): void {
@@ -151,13 +162,20 @@ export class Player {
     if (len > 0) { wx /= len; wz /= len; }
 
     const sin = Math.sin(st.yaw), cos = Math.cos(st.yaw);
-    const dirX = wx * cos - wz * sin;
-    const dirZ = wx * sin + wz * cos;
+    let dirX = wx * cos - wz * sin;
+    let dirZ = wx * sin + wz * cos;
+    let moving = len > 0;
+
+    if (this.probeWish) {
+      dirX = this.probeWish.x;
+      dirZ = this.probeWish.z;
+      moving = true;
+    }
 
     const speed = this.keys.has('ShiftLeft') || this.keys.has('ShiftRight') ? SPRINT : WALK;
 
     // ---- horizontal accelerate / friction
-    if (len > 0) {
+    if (moving) {
       st.vel.x += dirX * ACCEL * dt;
       st.vel.z += dirZ * ACCEL * dt;
       const h = Math.hypot(st.vel.x, st.vel.z);

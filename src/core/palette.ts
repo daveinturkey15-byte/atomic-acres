@@ -22,17 +22,17 @@ export const PAL = {
   terracottaDk:  0x9a5134,
   houseCream:    0xe6dfd0,   // ground floor + garage box
   roofWhite:     0xeae6dc,   // swooping butterfly roof
-  solarPanel:    0x2a3444,
-  barrelRoof:    0x3b3d42,   // dark garage barrel vaults
+  solarPanel:    0x39455a,
+  barrelRoof:    0x585c64,   // dark garage barrel vaults
 
   // --- white house (the +z house)
   capsuleWhite:  0xf0ece2,
   capsuleTrim:   0x6d93ad,   // blue trim accent
   roofGlazing:   0x93b3c6,   // pale blue-grey glazed roof
-  rooftopDrum:   0x3a3f46,
+  rooftopDrum:   0x565b63,
 
   // --- third house, beyond the cul-de-sac
-  thirdRoof:     0x3c3f44,   // dark pitched roof
+  thirdRoof:     0x585d65,   // dark pitched roof
   thirdWall:     0xd8d2c6,
   windowBand:    0xf2f4f3,
 
@@ -59,14 +59,14 @@ export const PAL = {
   mannequin:     0xd9cfc0,
 
   // --- sky / atmosphere
-  skyTop:        0x6f9fd0,
-  skyHorizon:    0xd8e4ee,
+  skyTop:        0x9dbcdd,
+  skyHorizon:    0xdfe8ee,
   sunColor:      0xfff2dc,
   bounce:        0xa8a08c,   // ground bounce into shadow
-  mountain:      0x7f93a8,
-  mountainFar:   0x9fb0c2,
-  cityFar:       0xb9c4d0,
-  fog:           0xcdd9e4,
+  mountain:      0xa6b4c4,
+  mountainFar:   0xc6d0dc,
+  cityFar:       0xc6cfd9,
+  fog:           0xd5dee6,
 } as const;
 
 export type PaletteKey = keyof typeof PAL;

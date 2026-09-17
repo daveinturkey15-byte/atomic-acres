@@ -51,13 +51,13 @@ function makeSky(): THREE.Mesh {
         vec3 d = normalize(vWorld);
         // horizon -> zenith ramp, biased so most of the visible sky is pale
         float h = clamp(d.y, 0.0, 1.0);
-        vec3 col = mix(horizonColor, topColor, pow(h, 0.62));
+        vec3 col = mix(horizonColor, topColor, pow(h, 0.85));
         // broad warm glow around the sun, plus a hotter core
         float s = max(dot(d, normalize(sunDir)), 0.0);
         col += sunColor * pow(s, 8.0) * 0.28;
         col += sunColor * pow(s, 180.0) * 0.9;
         // slight warm haze right at the horizon band
-        col = mix(col, horizonColor * 1.04, smoothstep(0.16, -0.04, d.y));
+        col = mix(col, horizonColor * 1.02, smoothstep(0.30, -0.04, d.y));
         gl_FragColor = vec4(col, 1.0);
       }
     `,
@@ -83,8 +83,38 @@ export function createWorld(canvasParent: HTMLElement): World {
   canvasParent.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(PAL.fog, 130, 620);
-  scene.add(makeSky());
+  scene.fog = new THREE.FogExp2(PAL.fog, 0.0031);
+
+  const sky = makeSky();
+  scene.add(sky);
+
+  // ---- environment map, prefiltered from the sky itself.
+  // Without this every metalness>0.7 material (chrome bumpers, trim, steel) has no
+  // indirect specular to reflect and renders near-BLACK. That is not a "dark metal"
+  // look, it is a missing term. Generating it from the sky dome keeps the reflections
+  // consistent with the lighting for free.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  pmrem.compileEquirectangularShader();
+  const envScene = new THREE.Scene();
+  const envSky = makeSky();
+  envScene.add(envSky);
+  // a large dim ground disc so the lower hemisphere reflects bleached concrete,
+  // not the black void below the dome
+  const envGround = new THREE.Mesh(
+    new THREE.CircleGeometry(880, 24),
+    new THREE.MeshBasicMaterial({ color: new THREE.Color(PAL.bounce), side: THREE.DoubleSide }),
+  );
+  envGround.rotation.x = -Math.PI / 2;
+  envGround.position.y = -1;
+  envScene.add(envGround);
+  const envRT = pmrem.fromScene(envScene, 0.04);
+  scene.environment = envRT.texture;
+  scene.environmentIntensity = 1.0;
+  envSky.geometry.dispose();
+  (envSky.material as THREE.Material).dispose();
+  envGround.geometry.dispose();
+  envGround.material.dispose();
+  pmrem.dispose();
 
   const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.08, 1400);
 
@@ -132,6 +162,7 @@ export function createWorld(canvasParent: HTMLElement): World {
 
   const dispose = () => {
     removeEventListener('resize', resize);
+    envRT.dispose();
     renderer.dispose();
   };
 

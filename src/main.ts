@@ -73,13 +73,23 @@ let fps = 0;
 let acc = 0;
 let last = performance.now();
 
+/**
+ * When the capture harness drives a camera station it must OWN the camera. The
+ * animation loop syncs the camera to the player every frame, so without this flag
+ * `goto()` is overwritten before the screenshot is taken and every station silently
+ * photographs the spawn view - identical stats at every station is the tell.
+ */
+let cameraHeldByQA = false;
+
 function frame(): void {
   const now = performance.now();
   const dt = (now - last) / 1000;
   last = now;
 
-  player.update(dt);
-  world.renderer.render(world.scene, world.camera);
+  if (!cameraHeldByQA) {
+    player.update(dt);
+    world.renderer.render(world.scene, world.camera);
+  }
 
   frames++;
   acc += dt;
@@ -107,10 +117,14 @@ interface QA {
   stations: Record<string, Station>;
   goto: (name: string) => boolean;
   spawn: (team: 'a' | 'b') => void;
+  release: () => void;
   stats: () => Record<string, unknown>;
   moduleStats: typeof moduleStats;
   colliderCount: number;
   render: () => void;
+  probeReset: (x: number, z: number) => void;
+  probeWalkTo: (tx: number, tz: number, maxSteps: number) => boolean;
+  probePos: () => [number, number, number];
 }
 
 const qa: QA = {
@@ -119,6 +133,7 @@ const qa: QA = {
   goto(name) {
     const s = STATIONS[name];
     if (!s) return false;
+    cameraHeldByQA = true;
     world.camera.position.set(s.pos[0], s.pos[1], s.pos[2]);
     world.camera.rotation.set(0, 0, 0, 'YXZ');
     world.camera.rotation.y = s.yaw;
@@ -130,7 +145,11 @@ const qa: QA = {
   },
   spawn(team) {
     const s = team === 'a' ? SPAWN_A : SPAWN_B;
+    cameraHeldByQA = false;
     player.teleport(s.x, 0, s.z, s.yaw);
+  },
+  release() {
+    cameraHeldByQA = false;
   },
   stats() {
     const i = world.renderer.info;
@@ -149,6 +168,36 @@ const qa: QA = {
   colliderCount: colliders.length,
   render() {
     world.renderer.render(world.scene, world.camera);
+  },
+
+  // ---- traversability probe. Drives the REAL controller at a fixed timestep.
+  probeReset(x, z) {
+    cameraHeldByQA = true;   // stop the rAF loop double-stepping the player
+    player.setProbeWish(null);
+    player.teleport(x, 0, z, 0);
+  },
+  probeWalkTo(tx, tz, maxSteps) {
+    const dt = 1 / 60;
+    let closest = Infinity;
+    let sinceImproved = 0;
+    for (let i = 0; i < maxSteps; i++) {
+      const p = player.state.pos;
+      const dx = tx - p.x;
+      const dz = tz - p.z;
+      const d = Math.hypot(dx, dz);
+      if (d < 0.7) { player.setProbeWish(null); return true; }
+      // bail early once it is clearly wedged rather than burning the whole budget
+      if (d < closest - 0.02) { closest = d; sinceImproved = 0; }
+      else if (++sinceImproved > 120) break;
+      player.setProbeWish(dx / d, dz / d);
+      player.update(dt);
+    }
+    player.setProbeWish(null);
+    return false;
+  },
+  probePos() {
+    const p = player.state.pos;
+    return [p.x, p.y, p.z];
   },
 };
 

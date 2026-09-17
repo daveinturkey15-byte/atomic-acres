@@ -6,10 +6,14 @@
  * `ref` is `null` is a gameplay/diagnostic view, not a fidelity view, and must never
  * be used to claim the map "looks right".
  *
- * Stations are OUTSIDE collision on purpose for the overview shots - a camera placed
- * inside geometry flatters every aggregate you measure from it.
+ * YAW CONVENTION (get this wrong and you photograph the wrong building - it happened):
+ *   the camera's forward is (-sin(yaw), 0, -cos(yaw)), so
+ *     yaw =  0      faces -z      yaw =  PI     faces +z
+ *     yaw = +PI/2   faces -x      yaw = -PI/2   faces +x
+ * Overview stations sit OUTSIDE the play area on purpose - a camera inside geometry
+ * flatters every aggregate measured from it.
  */
-import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HEAD_CENTER_X, BACK_FENCE } from './layout';
+import { SPAWN_A, SPAWN_B, EYE_HEIGHT, BACK_FENCE } from './layout';
 
 export interface Station {
   pos: [number, number, number];
@@ -26,51 +30,63 @@ const D = Math.PI / 180;
 export const STATIONS: Record<string, Station> = {
   // ---- fidelity stations, each paired to a BO2-2025 reference frame
   aerial: {
-    pos: [-6, 78, 44],
-    yaw: 12 * D,
-    pitch: -58 * D,
-    fov: 60,
+    pos: [-4, 82, 52],
+    yaw: 8 * D,
+    pitch: -57 * D,
+    fov: 58,
     ref: 'NT02 Nuketown_2025_Aerial_View_BOII.jpg',
     note: 'Whole-map plan read. Check: turning head is a CIRCLE at +x, third house '
-      + 'beyond it, mow-stripe lawns, two houses of different architecture.',
+      + 'beyond it, mow-stripe lawns, two houses of DIFFERENT architecture, and the '
+      + 'town sitting in desert rather than on an endless concrete slab.',
   },
   yardOrange: {
-    pos: [4.5, 4.2, -(BACK_FENCE - 4)],
-    yaw: 168 * D,
-    pitch: -7 * D,
-    fov: 66,
+    pos: [10, 8.5, -(BACK_FENCE + 1)],
+    yaw: 149.5 * D,
+    pitch: -14 * D,
+    fov: 62,
     ref: 'NT03 Nuketown_2025_BOII.jpg',
-    note: 'THE owner viewpoint. Elevated in the orange back yard looking at the orange '
-      + 'house. Check: butterfly roof sweep, terracotta upper over cream lower, '
-      + 'exterior stair LEFT, barrel-vault garage RIGHT.',
+    note: 'THE owner viewpoint - elevated over the orange back yard looking at the '
+      + 'orange house. Check: butterfly roof sweep, terracotta upper over cream lower, '
+      + 'exterior stair on the LEFT, barrel-vault garage on the RIGHT.',
+  },
+  yardWhite: {
+    pos: [-10, 8.5, BACK_FENCE + 1],
+    yaw: -30.5 * D,
+    pitch: -14 * D,
+    fov: 62,
+    ref: 'NT02 Nuketown_2025_Aerial_View_BOII.jpg',
+    note: 'The answering view over the white back yard. Check: rounded capsule volumes, '
+      + 'blue-grey roof glazing, rooftop drum, garden pod / sand pit / shuffleboard, '
+      + 'and the garage again on the RIGHT.',
   },
   streetElevation: {
-    pos: [-2.0, EYE_HEIGHT, -8.4],
-    yaw: 186 * D,
-    pitch: 2 * D,
+    pos: [-3, EYE_HEIGHT, 4.0],
+    yaw: 0,
+    pitch: 4 * D,
     fov: 70,
     ref: 'NT04 Nuketown_2025_Sniper_BOII.jpg',
-    note: 'Eye level on the pavement facing the orange house street face. Check: tall '
-      + 'narrow window band with vertical mullions, red appliance bank on the lawn, '
-      + 'chain-and-post edging, paving slab scale, deep cantilevered eave.',
+    note: 'Eye level in the road facing the ORANGE house street face. Check: tall '
+      + 'narrow window band with vertical mullions, RED appliance bank on the lawn, '
+      + 'chain-and-post edging, paving slab scale, deep cantilevered eave. Glazing '
+      + 'must reflect sky, not read as black holes.',
   },
   plaza: {
-    pos: [-40, 2.6, 1.5],
-    yaw: 92 * D,
-    pitch: 1 * D,
+    pos: [6, 2.6, -1.0],
+    yaw: 90 * D,
+    pitch: -1 * D,
     fov: 72,
     ref: 'NT05 Nuketown_2025_Load_Screen_BOII.png',
-    note: 'Down the road stem from the open -x end, looking back into the map. Check: '
-      + 'Nuketown pylon sign with atom motif, coach, classic car, saucer house, dome, '
-      + 'tower, flags, hazy skyline.',
+    note: 'Down the road stem toward the open -x end. Check: Nuketown pylon sign with '
+      + 'the atom motif, space-needle tower, hypar petal, flags, teal classic car, '
+      + 'hazy blue-grey mountains behind.',
   },
   turningHead: {
-    pos: [HEAD_CENTER_X - 20, 3.0, -1.0],
-    yaw: 84 * D,
-    pitch: -2 * D,
-    fov: 70,
+    pos: [6, 2.6, 1.0],
+    yaw: -90 * D,
+    pitch: -1 * D,
+    fov: 72,
     ref: 'NT02 Nuketown_2025_Aerial_View_BOII.jpg',
-    note: 'Along the street toward the cul-de-sac. Check: circular kerbed head, coach '
+    note: 'Along the street toward the CUL-DE-SAC. Check: circular kerbed head, coach '
       + 'on the -z side, box truck + dark saloon on the +z side, boundary fence and '
       + 'the third house with its red car beyond.',
   },
@@ -92,7 +108,7 @@ export const STATIONS: Record<string, Station> = {
   },
   midStreet: {
     pos: [0, EYE_HEIGHT, 0],
-    yaw: 0,
+    yaw: Math.PI,
     pitch: 0,
     ref: null,
     note: 'Standing in the middle of the road looking at the white house.',

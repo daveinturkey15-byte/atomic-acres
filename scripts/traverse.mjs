@@ -1,0 +1,155 @@
+/**
+ * Traversability probe.
+ *
+ * A map that photographs well and cannot be walked is not a map. This drives the real
+ * player controller (not a raycast approximation) along a set of routes a player must
+ * be able to take, and reports where it gets stuck.
+ *
+ *   node scripts/traverse.mjs
+ */
+import { chromium } from 'playwright';
+import { spawn } from 'node:child_process';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import net from 'node:net';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+function freePort() {
+  return new Promise((res, rej) => {
+    const s = net.createServer();
+    s.listen(0, '127.0.0.1', () => {
+      const p = s.address().port;
+      s.close(() => res(p));
+    });
+    s.on('error', rej);
+  });
+}
+
+async function waitForServer(url, ms = 60000) {
+  const t0 = Date.now();
+  while (Date.now() - t0 < ms) {
+    try { if ((await fetch(url)).ok) return true; } catch { /* not up */ }
+    await new Promise((r) => setTimeout(r, 250));
+  }
+  return false;
+}
+
+const port = await freePort();
+const server = spawn(
+  process.platform === 'win32' ? 'npx.cmd' : 'npx',
+  ['vite', '--port', String(port), '--strictPort'],
+  { cwd: ROOT, stdio: 'ignore', shell: process.platform === 'win32' },
+);
+const url = 'http://localhost:' + port + '/';
+if (!await waitForServer(url)) {
+  console.error('[traverse] server never came up');
+  server.kill();
+  process.exit(1);
+}
+
+const browser = await chromium.launch();
+const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
+await page.goto(url, { waitUntil: 'load', timeout: 90000 });
+await page.waitForFunction(() => window.__NT && window.__NT.ready === true, { timeout: 90000 });
+await page.waitForTimeout(600);
+
+/**
+ * Routes a player must be able to walk. Waypoints are world x/z and must stay OUT of
+ * the house footprints - going around is the player's normal path; going through needs
+ * a door, which the door scan below locates rather than assumes.
+ */
+const ROUTES = [
+  { name: 'spawnA -> spawnB, west flank',
+    pts: [[0, -29], [-13, -27], [-20, -16], [-20, 0], [-20, 16], [-13, 27], [0, 29]] },
+  { name: 'spawnA -> spawnB, east flank',
+    pts: [[0, -29], [13, -27], [16, -16], [16, -8], [16, 8], [16, 16], [13, 27], [0, 29]] },
+  { name: 'spawnA -> cul-de-sac turning head',
+    pts: [[0, -29], [13, -27], [16, -16], [16, -8], [20, -1], [26, -0.5]] },
+  { name: 'spawnA -> open end of the street',
+    pts: [[0, -29], [-13, -27], [-20, -10], [-30, -2], [-44, 0]] },
+  { name: 'along the street, open end -> head',
+    pts: [[-44, 0], [-24, 0], [-8, 0], [8, 0], [20, 0], [26, 0]] },
+];
+
+const results = await page.evaluate(async (routes) => {
+  const nt = window.__NT;
+  const out = [];
+  for (const route of routes) {
+    nt.probeReset(route.pts[0][0], route.pts[0][1]);
+    let stuck = null;
+    let reached = 0;
+    for (let i = 1; i < route.pts.length; i++) {
+      const [tx, tz] = route.pts[i];
+      if (!nt.probeWalkTo(tx, tz, 1400)) {
+        stuck = { target: [tx, tz], at: nt.probePos() };
+        break;
+      }
+      reached = i;
+    }
+    out.push({ name: route.name, reached, legs: route.pts.length - 1, stuck });
+  }
+  return out;
+}, ROUTES);
+
+/**
+ * Door scan. Walk at the wall from 2 m out, at 0.5 m intervals along it, and record
+ * every x that gets through. This finds the doors instead of assuming where they are,
+ * and it fails loudly if a house has no way in at all.
+ */
+const doors = await page.evaluate(() => {
+  const nt = window.__NT;
+  const FRONT = 13.6;
+  const BACK = 22.8;
+  const scan = (side, wallZ, fromOutside) => {
+    const open = [];
+    for (let x = -9.5; x <= 9.5; x += 0.5) {
+      const startZ = side * (wallZ + (fromOutside ? 2.4 : -2.4));
+      const endZ = side * (wallZ - (fromOutside ? 2.6 : -2.6));
+      nt.probeReset(x, startZ);
+      if (nt.probeWalkTo(x, endZ, 420)) open.push(+x.toFixed(1));
+    }
+    // collapse consecutive hits into spans
+    const spans = [];
+    for (const v of open) {
+      const last = spans[spans.length - 1];
+      if (last && Math.abs(v - last[1]) < 0.75) last[1] = v;
+      else spans.push([v, v]);
+    }
+    return spans;
+  };
+  return {
+    orangeStreet: scan(-1, FRONT, true),
+    orangeYard: scan(-1, BACK, false),
+    whiteStreet: scan(1, FRONT, true),
+    whiteYard: scan(1, BACK, false),
+  };
+});
+
+await browser.close();
+server.kill();
+
+let bad = 0;
+console.log('[traverse] routes:');
+for (const r of results) {
+  const ok = r.stuck === null;
+  if (!ok) bad++;
+  console.log('  ' + (ok ? 'PASS' : 'FAIL') + '  ' + r.name
+    + '  (' + r.reached + '/' + r.legs + ' legs)'
+    + (r.stuck ? '  stuck heading to ' + JSON.stringify(r.stuck.target)
+        + ' at ' + JSON.stringify(r.stuck.at.map((n) => +n.toFixed(1))) : ''));
+}
+
+console.log('\n[traverse] door scan - x spans where the player got through the wall:');
+let faceless = 0;
+for (const [k, spans] of Object.entries(doors)) {
+  if (!spans.length) faceless++;
+  const txt = spans.length
+    ? spans.map((v) => (v[0] === v[1] ? String(v[0]) : v[0] + '..' + v[1])).join(',  ')
+    : 'NONE - no way through this face';
+  console.log('  ' + k.padEnd(14) + txt);
+}
+
+console.log('\n[traverse] ' + (results.length - bad) + '/' + results.length
+  + ' routes passed;  ' + (4 - faceless) + '/4 house faces enterable');
+process.exit(bad || faceless ? 1 : 0);

@@ -62,7 +62,7 @@ let serverLog = '';
 server.stdout.on('data', (d) => { serverLog += d; });
 server.stderr.on('data', (d) => { serverLog += d; });
 
-const url = 'http://127.0.0.1:' + port + '/';
+const url = 'http://localhost:' + port + '/';
 const up = await waitForServer(url);
 if (!up) {
   console.error('[capture] server never came up. log:\n' + serverLog);
@@ -110,6 +110,18 @@ try {
   process.exit(1);
 }
 
+// Dismiss the click-to-play overlay. Without this EVERY screenshot is the overlay -
+// the renderer stats still look perfectly healthy, which is exactly how a capture set
+// can be green and show nothing.
+await page.evaluate(() => {
+  const el = document.getElementById('start');
+  if (el) el.remove();
+  const hud = document.getElementById('hud');
+  if (hud) hud.style.display = 'none';
+  const ch = document.getElementById('crosshair');
+  if (ch) ch.style.display = 'none';
+});
+
 // let a few frames run so the renderer info is populated and textures have uploaded
 await page.waitForTimeout(1200);
 
@@ -129,6 +141,8 @@ for (const name of names) {
   const file = join(OUT, (tag ? tag + '-' : '') + name + '.png');
   await page.screenshot({ path: file });
   const stats = await page.evaluate(() => window.__NT.stats());
+  // a station that renders almost nothing is a defect, not a view
+  if (stats.calls < 8) console.warn('    !! only ' + stats.calls + ' draw calls at ' + name);
   results.push({ station: name, ref: stations[name].ref, note: stations[name].note, file, stats });
   console.log('  ' + name.padEnd(16)
     + String(stats.calls).padStart(5) + ' calls  '

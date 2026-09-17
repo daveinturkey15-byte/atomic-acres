@@ -65,8 +65,11 @@ export const BOUND_Z = 38;
 export const THIRD_HOUSE_X = 40.0;        // beyond the head, past the boundary fence
 
 // ---------------------------------------------------------------- spawns
-export const SPAWN_A = { x: 0, y: 0, z: -29.0, yaw: 0 };        // orange team, faces +z
-export const SPAWN_B = { x: 0, y: 0, z: 29.0, yaw: Math.PI };   // white team, faces -z
+// Camera forward is (-sin(yaw), 0, -cos(yaw)): yaw 0 faces -z, yaw PI faces +z.
+// A spawn stands in its own back yard and must look AT its own house, i.e. inward
+// toward z=0 - spawn A from -z looks +z (PI), spawn B from +z looks -z (0).
+export const SPAWN_A = { x: 0, y: 0, z: -29.0, yaw: Math.PI }; // orange team, faces +z
+export const SPAWN_B = { x: 0, y: 0, z: 29.0, yaw: 0 };        // white team, faces -z
 
 export const EYE_HEIGHT = 1.68;
 
