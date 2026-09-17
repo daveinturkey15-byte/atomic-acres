@@ -19,6 +19,8 @@ import { buildThirdHouse } from './build/third-house';
 import { buildVehicles } from './build/vehicles';
 import { buildYards } from './build/yards';
 import { buildSkyline } from './build/skyline';
+import { buildPlaza } from './build/plaza';
+import { buildMannequins } from './build/mannequins';
 
 const BUILDERS: [string, Builder][] = [
   ['ground', buildGround],
@@ -28,6 +30,8 @@ const BUILDERS: [string, Builder][] = [
   ['vehicles', buildVehicles],
   ['yards', buildYards],
   ['skyline', buildSkyline],
+  ['plaza', buildPlaza],
+  ['mannequins', buildMannequins],
 ];
 
 const world = createWorld(document.body);

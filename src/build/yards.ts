@@ -294,39 +294,6 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     lamp(lx, lz, HEAD_CENTER_X - lx, -lz);
   }
 
-  // ---------------------------------------------------------------- mannequins
-  /** pale featureless shop dummy; some in 1960s shift dresses. No colliders - walk through. */
-  function dummy(x: number, z: number, ry: number, dress: number): void {
-    const H = 1.78 * rr(0.94, 1.06);
-    const M = mat.painted(PAL.mannequin, 0.7, 0);
-    const at = (ox: number, oz: number): [number, number] => l2w(x, z, ry, ox, oz);
-    for (const s of [-1, 1]) {
-      const [lx, lz] = at(s * 0.11, 0);
-      C.span(M, 0.05 * H, lx, 0.02, lz, lx + s * 0.02, 0.48 * H, lz);
-    }
-    S.put(M, 0.33, 0.26, 0.25, x, 0.52 * H, z, ry);               // hips
-    S.put(M, 0.36, 0.46, 0.26, x, 0.70 * H, z, ry);               // torso
-    C.put(M, 0.1, 0.09 * H, 0.1, x, 0.86 * H, z);                 // neck
-    S.put(M, 0.23, 0.26, 0.22, x, 0.93 * H, z, ry);               // head
-    for (const s of [-1, 1]) {
-      const [sx, sz] = at(s * 0.19, 0);
-      const [wx, wz] = at(s * 0.25, 0.05);
-      C.span(M, 0.055, sx, 0.80 * H, sz, wx, 0.50 * H, wz);
-    }
-    if (dress) C.put(mat.painted(dress, 0.72, 0), 0.62, 0.36 * H, 0.44, x, 0.63 * H, z, ry);
-  }
-
-  for (const [dx, dz, dr, col] of [
-    [hx(0.55), fz(ORANGE, 0.62), 0.4, 0],
-    [hx(-0.8), fz(ORANGE, 0.22), -2.0, PAL.signMaroon],           // the magenta shift dress
-    [hx(0.2), ORANGE.side * PAVE_MID, 2.6, 0],
-    [hx(-0.35), WHITE.side * PAVE_MID, 0.9, PAL.signTeal],
-    [hx(0.9), fz(WHITE, 0.5), -1.2, 0],
-    [yx(0.42), yz(ORANGE, 0.38), 1.8, 0],
-    [yx(0.5), yz(WHITE, 0.62), -0.6, PAL.carTeal],
-    [HEAD_CENTER_X - HEAD_RADIUS * 0.8, PAVE_MID * 0.4, 2.2, PAL.applianceBlue],
-  ]) dummy(dx, dz, dr, col);
-
   // ---------------------------------------------------------------- appliance banks
   /** three-unit retro cooker bank on a white cabinet - the front-lawn chirality anchor */
   function applianceBank(x: number, z: number, ry: number, top: number): void {
