@@ -38,7 +38,7 @@ async function waitForServer(url, ms = 60000) {
 const port = await freePort();
 const server = spawn(
   process.platform === 'win32' ? 'npx.cmd' : 'npx',
-  ['vite', '--port', String(port), '--strictPort'],
+  ['vite', 'preview', '--port', String(port), '--strictPort'],
   { cwd: ROOT, stdio: 'ignore', shell: process.platform === 'win32' },
 );
 const url = 'http://localhost:' + port + '/';
@@ -51,7 +51,7 @@ if (!await waitForServer(url)) {
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
 await page.goto(url, { waitUntil: 'load', timeout: 90000 });
-await page.waitForFunction(() => window.__NT && window.__NT.ready === true, { timeout: 90000 });
+await page.waitForFunction(() => window.__NT && window.__NT.ready === true, null, { timeout: 180000 });
 await page.waitForTimeout(600);
 
 /**

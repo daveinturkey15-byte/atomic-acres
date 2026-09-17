@@ -518,9 +518,11 @@ export const buildSurround: Builder = (ctx: BuildContext): BuildResult => {
       colliders.push(aabbSlab(x, y0, z, c * 1.42 + t * 0.2, 1.68, t * 1.42 + c * 0.2));
     }
 
-    // West flank, south: curved barrier + NOTICE pier, ~12 m off the walk corner.
-    barrierArc(-42, -14, 2.4, surfaceY(-42, -14));
-    plaquePier(-39.4, -12.8, -0.5, surfaceY(-39.4, -12.8), true);
+    // West flank, south: curved barrier + NOTICE pier. Moved 3 m north of the
+    // first siting: a pre-existing yard tree at (-38.9,-13.0) stood 1.1 m in
+    // front of the pier and occluded it entirely (fencechk-barrier.png).
+    barrierArc(-42, -10.8, 2.4, surfaceY(-42, -10.8));
+    plaquePier(-39.4, -9.7, -0.5, surfaceY(-39.4, -9.7), true);
     // West flank, north: straight barrier + blank pier, ~5 m off the plaza disc.
     barrierStraight(-43, 12.5, 0.35, surfaceY(-43, 12.5));
     plaquePier(-40.3, 13.1, -0.4, surfaceY(-40.3, 13.1), false);
@@ -532,10 +534,12 @@ export const buildSurround: Builder = (ctx: BuildContext): BuildResult => {
     crates(-30, 13, -0.15, surfaceY(-30, 13));
     turfRolls(-29.4, 16.0, 0.2, surfaceY(-29.4, 16.0));
     stepDiscs(-36.5, 9.5, 0.5, surfaceY(-36.5, 9.5));
-    // East flank, north: shelter mound + trefoil + blank Security board.
-    mound(32.5, 14, surfaceY(32.5, 14));
-    trefoil(28.9, 14.8, 0.5, surfaceY(28.9, 14.8));
-    security(33.1, 17.2, -0.3, surfaceY(33.1, 17.2));
+    // East flank, north: shelter mound + trefoil + blank Security board. Moved
+    // west of the first siting: a pre-existing tree at (31.8,14.3) stood inside
+    // the mound footprint and trunk-blocked the whole cluster (fencechk-mound.png).
+    mound(27.5, 15.5, surfaceY(27.5, 15.5));
+    trefoil(24.3, 16.3, 0.5, surfaceY(24.3, 16.3));
+    security(28.6, 18.8, -0.3, surfaceY(28.6, 18.8));
     // East flank, south: planter + bin + hydrant + vent, clear of terrace + bulb.
     planter(32.5, -13.5, 2.0, 1.4, surfaceY(32.5, -13.5));
     bin(35.1, -14.7, surfaceY(35.1, -14.7));

@@ -1237,30 +1237,28 @@ export const buildVehicles: Builder = (ctx) => {
 
   const APRON_Y = KERB_HEIGHT + 0.006; // must track ground.ts T_DRIVE
 
-  // DISPLAY PLINTH on the -z pavement at the -x mouth. 6.0-long plinth at
-  // x -50.5..-44.5 (inside ROAD_X_MIN -52), z -7.15..-4.65: fully on the
-  // pavement band (|z| 4.6..7.2), carriageway clear. Sedan rides the deck.
-  // The ground.ts steel gate + manhole already close the stem; not rebuilt here.
-  const plinth = makeDisplayPlinth(ctx);
-  plinth.obj.position.set(-47.5, 0, -5.9);
-  out.add(plinth.obj);
-  colliders.push(aabbSlab(-47.5, 0, -5.9, 6.15, 0.4, 2.65));
-  colliders.push(aabbSlab(-43.9, 0, -5.0, 1.1, 1.3, 0.4)); // placard post + board
-  park(makeDisplaySedan(ctx), -47.5, -5.9, 0.10, plinth.top);
-
-  // CHICANE GATE 1 — rigid truck, -z side, shallow diagonal. Far (+z) slot ~2.5 m.
+  // SLALOM GATE — rigid truck (south) + towed trailer (north) parked parallel
+  // to the kerbs at the same x, noses west, leaving a ~2.6 m central slot at
+  // z=0 the player threads straight through. Diagonal gates were tried first
+  // and walled the street: a 10 m hull within a metre of the z=0 beeline
+  // stalls the traverse walker for the whole route, and any true-3 m far-lane
+  // slot covers z=0 by construction on a 9.2 m road. The paired parallel gate
+  // is also the footage read (rigid parallel-parked at the kerb, f-FKQOEO-1ceE-153).
+  // Truck: x -40.9..-31.1, z -4.85..-1.15. Trailer: x -40.6..-31.4,
+  // z +1.46..+4.54. Slot between: ~2.6 m. Route-4 waypoint (-30,-2) stays
+  // east of both hulls; route-1 x=-20 leg is 11 m clear.
   park(makeBoxTruck(ctx),
-    -34 + nudge(),
-    -0.75,
-    NOSE_DOWN_STEM + 0.22 + skew());
+    -36 + nudge(),
+    -3.0,
+    NOSE_DOWN_STEM + 0.05 + skew());
 
-  // CHICANE GATE 2 — towed trailer, +z side, diagonal the other way.
-  // Far (-z) slot ~2.5 m.
+  // Towed trailer, north side of the slalom, nose west; drawbar runs ahead to
+  // ~-42, ramp trails east at kerb height. Ground crate on the truck's hatch
+  // side narrows the slot mouth locally to ~2.7 m — still inside the band.
   park(makeTrailer(ctx),
-    -18 + nudge(),
-    1.1,
-    NOSE_DOWN_STEM - 0.46 + skew());
-
+    -36 + nudge(),
+    3.0,
+    NOSE_DOWN_STEM - 0.05 + skew());
   // Show-condition two-tone in the open road stem, held to the orange kerb
   // side so the far lane stays open. Kept carBlue: the display sedan above is
   // the teal show car now, and plaza.ts owns the NT05 dais car.
@@ -1269,15 +1267,17 @@ export const buildVehicles: Builder = (ctx) => {
     ORANGE.side * ROAD_HALF_WIDTH * 0.52,
     0.18 + skew());
 
-  // CHICANE GATE 3 — second bus, -z side, shallow diagonal. Far (+z) slot ~4 m.
-  // West end (~9.5) stays ~3.5 m ahead of the turningHead lens at (6, 2.6, 1.0)
-  // looking +x, and the flank (~0.6 north edge) clears the lens z=1.0: the
-  // first attempt parked the hull around the camera, the second filled the
-  // frame from 3 m. East end stops short of the coach nose corner (~20.4).
-  park(makeSecondBus(ctx),
-    15.5 + nudge(),
-    -1.9,
-    NOSE_DOWN_STEM + 0.18 + skew());
+  // SECOND BUS on the head, white (+z) half, nosed down the stem — the old
+  // rigid slot. A stem gate-3 with a true ~3 m slot is geometrically exclusive
+  // with the turningHead lens standing mid-road at (6, 2.6, 1.0): any hull
+  // pinching the +z lane to 3 m covers z=1.0 and swallows the camera (tried
+  // x=9, 14 and 15.5 — inside it, then frame-filling). The head pair per NT02
+  // (coach -z, bus +z) keeps every fidelity lens clear; truck + trailer hold
+  // the stem slalom with its ~2.6 m central slot.
+  parkOnHead(makeSecondBus(ctx),
+    HEAD_CENTER_X - HEAD_RADIUS * 0.06 + nudge(),
+    WHITE.side * HEAD_RADIUS * 0.42,
+    NOSE_DOWN_STEM + skew());
 
   // The hero coach, on the orange (-z) half of the head, parked ACROSS the
   // bulb rather than square down the stem. Nosed straight at the turningHead
@@ -1288,9 +1288,9 @@ export const buildVehicles: Builder = (ctx) => {
     ORANGE.side * HEAD_RADIUS * 0.33,
     NOSE_DOWN_STEM - 0.44 + skew());
 
-  // dark blue saloon tucked in outboard on the head, white (+z) half.
-  // The rigid's old head slot stays empty: the head must not wall off now that
-  // the stem gates force the weave.
+  // dark blue saloon tucked in outboard of the second bus, white (+z) half.
+  // The head stays passable: coach -z, bus inner +z, saloon outer +z, with the
+  // route-5 end threading between coach and bus.
   parkOnHead(makeSaloon(ctx, PAL.carBlue, { fin: 0.2, twoTone: false, brightwork: false }),
     HEAD_CENTER_X + HEAD_RADIUS * 0.06 + nudge(),
     WHITE.side * HEAD_RADIUS * 0.76,

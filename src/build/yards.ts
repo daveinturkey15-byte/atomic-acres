@@ -140,7 +140,11 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   const WHITEP = mat.painted(PAL.capsuleWhite, 0.5, 0.05);
   const LINE = mat.painted(PAL.windowBand, 0.85, 0);      // court markings
   const PAVE = mat.painted(PAL.concreteDark, 0.95, 0);    // patio disc
-  const STONE = mat.painted(PAL.steel, 1, 0);             // stepping stones: mid cool
+  // Stepping stones. PAL.steel is a COOL blue-grey (0x8b9099) and against saturated
+  // lawn under a blue sky it read as a row of puddles, not paving. The footage
+  // correction in docs/REAL-REFERENCE.md has sunlit ground running warm, so these
+  // take the warm flagstone key.
+  const STONE = mat.painted(PAL.flagstone, 1, 0);
   // grey, matte - nearer the lawn in value so the run reads as a path, not plates.
   const SLAB = mat.painted(PAL.concrete, 0.95, 0);        // pale dwarf walls / plinths
   const SOIL = mat.painted(PAL.dirt, 1, 0);

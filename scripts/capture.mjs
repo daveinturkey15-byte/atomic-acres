@@ -55,7 +55,7 @@ const port = await freePort();
 console.log('[capture] starting own dev server on port ' + port);
 const server = spawn(
   process.platform === 'win32' ? 'npx.cmd' : 'npx',
-  ['vite', '--port', String(port), '--strictPort'],
+  ['vite', 'preview', '--port', String(port), '--strictPort'],
   { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32' },
 );
 let serverLog = '';
@@ -104,7 +104,7 @@ await page.goto(url, { waitUntil: 'load', timeout: 90000 });
 // wait for the build to finish and the QA surface to appear
 try {
   await page.waitForFunction(() => window.__NT && window.__NT.ready === true,
-    { timeout: 90000 });
+    null, { timeout: 180000 });
 } catch {
   console.error('[capture] window.__NT never became ready.');
   console.error('  page errors: ' + JSON.stringify(pageErrors, null, 2));
