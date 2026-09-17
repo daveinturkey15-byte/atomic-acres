@@ -139,15 +139,17 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   const IRON = mat.painted(PAL.rooftopDrum, 0.5, 0.35);   // chain posts and chain
   const WHITEP = mat.painted(PAL.capsuleWhite, 0.5, 0.05);
   const LINE = mat.painted(PAL.windowBand, 0.85, 0);      // court markings
-  const PAVE = mat.painted(PAL.concreteDark, 0.95, 0);    // patio / stepping stones
+  const PAVE = mat.painted(PAL.concreteDark, 0.95, 0);    // patio disc
+  const STONE = mat.painted(PAL.steel, 1, 0);             // stepping stones: mid cool
+  // grey, matte - nearer the lawn in value so the run reads as a path, not plates.
   const SLAB = mat.painted(PAL.concrete, 0.95, 0);        // pale dwarf walls / plinths
   const SOIL = mat.painted(PAL.dirt, 1, 0);
   const FLOWER = mat.painted(PAL.carRed, 0.8, 0);
-  // treeLeaf (0x3f6b30) on lawn (0x4c7a33) was the same hue at the same value -
-  // invisible even raised. carTeal is the greenest blue-green in the palette: still
-  // SPEC's "green court", but it separates from mown grass in hue AND value, and
-  // unlike a darker green it survives the tree shadow across this yard.
-  const COURT = mat.painted(PAL.carTeal, 0.85, 0);        // painted shuffleboard surface
+  // Shuffleboard court: SPEC's "green court" (NT02). carTeal read as a swimming
+  // pool from spawn B - deep saturated fill, pale lip, white coping. lawnLight is
+  // the palest green in the palette: it separates from mown lawn by VALUE, keeps
+  // the white markings legible, and at roughness 1 can never read as liquid.
+  const COURT = mat.painted(PAL.lawnLight, 1, 0);         // painted court, matte
   const LAMP = mat.painted(PAL.terracotta, 0.45, 0.2);    // orange lamp head
   const POT = mat.painted(PAL.terracottaDk, 0.85, 0);       // plant pots
   const CLOTHB = mat.painted(PAL.capsuleTrim, 0.8, 0);      // blue wash, chair accents
@@ -407,8 +409,8 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   function stones(n: number, f: (u: number) => [number, number]): void {
     for (let i = 0; i < n; i++) {
       const [sx, sz] = f(i / (n - 1));
-      C.put(PAVE, rr(0.62, 0.8), T_STEP, rr(0.56, 0.72), sx, T_STEP / 2, sz,
-        rand() * Math.PI);
+      C.put(STONE, rr(0.44, 0.52), T_STEP, rr(0.40, 0.47), sx, T_STEP / 2, sz,
+        rr(-0.15, 0.15));
     }
   }
 
@@ -538,7 +540,7 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
       const len = Math.hypot(ex0 - sx0, ez0 - sz0);
       const ry = Math.atan2(ex0 - sx0, ez0 - sz0);
       for (const s of [-1, 1])
-        B.put(SLAB, 0.14, T_STEP, len, mx + Math.cos(ry) * 0.55 * s, T_STEP / 2, mz - Math.sin(ry) * 0.55 * s, ry);
+        B.put(STONE, 0.14, T_STEP, len, mx + Math.cos(ry) * 0.55 * s, T_STEP / 2, mz - Math.sin(ry) * 0.55 * s, ry);
     }
   }
 
@@ -590,7 +592,7 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     // corridor between court apron and pit kerb is only 0.57 m. So it goes the other way.
     const ax = H.deckX - DECK_LEN * 0.15, az = yz(H, (DECK_OUT + 0.9) / YARD_D);
     const bx = yx(0.21), bz = yz(H, 0.94);
-    stones(9, (u) => {
+    stones(11, (u) => {
       const mx = yx(0.30), mz = yz(H, 0.79);                       // bezier control
       const k = (1 - u) * (1 - u), j = 2 * (1 - u) * u, i2 = u * u;
       return [k * ax + j * mx + i2 * bx, k * az + j * mz + i2 * bz];

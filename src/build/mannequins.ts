@@ -213,8 +213,8 @@ const PLACES: Place[] = [
   // --- white front lawn and pavement (+z)
   [hx(-0.10), fz(W, 0.40), Y_LAWN, 0.3, 'stand', -1],
   [hx(-0.42), fz(W, 0.62), Y_LAWN, 0.9, 'lean', -1],
-  [hx(0.72), fz(W, 0.24), Y_LAWN, -0.4, 'sit', -1],   // clear of the blue appliance bank
-  [hx(0.15), W.side * PAVE_MID, Y_PAVE, 0.1, 'armOut', -1],
+  [hx(0.72), fz(W, 0.24), Y_LAWN, -0.4, 'stand', -1],   // clear of the blue appliance bank
+  [hx(-0.02), W.side * PAVE_MID, Y_PAVE, 0.1, 'armOut', -1],
   [hx(-0.85), W.side * KERB_EDGE, Y_PAVE, -0.7, 'stand', -1],
 
   // --- the road. Clear of the teal saloon and of the two eye-level stations parked at
@@ -233,7 +233,7 @@ const PLACES: Place[] = [
   //     The toppled ones live here and behind the fences, out of the street frames.
   [yx(0.32), yz(O, 0.18), Y_LAWN, 2.8, 'stand', -1],
   [yx(0.72), yz(O, 0.70), Y_LAWN, 1.6, 'fallen', -1],
-  [yx(0.78), yz(W, 0.18), Y_LAWN, 0.4, 'sit', -1],
+  [yx(0.78), yz(W, 0.18), Y_LAWN, 0.4, 'lean', -1],
   [yx(0.72), yz(W, 0.88), Y_LAWN, -0.9, 'fallen', -1],
 
   // --- one on each rear deck, at upper-floor level, reading over the fence line
@@ -248,7 +248,7 @@ const PLACES: Place[] = [
 
   // --- the plaza end of the stem
   [stx(0.13), O.side * PAVE_MID, Y_PAVE, 1.4, 'stand', -1],
-  [stx(0.17), O.side * (PAVEMENT_OUTER + 1.6), Y_APRON, 1.9, 'sit', -1],
+  [stx(0.17), O.side * (PAVEMENT_OUTER + 1.6), Y_APRON, 1.9, 'stand', -1],
   [stx(0.10), W.side * PAVE_MID, Y_PAVE, -1.5, 'armsUp', 1],
   [stx(0.22), W.side * (PAVEMENT_OUTER + 2.4), Y_APRON, -1.1, 'stand', -1],
   [stx(0.05), W.side * (PAVEMENT_OUTER + 1.2), Y_APRON, 0.8, 'armOut', -1],
@@ -256,7 +256,7 @@ const PLACES: Place[] = [
   // --- along the stem pavements between the plaza and the houses
   [stx(0.48), O.side * PAVE_MID, Y_PAVE, 2.7, 'lean', -1],
   [stx(0.53), O.side * KERB_EDGE, Y_PAVE, 3.5, 'stand', -1],
-  [stx(0.66), W.side * PAVE_MID, Y_PAVE, -0.2, 'sit', -1],
+  [stx(0.66), W.side * PAVE_MID, Y_PAVE, -0.2, 'stand', -1],
   [stx(0.72), W.side * KERB_EDGE, Y_PAVE, -2.6, 'armOut', -1],
   // --- close-up pass: five more, each somewhere the first 35 never stood. Porch
   //     drip-edge under the orange canopy; a loiterer by the stem saloon (a metre

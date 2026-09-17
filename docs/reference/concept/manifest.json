@@ -1,0 +1,638 @@
+{
+ "attempts": [
+  {
+   "error": "",
+   "note": "Single test image requested before bulk; agent called its native image tool and wrote the file.",
+   "ok": true,
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high --dangerously-skip-permissions --print-timeout 840s)",
+   "stdout": "ROUTE_USED: Native `generate_image` tool | FILE_PATH: docs/reference/concept/test-route-a.png | FILE_BYTES: 991344 | IMAGE_MODEL_NAME: Imagen 3 (via Antigravity Image Generation Tool)"
+  },
+  {
+   "note": "All 8 requested files written, byte counts match disk.",
+   "ok": true,
+   "route": "A orange-house batch (8 images)"
+  },
+  {
+   "note": "7 of 8 files were photographic concept art; white-house-noon-rear.png arrived as a 111421-byte pure-black Blender Cycles render. Regenerated in the backyards batch (now 1578417 bytes, photographic, verified non-blank).",
+   "ok": true,
+   "route": "A white-house batch (8 images, 1 failed then regenerated)"
+  },
+  {
+   "note": "Agent rendered locally on RTX 5080 with Juggernaut-XL_v9_RunDiffusionPhoto_v2; left 3 stray test_*.png files which were deleted same session.",
+   "ok": true,
+   "route": "A cul-de-sac+coach batch (7 images)"
+  },
+  {
+   "note": "Agent used Gemini-3.1-Flash-Image for the hero frame and local SDXL-Turbo for the other 7.",
+   "ok": true,
+   "route": "A plaza+pylon batch (8 images)"
+  },
+  {
+   "note": "Agent rendered locally on RTX 5080 with Juggernaut-XL-v9; a stray test-pipeline.png was removed by the agent itself.",
+   "ok": true,
+   "route": "A mannequins+vehicles+surround batch (12 images)"
+  },
+  {
+   "note": "Also regenerated white-house-noon-rear.png correctly.",
+   "ok": true,
+   "route": "A backyards+street batch (10 images)"
+  },
+  {
+   "note": "Route A succeeded on the first test, so Route B was never attempted. No web images downloaded; every file was generated fresh this session.",
+   "ok": true,
+   "route": "B (ComfyUI) \u00e2\u20ac\u201d not attempted"
+  }
+ ],
+ "discipline": "Original concept imagery of this kind of place (BO2-2025 Nuketown 2025). NOT reproductions of Treyarch art; no BO1/84/BO6/BO7 subjects (no 1950s tract housing, no school buses).",
+ "entries": [
+  {
+   "angle": "eye-level",
+   "filename": "orange-house-noon-eye.png",
+   "id": "orange-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level street view of a two-storey 1960s show home with a dramatic swooping white butterfly roof cantilevered over a terracotta burnt-orange panelised upper wall with a band of tall narrow windows, cream ground floor, bleached concrete drive, bright green mown lawn.",
+   "route": "A",
+   "subject": "orange-house",
+   "bytes": 1707910
+  },
+  {
+   "angle": "low",
+   "filename": "orange-house-noon-low.png",
+   "id": "orange-noon-low",
+   "light": "harsh-noon",
+   "prompt": "Low worm's-eye view looking up at the butterfly-roof show home, roof sweeping upward against a hazy blue desert noon sky, terracotta walls glowing in harsh sunlight.",
+   "route": "A",
+   "subject": "orange-house",
+   "bytes": 1334021
+  },
+  {
+   "angle": "high-three-quarter",
+   "filename": "orange-house-noon-high34.png",
+   "id": "orange-noon-high34",
+   "light": "harsh-noon",
+   "prompt": "High three-quarter view of the butterfly-roof show home showing roof geometry, solar panels on the low roof slope, driveway, lawn and street.",
+   "route": "A",
+   "subject": "orange-house",
+   "bytes": 1805316
+  },
+  {
+   "angle": "eye-level",
+   "filename": "orange-house-lowsun-eye.png",
+   "id": "orange-lowsun-eye",
+   "light": "low-sun",
+   "prompt": "Eye-level view of the butterfly-roof show home at golden-hour low sun, long shadows across the lawn, warm raking light on the terracotta panels.",
+   "route": "A",
+   "subject": "orange-house",
+   "bytes": 1519865
+  },
+  {
+   "angle": "low",
+   "filename": "orange-house-lowsun-low.png",
+   "id": "orange-lowsun-low",
+   "light": "low-sun",
+   "prompt": "Low angle view of the butterfly-roof house against a low orange desert sun, butterfly roof edge lit gold.",
+   "route": "A",
+   "subject": "orange-house",
+   "bytes": 1152482
+  },
+  {
+   "angle": "eye-level",
+   "filename": "orange-house-overcast-eye.png",
+   "id": "orange-overcast-eye",
+   "light": "overcast",
+   "prompt": "Eye-level view of the butterfly-roof house under flat overcast desert light, soft shadowless modelling of roof and panel walls.",
+   "route": "A",
+   "subject": "orange-house",
+   "bytes": 1338226
+  },
+  {
+   "angle": "eye-level-rear",
+   "filename": "orange-house-noon-rear.png",
+   "id": "orange-noon-rear",
+   "light": "harsh-noon",
+   "prompt": "Eye-level rear view of the butterfly-roof house from its back yard: wooden exterior staircase on the left to a railed deck, dark barrel-vault garage bays on the right, circular concrete patio at the stair foot.",
+   "route": "A",
+   "subject": "orange-house",
+   "bytes": 1627569
+  },
+  {
+   "angle": "close-up",
+   "filename": "orange-house-noon-roof-detail.png",
+   "id": "orange-noon-roof-detail",
+   "light": "harsh-noon",
+   "prompt": "Close-up detail of the butterfly roof valley, dark solar panels, cream fascia and tall narrow window band with vertical mullions, crisp material detail.",
+   "route": "A",
+   "subject": "orange-house",
+   "bytes": 1425238
+  },
+  {
+   "angle": "eye-level",
+   "filename": "white-house-noon-eye.png",
+   "id": "white-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level street view of a white streamline-moderne show home of rounded capsule forms with blue trim, curved corners, porthole windows and flat cantilevered porch canopy, bright green lawn.",
+   "route": "A",
+   "subject": "white-house",
+   "bytes": 1608770
+  },
+  {
+   "angle": "low",
+   "filename": "white-house-noon-low.png",
+   "id": "white-noon-low",
+   "light": "harsh-noon",
+   "prompt": "Low worm's-eye view of the white capsule show home, rounded white volumes and blue trim against a hazy blue noon sky.",
+   "route": "A",
+   "subject": "white-house",
+   "bytes": 1423233
+  },
+  {
+   "angle": "high-three-quarter",
+   "filename": "white-house-noon-high34.png",
+   "id": "white-noon-high34",
+   "light": "harsh-noon",
+   "prompt": "High three-quarter view of the white capsule house showing rounded roof forms, driveway, lawn and street.",
+   "route": "A",
+   "subject": "white-house",
+   "bytes": 1716997
+  },
+  {
+   "angle": "eye-level",
+   "filename": "white-house-lowsun-eye.png",
+   "id": "white-lowsun-eye",
+   "light": "low-sun",
+   "prompt": "Eye-level view of the white capsule house at golden-hour low sun, long shadows, warm light on white stucco and blue trim.",
+   "route": "A",
+   "subject": "white-house",
+   "bytes": 1506921
+  },
+  {
+   "angle": "high-three-quarter",
+   "filename": "white-house-lowsun-high34.png",
+   "id": "white-lowsun-high34",
+   "light": "low-sun",
+   "prompt": "High three-quarter view of the white capsule house at low sun, glowing white curves, long garden shadows.",
+   "route": "A",
+   "subject": "white-house",
+   "bytes": 1683861
+  },
+  {
+   "angle": "eye-level",
+   "filename": "white-house-overcast-eye.png",
+   "id": "white-overcast-eye",
+   "light": "overcast",
+   "prompt": "Eye-level view of the white capsule house under flat overcast light, soft modelling of the rounded volumes.",
+   "route": "A",
+   "subject": "white-house",
+   "bytes": 1608505
+  },
+  {
+   "angle": "eye-level-rear",
+   "filename": "white-house-noon-rear.png",
+   "id": "white-noon-rear",
+   "light": "harsh-noon",
+   "prompt": "Eye-level photographic rear view of the white streamline-moderne show home from its back yard: rear deck with steps down, round garden pod, tan sand pit, shuffleboard court, stepping stones. (First attempt arrived as a blank black render and was regenerated.)",
+   "route": "A",
+   "subject": "white-house",
+   "bytes": 1578417
+  },
+  {
+   "angle": "close-up",
+   "filename": "white-house-noon-detail.png",
+   "id": "white-noon-detail",
+   "light": "harsh-noon",
+   "prompt": "Close-up detail of a white capsule wall junction: blue trim band, porthole window with chrome ring, smooth stucco, crisp material detail.",
+   "route": "A",
+   "subject": "white-house",
+   "bytes": 1190739
+  },
+  {
+   "angle": "high-three-quarter",
+   "filename": "cul-de-sac-noon-high34.png",
+   "id": "culdesac-noon-high34",
+   "light": "harsh-noon",
+   "prompt": "High three-quarter view of a lollipop cul-de-sac closing a short residential street: circular kerbed turning head with a cream-and-maroon 1950s intercity coach and two classic cars, modernist show homes on both sides.",
+   "route": "A",
+   "subject": "cul-de-sac-coach",
+   "bytes": 1698110
+  },
+  {
+   "angle": "eye-level",
+   "filename": "cul-de-sac-noon-eye.png",
+   "id": "culdesac-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level view from the road stem toward the cul-de-sac turning head with parked vintage coach and cars, show homes flanking, bleached concrete kerbs.",
+   "route": "A",
+   "subject": "cul-de-sac-coach",
+   "bytes": 1132752
+  },
+  {
+   "angle": "eye-level",
+   "filename": "cul-de-sac-lowsun-eye.png",
+   "id": "culdesac-lowsun-eye",
+   "light": "low-sun",
+   "prompt": "Eye-level view of the cul-de-sac at golden-hour low sun, long vehicle shadows across the turning head, warm light.",
+   "route": "A",
+   "subject": "cul-de-sac-coach",
+   "bytes": 1141319
+  },
+  {
+   "angle": "eye-level",
+   "filename": "coach-noon-eye.png",
+   "id": "coach-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level side view of a cream-and-silver 1950s Greyhound-style intercity tour coach with maroon swoosh, chrome belt trim, riveted panels, round headlights, parked on a desert show-town street.",
+   "route": "A",
+   "subject": "cul-de-sac-coach",
+   "bytes": 1280364
+  },
+  {
+   "angle": "low",
+   "filename": "coach-noon-low.png",
+   "id": "coach-noon-low",
+   "light": "harsh-noon",
+   "prompt": "Low angle view of the vintage tour coach, chrome and glass gleaming against a hazy blue sky.",
+   "route": "A",
+   "subject": "cul-de-sac-coach",
+   "bytes": 1190297
+  },
+  {
+   "angle": "eye-level",
+   "filename": "coach-lowsun-eye.png",
+   "id": "coach-lowsun-eye",
+   "light": "low-sun",
+   "prompt": "Eye-level view of the vintage tour coach at low golden sun, long shadows, glowing chrome.",
+   "route": "A",
+   "subject": "cul-de-sac-coach",
+   "bytes": 1063454
+  },
+  {
+   "angle": "plan",
+   "filename": "turning-head-noon-plan.png",
+   "id": "turning-head-noon-plan",
+   "light": "harsh-noon",
+   "prompt": "Near-top-down plan view of the circular kerbed cul-de-sac turning head with parked coach and cars, mow-striped lawns, pale concrete aprons.",
+   "route": "A",
+   "subject": "cul-de-sac-coach",
+   "bytes": 1717305
+  },
+  {
+   "angle": "eye-level",
+   "filename": "plaza-pylon-noon-eye.png",
+   "id": "plaza-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level view of the 1960s show-town entrance plaza: tall neon pylon sign with pink script and atom-and-orbit sphere, vintage tour coach, teal classic car on a display plinth, geodesic dome and space-needle tower behind.",
+   "route": "A",
+   "subject": "plaza-pylon",
+   "bytes": 1756497
+  },
+  {
+   "angle": "low",
+   "filename": "plaza-pylon-noon-low.png",
+   "id": "plaza-noon-low",
+   "light": "harsh-noon",
+   "prompt": "Low angle view of the entrance plaza looking up at the neon pylon sign against a hazy blue noon sky, flags on poles, coach below.",
+   "route": "A",
+   "subject": "plaza-pylon",
+   "bytes": 708256
+  },
+  {
+   "angle": "eye-level",
+   "filename": "plaza-pylon-lowsun-eye.png",
+   "id": "plaza-lowsun-eye",
+   "light": "low-sun",
+   "prompt": "Eye-level view of the entrance plaza at golden-hour low sun, neon sign starting to glow, long shadows across bleached concrete.",
+   "route": "A",
+   "subject": "plaza-pylon",
+   "bytes": 798243
+  },
+  {
+   "angle": "high-three-quarter",
+   "filename": "plaza-pylon-noon-high34.png",
+   "id": "plaza-noon-high34",
+   "light": "harsh-noon",
+   "prompt": "High three-quarter view of the whole entrance plaza: pylon sign, coach, display cars, dome, saucer house, tower, flag rows.",
+   "route": "A",
+   "subject": "plaza-pylon",
+   "bytes": 1055618
+  },
+  {
+   "angle": "low",
+   "filename": "pylon-sign-noon-low.png",
+   "id": "pylon-sign-noon-low",
+   "light": "harsh-noon",
+   "prompt": "Close low-angle view of the neon pylon sign alone: pink neon script with tagline, maroon atom-and-orbit sphere on top, teal oval badge below, two-post trapezoid frame.",
+   "route": "A",
+   "subject": "plaza-pylon",
+   "bytes": 1083731
+  },
+  {
+   "angle": "eye-level",
+   "filename": "plaza-dome-noon-eye.png",
+   "id": "plaza-dome-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level view of a silver geodesic dome pavilion in the show-town plaza with flag poles and bleached concrete forecourt.",
+   "route": "A",
+   "subject": "plaza-pylon",
+   "bytes": 868291
+  },
+  {
+   "angle": "eye-level",
+   "filename": "plaza-saucer-noon-eye.png",
+   "id": "plaza-saucer-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level view of a flying-saucer house on slim legs, cream with a dark window band, 1950s cars parked beneath, desert plaza.",
+   "route": "A",
+   "subject": "plaza-pylon",
+   "bytes": 1030525
+  },
+  {
+   "angle": "eye-level",
+   "filename": "plaza-tower-noon-eye.png",
+   "id": "plaza-tower-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level view of a slender space-needle observation tower over the show-town plaza, 1960s Googie styling, tiny human figures for scale.",
+   "route": "A",
+   "subject": "plaza-pylon",
+   "bytes": 968837
+  },
+  {
+   "angle": "eye-level",
+   "filename": "backyard-orange-noon-eye.png",
+   "id": "backyard-orange-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level view inside the orange show-home back yard: white curved-roof carport, planting beds with red flowers, glasshouse, crate store, circular concrete patio.",
+   "route": "A",
+   "subject": "back-yards",
+   "bytes": 1740113
+  },
+  {
+   "angle": "high-three-quarter",
+   "filename": "backyard-orange-noon-high34.png",
+   "id": "backyard-orange-noon-high34",
+   "light": "harsh-noon",
+   "prompt": "High three-quarter view of the orange-house back yard showing carport curve, glasshouse, beds and patio layout.",
+   "route": "A",
+   "subject": "back-yards",
+   "bytes": 1920754
+  },
+  {
+   "angle": "eye-level",
+   "filename": "backyard-white-noon-eye.png",
+   "id": "backyard-white-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level view inside the white show-home back yard: round garden pod, tan sand pit, green shuffleboard court, stepping stones.",
+   "route": "A",
+   "subject": "back-yards",
+   "bytes": 1692799
+  },
+  {
+   "angle": "high-three-quarter",
+   "filename": "backyard-white-noon-high34.png",
+   "id": "backyard-white-noon-high34",
+   "light": "harsh-noon",
+   "prompt": "High three-quarter view of the white-house back yard layout: pod, sand pit, court, stones.",
+   "route": "A",
+   "subject": "back-yards",
+   "bytes": 1678836
+  },
+  {
+   "angle": "eye-level",
+   "filename": "backyard-orange-lowsun-eye.png",
+   "id": "backyard-orange-lowsun-eye",
+   "light": "low-sun",
+   "prompt": "Eye-level view of the orange-house back yard at golden-hour low sun, long shadows from carport and fences.",
+   "route": "A",
+   "subject": "back-yards",
+   "bytes": 1379702
+  },
+  {
+   "angle": "eye-level",
+   "filename": "backyard-white-overcast-eye.png",
+   "id": "backyard-white-overcast-eye",
+   "light": "overcast",
+   "prompt": "Eye-level view of the white-house back yard under flat overcast light.",
+   "route": "A",
+   "subject": "back-yards",
+   "bytes": 1382750
+  },
+  {
+   "angle": "eye-level",
+   "filename": "street-elevation-noon-eye.png",
+   "id": "street-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level street elevation of two modernist show homes facing each other across a short road: terracotta appliance bank on one lawn, blue on the other, chain-and-post lawn edging, clipped hedges.",
+   "route": "A",
+   "subject": "street-elevation",
+   "bytes": 1518657
+  },
+  {
+   "angle": "eye-level",
+   "filename": "street-elevation-lowsun-eye.png",
+   "id": "street-lowsun-eye",
+   "light": "low-sun",
+   "prompt": "Facing-houses street view at golden-hour low sun with long shadows down the road.",
+   "route": "A",
+   "subject": "street-elevation",
+   "bytes": 1199914
+  },
+  {
+   "angle": "plan",
+   "filename": "street-noon-plan.png",
+   "id": "street-noon-plan",
+   "light": "harsh-noon",
+   "prompt": "Near-top-down plan view of the short show-town street: two facing houses, mow-striped lawns, road stem, cul-de-sac turning head with parked coach.",
+   "route": "A",
+   "subject": "street-elevation",
+   "bytes": 2121504
+  },
+  {
+   "angle": "eye-level",
+   "filename": "mannequins-noon-eye.png",
+   "id": "mannequins-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level view of 1960s artist mannequins posed as a family on a show-town pavement: one in a purple shift dress, others in period casuals, painted faces, crisp noon shadows.",
+   "route": "A",
+   "subject": "mannequins",
+   "bytes": 1600260
+  },
+  {
+   "angle": "eye-level",
+   "filename": "mannequins-lowsun-eye.png",
+   "id": "mannequins-lowsun-eye",
+   "light": "low-sun",
+   "prompt": "Mannequin family group at golden-hour low sun, long shadows, warm rim light on fibreglass figures.",
+   "route": "A",
+   "subject": "mannequins",
+   "bytes": 1240073
+  },
+  {
+   "angle": "close-up",
+   "filename": "mannequin-close-noon-eye.png",
+   "id": "mannequin-close-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Close-up of two 1960s mannequin faces and upper bodies, glossy fibreglass, painted features, period clothing detail.",
+   "route": "A",
+   "subject": "mannequins",
+   "bytes": 1502029
+  },
+  {
+   "angle": "eye-level",
+   "filename": "mannequins-overcast-eye.png",
+   "id": "mannequins-overcast-eye",
+   "light": "overcast",
+   "prompt": "Mannequin family group under flat overcast light, soft shadowless modelling of faces and clothes.",
+   "route": "A",
+   "subject": "mannequins",
+   "bytes": 1417169
+  },
+  {
+   "angle": "eye-level",
+   "filename": "vehicles-teal-noon-eye.png",
+   "id": "vehicles-teal-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level view of a teal-turquoise 1950s classic American car with heavy chrome and whitewall tyres on a display plinth with an info placard, desert show-town plaza.",
+   "route": "A",
+   "subject": "vehicles",
+   "bytes": 1429403
+  },
+  {
+   "angle": "eye-level",
+   "filename": "vehicles-maroon-noon-eye.png",
+   "id": "vehicles-maroon-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level view of a maroon 1950s classic sedan with chrome fins and whitewalls parked on a show-town street.",
+   "route": "A",
+   "subject": "vehicles",
+   "bytes": 1464095
+  },
+  {
+   "angle": "eye-level",
+   "filename": "vehicles-lineup-lowsun-eye.png",
+   "id": "vehicles-lineup-lowsun-eye",
+   "light": "low-sun",
+   "prompt": "Low-sun lineup of three 1950s cars (teal sedan, maroon sedan, cream classic pickup) on bleached concrete, long shadows, golden light on chrome.",
+   "route": "A",
+   "subject": "vehicles",
+   "bytes": 1608348
+  },
+  {
+   "angle": "low",
+   "filename": "vehicles-noon-low.png",
+   "id": "vehicles-noon-low",
+   "light": "harsh-noon",
+   "prompt": "Low angle view of a cream 1950s pickup truck front three-quarter, chrome grille gleaming against a hazy blue sky.",
+   "route": "A",
+   "subject": "vehicles",
+   "bytes": 1366707
+  },
+  {
+   "angle": "high-three-quarter",
+   "filename": "surround-noon-high34.png",
+   "id": "surround-noon-high34",
+   "light": "harsh-noon",
+   "prompt": "High three-quarter vista of the show town in its desert bowl: two show homes and street in the foreground, blue-grey mountains and hazy distant city skyline on every horizon, noon haze.",
+   "route": "A",
+   "subject": "surround",
+   "bytes": 1319614
+  },
+  {
+   "angle": "eye-level",
+   "filename": "surround-lowsun-eye.png",
+   "id": "surround-lowsun-eye",
+   "light": "low-sun",
+   "prompt": "Eye-level desert-edge view past the town boundary fence toward layered blue-grey mountains at golden low sun.",
+   "route": "A",
+   "subject": "surround",
+   "bytes": 1600465
+  },
+  {
+   "angle": "eye-level",
+   "filename": "surround-mountains-noon-eye.png",
+   "id": "surround-mountains-noon-eye",
+   "light": "harsh-noon",
+   "prompt": "Eye-level panorama of blue-grey desert mountains with atmospheric haze above a bleached concrete town edge, big rounded deciduous trees.",
+   "route": "A",
+   "subject": "surround",
+   "bytes": 1392280
+  },
+  {
+   "angle": "high-three-quarter",
+   "filename": "surround-overcast-high34.png",
+   "id": "surround-overcast-high34",
+   "light": "overcast",
+   "prompt": "High three-quarter view of the whole show town under overcast skies, muted desert tones, town oval glowing green against grey-brown desert.",
+   "route": "A",
+   "subject": "surround",
+   "bytes": 1526778
+  },
+  {
+   "angle": "eye-level",
+   "filename": "test-route-a.png",
+   "id": "test-route-a",
+   "light": "harsh-noon",
+   "prompt": "Route-A capability test: 1960s 'world of tomorrow' show-town street with two modernist show homes facing each other across a short road, bright hazy desert noon light, bleached concrete, saturated accents.",
+   "route": "A",
+   "subject": "street-elevation",
+   "bytes": 991344
+  }
+ ],
+ "file_count": 53,
+ "models": {
+  "backyard-orange-lowsun-eye.png": "Juggernaut-XL-v9-SDXL (local RTX 5080 via agy)",
+  "backyard-orange-noon-eye.png": "Juggernaut-XL-v9-SDXL (local RTX 5080 via agy)",
+  "backyard-orange-noon-high34.png": "Juggernaut-XL-v9-SDXL (local RTX 5080 via agy)",
+  "backyard-white-noon-eye.png": "Juggernaut-XL-v9-SDXL (local RTX 5080 via agy)",
+  "backyard-white-noon-high34.png": "Juggernaut-XL-v9-SDXL (local RTX 5080 via agy)",
+  "backyard-white-overcast-eye.png": "Juggernaut-XL-v9-SDXL (local RTX 5080 via agy)",
+  "coach-lowsun-eye.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "coach-noon-eye.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "coach-noon-low.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "cul-de-sac-lowsun-eye.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "cul-de-sac-noon-eye.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "cul-de-sac-noon-high34.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "mannequin-close-noon-eye.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "mannequins-lowsun-eye.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "mannequins-noon-eye.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "mannequins-overcast-eye.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "orange-house-lowsun-eye.png": "Imagen 3 (via agy native image tool)",
+  "orange-house-lowsun-low.png": "Imagen 3 (via agy native image tool)",
+  "orange-house-noon-eye.png": "Imagen 3 (via agy native image tool)",
+  "orange-house-noon-high34.png": "Imagen 3 (via agy native image tool)",
+  "orange-house-noon-low.png": "Imagen 3 (via agy native image tool)",
+  "orange-house-noon-rear.png": "Imagen 3 (via agy native image tool)",
+  "orange-house-noon-roof-detail.png": "Imagen 3 (via agy native image tool)",
+  "orange-house-overcast-eye.png": "Imagen 3 (via agy native image tool)",
+  "plaza-dome-noon-eye.png": "SDXL-Turbo (local RTX 5080 via agy)",
+  "plaza-pylon-lowsun-eye.png": "SDXL-Turbo (local RTX 5080 via agy)",
+  "plaza-pylon-noon-eye.png": "Gemini-3.1-Flash-Image (via agy)",
+  "plaza-pylon-noon-high34.png": "SDXL-Turbo (local RTX 5080 via agy)",
+  "plaza-pylon-noon-low.png": "SDXL-Turbo (local RTX 5080 via agy)",
+  "plaza-saucer-noon-eye.png": "SDXL-Turbo (local RTX 5080 via agy)",
+  "plaza-tower-noon-eye.png": "SDXL-Turbo (local RTX 5080 via agy)",
+  "pylon-sign-noon-low.png": "SDXL-Turbo (local RTX 5080 via agy)",
+  "street-elevation-lowsun-eye.png": "Juggernaut-XL-v9-SDXL (local RTX 5080 via agy)",
+  "street-elevation-noon-eye.png": "Juggernaut-XL-v9-SDXL (local RTX 5080 via agy)",
+  "street-noon-plan.png": "Juggernaut-XL-v9-SDXL (local RTX 5080 via agy)",
+  "surround-lowsun-eye.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "surround-mountains-noon-eye.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "surround-noon-high34.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "surround-overcast-high34.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "test-route-a.png": "Imagen 3 (via Antigravity image tool)",
+  "turning-head-noon-plan.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "vehicles-lineup-lowsun-eye.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "vehicles-maroon-noon-eye.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "vehicles-noon-low.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "vehicles-teal-noon-eye.png": "Juggernaut-XL-v9 (local RTX 5080 via agy)",
+  "white-house-lowsun-eye.png": "Gemini 3.1 Flash Image (via agy)",
+  "white-house-lowsun-high34.png": "Gemini 3.1 Flash Image (via agy)",
+  "white-house-noon-detail.png": "Gemini 3.1 Flash Image (via agy)",
+  "white-house-noon-eye.png": "Gemini 3.1 Flash Image (via agy)",
+  "white-house-noon-high34.png": "Gemini 3.1 Flash Image (via agy)",
+  "white-house-noon-low.png": "Gemini 3.1 Flash Image (via agy)",
+  "white-house-noon-rear.png": "Juggernaut-XL-v9-SDXL (local RTX 5080 via agy, regenerated)",
+  "white-house-overcast-eye.png": "Gemini 3.1 Flash Image (via agy)"
+ },
+ "route": "A \u00e2\u20ac\u201d local Gemini via agy CLI (C:/Users/david/AppData/Local/agy/bin/agy.exe --model gemini-3.7-flash-high --effort high --dangerously-skip-permissions --print-timeout 840s). Sub-agents invoked cloud image models (Imagen 3 / Gemini Flash Image) and local RTX 5080 SDXL pipelines (Juggernaut-XL, SDXL-Turbo); exact model per file in `models`.",
+ "style": "Original concept painting/photograph, 1960s American 'world of tomorrow' nuclear-test show town in the desert: Googie and streamline moderne architecture, bleached concrete, saturated accent colours, bright hazy daylight.",
+ "total_bytes": 74815263
+}
