@@ -12,6 +12,7 @@ import { Player, type MoveMode } from './core/player';
 import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core/layout';
 import { STATIONS, type Station } from './core/stations';
 import { WeaponsController } from './weapons/controller';
+import { initUI } from './ui/index';
 
 import { buildGround } from './build/ground';
 import { buildOrangeHouse } from './build/orange-house';
@@ -100,6 +101,11 @@ hudHelp.textContent =
   'F fly · C noclip · wheel/[ ] speed · H help · Esc free mouse · ' +
   'LMB fire · RMB aim · R reload · 1/2 or wheel weapons';
 hud.append(hudStats, hudMode, hudHelp, ammoDiv);
+// ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
+// initUI owns everything inside #hud and #start, so the capture harness still
+// hides all of it by hiding those two ids.
+const { hud: gameHud } = initUI({ player, world });
+
 const startOverlay = document.getElementById('start')!;
 // The first click lands on the overlay (it covers the canvas), so dismiss and lock
 // here; later clicks hit the canvas and re-lock via Player. Esc releases (browser
@@ -178,6 +184,14 @@ function frame(): void {
     world.renderer.autoClear = false;
     world.renderer.render(weapons.overlay, world.camera);
     world.renderer.autoClear = ac;
+  }
+
+  // Weapon -> HUD. snapshot() is the controller's own read API; pushing from the
+  // loop means neither lane had to know about the other's internals.
+  if (!cameraHeldByQA) {
+    const snap = weapons.snapshot();
+    gameHud.setAmmo(snap.mag, snap.reserve);
+    gameHud.setADS(snap.ads);
   }
 
   frames++;
