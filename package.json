@@ -1,0 +1,22 @@
+{
+  "name": "nuketown-2025",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173",
+    "capture": "node scripts/capture.mjs",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.180.0",
+    "playwright": "^1.50.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0"
+  }
+}
