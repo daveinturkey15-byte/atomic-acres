@@ -11,7 +11,7 @@ export const PAL = {
   concreteDark:  0xa8a59c,
   asphalt:       0x4a4a4d,
   asphaltLight:  0x5c5c60,
-  kerb:          0xd6d3cb,
+  kerb:          0xb4b0a6,
   lawn:          0x4c7a33,   // saturated mown green
   lawnLight:     0x5d8d3d,   // mow-stripe alternate
   dirt:          0x8a7a5e,
@@ -59,14 +59,14 @@ export const PAL = {
   mannequin:     0xd9cfc0,
 
   // --- sky / atmosphere
-  skyTop:        0xa7c3de,
-  skyHorizon:    0xe4e9ea,
+  skyTop:        0x6f9cc8,
+  skyHorizon:    0xcdd9df,
   sunColor:      0xfff2dc,
   bounce:        0xa8a08c,   // ground bounce into shadow
   mountain:      0xa6b4c4,
   mountainFar:   0xc6d0dc,
   cityFar:       0xc6cfd9,
-  fog:           0xdbdfdd,
+  fog:           0xccd4d4,
 } as const;
 
 export type PaletteKey = keyof typeof PAL;

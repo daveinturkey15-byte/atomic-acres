@@ -117,11 +117,11 @@ export function buildMaterials(): MaterialLibrary {
     const band = s / 8;
     c.fillStyle = hex(PAL.lawnLight);
     for (let i = 0; i < 8; i += 2) c.fillRect(i * band, 0, band, s);
-    c.globalAlpha = 0.35;
+    c.globalAlpha = 0.55;
     for (let i = 0; i < 8; i += 2) c.fillRect(0, i * band, s, band);
     c.globalAlpha = 1;
-    speckle(c, s, 1500, 0.11);
-    speckle(c, s, 900, 0.07, false);
+    speckle(c, s, 600, 0.05);
+    speckle(c, s, 400, 0.035, false);
   });
 
   const asphaltTex = tex(512, 22, (c, s) => {
@@ -215,7 +215,7 @@ export function buildMaterials(): MaterialLibrary {
       transparent: true, opacity: 0.42, envMapIntensity: 1.4,
     }),
     windowDark: std({
-      color: 0x56707e, roughness: 0.11, metalness: 0.68, envMapIntensity: 1.7,
+      color: 0x66808e, roughness: 0.13, metalness: 0.16, envMapIntensity: 1.9,
     }),
     timber: std({ map: boardTex(PAL.timber, PAL.timberDark, 8), roughness: 0.9, metalness: 0 }),
     timberDark: std({ map: boardTex(PAL.timberDark, 0x4d3116, 8), roughness: 0.92, metalness: 0 }),

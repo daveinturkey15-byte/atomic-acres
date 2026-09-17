@@ -20,9 +20,21 @@ export interface World {
   dispose: () => void;
 }
 
-/** Vertical gradient sky dome, drawn in a shader so it costs one draw call. */
-function makeSky(): THREE.Mesh {
+/**
+ * Vertical gradient sky dome, drawn in a shader so it costs one draw call.
+ *
+ * `target` matters. The VISIBLE dome is rendered to the sRGB canvas alongside
+ * materials that three.js has already fitted with tonemapping and colour-space
+ * conversion, so it must apply both itself or it comes out darker than the
+ * buildings. The dome used to prefilter the environment map is rendered into a
+ * LINEAR target, so it must apply neither - doing both would double-convert it
+ * and every reflection would be wrong.
+ */
+function makeSky(target: 'screen' | 'env'): THREE.Mesh {
   const geo = new THREE.SphereGeometry(900, 32, 16);
+  const OUTPUT_CONVERSION = target === 'screen'
+    ? ['#include <tonemapping_fragment>', '#include <colorspace_fragment>'].join('\n')
+    : '';
   const mat = new THREE.ShaderMaterial({
     side: THREE.BackSide,
     depthWrite: false,
@@ -59,6 +71,12 @@ function makeSky(): THREE.Mesh {
         // slight warm haze right at the horizon band
         col = mix(col, horizonColor * 1.02, smoothstep(0.30, -0.04, d.y));
         gl_FragColor = vec4(col, 1.0);
+        // three.js injects these for its BUILT-IN materials only. A hand-written
+        // ShaderMaterial that writes gl_FragColor without them ships raw linear
+        // values into an sRGB target while every other surface goes through ACES -
+        // so the sky comes out DARKER than the buildings in front of it, the horizon
+        // haze disappears and the distant mountains lose all separation from it.
+        ${OUTPUT_CONVERSION}
       }
     `,
   });
@@ -85,7 +103,7 @@ export function createWorld(canvasParent: HTMLElement): World {
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(PAL.fog, 0.0031);
 
-  const sky = makeSky();
+  const sky = makeSky('screen');
   scene.add(sky);
 
   // ---- environment map, prefiltered from the sky itself.
@@ -96,7 +114,7 @@ export function createWorld(canvasParent: HTMLElement): World {
   const pmrem = new THREE.PMREMGenerator(renderer);
   pmrem.compileEquirectangularShader();
   const envScene = new THREE.Scene();
-  const envSky = makeSky();
+  const envSky = makeSky('env');
   envScene.add(envSky);
   // a large dim ground disc so the lower hemisphere reflects bleached concrete,
   // not the black void below the dome
