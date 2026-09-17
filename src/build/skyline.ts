@@ -114,31 +114,75 @@ function splayLegs(
 
 const legLen = (topY: number, rFoot: number, rTop: number) => Math.hypot(topY, rFoot - rTop);
 
-/** unique-vertex normals, so a low-segment primitive reads as facets */
-function faceted(g: THREE.BufferGeometry): THREE.BufferGeometry {
-  const n = g.toNonIndexed();
-  n.computeVertexNormals();
-  g.dispose();
-  return n;
+/**
+ * Geodesic hemisphere: a vertex-up icosphere cut at the equator, returned as the
+ * flat-shaded upper shell plus one transform per lattice strut. Meridian ribs alone
+ * read as a circus tent; the triangulation IS the shape.
+ * Two traps. (a) Rotate by a BASE vertex - (0,1,phi) is one of the twelve - because
+ * position[0] is a subdivision midpoint already on +y, so rotating by it is a no-op.
+ * (b) Only an EVEN subdivision lands vertices exactly on y=0: detail 1 and 3 cut
+ * clean, detail 2 leaves 30 struts hanging through the floor.
+ */
+function geodesic(R: number, detail: number) {
+  const src = new THREE.IcosahedronGeometry(R, detail);
+  src.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(
+    new THREE.Vector3(0, 1, (1 + Math.sqrt(5)) / 2).normalize(), YAXIS));
+  const pos = src.getAttribute('position');
+  const seen = new Map<string, number>();
+  const pts: THREE.Vector3[] = [];
+  const face: number[] = [];
+  for (let i = 0; i < pos.count; i++) {
+    const v = new THREE.Vector3().fromBufferAttribute(pos, i);
+    const k = v.toArray().map((n) => n.toFixed(4)).join();
+    let id = seen.get(k);
+    if (id === undefined) { id = pts.length; seen.set(k, id); pts.push(v); }
+    face.push(id);
+  }
+  src.dispose();
+  const shellPos: number[] = [];
+  const edges = new Set<string>();
+  for (let t = 0; t < face.length; t += 3) {
+    const [a, b, c] = [pts[face[t]], pts[face[t + 1]], pts[face[t + 2]]];
+    if (a.y + b.y + c.y <= 0) continue;                        // lower half, discard
+    shellPos.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
+    for (let e = 0; e < 3; e++) {
+      const i = face[t + e], j = face[t + (e + 1) % 3];
+      edges.add(i < j ? i + '_' + j : j + '_' + i);
+    }
+  }
+  const shell = new THREE.BufferGeometry();
+  shell.setAttribute('position', new THREE.Float32BufferAttribute(shellPos, 3));
+  shell.computeVertexNormals();
+  const struts: THREE.Matrix4[] = [];
+  const dir = new THREE.Vector3();
+  for (const e of edges) {
+    const [i, j] = e.split('_').map(Number);
+    const a = pts[i], b = pts[j];
+    const len = dir.subVectors(b, a).length();
+    struts.push(new THREE.Matrix4().compose(
+      new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5),
+      new THREE.Quaternion().setFromUnitVectors(YAXIS, dir.divideScalar(len)),
+      new THREE.Vector3(1, len, 1),
+    ));
+  }
+  return { shell, struts };
 }
 
-/** Script-wordmark silhouette; monotone in x so it can never self-intersect. At 60 m
- *  a LOW ribbon with a tall initial and small bumps reads as script; a tall
- *  deep-toothed one reads as a comb, and lifting both ends as a bowl. */
-function ribbon(halfW: number, thick: number, cap: number, wob: number, freq = 4.5) {
-  const N = 44;
-  const top: [number, number][] = [], bot: [number, number][] = [];
-  for (let i = 0; i <= N; i++) {
-    const t = i / N;
-    const x = (t * 2 - 1) * halfW;
-    const base = Math.sin(t * Math.PI * 1.9) * 0.16 + t * 0.5 - 0.28;
-    const w = Math.sin(t * Math.PI * freq) * wob;
-    const asc = Math.exp(-(((t - 0.06) / 0.055) ** 2)) * cap;      // initial, left only
-    const flick = Math.exp(-(((t - 0.9) / 0.06) ** 2)) * cap * 0.28;
-    top.push([x, base + thick + w + asc + flick]);
-    bot.push([x, base - thick + w * 0.3]);   // underside barely follows the wobble
-  }
-  return top.concat(bot.reverse());
+/**
+ * A transparent lettered plane laid ON a sign face - a drawn ribbon is a squiggle at
+ * any distance; only glyphs give a baseline, a capital and a word silhouette.
+ * THE MIRROR TRAP: rotation.y = +PI/2 puts the normal on +x and +u on world -z, and
+ * -z is the right hand of anyone in the street looking down the stem toward -x, so
+ * the word reads forwards from the map. -PI/2 faces the desert and mirrors it.
+ */
+function letters(
+  g: THREE.Group, mat: THREE.Material, w: number, h: number,
+  x: number, y: number, z: number,
+): void {
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(w, h), mat);
+  mesh.rotation.y = Math.PI / 2;
+  mesh.position.set(x, y, z);
+  g.add(mesh);
 }
 
 function ellipse(rx: number, ry: number): [number, number][] {
@@ -244,7 +288,6 @@ export const buildSkyline: Builder = (ctx) => {
     const TOP = 17.2, BOT_HALF = 5.6, TOP_HALF = 3.4;
     const halfAt = (y: number) => BOT_HALF + (TOP_HALF - BOT_HALF) * (y / TOP);
     const pale = m.painted(PAL.concrete, 0.74, 0.12);
-    const maroon = m.emissive(PAL.signMaroon);
 
     // two splayed posts and two cross-beams = the trapezoid frame
     const lean = Math.atan2(BOT_HALF - TOP_HALF, TOP);
@@ -263,11 +306,26 @@ export const buildSkyline: Builder = (ctx) => {
       [halfAt(15.9) - 0.55, 15.9], [-halfAt(15.9) + 0.55, 15.9],
     ], 0.34, m.painted(PAL.houseCream, 0.82, 0.04), SX + 0.5, 0, SZ);
 
-    // "Nuketown" script over its underswash
-    plate(g, ribbon(3.7, 0.3, 1.55, 0.16, 8), 0.26, maroon, SX + 0.8, 12.2, SZ);
-    plate(g, ribbon(4.0, 0.15, 0, 0.1, 1.6), 0.2, maroon, SX + 0.76, 10.5, SZ);
-    // strapline: "Discover the City of the Future" is one lighter bar at 66 m
-    g.add(box(0.2, 0.42, 6.0, m.emissive(PAL.windowBand, 0.5), SX + 0.72, 9.3, SZ));
+    // "Nuketown" in neon script with the NT05 strapline under it, both glyph planes
+    // standing just clear of the face so the cream panel still backs them. The plane,
+    // not the font, sets the cap height: signText pins the word to 90% of the plane
+    // width, so at 72 m every centimetre of panel is worth taking. Headless Chromium
+    // has no Brush Script MT - the stack lands on Segoe Script - and no Futura, so
+    // the strapline is Century Gothic. Both are period-correct enough.
+    const NAME_W = (halfAt(12.2) - 0.55) * 2 / 0.9;      // 90% of it IS the word
+    const NAME_A = 3.5;
+    letters(g, m.signText({
+      text: 'Nuketown', color: PAL.signMaroon, aspect: NAME_A, script: true, glow: true,
+    }), NAME_W, NAME_W / NAME_A, SX + 0.86, 12.2, SZ);
+
+    const LINE_W = (halfAt(9.3) - 0.55) * 2, LINE_A = 9.0;
+    const lineH = LINE_W / LINE_A;
+    // the plate is sized BY the strapline now, not the other way round; it used to be
+    // a 0.42 m bar, which is why the line had nowhere to go and it read as blank
+    g.add(box(0.2, lineH, LINE_W, m.emissive(PAL.windowBand, 0.5), SX + 0.72, 9.3, SZ));
+    letters(g, m.signText({
+      text: 'Discover the City of the Future', color: PAL.signTeal, aspect: LINE_A,
+    }), LINE_W, lineH, SX + 0.86, 9.3, SZ);
     // teal oval badge on a cream surround
     plate(g, ellipse(3.15, 1.8), 0.22, m.painted(PAL.coachCream, 0.7, 0.05),
       SX + 0.72, 7.0, SZ);
@@ -358,19 +416,23 @@ export const buildSkyline: Builder = (ctx) => {
   }
 
   // --- 6. geodesic dome, beyond team B's back fence: its answering landmark.
+  // Panels and struts come off the SAME triangulation, so the frame lands on the
+  // panel joints instead of lying across them. detail 3 is a 4V dome: 160 panels and
+  // 250 struts, one draw call each and ~2.7k triangles - cheap enough for background,
+  // and 2V at this 32 m span reads as folded paper rather than a space frame.
   {
     const R = DOME_R;
-    put(g, faceted(new THREE.SphereGeometry(R, 14, 7, 0, Math.PI * 2, 0, Math.PI / 2)),
-      m.painted(PAL.capsuleWhite, 0.72, 0.03), DOME_X, 0.4, DOME_Z);
+    const strut = R * 0.0085;
+    const dome = geodesic(R, 3);
+    put(g, dome.shell, m.painted(PAL.capsuleWhite, 0.72, 0.03), DOME_X, 0.4, DOME_Z);
     put(g, new THREE.CylinderGeometry(R * 1.04, R * 1.08, 0.9, 24),
       m.painted(PAL.concreteDark, 0.92, 0), DOME_X, 0.45, DOME_Z);
-    const meridians: THREE.Matrix4[] = [];
-    for (let i = 0; i < 8; i++) meridians.push(mtx(DOME_X, 0.4, DOME_Z, (i / 8) * Math.PI));
-    g.add(inst(new THREE.TorusGeometry(R * 1.008, 0.14, 5, 36, Math.PI), m.steel, meridians));
-    for (const th of [0.52, 1.0]) {
-      put(g, new THREE.TorusGeometry(R * Math.cos(th), 0.13, 5, 40), m.steel,
-        DOME_X, 0.4 + R * Math.sin(th), DOME_Z).rotation.x = Math.PI / 2;
-    }
+    // struts ride a hair proud of the shell so they never z-fight the panels
+    const lattice = inst(
+      new THREE.CylinderGeometry(strut, strut, 1, 5, 1, true), m.steel, dome.struts);
+    lattice.position.set(DOME_X, 0.4, DOME_Z);
+    lattice.scale.setScalar(1.004);
+    g.add(lattice);
   }
 
   // --- 7. perimeter fringe: low show pavilions scattered just outside the boundary,
