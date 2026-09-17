@@ -60,18 +60,28 @@ await page.waitForTimeout(600);
  * a door, which the door scan below locates rather than assumes.
  */
 const ROUTES = [
+  // The turning circle is now CENTRAL (HEAD_CENTER_X 0, HEAD_RADIUS 10.5) with one
+  // road stem running west. These waypoints follow that plan; the previous set
+  // targeted a cul-de-sac at x=26 that no longer exists.
   { name: 'spawnA -> spawnB, west flank',
     pts: [[0, -29], [-13, -27], [-20, -16], [-20, 0], [-20, 16], [-13, 27], [0, 29]] },
-  // crosses the verge at x=18, which the verge scan below confirms is open on both
-  // sides. x=16 lands on a 1.15 m hedge - correct cover, not a defect.
+  // x=13 at z=-27 walks into the rear deck's posts (deck spans x 2.4..9.6), so the
+  // east flank clears the house end at x=16 before turning.
+  // A collider scan of the orange yard shows the BACK of the yard (z=-28) is sealed
+  // east of x=9.5 by clutter, while z=-26 is open at 12.5..16.5 and z=-24 at 11.5..19.
+  // That is legitimate cover, so the east flank comes forward before turning out.
   { name: 'spawnA -> spawnB, east flank',
-    pts: [[0, -29], [13, -27], [18, -16], [18, -8], [18, 8], [18, 16], [13, 27], [0, 29]] },
-  { name: 'spawnA -> cul-de-sac turning head',
-    pts: [[0, -29], [13, -27], [16, -16], [16, -8], [20, -1], [26, -0.5]] },
-  { name: 'spawnA -> open end of the street',
+    pts: [[0, -29], [6, -26], [14, -25], [18, -16], [18, -8], [18, 8], [18, 16], [14, 25], [6, 27], [0, 29]] },
+  // the house occupies x -9.6..9.6, z -13.6..-22.8, so reaching the circle from the
+  // back yard means going AROUND the house end, not through its footprint.
+  // the garage wing occupies x -17.2..-9.6 down to z=-21.6, so the west route holds
+  // x=-18.5 in the gap between the garage end and the side fence at YARD_X_MIN.
+  { name: 'spawnA -> the central circle',
+    pts: [[0, -29], [-12, -26], [-18.5, -22], [-18.5, -14], [-14, -8], [-8, -3]] },
+  { name: 'spawnA -> west stem off-map',
     pts: [[0, -29], [-13, -27], [-20, -10], [-30, -2], [-44, 0]] },
-  { name: 'along the street, open end -> head',
-    pts: [[-44, 0], [-24, 0], [-8, 0], [8, 0], [20, 0], [26, 0]] },
+  { name: 'along the street, west stem -> circle',
+    pts: [[-44, 0], [-34, 0], [-24, 0], [-16, 0], [-12, 0]] },
 ];
 
 const results = await page.evaluate(async (routes) => {
