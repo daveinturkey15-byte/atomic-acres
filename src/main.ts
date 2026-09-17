@@ -9,7 +9,7 @@ import { createWorld } from './core/world';
 import { buildMaterials } from './core/materials';
 import { makeRng, type AABB, type BuildContext, type Builder } from './core/kit';
 import { Player } from './core/player';
-import { SPAWN_A, SPAWN_B, EYE_HEIGHT } from './core/layout';
+import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core/layout';
 import { STATIONS, type Station } from './core/stations';
 
 import { buildGround } from './build/ground';
@@ -33,6 +33,15 @@ const BUILDERS: [string, Builder][] = [
   ['plaza', buildPlaza],
   ['mannequins', buildMannequins],
 ];
+
+// The one invariant, asserted rather than commented. From either back yard, facing
+// your own house, the garage is on your RIGHT - and because the houses are a 180
+// degree rotational pair, both must agree. A half-mirror breaks exactly this.
+const handedness = HOUSES.map(garageIsOnTheRight);
+if (!handedness.every(Boolean)) {
+  console.error('[nuketown] HANDEDNESS VIOLATION: garage-on-the-right is',
+    handedness, '- the houses are no longer a 180 degree rotational pair.');
+}
 
 const world = createWorld(document.body);
 const mat = buildMaterials();
@@ -167,6 +176,7 @@ const qa: QA = {
       programs: i.programs?.length ?? 0,
       colliders: colliders.length,
       eyeHeight: EYE_HEIGHT,
+      handedness,
     };
   },
   moduleStats,

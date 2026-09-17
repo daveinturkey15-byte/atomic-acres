@@ -24,10 +24,28 @@ no build scripts carried across. Measurements and lessons may be recovered; byte
 
 | Thing | State |
 |---|---|
-| Core (layout, palette, materials, world, player, stations, kit) | written, typechecks clean |
-| Capture harness | written, Playwright chromium installed |
-| Feature modules in `src/build/` | built by six parallel Opus 5 agents, see git log |
-| Reference images | **not committed.** CDN is behind a bot check — fetch with a real browser, not curl. Source URLs in the old project's `docs/references/nuketown-2025/manifest.json` |
+| Core (layout, palette, materials, world, player, stations, kit) | done, typechecks clean |
+| Feature modules | 9: ground, orange-house, white-house, third-house, vehicles, yards, skyline, plaza, mannequins |
+| Capture harness | `npm run capture` - 10 stations, fails on page errors, strips the overlay before every shot |
+| Traversability harness | `npm run traverse` - 5/5 routes, 4/4 house faces enterable, verge scan |
+| Budgets | worst station ~326 draw calls / 112k tris against 1200 / 900k |
+| Reference images | **not committed.** CDN is behind a bot check - fetch with a real browser, not curl. URLs in the old project's `docs/references/nuketown-2025/manifest.json` |
+
+## Bugs found by looking at frames, that the numbers passed
+
+Worth knowing, because each one produced a perfectly healthy-looking stat line:
+
+- no environment map, so every `metalness > 0.7` surface rendered near-black
+- the animation loop re-synced the camera each frame, so all ten capture stations
+  silently photographed the spawn view (identical stats everywhere was the tell)
+- every screenshot was the click-to-play overlay; a vite HMR reload restores it
+  mid-run, so the harness now strips it before **every** shot
+- player movement was mirrored in x against the camera: correct at yaw 0 and PI,
+  exactly backwards at +/-PI/2
+- both spawn yaws were inverted, so each team faced its own back fence
+- the house interiors had a **lawn** floor - ground.ts laid its house band in grass
+  and neither house drew a floor of its own
+- three camera stations were aimed at the wrong building
 
 ## The one invariant
 

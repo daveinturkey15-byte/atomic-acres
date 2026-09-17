@@ -152,6 +152,9 @@ const verge = await page.evaluate(() => {
   return { orangeVerge: scan(-1), whiteVerge: scan(1) };
 });
 
+// the one invariant, read from the running scene rather than re-derived here
+const hand = await page.evaluate(() => window.__NT.stats().handedness);
+
 await browser.close();
 server.kill();
 
@@ -176,6 +179,10 @@ for (const [k, spans] of Object.entries(doors)) {
   console.log('  ' + k.padEnd(14) + txt);
 }
 
+const handOk = Array.isArray(hand) && hand.every(Boolean);
+console.log('\n[traverse] invariant - garage on the RIGHT from both back yards: '
+  + (handOk ? 'PASS' : 'FAIL ' + JSON.stringify(hand)));
+
 console.log('\n[traverse] verge scan - x spans where lawn -> street is passable:');
 let walled = 0;
 for (const [k, spans] of Object.entries(verge)) {
@@ -188,4 +195,4 @@ for (const [k, spans] of Object.entries(verge)) {
 
 console.log('\n[traverse] ' + (results.length - bad) + '/' + results.length
   + ' routes passed;  ' + (4 - faceless) + '/4 house faces enterable');
-process.exit(bad || faceless || walled ? 1 : 0);
+process.exit(bad || faceless || walled || !handOk ? 1 : 0);
