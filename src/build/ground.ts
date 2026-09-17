@@ -22,11 +22,17 @@
  *   0.030  desert road tail (slab top) ..... asphalt  (apron rect -> ROAD_TAIL_X)
  *   0.044  turning-head disc ............... asphalt  (sits over the strip end)
  *   0.058  manhole covers .................. painted steel
+ *   0.072  painted centre line + bulb ring . painted white (over road/head, clear of covers)
+ *   0.086  gutter lines + drain gratings ... painted asphaltLight/steel (offset footprints)
+ *   0.100  tyre scuffs + oil marks ......... painted dark (over the bulb asphalt)
  *   0.138  circular kerb + circular pavement          (overlap the straight run)
  *   0.140  straight kerb + straight pavement = KERB_HEIGHT
  *   0.141  front lawns, frontage corner pads, house band, back yards
  *   0.144  house interior floors ........... concrete (over the lawn pad)
  *   0.146  garage aprons ................... concrete (overlay lawn + head pavement)
+ *   0.154  paving joints/cracks, dropped kerbs, tactile pads, utility covers
+ *           (14 mm over the kerb/pavement plateau; joints skip the driveway spans
+ *           and the dropped-kerb quads abut the aprons, so nothing overlaps T_DRIVE)
  *   0.000..0.550  out-of-bounds perimeter berm
  *
  * A rung has to clear the DEPTH BUFFER, not just the rung below. With 24 bits,
@@ -69,7 +75,11 @@ const Y_BASE = 0.0;
 const Y_ROAD = 0.030;                // 30 mm over the apron: resolves out to 200 m
 const Y_HEAD = 0.044;
 const Y_MANHOLE = 0.058;
-const T_ARC = KERB_HEIGHT - 0.002;   // circular kerb + circular pavement
+const Y_LINE = 0.072;                // painted centre dashes + bulb circulation ring
+const Y_GUTTER = 0.086;              // gutter/camber lines + drain gratings (offset)
+const Y_SCUFF = 0.100;               // tyre scuffs + oil marks on the bulb
+const Y_PAVE_MARK = 0.154;           // paving joints/cracks, dropped kerbs, tactile pads
+const T_ARC = KERB_HEIGHT - 0.002; // circular kerb + circular pavement ring (overlaps straight run)
 const T_PAVE = KERB_HEIGHT;          // straight kerb + straight pavement
 const T_LAWN = KERB_HEIGHT + 0.001;  // lawns and yards, flush with the pavement
 const T_FLOOR = KERB_HEIGHT + 0.004; // house interior floor, over the lawn pad
@@ -300,6 +310,37 @@ function arcPad(
   m.position.set(HEAD_CENTER_X, Y_BASE, 0);
   return flat(m);
 }
+/**
+ * One draw call for a whole family of flat decals: a unit quad instanced with
+ * per-instance position, yaw and (w, d) scale at a fixed rung `y`. Decal
+ * materials are all unmapped (painted/kerb/concrete) so no UV scaling needed.
+ * Emits no colliders - groundUnder() already defaults to y=0 and the plateau
+ * colliders cover everything up here.
+ */
+interface DecalSpec { x: number; z: number; w: number; d: number; rot?: number }
+function decalMesh(material: THREE.Material, specs: DecalSpec[], y: number): THREE.InstancedMesh {
+  const geo = new THREE.PlaneGeometry(1, 1);
+  geo.rotateX(-Math.PI / 2);
+  const mesh = new THREE.InstancedMesh(geo, material, Math.max(1, specs.length));
+  const m4 = new THREE.Matrix4();
+  const up = new THREE.Vector3(0, 1, 0);
+  const q = new THREE.Quaternion();
+  const pos = new THREE.Vector3();
+  const scl = new THREE.Vector3();
+  for (let i = 0; i < specs.length; i++) {
+    const s = specs[i];
+    pos.set(s.x, y, s.z);
+    q.setFromAxisAngle(up, s.rot ?? 0);
+    scl.set(s.w, 1, s.d);
+    mesh.setMatrixAt(i, m4.compose(pos, q, scl));
+  }
+  mesh.count = specs.length;
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.computeBoundingSphere();
+  mesh.castShadow = false;
+  mesh.receiveShadow = true;
+  return mesh;
+}
 
 // ---------------------------------------------------------------- builder
 
@@ -512,6 +553,8 @@ export const buildGround: Builder = (ctx) => {
       [ROAD_X_MIN + (ROAD_X_MAX - ROAD_X_MIN) * 0.34, -ROAD_HALF_WIDTH * 0.5],
       [ROAD_X_MIN + (ROAD_X_MAX - ROAD_X_MIN) * 0.72, ROAD_HALF_WIDTH * 0.42],
       [HEAD_CENTER_X, 0],
+      [ROAD_X_MIN + (ROAD_X_MAX - ROAD_X_MIN) * 0.12, ROAD_HALF_WIDTH * 0.35],
+      [HEAD_CENTER_X + HEAD_RADIUS * 0.45, -HEAD_RADIUS * 0.4],
     ];
     // A disc at Y_MANHOLE would be a plane hovering over the asphalt; a short
     // cylinder rising from y=0 is buried in the road and stands a couple of
@@ -535,6 +578,165 @@ export const buildGround: Builder = (ctx) => {
     covers.castShadow = false;
     covers.receiveShadow = true;
     g.add(covers);
+  }
+  // ---- 12. painted + paved surface detail, one InstancedMesh per family.
+  // All quads sit on their own rungs (Y_LINE/Y_GUTTER/Y_SCUFF over the road and
+  // Y_PAVE_MARK over the plateau) with footprints that never overlap a sibling
+  // rung's neighbour: centre dashes steer clear of the manhole spots, drains sit
+  // kerb-side of the gutter lines, scuffs keep to the bulb, and paving joints
+  // skip the driveway spans so nothing fights T_DRIVE at aerial range.
+  {
+    const paintWhite = ctx.mat.painted(PAL.windowBand, 0.6, 0);
+    const gutterMat = ctx.mat.painted(PAL.asphaltLight, 0.96, 0);
+    const ironMat = ctx.mat.painted(PAL.steel, 0.72, 0.45);
+    const jointMat = ctx.mat.painted(PAL.concreteDark, 0.95, 0);
+    const scuffMat = ctx.mat.painted(PAL.truckCab, 0.97, 0);
+    const tactileMat = ctx.mat.painted(PAL.sand, 0.9, 0);
+
+    // Centre dashes down the stem, kept off the manhole x positions.
+    const lineSpecs: DecalSpec[] = [];
+    const coverKeep: [number, number][] = [
+      [ROAD_X_MIN + (ROAD_X_MAX - ROAD_X_MIN) * 0.34, -ROAD_HALF_WIDTH * 0.5],
+      [ROAD_X_MIN + (ROAD_X_MAX - ROAD_X_MIN) * 0.72, ROAD_HALF_WIDTH * 0.42],
+      [ROAD_X_MIN + (ROAD_X_MAX - ROAD_X_MIN) * 0.12, ROAD_HALF_WIDTH * 0.35],
+    ];
+    for (let x = ROAD_X_MIN + 1.5; x < ROAD_X_MAX - 1.0; x += 5.0) {
+      let clear = true;
+      for (const s of coverKeep) {
+        if (Math.abs(s[0] - x - 1.0) < 1.6 && Math.abs(s[1]) < 0.8) { clear = false; break; }
+      }
+      if (!clear) continue;
+      lineSpecs.push({ x: x + (ctx.rand() - 0.5) * 0.2, z: (ctx.rand() - 0.5) * 0.06, w: 2.0, d: 0.15 });
+    }
+    // Stop bar where the stem meets the bulb.
+    lineSpecs.push({ x: ROAD_X_MAX - 1.2, z: 0, w: 0.45, d: ROAD_HALF_WIDTH * 1.3 });
+    // Circulation dashes round the bulb + two entry chevrons.
+    const ringR = HEAD_RADIUS - 2.2;
+    const ringN = 18;
+    for (let i = 0; i < ringN; i++) {
+      const a = (i / ringN) * Math.PI * 2 + ctx.rand() * 0.05;
+      lineSpecs.push({
+        x: HEAD_CENTER_X + Math.cos(a) * ringR,
+        z: Math.sin(a) * ringR,
+        w: 1.5, d: 0.16, rot: -a + Math.PI / 2,
+      });
+    }
+    if (lineSpecs.length) g.add(decalMesh(paintWhite, lineSpecs, Y_LINE));
+
+    // Gutter/camber hint: stem edges up to the kerb join + an arc round the bulb.
+    const gutterSpecs: DecalSpec[] = [];
+    for (const s of [-1, 1] as const) {
+      gutterSpecs.push({
+        x: (ROAD_X_MIN + KERB_JOIN_X) / 2, z: s * (ROAD_HALF_WIDTH - 0.55),
+        w: KERB_JOIN_X - ROAD_X_MIN, d: 0.22,
+      });
+    }
+    const gutR = HEAD_RADIUS - 0.75;
+    const gutN = 16;
+    for (let i = 0; i < gutN; i++) {
+      const a = ARC_START + ARC_SPAN * ((i + 0.5) / gutN);
+      gutterSpecs.push({
+        x: HEAD_CENTER_X + Math.cos(a) * gutR, z: Math.sin(a) * gutR,
+        w: 1.7, d: 0.2, rot: -a + Math.PI / 2,
+      });
+    }
+    if (gutterSpecs.length) g.add(decalMesh(gutterMat, gutterSpecs, Y_GUTTER));
+
+    // Drain gratings: kerb-side of the gutter lines so the footprints abut.
+    const drainSpecs: DecalSpec[] = [];
+    for (const s of [-1, 1] as const) {
+      for (const t of [0.25, 0.55, 0.85]) {
+        drainSpecs.push({
+          x: ROAD_X_MIN + (KERB_JOIN_X - ROAD_X_MIN) * t + (ctx.rand() - 0.5) * 0.6,
+          z: s * (ROAD_HALF_WIDTH - 0.2), w: 0.65, d: 0.4,
+        });
+      }
+    }
+    for (const a of [0.6, 2.5, 4.2]) {
+      drainSpecs.push({
+        x: HEAD_CENTER_X + Math.cos(a) * (HEAD_RADIUS - 0.3),
+        z: Math.sin(a) * (HEAD_RADIUS - 0.3),
+        w: 0.65, d: 0.45, rot: -a + Math.PI / 2,
+      });
+    }
+    if (drainSpecs.length) g.add(decalMesh(ironMat, drainSpecs, Y_GUTTER));
+
+    // Tyre scuff arcs + oil spots on the bulb.
+    const scuffSpecs: DecalSpec[] = [];
+    for (let i = 0; i < 16; i++) {
+      const a = ctx.rand() * Math.PI * 2;
+      const r = 2.0 + ctx.rand() * (HEAD_RADIUS - 3.0);
+      scuffSpecs.push({
+        x: HEAD_CENTER_X + Math.cos(a) * r, z: Math.sin(a) * r,
+        w: 1.2 + ctx.rand() * 1.2, d: 0.22 + ctx.rand() * 0.13,
+        rot: -a + Math.PI / 2 + (ctx.rand() - 0.5) * 0.5,
+      });
+    }
+    for (let i = 0; i < 6; i++) {
+      const a = ctx.rand() * Math.PI * 2;
+      const r = ctx.rand() * (HEAD_RADIUS - 2.5);
+      const s = 0.35 + ctx.rand() * 0.45;
+      scuffSpecs.push({
+        x: HEAD_CENTER_X + Math.cos(a) * r, z: Math.sin(a) * r,
+        w: s, d: s * (0.7 + ctx.rand() * 0.5), rot: ctx.rand() * Math.PI,
+      });
+    }
+    if (scuffSpecs.length) g.add(decalMesh(scuffMat, scuffSpecs, Y_SCUFF));
+
+    // Paving joints across both straight bands, skipping the driveway spans.
+    const paveSpecs: DecalSpec[] = [];
+    const bandMid = (ROAD_HALF_WIDTH + KERB_WIDTH + PAVEMENT_OUTER) / 2;
+    const bandD = PAVEMENT_OUTER - (ROAD_HALF_WIDTH + KERB_WIDTH);
+    for (const s of [-1, 1] as const) {
+      for (let x = ROAD_X_MIN + 1.0; x < KERB_JOIN_X; x += 3.0) {
+        let overDrive = false;
+        for (const h of HOUSES) {
+          if (h.side !== s) continue;
+          if (Math.abs(x - h.garageX) < GARAGE_LEN / 2 + DRIVE_FLARE + 0.4) { overDrive = true; break; }
+        }
+        if (overDrive) continue;
+        paveSpecs.push({ x: x + (ctx.rand() - 0.5) * 0.15, z: s * bandMid, w: 0.09, d: bandD });
+      }
+    }
+    // A few jittered cracks on the straight pavements.
+    for (let i = 0; i < 12; i++) {
+      const s = i % 2 === 0 ? 1 : -1;
+      paveSpecs.push({
+        x: ROAD_X_MIN + ctx.rand() * (KERB_JOIN_X - ROAD_X_MIN),
+        z: s * (bandMid + (ctx.rand() - 0.5) * bandD * 0.5),
+        w: 0.07, d: 0.8 + ctx.rand() * 1.0, rot: (ctx.rand() - 0.5) * 1.2,
+      });
+    }
+    if (paveSpecs.length) g.add(decalMesh(jointMat, paveSpecs, Y_PAVE_MARK));
+
+    // Dropped kerbs: one quad per garage over the kerb strip, abutting the apron.
+    const dropSpecs: DecalSpec[] = [];
+    for (const h of HOUSES) {
+      dropSpecs.push({
+        x: h.garageX, z: h.side * (ROAD_HALF_WIDTH + KERB_WIDTH / 2),
+        w: GARAGE_LEN + DRIVE_FLARE * 2, d: KERB_WIDTH,
+      });
+    }
+    if (dropSpecs.length) g.add(decalMesh(ctx.mat.kerb, dropSpecs, Y_PAVE_MARK));
+
+    // Tactile pad hints at the bulb junction + the -x street mouth corners.
+    const tactileSpecs: DecalSpec[] = [
+      { x: KERB_JOIN_X - 0.9, z: PAVEMENT_OUTER - 0.55, w: 0.7, d: 0.7 },
+      { x: KERB_JOIN_X - 0.9, z: -(PAVEMENT_OUTER - 0.55), w: 0.7, d: 0.7 },
+      { x: ROAD_X_MIN + 0.9, z: PAVEMENT_OUTER - 0.55, w: 0.7, d: 0.7 },
+      { x: ROAD_X_MIN + 0.9, z: -(PAVEMENT_OUTER - 0.55), w: 0.7, d: 0.7 },
+    ];
+    g.add(decalMesh(tactileMat, tactileSpecs, Y_PAVE_MARK));
+
+    // Pavement utility covers: small steel squares clear of the driveway spans.
+    const utilSpecs: DecalSpec[] = [];
+    for (const s of [-1, 1] as const) {
+      const h = HOUSES.find((hh) => hh.side === s)!;
+      const inward = h.garageX > 0 ? -1 : 1;
+      const clearX = h.garageX + inward * (GARAGE_LEN / 2 + DRIVE_FLARE + 2.5);
+      utilSpecs.push({ x: clearX, z: s * bandMid, w: 0.7, d: 0.7, rot: (ctx.rand() - 0.5) * 0.4 });
+    }
+    if (utilSpecs.length) g.add(decalMesh(ironMat, utilSpecs, Y_PAVE_MARK));
   }
 
   const result: BuildResult = { group: g, colliders };

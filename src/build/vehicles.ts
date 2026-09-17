@@ -45,14 +45,13 @@ const SEG_OVERHANG = 0.35;
 const SEG_MAX = 6;
 
 /**
- * Big brightwork - bumpers, grilles, spears, arches, hubcaps. `ctx.mat.chrome`
- * is metalness 0.95 and world.ts lights the map with a sun, a hemisphere and a
- * fill but NO environment map, so a full metal has no indirect specular to
- * reflect and renders black but for one hot spot - verified by rendering, every
- * bumper came out a black hole. Large chrome faces are therefore a low-metal
- * polish off the same palette entry. Small dark seams (mullions, rivets) keep
- * the real chrome, where near-black is right anyway. Revert throughout if an
- * environment map ever lands in world.ts.
+ * Big brightwork - bumpers, grilles, spears, arches, hubcaps. world.ts now
+ * provides a PMREM environment map, so `ctx.mat.chrome` (metalness 0.95)
+ * reflects properly and suits hero parts (coach front bumper, mirror heads,
+ * grille slats). Large flat trim faces still use this low-metal polish off the
+ * same palette entry - it holds its value in shade where a full metal goes
+ * dark. Small dark seams (mullions, rivets) keep the real chrome, where
+ * near-black is right anyway.
  */
 function brightwork(ctx: BuildContext): THREE.Material {
   return ctx.mat.painted(PAL.chrome, 0.24, 0.4);
@@ -128,6 +127,15 @@ function wheels(
     ctx.mat.painted(PAL.truckWhite, 0.62, 0), hubs));
   g.add(inst(new THREE.CylinderGeometry(r * 0.60, r * 0.60, w * 1.08, 16),
     ctx.mat.painted(PAL.asphalt, 0.55, 0.25), hubs));
+  // sidewall bead: a dark torus flat against the outer tyre face, so the
+  // whitewall reads as paint on a tyre rather than a pale disc. The torus
+  // already lies in the wheel plane (axle along z), hence no rotation.
+  const bead = new THREE.TorusGeometry(r * 0.92, r * 0.055, 6, 20);
+  const beads: THREE.Matrix4[] = [];
+  for (const x of xs) {
+    for (const s of [-1, 1]) beads.push(xform(x, WHEEL_REST + r, s * (zHalf + w * 0.53)));
+  }
+  g.add(inst(bead, ctx.mat.painted(PAL.truckCab, 0.9, 0), beads));
   const dome = new THREE.SphereGeometry(r * 0.46, 14, 7, 0, Math.PI * 2, 0, Math.PI * 0.52);
   dome.scale(1, 0.55, 1);
   dome.translate(0, w * 0.56, 0);
@@ -136,20 +144,50 @@ function wheels(
     brightwork(ctx), arches));
 }
 
-/** A row of round headlamps: chrome bezel plus a pale lens. */
+/**
+ * A row of round headlamps with real depth: a dark socket buried in the nose,
+ * a bright bezel standing proud of it, and a pale lens domed slightly forward
+ * of the bezel so it catches the sun instead of reading as paint. The whole
+ * stack spans x +/- 0.08 - park the call x so the socket sits inside the panel
+ * and the lens hoods forward of it.
+ */
 function lamps(
   g: THREE.Group, ctx: BuildContext,
   x: number, y: number, zs: number[], r: number,
 ): void {
-  const xf = zs.map((z) => xform(x, y, z, 0));
-  const bez = new THREE.CylinderGeometry(r, r, 0.1, 12);
+  const dark = ctx.mat.painted(PAL.truckCab, 0.6, 0.2);
+  const socket = new THREE.CylinderGeometry(r * 1.14, r * 1.14, 0.06, 12);
+  socket.rotateZ(Math.PI / 2);
+  g.add(inst(socket, dark, zs.map((z) => xform(x - 0.05, y, z, 0))));
+  const bez = new THREE.CylinderGeometry(r, r, 0.12, 12);
   bez.rotateZ(Math.PI / 2);
-  const lens = new THREE.CylinderGeometry(r * 0.76, r * 0.76, 0.14, 12);
+  g.add(inst(bez, brightwork(ctx), zs.map((z) => xform(x, y, z, 0))));
+  const lens = new THREE.CylinderGeometry(r * 0.76, r * 0.62, 0.08, 12);
   lens.rotateZ(Math.PI / 2);
-  g.add(inst(bez, brightwork(ctx), xf));
-  g.add(inst(lens, ctx.mat.painted(PAL.windowBand, 0.12, 0.3), xf));
+  g.add(inst(lens, ctx.mat.painted(PAL.windowBand, 0.12, 0.3),
+    zs.map((z) => xform(x + 0.04, y, z, 0))));
 }
 
+/**
+ * Round red tail lights reusing the lamp depth trick: dark socket, bright
+ * bezel, red lens rearward. `x` is the tail face, lenses point -x.
+ */
+function tailLamps(
+  g: THREE.Group, ctx: BuildContext,
+  x: number, y: number, zs: number[], r: number,
+): void {
+  const dark = ctx.mat.painted(PAL.truckCab, 0.6, 0.2);
+  const socket = new THREE.CylinderGeometry(r * 1.14, r * 1.14, 0.06, 12);
+  socket.rotateZ(Math.PI / 2);
+  g.add(inst(socket, dark, zs.map((z) => xform(x + 0.05, y, z, 0))));
+  const bez = new THREE.CylinderGeometry(r, r, 0.12, 12);
+  bez.rotateZ(Math.PI / 2);
+  g.add(inst(bez, brightwork(ctx), zs.map((z) => xform(x, y, z, 0))));
+  const lens = new THREE.CylinderGeometry(r * 0.76, r * 0.62, 0.08, 12);
+  lens.rotateZ(Math.PI / 2);
+  g.add(inst(lens, ctx.mat.painted(PAL.applianceRed, 0.28, 0.15),
+    zs.map((z) => xform(x - 0.04, y, z, 0))));
+}
 // ------------------------------------------------------------------ the coach
 
 /**
@@ -369,20 +407,91 @@ function makeCoach(ctx: BuildContext): Vehicle {
   const slats: THREE.Matrix4[] = [];
   for (let i = 0; i < 5; i++) slats.push(xform(5.705, 1.15 + i * 0.065, 0));
   g.add(inst(new THREE.BoxGeometry(0.05, 0.032, 1.30), trim, slats));
+  // twin lamps seated on the nose plan curvature (surface runs ~5.50 at this
+  // span, so the socket buries and the lens hoods forward of it). A 4-lamp
+  // row does not fit: the grille already owns the middle 1.5 m.
   lamps(g, ctx, 5.50, 1.32, [-1.00, 1.00], 0.19);
 
-  // bumpers, bent to the plan radius so they hug the rounded nose and tail
-  g.add(inst(arcBar(2.2, 0.115, 1.05), trim, [
+  // bumpers, bent to the plan radius so they hug the rounded nose and tail.
+  // The nose bumper is real chrome - it now has an env map to reflect - with
+  // a dark rubber shadow-gap arc under it, so it separates from the cream at
+  // distance; the tail bumper is darker steel.
+  const shadowGap = ctx.mat.painted(PAL.truckCab, 0.7, 0.1);
+  g.add(inst(arcBar(2.2, 0.115, 1.05), ctx.mat.chrome, [
     xform(5.62 - 2.2, 1.00, 0),
+  ]));
+  g.add(inst(arcBar(2.2, 0.05, 1.0), shadowGap, [
+    xform(5.60 - 2.2, 0.855, 0),
+  ]));
+  g.add(inst(arcBar(2.2, 0.115, 1.05), ctx.mat.steel, [
     xform(-5.52 + 2.2, 1.00, 0, 0, Math.PI),
   ]));
   // rear screen, set into the tail crown
   g.add(box(0.08, 0.72, 1.50, glazing, -5.50, 2.30, 0));
+  // four round tail lights across the tail, clear of the rear screen. The tail
+  // face runs about -5.46 inboard to -5.39 outboard at this height.
+  tailLamps(g, ctx, -5.44, 1.15, [-0.95, -0.65, 0.65, 0.95], 0.10);
+
+  // entry door on the right (+z) flank just ahead of the front axle: cream
+  // leaf proud of the swoosh, dark seams bridging the panel gap, a glazing
+  // drop and a chrome handle. Kept on the parallel mid-body (hull 1.30) so
+  // the leaf never stands off the nose turn-in.
+  const cream = ctx.mat.painted(PAL.coachCream, 0.5, 0.12);
+  g.add(box(0.90, 1.38, 0.04, cream, 4.10, 1.31, 1.315));
+  g.add(box(0.60, 0.40, 0.045, glazing, 4.10, 1.72, 1.33));
+  g.add(inst(new THREE.BoxGeometry(0.035, 1.44, 0.045), shadowGap, [
+    xform(3.63, 1.31, 1.33), xform(4.57, 1.31, 1.33),
+  ]));
+  g.add(box(0.94, 0.035, 0.045, shadowGap, 4.10, 2.03, 1.33));
+  g.add(box(0.16, 0.045, 0.05, trim, 4.47, 1.28, 1.345));
+
+  // wing mirrors flanking the split screen: each stalk rises from a sill-frame
+  // end (5.48, 1.87, +/-0.96), so base and head are one connected fitting with
+  // a chrome head and its glass facing the driver (-x)
+  for (const s of [-1, 1]) {
+    g.add(box(0.05, 0.46, 0.05, shadowGap, 5.476, 2.08, s * 0.955));
+    g.add(box(0.06, 0.26, 0.16, ctx.mat.chrome, 5.476, 2.38, s * 0.99));
+    g.add(box(0.02, 0.22, 0.12, glazing, 5.44, 2.38, s * 0.99));
+  }
+  // wipers parked at an angle on each screen pane
+  for (const s of [-1, 1]) {
+    const wiper = box(0.025, 0.55, 0.03, shadowGap, 5.565, 2.18, s * 0.52);
+    wiper.rotation.set(0, -s * 0.15, s * 0.38);
+    g.add(wiper);
+  }
+  // roof pods: low luggage/vent boxes riding the flat mid roofline
+  for (const [px, pl] of [[-1.6, 1.3], [1.2, 1.0]] as [number, number][]) {
+    g.add(box(pl + 0.04, 0.03, 0.59, shadowGap, px, 3.265, 0));
+    g.add(box(pl, 0.10, 0.55, cream, px, 3.33, 0));
+  }
+  // luggage-bay hatches along both skirts: dark frame bedded in the hull with
+  // a cream leaf proud of it (hull runs 1.13 here, so both bury their backs)
+  const hatchX = [-3.4, -1.2, 1.0];
+  const hatchDark: THREE.Matrix4[] = [];
+  const hatchLeaf: THREE.Matrix4[] = [];
+  for (const hx of hatchX) {
+    for (const s of [-1, 1]) {
+      hatchDark.push(xform(hx, 0.62, s * 1.132));
+      hatchLeaf.push(xform(hx, 0.62, s * 1.138));
+    }
+  }
+  g.add(inst(new THREE.BoxGeometry(1.50, 0.50, 0.020), shadowGap, hatchDark));
+  g.add(inst(new THREE.BoxGeometry(1.44, 0.44, 0.024), cream, hatchLeaf));
+  // plates ride the bumper faces, exhaust tucked under the tail
+  const plateMat = ctx.mat.signText({
+    text: 'NT07', color: PAL.truckCab, background: PAL.windowBand, aspect: 2.4,
+  });
+  g.add(box(0.05, 0.18, 0.44, plateMat, 5.72, 1.00, 0));
+  g.add(box(0.05, 0.18, 0.44, plateMat, -5.61, 1.00, 0));
+  const stack = new THREE.CylinderGeometry(0.055, 0.055, 0.5, 10);
+  stack.rotateZ(Math.PI / 2);
+  const stackMesh = new THREE.Mesh(stack, shadowGap);
+  stackMesh.position.set(-5.45, 0.30, -0.85);
+  g.add(stackMesh);
 
   wheels(g, ctx, [3.55, -2.95, -4.45], 1.22, 0.54, 0.30);
-  return { obj: g, len: 11.6, wid: 2.87, hgt: 3.25 };
+  return { obj: g, len: 11.6, wid: 2.87, hgt: 3.40 };
 }
-
 // ------------------------------------------------------------------ box truck
 
 /** White box body on a dark snub-nose cab. ~8 x 2.45 x 3.1 m. */
@@ -413,15 +522,55 @@ function makeBoxTruck(ctx: BuildContext): Vehicle {
     L / 2 - 0.235, 1.98, 0);
   screen.rotation.z = 0.2;
   g.add(screen);
+  // screen frame: header/sill rails following the same rake, buried just
+  // behind the glass so only a trim border shows
+  for (const e of [-1, 1]) {
+    const rail = box(0.08, 0.07, W - 0.26, trim, L / 2 - 0.235 - e * 0.078, 1.98 + e * 0.382, 0);
+    rail.rotation.z = 0.2;
+    g.add(rail);
+  }
   g.add(box(1.0, 0.66, W + 0.03, ctx.mat.windowDark, 2.3, 1.92, 0));
+  // side-glass frames: post/rail borders proud of the cab flanks, instanced
+  const cabDark = ctx.mat.painted(PAL.truckCab, 0.6, 0.2);
+  const postXf: THREE.Matrix4[] = [];
+  const railXf: THREE.Matrix4[] = [];
+  for (const s of [-1, 1]) {
+    postXf.push(xform(1.77, 1.92, s * (W / 2 + 0.012)));
+    postXf.push(xform(2.83, 1.92, s * (W / 2 + 0.012)));
+    railXf.push(xform(2.3, 1.56, s * (W / 2 + 0.012)));
+    railXf.push(xform(2.3, 2.28, s * (W / 2 + 0.012)));
+  }
+  g.add(inst(new THREE.BoxGeometry(0.07, 0.78, 0.05), trim, postXf));
+  g.add(inst(new THREE.BoxGeometry(1.13, 0.07, 0.05), trim, railXf));
+  // cab door seams + handles on both flanks
+  const seamXf: THREE.Matrix4[] = [];
+  for (const s of [-1, 1]) {
+    seamXf.push(xform(1.70, 1.50, s * (W / 2 + 0.006)));
+    seamXf.push(xform(2.90, 1.50, s * (W / 2 + 0.006)));
+  }
+  g.add(inst(new THREE.BoxGeometry(0.045, 1.60, 0.025), cabDark, seamXf));
+  g.add(inst(new THREE.BoxGeometry(0.22, 0.05, 0.04), trim, [
+    xform(2.62, 1.58, W / 2 + 0.012), xform(2.62, 1.58, -W / 2 - 0.012),
+  ]));
   g.add(box(0.2, 0.26, W - 0.15, trim, L / 2 - 0.02, 0.62, 0));
   g.add(box(0.1, 0.4, 1.7, trim, L / 2 - 0.02, 1.16, 0));
   lamps(g, ctx, L / 2 - 0.03, 1.16, [-1.02, 1.02], 0.15);
+  // tail lights on the box rear corners, rear bumper, mudflaps, plates
+  const tailRed = ctx.mat.painted(PAL.applianceRed, 0.28, 0.15);
+  for (const s of [-1, 1]) {
+    g.add(box(0.08, 0.22, 0.28, tailRed, -L / 2 - 0.02, 1.00, s * 0.95));
+    g.add(box(0.06, 0.42, 0.40, cabDark, -2.78, 0.32, s * 1.05));
+  }
+  g.add(box(0.15, 0.18, W, ctx.mat.steel, -L / 2 - 0.05, 0.55, 0));
+  const plateMat = ctx.mat.signText({
+    text: 'NT52', color: PAL.truckCab, background: PAL.windowBand, aspect: 2.4,
+  });
+  g.add(box(0.06, 0.18, 0.44, plateMat, L / 2 + 0.06, 0.62, 0));
+  g.add(box(0.06, 0.18, 0.44, plateMat, -L / 2 - 0.14, 0.55, 0));
 
   wheels(g, ctx, [2.85, -2.2], 1.08, 0.46, 0.28);
-  return { obj: g, len: L + 0.24, wid: W + 0.12, hgt: H };
+  return { obj: g, len: L + 0.36, wid: W + 0.12, hgt: H };
 }
-
 // ------------------------------------------------------------------ saloons
 
 interface SaloonOpts {
@@ -481,9 +630,31 @@ function makeSaloon(ctx: BuildContext, colour: number, o: SaloonOpts): Vehicle {
   } else {
     lamps(g, ctx, L / 2 - 0.01, 0.62, [-0.7, 0.7], 0.13);
   }
+  // greenhouse frame: belt rail under the side glass, drip rail over it
+  g.add(box(2.10, 0.05, W * 0.84 + 0.02, trim, -0.05, 0.895, 0));
+  g.add(box(1.90, 0.045, W * 0.86, trim, -0.25, 1.345, 0));
+  // door shut-lines (four per flank) and chrome handles, all instanced
+  const shutDark = ctx.mat.painted(PAL.truckCab, 0.6, 0.2);
+  const shutXf: THREE.Matrix4[] = [];
+  for (const hx of [1.02, 0.06, -0.10, -1.52]) {
+    shutXf.push(xform(hx, 0.62, W / 2 + 0.004));
+    shutXf.push(xform(hx, 0.62, -W / 2 - 0.004));
+  }
+  g.add(inst(new THREE.BoxGeometry(0.035, 0.52, 0.025), shutDark, shutXf));
+  g.add(inst(new THREE.BoxGeometry(0.18, 0.04, 0.03), trim, [
+    xform(0.78, 0.82, W / 2 + 0.008), xform(0.78, 0.82, -W / 2 - 0.008),
+    xform(-0.38, 0.82, W / 2 + 0.008), xform(-0.38, 0.82, -W / 2 - 0.008),
+  ]));
+  // red lenses on the fin tips, plates front and rear
+  tailLamps(g, ctx, -L / 2 - 0.02, 0.92 + o.fin, [W / 2 - 0.05, -(W / 2 - 0.05)], 0.09);
+  const saloonPlate = ctx.mat.signText({
+    text: 'NT55', color: PAL.truckCab, background: PAL.windowBand, aspect: 2.4,
+  });
+  g.add(box(0.05, 0.16, 0.40, saloonPlate, L / 2 + 0.09, 0.46, 0));
+  g.add(box(0.05, 0.16, 0.40, saloonPlate, -L / 2 - 0.09, 0.50, 0));
 
   wheels(g, ctx, [1.52, -1.52], 0.86, 0.34, 0.22);
-  return { obj: g, len: L + 0.14, wid: W + 0.09, hgt: H };
+  return { obj: g, len: L + 0.24, wid: W + 0.09, hgt: H };
 }
 
 // ------------------------------------------------------------------ placement

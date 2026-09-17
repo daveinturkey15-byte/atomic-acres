@@ -75,7 +75,10 @@ export const THIRD_HOUSE_X = 44.5;        // beyond the head, past the boundary 
 // the rear deck's outer edge and the whole frame was stair. Offset in x away from each
 // house's deck (ORANGE.deckX is +x, WHITE.deckX is -x) so the house reads on spawn.
 export const SPAWN_A = { x: -4.0, y: 0, z: -31.8, yaw: Math.PI }; // orange, faces +z
-export const SPAWN_B = { x: 4.0, y: 0, z: 31.8, yaw: 0 };         // white,  faces -z
+// x=+4 put spawn B INSIDE the white yard's sand pit (x 2.8..6.8, z 30.0..33.0) -
+// the first thing that team saw was a timber kerb across the bottom of frame.
+// -1.2 clears both the pit and the deck at WHITE.deckX = -6.
+export const SPAWN_B = { x: -1.2, y: 0, z: 31.2, yaw: 0 };        // white,  faces -z
 
 export const EYE_HEIGHT = 1.68;
 

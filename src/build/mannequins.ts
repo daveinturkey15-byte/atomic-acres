@@ -1,8 +1,8 @@
 /**
  * MANNEQUINS - the shop dummies that make this a nuclear test town and not a suburb.
  *
- * ONE figure factory, reused 35 times. Every part is a unit primitive pushed into a
- * per-geometry batch, so the population costs ~16 InstancedMesh draw calls.
+ * ONE figure factory, reused 40 times. Every part is a unit primitive pushed into a
+ * per-geometry batch, so the population costs ~26 InstancedMesh draw calls.
  *
  * The rig is built in the figure's OWN frame - feet at y=0, facing -z (the camera
  * convention in core/stations.ts), every length a fraction of the figure's height -
@@ -258,10 +258,21 @@ const PLACES: Place[] = [
   [stx(0.53), O.side * KERB_EDGE, Y_PAVE, 3.5, 'stand', -1],
   [stx(0.66), W.side * PAVE_MID, Y_PAVE, -0.2, 'sit', -1],
   [stx(0.72), W.side * KERB_EDGE, Y_PAVE, -2.6, 'armOut', -1],
+  // --- close-up pass: five more, each somewhere the first 35 never stood. Porch
+  //     drip-edge under the orange canopy; a loiterer by the stem saloon (a metre
+  //     and a half clear of its flanks); a greeter stepped into the orange rear
+  //     deck's glazed doorway upstairs; a child with the white lawn group; one more
+  //     beyond the +z fence. All off the x=6 station sight-lines, none fallen on
+  //     the carriageway.
+  [hx(0.49), fz(O, 0.53), Y_LAWN, 3.1, 'stand', -1],
+  [stx(0.72), O.side * KERB_EDGE, Y_PAVE, 2.4, 'lean', -1],
+  [O.deckX, O.side * (HOUSE_BACK + 0.3), DECK_Y, -0.2, 'stand', -1],
+  [hx(-0.60), fz(W, 0.45), Y_LAWN, -0.9, 'stand', -1],
+  [yx(0.52), BACK_FENCE + 2.8, Y_APRON, 2.2, 'armsUp', -1],
 ];
 
 /** indices given a child-sized figure */
-const CHILD = new Set([1, 7, 18, 26]);
+const CHILD = new Set([1, 7, 18, 26, 38]);
 const ADULT_H = 1.78;
 
 // ================================================================= builder
@@ -272,7 +283,9 @@ export const buildMannequins: Builder = (ctx: BuildContext): BuildResult => {
   // Unit primitives. TAP_UP is wide at its base (hips, limb roots), TAP_DN wide at its
   // top (torso tapering to the waist), SHIFT barely tapered so a 1960s dress falls
   // nearly straight instead of belling out.
-  const HEAD = new Batch(new THREE.IcosahedronGeometry(0.5, 1));
+  // HEAD is detail-0: twenty broad facets catch the sun as flat chips, which is what
+  // sells moulded plastic up close; detail-1 shaded smooth and read as skin.
+  const HEAD = new Batch(new THREE.IcosahedronGeometry(0.5, 0));
   const JOINT = new Batch(new THREE.IcosahedronGeometry(0.5, 0));
   const CYL = new Batch(new THREE.CylinderGeometry(0.5, 0.5, 1, 10));
   const TAP_UP = new Batch(new THREE.CylinderGeometry(0.35, 0.5, 1, 8));
@@ -280,6 +293,12 @@ export const buildMannequins: Builder = (ctx: BuildContext): BuildResult => {
   const SHIFT = new Batch(new THREE.CylinderGeometry(0.44, 0.5, 1, 10));
 
   const SKIN = mat.painted(PAL.mannequin, 0.72, 0);
+  // Bare limbs run one step darker/richer than the torso so the two read as separate
+  // pressings; SEAM is the same warm-grey family sunk to a groove tone for the waist
+  // parting and bare wig-blocks. Painted singletons only - new uniform sets, no new
+  // programs.
+  const LIMB = mat.painted(PAL.sand, 0.72, 0);
+  const SEAM = mat.painted(PAL.concreteDark, 0.62, 0);
   const DISC = mat.painted(PAL.concreteDark, 0.88, 0);   // dull stand, never chrome
   const jitter = (a: number): number => a + (rand() - 0.5) * 0.12;
 
@@ -297,6 +316,9 @@ export const buildMannequins: Builder = (ctx: BuildContext): BuildResult => {
     }
     const suit = wear >= DRESS.length && wear < BARE ? SUIT[wear - DRESS.length] : -1;
     const body = suit >= 0 ? mat.painted(suit, 0.62, 0.04) : SKIN;
+    const bare = wear === BARE;
+    const limbA = bare ? LIMB : SKIN;    // arms stay pale sleeves under cloth
+    const legMat = bare ? LIMB : body;   // legs follow the suit when suited
 
     const H = ADULT_H * (CHILD.has(i) ? 0.62 + rand() * 0.10 : 0.94 + rand() * 0.12);
     _e.set(pose.tilt, yaw, pose.roll, 'YXZ');
@@ -305,29 +327,43 @@ export const buildMannequins: Builder = (ctx: BuildContext): BuildResult => {
 
     const o = pose.hipY - HIP_Y;   // whole upper body rides with the pelvis
     part(HEAD, SKIN, P.headW, P.headH, P.headD, 0, P.headY + o, 0);
+    // Wig-block crown: a flattened cap sunk into the skull top, cloth-toned when
+    // dressed or suited, groove-toned on bare plastic.
+    const crown = wear < DRESS.length ? mat.painted(DRESS[wear], 0.74, 0)
+      : suit >= 0 ? body : SEAM;
+    part(CYL, crown, P.headW * 0.78, 0.035, P.headD * 0.78,
+      0, P.headY + o + P.headH / 2 - 0.008, 0);
     part(CYL, SKIN, P.neckD, P.neckH, P.neckD, 0, P.neckY + o, 0);
     part(TAP_DN, body, P.torW, P.torH, P.torD, 0, P.torY + o, 0);
     part(TAP_UP, body, P.pelW, P.pelH, P.pelD, 0, P.pelY + o, 0);
+    // Waist parting: a thin groove ring where the torso pressing meets the pelvis.
+    // Slightly proud of the TAP_DN waist so it never z-fights; hides under dresses.
+    part(CYL, SEAM, P.torW * 0.78, 0.014, P.torD * 0.78,
+      0, P.torY - P.torH / 2 + 0.012 + o, 0);
 
     for (let k = 0; k < 2; k++) {
       const s = k === 0 ? -1 : 1;
       // arm: shoulder -> elbow -> wrist. Sleeves stay pale even under a suit.
       const sho = new THREE.Vector3(s * P.shoX, P.shoY + o, 0);
-      part(JOINT, SKIN, P.shoD, P.shoD, P.shoD, sho.x, sho.y, sho.z);
+      part(JOINT, limbA, P.shoD, P.shoD, P.shoD, sho.x, sho.y, sho.z);
+      // Shoulder collar: a thin disc through the ball, limb-toned against the torso.
+      part(CYL, limbA, P.shoD * 1.18, 0.022, P.shoD * 1.18, sho.x, sho.y, sho.z);
       const aF = jitter(pose.armF[k]);
       const aS = s * jitter(pose.armS[k]);
-      const elb = bone(TAP_UP, SKIN, sho, aF, aS, P.uarmL, P.uarmW);
-      part(JOINT, SKIN, P.elbD, P.elbD, P.elbD, elb.x, elb.y, elb.z);
-      bone(TAP_UP, SKIN, elb, aF + pose.elb[k], aS + s * pose.elbS[k], P.farmL, P.farmW);
+      const elb = bone(TAP_UP, limbA, sho, aF, aS, P.uarmL, P.uarmW);
+      part(JOINT, limbA, P.elbD, P.elbD, P.elbD, elb.x, elb.y, elb.z);
+      bone(TAP_UP, limbA, elb, aF + pose.elb[k], aS + s * pose.elbS[k], P.farmL, P.farmW);
 
       // leg: hip -> knee -> ankle -> foot, flat on the surface
       const hip = new THREE.Vector3(s * P.hipX, pose.hipY, 0);
+      // Hip collar where the thigh root leaves the pelvis, leg-toned either way.
+      part(CYL, legMat, P.thighW * 1.18, 0.022, P.thighW * 1.18, hip.x, hip.y, hip.z);
       const lF = jitter(pose.legF[k]);
       const lS = s * jitter(pose.legS[k]);
-      const knee = bone(TAP_UP, body, hip, lF, lS, P.thighL, P.thighW);
-      part(JOINT, body, P.kneeD, P.kneeD, P.kneeD, knee.x, knee.y, knee.z);
-      const ank = bone(TAP_UP, body, knee, lF - pose.knee[k], lS, P.calfL, P.calfW);
-      part(JOINT, body, P.footW, P.footH, P.footD, ank.x, ank.y, ank.z - 0.022);
+      const knee = bone(TAP_UP, legMat, hip, lF, lS, P.thighL, P.thighW);
+      part(JOINT, legMat, P.kneeD, P.kneeD, P.kneeD, knee.x, knee.y, knee.z);
+      const ank = bone(TAP_UP, legMat, knee, lF - pose.knee[k], lS, P.calfL, P.calfW);
+      part(JOINT, legMat, P.footW, P.footH, P.footD, ank.x, ank.y, ank.z - 0.022);
     }
 
     if (wear < DRESS.length) {

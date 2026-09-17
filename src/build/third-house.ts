@@ -24,9 +24,10 @@
  * the head mask the gable outside roughly z = -4.3 .. +3.5, so the door, the bands and
  * the car are all kept inside that window.
  *
- * Only ctx.mat.painted(PAL.chrome, ...) is used for brightwork, never ctx.mat.chrome:
- * world.ts lights the map with no environment map, so a metalness-0.95 material has
- * nothing to reflect and renders as a black hole (vehicles.ts hit this first).
+ * Brightwork uses ctx.mat.painted(PAL.chrome, 0.24, 0.4), never raw ctx.mat.chrome:
+ * world.ts DOES have a PMREM environment map now, so full metals reflect properly -
+ * but check in a frame rather than assuming, and prefer painted chrome for large
+ * bright trim faces if real chrome reads too dark (brief Rules chrome note).
  */
 import * as THREE from 'three';
 import { PAL } from '../core/palette';
@@ -174,6 +175,7 @@ export const buildThirdHouse: Builder = (ctx) => {
   const bWall = new Batch(), bFrame = new Batch(), bGlaze = new Batch();
   const bDark = new Batch(), bDoor = new Batch();
   const bCar = new Batch(), bChrome = new Batch();
+  const bTimber = new Batch(), bHedge = new Batch();
 
   // --- driveway slab ---------------------------------------------------------
   // PAL.concreteDark, not ctx.mat.concrete: the whole out-of-bounds surround is
@@ -191,6 +193,8 @@ export const buildThirdHouse: Builder = (ctx) => {
   const chH = RIDGE + 1.0;
   bWall.add(0.85, chH, 0.85, chX, WALL_H + chH * 0.5, chZ);
   bDark.add(1.02, 0.16, 1.02, chX, WALL_H + chH + 0.08, chZ);   // dark cap, reads on sky
+  bDark.add(0.30, 0.55, 0.30, chX, WALL_H + chH + 0.43, chZ); // chimney pot on the cap
+  bDark.add(0.42, 0.10, 0.42, chX, WALL_H + chH + 0.75, chZ); // pot cap, reads on sky
 
   // --- dark pitched roof: gable triangle swept along x -----------------------
   const half = BODY_Z * 0.5 + EAVE_OUT;
@@ -202,6 +206,24 @@ export const buildThirdHouse: Builder = (ctx) => {
   // eave fascia under the roof edge, both long faces
   for (const s of [-1, 1]) {
     bWall.add(BODY_X + EAVE_OUT * 2, 0.2, 0.16, THIRD_HOUSE_X, WALL_H - 0.1, s * half);
+  }
+  // ridge cap along the apex; gutters hung off both eaves just under the fascia
+  const ridgeLen = BODY_X + EAVE_OUT * 2;
+  bDark.add(ridgeLen, 0.12, 0.34, THIRD_HOUSE_X, WALL_H + RIDGE + 0.02, 0);
+  for (const s of [-1, 1] as const) {
+    bChrome.add(ridgeLen, 0.11, 0.11, THIRD_HOUSE_X, WALL_H - 0.24, s * (half + 0.08));
+  }
+  // barge boards: Batch only yaws, so each sloped gable edge is stepped pale trim,
+  // both slopes of both gables (only the -x one is ever seen from the street)
+  const slopeN = 6, slopeSeg = Math.hypot(half, RIDGE) / slopeN;
+  for (const gx of [-1, 1]) {
+    const bx = THIRD_HOUSE_X + gx * (ridgeLen * 0.5 + 0.02);
+    for (const s of [-1, 1]) {
+      for (let i = 0; i < slopeN; i++) {
+        const t = (i + 0.5) / slopeN;
+        bFrame.add(0.14, 0.24, slopeSeg + 0.12, bx, WALL_H + RIDGE * t - 0.10, s * half * (1 - t));
+      }
+    }
   }
 
   // --- the two big window bands on the gable face toward the map -------------
@@ -231,12 +253,25 @@ export const buildThirdHouse: Builder = (ctx) => {
     bFrame.add(FRAME_T, DOOR_H + RAIL, RAIL,
       dFd, doorMid + RAIL * 0.5, DOOR_Z + s * (DOOR_W + RAIL) * 0.5);
   }
-  // hood sits ON the door head; its top has to stay under the upper band's sill
-  bWall.add(0.52, 0.14, DOOR_W + 1.3, FACE_X - 0.25, STEP_H + DOOR_H + RAIL + 0.07, DOOR_Z);
+  // porch: the hood deepened to a slab roof on two white posts. The 0.8 m fence gap
+  // caps protrusion at ~0.77, and the top must stay under the upper band's sill (~2.70)
+  const porchY = STEP_H + DOOR_H + RAIL + 0.07;
+  bWall.add(0.78, 0.14, DOOR_W + 1.5, FACE_X - 0.38, porchY, DOOR_Z);
+  for (const s of [-1, 1]) {
+    bFrame.add(0.12, porchY - 0.07, 0.12, FACE_X - 0.68, (porchY - 0.07) * 0.5, DOOR_Z + s * (DOOR_W * 0.5 + 0.55));
+    bFrame.add(0.10, 0.30, 0.10, FACE_X - 0.08, porchY - 0.22, DOOR_Z + s * (DOOR_W * 0.5 + 0.45));
+  }
   // the step stays short: the boundary fence is only ~0.8 m off this wall now
   bWall.add(0.62, STEP_H, DOOR_W + 0.8, FACE_X - 0.31, STEP_H * 0.5, DOOR_Z);
 
-  colliders.push(aabbSlab(THIRD_HOUSE_X, 0, 0, BODY_X, WALL_H + RIDGE, BODY_Z));
+  // house slab widened 0.77 toward the map so the porch roof/posts collide honestly
+  colliders.push(aabbSlab(THIRD_HOUSE_X - 0.38, 0, 0, BODY_X + 0.77, WALL_H + RIDGE, BODY_Z));
+  // downpipes: rear corners, gutter to ground + shoe; clear of the drive's 0.5 m offset
+  for (const s of [-1, 1] as const) {
+    const px = THIRD_HOUSE_X + BODY_X * 0.5 - 0.15, pz = s * (BODY_Z * 0.5 + 0.10);
+    bChrome.add(0.09, WALL_H - 0.2, 0.09, px, (WALL_H - 0.2) * 0.5, pz);
+    bChrome.add(0.09, 0.22, 0.30, px, 0.11, pz + s * 0.08);
+  }
 
   // --- red 1950s saloon on the drive -----------------------------------------
   // Authored nose-along-local-+x with the wheels resting at 0, then yawed and lifted
@@ -296,6 +331,32 @@ export const buildThirdHouse: Builder = (ctx) => {
     CAR_L * Math.abs(sy) + CAR_W * Math.abs(cy),
   ));
 
+  // plot boundary: hedge down the -z flank, low timber fence beyond the drive on +z.
+  // both run front (bulb-clear DRIVE_X0) to rear, clear of the drive and the car.
+  const plotX0 = DRIVE_X0, plotX1 = THIRD_HOUSE_X + BODY_X * 0.5;
+  const plotLen = plotX1 - plotX0, plotCX = (plotX0 + plotX1) * 0.5;
+  const hedgeN = Math.max(1, Math.round(plotLen / 1.5));
+  for (let i = 0; i < hedgeN; i++) {
+    const hh = 0.85 + (ctx.rand() - 0.5) * 0.12;
+    bHedge.add(plotLen / hedgeN + 0.06, hh, 0.6, plotX0 + plotLen * (i + 0.5) / hedgeN, hh * 0.5, -(BODY_Z * 0.5 + 1.0));
+  }
+  const fenceZ = DRIVE_CZ + DRIVE_W * 0.5 + 0.6;
+  const postN = Math.max(2, Math.round(plotLen / 1.8) + 1);
+  for (let i = 0; i < postN; i++) {
+    bTimber.add(0.12, 1.0, 0.12, plotX0 + plotLen * i / (postN - 1), 0.5, fenceZ);
+  }
+  for (const ry of [0.5, 0.85]) bTimber.add(plotLen, 0.10, 0.06, plotCX, ry, fenceZ);
+  // planting: faceted shrubs flanking the door gap + down the -z flank, all on y = 0
+  const shrub = (x: number, z: number, s: number): void => {
+    bHedge.add(s, s * 0.85, s, x, s * 0.425, z);
+    bHedge.add(s * 0.62, s * 0.5, s * 0.62, x, s * 1.1, z);
+  };
+  shrub(FACE_X - 0.42, DOOR_Z - 1.7, 0.55);
+  shrub(FACE_X - 0.42, DOOR_Z + 1.7, 0.55);
+  shrub(FACE_X - 0.42, BODY_Z * 0.125, 0.5);
+  shrub(THIRD_HOUSE_X - 1.5, -(BODY_Z * 0.5 + 0.55), 0.65);
+  shrub(THIRD_HOUSE_X + 1.5, -(BODY_Z * 0.5 + 0.55), 0.65);
+
   // --- one draw call per material --------------------------------------------
   const batched: [Batch, THREE.Material, string][] = [
     [bWall, ctx.mat.painted(PAL.thirdWall, 0.9, 0), 'th-walls'],
@@ -306,6 +367,8 @@ export const buildThirdHouse: Builder = (ctx) => {
     // low metalness: PAL.carRed at 0.35 washed out to salmon pink in the sun
     [bCar, ctx.mat.painted(PAL.carRed, 0.45, 0.06), 'th-car'],
     [bChrome, ctx.mat.painted(PAL.chrome, 0.24, 0.4), 'th-car-chrome'],
+    [bTimber, ctx.mat.painted(PAL.timber, 0.9, 0), 'th-fence'],
+    [bHedge, ctx.mat.painted(PAL.hedge, 0.95, 0), 'th-planting'],
   ];
   for (const [b, m, n] of batched) {
     const im = b.mesh(m, n);

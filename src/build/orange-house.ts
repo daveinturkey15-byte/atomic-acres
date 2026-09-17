@@ -130,6 +130,12 @@ export const buildOrangeHouse: Builder = (ctx) => {
       v.set(r[3], r[4], r[5]), q.setFromAxisAngle(UP, r[6]), sc.set(r[0], r[1], r[2]))));
     g.add(im);
   };
+  /** One box + optional honest collider in a single line; keeps dressing compact. */
+  const put = (w: number, h: number, d: number, m: THREE.Material,
+    x: number, y: number, z: number, solid = false): void => {
+    g.add(box(w, h, d, m, x, y, z));
+    if (solid) colliders.push(aabb(x, y, z, w, h, d));
+  };
 
   // -------------------------------------------------- ground floor, walls + holes
   const openings: Opening[] = [];
@@ -163,6 +169,7 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const DOOR: Omit<Hole, 'c'> = { w: 1.5, sill: 0, head: 2.35 };
   const WIN: Omit<Hole, 'c'> = { w: 2.1, sill: 0.95, head: 2.45 };
   const porchX = FE * (HHL - CORNER_R - CANOPY_LEN / 2);
+  const backDoorX = GE * HHL * 0.32;   // must match the back-wall DOOR hole below
 
   wallRun('x', GND_FRONT + S * WALL_T / 2, GE * HHL, FE * HHL, OUT, [
     { c: porchX, ...DOOR }, { c: FE * HHL * 0.1, ...WIN }, { c: GE * HHL * 0.34, ...WIN },
@@ -199,6 +206,9 @@ export const buildOrangeHouse: Builder = (ctx) => {
     const barN = faceN - o.out * 0.035;                  // bars ride inside the reveal
     for (const s of [-1, 1]) at(frameRows, o.c + s * o.w / 6, cy, barN, 0.075, hh, 0.11);
     at(frameRows, o.c, o.sill + hh * 0.62, barN, o.w, 0.08, 0.11);
+    for (const s of [-1, 1]) {   // jamb liners: visible reveal depth, doors keep 1.36 m clear
+      at(frameRows, o.c + s * (o.w / 2 - 0.035), cy, faceN - o.out * 0.01, 0.07, hh, WALL_T * 0.85);
+    }
   }
 
   // upper-storey glazed door onto the rear deck, filling the spandrel under the band
@@ -219,6 +229,63 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const gndD = HOUSE_DEPTH - RECESS;
   g.add(slab(HHL * 2, 0.12, gndD, mat.concrete, 0, -0.09, gndCz));
   g.add(box(HHL * 2 - 0.1, 0.08, gndD - 0.1, mat.stuccoCream, 0, FLOOR_H - 0.05, gndCz));
+  // -------------------------------------------------- interior dressing (ground floor)
+  // Blocky set dressing inside the walkable ground floor. Traverse probes start at
+  // (x,-16)/(x,-20.4) and walk straight out through each real door, so the front
+  // lane (x ~ porchX) and back lane (x ~ backDoorX) stay empty; every collider
+  // below sits off those lanes. Partitions stop at >=1.1 m gaps, colliders flank.
+  const darkIn = mat.timberDark, topIn = mat.painted(PAL.concreteDark, 0.6, 0.05);
+  // stair bay on the garage-end wall: full-height cheeks, open toward the room
+  // (2.1 m doorway), treads rising over a cupboard; the cap hides the penetration.
+  const encX0 = GE * (HHL - 0.35), encX1 = encX0 - GE * 2.1, encXM = (encX0 + encX1) / 2;
+  const encZ0 = frontZ - S * 1.9, encZ1 = encZ0 + S * 3.5, encZM = (encZ0 + encZ1) / 2;
+  put(0.12, FLOOR_H, encZ0 - encZ1, frameMat, encX0, FLOOR_H / 2, encZM, true);
+  put(0.12, FLOOR_H, encZ0 - encZ1, frameMat, encX1, FLOOR_H / 2, encZM, true);
+  put(encX1 - encX0, 0.12, encZ0 - encZ1, frameMat, encXM, FLOOR_H - 0.06, encZM);
+  put(encX1 - encX0 - 0.24, 1.1, 1.7, darkIn, encXM, 0.55, encZ0 + S * 2.15, true);
+  for (let k = 0; k < 5; k++) {
+    put(encX1 - encX0 - 0.24, 0.07, 0.3, mat.deckBoards,
+      encXM, 1.25 + k * 0.32, encZ0 + S * (1.45 + k * 0.3));
+  }
+  // kitchen counter on a solid back-wall stretch, clear of the door and windows
+  const kCZ = backZ - S * (WALL_T / 2 + 0.31);
+  put(2.4, 0.9, 0.62, frameMat, -0.6, 0.45, kCZ, true);
+  put(2.48, 0.06, 0.7, topIn, -0.6, 0.93, kCZ);
+  g.add(box(0.9, 0.03, 0.5, mat.windowDark, -0.9, 0.975, kCZ));
+  // chimney breast on the solid back-wall segment by the garage-end corner
+  const fBX = GE * (HHL - 0.75), fBZ = backZ - S * (WALL_T / 2 + 0.275);
+  put(1.5, 2.6, 0.55, mat.stuccoTerracotta, fBX, 1.3, fBZ, true);
+  g.add(box(0.8, 0.6, 0.12, mat.barrelRoof, fBX, 0.45, fBZ - S * 0.24));
+  put(1.6, 0.08, 0.65, darkIn, fBX, 1.12, fBZ - S * 0.03);
+  // two dividers, each with a 1.3 m gap; colliders flank the gap, never span it
+  const paX = porchX - 2.5, paZ0 = frontZ + S * 2.9, paZ1 = backZ - S * 1.3;
+  const paG0 = midZ + S * 0.82, paG1 = midZ - S * 0.48;
+  const segZ = (a: number, b: number): void => {
+    const lo = Math.min(a, b), hi = Math.max(a, b);
+    put(0.12, FLOOR_H, hi - lo, frameMat, paX, FLOOR_H / 2, (lo + hi) / 2, true);
+  };
+  segZ(paZ0, paG1); segZ(paG0, paZ1);
+  const pbZ = midZ + S * 1.3, pbX0 = GE * (HHL - 1.0), pbX1 = GE * HHL * 0.05;
+  const pbG0 = backDoorX + GE * 2.25, pbG1 = backDoorX + GE * 0.95;
+  const segX = (a: number, b: number): void => {
+    const lo = Math.min(a, b), hi = Math.max(a, b);
+    put(hi - lo, FLOOR_H, 0.12, frameMat, (lo + hi) / 2, FLOOR_H / 2, pbZ, true);
+  };
+  segX(pbX0, pbG0); segX(pbG1, pbX1);
+  // skirting tight to the inner faces, split around both doors; never collided
+  const skF = GND_FRONT - S * (WALL_T / 2 + 0.015), skB = backZ - S * (WALL_T / 2 + 0.015);
+  put(porchX - 0.75 + HHL - 0.3, 0.09, 0.03, darkIn, (-HHL + 0.3 + porchX - 0.75) / 2, 0.075, skF);
+  put(HHL - 0.3 - porchX - 0.75, 0.09, 0.03, darkIn, (porchX + 0.75 + HHL - 0.3) / 2, 0.075, skF);
+  put(backDoorX - 0.75 + HHL - 0.3, 0.09, 0.03, darkIn, (-HHL + 0.3 + backDoorX - 0.75) / 2, 0.075, skB);
+  put(HHL - 0.3 - backDoorX - 0.75, 0.09, 0.03, darkIn, (backDoorX + 0.75 + HHL - 0.3) / 2, 0.075, skB);
+  put(0.03, 0.09, HOUSE_DEPTH - RECESS - 0.6, darkIn, GE * (HHL - WALL_T / 2 - 0.155), 0.075, midZ);
+  put(0.03, 0.09, HOUSE_DEPTH - RECESS - 0.6, darkIn, FE * (HHL - WALL_T / 2 - 0.155), 0.075, midZ);
+  // ceiling lights: emissive diffusers only, no scene lights
+  const glowM = mat.emissive(PAL.sunColor);
+  for (const [lx, lz] of [[GE * HHL * 0.4, midZ + S * 1.2], [FE * HHL * 0.4, midZ - S * 1.8]] as P2[]) {
+    put(0.1, 0.08, 0.1, darkIn, lx, FLOOR_H - 0.1, lz);
+    g.add(box(0.55, 0.05, 0.55, glowM, lx, FLOOR_H - 0.15, lz));
+  }
 
   // -------------------------------------------------- upper storey (solid, wrapped corner)
   const wallPts = outline(GE * HHL, GE * HHL, CORNER_R, 5).map(([x, z]) => [x, -z] as P2);
@@ -399,15 +466,20 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const dCz = backZ + S * (DECK_OUT / 2 - 0.05);
   g.add(box(DECK_LEN, 0.18, DECK_OUT + 0.1, mat.deckBoards, dX, DECK_Y - 0.09, dCz));
   colliders.push(aabb(dX, DECK_Y - 0.09, dCz, DECK_LEN, 0.18, DECK_OUT + 0.1));
-  for (const px of [dX - DECK_LEN / 2 + 0.3, dX, dX + DECK_LEN / 2 - 0.3]) {
+  const dL = dX - DECK_LEN / 2, dR = dX + DECK_LEN / 2;
+  for (const px of [dL + 0.3, dX - STAIR_W / 2 - 0.2, dX + STAIR_W / 2 + 0.2, dR - 0.3]) {
     postRows.push([0.2, DECK_Y - 0.18, 0.2, px, (DECK_Y - 0.18) / 2, dOut + OUT * 0.18, 0]);
   }
 
-  const dL = dX - DECK_LEN / 2, dR = dX + DECK_LEN / 2;
+  // NT03: the flight leaves the OUTER edge at its centre and runs yard-ward (S),
+  // landing on the yards.ts patio disc (centre deckX, offset DECK_OUT + pr*1.12).
+  // Chosen over reversing along x: an x-run foot lands metres off the disc by the
+  // side fence, while the yard-ward run drops onto it. Gap + newels serve the stair.
   const runs: [number, number, number, number][] = [
-    [dL, dOut, dR, dOut],
+    [dL, dOut, dX - STAIR_W / 2, dOut],
+    [dX + STAIR_W / 2, dOut, dR, dOut],
     [dR, dOut, dR, backZ],
-    [dL, backZ, dL, dOut + OUT * STAIR_W],
+    [dL, backZ, dL, dOut],
   ];
   const railY = DECK_Y + RAIL_H;
   const bal: { x: number; z: number; a: number }[] = [];
@@ -434,45 +506,80 @@ export const buildOrangeHouse: Builder = (ctx) => {
       q.setFromAxisAngle(UP, b.a), sc.set(1, 1, 1)));
   });
   g.add(balusters);
-  for (const [nx, nz] of [[dL, dOut], [dR, dOut], [dR, backZ]] as P2[]) {
+  for (const [nx, nz] of [[dL, dOut], [dR, dOut], [dR, backZ], [dL, backZ],
+    [dX - STAIR_W / 2, dOut], [dX + STAIR_W / 2, dOut]] as P2[]) {
     postRows.push([0.14, RAIL_H + 0.1, 0.14, nx, DECK_Y + (RAIL_H + 0.1) / 2, nz, 0]);
   }
 
   // -------------------------------------------------- exterior timber stair
-  const topX = dL;
-  const botX = topX + GE * STEPS * 0.28;
-  const stCz = dOut + OUT * (STAIR_W / 2);
-  const rise = DECK_Y / STEPS;
-  const treads = inst(new THREE.BoxGeometry(0.34, 0.07, STAIR_W - 0.12),
+  // Yard-ward flight from the deck-edge gap: the foot (z = dOut + S*run) lands
+  // ~1 m past the patio centre, inside its radius. Treads finish on the disc;
+  // stringer/handrail slope signs derive from S, never a bare sign.
+  const runL = STEPS * 0.28, topZ = dOut, botZ = dOut + S * runL;
+  const footY = 0.2, yAt = (t: number): number => DECK_Y + (footY - DECK_Y) * t;
+  const slopeA = Math.atan2(DECK_Y - footY, runL);
+  const treads = inst(new THREE.BoxGeometry(STAIR_W - 0.12, 0.07, 0.34),
     mat.deckBoards, STEPS);
   for (let i = 0; i < STEPS; i++) {
     treads.setMatrixAt(i, m4.compose(
-      v.set(topX + GE * (i + 0.5) * 0.28, DECK_Y - (i + 1) * rise, stCz),
+      v.set(dX, yAt((i + 1) / STEPS) + 0.035, topZ + S * (i + 0.5) * 0.28),
       NOROT, sc.set(1, 1, 1)));
   }
   g.add(treads);
-  for (const sz of [stCz - (STAIR_W / 2 - 0.05), stCz + (STAIR_W / 2 - 0.05)]) {
-    const st = extrude([[botX, 0], [topX, DECK_Y], [topX, DECK_Y - 0.34], [botX, -0.34]],
-      0.1, mat.timberDark);
-    st.position.z = sz;
+  const railM = mat.painted(PAL.timber, 0.88, 0);
+  for (const sx of [dX - (STAIR_W / 2 - 0.05), dX + (STAIR_W / 2 - 0.05)]) {
+    const st = box(0.1, 0.34, Math.hypot(runL, DECK_Y - footY) + 0.3,
+      mat.timberDark, sx, (DECK_Y + footY) / 2 - 0.1, (topZ + botZ) / 2);
+    st.rotation.x = S * slopeA;
     g.add(st);
+    const hr = box(0.08, 0.08, Math.hypot(runL, DECK_Y - footY) + 0.2,
+      railM, sx + Math.sign(sx - dX) * 0.05, (DECK_Y + footY) / 2 + RAIL_H, (topZ + botZ) / 2);
+    hr.rotation.x = S * slopeA;
+    g.add(hr);
   }
-  const slopeA = Math.atan2(DECK_Y, topX - botX);
-  const hrZ = stCz + S * (STAIR_W / 2);
-  const hr = box(Math.hypot(topX - botX, DECK_Y) + 0.2, 0.08, 0.08,
-    mat.painted(PAL.timber, 0.88, 0), (topX + botX) / 2, DECK_Y / 2 + RAIL_H, hrZ);
-  hr.rotation.z = slopeA;
-  g.add(hr);
-  for (const t of [0.14, 0.5, 0.86]) {
-    postRows.push([0.07, RAIL_H, 0.07, botX + (topX - botX) * t, DECK_Y * t + RAIL_H / 2, hrZ, 0]);
+  for (const t of [0.08, 0.5, 0.92]) {
+    for (const sx of [dX - STAIR_W / 2, dX + STAIR_W / 2]) {
+      postRows.push([0.07, RAIL_H, 0.07, sx, yAt(t) + RAIL_H / 2, topZ + (botZ - topZ) * t, 0]);
+    }
   }
   emit(postRows, mat.timberDark, true);
+  // Only the low foot of the flight is solid: the traverse east-west corridor
+  // crosses UNDER the high part, so a collider may only cover the run where the
+  // soffit yAt drops below ~2.0 m headroom (eye 1.68 + margin). Each third is
+  // clipped to that line; the upper thirds emit nothing and stay walk-under.
+  const tHead = (DECK_Y - 2.0) / (DECK_Y - footY);
   for (let i = 0; i < 3; i++) {
-    const xa = botX + (topX - botX) * (i / 3);
-    const xb = botX + (topX - botX) * ((i + 1) / 3);
-    const top = DECK_Y * ((i + 1) / 3);
-    colliders.push(aabb((xa + xb) / 2, top / 2, stCz, Math.abs(xb - xa), top, STAIR_W));
+    const t0 = Math.max(i / 3, tHead), t1 = (i + 1) / 3;
+    if (t0 >= t1) continue;
+    const za = topZ + (botZ - topZ) * t0, zb = topZ + (botZ - topZ) * t1;
+    colliders.push(aabb(dX, yAt(t0) / 2, (za + zb) / 2, STAIR_W, yAt(t0), Math.abs(zb - za)));
   }
+  // -------------------------------------------------- exterior close-up detail
+  // Gutters ride the constant-height garage eaves (no straight gutter can follow
+  // the butterfly sweep); downpipes pin the garage corners and the free-end back
+  // corner. Number plate is paint, porch lights are emissive - no scene lights.
+  const steelM = mat.steel, chromeM = mat.chrome;
+  put(GARAGE_LEN, 0.1, 0.12, steelM, gx, GARAGE_H - 0.02, gz - GARAGE_DEPTH / 2);
+  put(GARAGE_LEN, 0.1, 0.12, steelM, gx, GARAGE_H - 0.02, gz + GARAGE_DEPTH / 2);
+  put(0.09, GARAGE_H, 0.09, steelM, gx - GARAGE_LEN / 2 + 0.15, GARAGE_H / 2, gz + GARAGE_DEPTH / 2 + 0.08);
+  put(0.09, GARAGE_H, 0.09, steelM, gx + GARAGE_LEN / 2 - 0.15, GARAGE_H / 2, gz - GARAGE_DEPTH / 2 - 0.08);
+  put(0.1, EAVE_Y, 0.1, steelM, FE * (HHL + 0.05), EAVE_Y / 2, backZ + S * 0.12);
+  put(0.55, 0.75, 0.16, topIn, porchX + 1.6, 1.5, GND_FRONT + OUT * 0.08, true);
+  put(0.5, 0.35, 0.12, steelM, GE * HHL * 0.55, 2.65, backZ + S * 0.06);
+  put(0.5, 0.35, 0.12, steelM, FE * HHL * 0.5, 2.65, backZ + S * 0.06);
+  put(0.4, 0.25, 0.05, mat.painted(PAL.signMaroon, 0.5, 0.1), porchX - 1.25, 1.7, GND_FRONT + OUT * 0.03);
+  put(0.05, 0.24, 0.04, chromeM, porchX + 0.55, 1.05, GND_FRONT + OUT * 0.05);
+  put(0.05, 0.24, 0.04, chromeM, backDoorX + 0.55, 1.05, backZ + S * 0.05);
+  put(0.05, 0.24, 0.04, chromeM, gx + GARAGE_LEN / 2 - 1.0, 1.05, frontZ + OUT * 0.05);
+  g.add(slab(1.7, 0.09, 0.7, mat.concrete, porchX, 0, GND_FRONT + OUT * 0.35));
+  colliders.push(aabbSlab(porchX, 0, GND_FRONT + OUT * 0.35, 1.7, 0.09, 0.7));
+  g.add(slab(1.7, 0.09, 0.7, mat.concrete, backDoorX, 0, backZ + S * 0.35));
+  colliders.push(aabbSlab(backDoorX, 0, backZ + S * 0.35, 1.7, 0.09, 0.7));
+  const porchGlow = mat.emissive(PAL.sunColor);
+  put(0.12, 0.2, 0.12, porchGlow, porchX + 0.95, 2.0, GND_FRONT + OUT * 0.1);
+  put(0.2, 0.05, 0.18, steelM, porchX + 0.95, 2.14, GND_FRONT + OUT * 0.1);
+  put(0.12, 0.2, 0.12, porchGlow, backDoorX - 0.95, 2.0, backZ + S * 0.1);
+  put(0.2, 0.05, 0.18, steelM, backDoorX - 0.95, 2.14, backZ + S * 0.1);
 
   return { group: g, colliders };
 };

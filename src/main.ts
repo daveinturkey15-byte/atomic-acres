@@ -8,7 +8,7 @@ import * as THREE from 'three';
 import { createWorld } from './core/world';
 import { buildMaterials } from './core/materials';
 import { makeRng, type AABB, type BuildContext, type Builder } from './core/kit';
-import { Player } from './core/player';
+import { Player, type MoveMode } from './core/player';
 import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core/layout';
 import { STATIONS, type Station } from './core/stations';
 
@@ -77,16 +77,43 @@ player.setColliders(colliders);
 player.teleport(SPAWN_A.x, 0, SPAWN_A.z, SPAWN_A.yaw);
 
 // ---------------------------------------------------------------- HUD
+// All overlay UI lives in #hud and #start: scripts/capture.mjs removes #start and
+// hides #hud/#crosshair before every shot, so a new top-level element would leak
+// into captures. Children of #hud are hidden with it.
 const hud = document.getElementById('hud')!;
+const hudStats = document.createElement('div');
+const hudMode = document.createElement('div');
+const hudHelp = document.createElement('div');
+hudHelp.textContent =
+  'WASD move · SHIFT sprint/boost · SPACE jump/up · E up · Q/X down · ' +
+  'F fly · C noclip · wheel/[ ] speed · H help · Esc free mouse';
+hud.append(hudStats, hudMode, hudHelp);
 const startOverlay = document.getElementById('start')!;
+// The first click lands on the overlay (it covers the canvas), so dismiss and lock
+// here; later clicks hit the canvas and re-lock via Player. Esc releases (browser
+// default) and Player drops held keys so nothing spins or keeps walking.
+startOverlay.addEventListener('click', () => {
+  startOverlay.style.display = 'none';
+  world.renderer.domElement.requestPointerLock();
+});
 world.renderer.domElement.addEventListener('click', () => {
   startOverlay.style.display = 'none';
+});
+// H toggles the key legend. Owned here, not in Player, because the legend is DOM.
+addEventListener('keydown', (e) => {
+  if (e.code === 'KeyH' && !e.repeat) {
+    hudHelp.style.display = hudHelp.style.display === 'none' ? '' : 'none';
+  }
 });
 
 let frames = 0;
 let fps = 0;
 let acc = 0;
 let last = performance.now();
+// Last mode/speed written to the HUD. Compared every frame so a mode toggle
+// shows up immediately instead of at the next 0.5 s stats tick.
+let lastMode: MoveMode = 'walk';
+let lastSpeed = -1;
 
 /**
  * When the capture harness drives a camera station it must OWN the camera. The
@@ -108,18 +135,26 @@ function frame(): void {
 
   frames++;
   acc += dt;
-  if (acc >= 0.5) {
-    fps = Math.round(frames / acc);
-    frames = 0;
-    acc = 0;
+  const mode = player.getMode();
+  const speed = player.getFlySpeed();
+  if (acc >= 0.5 || mode !== lastMode || speed !== lastSpeed) {
+    fps = acc >= 0.5 ? Math.round(frames / acc) : fps;
+    if (acc >= 0.5) { frames = 0; acc = 0; }
+    lastMode = mode;
+    lastSpeed = speed;
     const i = world.renderer.info;
     const p = player.state.pos;
-    hud.textContent =
+    hudStats.textContent =
       fps + ' fps   ' +
       i.render.calls + ' calls   ' +
       (i.render.triangles / 1000).toFixed(0) + 'k tris   ' +
       'x ' + p.x.toFixed(1) + '  y ' + p.y.toFixed(2) + '  z ' + p.z.toFixed(1) +
       (player.state.grounded ? '' : '   [air]');
+    hudMode.textContent =
+      mode === 'walk'
+        ? '— WALK —'
+        : '— ' + (mode === 'fly' ? 'FLY' : 'FLY-NOCLIP') +
+          ' · ' + speed.toFixed(0) + ' m/s (wheel / [ ] adjust, SHIFT ×3) —';
   }
   requestAnimationFrame(frame);
 }
@@ -141,6 +176,11 @@ interface QA {
   probeWalkTo: (tx: number, tz: number, maxSteps: number) => boolean;
   probePos: () => [number, number, number];
   collidersAt: (x: number, z: number, y?: number) => unknown[];
+  /** Inspection-mode control for headless fly/noclip checks. Additive only. */
+  setMode: (m: MoveMode) => void;
+  mode: () => MoveMode;
+  teleport: (x: number, y: number, z: number, yaw?: number, pitch?: number) => void;
+  setFlySpeed: (v: number) => void;
 }
 
 const qa: QA = {
@@ -162,10 +202,25 @@ const qa: QA = {
   spawn(team) {
     const s = team === 'a' ? SPAWN_A : SPAWN_B;
     cameraHeldByQA = false;
+    // The probe and the player loop assume walk physics (gravity, step-up). A
+    // leftover noclip here would silently fly later checks through walls.
+    player.setMode('walk');
     player.teleport(s.x, 0, s.z, s.yaw);
   },
   release() {
     cameraHeldByQA = false;
+  },
+  setMode(m) {
+    player.setMode(m);
+  },
+  mode() {
+    return player.getMode();
+  },
+  teleport(x, y, z, yaw = 0, pitch = 0) {
+    player.teleport(x, y, z, yaw, pitch);
+  },
+  setFlySpeed(v) {
+    player.setFlySpeed(v);
   },
   stats() {
     const i = world.renderer.info;
@@ -179,6 +234,8 @@ const qa: QA = {
       colliders: colliders.length,
       eyeHeight: EYE_HEIGHT,
       handedness,
+      mode: player.getMode(),
+      flySpeed: +player.getFlySpeed().toFixed(1),
     };
   },
   moduleStats,
@@ -188,8 +245,12 @@ const qa: QA = {
   },
 
   // ---- traversability probe. Drives the REAL controller at a fixed timestep.
+  // probeReset forces WALK: the probe injects a horizontal world-space wish, and
+  // in a fly mode that wish would leave the ground or pass through walls — every
+  // route would then pass vacuously. Fly/noclip have their own QA path (setMode).
   probeReset(x, z) {
     cameraHeldByQA = true;   // stop the rAF loop double-stepping the player
+    player.setMode('walk');
     player.setProbeWish(null);
     player.teleport(x, 0, z, 0);
   },

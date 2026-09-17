@@ -149,6 +149,8 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   // unlike a darker green it survives the tree shadow across this yard.
   const COURT = mat.painted(PAL.carTeal, 0.85, 0);        // painted shuffleboard surface
   const LAMP = mat.painted(PAL.terracotta, 0.45, 0.2);    // orange lamp head
+  const POT = mat.painted(PAL.terracottaDk, 0.85, 0);       // plant pots
+  const CLOTHB = mat.painted(PAL.capsuleTrim, 0.8, 0);      // blue wash, chair accents
 
   /** rotate a local offset into world space about (x,z) by yaw ry */
   const l2w = (x: number, z: number, ry: number, ox: number, oz: number): [number, number] =>
@@ -161,6 +163,38 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   const padDisc = (m: THREE.Material, dia: number,
                    x: number, z: number, top: number): void =>
     C.put(m, dia, top, dia, x, top / 2, z);
+  /** terracotta pot with soil + bedding plant; founded ON the lawn rung */
+  const pot = (x: number, z: number, s = 1): void => {
+    C.put(POT, 0.36 * s, 0.30 * s, 0.36 * s, x, T_LAWN + 0.15 * s, z);
+    C.put(SOIL, 0.30 * s, 0.05 * s, 0.30 * s, x, T_LAWN + 0.30 * s, z);
+    S.put(mat.leaf, 0.30 * s, 0.24 * s, 0.30 * s, x, T_LAWN + 0.42 * s, z);
+    S.put(FLOWER, 0.16 * s, 0.14 * s, 0.16 * s, x, T_LAWN + 0.55 * s, z);
+  };
+  /** white garden chair, seat facing local +z rotated by ry, standing on y0 */
+  const chair = (x: number, z: number, ry: number, y0: number): void => {
+    const at = (ox: number, oz: number): [number, number] => l2w(x, z, ry, ox, oz);
+    const [cx, cz] = at(0, 0);
+    B.put(WHITEP, 0.52, 0.06, 0.5, cx, y0 + 0.45, cz, ry);
+    const [bx, bz] = at(0, -0.24);
+    B.put(WHITEP, 0.52, 0.55, 0.06, bx, y0 + 0.75, bz, ry, -0.12);
+    for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
+      const [lx, lz] = at(sx * 0.22, sz * 0.20);
+      B.put(IRON, 0.05, 0.45, 0.05, lx, y0 + 0.225, lz);
+    }
+    colliders.push(aabbSlab(cx, y0, cz, 0.62, 0.95, 0.62));
+  };
+  /** round side table standing on y0 */
+  const table = (x: number, z: number, y0: number): void => {
+    C.put(WHITEP, 0.7, 0.05, 0.7, x, y0 + 0.62, z);
+    C.put(IRON, 0.07, 0.6, 0.07, x, y0 + 0.31, z);
+    C.put(IRON, 0.4, 0.04, 0.4, x, y0 + 0.02, z);
+    colliders.push(aabbSlab(x, y0, z, 0.75, 0.65, 0.75));
+  };
+  /** one bedding blob on rung y0: leaf mass + flower head */
+  const bloom = (x: number, z: number, y0: number, s = 1): void => {
+    S.put(mat.leaf, 0.26 * s, 0.2 * s, 0.26 * s, x, y0 + 0.10 * s, z);
+    S.put(FLOWER, 0.15 * s, 0.13 * s, 0.15 * s, x, y0 + 0.22 * s, z);
+  };
 
   // ---------------------------------------------------------------- fences
   const BOARD_P = 0.2, BOARD_W = 0.17, BOARD_T = 0.06, POST_P = 2.45;
@@ -320,16 +354,16 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     dx /= n; dz /= n;
     C.put(mat.steel, 0.38, 0.26, 0.38, x, 0.13, z);
     C.put(mat.steel, 0.17, ph, 0.17, x, ph / 2, z);
-    let px = x, py = ph, pz = z;
-    for (let i = 1; i <= 4; i++) {
-      const th = (i / 4) * (Math.PI / 2);
-      const nx = x + dx * R * (1 - Math.cos(th)), nz = z + dz * R * (1 - Math.cos(th));
-      const ny = ph + R * Math.sin(th);
-      C.span(mat.steel, 0.075, px, py, pz, nx, ny, nz);
-      px = nx; py = ny; pz = nz;
-    }
-    S.put(LAMP, 0.72, 0.36, 0.72, px + dx * 0.24, py - 0.02, pz + dz * 0.24);
-    S.put(mat.emissive(PAL.sunColor, 0.5), 0.36, 0.14, 0.36, px + dx * 0.24, py - 0.2, pz + dz * 0.24);
+    // Two-span 0.21 m arm: the 0.15 m four-span curve aliased into white
+    // asterisks at aerial range (~2px); this is ~3px out there, and the elbow
+    // knob keeps a curved read close up. Head lands where it always did.
+    const ex = x + dx * R * 0.45, ey = ph + R * 0.52, ez = z + dz * R * 0.45;
+    const hx2 = x + dx * R, hy2 = ph + R, hz2 = z + dz * R;
+    C.span(mat.steel, 0.105, x, ph, z, ex, ey, ez);
+    C.span(mat.steel, 0.105, ex, ey, ez, hx2, hy2, hz2);
+    S.put(mat.steel, 0.26, 0.26, 0.26, ex, ey, ez);
+    S.put(LAMP, 0.72, 0.36, 0.72, hx2 + dx * 0.24, hy2 - 0.02, hz2 + dz * 0.24);
+    S.put(mat.emissive(PAL.sunColor, 0.5), 0.36, 0.14, 0.36, hx2 + dx * 0.24, hy2 - 0.2, hz2 + dz * 0.24);
   }
 
   for (const h of HOUSES) for (const t of [0.34, 0.60, 0.86]) lamp(rx(t), h.side * PAVE_MID, 0, -h.side);
@@ -387,19 +421,47 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     padDisc(SLAB, pr * 2.2, pxx, pzz, T_STEP);   // pale kerb ring, 30 mm proud of the lawn
     padDisc(PAVE, pr * 2, pxx, pzz, T_SURF);     // the terrace itself, 30 mm over the ring
 
-    // glasshouse, tucked behind the garage end
-    const gxx = yx(0.16), gzz = yz(H, 0.62), gw = 3.5, gd = 2.7, gwall = 1.75, grise = 1.0;
-    B.put(SLAB, gw + 0.16, 0.44, gd + 0.16, gxx, 0.22, gzz);
-    for (const sx of [-1, 1]) for (const sz of [-1, 1]) C.put(mat.steel, 0.1, gwall + grise,
-      0.1, gxx + sx * gw / 2, (gwall + grise) / 2, gzz + sz * gd / 2);
-    const gy = 0.44 + (gwall - 0.44) / 2, gh = gwall - 0.44;
+    // glasshouse: a white aluminium frame, not a haze. Dwarf wall, corner posts,
+    // eaves + ridge beams, glazing bars every ~0.7 m, door on the east face.
+    // SW of the cold frames: 3.4 m off the west fence, 2.2 m off the back fence,
+    // 2.9 m off the cold frames, 1.9 m off the west walk corridor.
+    const gxx = yx(0.13), gzz = yz(H, 0.68), gw = 3.5, gd = 2.7, gwall = 1.75, grise = 1.0;
+    const GBASE = 0.5, FRAME = WHITEP;
+    const gh = gwall - GBASE;
+    for (const s of [-1, 1]) {
+      B.put(SLAB, gw + 0.12, GBASE, 0.12, gxx, GBASE / 2, gzz + s * (gd / 2));
+      B.put(SLAB, 0.12, GBASE, gd + 0.12, gxx + s * (gw / 2), GBASE / 2, gzz);
+    }
+    for (const sx of [-1, 1]) for (const sz of [-1, 1])
+      B.put(FRAME, 0.12, gwall + grise, 0.12, gxx + sx * gw / 2, (gwall + grise) / 2, gzz + sz * gd / 2);
+    for (const s of [-1, 1]) {
+      B.put(FRAME, gw + 0.12, 0.1, 0.1, gxx, gwall + 0.05, gzz + s * gd / 2);
+      B.put(FRAME, 0.1, 0.1, gd + 0.12, gxx + s * gw / 2, gwall + 0.05, gzz);
+    }
+    B.put(FRAME, gw + 0.14, 0.12, 0.14, gxx, gwall + grise + 0.02, gzz);
+    for (let i = -1; i <= 1; i++) {
+      for (const s of [-1, 1]) {
+        B.put(FRAME, 0.07, gh, 0.07, gxx + i * gw / 4, GBASE + gh / 2, gzz + s * gd / 2);
+        B.put(FRAME, 0.07, gh, 0.07, gxx + s * gw / 2, GBASE + gh / 2, gzz + i * gd / 3);
+      }
+    }
+    for (const s of [-1, 1]) {
+      B.put(mat.glass, 0.05, 0.55, gd * 0.62, gxx + s * gw / 2, gwall + 0.27, gzz);
+      B.put(mat.glass, 0.05, 0.5, gd * 0.30, gxx + s * gw / 2, gwall + 0.72, gzz);
+      B.put(FRAME, 0.07, 0.07, gd * 0.62 + 0.1, gxx + s * gw / 2, gwall + 0.55, gzz);
+    }
     const slope = Math.atan2(grise, gd / 2), plen = Math.hypot(grise, gd / 2);
     for (const s of [-1, 1]) {
-      B.put(mat.glass, gw, gh, 0.06, gxx, gy, gzz + s * gd / 2);
-      B.put(mat.glass, 0.06, gh, gd, gxx + s * gw / 2, gy, gzz);
-      B.put(mat.glass, gw, 0.05, plen, gxx, gwall + grise / 2, gzz + s * gd / 4, 0, s * slope);
+      B.put(mat.glass, gw, gh, 0.05, gxx, GBASE + gh / 2, gzz + s * gd / 2);
+      B.put(mat.glass, 0.05, gh, gd, gxx + s * gw / 2, GBASE + gh / 2, gzz);
+      B.put(mat.glass, gw, 0.04, plen, gxx, gwall + grise / 2, gzz + s * gd / 4, 0, s * slope);
+      for (let i = -1; i <= 1; i++)
+        B.put(FRAME, 0.07, 0.07, plen, gxx + i * gw / 4, gwall + grise / 2, gzz + s * gd / 4, 0, s * slope);
     }
-    C.span(mat.steel, 0.05, gxx - gw / 2, gwall + grise, gzz, gxx + gw / 2, gwall + grise, gzz);
+    B.put(mat.windowDark, 0.08, 1.5, 0.9, gxx + gw / 2 + 0.02, GBASE + 0.75, gzz);
+    for (const s of [-1, 1]) B.put(FRAME, 0.09, 1.6, 0.09, gxx + gw / 2 + 0.03, GBASE + 0.8, gzz + s * 0.5);
+    B.put(FRAME, 0.09, 0.09, 1.09, gxx + gw / 2 + 0.03, GBASE + 1.62, gzz);
+    B.put(SLAB, 0.7, 0.2, 1.1, gxx + gw / 2 + 0.4, 0.10, gzz);
     colliders.push(aabbSlab(gxx, 0, gzz, gw + 0.2, gwall + grise, gd + 0.2));
 
     // cold frames with red flowers
@@ -448,6 +510,36 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
       const t = u0 + (1 - u0) * u;
       return [pxx + dx0 * t, pzz + dz0 * t];
     });
+    // ---- lived-in detail, all founded on the T_* ladder, all instanced
+    pot(gxx + gw / 2 + 1.15, gzz - 1.1);
+    pot(gxx + gw / 2 + 1.15, gzz + 1.0);
+    pot(pxx - 3.2, yz(H, 0.42), 1.15);
+    pot(pxx - 2.3, yz(H, 0.38), 0.9);
+    B.put(IRON, 0.32, 0.24, 0.2, pxx - 2.75, T_LAWN + 0.12, yz(H, 0.44));   // watering can
+    C.span(IRON, 0.03, pxx - 2.75, T_LAWN + 0.2, yz(H, 0.44), pxx - 2.45, T_LAWN + 0.32, yz(H, 0.44));
+    const hrx = gxx - 1.3, hrz = gzz + gd / 2 + 0.55;                // hose reel
+    for (const s of [-1, 1]) B.put(mat.timberDark, 0.08, 0.7, 0.5, hrx + s * 0.3, T_LAWN + 0.35, hrz);
+    C.put(mat.hedge, 0.5, 0.52, 0.5, hrx, T_LAWN + 0.45, hrz, Math.PI / 2, Math.PI / 2);
+    colliders.push(aabbSlab(hrx, T_LAWN, hrz, 0.75, 0.7, 0.55));
+    // patio set on the SOUTH half: the deck stair lands mid-disc from the north
+    // and the east-west walk corridor crosses just north of it. Keep both clear.
+    chair(pxx - 1.3, pzz - 1.2, Math.PI * 0.75, T_SURF);
+    chair(pxx + 1.3, pzz - 1.2, -Math.PI * 0.6, T_SURF);
+    table(pxx, pzz - 1.35, T_SURF);
+    for (let i = 0; i < 8; i++) {                                   // patio bedding ring
+      const a = -Math.PI * 0.45 + (i / 7) * Math.PI * 0.75;
+      bloom(pxx + Math.cos(a) * (pr * 1.1 + 0.55), pzz + Math.sin(a) * (pr * 1.1 + 0.55),
+        T_LAWN, rr(0.85, 1.2));
+    }
+    {                                                                // run edging
+      const ex0 = gxx, ez0 = gzz + gd / 2 + 0.7;
+      const sx0 = pxx + dx0 * u0, sz0 = pzz + dz0 * u0;
+      const mx = (sx0 + ex0) / 2, mz = (sz0 + ez0) / 2;
+      const len = Math.hypot(ex0 - sx0, ez0 - sz0);
+      const ry = Math.atan2(ex0 - sx0, ez0 - sz0);
+      for (const s of [-1, 1])
+        B.put(SLAB, 0.14, T_STEP, len, mx + Math.cos(ry) * 0.55 * s, T_STEP / 2, mz - Math.sin(ry) * 0.55 * s, ry);
+    }
   }
 
   // ================================ WHITE back yard (+z) ================================
@@ -503,6 +595,31 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
       const k = (1 - u) * (1 - u), j = 2 * (1 - u) * u, i2 = u * u;
       return [k * ax + j * mx + i2 * bx, k * az + j * mz + i2 * bz];
     });
+    // ---- lived-in detail, all founded on the T_* ladder, all instanced
+    const wlz = yz(H, 0.30);                                         // washing line
+    for (const wx of [yx(0.70), yx(0.80)]) {
+      B.put(mat.timberDark, 0.12, 1.75, 0.12, wx, T_LAWN + 0.875, wlz);
+      B.put(mat.timberDark, 0.5, 0.08, 0.08, wx, T_LAWN + 1.7, wlz);
+    }
+    C.span(IRON, 0.015, yx(0.70), T_LAWN + 1.68, wlz, yx(0.80), T_LAWN + 1.68, wlz);
+    B.put(WHITEP, 0.55, 0.65, 0.04, yx(0.725), T_LAWN + 1.32, wlz);
+    B.put(FLOWER, 0.5, 0.6, 0.04, yx(0.755), T_LAWN + 1.35, wlz);
+    B.put(CLOTHB, 0.55, 0.62, 0.04, yx(0.7775), T_LAWN + 1.34, wlz);
+    colliders.push(aabbSlab(yx(0.75), T_LAWN, wlz, 4.3, 1.75, 0.4));
+    chair(yx(0.11), yz(H, 0.58), Math.PI / 2, T_LAWN);                // chairs west of the pod
+    chair(yx(0.11), yz(H, 0.723), Math.PI / 2 + 0.3, T_LAWN);
+    table(yx(0.1275), yz(H, 0.652), T_LAWN);
+    pot(yx(0.165), yz(H, 0.30), 1.1);                                  // pair flanking the pod door
+    pot(yx(0.235), yz(H, 0.30), 0.95);
+    C.put(FLOWER, 0.3, 0.28, 0.3, yx(0.6025), T_SAND + 0.14, yz(H, 0.741)); // sand toys
+    B.put(IRON, 0.06, 0.5, 0.12, yx(0.635), T_SAND + 0.1, yz(H, 0.8125), 0.5);
+    S.put(mat.sand, 0.35, 0.18, 0.35, yx(0.6225), T_SAND + 0.06, yz(H, 0.830));
+    padBox(SOIL, 5.5, 0.7, yx(0.5375), yz(H, 0.25), T_STEP);         // bedding south of court
+    for (let i = 0; i < 7; i++)
+      bloom(yx(0.4775) + i * 0.8, yz(H, 0.25) + (i % 2 ? 0.15 : -0.15), T_STEP, rr(0.9, 1.2));
+    B.put(SLAB, 0.25, 0.85, 3.0, yx(0.9125), T_LAWN + 0.425, yz(H, 0.464)); // east windbreak
+    B.put(PAVE, 0.4, 0.1, 3.2, yx(0.9125), T_LAWN + 0.9, yz(H, 0.464));
+    colliders.push(aabbSlab(yx(0.9125), T_LAWN, yz(H, 0.464), 0.4, 1.0, 3.2));
   }
 
   B.flush(g, 'yard-box');

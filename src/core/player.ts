@@ -1,12 +1,17 @@
 /**
  * First-person controller: pointer-lock look, axis-resolved AABB collision,
- * gravity, jump and step-up.
+ * gravity, jump and step-up — plus FLY / FLY-NOCLIP inspection modes.
  *
- * Two things this gets right that are easy to get wrong:
+ * Three things this gets right that are easy to get wrong:
  *  - dt is CLAMPED. An unclamped dt after a tab stall integrates a huge step and
  *    tunnels the player through geometry.
  *  - ground snap runs every frame while grounded, not only on landing, so walking
  *    off a kerb does not leave you hovering for a frame.
+ *  - the wish vector's rotation into the yaw frame agrees with the camera: world
+ *    forward is (-sin yaw, 0, -cos yaw), right is (cos yaw, 0, -sin yaw). The x
+ *    term's sign was wrong once and mirrored movement about the z axis - correct
+ *    at yaw 0 and PI, exactly backwards at +/-PI/2. Fly uses the same frame with
+ *    pitch added, so test it at 45 and 90 degrees, not just down the street.
  */
 import * as THREE from 'three';
 import type { AABB } from './kit';
@@ -23,6 +28,13 @@ const ACCEL = 62.0;
 const FRICTION = 11.5;
 const MAX_DT = 1 / 20;       // clamp: never integrate more than a 50 ms step
 
+/** WALK: gravity + collision. FLY: 6-axis, no gravity, still collides. NOCLIP: through everything. */
+export type MoveMode = 'walk' | 'fly' | 'noclip';
+const FLY_DEFAULT = 12;      // m/s — the map is ~100 m across, walk pace is useless
+const FLY_MIN = 2;
+const FLY_MAX = 60;
+const FLY_BOOST = 3;         // shift multiplier in fly modes
+
 export interface PlayerState {
   pos: THREE.Vector3;        // feet position
   vel: THREE.Vector3;
@@ -38,6 +50,8 @@ export class Player {
   private locked = false;
   /** world-space wish direction injected by the traversability probe, or null */
   private probeWish: { x: number; z: number } | null = null;
+  private mode: MoveMode = 'walk';
+  private flySpeed = FLY_DEFAULT;
 
   constructor(private camera: THREE.PerspectiveCamera, private dom: HTMLElement) {
     this.state = {
@@ -75,6 +89,12 @@ export class Player {
     addEventListener('keydown', (e) => {
       this.keys.add(e.code);
       if (e.code === 'Space') e.preventDefault();
+      // Toggles must ignore auto-repeat: holding F would flicker modes every 30 ms.
+      if (e.repeat) return;
+      if (e.code === 'KeyF') this.toggleFly();
+      else if (e.code === 'KeyC') this.toggleNoclip();
+      else if (e.code === 'BracketLeft') this.adjustFlySpeed(1 / 1.25);
+      else if (e.code === 'BracketRight') this.adjustFlySpeed(1.25);
     });
     addEventListener('keyup', (e) => this.keys.delete(e.code));
     addEventListener('blur', () => this.keys.clear());
@@ -84,6 +104,9 @@ export class Player {
     });
     document.addEventListener('pointerlockchange', () => {
       this.locked = document.pointerLockElement === this.dom;
+      // Esc releases the lock; drop held keys so the camera neither spins (it
+      // cannot — mousemove is lock-gated below) nor keeps walking on one stuck key.
+      if (!this.locked) this.keys.clear();
     });
     addEventListener('mousemove', (e) => {
       if (!this.locked) return;
@@ -93,6 +116,49 @@ export class Player {
       const lim = Math.PI / 2 - 0.02;
       this.state.pitch = Math.max(-lim, Math.min(lim, this.state.pitch));
     });
+    // Wheel adjusts fly speed only; in walk it does nothing so page/scroll
+    // behaviour elsewhere is unaffected.
+    this.dom.addEventListener('wheel', (e: WheelEvent) => {
+      if (this.mode === 'walk') return;
+      this.adjustFlySpeed(Math.exp(-e.deltaY * 0.0012));
+    }, { passive: true });
+  }
+
+  // ---------------------------------------------------------- inspection modes
+  getMode(): MoveMode { return this.mode; }
+  getFlySpeed(): number { return this.flySpeed; }
+  setFlySpeed(v: number): void {
+    this.flySpeed = Math.max(FLY_MIN, Math.min(FLY_MAX, v));
+  }
+  adjustFlySpeed(mult: number): void {
+    this.setFlySpeed(this.flySpeed * mult);
+  }
+  /** F: walk <-> fly; leaving noclip always lands back in walk. */
+  toggleFly(): void {
+    this.setMode(this.mode === 'walk' ? 'fly' : 'walk');
+  }
+  /** C: any colliding mode -> noclip; noclip -> fly (keeps you airborne). */
+  toggleNoclip(): void {
+    this.setMode(this.mode === 'noclip' ? 'fly' : 'noclip');
+  }
+  setMode(m: MoveMode): void {
+    if (m === this.mode) return;
+    this.mode = m;
+    this.state.vel.set(0, 0, 0);
+    this.state.grounded = false;
+    // Coming out of noclip inside a wall would wedge a colliding mode: every
+    // axis refuses and gravity cannot help. Rise to the first free spot instead.
+    if (m !== 'noclip') this.depenetrate();
+  }
+  /** If the player box overlaps anything, rise in 0.5 m steps to free air. */
+  private depenetrate(): void {
+    const p = this.state.pos;
+    if (!this.hits(p, 0.02)) return;
+    for (let i = 0; i < 10; i++) {
+      p.y += 0.5;
+      if (!this.hits(p, 0.02)) break;
+    }
+    this.state.vel.set(0, 0, 0);
   }
 
   /** Does the player box at this feet-position overlap anything? */
@@ -149,6 +215,56 @@ export class Player {
 
   update(dtRaw: number): void {
     const dt = Math.min(dtRaw, MAX_DT);
+    if (this.mode === 'walk') this.updateWalk(dt);
+    else this.updateFly(dt);
+    if (this.state.pos.y < -12) this.teleport(SPAWN_A.x, 0, SPAWN_A.z, SPAWN_A.yaw);
+    this.syncCamera();
+  }
+
+  /**
+   * Inspection flight. Wish direction is built in the camera frame WITH pitch:
+   * forward is (-sin yaw * cos pitch, sin pitch, -cos yaw * cos pitch), so flying
+   * forward while looking up gains height. Strafe stays horizontal in the same yaw
+   * frame walk uses, so A/D never surprise. Velocity is set directly — no accel
+   * lag, hard stop on release. FLY reuses moveAxis for x/z (grounded is false, so
+   * no step-up: pure slide) and resolves y against slabs; NOCLIP skips collision.
+   */
+  private updateFly(dt: number): void {
+    const st = this.state;
+    const fwd = (this.keys.has('KeyW') ? 1 : 0) - (this.keys.has('KeyS') ? 1 : 0);
+    const str = (this.keys.has('KeyD') ? 1 : 0) - (this.keys.has('KeyA') ? 1 : 0);
+    const up = ((this.keys.has('Space') || this.keys.has('KeyE')) ? 1 : 0)
+      - ((this.keys.has('KeyX') || this.keys.has('KeyQ')) ? 1 : 0);
+    const sin = Math.sin(st.yaw), cos = Math.cos(st.yaw);
+    const cosP = Math.cos(st.pitch), sinP = Math.sin(st.pitch);
+    let dx = -sin * cosP * fwd + cos * str;
+    let dy = sinP * fwd + up;
+    let dz = -cos * cosP * fwd - sin * str;
+    const len = Math.hypot(dx, dy, dz);
+    const boost = this.keys.has('ShiftLeft') || this.keys.has('ShiftRight') ? FLY_BOOST : 1;
+    const speed = this.flySpeed * boost;
+    if (len > 0) { dx = (dx / len) * speed; dy = (dy / len) * speed; dz = (dz / len) * speed; }
+    else { dx = 0; dy = 0; dz = 0; }
+    st.vel.set(dx, dy, dz);
+    st.grounded = false;
+    if (this.mode === 'noclip') {
+      st.pos.x += dx * dt;
+      st.pos.y += dy * dt;
+      st.pos.z += dz * dt;
+      return;
+    }
+    this.moveAxis('x', dx * dt);
+    this.moveAxis('z', dz * dt);
+    const y0 = st.pos.y;
+    st.pos.y = y0 + dy * dt;
+    if (this.hits(st.pos, 0.02)) {
+      st.pos.y = y0;
+      st.vel.y = 0;
+    }
+  }
+
+  /** Walk: gravity, collision, step-up, jump. Untouched hard-won behaviour. */
+  private updateWalk(dt: number): void {
     const st = this.state;
 
     // ---- wish direction in the yaw frame
@@ -232,9 +348,6 @@ export class Player {
       if (Math.abs(p.y - g) < STEP_UP) p.y = g;
     }
 
-    if (p.y < -12) this.teleport(SPAWN_A.x, 0, SPAWN_A.z, SPAWN_A.yaw);
-
-    this.syncCamera();
   }
 
   private syncCamera(): void {
