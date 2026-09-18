@@ -1,8 +1,8 @@
 /**
  * THIRD HOUSE - the out-of-bounds landmark beyond the cul-de-sac.
  *
- * Sits at layout.THIRD_HOUSE_X on the street centreline, past the boundary fence, so
- * the player never reaches it. Its whole job is to tell the +x end of the map apart at
+ * Sits on the street centreline just past the boundary fence, so the player never
+ * reaches it. Its whole job is to tell the +x end of the map apart at
  * 25-40 m (SPEC section 3, NT02): the ONE building with a real pitched roof - a dark
  * gable whose triangular end faces the turning head - over pale walls with two big
  * white window bands, with a red 1950s saloon on the hardstanding beside it.
@@ -32,8 +32,9 @@
 import * as THREE from 'three';
 import { PAL } from '../core/palette';
 import {
-  THIRD_HOUSE_X, HEAD_CENTER_X, HEAD_RADIUS, KERB_HEIGHT,
+  HEAD_CENTER_X, HEAD_RADIUS, KERB_HEIGHT,
   HOUSE_HALF_LEN, HOUSE_DEPTH, FLOOR_H, UPPER_H,
+  WHITE, GARAGE_LEN,
 } from '../core/layout';
 import { aabbSlab, extrude, group, slab } from '../core/kit';
 import type { AABB, Builder } from '../core/kit';
@@ -65,6 +66,17 @@ class Batch {
     return im;
   }
 }
+// ------------------------------------------------------------------ siting
+// layout.THIRD_HOUSE_X (44.5) is stale: 8 m past the OLD east tangent (26.0 +
+// 10.5). After the re-centre (HEAD_CENTER_X 0.0) it strands the house 34 m past
+// the bulb, so the same 8 m is re-derived against the new head (layout.ts is
+// read-only here). Rear (~21.8) stays inside BOUND_X_MAX.
+// +8.0 put the body at x 15.2..21.8, which is INSIDE the play space: YARD_X_MAX is
+// 20 and the east flanking lane runs at x=18, so the house sealed the flank the
+// sibling lane had just opened. This is the out-of-bounds landmark, not cover.
+// +15.8 puts the body at 23.0..29.6 - clear of the yards by 3 m, still only ~26 m
+// east of the centre, so it still closes the view down the street.
+const HOUSE_X = HEAD_CENTER_X + HEAD_RADIUS + 15.8;
 
 // ------------------------------------------------------------------ dimensions
 const BODY_X = HOUSE_DEPTH * 0.72;              // extent along x (toward the map)
@@ -72,7 +84,7 @@ const BODY_Z = HOUSE_HALF_LEN * 1.25;           // extent along z (the long face
 const WALL_H = FLOOR_H + UPPER_H * 0.28;
 const RIDGE = HOUSE_DEPTH * 0.33;               // rise from eave to ridge
 const EAVE_OUT = 0.45;
-const FACE_X = THIRD_HOUSE_X - BODY_X * 0.5;    // the wall plane looking at the map
+const FACE_X = HOUSE_X - BODY_X * 0.5;          // the wall plane looking at the map
 const GABLE_X = FACE_X - EAVE_OUT;              // the roof's overhanging gable plane
 
 // ------------------------------------------------------------------ openings
@@ -128,26 +140,21 @@ const STEP_H = 0.12;
 const DOOR_Z = -BODY_Z * 0.333;
 
 // ------------------------------------------------------------------ driveway
-/**
- * Top of the drive. ground.ts's y-ladder puts garage aprons on the T_DRIVE rung,
- * KERB_HEIGHT + 0.006, so they ride over the plateau beneath them; this hardstanding
- * sits on the base apron and takes the same rung. The car's wheels rest on DRIVE_TOP,
- * not on y = 0 as they used to - it was parked 100 mm inside its own slab.
- *
- * WHERE it is, and why not in front: yards.ts now runs the cul-de-sac boundary fence
- * on the bulb's kerb line, about 0.8 m short of this house's front wall, so there is
- * no longer room for anything in front of the gable. The hardstanding therefore runs
- * down the +z flank - which is the side the aerial station looks at, and the only side
- * with room. It cannot be seen from the turningHead station at all: the coach and the
- * box truck parked on the head mask everything outside z = -4.2 .. +3.4 at this range,
- * so from the street the HOUSE, not the car, has to be the landmark.
- */
+// Both hardstandings ride on the T_DRIVE rung (KERB_HEIGHT + 0.006) like the garage
+// aprons. Side drive down the +z flank (masked from turningHead outside z -4.2..3.4
+// by the buses on the head); forecourt across the bulb's ring to the gable: the SPEC
+// driveway apron to the fence. From the street the HOUSE is the landmark.
 const DRIVE_TOP = KERB_HEIGHT + 0.006;
 const DRIVE_W = HOUSE_HALF_LEN * 0.68;                    // z extent, across the drive
 const DRIVE_CZ = BODY_Z * 0.5 + DRIVE_W * 0.5 + 0.5;      // clear of the +z wall's sills
 const DRIVE_X0 = Math.max(GABLE_X, HEAD_CENTER_X + HEAD_RADIUS);   // clear of the bulb
-const DRIVE_LEN = THIRD_HOUSE_X + BODY_X * 0.5 - DRIVE_X0;
+const DRIVE_LEN = HOUSE_X + BODY_X * 0.5 - DRIVE_X0;
 const DRIVE_CX = DRIVE_X0 + DRIVE_LEN * 0.5;
+// forecourt: bulb east tangent to the gable, a 5.2 m path on the street axis
+const FORE_W = 5.2;
+const FORE_X0 = HEAD_CENTER_X + HEAD_RADIUS;
+const FORE_LEN = GABLE_X - FORE_X0;
+const FORE_CX = (FORE_X0 + GABLE_X) * 0.5;
 
 // ------------------------------------------------------------------ the saloon
 /**
@@ -185,10 +192,18 @@ export const buildThirdHouse: Builder = (ctx) => {
   g.add(slab(DRIVE_LEN, DRIVE_TOP, DRIVE_W,
     ctx.mat.painted(PAL.concreteDark, 0.94, 0), DRIVE_CX, 0, DRIVE_CZ));
   colliders.push(aabbSlab(DRIVE_CX, 0, DRIVE_CZ, DRIVE_LEN, DRIVE_TOP, DRIVE_W));
+  // --- forecourt: bulb tangent to the gable, 8 mm over the ring, hedges flank it -
+  g.add(slab(FORE_LEN, DRIVE_TOP, FORE_W,
+    ctx.mat.painted(PAL.concreteDark, 0.94, 0), FORE_CX, 0, 0));
+  colliders.push(aabbSlab(FORE_CX, 0, 0, FORE_LEN, DRIVE_TOP, FORE_W));
+  for (const s of [-1, 1] as const) {
+    const hh = 0.8 + (ctx.rand() - 0.5) * 0.1;
+    bHedge.add(FORE_LEN + 0.06, hh, 0.6, FORE_CX, hh * 0.5, s * (FORE_W * 0.5 + 0.55));
+  }
 
   // --- body + chimney --------------------------------------------------------
-  bWall.add(BODY_X, WALL_H, BODY_Z, THIRD_HOUSE_X, WALL_H * 0.5, 0);
-  const chX = THIRD_HOUSE_X + BODY_X * 0.22;
+  bWall.add(BODY_X, WALL_H, BODY_Z, HOUSE_X, WALL_H * 0.5, 0);
+  const chX = HOUSE_X + BODY_X * 0.22;
   const chZ = BODY_Z * 0.24;
   const chH = RIDGE + 1.0;
   bWall.add(0.85, chH, 0.85, chX, WALL_H + chH * 0.5, chZ);
@@ -201,23 +216,23 @@ export const buildThirdHouse: Builder = (ctx) => {
   const roofMat = ctx.mat.painted(PAL.thirdRoof, 0.78, 0.04);
   const roof = extrude([[-half, 0], [half, 0], [0, RIDGE]], BODY_X + EAVE_OUT * 2, roofMat);
   roof.rotation.y = Math.PI * 0.5;              // sweep axis -> world x, gable faces +/-x
-  roof.position.set(THIRD_HOUSE_X, WALL_H, 0);
+  roof.position.set(HOUSE_X, WALL_H, 0);
   g.add(roof);
   // eave fascia under the roof edge, both long faces
   for (const s of [-1, 1]) {
-    bWall.add(BODY_X + EAVE_OUT * 2, 0.2, 0.16, THIRD_HOUSE_X, WALL_H - 0.1, s * half);
+    bWall.add(BODY_X + EAVE_OUT * 2, 0.2, 0.16, HOUSE_X, WALL_H - 0.1, s * half);
   }
   // ridge cap along the apex; gutters hung off both eaves just under the fascia
   const ridgeLen = BODY_X + EAVE_OUT * 2;
-  bDark.add(ridgeLen, 0.12, 0.34, THIRD_HOUSE_X, WALL_H + RIDGE + 0.02, 0);
+  bDark.add(ridgeLen, 0.12, 0.34, HOUSE_X, WALL_H + RIDGE + 0.02, 0);
   for (const s of [-1, 1] as const) {
-    bChrome.add(ridgeLen, 0.11, 0.11, THIRD_HOUSE_X, WALL_H - 0.24, s * (half + 0.08));
+    bChrome.add(ridgeLen, 0.11, 0.11, HOUSE_X, WALL_H - 0.24, s * (half + 0.08));
   }
   // barge boards: Batch only yaws, so each sloped gable edge is stepped pale trim,
   // both slopes of both gables (only the -x one is ever seen from the street)
   const slopeN = 6, slopeSeg = Math.hypot(half, RIDGE) / slopeN;
   for (const gx of [-1, 1]) {
-    const bx = THIRD_HOUSE_X + gx * (ridgeLen * 0.5 + 0.02);
+    const bx = HOUSE_X + gx * (ridgeLen * 0.5 + 0.02);
     for (const s of [-1, 1]) {
       for (let i = 0; i < slopeN; i++) {
         const t = (i + 0.5) / slopeN;
@@ -238,9 +253,9 @@ export const buildThirdHouse: Builder = (ctx) => {
   // a band and a small light per long face, so it still reads as a house from above.
   // Nothing smaller goes on the gable: the door hood needs that wall clear.
   for (const s of [-1, 1] as const) {
-    opening(bFrame, bGlaze, LONG(s), THIRD_HOUSE_X - 0.4,
+    opening(bFrame, bGlaze, LONG(s), HOUSE_X - 0.4,
       FLOOR_H * 0.62, BODY_X * 0.50, 1.15, 3);
-    opening(bFrame, bGlaze, LONG(s), THIRD_HOUSE_X + BODY_X * 0.37,
+    opening(bFrame, bGlaze, LONG(s), HOUSE_X + BODY_X * 0.37,
       FLOOR_H * 0.62, 0.70, 0.85, 2);
   }
 
@@ -265,10 +280,10 @@ export const buildThirdHouse: Builder = (ctx) => {
   bWall.add(0.62, STEP_H, DOOR_W + 0.8, FACE_X - 0.31, STEP_H * 0.5, DOOR_Z);
 
   // house slab widened 0.77 toward the map so the porch roof/posts collide honestly
-  colliders.push(aabbSlab(THIRD_HOUSE_X - 0.38, 0, 0, BODY_X + 0.77, WALL_H + RIDGE, BODY_Z));
+  colliders.push(aabbSlab(HOUSE_X - 0.38, 0, 0, BODY_X + 0.77, WALL_H + RIDGE, BODY_Z));
   // downpipes: rear corners, gutter to ground + shoe; clear of the drive's 0.5 m offset
   for (const s of [-1, 1] as const) {
-    const px = THIRD_HOUSE_X + BODY_X * 0.5 - 0.15, pz = s * (BODY_Z * 0.5 + 0.10);
+    const px = HOUSE_X + BODY_X * 0.5 - 0.15, pz = s * (BODY_Z * 0.5 + 0.10);
     bChrome.add(0.09, WALL_H - 0.2, 0.09, px, (WALL_H - 0.2) * 0.5, pz);
     bChrome.add(0.09, 0.22, 0.30, px, 0.11, pz + s * 0.08);
   }
@@ -333,19 +348,31 @@ export const buildThirdHouse: Builder = (ctx) => {
 
   // plot boundary: hedge down the -z flank, low timber fence beyond the drive on +z.
   // both run front (bulb-clear DRIVE_X0) to rear, clear of the drive and the car.
-  const plotX0 = DRIVE_X0, plotX1 = THIRD_HOUSE_X + BODY_X * 0.5;
+  const plotX0 = DRIVE_X0, plotX1 = HOUSE_X + BODY_X * 0.5;
   const plotLen = plotX1 - plotX0, plotCX = (plotX0 + plotX1) * 0.5;
   const hedgeN = Math.max(1, Math.round(plotLen / 1.5));
   for (let i = 0; i < hedgeN; i++) {
     const hh = 0.85 + (ctx.rand() - 0.5) * 0.12;
     bHedge.add(plotLen / hedgeN + 0.06, hh, 0.6, plotX0 + plotLen * (i + 0.5) / hedgeN, hh * 0.5, -(BODY_Z * 0.5 + 1.0));
   }
+  // the +z fence starts east of the white garage's east face (this plot moved west
+  // under it); the rear return is a hedge across the back of the house only, so the
+  // drive stays open.
   const fenceZ = DRIVE_CZ + DRIVE_W * 0.5 + 0.6;
-  const postN = Math.max(2, Math.round(plotLen / 1.8) + 1);
+  const fenceX0 = WHITE.garageX + GARAGE_LEN / 2 + 0.4;
+  const fenceLen = plotX1 - fenceX0, fenceCX = (fenceX0 + plotX1) * 0.5;
+  const postN = Math.max(2, Math.round(fenceLen / 1.8) + 1);
   for (let i = 0; i < postN; i++) {
-    bTimber.add(0.12, 1.0, 0.12, plotX0 + plotLen * i / (postN - 1), 0.5, fenceZ);
+    bTimber.add(0.12, 1.0, 0.12, fenceX0 + fenceLen * i / (postN - 1), 0.5, fenceZ);
   }
-  for (const ry of [0.5, 0.85]) bTimber.add(plotLen, 0.10, 0.06, plotCX, ry, fenceZ);
+  for (const ry of [0.5, 0.85]) bTimber.add(fenceLen, 0.10, 0.06, fenceCX, ry, fenceZ);
+  const rearZ0 = -(BODY_Z * 0.5 + 1.0), rearZ1 = BODY_Z * 0.5 - 0.3;
+  const rearN = Math.max(2, Math.round((rearZ1 - rearZ0) / 1.5));
+  for (let i = 0; i < rearN; i++) {
+    const hh = 0.85 + (ctx.rand() - 0.5) * 0.12;
+    bHedge.add(0.6, hh, (rearZ1 - rearZ0) / rearN + 0.06,
+      plotX1 - 0.3, hh * 0.5, rearZ0 + (rearZ1 - rearZ0) * (i + 0.5) / rearN);
+  }
   // planting: faceted shrubs flanking the door gap + down the -z flank, all on y = 0
   const shrub = (x: number, z: number, s: number): void => {
     bHedge.add(s, s * 0.85, s, x, s * 0.425, z);
@@ -354,8 +381,8 @@ export const buildThirdHouse: Builder = (ctx) => {
   shrub(FACE_X - 0.42, DOOR_Z - 1.7, 0.55);
   shrub(FACE_X - 0.42, DOOR_Z + 1.7, 0.55);
   shrub(FACE_X - 0.42, BODY_Z * 0.125, 0.5);
-  shrub(THIRD_HOUSE_X - 1.5, -(BODY_Z * 0.5 + 0.55), 0.65);
-  shrub(THIRD_HOUSE_X + 1.5, -(BODY_Z * 0.5 + 0.55), 0.65);
+  shrub(HOUSE_X - 1.5, -(BODY_Z * 0.5 + 0.55), 0.65);
+  shrub(HOUSE_X + 1.5, -(BODY_Z * 0.5 + 0.55), 0.65);
 
   // --- one draw call per material --------------------------------------------
   const batched: [Batch, THREE.Material, string][] = [

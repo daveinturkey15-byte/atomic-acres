@@ -25,7 +25,7 @@ import type { Builder } from '../core/kit';
 import { box, extrude, group } from '../core/kit';
 import { PAL } from '../core/palette';
 import {
-  BOUND_X_MAX, BOUND_X_MIN, BOUND_Z, PAVEMENT_OUTER, THIRD_HOUSE_X,
+  BOUND_X_MAX, BOUND_X_MIN, BOUND_Z, PAVEMENT_OUTER,
 } from '../core/layout';
 
 /** half the playable footprint - every horizon ring is a multiple of this */
@@ -493,10 +493,19 @@ export const buildSkyline: Builder = (ctx) => {
       if (clear(x, SAUCER_X, 15)) add(x, -zRow - r() * 11, 0);
       if (clear(x, DOME_X, DOME_R + 5)) add(x, zRow + r() * 11, Math.PI);
     }
-    // the +x run must clear the third house, which another module owns
-    const xRow = Math.max(BOUND_X_MAX + 13, THIRD_HOUSE_X + 19);
+    // the +x ranks close the east behind the re-sited third house. layout's
+    // THIRD_HOUSE_X (44.5) is stale - the house now stands ~18 (third-house.ts) -
+    // so a row derived off it strands the ring 60 m out and leaves the aerial's
+    // dead slab. A near rank just inside the boundary holds the street axis with
+    // a gap on it so the house keeps the view; the far rank stays outside as before.
+    const xNear = BOUND_X_MAX - 14;
+    for (let z = -BOUND_Z - 8; z <= BOUND_Z + 8; z += 13 + r() * 9) {
+      if (Math.abs(z) < 13) continue;                    // the house owns the axis
+      add(xNear + r() * 8, z, -Math.PI / 2);
+    }
+    const xFar = BOUND_X_MAX + 13;
     for (let z = -BOUND_Z - 8; z <= BOUND_Z + 8; z += 11 + r() * 10) {
-      add(xRow + r() * 9, z, -Math.PI / 2);
+      add(xFar + r() * 9, z, -Math.PI / 2);
     }
     // the -x side only closes past |z| = 28: the road stem, the pylon sign and the
     // needle all sit inside that corridor and the plaza vista must stay open

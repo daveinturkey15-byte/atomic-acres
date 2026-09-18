@@ -39,7 +39,7 @@ import {
   BACK_FENCE, BOUND_X_MIN, BOUND_Z, CANOPY_LEN, DECK_LEN, DECK_OUT, FENCE_H,
   FRONT_LAWN_OUTER, GARAGE_LEN, HEAD_CENTER_X, HEAD_RADIUS, HOUSES, HOUSE_BACK,
   HOUSE_HALF_LEN, KERB_HEIGHT, KERB_WIDTH, ORANGE, PAVEMENT_OUTER, ROAD_HALF_WIDTH,
-  ROAD_X_MAX, ROAD_X_MIN, WHITE, YARD_X_MAX, YARD_X_MIN,
+  ROAD_X_MAX, ROAD_X_MIN, THIRD_HOUSE_X, WHITE, YARD_X_MAX, YARD_X_MIN,
 } from '../core/layout';
 
 // ---------------------------------------------------------------- derived frame
@@ -56,11 +56,17 @@ const T_SURF = T_LAWN + 0.060;        // patio disc, court bed
 const T_MARK = T_LAWN + 0.085;        // court markings
 
 /**
- * Boundary fence at the cul-de-sac, hard against the turning head's kerb ring.
- * Halfway to THIRD_HOUSE_X put it at x 37.8, inside that house's body (36.69-43.31):
- * the aerial had the fence going into the roof one side and out the other.
+ * East boundary fence, closing the map beyond the eastern fringe dressing.
+ * It was derived from the turning head's kerb ring, which put it at x 10.8
+ * after the recentre - straight through both back yards, sealing the east
+ * flank. Anchored to THIRD_HOUSE_X instead so every lane's work stays inside.
+ * NOTE (orchestrator): the third-house lane has re-sited that house into the
+ * map (~18.5), so this fence no longer abuts it; that lane's "0.8 m off the
+ * wall" comments describe a fence position this lane cannot use (it would cut
+ * the terrace and the traverse flank lane). Siting the boundary is now a
+ * cross-lane decision - this value only guarantees: out of the yards.
  */
-const BOUNDARY_X = HEAD_CENTER_X + HEAD_RADIUS + KERB_WIDTH;
+const BOUNDARY_X = THIRD_HOUSE_X - 6.7;
 
 /** x at fraction t across a back yard */
 const yx = (t: number): number => YARD_X_MIN + t * YARD_W;

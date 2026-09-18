@@ -1,0 +1,601 @@
+{
+ "entries": [
+  {
+   "id": "east-eave-lowsun-low-01",
+   "file": "east-eave-lowsun-low-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, low worm's-eye view up the gable and eave side of a Googie show house, east-side timber fence and hedge silhouetted, concrete kerb in foreground, low-sun golden raking light with long shadows.",
+   "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+   "subject": "eave",
+   "angle": "low",
+   "light": "low-sun"
+  },
+  {
+   "id": "east-fence-noon-high34-01",
+   "file": "east-fence-noon-high34-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, high three-quarter view over the east flank side yards, fence returns and gates, hedge lines, kerbs and rooflines, harsh desert noon.",
+   "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+   "subject": "fence",
+   "angle": "high34",
+   "light": "harsh-noon"
+  },
+  {
+   "id": "east-gable-noon-axis-01",
+   "file": "east-gable-noon-axis-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, gable and eave side of a Googie show house seen straight down the street axis at street level, east-side timber fence returning to the house corner, hedge and concrete kerb leading the eye, harsh desert noon.",
+   "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+   "subject": "gable",
+   "angle": "axis",
+   "light": "harsh-noon"
+  },
+  {
+   "id": "east-passage-noon-hero-01",
+   "file": "east-passage-noon-hero-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, angled hero view of the runnable passage between two Googie show houses, east-side timber fence with gates on both sides, hedges, kerbs and pale paving, harsh desert noon.",
+   "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+   "subject": "passage",
+   "angle": "hero",
+   "light": "harsh-noon"
+  },
+  {
+   "id": "east-roofline-overcast-eye-01",
+   "file": "east-roofline-overcast-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, eye-level view along east-flank rooflines from the street axis, east-side timber fence, hedge and kerb below, flat overcast desert light, soft shadowless modelling.",
+   "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+   "subject": "roofline",
+   "angle": "eye",
+   "light": "overcast"
+  },
+  {
+   "id": "east-sideyard-noon-eye-01",
+   "file": "east-sideyard-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, east side yard running beside a Googie show-house gable end, runnable passage with east-side timber fence and gate, dark hedge line, concrete kerb and pale paving slabs, eye-level street view, harsh desert noon short shadows.",
+   "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+   "subject": "sideyard",
+   "angle": "eye",
+   "light": "harsh-noon"
+  },
+  {
+   "id": "east-test-01",
+   "file": "east-test-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, east side yard running beside a Googie show house gable end, weathered east-side timber fence with a gate, dark hedge line, concrete kerb and pale paving, harsh desert noon short shadows.",
+   "route": "Imagen 3 (imagen-3.0-generate-002) via agy native image tool",
+   "subject": "route-test",
+   "angle": "eye",
+   "light": "harsh-noon"
+  },
+  {
+   "id": "ground-asphalt-lowsun-low-01",
+   "file": "ground-asphalt-lowsun-low-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low-angle asphalt with tyre-polish arcs glowing in low warm sun, oil spots 100-200mm, long shadows, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+   "subject": "asphalt-tyre-polish",
+   "angle": "low",
+   "light": "lowsun"
+  },
+  {
+   "id": "ground-asphalt-noon-eye-01",
+   "file": "ground-asphalt-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Desert-show-town asphalt close-up with polished dark tyre arcs and two oil spots 100-200mm across, aggregate glinting, bleached concrete kerb at frame edge, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+   "subject": "asphalt-tyre-polish",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "ground-asphalt-noon-low-01",
+   "file": "ground-asphalt-noon-low-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low-angle view down asphalt with long tyre-polish arcs curving away, oil spots 100-200mm, harsh desert noon hard shadows, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+   "subject": "asphalt-tyre-polish",
+   "angle": "low",
+   "light": "noon"
+  },
+  {
+   "id": "ground-kerb-noon-eye-01",
+   "file": "ground-kerb-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Concrete kerb seen on three faces, top worn pale by foot traffic, face with grit wash darkening the bottom 40mm, joints every 900mm, meeting pale paving slabs and asphalt, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+   "subject": "kerb-three-faces",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "ground-kerb-noon-macro-01",
+   "file": "ground-kerb-noon-macro-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Extreme macro of one kerb joint, worn pale top edge, grit wash on bottom 40mm of face, sand grains lodged in joint, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+   "subject": "kerb-three-faces",
+   "angle": "macro",
+   "light": "noon"
+  },
+  {
+   "id": "ground-lawnedge-noon-eye-01",
+   "file": "ground-lawnedge-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Lawn-to-slab edging, mown green lawn with visible mow stripes meeting pale concrete slabs, grass edges brown-frayed, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+   "subject": "lawn-to-slab-edging",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "ground-lawnedge-noon-macro-01",
+   "file": "ground-lawnedge-noon-macro-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Macro of lawn-to-slab edge, individual grass blades, brown-frayed tips, grit on slab edge, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+   "subject": "lawn-to-slab-edging",
+   "angle": "macro",
+   "light": "noon"
+  },
+  {
+   "id": "ground-patio-lowsun-eye-01",
+   "file": "ground-patio-lowsun-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Patio paving with moss growing in joints, low warm evening sun raking across, long soft shadows, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+   "subject": "patio-moss-joints",
+   "angle": "eye",
+   "light": "lowsun"
+  },
+  {
+   "id": "ground-paving-noon-eye-01",
+   "file": "ground-paving-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Close-up eye-level study of big-slab pale concrete paving with 600-900mm module and grit-dark joints, slight tonal variation slab to slab, harsh desert noon hard short shadows, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (gemini-3.1-flash-image, native generate_image)",
+   "subject": "paving-slabs",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "ground-paving-noon-low-01",
+   "file": "ground-paving-noon-low-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low raking-angle view across big-slab pale paving, 600-900mm module, grit-dark joints catching shadow, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (gemini-3.1-flash-image, native generate_image)",
+   "subject": "paving-slabs",
+   "angle": "low",
+   "light": "noon"
+  },
+  {
+   "id": "ground-sandspill-noon-macro-01",
+   "file": "ground-sandspill-noon-macro-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Macro of sand spilling from a childrens sand pit across pale paving joints, fine grains and small drifts, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+   "subject": "sand-pit-spill",
+   "angle": "macro",
+   "light": "noon"
+  },
+  {
+   "id": "ground-stepping-noon-eye-01",
+   "file": "ground-stepping-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Round stepping stones set IN a mown lawn, grass growing to stone edges, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+   "subject": "stepping-stones-in-lawn",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "ground-test-01",
+   "file": "ground-test-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Close-up ground-level study of big-slab pale concrete paving with 600-900mm module and grit-dark joints, macro material detail, harsh desert noon hard short shadows. Original design only, no logos, no signage, no people.",
+   "route": "agy CLI (Imagen 3 via Antigravity Image Generation Tool)",
+   "subject": "route-test",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "interior-ceiling-noon-low-01",
+   "file": "interior-ceiling-noon-low-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low-angle interior of a 1960s show-home ceiling showing the butterfly-V roof underside, exposed timber-grain beams fanning to a central valley, harsh desert noon light washing the stucco soffit through tall narrow mullioned windows, enamel pendant lamps.",
+   "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+   "subject": "ceiling",
+   "angle": "low",
+   "light": "noon"
+  },
+  {
+   "id": "interior-kitchen-blue-noon-eye-01",
+   "file": "interior-kitchen-blue-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level interior of a 1960s show-home kitchen, chest-height bank of retro appliances topped in blue, blue tops only and never red-pink, harsh desert noon light through tall narrow mullioned windows, white enamel doors, timber-grain shelving, stucco walls.",
+   "route": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+   "subject": "kitchen-blue",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "interior-kitchen-blue-overcast-detail-01",
+   "file": "interior-kitchen-blue-overcast-detail-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Soft overcast daylight instead of harsh noon. Macro detail of a 1960s show-home kitchen appliance bank with blue tops, blue only and never red-pink, chrome dial, enamel edge, rubber gasket and hinge in sharp focus, timber grain beside.",
+   "route": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+   "subject": "kitchen-blue",
+   "angle": "detail",
+   "light": "overcast"
+  },
+  {
+   "id": "interior-kitchen-red-noon-detail-01",
+   "file": "interior-kitchen-red-noon-detail-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Macro detail of a 1960s show-home kitchen appliance bank with red-pink enamel cabinet doors, red-pink only and never blue, chrome handles, hinges and rubber gaskets in sharp focus, harsh desert noon side-light raking across enamel and timber grain.",
+   "route": "agy --model gemini-3.7-flash-high -> native generate_image (gemini-3.1-flash-image)",
+   "subject": "kitchen-red",
+   "angle": "detail",
+   "light": "noon"
+  },
+  {
+   "id": "interior-kitchen-red-noon-eye-01",
+   "file": "interior-kitchen-red-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level interior of a 1960s show-home kitchen, chest-height bank of retro appliances with red-pink enamel cabinets, red-pink cabinets only and never blue, harsh desert noon light through a tall narrow mullioned window, timber-grain breakfast bar, stucco walls, glass sky reflection.",
+   "route": "agy --model gemini-3.7-flash-high -> native generate_image (gemini-3.1-flash-image)",
+   "subject": "kitchen-red",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "interior-living-lowsun-eye-01",
+   "file": "interior-living-lowsun-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low evening sun raking through the glass instead of noon. Eye-level interior of a 1960s show-home living room, tall narrow windows with vertical mullions, long raking amber shadows across timber-grain floor and stucco walls, enamel cabinet catching warm light, glass sky reflection.",
+   "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+   "subject": "living",
+   "angle": "eye",
+   "light": "lowsun"
+  },
+  {
+   "id": "interior-living-noon-eye-01",
+   "file": "interior-living-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Interior of a 1960s show-home living room at eye level, tall narrow windows with vertical mullions, harsh desert noon light streaming through glass casting mullion shadows on stucco walls, enamel sideboard, timber-grain lounge chairs, glass reflecting pale sky.",
+   "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+   "subject": "living",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "interior-living-noon-low-01",
+   "file": "interior-living-noon-low-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low-angle interior of a 1960s show-home living room looking up past timber-grain furniture toward tall narrow windows with vertical mullions, harsh desert noon light flooding through glass, stucco ceiling with butterfly-V underside, enamel lamp bases gleaming.",
+   "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+   "subject": "living",
+   "angle": "low",
+   "light": "noon"
+  },
+  {
+   "id": "interior-living-overcast-eye-01",
+   "file": "interior-living-overcast-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Soft overcast daylight instead of harsh noon. Eye-level interior of a 1960s show-home living room, tall narrow windows with vertical mullions under flat soft light, matte stucco walls, enamel surfaces, timber-grain furniture, muted glass reflections.",
+   "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+   "subject": "living",
+   "angle": "eye",
+   "light": "overcast"
+  },
+  {
+   "id": "interior-reveal-lowsun-detail-01",
+   "file": "interior-reveal-lowsun-detail-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low evening sun raking through the glass instead of noon. Macro detail of a 1960s show-home window reveal, vertical mullion shadow stretching across deep stucco jamb, amber raking light on enamel latch, timber grain and glass sky reflection.",
+   "route": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+   "subject": "reveal",
+   "angle": "detail",
+   "light": "lowsun"
+  },
+  {
+   "id": "interior-reveal-noon-detail-01",
+   "file": "interior-reveal-noon-detail-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Macro detail of a 1960s show-home window reveal, deep stucco jamb with vertical timber mullion casting a crisp shadow line, harsh desert noon light, enamel latch and glass edge reflecting pale sky, plaster texture sharp.",
+   "route": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+   "subject": "reveal",
+   "angle": "detail",
+   "light": "noon"
+  },
+  {
+   "id": "interior-stair-lowsun-low-01",
+   "file": "interior-stair-lowsun-low-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low evening sun raking through the glass instead of noon. Low-angle interior of a 1960s show-home stair and deck junction, timber-grain stair risers, tall narrow mullioned glass door to deck, long amber shadows, stucco and enamel details.",
+   "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+   "subject": "stair",
+   "angle": "low",
+   "light": "lowsun"
+  },
+  {
+   "id": "interior-stair-noon-eye-01",
+   "file": "interior-stair-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level interior of a 1960s show-home stair and deck junction, timber-grain staircase meeting a sun-deck door wall of tall narrow mullioned glass, harsh desert noon light striping the steps with mullion shadows, stucco wall, enamel handrail brackets.",
+   "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+   "subject": "stair",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "interior-test-01",
+   "file": "interior-test-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Interior of a 1960s show-home living room, tall narrow windows with vertical mullions, harsh desert noon light streaming through glass, stucco walls, enamel surfaces, timber grain furniture, glass sky reflection.",
+   "route": "agy --model gemini-3.7-flash-high -> native generate_image (Imagen 3)",
+   "subject": "route-test",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "mannequin-bare-noon-eye-01",
+   "file": "mannequin-bare-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Bare ivory-fibreglass articulated display mannequin with no clothes, standing full-figure at eye level on a desert show-town plaza of bleached concrete, Googie pylon behind, glossy torso with visible shoulder wrist and knee joints, scuff-blackened feet, harsh desert noon light.",
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+   "subject": "bare-figure",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "mannequin-cloth-noon-macro-01",
+   "file": "mannequin-cloth-noon-macro-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Close macro study of matte purple shift-dress cloth against a glossy bare fibreglass shoulder and collarbone of an articulated display mannequin, woven texture versus smooth gel-coat shine, dust film on the shoulder, harsh desert noon light.",
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+   "subject": "cloth-detail",
+   "angle": "macro",
+   "light": "noon"
+  },
+  {
+   "id": "mannequin-couple-lowsun-low-01",
+   "file": "mannequin-couple-lowsun-low-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise; low-sun light slot. Pair of articulated display mannequins, one in a magenta shift dress and one bare fibreglass, standing on a lawn edge by a Googie show home at golden-hour low sun, low camera angle, long shadows, warm rim light.",
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+   "subject": "couple",
+   "angle": "low",
+   "light": "lowsun"
+  },
+  {
+   "id": "mannequin-family-noon-eye-01",
+   "file": "mannequin-family-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Articulated display mannequin family posed as neighbours on a mown lawn beside a Googie show home, full figures at eye level, one woman figure in a magenta-purple shift dress, others in plain period casual shirts and slacks, glossy fibreglass faces with painted features, visible elbow and knee joints, crisp harsh-noon shadows.",
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+   "subject": "family",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "mannequin-family-overcast-eye-01",
+   "file": "mannequin-family-overcast-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise; overcast light slot. Articulated display mannequin family posed on a residential street under flat overcast desert light, soft shadowless modelling of painted faces and plain period clothes, one figure in a purple shift dress, bleached concrete and Googie rooflines behind, eye level.",
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+   "subject": "family",
+   "angle": "eye",
+   "light": "overcast"
+  },
+  {
+   "id": "mannequin-group-lowsun-eye-01",
+   "file": "mannequin-group-lowsun-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise; low-sun light slot. Group of five articulated display mannequins posed as a crowd on a desert show-town plaza at golden-hour low sun, mixed dressed figures including one in a purple shift dress and bare fibreglass figures, long raking shadows across bleached concrete, warm rim light on glossy shoulders, eye level.",
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+   "subject": "group",
+   "angle": "eye",
+   "light": "lowsun"
+  },
+  {
+   "id": "mannequin-knee-noon-macro-01",
+   "file": "mannequin-knee-noon-macro-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Extreme macro detail of an articulated display mannequin knee seam and lower legs, glossy fibreglass joint line, scuff-blackened feet on bleached concrete, dust stipple, harsh desert noon light with hard shadows.",
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+   "subject": "knee-seam",
+   "angle": "macro",
+   "light": "noon"
+  },
+  {
+   "id": "mannequin-neck-noon-macro-01",
+   "file": "mannequin-neck-noon-macro-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Extreme macro detail of an articulated display mannequin neck and shoulder seam, glossy ivory fibreglass ring joint with a fine dust film on the shoulders, shallow depth of field, harsh desert noon side light raking across the seam.",
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+   "subject": "neck-seam",
+   "angle": "macro",
+   "light": "noon"
+  },
+  {
+   "id": "mannequin-pair-noon-low-01",
+   "file": "mannequin-pair-noon-low-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Two articulated display mannequins, one bare ivory fibreglass and one dressed in plain period casuals, standing on a bleached-concrete street by a kerb, full figures from a low worm's-eye angle against a harsh desert noon sky, crisp short shadows.",
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+   "subject": "pair",
+   "angle": "low",
+   "light": "noon"
+  },
+  {
+   "id": "mannequin-test-01",
+   "file": "mannequin-test-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Articulated display mannequin family posed as neighbours on a mown lawn beside a Googie show home, full figures eye-level, one figure in a purple shift dress, others in plain period casuals, glossy fibreglass faces with painted features, visible limb joints, crisp harsh-noon shadows on grass and bleached concrete.",
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Imagen 3 (Antigravity Image Generation Tool)",
+   "subject": "route-test",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "mannequin-wrist-noon-macro-01",
+   "file": "mannequin-wrist-noon-macro-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Extreme macro detail of an articulated display mannequin wrist joint, glossy fibreglass ball seam between hand and the cuff of a plain period shirt, crisp harsh-noon highlight, shallow depth of field.",
+   "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+   "subject": "wrist-joint",
+   "angle": "macro",
+   "light": "noon"
+  },
+  {
+   "id": "third-approach-lowsun-eye-01",
+   "file": "third-approach-lowsun-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, eye-level approach view toward the third-house massing beyond the turning head at low sun, east-side timber fence, hedge and kerb glowing warm, long shadows.",
+   "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+   "subject": "approach",
+   "angle": "eye",
+   "light": "low-sun"
+  },
+  {
+   "id": "third-massing-noon-hero-01",
+   "file": "third-massing-noon-hero-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, angled hero view of the third-house massing beyond the turning head, Googie roofline, east-side timber fence and hedge in the midground, concrete kerb, harsh desert noon.",
+   "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+   "subject": "massing",
+   "angle": "hero",
+   "light": "harsh-noon"
+  },
+  {
+   "id": "third-street-noon-high34-01",
+   "file": "third-street-noon-high34-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, high three-quarter view down the street axis over rooflines toward the third-house massing closing the vista, fence lines, hedges and kerbs, harsh desert noon.",
+   "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+   "subject": "street",
+   "angle": "high34",
+   "light": "harsh-noon"
+  },
+  {
+   "id": "third-vista-noon-axis-01",
+   "file": "third-vista-noon-axis-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, third house closing the vista beyond the turning head, street-axis view past east-side timber fence, hedge and concrete kerb, third-house massing centred at the end of the street, harsh desert noon.",
+   "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+   "subject": "vista",
+   "angle": "axis",
+   "light": "harsh-noon"
+  },
+  {
+   "id": "turn-vehicles-lowsun-eye-01",
+   "file": "turn-vehicles-lowsun-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Light slot says otherwise: low sun, long warm raking evening light. Eye-level view of a small-town roundabout traffic circle, circular ring road with round concrete kerb island, cream intercity coach with maroon swoosh casting a long shadow across the asphalt, white box truck and dark saloon parked at the kerb, glowing horizon behind the show-town rooftops.",
+   "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+   "subject": "lowsun-long-shadow-coach",
+   "angle": "eye",
+   "light": "lowsun"
+  },
+  {
+   "id": "turn-vehicles-lowsun-low-01",
+   "file": "turn-vehicles-lowsun-low-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Light slot says otherwise: low sun, warm side light with long shadows. Low camera angle at the curved kerb of a roundabout traffic circle, rounded kerb edge sweeping in an arc, dark saloon and coach wheels rimmed with warm light on the circular ring road, dust glowing in the air.",
+   "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+   "subject": "lowsun-kerb-dust",
+   "angle": "low",
+   "light": "lowsun"
+  },
+  {
+   "id": "turn-vehicles-noon-eye-01",
+   "file": "turn-vehicles-noon-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level view of a small-town roundabout traffic circle, circular ring road of asphalt around a round concrete kerb island, cream intercity coach with maroon swoosh parked at the kerb, coach flank against asphalt, kerb grit wash, tyre-polish arcs, oil spots.",
+   "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+   "subject": "coach-flank-kerb-grit",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "turn-vehicles-noon-eye-02",
+   "file": "turn-vehicles-noon-eye-02.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level view across a small-town roundabout traffic circle, white box truck and dark saloon parked nose-to-kerb on the circular ring road, round concrete kerb island at the centre, desert noon shadows, empty shopfront colonnade behind.",
+   "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+   "subject": "truck-saloon-nose-to-kerb",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "turn-vehicles-noon-eye-03",
+   "file": "turn-vehicles-noon-eye-03.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level view along the curving asphalt of a roundabout traffic circle ring road, dark tyre-polish arcs and scattered oil spots curving around the round concrete kerb island, cream intercity coach with maroon swoosh and dark saloon parked at opposite kerbs.",
+   "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+   "subject": "tyre-arcs-oil-spots",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "turn-vehicles-noon-eye-04",
+   "file": "turn-vehicles-noon-eye-04.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level close view of the round concrete kerb island of a roundabout traffic circle, curved bleached-concrete kerb with grit wash and paint scuffs sweeping through frame, dark saloon parked tight to the kerb on the circular ring road, white box truck beyond.",
+   "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+   "subject": "kerb-island-close",
+   "angle": "eye",
+   "light": "noon"
+  },
+  {
+   "id": "turn-vehicles-noon-high34-01",
+   "file": "turn-vehicles-noon-high34-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Elevated three-quarter view of a whole small-town roundabout traffic circle, circular ring road with round concrete kerb island at the centre, cream intercity coach with maroon swoosh, white box truck and dark saloon parked around the ring, tyre-polish arcs and oil spots on the asphalt.",
+   "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+   "subject": "full-circle-all-vehicles",
+   "angle": "high34",
+   "light": "noon"
+  },
+  {
+   "id": "turn-vehicles-noon-low-01",
+   "file": "turn-vehicles-noon-low-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low camera angle at the rounded kerb of a roundabout traffic circle, curved kerb sweeping in an arc through the foreground with grit wash and stained concrete, cream intercity coach with maroon swoosh parked above at the kerb, wheel and chrome bumper detail.",
+   "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+   "subject": "low-kerb-coach-looming",
+   "angle": "low",
+   "light": "noon"
+  },
+  {
+   "id": "turn-vehicles-noon-plan-01",
+   "file": "turn-vehicles-noon-plan-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. True overhead aerial photograph looking straight down, map-like flat view with no horizon and no sky: a small-town roundabout traffic circle seen as a perfect flat asphalt ring with a round pale-concrete island filling the centre, cream intercity coach with maroon swoosh, white box truck and dark saloon parked small like toys on the ring, desert ground and flat rooftops around the outer edge, all vehicles and buildings blank and unmarked.",
+   "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+   "subject": "overhead-flat-ring",
+   "angle": "plan",
+   "light": "noon"
+  },
+  {
+   "id": "turn-vehicles-overcast-eye-01",
+   "file": "turn-vehicles-overcast-eye-01.png",
+   "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Light slot says otherwise: flat overcast daylight, soft shadowless grey sky. Eye-level view of a small-town roundabout traffic circle, circular ring road with round concrete kerb island, cream intercity coach with maroon swoosh, white box truck and dark saloon parked around the ring, muted bleached concrete under cloud.",
+   "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+   "subject": "overcast-flat-circle",
+   "angle": "eye",
+   "light": "overcast"
+  }
+ ],
+ "file_count": 59,
+ "total_bytes": 86212362,
+ "models": {
+  "east-eave-lowsun-low-01.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "east-fence-noon-high34-01.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "east-gable-noon-axis-01.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "east-passage-noon-hero-01.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "east-roofline-overcast-eye-01.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "east-sideyard-noon-eye-01.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+  "east-test-01.png": "Imagen 3 (imagen-3.0-generate-002) via agy native image tool",
+  "ground-asphalt-lowsun-low-01.png": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+  "ground-asphalt-noon-eye-01.png": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+  "ground-asphalt-noon-low-01.png": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+  "ground-kerb-noon-eye-01.png": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+  "ground-kerb-noon-macro-01.png": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+  "ground-lawnedge-noon-eye-01.png": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+  "ground-lawnedge-noon-macro-01.png": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+  "ground-patio-lowsun-eye-01.png": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+  "ground-paving-noon-eye-01.png": "agy CLI (gemini-3.1-flash-image, native generate_image)",
+  "ground-paving-noon-low-01.png": "agy CLI (gemini-3.1-flash-image, native generate_image)",
+  "ground-sandspill-noon-macro-01.png": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+  "ground-stepping-noon-eye-01.png": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+  "ground-test-01.png": "agy CLI (Imagen 3 via Antigravity Image Generation Tool)",
+  "interior-ceiling-noon-low-01.png": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+  "interior-kitchen-blue-noon-eye-01.png": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+  "interior-kitchen-blue-overcast-detail-01.png": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+  "interior-kitchen-red-noon-detail-01.png": "agy --model gemini-3.7-flash-high -> native generate_image (gemini-3.1-flash-image)",
+  "interior-kitchen-red-noon-eye-01.png": "agy --model gemini-3.7-flash-high -> native generate_image (gemini-3.1-flash-image)",
+  "interior-living-lowsun-eye-01.png": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+  "interior-living-noon-eye-01.png": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+  "interior-living-noon-low-01.png": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+  "interior-living-overcast-eye-01.png": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+  "interior-reveal-lowsun-detail-01.png": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+  "interior-reveal-noon-detail-01.png": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+  "interior-stair-lowsun-low-01.png": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+  "interior-stair-noon-eye-01.png": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+  "interior-test-01.png": "agy --model gemini-3.7-flash-high -> native generate_image (Imagen 3)",
+  "mannequin-bare-noon-eye-01.png": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+  "mannequin-cloth-noon-macro-01.png": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+  "mannequin-couple-lowsun-low-01.png": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+  "mannequin-family-noon-eye-01.png": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+  "mannequin-family-overcast-eye-01.png": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+  "mannequin-group-lowsun-eye-01.png": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+  "mannequin-knee-noon-macro-01.png": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+  "mannequin-neck-noon-macro-01.png": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+  "mannequin-pair-noon-low-01.png": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+  "mannequin-test-01.png": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Imagen 3 (Antigravity Image Generation Tool)",
+  "mannequin-wrist-noon-macro-01.png": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+  "third-approach-lowsun-eye-01.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+  "third-massing-noon-hero-01.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+  "third-street-noon-high34-01.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+  "third-vista-noon-axis-01.png": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+  "turn-vehicles-lowsun-eye-01.png": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+  "turn-vehicles-lowsun-low-01.png": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+  "turn-vehicles-noon-eye-01.png": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+  "turn-vehicles-noon-eye-02.png": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+  "turn-vehicles-noon-eye-03.png": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+  "turn-vehicles-noon-eye-04.png": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+  "turn-vehicles-noon-high34-01.png": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+  "turn-vehicles-noon-low-01.png": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+  "turn-vehicles-noon-plan-01.png": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+  "turn-vehicles-overcast-eye-01.png": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)"
+ },
+ "route": "agy CLI --model gemini-3.7-flash-high to cloud image models (Imagen 3 / gemini-flash-image via native generate_image) + local Juggernaut-XL SDXL on RTX 5080; exact per-file route in `models`.",
+ "style": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise",
+ "discipline": "Original 1960s show-town concept imagery (BO2-2025 Nuketown 2025). NOT Treyarch reproductions; no BO1/84/BO6/BO7 subjects."
+}

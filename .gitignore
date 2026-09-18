@@ -14,3 +14,5 @@ probe.mjs
 docs/reference/gameplay/*.jpg
 docs/reference/gameplay/*.mp4
 docs/reference/gameplay/*.log
+docs/reference/concept2/*.png
+docs/reference/concept2/*.jpg
