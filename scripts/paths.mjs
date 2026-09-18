@@ -15,7 +15,19 @@
  * Reachable-but-awkward is a design question. Unreachable is a bug. Only this can tell
  * them apart.
  *
- *   node scripts/paths.mjs
+ *   node scripts/paths.mjs              ground-height flood (UNCHANGED, the default)
+ *   node scripts/paths.mjs --y 3.3      upper-floor flood at that standing height
+ *
+ * --y answers a question the ground flood cannot: is the SECOND FLOOR real? At ground
+ * level the world plane in player.ts means every cell has something to stand on, so the
+ * only question is what blocks you. Three metres up there is no world plane: a cell is
+ * standable only if some collider TOP sits at about that height, and the cell is
+ * useless unless a body fits above it. So in --y mode a cell is standable when
+ *   (a) a collider containing (x,z) has its top in [y - 0.65, y + STEP_UP], and
+ *   (b) nothing occupies the band from that top + 0.45 up to top + 1.6.
+ * The flood is then run from EACH way up separately - the head of each internal stair
+ * and each deck door - so "reachable" cannot be satisfied by one route standing in for
+ * the other. The ground-height run is untouched, down to the file it writes.
  */
 import { chromium } from 'playwright';
 import { usePreview } from './lib/preview.mjs';
@@ -24,6 +36,15 @@ import { fileURLToPath } from 'node:url';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+const argv = process.argv.slice(2);
+const yArg = argv.indexOf('--y');
+/** null = the original ground-height behaviour, in every respect. */
+const UP_Y = yArg >= 0 ? Number(argv[yArg + 1]) : null;
+if (UP_Y !== null && !Number.isFinite(UP_Y)) {
+  console.error('[paths] --y needs a height in metres, e.g. --y 3.3');
+  process.exit(2);
+}
 
 const X0 = -22, X1 = 20, Z0 = -42, Z1 = 42;
 const STEP = 0.2;                 // grid pitch, metres
@@ -47,24 +68,41 @@ const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
 await page.goto(url, { waitUntil: 'load', timeout: 120000 });
 await page.waitForFunction(() => window.__NT && window.__NT.ready === true, null, { timeout: 240000 });
 
-const data = await page.evaluate(([X0, X1, Z0, Z1, STEP, SAMPLE_Y, STEP_UP, BODY_TOP]) => {
+const data = await page.evaluate(([X0, X1, Z0, Z1, STEP, SAMPLE_Y, STEP_UP, BODY_TOP, UP_Y]) => {
   const nt = window.__NT;
   const nx = Math.round((X1 - X0) / STEP);
   const nz = Math.round((Z1 - Z0) / STEP);
   const blocked = new Uint8Array(nx * nz);
+  /** Highest collider top under (x,z) that a body standing at UP_Y could be on. */
+  const floorTop = (x, z) => {
+    let top = -Infinity;
+    for (const py of [UP_Y - 0.1, UP_Y - 0.3, UP_Y - 0.6]) {
+      for (const h of nt.collidersAt(x, z, py)) {
+        if (x < h.min[0] || x > h.max[0] || z < h.min[2] || z > h.max[2]) continue;
+        if (h.max[1] > UP_Y + STEP_UP || h.max[1] < UP_Y - 0.65) continue;
+        if (h.max[1] > top) top = h.max[1];
+      }
+    }
+    return top;
+  };
   for (let iz = 0; iz < nz; iz++) {
     for (let ix = 0; ix < nx; ix++) {
       // collidersAt() pads by 0.35 m on x/z, so query the raw AABBs would be better;
       // instead undo the pad by requiring the point to be INSIDE a hit's bounds.
       const x = X0 + ix * STEP, z = Z0 + iz * STEP;
       let solid = 0;
+      let base = 0;
+      if (UP_Y !== null) {
+        base = floorTop(x, z);
+        if (base === -Infinity) { blocked[iz * nx + ix] = 1; continue; }  // no floor here
+      }
       for (const y of SAMPLE_Y) {
-        for (const h of nt.collidersAt(x, z, y)) {
+        for (const h of nt.collidersAt(x, z, base + y)) {
           // collidersAt() pads by 0.35 m on x/z, so require the point to be genuinely
           // inside the AABB, and the AABB to reach above what the player can step onto.
           if (x < h.min[0] || x > h.max[0] || z < h.min[2] || z > h.max[2]) continue;
-          if (h.max[1] <= STEP_UP) continue;          // a kerb: walk straight over it
-          if (h.min[1] >= BODY_TOP) continue;         // a canopy: walk straight under it
+          if (h.max[1] <= base + STEP_UP) continue;   // a kerb: walk straight over it
+          if (h.min[1] >= base + BODY_TOP) continue;  // a canopy: walk straight under it
           solid = 1; break;
         }
         if (solid) break;
@@ -73,7 +111,7 @@ const data = await page.evaluate(([X0, X1, Z0, Z1, STEP, SAMPLE_Y, STEP_UP, BODY
     }
   }
   return { nx, nz, blocked: Array.from(blocked) };
-}, [X0, X1, Z0, Z1, STEP, SAMPLE_Y, STEP_UP, BODY_TOP]);
+}, [X0, X1, Z0, Z1, STEP, SAMPLE_Y, STEP_UP, BODY_TOP, UP_Y]);
 
 await browser.close();
 
@@ -134,6 +172,101 @@ function bfs(from) {
     }
   }
   return { seen, prev };
+}
+
+/**
+ * UPPER-FLOOR MODE. Runs only with --y, and returns before the ground-height report so
+ * that report cannot change. Coordinates below are read off src/core/layout.ts the same
+ * way the house builders derive them: ORANGE is the -z house with deckX +3.4 and the
+ * garage at -x; WHITE is its 180-degree partner with deckX -3.4 and the garage at +x.
+ * Each house is flooded TWICE - once from the head of its internal stair, once from its
+ * deck door - because a single flood cannot tell "there are two ways up" from "there is
+ * one way up and the other hole happens to join it".
+ */
+if (UP_Y !== null) {
+  const HOUSES = [
+    {
+      name: 'ORANGE',
+      seeds: [['internal stair head', 5.4, -25.4], ['deck door', 3.4, -27.4]],
+      marks: [
+        ['orange upper landing', 5.4, -25.4],
+        ['orange gallery landing', 0.6, -18.0],
+        ['orange upper front room', -3.3, -18.0],
+        ['orange upper rear room', -3.3, -23.5],
+        ['orange deck door (inside)', 3.4, -25.8],
+        ['orange rear deck', 3.4, -28.3],
+      ],
+    },
+    {
+      name: 'WHITE',
+      seeds: [['internal stair head', 1.9, 24.6], ['deck door', -3.4, 27.4]],
+      marks: [
+        ['white upper landing', 1.9, 24.7],
+        ['white upper bedroom (curved end)', -4.8, 23.3],
+        ['white upper green room', 0.0, 23.2],
+        ['white deck door (inside)', -3.4, 26.0],
+        ['white rear deck', -3.4, 28.3],
+      ],
+    },
+  ];
+  const total = standable.reduce((a, v) => a + v, 0);
+  console.log(`[paths] grid ${nx}x${nz} @ ${STEP} m, player radius ${PLAYER_R} m, `
+    + `STANDING BAND at y = ${UP_Y}`);
+  console.log(`[paths] ${total} cells are standable at that height`);
+  // Snapping has to be tight up here: the nearest standable cell to a point on a floor
+  // that does not exist is somewhere else entirely, and a loose snap would report that
+  // as a pass. 1.2 m, or it is a NO.
+  const snapNear = (x, z) => {
+    const i = snap(x, z);
+    if (i < 0) return -1;
+    const [cx, cz] = xyOf(i);
+    return Math.hypot(cx - x, cz - z) <= 1.2 ? i : -1;
+  };
+  let bad = 0;
+  for (const h of HOUSES) {
+    console.log(`
+[paths] ${h.name} upper floor:`);
+    for (const [sName, sx, sz] of h.seeds) {
+      const s0 = snapNear(sx, sz);
+      if (s0 < 0) {
+        console.log(`  SEED ${sName.padEnd(20)} NO STANDABLE CELL at (${sx}, ${sz}) - this way up does not exist`);
+        bad += h.marks.length;
+        continue;
+      }
+      const { seen } = bfs(s0);
+      console.log(`  from ${sName}:`);
+      for (const [name, x, z] of h.marks) {
+        const t = snapNear(x, z);
+        const ok = t >= 0 && seen[t];
+        if (!ok) bad++;
+        const at = t >= 0 ? xyOf(t) : [NaN, NaN];
+        console.log('    ' + (ok ? 'YES' : 'NO ') + '  ' + name.padEnd(34)
+          + ` (nearest standable ${at[0].toFixed(1)}, ${at[1].toFixed(1)})`);
+      }
+    }
+  }
+  const W = nx, H = nz;
+  const px = Buffer.alloc(W * H * 3);
+  const s0 = snapNear(...[HOUSES[0].seeds[0][1], HOUSES[0].seeds[0][2]]);
+  const seen0 = s0 >= 0 ? bfs(s0).seen : new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) {
+    const o = i * 3;
+    if (!standable[i]) { px[o] = 24; px[o + 1] = 24; px[o + 2] = 28; }
+    else if (seen0[i]) { px[o] = 70; px[o + 1] = 190; px[o + 2] = 110; }
+    else { px[o] = 210; px[o + 1] = 70; px[o + 2] = 60; }
+  }
+  mkdirSync(join(ROOT, 'captures'), { recursive: true });
+  writeFileSync(join(ROOT, `captures/paths-y${UP_Y}.ppm`),
+    Buffer.concat([Buffer.from(`P6
+${W} ${H}
+255
+`), px]));
+  console.log(`
+[paths] wrote captures/paths-y${UP_Y}.ppm  `
+    + '(green = reachable from the ORANGE internal stair head)');
+  console.log(`[paths] ${bad === 0 ? 'ALL upper landmarks reachable from BOTH ways up'
+    : bad + ' upper landmark/seed pairs FAILED'}`);
+  process.exit(bad ? 1 : 0);
 }
 
 const LANDMARKS = [

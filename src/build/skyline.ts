@@ -28,15 +28,50 @@ import {
   BOUND_X_MAX, BOUND_X_MIN, BOUND_Z, PAVEMENT_OUTER,
 } from '../core/layout';
 
-/** half the playable footprint - every horizon ring is a multiple of this */
-const MAP_R = (BOUND_X_MAX - BOUND_X_MIN) / 2;
-const CITY_R = MAP_R * 3.7;
-/** Three overlapping massif rings, near -> far (265 / 330 / 405 m). Kept close on
- *  purpose: the haze buries anything much beyond this, so a ring at 500 m renders
- *  as white whatever albedo it is given. The 405 m layer is meant to be nearly gone. */
-const MTN_R = [MAP_R * 5.3, MAP_R * 6.6, MAP_R * 8.1];
+/** half the playable footprint - used only for things that belong TO the map */
+const MAP_R = (BOUND_X_MAX - BOUND_X_MIN) / 2;   // 22.25
+
+/**
+ * HORIZON DISTANCES ARE ABSOLUTE METRES, NOT MULTIPLES OF MAP_R.  (2026-09-18)
+ *
+ * They used to be MAP_R * k. The 2026-09-18 re-proportioning cut MAP_R from ~54 to
+ * 22.25, so every ring came in with it and the whole backdrop collapsed onto the map:
+ * measured from the shipped constants, the city band stood at 67-82 m and the three
+ * mountain rings at 118 / 147 / 180 m, with the pavilion rows at 55 m in front of them.
+ * At FogExp2 0.0016 that is 1.7% haze on the city and 3.5-8.0% on the mountains - no
+ * aerial perspective at all - so the horizon read as one flat crowd of same-valued grey
+ * boxes stacked just behind the fence. That is the "grey lumps" in the owner's brief and
+ * it is arithmetic, not taste: a backdrop's distance cannot be a function of how big the
+ * town is.
+ *
+ * Re-pitched so the four bands separate, and so the haze does some of the work:
+ *   pavilions  55-85 m     1-2% haze   hard edges, full value - the rest of the test town
+ *   city       137/175 m   5-8% haze   a low band, never architecture
+ *   foothills  300 m      21% haze     the DARK layer: the value ladder starts here
+ *   mid range  420 m      36% haze
+ *   far range  560 m      56% haze
+ *   horizon    720 m      72% haze     nearly sky, and meant to be
+ * ground.ts's desert floor runs to 900 m, so the far ring still stands on ground.
+ *
+ * The city ring has to stay IN FRONT of every mountain ring and angularly BELOW them,
+ * or it becomes the horizon itself - which is what a first pass at 240 m did, with the
+ * foothills interleaved through it at 234 m.
+ */
+const CITY_R = 175;
+const MTN_R = [300, 420, 560, 720];
+/** Massifs scale with their ring or the far ones vanish; multiplier per ring. */
+const MTN_SCALE = [1.0, 1.4, 1.8, 2.3];
 /** mountains are sunk so no base rim shows where the ground plane ends */
 const MTN_SINK = 12;
+/**
+ * Nothing in the backdrop may stand inside the playable footprint. The pavilion ring
+ * used to be placed at BOUND_X_MAX - 14, which was well outside the map before the
+ * re-proportioning and is x = 11 after it - i.e. on the east flank of both houses.
+ * Measured in base0-yardWhite.png: a 20 m wide, 7 m tall collider-less white slab
+ * standing in the white house's east flank, which the player walks straight through.
+ * KEEPOUT is checked per block below, and violations are counted and reported.
+ */
+const KEEPOUT = 9;
 
 /** Behind-the-spawn landmarks. Hoisted: the perimeter filler must leave a gap in
  *  front of each, or a 7 m block at 22 m hides a 10 m saucer at 40 m entirely. */
@@ -467,18 +502,37 @@ export const buildSkyline: Builder = (ctx) => {
   // walls, a roof one step darker in the SAME concrete family, and the only colour is
   // a thin glazing band. Spacing, size and yaw are jittered and one slot in six is
   // dropped: an even pitch at a fixed angle reads as a car park from 78 m up.
+  // Two value tiers by distance, so the ring itself has depth instead of being one
+  // flat crowd: the near rank keeps its own value, the outer rank is stepped toward the
+  // city band. Fog does almost nothing at 55-90 m (1-2%), so this has to be albedo.
   {
-    const walls: THREE.Matrix4[] = [];
+    const wallsNear: THREE.Matrix4[] = [];
+    const wallsFar: THREE.Matrix4[] = [];
     const roofs: THREE.Matrix4[] = [];
     const bands: THREE.Matrix4[] = [];
     const ROOF_T = 0.7;
     const OVER = 0.5;          // roof overhang: the eave line is what reads at 60 m
+    let rejected = 0;
+    /**
+     * Would a block of this footprint at this yaw touch the playable area? Uses the
+     * yawed half-extents against the boundary rect inflated by KEEPOUT, which is the
+     * conservative test - the exact OBB can only be smaller.
+     */
+    const clearOfMap = (x: number, z: number, w: number, d: number, yaw: number): boolean => {
+      const c = Math.abs(Math.cos(yaw)), s = Math.abs(Math.sin(yaw));
+      const hx = (c * w + s * d) / 2, hz = (s * w + c * d) / 2;
+      const insideX = x + hx > BOUND_X_MIN - KEEPOUT && x - hx < BOUND_X_MAX + KEEPOUT;
+      const insideZ = Math.abs(z) - hz < BOUND_Z + KEEPOUT;
+      return !(insideX && insideZ);
+    };
     // every block's local +z faces the map, so the window-band offset is free
     const add = (x: number, z: number, ry: number) => {
       if (r() < 0.16) return;                                   // break the rhythm
       const yaw = ry + (r() - 0.5) * 0.7 + (r() < 0.22 ? Math.PI / 2 : 0);
       const w = 7 + r() * 13, d = 7 + r() * 9, h = 3.2 + r() * 4.3;
-      walls.push(mtx(x, h / 2, z, yaw, w, h, d));
+      if (!clearOfMap(x, z, w, d, yaw)) { rejected++; return; }
+      const far = Math.hypot(x, z) > 78;
+      (far ? wallsFar : wallsNear).push(mtx(x, h / 2, z, yaw, w, h, d));
       roofs.push(mtx(x, h + ROOF_T / 2, z, yaw, w + OVER * 2, ROOF_T, d + OVER * 2));
       // half-buried in the wall, so it is a glazing band and never a loose card
       const off = d / 2 - 0.06;
@@ -488,86 +542,114 @@ export const buildSkyline: Builder = (ctx) => {
     // each run breaks where a landmark stands behind it, so the sightline out
     // over the back fence actually reaches the landmark
     const clear = (x: number, at: number, gap: number) => Math.abs(x - at) > gap;
-    const zRow = BOUND_Z + 13;
-    for (let x = BOUND_X_MIN - 28; x <= BOUND_X_MAX - 2; x += 12 + r() * 11) {
-      if (clear(x, SAUCER_X, 15)) add(x, -zRow - r() * 11, 0);
-      if (clear(x, DOME_X, DOME_R + 5)) add(x, zRow + r() * 11, Math.PI);
+    const zRow = BOUND_Z + KEEPOUT + 5;
+    for (let x = BOUND_X_MIN - 34; x <= BOUND_X_MAX + 30; x += 12 + r() * 11) {
+      if (clear(x, SAUCER_X, 15)) add(x, -zRow - r() * 13, 0);
+      if (clear(x, DOME_X, DOME_R + 5)) add(x, zRow + r() * 13, Math.PI);
     }
-    // the +x ranks close the east behind the re-sited third house. layout's
-    // THIRD_HOUSE_X (44.5) is stale - the house now stands ~18 (third-house.ts) -
-    // so a row derived off it strands the ring 60 m out and leaves the aerial's
-    // dead slab. A near rank just inside the boundary holds the street axis with
-    // a gap on it so the house keeps the view; the far rank stays outside as before.
-    const xNear = BOUND_X_MAX - 14;
+    // The +x ranks close the east behind the third house. Both ranks now sit OUTSIDE
+    // the boundary: the near rank used to be at BOUND_X_MAX - 14, which the
+    // re-proportioning put at x = 11, i.e. inside the map (see KEEPOUT).
+    const xNear = BOUND_X_MAX + KEEPOUT + 3;
     for (let z = -BOUND_Z - 8; z <= BOUND_Z + 8; z += 13 + r() * 9) {
       if (Math.abs(z) < 13) continue;                    // the house owns the axis
       add(xNear + r() * 8, z, -Math.PI / 2);
     }
-    const xFar = BOUND_X_MAX + 13;
-    for (let z = -BOUND_Z - 8; z <= BOUND_Z + 8; z += 11 + r() * 10) {
-      add(xFar + r() * 9, z, -Math.PI / 2);
+    const xFar = BOUND_X_MAX + 30;
+    for (let z = -BOUND_Z - 12; z <= BOUND_Z + 12; z += 11 + r() * 10) {
+      add(xFar + r() * 11, z, -Math.PI / 2);
     }
     // the -x side only closes past |z| = 28: the road stem, the pylon sign and the
     // needle all sit inside that corridor and the plaza vista must stay open
     for (const s of [-1, 1]) {
-      for (let z = 28; z <= BOUND_Z + 20; z += 11 + r() * 9) {
-        add(BOUND_X_MIN - 22 - r() * 12, s * z, s * Math.PI / 2);
+      for (let z = 28; z <= BOUND_Z + 26; z += 11 + r() * 9) {
+        add(BOUND_X_MIN - 26 - r() * 14, s * z, s * Math.PI / 2);
       }
     }
-    g.add(inst(unit, m.painted(PAL.thirdWall, 0.9, 0), walls));
+    g.add(inst(unit, m.painted(PAL.thirdWall, 0.9, 0), wallsNear));
+    g.add(inst(unit, m.painted(PAL.concrete, 0.95, 0.18), wallsFar));
     g.add(inst(unit, m.painted(PAL.concreteDark, 0.93, 0), roofs));
     // the one accent, and distant glazing is pale haze, never a black slot
     g.add(inst(unit, m.painted(PAL.roofGlazing, 0.3, 0.2), bands));
+    if (rejected) {
+      console.warn('[skyline] %d backdrop pavilion(s) rejected for reaching inside the '
+        + 'playable area (boundary + %s m). Backdrop blocks have no colliders, so one '
+        + 'inside the map is geometry the player walks through.', rejected, KEEPOUT);
+    }
   }
 
   // --- 8. hazy city band between the map and the mountains. Haze, not architecture:
   // low enough that the mountains always read above it, with enough spread in all
   // three dimensions that no two blocks share a silhouette. A second, lower ring in
   // front thickens the band for free.
+  // Two tiers, two materials: the inner tier is a step darker so the band is a band
+  // with depth rather than a single cut-out. Sizes scale with CITY_R (now 240 m, not
+  // 82) or the whole thing subtends nothing.
   {
-    const city: THREE.Matrix4[] = [];
-    const place = (rad: number, hMin: number, hSpan: number, n: number, tower: number) => {
+    const near: THREE.Matrix4[] = [];
+    const far: THREE.Matrix4[] = [];
+    const place = (
+      out: THREE.Matrix4[], rad: number, hMin: number, hSpan: number,
+      n: number, tower: number, kh: number, kp: number,
+    ) => {
       for (let i = 0; i < n; i++) {
         const a = (i / n) * Math.PI * 2 + (r() - 0.5) * 0.06;
         const d = rad * (0.96 + r() * 0.09);
         const isTower = r() > tower;
-        const h = isTower ? hMin + hSpan + r() * 12 : hMin + r() * hSpan;
+        const h = (isTower ? hMin + hSpan + r() * 12 : hMin + r() * hSpan) * kh;
         // local +x is radial with this yaw, local +z tangential: keep the frontage
         // the wide one, and never let either go below 8 m or it reads as a panel
-        const deep = 8 + r() * 11;
-        const front = isTower ? 9 + r() * 8 : 12 + r() * 21;
-        city.push(mtx(Math.cos(a) * d, h / 2, Math.sin(a) * d,
+        const deep = (8 + r() * 11) * kp;
+        const front = (isTower ? 9 + r() * 8 : 12 + r() * 21) * kp;
+        out.push(mtx(Math.cos(a) * d, h / 2, Math.sin(a) * d,
           -a + (r() - 0.5) * 0.45, deep, h, front));
       }
     };
-    place(CITY_R, 6, 15, 104, 0.9);
-    place(CITY_R * 0.82, 4, 8, 40, 1.1);
-    g.add(inst(unit, m.painted(PAL.cityFar, 1, 0.7), city));
+    // Plan sizes scale so the band still closes the circle at 175 m; HEIGHTS do not,
+    // because the band's job is to sit under the ranges, not to compete with them.
+    place(far, CITY_R, 6, 15, 130, 0.9, 1.0, 1.9);
+    place(near, CITY_R * 0.78, 4, 8, 58, 1.1, 1.0, 1.6);
+    g.add(inst(unit, m.painted(PAL.mountainFar, 1, 0.85), near));
+    g.add(inst(unit, m.painted(PAL.cityFar, 1, 0.7), far));
   }
 
-  // --- 9. mountains: three overlapping ridge layers, each paler than the one in
-  // front. Two silhouettes per layer so the instances are not all the same massif;
-  // the far layer sits at the sky horizon colour and should barely read as geometry.
+  // --- 9. mountains: FOUR overlapping ridge layers now, and the near one is the dark
+  // one. The three-layer set was mountain / mountainFar / skyHorizon - three pale greys
+  // within ~12% of each other, at 118-180 m where the haze contributes 3-8%. Nothing in
+  // that set could read as depth, because depth is a VALUE LADDER and there was no dark
+  // end to the ladder. A steel-toned foothill ring at 300 m gives the ladder a floor;
+  // 450 m and 640 m step up through mountain / mountainFar to skyHorizon, which at 65%
+  // haze is meant to be almost gone.
+  //
+  // Counts are up from 9-10 to 14-18 per ring: at MAP_R*5.3 = 118 m nine massifs closed
+  // the circle, at 300 m they leave 100 m gaps between them and the range reads as
+  // separate lumps rather than as a range. Two silhouettes per layer, as before.
   {
     // [count, ring index, half-width min/span, height min/span, half-depth min/span]
     const layers: [number, number, number, number, number, number, number, number,
       THREE.Material][] = [
-      [9, 0, 110, 80, 38, 46, 17, 9, m.painted(PAL.mountain, 1, 1)],
-      [10, 1, 130, 95, 46, 54, 20, 11, m.painted(PAL.mountainFar, 1, 1)],
-      [10, 2, 150, 110, 54, 58, 23, 13, m.painted(PAL.skyHorizon, 1, 0.9)],
+      [18, 0, 95, 70, 55, 45, 16, 9, m.painted(PAL.steel, 1, 1)],
+      [16, 1, 110, 80, 46, 50, 17, 9, m.painted(PAL.mountain, 1, 1)],
+      [16, 2, 130, 95, 50, 54, 20, 11, m.painted(PAL.mountainFar, 1, 1)],
+      [14, 3, 150, 110, 54, 58, 23, 13, m.painted(PAL.skyHorizon, 1, 0.9)],
     ];
+    let phase = 0;
     for (const [n, ring, wMin, wSpan, hMin, hSpan, dMin, dSpan, mat] of layers) {
+      const k = MTN_SCALE[ring];
       const buckets: THREE.Matrix4[][] = [[], []];
+      // each layer starts at its own angle, so two rings never stack crest-on-crest
+      phase += 0.37;
       for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2 + (r() - 0.5) * 0.45;
+        const a = (i / n) * Math.PI * 2 + phase + (r() - 0.5) * 0.45;
         const d = MTN_R[ring] * (0.96 + r() * 0.1);
         buckets[i % 2].push(mtx(
           Math.cos(a) * d, -MTN_SINK, Math.sin(a) * d,
           -a - Math.PI / 2,                                  // crest runs tangentially
-          wMin + r() * wSpan, hMin + r() * hSpan + MTN_SINK, dMin + r() * dSpan,
+          (wMin + r() * wSpan) * k, (hMin + r() * hSpan) * k + MTN_SINK,
+          (dMin + r() * dSpan) * k,
         ));
       }
-      for (let k = 0; k < 2; k++) g.add(inst(ridgeGeo(r, 22), mat, buckets[k]));
+      for (let b = 0; b < 2; b++) g.add(inst(ridgeGeo(r, 22), mat, buckets[b]));
     }
   }
 

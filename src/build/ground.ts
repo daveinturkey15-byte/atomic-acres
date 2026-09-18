@@ -127,7 +127,25 @@ const DRIVE_FLARE = 0.6;             // apron is a little wider than the garage
 const ARC_SEGS = 64;
 const PERIM_H = 0.55;
 const PERIM_W = 0.6;
-const WALL_H = 12.0;                 // invisible out-of-bounds collider height
+/**
+ * Out-of-bounds shell height. This shell is a BACKSTOP, not the map's border.
+ *
+ * Until 2026-09-18 it WAS the border: 12 m of collider behind a 0.55 m berm, so a
+ * player walking west out of the front lawns, or out through one of the back-fence
+ * gameplay holes, was stopped in open ground by nothing they could see. That is the
+ * defect the owner named ("make the borders of the map much clearer rather than any
+ * kind of invisible walls").
+ *
+ * surround.ts now stands a visible test-site fence 0.55 m INSIDE these faces on the
+ * west and on both back faces, and the east is closed by yards.ts's boundary fence at
+ * ROAD_X_MAX + 0.6, so the shell should never be the thing a player touches. Verified
+ * with scripts/_perimeter.mjs: 0 of 20 boundary stop points ended on the shell.
+ *
+ * If you move a boundary, move the visible barrier with it - and if you punch a hole in
+ * a fence that currently keeps the player off one of these faces (the east one is the
+ * exposed case), give that face a visible barrier first.
+ */
+const WALL_H = 12.0;
 const WALL_T = 1.2;
 const MANHOLE_R = 0.42;
 /** Black steel gate closing the -x carriageway mouth: full 2.2 m leaf. */
@@ -538,6 +556,8 @@ export const buildGround: Builder = (ctx) => {
   // ---- 10. out-of-bounds: a low berm on the apron, backed by hard colliders.
   // The -x end is left open so the street reads as running away to the plaza;
   // the collider there is solid all the same.
+  // The berm is a kerb at the apron edge, not the border - see WALL_H. The border the
+  // player meets is surround.ts's fence line, which stands just inside these faces.
   {
     const berm = ctx.mat.painted(PAL.concreteDark, 0.95, 0);
     const zEdge = BOUND_Z + PERIM_W / 2;

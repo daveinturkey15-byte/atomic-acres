@@ -32,9 +32,8 @@
 import * as THREE from 'three';
 import { PAL } from '../core/palette';
 import {
-  THIRD_HOUSE_X, HEAD_CENTER_X, HEAD_RADIUS, KERB_HEIGHT,
+  THIRD_HOUSE_X, KERB_HEIGHT, ROAD_X_MAX,
   HOUSE_HALF_LEN, HOUSE_DEPTH, FLOOR_H, UPPER_H,
-  WHITE, GARAGE_LEN,
 } from '../core/layout';
 import { aabbSlab, extrude, group, slab } from '../core/kit';
 import type { AABB, Builder } from '../core/kit';
@@ -65,6 +64,16 @@ class Batch {
     im.name = name;
     return im;
   }
+  /** Smallest x any primitive in this batch reaches, yaw included. Used by the
+   *  region guard at the end of the builder. */
+  minX(): number {
+    let m = Infinity;
+    for (const r of this.rows) {
+      const c = Math.abs(Math.cos(r[6])), s = Math.abs(Math.sin(r[6]));
+      m = Math.min(m, r[3] - (c * r[0] + s * r[2]) / 2);
+    }
+    return m;
+  }
 }
 // ------------------------------------------------------------------ siting
 // This house is scenery beyond the east boundary fence, never cover. Twice it has
@@ -72,8 +81,34 @@ class Batch {
 // the right value, so take it from there and let layout.ts stay the single source.
 const HOUSE_X = THIRD_HOUSE_X;
 
+/**
+ * The map's east boundary fence, a LOCAL duplicate of yards.ts's BOUNDARY_X. It is not
+ * a new dimension and not a new decision - this file needs to know where the fence is
+ * in order to stand behind it, and layout.ts does not carry it.
+ *
+ * Everything this module owns must sit at x >= ROAD_X_MAX: the perimeter lane's region
+ * starts there and the street beyond belongs to another lane. Two things did not, and
+ * are fixed in this pass:
+ *   - the FORECOURT ran from the turning head's east tangent (x 9.2) to the gable,
+ *     i.e. 7 m of paved slab laid across the playable east apron, with two 0.8 m
+ *     hedges on it that had no colliders. It is removed: after the re-proportioning
+ *     there is no room for a front drive between the fence and the house, and a
+ *     walk-through hedge on the apron is a defect either way.
+ *   - the +z plot fence started at the white garage's east face (x 13.0) at z 9.45,
+ *     1.8 m inside the map, again with no collider. It now starts behind the boundary
+ *     fence.
+ */
+const FENCE_LINE = ROAD_X_MAX + 0.6;            // 16.6
+
 // ------------------------------------------------------------------ dimensions
-const BODY_X = HOUSE_DEPTH * 0.72;              // extent along x (toward the map)
+/**
+ * Depth toward the map. Was HOUSE_DEPTH * 0.72 = 8.06, which put the near wall at
+ * x 16.97 - 0.06 m off the back of the boundary fence, so the house was pressed flat
+ * against it and read as a wall rather than as a building on its own plot. At 0.59 the
+ * wall stands at 17.70, leaving a 0.8 m garden strip, and the rear clears the
+ * out-of-bounds shell at x = 25.0 instead of poking through it.
+ */
+const BODY_X = HOUSE_DEPTH * 0.59;              // extent along x (toward the map)
 const BODY_Z = HOUSE_HALF_LEN * 1.25;           // extent along z (the long faces)
 const WALL_H = FLOOR_H + UPPER_H * 0.28;
 const RIDGE = HOUSE_DEPTH * 0.33;               // rise from eave to ridge
@@ -134,21 +169,28 @@ const STEP_H = 0.12;
 const DOOR_Z = -BODY_Z * 0.333;
 
 // ------------------------------------------------------------------ driveway
-// Both hardstandings ride on the T_DRIVE rung (KERB_HEIGHT + 0.006) like the garage
-// aprons. Side drive down the +z flank (masked from turningHead outside z -4.2..3.4
-// by the buses on the head); forecourt across the bulb's ring to the gable: the SPEC
-// driveway apron to the fence. From the street the HOUSE is the landmark.
+// The side drive down the +z flank, on the T_DRIVE rung (KERB_HEIGHT + 0.006) like the
+// garage aprons. It starts behind the boundary fence and runs to the rear of the plot,
+// so the "its own driveway" read in NT02 survives the forecourt's removal - from the
+// AERIAL the drive and the red saloon are what say "a house on a plot", and from the
+// STREET the house itself is the landmark.
 const DRIVE_TOP = KERB_HEIGHT + 0.006;
 const DRIVE_W = HOUSE_HALF_LEN * 0.68;                    // z extent, across the drive
 const DRIVE_CZ = BODY_Z * 0.5 + DRIVE_W * 0.5 + 0.5;      // clear of the +z wall's sills
-const DRIVE_X0 = Math.max(GABLE_X, HEAD_CENTER_X + HEAD_RADIUS);   // clear of the bulb
+const DRIVE_X0 = Math.max(GABLE_X, FENCE_LINE + 0.4);     // behind the boundary fence
 const DRIVE_LEN = HOUSE_X + BODY_X * 0.5 - DRIVE_X0;
 const DRIVE_CX = DRIVE_X0 + DRIVE_LEN * 0.5;
-// forecourt: bulb east tangent to the gable, a 5.2 m path on the street axis
-const FORE_W = 5.2;
-const FORE_X0 = HEAD_CENTER_X + HEAD_RADIUS;
-const FORE_LEN = GABLE_X - FORE_X0;
-const FORE_CX = (FORE_X0 + GABLE_X) * 0.5;
+
+// ------------------------------------------------------------------ the side wing
+// A single-storey wing on the -z flank, which is the one the turning head looks at.
+// The brief's note is that this house "reads as a box"; one mass with one roof is a
+// box whatever is drawn on it, and a lower wing with its own flat roof and its own
+// eave line is the cheapest thing that makes it a house on a plot.
+const WING_X = 5.0;
+const WING_Z = 4.4;
+const WING_H = 2.95;
+const WING_CX = HOUSE_X + 0.55;
+const WING_CZ = -(BODY_Z * 0.5 + WING_Z * 0.5 + 0.35);
 
 // ------------------------------------------------------------------ the saloon
 /**
@@ -186,14 +228,6 @@ export const buildThirdHouse: Builder = (ctx) => {
   g.add(slab(DRIVE_LEN, DRIVE_TOP, DRIVE_W,
     ctx.mat.painted(PAL.concreteDark, 0.94, 0), DRIVE_CX, 0, DRIVE_CZ));
   colliders.push(aabbSlab(DRIVE_CX, 0, DRIVE_CZ, DRIVE_LEN, DRIVE_TOP, DRIVE_W));
-  // --- forecourt: bulb tangent to the gable, 8 mm over the ring, hedges flank it -
-  g.add(slab(FORE_LEN, DRIVE_TOP, FORE_W,
-    ctx.mat.painted(PAL.concreteDark, 0.94, 0), FORE_CX, 0, 0));
-  colliders.push(aabbSlab(FORE_CX, 0, 0, FORE_LEN, DRIVE_TOP, FORE_W));
-  for (const s of [-1, 1] as const) {
-    const hh = 0.8 + (ctx.rand() - 0.5) * 0.1;
-    bHedge.add(FORE_LEN + 0.06, hh, 0.6, FORE_CX, hh * 0.5, s * (FORE_W * 0.5 + 0.55));
-  }
 
   // --- body + chimney --------------------------------------------------------
   bWall.add(BODY_X, WALL_H, BODY_Z, HOUSE_X, WALL_H * 0.5, 0);
@@ -273,6 +307,32 @@ export const buildThirdHouse: Builder = (ctx) => {
   // the step stays short: the boundary fence is only ~0.8 m off this wall now
   bWall.add(0.62, STEP_H, DOOR_W + 0.8, FACE_X - 0.31, STEP_H * 0.5, DOOR_Z);
 
+  // --- single-storey side wing on the -z flank -------------------------------
+  // Own eave line, own flat roof, own window band, set back 0.6 m from the main gable
+  // plane so the two masses step rather than line up.
+  {
+    const wx = WING_CX, wz = WING_CZ;
+    bWall.add(WING_X, WING_H, WING_Z, wx, WING_H * 0.5, wz);
+    bDark.add(WING_X + 0.5, 0.22, WING_Z + 0.5, wx, WING_H + 0.11, wz);   // flat roof lip
+    bWall.add(WING_X + 0.36, 0.14, WING_Z + 0.36, wx, WING_H + 0.29, wz); // parapet cap
+    // a band on the map-facing wall and one on the -z flank, same surround treatment
+    opening(bFrame, bGlaze, { axis: 'x', at: wx - WING_X * 0.5, out: -1 },
+      wz, WING_H * 0.54, WING_Z * 0.48, 0.88, 3);
+    opening(bFrame, bGlaze, { axis: 'z', at: wz - WING_Z * 0.5, out: -1 },
+      wx + 0.5, WING_H * 0.54, WING_X * 0.42, 0.82, 2);
+    colliders.push(aabbSlab(wx, 0, wz, WING_X + 0.5, WING_H + 0.36, WING_Z + 0.5));
+  }
+
+  // --- roof aerial: the single cheapest "this is a lived-in house" cue on a skyline
+  {
+    const ax = HOUSE_X - BODY_X * 0.18, az = BODY_Z * 0.30;
+    bChrome.add(0.07, 2.6, 0.07, ax, WALL_H + RIDGE + 1.3, az);
+    for (let i = 0; i < 4; i++) {
+      bChrome.add(0.05, 0.05, 1.5 - i * 0.22, ax, WALL_H + RIDGE + 1.5 + i * 0.28, az);
+    }
+    bChrome.add(0.05, 0.9, 0.05, ax, WALL_H + RIDGE + 1.05, az + 0.42);   // stay
+  }
+
   // house slab widened 0.77 toward the map so the porch roof/posts collide honestly
   colliders.push(aabbSlab(HOUSE_X - 0.38, 0, 0, BODY_X + 0.77, WALL_H + RIDGE, BODY_Z));
   // downpipes: rear corners, gutter to ground + shoe; clear of the drive's 0.5 m offset
@@ -349,11 +409,12 @@ export const buildThirdHouse: Builder = (ctx) => {
     const hh = 0.85 + (ctx.rand() - 0.5) * 0.12;
     bHedge.add(plotLen / hedgeN + 0.06, hh, 0.6, plotX0 + plotLen * (i + 0.5) / hedgeN, hh * 0.5, -(BODY_Z * 0.5 + 1.0));
   }
-  // the +z fence starts east of the white garage's east face (this plot moved west
-  // under it); the rear return is a hedge across the back of the house only, so the
-  // drive stays open.
+  // the +z fence starts BEHIND the map's boundary fence - it used to start at the white
+  // garage's east face (x 13.0), which is 1.8 m inside the playable east alley, and it
+  // carries no collider; the rear return is a hedge across the back of the house only,
+  // so the drive stays open.
   const fenceZ = DRIVE_CZ + DRIVE_W * 0.5 + 0.6;
-  const fenceX0 = WHITE.garageX + GARAGE_LEN / 2 + 0.4;
+  const fenceX0 = FENCE_LINE + 0.5;
   const fenceLen = plotX1 - fenceX0, fenceCX = (fenceX0 + plotX1) * 0.5;
   const postN = Math.max(2, Math.round(fenceLen / 1.8) + 1);
   for (let i = 0; i < postN; i++) {
@@ -375,8 +436,39 @@ export const buildThirdHouse: Builder = (ctx) => {
   shrub(FACE_X - 0.42, DOOR_Z - 1.7, 0.55);
   shrub(FACE_X - 0.42, DOOR_Z + 1.7, 0.55);
   shrub(FACE_X - 0.42, BODY_Z * 0.125, 0.5);
-  shrub(HOUSE_X - 1.5, -(BODY_Z * 0.5 + 0.55), 0.65);
   shrub(HOUSE_X + 1.5, -(BODY_Z * 0.5 + 0.55), 0.65);
+
+  // --- one garden tree, taller than the eaves ---------------------------------
+  // The house reads over a 2.1 m fence, so its bottom 2 m never shows. What sells "a
+  // house on a plot seen over a fence" from the street is something GROWING beside it
+  // that breaks the roofline - the fence cannot crop a 7.6 m tree.
+  //
+  // The canopy is faceted spheres in PAL.treeLeaf, not boxes in PAL.hedge: a first pass
+  // used the hedge batch, and a stack of dark-green BOXES at 22 m reads as a dark blob
+  // parked beside the coach, not as a tree (see the turningHead crop that caught it).
+  {
+    const tx = FENCE_LINE + 2.0, tz = -(BODY_Z * 0.5 + 3.2);
+    const trunk = ctx.mat.painted(PAL.treeTrunk, 0.95, 0);
+    const trunkMesh = slab(0.44, 4.2, 0.44, trunk, tx, 0, tz);
+    g.add(trunkMesh);
+    const blobs: [number, number, number, number][] = [
+      [tx, 5.1, tz, 4.5], [tx + 0.5, 6.3, tz - 0.5, 3.4], [tx - 0.45, 6.9, tz + 0.5, 2.6],
+    ];
+    const canopy = new THREE.InstancedMesh(
+      new THREE.IcosahedronGeometry(0.5, 1),
+      ctx.mat.painted(PAL.treeLeaf, 0.95, 0), blobs.length);
+    const cm = new THREE.Matrix4(), cq = new THREE.Quaternion();
+    for (let i = 0; i < blobs.length; i++) {
+      const [bx, by, bz, s] = blobs[i];
+      cq.setFromAxisAngle(new THREE.Vector3(0, 1, 0), i * 1.1);
+      canopy.setMatrixAt(i, cm.compose(
+        new THREE.Vector3(bx, by, bz), cq, new THREE.Vector3(s, s * 0.82, s)));
+    }
+    canopy.instanceMatrix.needsUpdate = true;
+    canopy.castShadow = canopy.receiveShadow = true;
+    canopy.name = 'th-tree';
+    g.add(canopy);
+  }
 
   // --- one draw call per material --------------------------------------------
   const batched: [Batch, THREE.Material, string][] = [
@@ -394,6 +486,21 @@ export const buildThirdHouse: Builder = (ctx) => {
   for (const [b, m, n] of batched) {
     const im = b.mesh(m, n);
     if (im) g.add(im);
+  }
+
+  // Region guard. This module is out-of-bounds scenery east of the boundary fence, so
+  // nothing it owns may reach west of ROAD_X_MAX - and twice now something has, without
+  // a collider, which is geometry the player walks through. Reported, not thrown:
+  // main.ts skips a module that throws, and losing the landmark is worse than a warning.
+  {
+    let west = Infinity;
+    for (const [b] of batched) west = Math.min(west, b.minX());
+    for (const c of colliders) west = Math.min(west, c.min.x);
+    if (west < ROAD_X_MAX) {
+      console.warn('[third-house] geometry reaches x %.2f, which is %.2f m west of '
+        + 'ROAD_X_MAX (%s). This module is scenery beyond the boundary fence and must '
+        + 'stay east of it.', west, ROAD_X_MAX - west, ROAD_X_MAX);
+    }
   }
   return { group: g, colliders };
 };

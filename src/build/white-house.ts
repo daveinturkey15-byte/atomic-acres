@@ -107,8 +107,65 @@ const DECK_CX = WHITE.deckX, DECK_CZ = Z_BACK + S * DECK_OUT * 0.5, DECK_END = -
 const DECK_EDGE_X = DECK_CX + DECK_END * DECK_LEN * 0.5;
 const STEPS = 13, STEP_RISE = DECK_Y / STEPS, STEP_GOING = 0.29, DECK_T = KERB_HEIGHT + 0.1;
 
-/** Door hole on a chord, in the plan's own street(-1)/yard(+1) face sign. */
-interface Hole { x: number; face: -1 | 1; y0: number; y1: number }
+// ---------------------------------------------------- interior plan (s2/s6 topology)
+// Signed off WHITE so a later handedness flip moves the whole plan with one sign.
+const GEW = WHITE.garageEnd;                        // +1: the garage end in x
+const SLAB_T = 0.22;                                // upper floor slab
+const RAIL_IN = 1.0;                                // internal balustrade
+// The upper floor starts PAST the single-storey entry capsule: over that capsule the
+// roof is at 4.31 m and a floor at 3.15 would leave 1.16 m of headroom. What is left
+// is the two-storey void the landing looks down into.
+const VOID_Z = Z_FRONT + S * (FRONT_D + 0.25);
+const RISERS = 12;                                  // 0.2625 m a riser, inside STEP_UP
+const RISE = FLOOR_H / RISERS;
+const GOING = 0.27;
+const ST_W = 1.4;
+const ST_X = GEW * (HOUSE_HALF_LEN * 0.30);
+const ST_Z0 = REAR.cz - S * 2.0;                    // foot, out under the void
+const ST_Z1 = ST_Z0 + S * RISERS * GOING;           // head
+const GAR_DOOR_Z = Z_FRONT + S * (HOUSE_DEPTH * 0.545);
+const BAY_W = 2.4, BAY_H = GARAGE_H * 0.63;
+const BAY_JAMB = (GARAGE_LEN - GARAGE_BAYS * BAY_W) / (GARAGE_BAYS + 1);
+const GAR_OUT_X = GAR_CX + GEW * (GARAGE_LEN / 2);
+const OPEN_BAY = GARAGE_BAYS - 1;                   // the bay nearest the house stands open
+// Absolute coping top. The floor the player actually stands on indoors is ground.ts's
+// lawn plateau at KERB_HEIGHT + 0.001 = 0.151, not y = 0, so a 0.34 rim left only
+// 0.19 m of pool. 0.50 gives a 0.349 m step in and the same step out, inside the
+// controller's STEP_UP of 0.38.
+const POOL_FLOOR = KERB_HEIGHT + 0.005;
+const POOL_RIM = 0.50;
+
+/** Interior |x| of the REAR capsule at this z, on the outline; -1 where there is none. */
+function rearX(z: number): number {
+  const d = Math.abs(z - REAR.cz);
+  return d > REAR.r ? -1 : (REAR.hx - REAR.r) + Math.sqrt(REAR.r * REAR.r - d * d);
+}
+/** Sorted [min,max] from two unordered bounds. */
+const span = (a: number, b: number): [number, number] => (a < b ? [a, b] : [b, a]);
+const overlaps = (a0: number, a1: number, b0: number, b1: number): boolean =>
+  Math.max(a0, b0) < Math.min(a1, b1) - 1e-6;
+/** [lo,hi] minus sorted cut intervals. */
+function subtract(lo: number, hi: number, cuts: [number, number][]): [number, number][] {
+  let spans: [number, number][] = [[lo, hi]];
+  for (const [c0, c1] of cuts) {
+    const next: [number, number][] = [];
+    for (const [a, b] of spans) {
+      if (c1 <= a || c0 >= b) { next.push([a, b]); continue; }
+      if (c0 > a) next.push([a, c0]);
+      if (c1 < b) next.push([c1, b]);
+    }
+    spans = next;
+  }
+  return spans;
+}
+
+/**
+ * A door hole, located by a PLAN POINT and a radius rather than by "flat face + x".
+ * The old test could only cut the two flat faces, which is why the garage could never
+ * have an internal door: the kitchen wall it has to pass through is the curved +x end
+ * of the rear capsule. Distance works on a curve and on a flat run alike.
+ */
+interface Hole { x: number; z: number; r: number; y0: number; y1: number }
 
 // ------------------------------------------------------------------ builder
 export const buildWhiteHouse: Builder = (ctx) => {
@@ -136,10 +193,8 @@ export const buildWhiteHouse: Builder = (ctx) => {
       const a = loop[i], c = loop[(i + 1) % loop.length];
       const mx = (a.x + c.x) * 0.5, mz = (a.y + c.y) * 0.5;
       if (others.some((o) => planSdf(o, mx, mz) < -0.18)) continue;
-      const face: -1 | 1 = S * (mz - p.cz) < 0 ? -1 : 1;
-      const flat = Math.abs(S * (mz - p.cz)) > p.hz * 0.6;
       let hole: Hole | null = null;
-      for (const h of holes) if (flat && h.face === face && Math.abs(mx - h.x) < DOOR_HALF) hole = h;
+      for (const h of holes) if (Math.hypot(mx - h.x, mz - h.z) < h.r) hole = h;
       const put = (y0: number, y1: number, glass: boolean): void => {
         const cut = hole !== null && y1 > hole.y0 && y0 < hole.y1;
         const glazed = glass && !(i % PIER_EVERY === 0 && !cut);
@@ -162,24 +217,59 @@ export const buildWhiteHouse: Builder = (ctx) => {
       }
       run(bTrim, a, c, p, top - 0.3, top + (twoStorey ? 0.1 : 0.34), WALL_T + 0.14, 0);
     }
-    const cw = COARSE * 1.12; // coarse colliders; spandrels solid (no walk-through)
-    for (const q of planLoop(p, COARSE)) {
-      if (others.some((o) => planSdf(o, q.x, q.y) < -0.18)) continue;
-      const face: -1 | 1 = S * (q.y - p.cz) < 0 ? -1 : 1;
-      const flat = Math.abs(S * (q.y - p.cz)) > p.hz * 0.6;
-      const h = holes.find((d) => flat && d.face === face && Math.abs(q.x - d.x) < DOOR_HALF + COARSE * 0.5);
-      const col = (y0: number, y1: number): void => {
-        if (y1 - y0 > 0.05) colliders.push(aabbSlab(q.x, y0, q.y, cw, y1 - y0, cw));
+    // Colliders: the EXACT axis-aligned bound of each wall chord. These used to be
+    // 1.344 m squares standing on a 0.26 m wall - a phantom metre of solid all round
+    // every capsule, which ate about 0.9 m off the inside of the curved ends. It was
+    // invisible on the ground floor (nobody goes right up to the curve) and it sealed
+    // the upper bedroom the moment there was an upper floor to seal: paths.mjs --y 3.3
+    // reported the room standable and unreachable through a 0.18 m pinch.
+    const loopC = planLoop(p, COARSE);
+    for (let i = 0; i < loopC.length; i++) {
+      const a = loopC[i], c = loopC[(i + 1) % loopC.length];
+      const mx = (a.x + c.x) * 0.5, mz = (a.y + c.y) * 0.5;
+      if (others.some((o) => planSdf(o, mx, mz) < -0.18)) continue;
+      const dx = c.x - a.x, dz = c.y - a.y, L = Math.hypot(dx, dz) || 1;
+      const ux = Math.abs(dx / L), uz = Math.abs(dz / L);
+      // Clip the aperture out ALONG the chord rather than dropping whole chords by
+      // their midpoint: a midpoint test on 1.2 m collider chords against 0.55 m mesh
+      // chords puts the two gaps in different places. That is exactly what it did -
+      // traverse's door scan found the white yard door passable at x = 1.8 only, and
+      // the spawn-to-spawn route wedged on the doorway it could see straight through.
+      let hole: Hole | null = null, ht: [number, number] | null = null;
+      for (const d of holes) {
+        const fx = a.x - d.x, fz = a.y - d.z;
+        const b2 = fx * (dx / L) + fz * (dz / L);
+        const cc = fx * fx + fz * fz - d.r * d.r;
+        const disc = b2 * b2 - cc;
+        if (disc <= 0) continue;
+        const sq = Math.sqrt(disc);
+        const t0 = Math.max(0, -b2 - sq), t1 = Math.min(L, -b2 + sq);
+        if (t1 > t0) { hole = d; ht = [t0, t1]; break; }
+      }
+      const chunk = (t0: number, t1: number, y0: number, y1: number): void => {
+        if (t1 - t0 < 0.02 || y1 - y0 < 0.05) return;
+        const len = t1 - t0, tm = (t0 + t1) * 0.5;
+        colliders.push(aabbSlab(a.x + (dx / L) * tm, y0, a.y + (dz / L) * tm,
+          Math.max(0.2, len * ux + WALL_T * uz), y1 - y0,
+          Math.max(0.2, len * uz + WALL_T * ux)));
       };
-      if (h) { col(0, h.y0); col(h.y1, top); } else col(0, top);
+      if (!hole || !ht) { chunk(0, L, 0, top); continue; }
+      for (const [s0, s1] of subtract(0, L, [ht])) chunk(s0, s1, 0, top);
+      chunk(ht[0], ht[1], 0, hole.y0);
+      chunk(ht[0], ht[1], hole.y1, top);
     }
   };
 
   shell(REAR, H_REAR, true, [
-    { x: YARD_DOOR_X, face: 1, y0: 0, y1: G_HEAD },
-    { x: DECK_CX, face: 1, y0: DECK_Y, y1: U_HEAD },
-  ], [FRONT, LINK]);
-  shell(FRONT, H_FRONT, false, [{ x: FRONT_DOOR_X, face: -1, y0: 0, y1: G_HEAD }], [REAR]);
+    { x: YARD_DOOR_X, z: Z_BACK, r: DOOR_HALF, y0: 0, y1: G_HEAD },
+    { x: DECK_CX, z: Z_BACK, r: DOOR_HALF, y0: DECK_Y, y1: U_HEAD },
+    // garage -> KITCHEN, through the curved +x end (INTERIORS-TOPOLOGY s3.3,
+    // g-VfcKHcDJXpM-122: green display shelving on the left, through an open internal
+    // doorway to the blue base units, white worktop, sink and fridge).
+    { x: GEW * rearX(GAR_DOOR_Z), z: GAR_DOOR_Z, r: 0.8, y0: 0, y1: G_HEAD },
+  ], [FRONT]);
+  shell(FRONT, H_FRONT, false,
+    [{ x: FRONT_DOOR_X, z: Z_FRONT, r: DOOR_HALF, y0: 0, y1: G_HEAD }], [REAR]);
 
   g.add(prism(REAR, 0.1, 0, ctx.mat.concrete));
   g.add(prism(FRONT, 0.1, 0, ctx.mat.concrete));
@@ -230,15 +320,18 @@ export const buildWhiteHouse: Builder = (ctx) => {
 
   // --- garage wing: flat shallow-crowned roof, 3 recessed bays ------------------
   const garLoop = planLoop(GAR_PLAN, CHORD);
-  const bayPitch = GARAGE_LEN / GARAGE_BAYS, bayHalf = bayPitch * 0.36, bayTop = GARAGE_H * 0.7;
+  const bayHalf = BAY_W * 0.5, bayTop = BAY_H;
+  const bayCx = (d: number): number =>
+    GAR_OUT_X - GEW * (BAY_JAMB + BAY_W / 2 + d * (BAY_W + BAY_JAMB));
   for (let i = 0; i < garLoop.length; i++) {
     const a = garLoop[i], c = garLoop[(i + 1) % garLoop.length];
     const mx = (a.x + c.x) * 0.5, mz = (a.y + c.y) * 0.5;
     if (planSdf(REAR, mx, mz) < -0.18) continue;
-    if (mx < HOUSE_HALF_LEN + 0.05 && Math.abs(mz - REAR.cz) < LINK_D * 0.5) continue;
+    // leave the kitchen doorway out of the garage's own house-side wall
+    if (Math.hypot(mx - GEW * rearX(GAR_DOOR_Z), mz - GAR_DOOR_Z) < 1.15) continue;
     let bay = false;
     for (let k = 0; k < GARAGE_BAYS; k++) {
-      if (S * (mz - GAR_CZ) < 0 && Math.abs(mx - GAR_CX - (k - (GARAGE_BAYS - 1) * 0.5) * bayPitch) < bayHalf) bay = true;
+      if (S * (mz - GAR_CZ) < 0 && Math.abs(mx - bayCx(k)) < bayHalf) bay = true;
     }
     if (bay) run(bWall, a, c, GAR_PLAN, bayTop, GARAGE_H, WALL_T, 0);
     else run(bWall, a, c, GAR_PLAN, 0, GARAGE_H, WALL_T, 0);
@@ -248,11 +341,10 @@ export const buildWhiteHouse: Builder = (ctx) => {
   // shelving), f-aICKIbuo8zQ-055/115 (flat canopy + cloth banner + mint doors) and
   // f-FKQOEO-1ceE-205 (numbered door + open glazed bay). Plausible in-world text
   // only, never Treyarch wording.
-  const OPEN_BAY = 1; // middle bay stands open; the other two stay shut
   const bayZ = Z_FRONT + S * 0.44; // recessed dark bay plane behind the face
   const bayFaceZ = Z_FRONT - S * 0.06; // pier/header plane on the street face
   for (let k = 0; k < GARAGE_BAYS; k++) {
-    const bx = GAR_CX + (k - (GARAGE_BAYS - 1) * 0.5) * bayPitch;
+    const bx = bayCx(k);
     const open = k === OPEN_BAY;
     bDark.add(bayHalf * 2, bayTop, 0.14, bx, bayTop * 0.5, bayZ);
     bTrim.add(bayHalf * 2 + 0.3, 0.18, 0.2, bx, bayTop + 0.09, bayFaceZ);
@@ -286,35 +378,113 @@ export const buildWhiteHouse: Builder = (ctx) => {
   // Bay number on the pier between the open bay and its neighbour.
   g.add(box(0.4, 0.5, 0.05,
     ctx.mat.signText({ text: '13', color: PAL.capsuleWhite, background: PAL.rooftopDrum, aspect: 0.8 }),
-    GAR_CX + bayPitch * 0.5, 1.7, bayFaceZ - S * 0.12));
-  // Open-bay interior: shelf uprights + boards + stored boxes, offset so the
-  // drive-in lane through the middle bay stays passable.
-  const shX = GAR_CX + 0.85, shZ = GAR_CZ + GARAGE_DEPTH * 0.28;
-  for (const sx of [-0.8, 0.8]) bWood.add(0.08, 1.9, 0.5, shX + sx, 0.95, shZ);
-  for (const sy of [0.5, 1.05, 1.6]) bWood.add(1.7, 0.07, 0.55, shX, sy, shZ);
-  bWood.add(0.55, 0.42, 0.4, shX - 0.45, 0.78, shZ);
-  bWood.add(0.5, 0.35, 0.38, shX + 0.4, 0.7, shZ);
-  bWood.add(0.6, 0.4, 0.42, shX + 0.1, 1.31, shZ);
-  colliders.push(aabbSlab(shX, 0, shZ, 1.8, 1.9, 0.6));
-  // Cabinet run along the west garage side wall, clear of the open-bay lane.
-  const cabX = GAR_CX - GARAGE_LEN * 0.5 + 0.42;
-  for (let ci = 0; ci < 3; ci++) {
-    const cz = GAR_CZ - 1.2 + ci * 1.25;
-    bWood.add(0.6, 1.85, 1.05, cabX, 0.925, cz);
+    (bayCx(0) + bayCx(1)) / 2, 1.7, bayFaceZ - S * 0.12));
+  // ==================== THE POOL ===================================================
+  // INTERIORS-TOPOLOGY s3: the white house's SECOND bay - the shut one - is an indoor
+  // swimming pool, and it is the most recognisable interior detail in Nuketown 2025
+  // that this build did not have. g-tB35IKluv0g-091 (pool, vending machines, green
+  // back-lit shelving and crates in one frame), g-VfcKHcDJXpM-171 (the painted "2" with
+  // the shut sectional door filling the right half), f-mGpZaLy5_hM-030.
+  //
+  // DEPTH IS CAPPED BY THE CONTROLLER, NOT BY TASTE. groundUnder() in src/core/player.ts
+  // starts at `let best = 0` - the world base plane - so nothing anywhere in this map can
+  // be entered below y = 0. A 1.4 m sunken basin would be a hole a player could neither
+  // fall into nor climb out of, and drawing one anyway would be a walk-on-water lie. So
+  // the basin floor IS y = 0 and the COPING stands POOL_RIM (0.34 m) proud of the garage
+  // floor: you step over the rim (STEP_UP is 0.38), you are in the water to mid-shin, you
+  // step out anywhere, and mesh and collider agree. Making it properly deep needs a
+  // change in player.ts, which is not this lane's file - see the report.
+  const poolCx = bayCx(OPEN_BAY === 0 ? 1 : 0);      // in front of the SHUT bay
+  // Pushed 0.55 m toward the yard and shortened, so a 1.5 m walkway survives between
+  // the shut sectional door and the pool's shallow end. At its first size the coping
+  // and the shut bay's leaf left 0.24 m between them and the pool was a sealed island
+  // - paths.mjs drew it in red and turned the white east flank landmark NO.
+  const poolW = BAY_W, poolD = GARAGE_DEPTH * 0.5;
+  const poolCz = GAR_CZ + S * 0.55;
+  const tileM = ctx.mat.painted(PAL.signTeal, 0.3, 0.05);
+  g.add(slab(poolW, 0.05, poolD, tileM, poolCx, POOL_FLOOR - 0.05, poolCz));   // basin floor
+  g.add(box(poolW * 0.55, 0.02, poolD * 0.35, ctx.mat.signText({
+    text: '2', color: PAL.capsuleTrim, background: PAL.signTeal, aspect: 1.2,
+  }), poolCx, POOL_FLOOR + 0.01, poolCz));
+  for (const sx of [-1, 1]) {                                                // coping, x sides
+    bWall.add(0.34, POOL_RIM, poolD + 0.68, poolCx + sx * (poolW / 2 + 0.17), POOL_RIM / 2, poolCz);
+    colliders.push(aabbSlab(poolCx + sx * (poolW / 2 + 0.17), 0, poolCz, 0.34, POOL_RIM, poolD + 0.68));
   }
-  colliders.push(aabbSlab(cabX, 0, GAR_CZ + 0.05, 0.65, 1.85, 3.9));
-  bWall.add(LINK_W, GARAGE_H, LINK_D, LINK_CX, GARAGE_H * 0.5, REAR.cz);
-  colliders.push(aabbSlab(LINK_CX, 0, REAR.cz, LINK_W, GARAGE_H, LINK_D));
-  // Honest garage shell: rear + side strips solid, street face blocked at the
-  // two shut bays only so the open bay stays walkable into the wing.
+  // Coping on the z ends - but the STREET end is left open for 1.3 m as the shallow
+  // end. Ringing the pool completely made it a sealed pocket: paths.mjs turned the
+  // white east flank landmark NO, because the nearest standable cell to it is inside
+  // a pool the ground flood cannot step into (the flood has no step-up). A player
+  // could, but "a player could" is not what that instrument measures, and an
+  // unenterable pool is a worse answer anyway.
+  const POOL_ENTRY = poolW;   // the whole street end is the shallow end
+  for (const sz of [-1, 1]) {
+    const cz = poolCz + sz * (poolD / 2 + 0.17);
+    if (sz * S > 0) {                                  // yard end: full run
+      bWall.add(poolW, POOL_RIM, 0.34, poolCx, POOL_RIM / 2, cz);
+      colliders.push(aabbSlab(poolCx, 0, cz, poolW, POOL_RIM, 0.34));
+      continue;
+    }
+    for (const [c0, c1] of subtract(poolCx - poolW / 2, poolCx + poolW / 2,
+      [[poolCx - POOL_ENTRY / 2, poolCx + POOL_ENTRY / 2]])) {
+      if (c1 - c0 < 0.05) continue;
+      bWall.add(c1 - c0, POOL_RIM, 0.34, (c0 + c1) / 2, POOL_RIM / 2, cz);
+      colliders.push(aabbSlab((c0 + c1) / 2, 0, cz, c1 - c0, POOL_RIM, 0.34));
+    }
+    // two shallow-end treads down into the water
+    for (let t = 0; t < 2; t++) {
+      bWall.add(POOL_ENTRY, POOL_RIM - (t + 1) * 0.12, 0.36, poolCx,
+        (POOL_RIM - (t + 1) * 0.12) / 2, cz + S * (0.2 + t * 0.36));
+    }
+  }
+  g.add(box(poolW - 0.06, 0.02, poolD - 0.06, ctx.mat.glass, poolCx, POOL_RIM - 0.14, poolCz));
+  // chequered floor round the pool (INTERIORS-TOPOLOGY s3), laid above the plateau
+  for (let fx = 0; fx < 6; fx++) {
+    for (let fz = 0; fz < 6; fz++) {
+      const px = GAR_OUT_X - GEW * (0.45 + fx * 1.0);
+      const pz = GAR_CZ - S * (GARAGE_DEPTH * 0.5 - 0.7 - fz * 1.1);
+      if (Math.abs(px - poolCx) < poolW * 0.5 + 0.3
+        && Math.abs(pz - poolCz) < poolD * 0.5 + 0.3) continue;
+      g.add(slab(0.98, 0.05, 1.08, (fx + fz) % 2
+        ? ctx.mat.painted(PAL.capsuleWhite, 0.55, 0.05)
+        : ctx.mat.painted(PAL.capsuleTrim, 0.55, 0.05), px, 0.115, pz));
+    }
+  }
+  // Three Nuka-style vending machines and the green back-lit display shelving that face
+  // each other across the room in g-tB35IKluv0g-091 - both are cover.
+  const vendX = GAR_OUT_X - GEW * (GARAGE_LEN - 0.85);
+  for (let vd = 0; vd < 3; vd++) {
+    const vz = GAR_CZ - S * (GARAGE_DEPTH * 0.5 - 1.35 - vd * 1.0);
+    bWall.add(0.62, 1.95, 0.92, vendX, 0.975, vz);
+    bGlaz.add(0.06, 1.15, 0.72, vendX - GEW * 0.3, 1.2, vz);
+    colliders.push(aabbSlab(vendX, 0, vz, 0.65, 1.95, 0.92));
+  }
+  const shelfZ = GAR_CZ + S * (GARAGE_DEPTH * 0.5 - 0.55);
+  bWall.add(1.8, 1.6, 0.42, poolCx, 1.45, shelfZ);
+  // GREEN back-lit shelving - the bGlow batch is one warm-white material, and this
+  // shelving is the room's signature colour (g-tB35IKluv0g-091), so it gets its own.
+  for (let sy = 0; sy < 3; sy++) {
+    g.add(box(1.66, 0.07, 0.3, ctx.mat.emissive(PAL.lawn, 1.6),
+      poolCx, 0.95 + sy * 0.45, shelfZ - S * 0.08));
+  }
+  colliders.push(aabbSlab(poolCx, 0.65, shelfZ, 1.8, 1.6, 0.42));
+  // (no crate stack in here: every place it fits between the pool coping, the vending
+  //  run and the kitchen doorway blocks the drive-in lane, and the probe proved it -
+  //  a crate that seals the open bay is worse dressing than none.)
+  // Honest garage shell: rear + outer side solid, the HOUSE side split around the
+  // kitchen doorway, street face blocked at the shut bay only.
   colliders.push(aabbSlab(GAR_CX, 0, GAR_CZ + S * GARAGE_DEPTH * 0.5 - S * 0.2, GARAGE_LEN, GARAGE_H, 0.4));
-  for (const sx of [-1, 1]) {
-    colliders.push(aabbSlab(GAR_CX + sx * (GARAGE_LEN * 0.5 - 0.15), 0, GAR_CZ, 0.3, GARAGE_H, GARAGE_DEPTH));
+  colliders.push(aabbSlab(GAR_OUT_X - GEW * 0.15, 0, GAR_CZ, 0.3, GARAGE_H, GARAGE_DEPTH));
+  {
+    const houseX = GAR_OUT_X - GEW * (GARAGE_LEN - 0.15);
+    const [ga, gb] = span(GAR_CZ - GARAGE_DEPTH * 0.5, GAR_CZ + GARAGE_DEPTH * 0.5);
+    for (const [c0, c1] of subtract(ga, gb, [[GAR_DOOR_Z - 0.75, GAR_DOOR_Z + 0.75]])) {
+      if (c1 - c0 < 0.1) continue;
+      colliders.push(aabbSlab(houseX, 0, (c0 + c1) / 2, 0.3, GARAGE_H, c1 - c0));
+    }
   }
   for (let k = 0; k < GARAGE_BAYS; k++) {
     if (k === OPEN_BAY) continue;
-    const bx = GAR_CX + (k - (GARAGE_BAYS - 1) * 0.5) * bayPitch;
-    colliders.push(aabbSlab(bx, 0, bayZ, bayHalf * 2, bayTop, 0.3));
+    colliders.push(aabbSlab(bayCx(k), 0, bayZ, bayHalf * 2, bayTop, 0.3));
   }
   const rHalf = GARAGE_LEN * 0.5 + 0.22, rise = HOUSE_DEPTH * 0.02, rT = 0.22;
   const roofPts: [number, number][] = [[-rHalf, 0], [rHalf, 0]];
@@ -373,23 +543,81 @@ export const buildWhiteHouse: Builder = (ctx) => {
       STEP_GOING, DECK_Y - i * STEP_RISE, 1.35));
   }
 
-  // --- interior set dressing (all clear of both real doors) ----------------------
-  const STAIR_X = DECK_CX, NST = 10, sRise = FLOOR_H / (NST + 1), sGo = 0.28;
-  const sZ0 = REAR.cz - REAR.hz * 0.5, sLen = NST * sGo + 0.8, sZc = sZ0 + sLen * 0.5 - 0.4;
-  for (let i = 0; i < NST; i++) { // open flight at the deck end, cheeks leave a foot doorway
-    const top = sRise * (i + 1);
-    bWood.add(1.2, 0.09, sGo + 0.05, STAIR_X, top - 0.045, sZ0 + i * sGo);
-    colliders.push(aabbSlab(STAIR_X, 0, sZ0 + i * sGo, 1.2, top, sGo + 0.05));
+  // ==================== internal stair + UPPER FLOOR ===============================
+  // The old flight was 10 risers ending at 2.86 m inside a walled box with NOTHING above
+  // it: this house had no second floor at all, so the deck door in the yard face - which
+  // the shell has always cut - opened onto three metres of air. 12 risers of 0.2625 m
+  // now, and a real slab to arrive on.
+  const railXW = ST_X - GEW * (ST_W / 2);            // open side of the flight
+  const wellX = span(railXW, ST_X + GEW * (ST_W / 2 + 0.1));
+  for (let i = 0; i < RISERS; i++) {
+    const top = (i + 1) * RISE;
+    const zc = ST_Z0 + S * (i + 0.5) * GOING;
+    bWood.add(ST_W, top, GOING, ST_X, top / 2, zc);
+    colliders.push(aabbSlab(ST_X, 0, zc, ST_W, top, GOING));
+    bWood.add(0.1, RAIL_IN, GOING, railXW, top + RAIL_IN / 2, zc);
+    colliders.push(aabb(railXW, top + RAIL_IN / 2, zc, 0.1, RAIL_IN, GOING));
   }
-  for (const wx of [STAIR_X - 0.68, STAIR_X + 0.68]) {
-    bWall.add(0.16, FLOOR_H, sLen, wx, FLOOR_H * 0.5, sZc);
-    colliders.push(aabbSlab(wx, 0, sZc, 0.16, FLOOR_H, sLen));
+  // two magenta discs on the flank wall at the head of the flight (f-mGpZaLy5_hM-088)
+  for (const dz of [-0.75, 0.75]) {
+    const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.34, 0.05, 18),
+      ctx.mat.painted(PAL.trailerTrim, 0.55, 0.1));
+    disc.rotation.x = Math.PI * 0.5;
+    disc.position.set(ST_X + GEW * (ST_W / 2 + 0.07), 2.1, ST_Z1 + S * dz);
+    g.add(disc);
   }
-  const CT_X = HOUSE_HALF_LEN - 0.95, CT_Z = REAR.cz - 0.2; // kitchen run, garage-end wall
-  bWall.add(0.65, 0.92, 3.0, CT_X, 0.46, CT_Z);
-  bWood.add(0.72, 0.07, 3.1, CT_X, 0.955, CT_Z);
-  bDark.add(0.6, 0.5, 0.9, CT_X - 0.02, 1.25, CT_Z - 1.1);
-  colliders.push(aabbSlab(CT_X, 0, CT_Z, 0.65, 0.92, 3.0));
+  // Floor slab, banded in z and clipped to the capsule outline so the boxes ARE the
+  // colliders and nothing overhangs the curved end. Holes: the two-storey void over the
+  // living/dining volume (everything street-side of VOID_Z) and the stairwell.
+  const BANDW = 0.4;
+  const [uz0, uz1] = span(VOID_Z, REAR.cz + S * REAR.r);
+  const nBandW = Math.max(1, Math.round((uz1 - uz0) / BANDW));
+  const [wz0, wz1] = span(VOID_Z, ST_Z1);
+  for (let b = 0; b < nBandW; b++) {
+    const za = uz0 + b * (uz1 - uz0) / nBandW, zb = uz0 + (b + 1) * (uz1 - uz0) / nBandW;
+    const lim = Math.min(rearX(za), rearX(zb));
+    if (lim <= 0.1) continue;
+    const cuts: [number, number][] = [];
+    if (overlaps(za, zb, wz0, wz1)) cuts.push(wellX);
+    for (const [a, c] of subtract(-lim, lim, cuts)) {
+      if (c - a < 0.06) continue;
+      bWall.add(c - a, SLAB_T, zb - za, (a + c) / 2, FLOOR_H - SLAB_T / 2, (za + zb) / 2);
+      colliders.push(aabb((a + c) / 2, FLOOR_H - SLAB_T / 2, (za + zb) / 2, c - a, SLAB_T, zb - za));
+    }
+  }
+  /** 1.0 m balustrade run on the upper floor; one box is both mesh and collider. */
+  const upRail = (x0: number, z0: number, x1: number, z1: number): void => {
+    const [a0, a1] = span(x0, x1), [b0, b1] = span(z0, z1);
+    const w = Math.max(0.12, a1 - a0), d = Math.max(0.12, b1 - b0);
+    const cx = (a0 + a1) / 2, cz = (b0 + b1) / 2;
+    bWood.add(w, RAIL_IN - 0.08, d, cx, FLOOR_H + (RAIL_IN - 0.08) / 2, cz);
+    bDark.add(w + 0.06, 0.08, d + 0.06, cx, FLOOR_H + RAIL_IN - 0.04, cz);
+    colliders.push(aabb(cx, FLOOR_H + RAIL_IN / 2, cz, w, RAIL_IN, d));
+  };
+  for (const [ra, rb] of subtract(-rearX(VOID_Z), rearX(VOID_Z), [wellX])) {
+    if (rb - ra < 0.2) continue;
+    upRail(ra, VOID_Z, rb, VOID_Z);
+  }
+  upRail(wellX[0], VOID_Z, wellX[0], ST_Z1);
+  upRail(wellX[1], VOID_Z, wellX[1], ST_Z1);
+  // NO rail across ST_Z1: that is the head of the flight, i.e. the one cell a player
+  // arriving from below has to step onto. It was railed for one build and the probe
+  // climbed the whole stair and then stood there unable to get off it.
+  // kitchen run + diner booth, garage end, clear of the garage doorway lane
+  const CT_X = HOUSE_HALF_LEN - 0.95, CT_Z = REAR.cz + S * 1.3; // kitchen run
+  bWall.add(0.65, 0.92, 2.2, CT_X, 0.46, CT_Z);
+  bWood.add(0.72, 0.07, 2.3, CT_X, 0.955, CT_Z);
+  bDark.add(0.6, 0.5, 0.9, CT_X - 0.02, 1.25, CT_Z - S * 0.7);
+  colliders.push(aabbSlab(CT_X, 0, CT_Z, 0.65, 0.92, 2.2));
+  // The built-in diner booth: navy banquettes round a fixed table, the best hard cover
+  // on this floor (INTERIORS-TOPOLOGY s2.3, g-1icNQzMgLUM-041).
+  const bkX = HOUSE_HALF_LEN * 0.66, bkZ = REAR.cz + S * 2.9;
+  for (const sz of [-1, 1]) {
+    bWall.add(2.0, 0.44, 0.55, bkX, 0.22, bkZ + sz * 0.72);
+    bDark.add(2.0, 0.62, 0.14, bkX, 0.75, bkZ + sz * 0.95);
+    colliders.push(aabbSlab(bkX, 0, bkZ + sz * 0.72, 2.0, 0.86, 0.6));
+  }
+  bWood.add(1.7, 0.07, 0.8, bkX, 0.74, bkZ);
   const FP_X = -HOUSE_HALF_LEN * 0.42; // chimney breast on the yard wall
   const fpZ = REAR.cz + REAR.hz - WALL_T - 0.28;
   bWall.add(1.7, FLOOR_H, 0.55, FP_X, FLOOR_H * 0.5, fpZ);
@@ -397,9 +625,11 @@ export const buildWhiteHouse: Builder = (ctx) => {
   bDark.add(1.9, 0.07, 0.8, FP_X, 0.035, fpZ - 0.15);
   colliders.push(aabbSlab(FP_X, 0, fpZ, 1.7, FLOOR_H, 0.55));
   // partitions as [x, zCentre, len]; each pair leaves a 1.2 m full-height doorway
+  // One partition closes the stair's kitchen side; one screens the back room. Both
+  // leave the plan open - a capsule house reads wrong chopped into cells.
   const segs: [number, number, number][] = [
-    [HOUSE_HALF_LEN * 0.5, REAR.cz - 1.95, 2.11], [HOUSE_HALF_LEN * 0.5, REAR.cz + 1.06, 1.51],
-    [HOUSE_HALF_LEN * 0.33, FRONT.cz - 1.43, 1.1], [HOUSE_HALF_LEN * 0.33, FRONT.cz + 0.92, 1.2],
+    [ST_X + GEW * (ST_W / 2 + 0.09), REAR.cz - S * 1.0, 3.0],
+    [-HOUSE_HALF_LEN * 0.34, REAR.cz + S * 1.6, 2.4],
   ];
   for (const [px, pz, pl] of segs) {
     bWall.add(0.14, 2.5, pl, px, 1.25, pz); // leaf
@@ -411,48 +641,69 @@ export const buildWhiteHouse: Builder = (ctx) => {
     bSteel.add(0.34, 0.16, 0.34, lx, FLOOR_H - 0.72, lz);
     bGlow.add(0.16, 0.1, 0.16, lx, FLOOR_H - 0.82, lz);
   }
-  // --- purple-diamond/gold bedroom + mustard bunks + mint ensuite ---------------
-  // West end of REAR, clear of FRONT_DOOR_X/YARD_DOOR_X lanes. Reads per
-  // f-aICKIbuo8zQ-135 (plum + gold diamonds, mustard bunks, purple shag, ring art,
-  const BX = -HOUSE_HALF_LEN + 3.0, BZ = REAR.cz + 0.3;
-  bPlum.add(0.12, 2.5, 3.4, BX - 2.4, 1.25, BZ - 0.2); // plum accent leaf on west wall
-  colliders.push(aabbSlab(BX - 2.4, 0, BZ - 0.2, 0.12, 2.5, 3.4));
-  for (let di = 0; di < 8; di++) { // gold diamond decals, plum wall only
-    const dz = -1.2 + (di % 4) * 0.8, dy = 1.25 + Math.floor(di / 4) * 0.65;
-    bGold.add(0.05, 0.24, 0.24, BX - 2.32, dy, BZ - 0.2 + dz, Math.PI * 0.25);
+  // ==================== upper rooms ================================================
+  // INTERIORS-TOPOLOGY s4.2: a PURPLE diamond-wallpaper bedroom in the ROUNDED capsule
+  // end - its outer wall is curved because the shell is, which is the thing s8.7 says
+  // makes the room read as Nuketown 2025 - and a PALE-GREEN room next to it through a
+  // doorway. f-aICKIbuo8zQ-135, g-1icNQzMgLUM-249/-256/-263.
+  const UY = FLOOR_H;
+  const BX = -HOUSE_HALF_LEN * 0.34;                 // bedroom | green-room partition
+  const BZ = REAR.cz + S * 0.9;
+  // partition, stopping short of the yard end so the DECK DOOR route gets round it
+  for (const [pz0, pz1] of [span(VOID_Z + 0.1, REAR.cz + S * 2.1)]) {
+    bPlum.add(0.14, UPPER_H - 0.3, pz1 - pz0, BX, UY + (UPPER_H - 0.3) / 2, (pz0 + pz1) / 2);
+    colliders.push(aabbSlab(BX, UY, (pz0 + pz1) / 2, 0.14, UPPER_H - 0.3, pz1 - pz0));
   }
-  for (const by of [0.5, 1.4]) bGold.add(0.9, 0.18, 1.9, BX - 1.6, by, BZ - 0.8); // bunk slabs
-  for (const px of [BX - 2.0, BX - 1.2]) for (const pz of [BZ - 1.7, BZ + 0.1]) {
-    bGold.add(0.09, 1.7, 0.09, px, 0.85, pz); // bunk posts
+  for (let di = 0; di < 8; di++) {                   // gold diamonds, plum face only
+    const dz = -1.0 + (di % 4) * 0.7, dy = 1.0 + Math.floor(di / 4) * 0.62;
+    bGold.add(0.05, 0.3, 0.3, BX - 0.09, UY + dy, BZ + dz);
   }
-  colliders.push(aabbSlab(BX - 1.6, 0, BZ - 0.8, 0.95, 1.7, 1.95));
-  bPlum.add(2.3, 0.05, 1.7, BX + 0.2, 0.13, BZ - 0.1); // purple shag rug plane, walk-over
-  bWall.add(0.05, 0.72, 0.72, BX - 2.3, 1.72, BZ + 0.95); // target-art poster, no letters
-  bDark.add(0.05, 0.5, 0.5, BX - 2.28, 1.72, BZ + 0.95);
-  bGold.add(0.05, 0.24, 0.24, BX - 2.26, 1.72, BZ + 0.95);
-  bWood.add(0.3, 0.06, 1.0, BX - 2.3, 1.5, BZ - 1.7); // small shelf on the plum leaf
-  bSteel.add(0.06, 1.1, 0.06, BX - 0.6, 0.55, BZ + 0.4); // floor-lamp stem by the bunks
-  bGlow.add(0.26, 0.22, 0.26, BX - 0.6, 1.2, BZ + 0.4); // lamp shade, no scene light
-  bDark.add(0.3, 0.35, 0.3, BX + 1.4, 0.175, BZ + 1.5); // plant pot in the corner
-  colliders.push(aabbSlab(BX + 1.4, 0, BZ + 1.5, 0.3, 0.35, 0.3));
-  const leaf = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.28, 0.7, 10),
-    ctx.mat.painted(PAL.hedge, 0.9, 0));
-  leaf.position.set(BX + 1.4, 0.7, BZ + 1.5); leaf.castShadow = true; g.add(leaf);
-  bMint.add(0.14, 2.1, 1.6, -3.4, 1.05, BZ + 0.6);
-  bMint.add(1.5, 2.1, 0.14, -2.95, 1.05, BZ + 1.5);
-  colliders.push(aabbSlab(-2.95, 0, BZ + 1.5, 1.5, 2.1, 0.14));
-  colliders.push(aabbSlab(-3.4, 0, BZ + 0.6, 0.14, 2.1, 1.6));
-  // Single-wall station cluster + 0.4 m band + pinstripe + plaque, and nowhere
-  // else: local striped-room nod per f-FKQOEO-1ceE-190 (band + pinstripe +
-  // intercom + wall plaque). No global striping.
-  g.add(box(0.06, 0.4, 1.6, ctx.mat.painted(PAL.trailerTrim, 0.7, 0), -3.31, 1.5, BZ + 0.6));
-  bGold.add(0.05, 0.06, 1.6, -3.31, 1.74, BZ + 0.6); // pinstripe above the band
-  bDark.add(0.1, 0.22, 0.16, -3.3, 1.35, BZ + 0.15); // intercom box
-  bWall.add(0.06, 0.12, 0.09, -3.3, 1.2, BZ + 0.45); // switch plate
-  for (let v = 0; v < 3; v++) bDark.add(0.06, 0.04, 0.4, -3.3, 1.85 + v * 0.09, BZ + 0.9);
-  g.add(box(0.04, 0.32, 0.5,
-    ctx.mat.signText({ text: 'House Care', color: PAL.rooftopDrum, background: PAL.capsuleWhite, aspect: 1.6 }),
-    -3.3, 1.05, BZ + 0.95));
+  // bed on a yellow rug, built-in cream headboard unit, side table and lamp
+  // A single bed tight against the partition. The curved end is only ~4 m across at
+  // the bedroom and a double bed in the middle of it pinched the room shut: paths.mjs
+  // --y 3.3 reported the bedroom standable but SEALED, which is exactly the failure
+  // that instrument exists to catch.
+  const bedX = BX - 1.3, bedZ = VOID_Z + S * 1.05;
+  bGold.add(1.0, 0.42, 1.9, bedX, UY + 0.21, bedZ);
+  bWall.add(1.1, 0.85, 0.22, bedX, UY + 0.42, bedZ - S * 1.0);
+  colliders.push(aabbSlab(bedX, UY, bedZ, 1.05, 0.55, 1.95));
+  bPlum.add(2.2, 0.04, 2.4, bedX - 0.55, UY + 0.03, bedZ);
+  bDark.add(0.42, 0.5, 0.42, bedX - 0.85, UY + 0.25, bedZ - S * 1.05);
+  bGlow.add(0.22, 0.2, 0.22, bedX - 0.85, UY + 0.62, bedZ - S * 1.05);
+  bSteel.add(0.06, 1.05, 0.06, bedX - 1.0, UY + 0.52, bedZ + S * 1.3);
+  bGlow.add(0.26, 0.22, 0.26, bedX - 1.0, UY + 1.15, bedZ + S * 1.3);
+  // pale-green room: striped wall panel, circular rug, starburst clock (g-1icNQzMgLUM-256)
+  const grX = BX + 1.9, grZ = REAR.cz + S * 1.4;
+  bMint.add(0.05, 2.0, 3.0, BX + 0.1, UY + 1.15, grZ);
+  bMint.add(2.6, 0.04, 2.4, grX, UY + 0.03, grZ);
+  bWood.add(0.9, 0.42, 0.5, grX + 0.5, UY + 0.21, grZ + S * 1.2);
+  colliders.push(aabbSlab(grX + 0.5, UY, grZ + S * 1.2, 0.9, 0.42, 0.5));
+  const star = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.26, 0.05, 14),
+    ctx.mat.painted(PAL.interiorGold, 0.5, 0.2));
+  star.rotation.x = Math.PI * 0.5;
+  star.position.set(BX + 0.14, UY + 1.9, grZ - S * 0.9);
+  g.add(star);
+  // Mint finish and the one striped-wall station cluster this house is allowed, both
+  // laid ON the curved wall. They were a free-standing screen until paths.mjs --y 3.3
+  // showed a 0.14 m ensuite partition plugging the ONLY corridor into the bedroom -
+  // the whole room standable and completely sealed. Paint, not furniture.
+  bMint.add(0.06, 1.9, 2.6, BX - 3.15, UY + 1.05, REAR.cz + S * 2.4);
+  g.add(box(0.05, 0.4, 1.4, ctx.mat.painted(PAL.trailerTrim, 0.7, 0),
+    BX - 3.09, UY + 1.45, REAR.cz + S * 2.4));
+  bGold.add(0.04, 0.06, 1.4, BX - 3.08, UY + 1.69, REAR.cz + S * 2.4);
+  bDark.add(0.09, 0.22, 0.16, BX - 3.08, UY + 1.3, REAR.cz + S * 1.8);
+  g.add(box(0.04, 0.32, 0.5, ctx.mat.signText({
+    text: 'House Care', color: PAL.rooftopDrum, background: PAL.capsuleWhite, aspect: 1.6,
+  }), BX - 3.08, UY + 1.0, REAR.cz + S * 3.0));
+  // ceiling diffusers upstairs - emissive only, never a scene light
+  for (const [lx, lz] of [[bedX, bedZ], [grX, grZ]]) {
+    bGlow.add(0.5, 0.05, 0.5, lx, UY + UPPER_H - 0.4, lz);
+  }
+  // ---- ground-floor back room left behind by the bedroom moving upstairs
+  bWall.add(0.14, 2.4, 2.2, BX, 1.2, REAR.cz + S * 3.4);
+  colliders.push(aabbSlab(BX, 0, REAR.cz + S * 3.4, 0.14, 2.4, 2.2));
+  bWood.add(1.7, 0.44, 0.7, BX - 2.0, 0.22, REAR.cz + S * 3.2);
+  colliders.push(aabbSlab(BX - 2.0, 0, REAR.cz + S * 3.2, 1.7, 0.44, 0.7));
 
   // --- exterior close-up detail ----------------------------------------------------
   const gut = (p: Plan, top: number): void => {
@@ -475,8 +726,7 @@ export const buildWhiteHouse: Builder = (ctx) => {
         const mx = (a.x + c.x) * 0.5, mz = (a.y + c.y) * 0.5;
         let mouth = false;
         for (let k = 0; k < GARAGE_BAYS; k++) {
-          const bx = GAR_CX + (k - (GARAGE_BAYS - 1) * 0.5) * bayPitch;
-          if (S * (mz - GAR_CZ) < 0 && Math.abs(mx - bx) < bayHalf + 0.3) mouth = true;
+          if (S * (mz - GAR_CZ) < 0 && Math.abs(mx - bayCx(k)) < bayHalf + 0.3) mouth = true;
         }
         if (mouth) continue;
       }
