@@ -227,3 +227,48 @@ All Muse Spark (`omp`) agents **stopped** at the owner's request — swapping to
 One `agy` process may still be finishing the photoreal reference images.
 At 18:30: 36 GB RAM free, commit ~32 GB, CPU moderate, preview on 4173 alive.
 `llama-server` holding ~17 GB is the owner's — leave it alone.
+
+---
+
+## 10. Overnight run — live state (Fable orchestrating, Opus 5 xhigh sub-agents)
+
+Updated 21:30. If you are reading this cold after a crash, this section is the truth.
+
+**Gate for anything touching the renderer:** `node scripts/playcap.mjs` — clicks to play
+and photographs the REAL game loop at four positions; fails on a dark frame. Proven able
+to fail (0/4 on `?post=chain`, 4/4 on the default path) before it was trusted.
+**Do not lower `DARK_THRESHOLD`.**
+
+**Wave 1** (launched 18:32): `renderfix` (post chain on the interactive path) still
+running at 21:30 with `src/core/post.ts`, `world.ts`, `main.ts` modified; an adversarial
+verifier fires when it returns. Research landed and is committed (`33e87ad`):
+`docs/INTERIORS-TOPOLOGY.md`, `docs/IMPORT-PLAN.md`, `docs/reference/library/`.
+
+**Contract change** (`6b88ef8`): `GARAGE_LEN 6.2`, `GARAGE_BAYS 2`, `YARD_X ±14.8` —
+two street-facing bays per the research; yard widened to keep the 2.0 m squeeze.
+Gated: all landmarks reachable, west flank 42 m → 15 m, 4/4 faces, handedness PASS.
+
+**Wave 2** (launched 21:24, `wf_5f9c4647-341`): `interiors` / `perimeter` / `dressing`
+with DECLARED COORDINATE REGIONS (see the workflow script), `handedness` falsifier
+(read-only), then `geoverify` which checks collider ownership per region via
+`collidersAt().owner`. Commit only if `geoverify.holds`.
+
+**Handedness invariant is under test, not settled.** INTERIORS-TOPOLOGY §7 contradicts
+it from one match's frames. It stays derived in one place (`garageIsOnTheRight`) so a
+single sign flip fixes the map if the verdict is "mirror". Nobody may flip it on a hunch.
+
+**Animation:** licence resolved (`docs/LICENCES-ANIMATION.md`); Wave 4 brief at
+`docs/night/brief-kimodo.md`. Kimodo built + weights present at
+`C:\Users\david\projects\kimodo.cpp`.
+
+**Trellis.2:** ComfyUI 0.34.0 running on :8188 (started 21:05 by the orchestrator via the
+old client's launch; never restarted/updated). All Trellis.2/Pixal3D nodes present.
+Weights were ABSENT (API-verified); fetching the Trellis.2-only set (~8.5 GB) from
+`Comfy-Org/TRELLIS.2` into the default models dir — resumable, log at scratchpad
+`agylogs/trellis_fetch.log`, provenance note written beside the weights.
+Owner authorised: "we do have trellis 2 … keep working through the waves" (18:55).
+
+**Next waves, in order:** 3 gameplay (IMPORT-PLAN §3: vocabulary → lanes A/B/C/D →
+integration), 4 animation (Kimodo), 5–7 visual gauntlets per `visual-gauntlet-loop`
+(≤6 corrections per loop, fresh blind critic each round, evidence per round).
+Concurrency cap ≈5 Opus xhigh. Pages stays on `master`.
