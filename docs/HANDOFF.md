@@ -133,6 +133,13 @@ if you use them.
 
 ## 6. Characters and animation — the licence position
 
+> **Resolved 2026-09-18 18:40 — see `docs/LICENCES-ANIMATION.md`.** The owner asked for
+> the Llama-3 question to be answered, not parked. Decision: proceed with the Kimodo text
+> bundle under the Meta Llama 3 Community License; weights never leave the machine;
+> "Built with Meta Llama 3" in credits and `public/anim/LICENCES.md`. CMU BVH and
+> procedural IK remain as second and third sources. The animation lane is unblocked.
+
+
 The owner **will not create an Adobe account**, so Mixamo is out permanently. Do not ask.
 
 The chosen route is **Kimodo** (local text-to-motion) + Blender retarget, with the
