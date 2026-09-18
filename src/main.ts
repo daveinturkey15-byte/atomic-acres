@@ -200,6 +200,11 @@ function frame(): void {
   // compared with the 1200-call budget in AGENTS.md. Reset at the top of every frame;
   // a stats() read between frames then reports the LAST frame, which is the number a
   // budget is about. (Memory counts are not touched by reset().)
+  //
+  // autoReset must be OFF: with it on, Info resets at the start of EVERY render() call,
+  // and the post chain makes several per frame, so a read between frames saw only the
+  // final quad pass - 1 draw call, 2 triangles - which is why triangles read 0.
+  if (world.renderer.info.autoReset) world.renderer.info.autoReset = false;
   world.renderer.info.reset();
 
   if (!cameraHeldByQA) {
@@ -337,7 +342,12 @@ const qa: QA = {
     const i = world.renderer.info;
     return {
       fps,
-      calls: i.render.calls,
+      // per-frame (frame() resets Info at the top of each frame with autoReset off):
+      // drawCalls and triangles are what the 1200-call / 900k-tri budget is about.
+      // render.calls is the number of render() invocations since page load - useful
+      // as a liveness counter, useless as a budget, so it is exposed under its own name.
+      calls: i.render.drawCalls,
+      renderCallsTotal: i.render.calls,
       triangles: i.render.triangles,
       geometries: i.memory.geometries,
       textures: i.memory.textures,
