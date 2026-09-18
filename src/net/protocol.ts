@@ -9,7 +9,28 @@
  * All messages are plain JSON-able data. `isNetMessage` is the single receive
  * boundary: unknown wire bytes become a NetMessage or are dropped, so a
  * malformed peer can at worst be ignored, never crash the room.
+ *
+ * WAVE 0 ADDITION (2026-09-18): the gameplay message set lives in
+ * `./protocol-game` — the two files together were 529 lines and AGENTS.md caps
+ * one at 400. It is re-exported here, so every existing importer of
+ * `./protocol` still sees the whole protocol and nothing existing changed.
  */
+
+import type { TeamId } from '../game/events';
+import {
+  isGameMessage,
+  isTeamId,
+  type DamageMsg,
+  type KillMsg,
+  type MatchStateMsg,
+  type ShotMsg,
+  type ShotRejectMsg,
+  type SpawnMsg,
+  type StreakIntentMsg,
+  type StreakStateMsg,
+} from './protocol-game';
+
+export * from './protocol-game';
 
 /** Opaque host capability. Created by HostRoom; never serialized, never sent. */
 export type HostKey = { readonly __host: unique symbol };
@@ -115,6 +136,15 @@ export interface PlayerSample {
   yaw: number;
   /** Last guest input seq the host integrated for this player. */
   ack: number;
+  /**
+   * WAVE 0, optional on purpose. `room.ts` broadcasts state before a GameHost
+   * exists and is not this lane's file, so these cannot be required without
+   * breaking the lobby path. Absent means "no game authority yet", NOT a
+   * default: a reader must branch on `undefined`, never substitute 100/0/true.
+   */
+  hp?: number;
+  team?: TeamId;
+  alive?: boolean;
 }
 
 /** Host -> all: fixed-tick world snapshot. */
@@ -153,7 +183,15 @@ export type NetMessage =
   | StateMsg
   | PingMsg
   | PongMsg
-  | ByeMsg;
+  | ByeMsg
+  | ShotMsg
+  | ShotRejectMsg
+  | DamageMsg
+  | KillMsg
+  | SpawnMsg
+  | StreakIntentMsg
+  | StreakStateMsg
+  | MatchStateMsg;
 
 function isFiniteNum(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v);
@@ -226,9 +264,25 @@ export function isNetMessage(v: unknown): v is NetMessage {
           isFiniteNum(s['y']) &&
           isFiniteNum(s['z']) &&
           isFiniteNum(s['yaw']) &&
-          Number.isSafeInteger(s['ack'])
+          Number.isSafeInteger(s['ack']) &&
+          // Wave 0 optional game fields: absent is legal, malformed is not.
+          (s['hp'] === undefined || isFiniteNum(s['hp'])) &&
+          (s['team'] === undefined || isTeamId(s['team'])) &&
+          (s['alive'] === undefined || typeof s['alive'] === 'boolean')
         );
       });
+    // Gameplay tags: shapes and validators live in ./protocol-game so this
+    // file stays inside the 400-line cap. `isGameMessage` fails closed on any
+    // tag it does not own, so this list cannot admit an unchecked message.
+    case 'shot':
+    case 'shot-reject':
+    case 'damage':
+    case 'kill':
+    case 'spawn':
+    case 'streak-intent':
+    case 'streak-state':
+    case 'match-state':
+      return isGameMessage(m);
     case 'ping':
     case 'pong':
       return isFiniteNum(m['t']);

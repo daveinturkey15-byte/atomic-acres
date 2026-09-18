@@ -6,10 +6,22 @@
  * Motion rule: transform and opacity only. The health fill scales (never
  * width), the damage arc rotates (never top/left), hitmarker and vignette
  * fade. will-change sits on the three animating elements and nowhere else.
+ *
+ * Every number that JS also knows lives in ui/layout.ts. The hitmarker
+ * keyframe offsets below are the one place the envelope shape is expressed:
+ * the attack is 40 ms in all three, so the percentage differs per kind
+ * (40/180, 40/210, 40/360) — a shared keyframe with a variable offset is not
+ * expressible in CSS, and a single averaged offset would quietly retune two of
+ * the three envelopes.
  */
 
 /* debug gate: hides ONLY the pre-existing debug divs tagged .hud-debug */
 #hud.hud-debug-hidden .hud-debug {
+  display: none !important;
+}
+
+/* generic hide used by every surface the game state can switch off */
+#hud .hud-hidden {
   display: none !important;
 }
 
@@ -40,62 +52,38 @@
   background: #eaf4ff;
   box-shadow: 0 0 2px #000;
 }
-#crosshair .xh-n {
-  left: -1px; top: calc(-7px - var(--xh-gap));
-  width: 2px; height: 7px;
-}
-#crosshair .xh-s {
-  left: -1px; top: var(--xh-gap);
-  width: 2px; height: 7px;
-}
-#crosshair .xh-e {
-  top: -1px; left: var(--xh-gap);
-  height: 2px; width: 7px;
-}
-#crosshair .xh-w {
-  top: -1px; left: calc(-7px - var(--xh-gap));
-  height: 2px; width: 7px;
-}
+#crosshair .xh-n { left: -1px; top: calc(-7px - var(--xh-gap)); width: 2px; height: 7px; }
+#crosshair .xh-s { left: -1px; top: var(--xh-gap); width: 2px; height: 7px; }
+#crosshair .xh-e { top: -1px; left: var(--xh-gap); height: 2px; width: 7px; }
+#crosshair .xh-w { top: -1px; left: calc(-7px - var(--xh-gap)); height: 2px; width: 7px; }
 
 /* --- weapon block + ammo bottom-right --- */
 #hud .hud-weapon {
   position: fixed;
   right: 22px;
-  bottom: 56px;
+  bottom: 78px;
   display: flex;
   align-items: baseline;
   gap: 10px;
   font-size: 15px;
   opacity: 0.9;
 }
-#hud .hud-weapon-name {
-  text-transform: uppercase;
-}
-#hud .hud-reload {
-  font-size: 12px;
-  color: var(--aa-accent, #d8b23a);
-}
-#hud .hud-reload-hidden {
-  display: none;
-}
+#hud .hud-weapon-name { text-transform: uppercase; }
+#hud .hud-reload { font-size: 12px; color: var(--aa-accent, #d8b23a); }
+#hud .hud-reload-hidden { display: none; }
+/* Raised 22 px off the corner: the netcode lane's #hud .nt-lobby-btn sits at
+ * the bottom-right and was clipping the reserve count. Measured in
+ * captures/readouts-hud.png before the move. */
 #hud .hud-ammo {
   position: fixed;
   right: 22px;
-  bottom: 18px;
+  bottom: 40px;
   font-size: 30px;
   font-weight: 600;
 }
-#hud .hud-ammo .hud-reserve {
-  font-size: 17px;
-  opacity: 0.75;
-}
-#hud .hud-ammo .hud-ammo-sep {
-  font-size: 20px;
-  opacity: 0.6;
-}
-#hud .hud-ammo.hud-low .hud-mag {
-  color: var(--aa-danger, #b8322e);
-}
+#hud .hud-ammo .hud-reserve { font-size: 17px; opacity: 0.75; }
+#hud .hud-ammo .hud-ammo-sep { font-size: 20px; opacity: 0.6; }
+#hud .hud-ammo.hud-low .hud-mag { color: var(--aa-danger, #b8322e); }
 
 /* --- health bottom-left: fill scales on the compositor, never width --- */
 #hud .hud-health {
@@ -119,15 +107,13 @@
   transform: scaleX(1);
   transform-origin: left center;
 }
-#hud .hud-health.hud-low .hud-hp-fill {
-  background: var(--aa-danger, #b8322e);
-}
-#hud .hud-hp-label {
-  font-size: 22px;
-  font-weight: 600;
-}
+#hud .hud-health.hud-low .hud-hp-fill { background: var(--aa-danger, #b8322e); }
+#hud .hud-hp-label { font-size: 22px; font-weight: 600; }
 
-/* --- damage vignette (fullscreen fade, opacity only) --- */
+/* --- damage vignette: peak opacity scales with the accessibility setting --- */
+#hud {
+  --aa-flash: 1;
+}
 #hud .hud-vignette {
   position: fixed;
   inset: 0;
@@ -136,11 +122,9 @@
   will-change: opacity;
   background: radial-gradient(ellipse at center, transparent 52%, rgba(200, 20, 10, 0.55) 100%);
 }
-#hud .hud-vignette.hud-flash {
-  animation: hud-dmg 0.45s ease-out;
-}
+#hud .hud-vignette.hud-flash { animation: hud-dmg 0.45s ease-out; }
 @keyframes hud-dmg {
-  0% { opacity: 1; }
+  0% { opacity: var(--aa-flash, 1); }
   100% { opacity: 0; }
 }
 
@@ -156,10 +140,7 @@
   opacity: 1;
   will-change: transform, opacity;
 }
-#hud .hud-dmgdir-hidden {
-  opacity: 0;
-  visibility: hidden;
-}
+#hud .hud-dmgdir-hidden { opacity: 0; visibility: hidden; }
 #hud .hud-dmgdir-arc {
   position: absolute;
   inset: 0;
@@ -168,7 +149,7 @@
   border-top-color: var(--aa-danger, #b8322e);
 }
 
-/* --- hitmarker: centered X, opacity only --- */
+/* --- hitmarker: three envelopes, all 40 ms attack, opacity + scale only --- */
 #hud .hud-hitmarker {
   position: fixed;
   left: 50%;
@@ -177,10 +158,7 @@
   height: 22px;
   margin: -11px 0 0 -11px;
   opacity: 0;
-  will-change: opacity;
-}
-#hud .hud-hitmarker.hm-show {
-  opacity: 1;
+  will-change: opacity, transform;
 }
 #hud .hud-hitmarker .hm-a {
   position: absolute;
@@ -195,55 +173,136 @@
 #hud .hud-hitmarker .hm-1 { transform: rotate(135deg) translateY(-7px); }
 #hud .hud-hitmarker .hm-2 { transform: rotate(225deg) translateY(-7px); }
 #hud .hud-hitmarker .hm-3 { transform: rotate(315deg) translateY(-7px); }
-#hud .hud-hitmarker.hm-kill .hm-a {
-  background: var(--aa-accent, #d8b23a);
-  height: 10px;
+
+#hud .hud-hitmarker.hm-body { animation: hm-body 180ms ease-out; }
+#hud .hud-hitmarker.hm-head { animation: hm-head 210ms ease-out; }
+#hud .hud-hitmarker.hm-kill { animation: hm-kill 360ms ease-out; }
+#hud .hud-hitmarker.hm-head .hm-a { background: #fff4d0; }
+#hud .hud-hitmarker.hm-kill .hm-a { background: var(--aa-accent, #d8b23a); height: 10px; }
+
+@keyframes hm-body {
+  0% { opacity: 0; transform: scale(0.7); }
+  22% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1); }
+}
+@keyframes hm-head {
+  0% { opacity: 0; transform: scale(0.7); }
+  19% { opacity: 1; transform: scale(1.18); }
+  100% { opacity: 0; transform: scale(1); }
+}
+@keyframes hm-kill {
+  0% { opacity: 0; transform: scale(0.7); }
+  11% { opacity: 1; transform: scale(1.42); }
+  100% { opacity: 0; transform: scale(1); }
 }
 
-/* --- killfeed top-right: pooled rows, shown/hidden by class --- */
-#hud .hud-killfeed {
+/* --- feeds: three pools, recycled rows, shown/hidden by class --- */
+#hud .hud-killfeed,
+#hud .hud-feed-done,
+#hud .hud-feed-taken {
   position: fixed;
-  right: 22px;
-  top: 14px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  align-items: flex-end;
   font-size: 13px;
+  pointer-events: none;
 }
+#hud .hud-killfeed { right: 22px; top: 14px; align-items: flex-end; }
+#hud .hud-feed-done { right: 22px; top: 44%; align-items: flex-end; font-size: 15px; }
+#hud .hud-feed-taken { left: 22px; top: 44%; align-items: flex-start; font-size: 15px; }
 #hud .hud-feed-row {
   background: rgba(0, 0, 0, 0.55);
   border-right: 2px solid var(--aa-accent, #d8b23a);
   padding: 2px 8px;
 }
-#hud .hud-feed-row.hud-feed-hidden {
-  display: none;
-}
+#hud .hud-feed-taken .hud-feed-row { border-right: 0; border-left: 2px solid var(--aa-danger, #b8322e); }
+#hud .hud-feed-row.hud-feed-hidden { display: none; }
+#hud .hud-tone-own { border-right-color: var(--aa-accent, #d8b23a); }
+#hud .hud-tone-friendly { border-right-color: #4ec9c0; }
+#hud .hud-tone-enemy { border-right-color: var(--aa-danger, #b8322e); }
+#hud .hud-tone-neutral { border-right-color: rgba(255, 255, 255, 0.35); }
 
-/* --- score / streak line top-center: hidden until a backend sets it --- */
-#hud .hud-score-line {
+/* --- match bar (top-centre): mode, clock, both team scores --- */
+#hud .hud-matchbar {
   position: fixed;
   left: 50%;
-  top: 14px;
+  top: 12px;
   transform: translateX(-50%);
-  font-size: 14px;
-  opacity: 0.9;
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font-size: 15px;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 4px 14px;
 }
-#hud .hud-score-line-hidden {
-  display: none;
+#hud .hud-bar-mode { font-size: 11px; opacity: 0.7; text-transform: uppercase; }
+#hud .hud-bar-clock { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+#hud .hud-bar-score { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+#hud .hud-bar-score.hud-team-a { color: var(--aa-accent, #d8b23a); }
+#hud .hud-bar-score.hud-team-b { color: #4ec9c0; }
+
+/* --- banner (centre) + respawn countdown --- */
+/* 36%, not 26%: at 26% the banner sat behind the scoreboard while Tab was
+ * held and "MATCH OVER" was unreadable under a score row. Measured against
+ * the scoreboard's own box, which now ends at ~33% of a 900 px viewport. */
+#hud .hud-banner {
+  position: fixed;
+  left: 50%;
+  top: 36%;
+  transform: translateX(-50%);
+  text-align: center;
+  pointer-events: none;
+}
+#hud .hud-banner-text {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--aa-accent, #d8b23a);
+}
+#hud .hud-banner-sub { font-size: 12px; opacity: 0.75; letter-spacing: 0.22em; }
+#hud .hud-respawn {
+  position: fixed;
+  left: 50%;
+  top: 56%;
+  transform: translateX(-50%);
+  font-size: 16px;
+  letter-spacing: 0.18em;
+  color: var(--aa-danger, #b8322e);
+}
+
+/* --- streak strip (bottom-centre) --- */
+#hud .hud-streak {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+#hud .hud-streak-kills {
+  font-size: 18px;
+  font-weight: 600;
+  min-width: 20px;
+  text-align: right;
+  opacity: 0.85;
+}
+#hud .hud-streak-slot {
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 2px 7px;
+  opacity: 0.45;
+  text-transform: uppercase;
+}
+#hud .hud-streak-slot.hud-streak-ready {
+  opacity: 1;
+  border-color: var(--aa-accent, #d8b23a);
+  color: var(--aa-accent, #d8b23a);
 }
 
 /* --- minimap top-left --- */
-#hud .hud-minimap {
-  position: fixed;
-  left: 22px;
-  top: 44px;
-}
-#hud .hud-map-title {
-  font-size: 11px;
-  opacity: 0.8;
-  margin-bottom: 3px;
-}
+#hud .hud-minimap { position: fixed; left: 22px; top: 44px; }
+#hud .hud-map-title { font-size: 11px; opacity: 0.8; margin-bottom: 3px; }
 #hud .hud-map-canvas {
   width: 148px;
   height: 148px;
@@ -255,38 +314,38 @@
 #hud .hud-score {
   position: fixed;
   left: 50%;
-  top: 18%;
+  top: 14%;
   transform: translateX(-50%);
-  min-width: 300px;
+  min-width: 340px;
   background: rgba(0, 0, 0, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.25);
   padding: 10px 14px;
   font-size: 14px;
 }
-#hud .hud-score.hud-score-hidden {
-  display: none;
-}
-#hud .hud-score-title {
-  font-size: 12px;
-  color: var(--aa-accent, #d8b23a);
-  margin-bottom: 6px;
-}
+#hud .hud-score.hud-score-hidden { display: none; }
+#hud .hud-score-title { font-size: 12px; color: var(--aa-accent, #d8b23a); margin-bottom: 6px; }
 #hud .hud-score-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
+  display: grid;
+  grid-template-columns: 1fr 42px 42px 56px;
+  gap: 8px;
   padding: 2px 0;
 }
+#hud .hud-score-head { opacity: 0.55; font-size: 11px; border-bottom: 1px solid rgba(255, 255, 255, 0.18); }
+#hud .hud-score-n { text-align: right; font-variant-numeric: tabular-nums; }
+#hud .hud-score-row.hud-team-b .hud-score-name { color: #4ec9c0; }
+#hud .hud-score-row.hud-score-self { background: rgba(255, 255, 255, 0.08); }
 
-/* Be polite when the OS asks for calm: event flashes go instant. */
+/* Be polite when the OS asks for calm, and when the player asks explicitly:
+ * .hud-reduced-motion is set by setAccessibility from ui/settings.ts, so the
+ * in-game toggle works on a machine whose OS preference says otherwise. */
 @media (prefers-reduced-motion: reduce) {
-  #hud .hud-vignette.hud-flash {
-    animation: none;
-  }
-  #hud .hud-dmgdir {
-    will-change: auto;
-  }
-  #hud .hud-hitmarker {
-    will-change: auto;
-  }
+  #hud .hud-vignette.hud-flash { animation: none; }
+  #hud .hud-dmgdir { will-change: auto; }
+  #hud .hud-hitmarker { will-change: auto; }
+}
+#hud.hud-reduced-motion .hud-vignette.hud-flash { animation: none; }
+#hud.hud-reduced-motion .hud-hitmarker.hm-body,
+#hud.hud-reduced-motion .hud-hitmarker.hm-head,
+#hud.hud-reduced-motion .hud-hitmarker.hm-kill {
+  animation-duration: 90ms;
 }

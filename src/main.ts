@@ -14,7 +14,8 @@ import { STATIONS, type Station } from './core/stations';
 import { WeaponsController } from './weapons/controller';
 import { initUI } from './ui/index';
 import { wireNetcode } from './net/wire';
-import { createCharacterSystem } from './characters';
+import { createCharacterSystem, type CharacterHandle } from './characters';
+import { createLocalMatch, type LocalMatch } from './game/session';
 import { PAL } from './core/palette';
 
 import { buildGround } from './build/ground';
@@ -103,12 +104,15 @@ for (const [cx, cz, cyaw] of [
 }
 player.teleport(SPAWN_A.x, 0, SPAWN_A.z, SPAWN_A.yaw);
 const ammoDiv = document.createElement('div');
+// The trigger is a CLAIM, not a verdict: the host resolves damage (IMPORT-PLAN s2).
+let match: LocalMatch | null = null;
 const weapons = new WeaponsController({
   camera: world.camera,
   scene: world.scene,
   mat,
   targets: worldTargets,
   onHud: (line) => { ammoDiv.textContent = line; },
+  onShot: (claim) => match?.localShot(claim),
 });
 
 // ---------------------------------------------------------------- HUD
@@ -126,11 +130,18 @@ hudHelp.textContent =
 hud.append(hudStats, hudMode, hudHelp, ammoDiv);
 // ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
 // initUI owns everything inside #hud and #start, so the capture harness still
-const { hud: gameHud } = initUI({ player, world });
+const ui = initUI({ player, world });
+const gameHud = ui.hud;
 // ---- Multiplayer lobby + host tech (netcode lane). Owns #hud .nt-* nodes and
 // window.__NTNET only; the world, player and QA surface are untouched.
 const netcode = wireNetcode({ player });
 void netcode;
+// ---- The match. Host + local player + bots, started by the same click that
+// dismisses the lobby overlay, so nothing runs before a player asks for it.
+match = createLocalMatch({
+  colliders, ui, placeLocal: (x, y, z, yaw) => player.teleport(x, y, z, yaw),
+});
+const botBodies = new Map<string, CharacterHandle>();
 
 const startOverlay = document.getElementById('start')!;
 // The first click lands on the overlay (it covers the canvas), so dismiss and lock
@@ -138,10 +149,15 @@ const startOverlay = document.getElementById('start')!;
 // default) and Player drops held keys so nothing spins or keeps walking.
 startOverlay.addEventListener('click', () => {
   startOverlay.style.display = 'none';
-  world.renderer.domElement.requestPointerLock();
+  match?.begin();
+  // requestPointerLock returns a PROMISE in current Chrome, so a refusal is an
+  // unhandled rejection, not a throw - which is the PAGEERROR WrongDocumentError
+  // every playcap run has been printing. try/catch alone never caught it.
+  try { void Promise.resolve(world.renderer.domElement.requestPointerLock()).catch(() => {}); } catch { /* no API */ }
 });
 world.renderer.domElement.addEventListener('click', () => {
   startOverlay.style.display = 'none';
+  match?.begin();
 });
 // H toggles the key legend. Owned here, not in Player, because the legend is DOM.
 addEventListener('keydown', (e) => {
@@ -168,6 +184,10 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyR' || e.code === 'Digit1' || e.code === 'Digit2') {
     try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
   }
+  // 3-6 are the four killstreak slots. A press always answers, even when it
+  // is refused - a dead key is the defect IMPORT-PLAN s5.4 is written about.
+  const slot = ['Digit3', 'Digit4', 'Digit5', 'Digit6'].indexOf(e.code);
+  if (slot >= 0) match?.pressStreak(slot + 1);
 });
 canvas.addEventListener('wheel', (e) => {
   if (player.getMode() !== 'walk') return;
@@ -240,6 +260,26 @@ function frame(): void {
     const snap = weapons.snapshot();
     gameHud.setAmmo(snap.mag, snap.reserve);
     gameHud.setADS(snap.ads);
+  }
+
+  // ---- Game tick and bodies. characters.update() runs FIRST: it integrates
+  // its own root motion, and the authoritative bot pose written just after is
+  // what survives. One rig for players, bots and corpses - a bot is hidden by
+  // nothing and substituted by nothing (AGENTS.md durable gotcha).
+  if (!cameraHeldByQA && match) {
+    characters.update(dt, world.camera.position);
+    const st = player.state;
+    match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch);
+    for (const b of match.bots()) {
+      let h = botBodies.get(b.id);
+      if (!h) { h = characters.spawn(b.x, b.z, b.yaw); botBodies.set(b.id, h); }
+      h.root.position.set(b.x, b.y, b.z);
+      h.root.rotation.y = b.yaw;
+      h.yaw = b.yaw;
+      h.input.speed = b.alive ? b.speed : 0;
+      if (b.alive && h.rig.isDead) h.rig.revive();
+      else if (!b.alive && !h.rig.isDead) h.rig.playDeath();
+    }
   }
 
   frames++;

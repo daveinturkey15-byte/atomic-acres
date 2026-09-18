@@ -1,43 +1,38 @@
 /**
- * Atomic Acres — menus, map select, settings panel, pause.
+ * Atomic Acres — menus, map select, pause, and the lifecycle that drives them.
  *
- * Everything here lives inside the existing #start overlay (capture harness
+ * Everything here lives inside the existing #start overlay (the capture harness
  * removes #start before every shot, so a node anywhere else would leak into
- * captures). No nodes are created outside #start; the existing click-to-dismiss
- * listener on #start itself keeps working — clicks on empty overlay area still
- * bubble to it, while interactive children below stop propagation so adjusting
- * a slider does not dismiss the menu or grab pointer lock.
+ * captures). No nodes are created outside #start; `main.ts` owns the overlay's
+ * own click-to-dismiss listener, so clicks on empty overlay area still bubble
+ * to it while interactive children stop propagation — adjusting a slider must
+ * not drop the player into the match.
  *
- * Keyboard: every view is fully operable without a mouse. Buttons, map cards,
- * sliders and the select are native controls (Tab works for free); arrow keys
- * move between controls in the visible view, Home/End jump, Escape steps back.
- * Every control has an explicit `:focus-visible` ring in menus.css — the
- * browser default is not relied on. Key hints use `<kbd data-glyph>` caps so
- * the glyph scheme (keyboard today, gamepad later) rewrites their text.
+ * TWO CHANGES FROM THE FIRST VERSION:
+ *
+ *  1. **The second projection is gone.** `drawNuketownThumb` re-projected
+ *     `core/layout.ts` top-down with its own colours, a duplicate of
+ *     `ui/hud.ts:drawMap()` in a project one day old (IMPORT-PLAN §5.12). Both
+ *     now call `game/minimap.ts` through `ui/hud-map.ts`. The thumbnail is
+ *     portrait because the arena IS portrait — 44.5 m by 84 m — and the old
+ *     landscape card only fitted by scaling the two axes differently, which
+ *     made the map-select picture a shape the map is not.
+ *  2. **Visibility is a reducer, not a pile of booleans.** `menu-lifecycle.ts`
+ *     owns which surface shows and what pointer lock is doing, including the
+ *     denied and focus-suspended phases. This file applies the result.
  */
-import './menus.css';
 import type { HudApi } from './hud';
 import { glyphFor, glyphScheme } from './glyphs';
-import { loadSettings, saveSettings, resetSettings, type Settings } from './settings';
+import { buildMapSelect } from './map-select';
+import { buildSettingsPanel } from './settings-panel';
 import {
-  ROAD_HALF_WIDTH,
-  ROAD_X_MIN,
-  ROAD_X_MAX,
-  HEAD_CENTER_X,
-  HEAD_RADIUS,
-  HOUSE_HALF_LEN,
-  HOUSE_DEPTH,
-  FRONT_LAWN_OUTER,
-  GARAGE_LEN,
-  GARAGE_DEPTH,
-  BACK_FENCE,
-  YARD_X_MIN,
-  YARD_X_MAX,
-  BOUND_X_MIN,
-  BOUND_X_MAX,
-  BOUND_Z,
-  HOUSES,
-} from '../core/layout';
+  INITIAL_MENU_STATE,
+  menuVisible,
+  reduceMenuLifecycle,
+  type MenuLifecycleEvent,
+  type MenuLifecycleState,
+} from './menu-lifecycle';
+import { loadSettings, saveSettings, resetSettings, accessibilityOf, type Settings } from './settings';
 
 /** Minimal surface menus actually use — probed, never assumed. */
 export interface MenuPlayer {
@@ -49,92 +44,22 @@ export interface MenuWorld {
   renderer?: { domElement?: { requestPointerLock: () => unknown } };
 }
 
-// ---------------------------------------------------------------------------
-// Map select: data-driven. A new map is one more entry here — the render loop
-// below builds a card per entry, no other code changes.
-// ---------------------------------------------------------------------------
-
-export interface MapEntry {
-  id: string;
-  name: string;
-  tagline: string;
-  drawThumb(canvas: HTMLCanvasElement): void;
-}
-
-/** Top-down schematic of Nuketown 2025, drawn from layout.ts — never guessed. */
-function drawNuketownThumb(canvas: HTMLCanvasElement): void {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-  const W = canvas.width;
-  const H = canvas.height;
-  const sx = W / (BOUND_X_MAX - BOUND_X_MIN);
-  const sz = H / (2 * BOUND_Z);
-  const X = (x: number): number => (x - BOUND_X_MIN) * sx;
-  const Z = (z: number): number => (z + BOUND_Z) * sz;
-
-  ctx.fillStyle = '#10151b';
-  ctx.fillRect(0, 0, W, H);
-
-  // yards
-  ctx.fillStyle = '#1a2b1d';
-  ctx.fillRect(X(YARD_X_MIN), Z(-BACK_FENCE), (YARD_X_MAX - YARD_X_MIN) * sx, 2 * BACK_FENCE * sz);
-
-  // road + turning head
-  ctx.fillStyle = '#2a2e33';
-  ctx.fillRect(X(ROAD_X_MIN), Z(-ROAD_HALF_WIDTH), (ROAD_X_MAX - ROAD_X_MIN) * sx, 2 * ROAD_HALF_WIDTH * sz);
-  ctx.beginPath();
-  ctx.arc(X(HEAD_CENTER_X), Z(0), HEAD_RADIUS * sx, 0, Math.PI * 2);
-  ctx.fill();
-
-  // houses: main block + garage wing per side
-  for (const h of HOUSES) {
-    const s = h.side;
-    const front = FRONT_LAWN_OUTER * s;
-    const back = (FRONT_LAWN_OUTER + HOUSE_DEPTH) * s;
-    const z0 = Math.min(Z(front), Z(back));
-    ctx.fillStyle = s < 0 ? '#8a5a22' : '#9aa0a6';
-    ctx.fillRect(X(-HOUSE_HALF_LEN), z0, 2 * HOUSE_HALF_LEN * sx, Math.abs(Z(back) - Z(front)));
-    const gx0 = h.garageX - GARAGE_LEN / 2;
-    const gz0 = Math.min(Z(front), Z(front + GARAGE_DEPTH * s));
-    ctx.fillStyle = '#3d434a';
-    ctx.fillRect(X(gx0), gz0, GARAGE_LEN * sx, Math.abs(Z(front + GARAGE_DEPTH * s) - Z(front)));
-  }
-
-  // back fences
-  ctx.strokeStyle = '#5a4a2f';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(X(YARD_X_MIN), Z(-BACK_FENCE));
-  ctx.lineTo(X(YARD_X_MAX), Z(-BACK_FENCE));
-  ctx.moveTo(X(YARD_X_MIN), Z(BACK_FENCE));
-  ctx.lineTo(X(YARD_X_MAX), Z(BACK_FENCE));
-  ctx.stroke();
-}
-
-export const MAPS: MapEntry[] = [
-  {
-    id: 'nuketown-2025',
-    name: 'Nuketown 2025',
-    tagline: 'Twin houses · cul-de-sac · tour coach',
-    drawThumb: drawNuketownThumb,
-  },
-];
+/** Map select lives in `map-select.ts`; re-exported so `menus.ts` stays the
+ *  one import target IMPORT-PLAN §0 lists for `initMenus` and `MAPS`. */
+export { MAPS, THUMB_H, THUMB_W, type MapEntry } from './map-select';
 
 // ---------------------------------------------------------------------------
 // Settings application.
 //
 // Applied today: FOV — world.camera is a public THREE.PerspectiveCamera, so
-// setting fov + updateProjectionMatrix() is an existing public API.
-// NOT applied (no public hook exists; values persist via settings.ts and take
-// effect once the owning module grows one):
-//   - sensitivity — Player's look speed is a hardcoded constant in its
-//     mousemove handler (player.ts); there is no setSensitivity. The panel
-//     still probes player.setSensitivity?.() so a future hook is picked up.
-//   - quality — World exposes no renderer-quality/scale hook, so there is
-//     nothing to call; the tier is stored for the future.
+// setting fov + updateProjectionMatrix() is an existing public API. The
+// accessibility trio reaches the HUD through `hud.setAccessibility`.
+// NOT applied (no public hook exists; values persist and take effect once the
+// owning module grows one): sensitivity (player.ts has no setter; probed here
+// so a future hook is picked up), quality, weaponMotionScale.
 // ---------------------------------------------------------------------------
 
-function applySettings(s: Settings, player: MenuPlayer, world: MenuWorld): void {
+function applySettings(s: Settings, player: MenuPlayer, world: MenuWorld, hud: HudApi): void {
   try {
     if (world.camera) {
       world.camera.fov = s.fov;
@@ -148,6 +73,7 @@ function applySettings(s: Settings, player: MenuPlayer, world: MenuWorld): void 
   } catch {
     // No sensitivity hook — persisted only.
   }
+  hud.setAccessibility(accessibilityOf(s));
 }
 
 function button(label: string, cls = ''): HTMLButtonElement {
@@ -155,8 +81,6 @@ function button(label: string, cls = ''): HTMLButtonElement {
   b.type = 'button';
   b.textContent = label;
   b.className = ('aa-btn ' + cls).trim();
-  // Keep menu interaction from bubbling to #start's click-to-dismiss listener
-  // (a bubbled click would hide the overlay and grab pointer lock mid-tweak).
   b.addEventListener('click', (e) => e.stopPropagation());
   return b;
 }
@@ -169,22 +93,28 @@ function kbd(action: string): HTMLElement {
   return k;
 }
 
+function view(label: string, hidden: boolean): HTMLElement {
+  const v = document.createElement('div');
+  v.className = 'aa-view' + (hidden ? ' aa-hidden' : '');
+  v.setAttribute('aria-label', label);
+  return v;
+}
+
 export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWorld }): void {
-  void deps.hud; // HudApi is owned by the HUD/weapons loop; menus take it for signature parity.
-  const { player, world } = deps;
-  const overlay = document.getElementById('start');
-  if (!overlay) return;
+  const { hud, player, world } = deps;
+  const found = document.getElementById('start');
+  if (!found) return;
+  // Bound once so the closures below keep the narrowed type; #start is never
+  // replaced during a session (the capture harness removes it before load).
+  const overlay: HTMLElement = found;
   const canvas = world.renderer?.domElement;
 
   let settings: Settings = loadSettings();
-  applySettings(settings, player, world);
-  let selectedMap = MAPS[0]?.id ?? '';
-  let hasStarted = false;
-  let settingsReturn: 'main' | 'pause' = 'main';
-  const refreshers: Array<() => void> = [];
+  applySettings(settings, player, world, hud);
+  let life: MenuLifecycleState = INITIAL_MENU_STATE;
+  let panel: 'none' | 'settings' = 'none';
 
   overlay.innerHTML = '';
-
   const root = document.createElement('div');
   root.className = 'aa-root';
   root.setAttribute('role', 'dialog');
@@ -192,9 +122,7 @@ export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWo
   root.setAttribute('aria-label', 'Atomic Acres menu');
 
   // ---- main menu ----
-  const main = document.createElement('div');
-  main.className = 'aa-view';
-  main.setAttribute('aria-label', 'Main menu');
+  const main = view('Main menu', false);
   const eyebrow = document.createElement('div');
   eyebrow.className = 'aa-eyebrow';
   eyebrow.textContent = 'A fan project inspired by Black Ops 2';
@@ -210,138 +138,41 @@ export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWo
   const settingsBtn = button('Settings');
   btnRow.append(playBtn, settingsBtn);
 
-  // ---- map select ----
   const mapHead = document.createElement('div');
   mapHead.className = 'aa-maphead';
   mapHead.textContent = 'Map select';
-  const mapList = document.createElement('div');
-  mapList.className = 'aa-maps';
-  for (const m of MAPS) {
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'aa-map' + (m.id === selectedMap ? ' aa-selected' : '');
-    card.setAttribute('aria-pressed', m.id === selectedMap ? 'true' : 'false');
-    card.addEventListener('click', (e) => {
-      e.stopPropagation();
-      selectedMap = m.id;
-      // Array.from: NodeListOf is only directly iterable with downlevelIteration,
-      // which this tsconfig does not set.
-      for (const c of Array.from(mapList.querySelectorAll('.aa-map'))) {
-        c.classList.remove('aa-selected');
-        c.setAttribute('aria-pressed', 'false');
-      }
-      card.classList.add('aa-selected');
-      card.setAttribute('aria-pressed', 'true');
-    });
-    const thumb = document.createElement('canvas');
-    thumb.width = 200;
-    thumb.height = 120;
-    thumb.className = 'aa-thumb';
-    m.drawThumb(thumb);
-    const name = document.createElement('div');
-    name.className = 'aa-mapname';
-    name.textContent = m.name;
-    const tag = document.createElement('div');
-    tag.className = 'aa-maptag';
-    tag.textContent = m.tagline;
-    card.append(thumb, name, tag);
-    mapList.append(card);
-  }
+  const mapSelect = buildMapSelect();
 
   const fan = document.createElement('div');
   fan.className = 'aa-fan';
   fan.textContent = 'Unofficial fan project — not affiliated with Activision or Treyarch.';
-  main.append(eyebrow, title, sub, btnRow, mapHead, mapList, fan);
+  main.append(eyebrow, title, sub, btnRow, mapHead, mapSelect.root, fan);
 
-  // ---- settings panel ----
-  const settingsView = document.createElement('div');
-  settingsView.className = 'aa-view aa-hidden';
-  settingsView.setAttribute('aria-label', 'Settings');
-  const sTitle = document.createElement('h2');
-  sTitle.className = 'aa-h2';
-  sTitle.textContent = 'Settings';
-  settingsView.append(sTitle);
-
-  function sliderRow(
-    label: string, min: number, max: number, step: number,
-    get: () => number, set: (v: number) => void, fmt: (v: number) => string,
-  ): HTMLElement {
-    const row = document.createElement('label');
-    row.className = 'aa-setting';
-    const head = document.createElement('div');
-    head.className = 'aa-setting-head';
-    const name = document.createElement('span');
-    name.textContent = label;
-    const val = document.createElement('span');
-    val.className = 'aa-val';
-    val.textContent = fmt(get());
-    head.append(name, val);
-    const input = document.createElement('input');
-    input.type = 'range';
-    input.min = String(min);
-    input.max = String(max);
-    input.step = String(step);
-    input.value = String(get());
-    input.setAttribute('aria-label', label);
-    input.addEventListener('click', (e) => e.stopPropagation());
-    input.addEventListener('input', (e) => {
-      e.stopPropagation();
-      set(Number(input.value));
-      val.textContent = fmt(get());
+  // ---- settings ----
+  const settingsPanel = buildSettingsPanel({
+    read: () => settings,
+    write: (patch) => {
+      settings = { ...settings, ...patch };
       saveSettings(settings);
-      applySettings(settings, player, world);
-    });
-    row.append(head, input);
-    refreshers.push(() => { input.value = String(get()); val.textContent = fmt(get()); });
-    return row;
-  }
-
-  settingsView.append(
-    sliderRow('Sensitivity', 0.1, 5, 0.1, () => settings.sensitivity,
-      (v) => { settings.sensitivity = v; }, (v) => v.toFixed(1)),
-    sliderRow('Field of view', 60, 110, 1, () => settings.fov,
-      (v) => { settings.fov = v; }, (v) => v.toFixed(0) + '°'),
-  );
-
-  const qRow = document.createElement('label');
-  qRow.className = 'aa-setting';
-  const qHead = document.createElement('div');
-  qHead.className = 'aa-setting-head';
-  const qName = document.createElement('span');
-  qName.textContent = 'Quality';
-  qHead.append(qName);
-  const qSel = document.createElement('select');
-  qSel.className = 'aa-select';
-  qSel.setAttribute('aria-label', 'Quality');
-  for (const q of ['low', 'medium', 'high'] as const) {
-    const opt = document.createElement('option');
-    opt.value = q;
-    opt.textContent = q[0].toUpperCase() + q.slice(1);
-    qSel.append(opt);
-  }
-  qSel.value = settings.quality;
-  qSel.addEventListener('click', (e) => e.stopPropagation());
-  qSel.addEventListener('change', (e) => {
-    e.stopPropagation();
-    settings.quality = qSel.value as Settings['quality'];
-    saveSettings(settings);
-    applySettings(settings, player, world);
+      settings = loadSettings();
+      applySettings(settings, player, world, hud);
+    },
   });
-  qRow.append(qHead, qSel);
-  refreshers.push(() => { qSel.value = settings.quality; });
-  settingsView.append(qRow);
-
   const sBtnRow = document.createElement('div');
   sBtnRow.className = 'aa-row';
   const backBtn = button('Back');
   const resetBtn = button('Reset defaults');
   sBtnRow.append(backBtn, resetBtn);
-  settingsView.append(sBtnRow);
+  settingsPanel.root.append(sBtnRow);
 
-  // ---- pause ----
-  const pause = document.createElement('div');
-  pause.className = 'aa-view aa-hidden';
-  pause.setAttribute('aria-label', 'Paused');
+  // ---- deploying / pause / error ----
+  const deploying = view('Deploying', true);
+  const dTitle = document.createElement('h2');
+  dTitle.className = 'aa-h2';
+  dTitle.textContent = 'DEPLOYING';
+  deploying.append(dTitle);
+
+  const pause = view('Paused', true);
   const pTitle = document.createElement('h2');
   pTitle.className = 'aa-h2';
   pTitle.textContent = 'Paused';
@@ -361,62 +192,85 @@ export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWo
   );
   pause.append(pTitle, pRow, hint);
 
-  root.append(main, settingsView, pause);
+  const errorView = view('Error', true);
+  const eTitle = document.createElement('h2');
+  eTitle.className = 'aa-h2';
+  eTitle.textContent = 'Something broke';
+  const eBody = document.createElement('div');
+  eBody.className = 'aa-hint';
+  eBody.textContent = 'The match stopped. Reload the page to try again.';
+  errorView.append(eTitle, eBody);
+
+  root.append(main, settingsPanel.root, deploying, pause, errorView);
   overlay.append(root);
 
-  const views = { main, settings: settingsView, pause } as const;
-  let current: keyof typeof views = 'main';
-
-  function focusFirst(view: HTMLElement): void {
+  // -------------------------------------------------------------------------
+  // Render the reducer's decision. One function, called after every event, so
+  // there is exactly one place that can make the overlay disagree with itself.
+  // -------------------------------------------------------------------------
+  function render(): void {
+    const showSettings = panel === 'settings' && menuVisible(life);
+    main.classList.toggle('aa-hidden', showSettings || life.surface !== 'pre-match');
+    settingsPanel.root.classList.toggle('aa-hidden', !showSettings);
+    deploying.classList.toggle('aa-hidden', showSettings || life.surface !== 'deploying');
+    pause.classList.toggle('aa-hidden', showSettings || life.surface !== 'paused-match');
+    errorView.classList.toggle('aa-hidden', showSettings || life.surface !== 'error');
+    overlay.style.display = menuVisible(life) ? 'flex' : 'none';
+    if (!menuVisible(life)) return;
     try {
-      const t = view.querySelector('button, input, select') as HTMLElement | null;
-      t?.focus();
+      const v = showSettings ? settingsPanel.root : visibleView();
+      (v.querySelector('button, input, select') as HTMLElement | null)?.focus();
     } catch {
       // Headless — focus is a no-op.
     }
   }
 
-  function show(view: keyof typeof views): void {
-    current = view;
-    main.classList.toggle('aa-hidden', view !== 'main');
-    settingsView.classList.toggle('aa-hidden', view !== 'settings');
-    pause.classList.toggle('aa-hidden', view !== 'pause');
-    focusFirst(views[view]);
+  function visibleView(): HTMLElement {
+    if (life.surface === 'paused-match') return pause;
+    if (life.surface === 'deploying') return deploying;
+    if (life.surface === 'error') return errorView;
+    return main;
+  }
+
+  function send(e: MenuLifecycleEvent): void {
+    const before = life;
+    life = reduceMenuLifecycle(life, e);
+    if (life.surface !== before.surface) panel = 'none';
+    render();
   }
 
   function lockPointer(): void {
+    send({ type: 'pointer-request', source: 'match-start' });
     try {
       const p = canvas?.requestPointerLock() as unknown as Promise<void> | undefined;
-      p?.catch?.(() => {});
+      // A rejected request is a REAL state, not an exception to swallow: the
+      // browser refuses within a second of an Escape. `denied` keeps the game
+      // running with a free mouse instead of opening a pause nobody asked for.
+      p?.then?.(
+        () => send({ type: 'pointer-acquired' }),
+        () => send({ type: 'pointer-rejected' }),
+      );
+      // No optimistic 'acquired' when the call returns nothing. `pointerlockchange`
+      // is the only authority on whether the lock exists, and assuming success
+      // here is what would let a headless browser — which never locks — reach the
+      // `locked` phase and then open a pause menu over the capture.
     } catch {
-      // Headless / denied — game still runs, mouse just stays free.
+      send({ type: 'pointer-rejected' });
     }
   }
 
-  function visibleControls(): HTMLElement[] {
-    const view = views[current];
-    const out: HTMLElement[] = [];
-    for (const t of Array.from(view.querySelectorAll('button, input, select'))) {
-      const h = t as HTMLElement;
-      if (h.getAttribute('aria-hidden') === 'true') continue;
-      out.push(h);
-    }
-    return out;
-  }
-
-  // Arrow-key navigation inside the visible view. Native controls keep their
-  // own keys: when focus sits in a slider or select, arrows adjust the value
-  // and only Escape steps back.
+  // ---- keyboard: arrows move between controls, Escape steps back ----------
   overlay.addEventListener('keydown', (e) => {
-    if (overlay.style.display === 'none') return;
+    if (!menuVisible(life)) return;
     const target = e.target as HTMLElement | null;
-    const inField =
-      !!target && (target.tagName === 'INPUT' || target.tagName === 'SELECT');
+    const inField = !!target && (target.tagName === 'INPUT' || target.tagName === 'SELECT');
     if (e.key === 'Escape') {
       e.stopPropagation();
-      if (current === 'settings') show(settingsReturn);
-      else if (current === 'pause' && hasStarted) {
-        overlay.style.display = 'none';
+      if (panel === 'settings') {
+        panel = 'none';
+        render();
+      } else if (life.surface === 'paused-match') {
+        send({ type: 'resume' });
         lockPointer();
       }
       return;
@@ -424,7 +278,8 @@ export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWo
     if (inField) return;
     const order = ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End'];
     if (!order.includes(e.key)) return;
-    const ctrls = visibleControls();
+    const host = panel === 'settings' ? settingsPanel.root : visibleView();
+    const ctrls = Array.from(host.querySelectorAll('button, input, select')) as HTMLElement[];
     if (ctrls.length === 0) return;
     e.preventDefault();
     e.stopPropagation();
@@ -432,11 +287,8 @@ export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWo
     let i = ctrls.indexOf(active ?? ctrls[0]);
     if (e.key === 'Home') i = 0;
     else if (e.key === 'End') i = ctrls.length - 1;
-    else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-      i = i < 0 ? 0 : (i + 1) % ctrls.length;
-    } else {
-      i = i < 0 ? ctrls.length - 1 : (i - 1 + ctrls.length) % ctrls.length;
-    }
+    else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') i = i < 0 ? 0 : (i + 1) % ctrls.length;
+    else i = i < 0 ? ctrls.length - 1 : (i - 1 + ctrls.length) % ctrls.length;
     try {
       ctrls[i].focus();
     } catch {
@@ -444,48 +296,58 @@ export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWo
     }
   });
 
+  const openSettings = (): void => {
+    panel = 'settings';
+    settings = loadSettings();
+    applySettings(settings, player, world, hud);
+    settingsPanel.refresh();
+    render();
+  };
+
   playBtn.addEventListener('click', () => {
-    hasStarted = true;
-    overlay.style.display = 'none';
+    send({ type: 'match-start' });
+    send({ type: 'match-ready' });
     lockPointer();
   });
-  settingsBtn.addEventListener('click', () => {
-    settingsReturn = hasStarted ? 'pause' : 'main';
-    // Refresh controls from storage in case another tab changed them.
-    settings = loadSettings();
-    applySettings(settings, player, world);
-    for (const r of refreshers) r();
-    show('settings');
+  settingsBtn.addEventListener('click', openSettings);
+  pauseSettingsBtn.addEventListener('click', openSettings);
+  backBtn.addEventListener('click', () => {
+    panel = 'none';
+    render();
   });
-  backBtn.addEventListener('click', () => show(settingsReturn));
   resetBtn.addEventListener('click', () => {
     settings = resetSettings();
     saveSettings(settings);
-    applySettings(settings, player, world);
-    for (const r of refreshers) r();
+    applySettings(settings, player, world, hud);
+    settingsPanel.refresh();
   });
   resumeBtn.addEventListener('click', () => {
-    overlay.style.display = 'none';
+    send({ type: 'resume' });
     lockPointer();
   });
-  pauseSettingsBtn.addEventListener('click', () => {
-    settingsReturn = 'pause';
-    settings = loadSettings();
-    applySettings(settings, player, world);
-    for (const r of refreshers) r();
-    show('settings');
+
+  // Pointer lock and focus are the two truths the reducer cannot see.
+  document.addEventListener('pointerlockchange', () => {
+    if (document.pointerLockElement) {
+      send({ type: 'pointer-acquired' });
+      return;
+    }
+    send({ type: 'pointer-lost', focusTransition: !document.hasFocus(), pauseAllowed: true });
+  });
+  addEventListener('blur', () => send({ type: 'focus-lost' }));
+  addEventListener('focus', () => send({ type: 'focus-gained' }));
+
+  // main.ts owns #start's own click-to-dismiss. Mirror it into the reducer so
+  // the two never disagree about whether the menu is up.
+  overlay.addEventListener('click', (e) => {
+    if (e.target !== overlay) return;
+    if (life.surface === 'pre-match') {
+      send({ type: 'match-start' });
+      send({ type: 'match-ready' });
+    } else if (life.surface === 'paused-match') {
+      send({ type: 'resume' });
+    }
   });
 
-  // Pause on Esc: the browser exits pointer lock, which fires
-  // pointerlockchange. Show the pause view (still inside #start) only after a
-  // real play session has begun and the overlay is currently hidden — the
-  // first-load menu is not a pause.
-  document.addEventListener('pointerlockchange', () => {
-    if (document.pointerLockElement) return;
-    if (!hasStarted) return;
-    if (overlay.style.display !== 'none') return;
-    settingsReturn = 'pause';
-    show('pause');
-    overlay.style.display = 'flex';
-  });
+  render();
 }

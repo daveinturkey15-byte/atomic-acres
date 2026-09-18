@@ -65,12 +65,49 @@ interface WeaponState {
   shotsFired: number;
 }
 
+/**
+ * One trigger pull, as the shooter saw it.
+ *
+ * WHAT THIS IS NOT: a damage number. The controller still raycasts, still
+ * draws a tracer and still sparks an impact, because those are PRESENTATION
+ * and must happen on the frame the trigger went down. What it no longer does
+ * is decide anything: the claim goes to `game/host.ts`, which rewinds every
+ * actor to `time`, runs the eight admission rules and resolves the damage.
+ * A client that resolves its own damage is the architecture IMPORT-PLAN §2
+ * exists to forbid — and the reason the old project could not tell a hit from
+ * a wish.
+ *
+ * `direction` is the AIM AXIS (camera forward, recoil included), not a pellet:
+ * the spread cone is presentation too, and the host resolves one ray. For the
+ * shotgun that means the host tests the centre of the pattern; a per-pellet
+ * wire claim is the upgrade, and it is not made here.
+ *
+ * `time` is the controller's own monotonic stamp (`performance.now()` domain),
+ * taken at the last `update`. At 60 fps that is at most ~17 ms behind the
+ * click, well inside the host's 250 ms fire-age ceiling, and it is stable —
+ * reading the clock inside the fire path would make a burst's spacing depend
+ * on when the browser felt like delivering the mouse event.
+ *
+ * `life` is deliberately ABSENT. The controller does not know the host's life
+ * epoch and must not guess one; the integrator stamps it (`game/session.ts`).
+ */
+export interface ShotClaim {
+  readonly origin: { readonly x: number; readonly y: number; readonly z: number };
+  readonly direction: { readonly x: number; readonly y: number; readonly z: number };
+  /** Per-controller monotonic, from 1. The host's exactly-once window keys on it. */
+  readonly seq: number;
+  readonly weaponId: string;
+  readonly time: number;
+}
+
 interface ControllerOpts {
   camera: THREE.PerspectiveCamera;
   scene: THREE.Scene;
   mat: MaterialLibrary;
   targets: THREE.Object3D[];
   onHud: (line: string) => void;
+  /** Optional: absent means nobody is listening, and the gun is a toy again. */
+  onShot?: (claim: ShotClaim) => void;
 }
 
 
@@ -115,6 +152,11 @@ export class WeaponsController {
   private recoilHead = 0;
   private recoilTotal = 0;
 
+  private onShot: ((claim: ShotClaim) => void) | null = null;
+  /** Monotonic claim sequence, and the clock the claim is stamped with. */
+  private shotSeq = 0;
+  private nowMs = 0;
+
   private shotsHit = 0;
   private hitSeq = 0;
   private lastDamage = 0;
@@ -137,6 +179,7 @@ export class WeaponsController {
     this.camera = opts.camera;
     this.targets = opts.targets;
     this.onHud = opts.onHud;
+    this.onShot = opts.onShot ?? null;
 
     this.weapons = WEAPONS.map((def) => {
       let rig: ViewmodelRig;
@@ -214,6 +257,9 @@ export class WeaponsController {
   update(dt: number, time: number, move: MoveSample): void {
     if (!this.visible) return;
     dt = Math.min(dt, MAX_DT);
+    // The stamp every shot claim this frame carries. `time` arrives in seconds
+    // (main.ts passes `performance.now() / 1000`); the wire is milliseconds.
+    this.nowMs = time * 1000;
     const cur = this.weapons[this.active];
     const def = cur.def;
     this.speed = move.speed;
@@ -584,6 +630,22 @@ export class WeaponsController {
     }
     cur.mag -= 1;
     cur.shotsFired += 1;
+
+    // THE CLAIM, authored before the presentation raycast below so that a
+    // throw anywhere in the effects path cannot swallow the shot the host is
+    // meant to resolve. Camera forward carries the recoil already applied this
+    // frame, which is what the player was actually pointing at.
+    if (this.onShot !== null) {
+      this.tmpDir.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+      const c = this.camera.position;
+      this.onShot({
+        origin: { x: c.x, y: c.y, z: c.z },
+        direction: { x: this.tmpDir.x, y: this.tmpDir.y, z: this.tmpDir.z },
+        seq: ++this.shotSeq,
+        weaponId: def.id,
+        time: this.nowMs,
+      });
+    }
 
     // Spread cone: base (hip<->ADS) + movement + accumulated bloom, crouch bonus.
     cur.bloom = Math.min(def.spread.bloomMax, cur.bloom + def.spread.bloom);

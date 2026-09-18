@@ -102,7 +102,7 @@
   border: 1px solid rgba(255, 255, 255, 0.16);
   padding: 8px;
   cursor: pointer;
-  width: 216px;
+  width: 148px;
 }
 
 #start .aa-map:hover { background: rgba(255, 255, 255, 0.11); }
@@ -112,10 +112,13 @@
   box-shadow: 0 0 0 1px #ff8a5c;
 }
 
+/* Portrait, and the same uniform projection the live minimap uses. The old
+ * 200x120 landscape thumb only fitted by scaling x and z differently, so the
+ * map-select picture was a shape the arena is not. */
 #start .aa-thumb {
   display: block;
-  width: 200px;
-  height: 120px;
+  width: 132px;
+  height: 200px;
 }
 
 #start .aa-mapname {
@@ -193,4 +196,28 @@
   color: #1b2430;
   background: #d8b23a;
   border-color: #d8b23a;
+}
+
+/* --- settings: accessibility group + checkbox rows --- */
+#start .aa-h3 {
+  margin: 14px 0 2px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(232, 238, 247, 0.6);
+}
+#start .aa-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+#start .aa-setting input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #d8b23a;
+}
+#start .aa-setting input[type="checkbox"]:focus-visible {
+  outline: 2px solid #d8b23a;
+  outline-offset: 2px;
 }
