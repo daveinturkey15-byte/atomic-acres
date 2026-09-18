@@ -18,6 +18,7 @@ import { buildStandardSkeleton } from './skeleton';
 import { buildClipLibrary, type ClipLibrary, type ClipName } from './clips';
 import { CharacterRig, type RigInput } from './blend';
 import { dressProcedural, type CharacterDress, type CharacterMesh } from './mesh';
+import { installAnimQA } from './anim-qa';
 
 export interface CharacterHandle {
   rig: CharacterRig;
@@ -47,6 +48,11 @@ export class CharacterSystem {
     private readonly dress: CharacterDress,
   ) {
     this.library = buildClipLibrary();
+    // Animation-lane QA surface (window.__NTANIM). Additive and read-only with
+    // respect to the game: it exists because LICENCES-ANIMATION obligation 6
+    // requires clips to be photographed IN THE GAME from four camera views, and
+    // the six figures main.ts spawns are otherwise unreachable from a harness.
+    try { installAnimQA(this); } catch { /* QA must never break a spawn */ }
   }
 
   get clipNames(): ClipName[] {

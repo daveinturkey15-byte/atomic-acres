@@ -1,0 +1,149 @@
+{
+  "_comment": [
+    "The clip vocabulary the game needs, written for a motion diffusion model.",
+    "Prompts are short, physical and present-tense; Kimodo responds to verbs and body",
+    "parts, not to cinematic adjectives. 'loopable' is a hint, not a guarantee - the",
+    "trimmer in retarget-soma.mjs is what actually makes a cycle loop.",
+    "",
+    "frames are at 30 fps. Locomotion clips are deliberately LONGER than one gait",
+    "cycle so a whole cycle can be cut out of the steady middle and the ragged",
+    "first/last half-second discarded.",
+    "",
+    "calib-right-arm is not a game clip. It is the handedness falsifier: SOMA's rest",
+    "skeleton is mirrored relative to glTF (see scripts/animation/soma30.mjs), and the",
+    "only honest way to prove the correction is to ask for a named side and check which",
+    "of OUR bones ends up raised."
+  ],
+  "generator": {
+    "motionModel": "kimodo-soma-rp-v1.1-f32.gguf",
+    "textBundle": "llm2vec-text-bundle",
+    "fps": 30,
+    "steps": 50,
+    "device": "cpu"
+  },
+  "prompts": [
+    {
+      "id": "calib-right-arm",
+      "frames": 75,
+      "seed": 4001,
+      "loop": false,
+      "text": "a person raises their right arm straight up above their head and holds it there, left arm hanging at their side"
+    },
+    {
+      "id": "idle",
+      "frames": 120,
+      "seed": 1001,
+      "loop": true,
+      "text": "a soldier stands still at ease holding a rifle across his chest, weight shifting slightly, small natural sway, breathing"
+    },
+    {
+      "id": "walk",
+      "frames": 120,
+      "seed": 1102,
+      "loop": true,
+      "text": "a soldier walks forward slowly and casually at an unhurried stroll, short relaxed steps, arms swinging gently, loopable",
+      "note": "second seed. The first (1002, 'steady relaxed pace') measured 2.14 m/s at the planted foot - a jog, not a walk, and the blend tree would have played it at half timeScale for a 1.1 m/s character."
+    },
+    {
+      "id": "run",
+      "frames": 100,
+      "seed": 1003,
+      "loop": true,
+      "text": "a soldier jogs forward at a steady pace holding a rifle at the ready, elbows bent, even strides, loopable"
+    },
+    {
+      "id": "sprint",
+      "frames": 100,
+      "seed": 1104,
+      "loop": true,
+      "text": "a soldier sprints flat out at top speed, very long powerful bounding strides, both feet leaving the ground, arms driving hard, body low and forward",
+      "note": "second seed. The first (1004) measured 2.90 m/s, inside the blend tree's RUN band (2.3-4.1); a sprint clip must sit above 4.1 to ever be selected on its own terms."
+    },
+    {
+      "id": "crouch-idle",
+      "frames": 120,
+      "seed": 1105,
+      "loop": true,
+      "text": "a soldier holds a half-kneeling combat crouch with his back straight and chest up, knees bent, rifle shouldered, steady",
+      "note": "second seed. The first (1005) put the pelvis at 0.288 m - sitting on the heels, head at 0.89 m. A combat crouch keeps the torso upright, so the prompt now says so instead of saying 'low'."
+    },
+    {
+      "id": "crouch-walk",
+      "frames": 120,
+      "seed": 1106,
+      "loop": true,
+      "text": "a soldier advances in a combat crouch, back straight and chest up, knees bent, taking short steady steps, rifle shouldered, loopable",
+      "note": "second seed. The first (1006, 'torso low') produced a duck-walk: pelvis 0.52 m with the torso near horizontal. Photographed at captures/anim/crouchwalk-side.png before the re-roll."
+    },
+    {
+      "id": "aim-rifle-idle",
+      "frames": 120,
+      "seed": 1007,
+      "loop": true,
+      "text": "a soldier stands still aiming a rifle straight ahead with both hands, elbows tucked in, holding steady"
+    },
+    {
+      "id": "aim-rifle-walk",
+      "frames": 120,
+      "seed": 1008,
+      "loop": true,
+      "text": "a soldier walks forward slowly while aiming a rifle straight ahead with both hands, upper body steady, loopable"
+    },
+    {
+      "id": "jump",
+      "frames": 75,
+      "seed": 2001,
+      "loop": false,
+      "text": "a person crouches and then jumps straight up off both feet, tucking the knees at the top"
+    },
+    {
+      "id": "land",
+      "frames": 60,
+      "seed": 2002,
+      "loop": false,
+      "text": "a person lands from a drop, absorbing the impact by bending both knees deeply, then straightens back up"
+    },
+    {
+      "id": "turn-left",
+      "frames": 75,
+      "seed": 2003,
+      "loop": false,
+      "text": "a person standing still pivots ninety degrees to their left on the spot, feet stepping around"
+    },
+    {
+      "id": "turn-right",
+      "frames": 75,
+      "seed": 2004,
+      "loop": false,
+      "text": "a person standing still pivots ninety degrees to their right on the spot, feet stepping around"
+    },
+    {
+      "id": "fire-recoil",
+      "frames": 45,
+      "seed": 2005,
+      "loop": false,
+      "text": "a soldier firing a rifle absorbs the recoil, the shoulders and head jolting back sharply and then resettling"
+    },
+    {
+      "id": "reload",
+      "frames": 100,
+      "seed": 2006,
+      "loop": false,
+      "text": "a soldier lowers a rifle slightly, brings his right hand down to his belt and up to the weapon, then raises the rifle again"
+    },
+    {
+      "id": "hit-react",
+      "frames": 60,
+      "seed": 2007,
+      "loop": false,
+      "text": "a person is struck hard in the chest and staggers backward, torso recoiling, arms flinching"
+    },
+    {
+      "id": "death",
+      "frames": 110,
+      "seed": 2008,
+      "loop": false,
+      "text": "a person is shot, buckles at the knees and collapses forward onto the ground, ending face down and motionless"
+    }
+  ]
+}

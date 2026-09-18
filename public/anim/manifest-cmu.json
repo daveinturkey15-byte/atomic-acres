@@ -1,0 +1,110 @@
+{
+  "fetched": "2026-09-18",
+  "fpsOut": 30,
+  "clips": {
+    "walk": {
+      "file": "walk.anim.json",
+      "desc": "CMU 07_01 walk",
+      "url": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/007/07_01.bvh",
+      "sha": "f8d82ea6ed1aab0c",
+      "fpsIn": 120,
+      "frames": 80,
+      "trim": [
+        1,
+        316
+      ],
+      "metresPerUnit": 0.054755
+    },
+    "run": {
+      "file": "run.anim.json",
+      "desc": "CMU 09_01 run",
+      "url": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/009/09_01.bvh",
+      "sha": "90641ccca814b9d8",
+      "fpsIn": 120,
+      "frames": 38,
+      "trim": [
+        1,
+        148
+      ],
+      "metresPerUnit": 0.053002
+    },
+    "sprint": {
+      "file": "sprint.anim.json",
+      "desc": "CMU 09_05 run (fast)",
+      "url": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/009/09_05.bvh",
+      "sha": "d2841178b0306566",
+      "fpsIn": 120,
+      "frames": 37,
+      "trim": [
+        1,
+        143
+      ],
+      "metresPerUnit": 0.053046
+    },
+    "crouch-walk": {
+      "file": "crouch-walk.anim.json",
+      "desc": "CMU 136_09 walk crouched",
+      "url": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/136/136_09.bvh",
+      "sha": "f958ad4cfc516b02",
+      "fpsIn": 120,
+      "frames": 263,
+      "trim": [
+        83,
+        1130
+      ],
+      "metresPerUnit": 0.043501
+    },
+    "jump": {
+      "file": "jump.anim.json",
+      "desc": "CMU 16_05 forward jump",
+      "url": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/016/16_05.bvh",
+      "sha": "a68f6c5e0db8ac7d",
+      "fpsIn": 120,
+      "frames": 75,
+      "trim": [
+        1,
+        295
+      ],
+      "metresPerUnit": 0.051982
+    },
+    "turn-left": {
+      "file": "turn-left.anim.json",
+      "desc": "CMU 16_41 run/jog 90-degree left turn",
+      "url": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/016/16_41.bvh",
+      "sha": "4a41df6f5c06ae6c",
+      "fpsIn": 120,
+      "frames": 41,
+      "trim": [
+        1,
+        160
+      ],
+      "metresPerUnit": 0.055527
+    },
+    "turn-right": {
+      "file": "turn-right.anim.json",
+      "desc": "CMU 16_43 run/jog 90-degree right turn",
+      "url": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/016/16_43.bvh",
+      "sha": "dd4efb8fe3df03f5",
+      "fpsIn": 120,
+      "frames": 54,
+      "trim": [
+        1,
+        210
+      ],
+      "metresPerUnit": 0.05466
+    },
+    "pirouette": {
+      "file": "pirouette.anim.json",
+      "desc": "three.js sample - loader proof",
+      "url": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/bvh/pirouette.bvh",
+      "sha": "bed46806d1c1e03d",
+      "fpsIn": 120,
+      "frames": 149,
+      "trim": [
+        0,
+        591
+      ],
+      "metresPerUnit": 0.011431
+    }
+  }
+}

@@ -16,6 +16,7 @@
  */
 import * as THREE from 'three';
 import { REST_OFFSETS, type StandardBoneName } from './skeleton';
+import { bakedClip } from './kimodo-clips';
 
 /**
  * Mixer position tracks REPLACE the bone position, so every Hips Y key in
@@ -438,6 +439,26 @@ export function buildClipLibrary(): Record<ClipName, ClipSpec> {
     }, [0, -0.35, -0.72]),
     speed: 0, stride: 0, loop: false,
   };
+
+  // ---- baked motion, where it exists.
+  //
+  // Everything above is the procedural floor: it is complete, it needs no
+  // network, and it is what ships if the bakery is missing. `loadBakedClips()`
+  // (kimodo-clips.ts) preloads the retargeted glTF from public/anim and this
+  // loop substitutes per NAME, so a set with four good clips replaces four and
+  // leaves the other eleven alone. There is no all-or-nothing switch on
+  // purpose - a partial bake is the normal state of this lane, and a clip that
+  // did not survive its two seeds must degrade to the authored one rather than
+  // take the whole library with it.
+  //
+  // `speed`/`stride` come from the glb, not from here: the retargeter measured
+  // them off the planted foot, and blend.ts divides by that number to set
+  // timeScale. Overriding a clip without its speed is what makes a figure
+  // skate.
+  for (const name of Object.keys(lib) as ClipName[]) {
+    const baked = bakedClip(name);
+    if (baked) lib[name] = baked;
+  }
 
   return lib;
 }
