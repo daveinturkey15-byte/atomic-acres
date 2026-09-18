@@ -162,3 +162,35 @@
   border: 1px solid rgba(255, 255, 255, 0.22);
   padding: 6px 10px;
 }
+
+/* --- keyboard: every control shows where focus is --- */
+#start .aa-btn:focus-visible,
+#start .aa-map:focus-visible,
+#start .aa-setting input[type="range"]:focus-visible,
+#start .aa-select:focus-visible {
+  outline: 2px solid #d8b23a;
+  outline-offset: 2px;
+}
+#start .aa-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* --- prompt caps: text owned by the glyph scheme, never layout --- */
+#start .aa-hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(232, 238, 247, 0.7);
+}
+#start .aa-hint kbd {
+  font: 600 11px/1 ui-monospace, Menlo, Consolas, monospace;
+  color: #ffd9a8;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-bottom-width: 2px;
+  padding: 2px 6px;
+}
+#start .aa-hint kbd.pad-glyph {
+  color: #1b2430;
+  background: #d8b23a;
+  border-color: #d8b23a;
+}

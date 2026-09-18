@@ -1,0 +1,155 @@
+/* Nuketown 2025 — multiplayer lobby panel.
+ *
+ * Lives inside #hud so the capture harness hides it with everything else
+ * (capture.mjs sets #hud display:none before every shot). #hud itself is
+ * pointer-events:none; this panel re-enables events on its own nodes only.
+ * Class prefix nt- throughout; nothing here touches HUD-lane selectors.
+ */
+
+#hud .nt-lobby-btn {
+  pointer-events: auto;
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 6;
+  font: 12px ui-monospace, Menlo, Consolas, monospace;
+  color: #cfe3ff;
+  background: rgba(10, 16, 24, 0.82);
+  border: 1px solid #3a4a5f;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+#hud .nt-lobby-btn:hover {
+  border-color: #ffb37a;
+  color: #ffd9a8;
+}
+
+#hud .nt-lobby {
+  pointer-events: auto;
+  position: fixed;
+  right: 12px;
+  bottom: 48px;
+  width: 264px;
+  z-index: 6;
+  font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace;
+  color: #cfe3ff;
+  background: rgba(8, 13, 20, 0.92);
+  border: 1px solid #3a4a5f;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+#hud .nt-lobby-hidden {
+  display: none;
+}
+
+#hud .nt-lobby h2 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: #ffb37a;
+}
+
+#hud .nt-lobby .nt-row {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+#hud .nt-lobby input[type="text"] {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: #eaf4ff;
+  background: #101823;
+  border: 1px solid #3a4a5f;
+  border-radius: 4px;
+  padding: 4px 6px;
+  text-transform: uppercase;
+}
+
+#hud .nt-lobby input[type="text"].nt-name {
+  text-transform: none;
+}
+
+#hud .nt-lobby button {
+  font: inherit;
+  color: #eaf4ff;
+  background: #1b2940;
+  border: 1px solid #3a4a5f;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+#hud .nt-lobby button:hover:not(:disabled) {
+  border-color: #ffb37a;
+}
+
+#hud .nt-lobby button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+#hud .nt-lobby .nt-code {
+  font-size: 20px;
+  letter-spacing: 4px;
+  color: #ffd9a8;
+  text-align: center;
+  margin: 4px 0;
+}
+
+#hud .nt-lobby ul {
+  list-style: none;
+  margin: 6px 0;
+  padding: 0;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+#hud .nt-lobby li {
+  padding: 2px 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#hud .nt-lobby li.nt-me {
+  color: #ffd9a8;
+}
+
+#hud .nt-lobby .nt-ready {
+  color: #8fd694;
+}
+
+#hud .nt-lobby .nt-notready {
+  color: #7a8a9d;
+}
+
+#hud .nt-lobby .nt-status {
+  min-height: 18px;
+  color: #9fb6cf;
+  word-break: break-word;
+}
+
+#hud .nt-lobby .nt-status.nt-error {
+  color: #e08a8a;
+}
+
+#hud .nt-lobby .nt-net {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #243144;
+  color: #7a8a9d;
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+
+#hud .nt-lobby label.nt-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}

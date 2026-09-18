@@ -14,6 +14,8 @@ import { STATIONS, type Station } from './core/stations';
 import { WeaponsController } from './weapons/controller';
 import { initUI } from './ui/index';
 import { wireNetcode } from './net/wire';
+import { createCharacterSystem } from './characters';
+import { PAL } from './core/palette';
 
 import { buildGround } from './build/ground';
 import { buildOrangeHouse } from './build/orange-house';
@@ -83,6 +85,22 @@ for (const [name, build] of BUILDERS) {
   };
 }
 player.setColliders(colliders);
+
+// Characters lane, wired per the contract documented in src/characters/index.ts.
+// Materials are ctx.mat singletons: painted() with a new uniform set is fine, a new
+// program is not. Placed on open ground the traverse routes already prove walkable,
+// so a figure cannot spawn inside a wall.
+const characters = createCharacterSystem(world.scene, {
+  skin: mat.painted(PAL.mannequin, 0.72, 0),
+  cloth: mat.painted(PAL.signTeal, 0.62, 0.04),
+  dark: mat.painted(PAL.truckCab, 0.8, 0),
+});
+for (const [cx, cz, cyaw] of [
+  [-6.5, -9.0, 0.6], [6.0, -6.0, -1.2], [-8.0, 6.5, 2.4],
+  [5.5, 9.0, 3.0], [0.0, -12.5, 1.5], [-2.0, 12.0, -0.4],
+] as const) {
+  characters.spawn(cx, cz, cyaw);
+}
 player.teleport(SPAWN_A.x, 0, SPAWN_A.z, SPAWN_A.yaw);
 const ammoDiv = document.createElement('div');
 const weapons = new WeaponsController({
@@ -196,6 +214,7 @@ function frame(): void {
     // comment and nobody read it. That single missing call is most of why the
     // build looked flat and plastic: no contact darkening anywhere, so every
     // object read as pasted onto the ground rather than standing on it.
+    characters.update(dt, world.camera.position);
     world.render();
     world.renderer.clearDepth();
     const ac = world.renderer.autoClear;

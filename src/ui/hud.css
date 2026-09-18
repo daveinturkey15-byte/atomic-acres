@@ -1,5 +1,12 @@
-/* NUKETOWN 2025 - HUD styles. BO2-ish: thin sans, tight tracking,
-   high-contrast white with soft shadow, one restrained amber accent. */
+/* Atomic Acres HUD — BO2 composition (bottom-corner heavy, thin condensed
+ * type, desaturated with one amber accent), our own palette: accent, danger
+ * and ink arrive as --aa-* custom properties set from PAL by initHud so the
+ * UI and the world agree. Fallbacks match those PAL values.
+ *
+ * Motion rule: transform and opacity only. The health fill scales (never
+ * width), the damage arc rotates (never top/left), hitmarker and vignette
+ * fade. will-change sits on the three animating elements and nowhere else.
+ */
 
 /* debug gate: hides ONLY the pre-existing debug divs tagged .hud-debug */
 #hud.hud-debug-hidden .hud-debug {
@@ -9,7 +16,7 @@
 #hud .hud-own {
   font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
   letter-spacing: 0.06em;
-  color: #f2f6fb;
+  color: var(--aa-ink, #f0ece2);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
 }
 
@@ -50,7 +57,27 @@
   height: 2px; width: 7px;
 }
 
-/* --- ammo bottom-right --- */
+/* --- weapon block + ammo bottom-right --- */
+#hud .hud-weapon {
+  position: fixed;
+  right: 22px;
+  bottom: 56px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 15px;
+  opacity: 0.9;
+}
+#hud .hud-weapon-name {
+  text-transform: uppercase;
+}
+#hud .hud-reload {
+  font-size: 12px;
+  color: var(--aa-accent, #d8b23a);
+}
+#hud .hud-reload-hidden {
+  display: none;
+}
 #hud .hud-ammo {
   position: fixed;
   right: 22px;
@@ -67,10 +94,10 @@
   opacity: 0.6;
 }
 #hud .hud-ammo.hud-low .hud-mag {
-  color: #ff5d4d;
+  color: var(--aa-danger, #b8322e);
 }
 
-/* --- health bottom-left --- */
+/* --- health bottom-left: fill scales on the compositor, never width --- */
 #hud .hud-health {
   position: fixed;
   left: 22px;
@@ -88,22 +115,25 @@
 #hud .hud-hp-fill {
   height: 100%;
   width: 100%;
-  background: #f2f6fb;
+  background: var(--aa-ink, #f0ece2);
+  transform: scaleX(1);
+  transform-origin: left center;
 }
 #hud .hud-health.hud-low .hud-hp-fill {
-  background: #ff5d4d;
+  background: var(--aa-danger, #b8322e);
 }
 #hud .hud-hp-label {
   font-size: 22px;
   font-weight: 600;
 }
 
-/* --- damage vignette --- */
+/* --- damage vignette (fullscreen fade, opacity only) --- */
 #hud .hud-vignette {
   position: fixed;
   inset: 0;
   pointer-events: none;
   opacity: 0;
+  will-change: opacity;
   background: radial-gradient(ellipse at center, transparent 52%, rgba(200, 20, 10, 0.55) 100%);
 }
 #hud .hud-vignette.hud-flash {
@@ -114,7 +144,31 @@
   100% { opacity: 0; }
 }
 
-/* --- hitmarker: centered X --- */
+/* --- damage-direction arc: a ring segment rotated into place --- */
+#hud .hud-dmgdir {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 110px;
+  height: 110px;
+  margin: -55px 0 0 -55px;
+  pointer-events: none;
+  opacity: 1;
+  will-change: transform, opacity;
+}
+#hud .hud-dmgdir-hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+#hud .hud-dmgdir-arc {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 6px solid transparent;
+  border-top-color: var(--aa-danger, #b8322e);
+}
+
+/* --- hitmarker: centered X, opacity only --- */
 #hud .hud-hitmarker {
   position: fixed;
   left: 50%;
@@ -123,6 +177,7 @@
   height: 22px;
   margin: -11px 0 0 -11px;
   opacity: 0;
+  will-change: opacity;
 }
 #hud .hud-hitmarker.hm-show {
   opacity: 1;
@@ -141,11 +196,11 @@
 #hud .hud-hitmarker .hm-2 { transform: rotate(225deg) translateY(-7px); }
 #hud .hud-hitmarker .hm-3 { transform: rotate(315deg) translateY(-7px); }
 #hud .hud-hitmarker.hm-kill .hm-a {
-  background: #ffd25c;
+  background: var(--aa-accent, #d8b23a);
   height: 10px;
 }
 
-/* --- killfeed top-right --- */
+/* --- killfeed top-right: pooled rows, shown/hidden by class --- */
 #hud .hud-killfeed {
   position: fixed;
   right: 22px;
@@ -158,8 +213,24 @@
 }
 #hud .hud-feed-row {
   background: rgba(0, 0, 0, 0.55);
-  border-right: 2px solid #ffd25c;
+  border-right: 2px solid var(--aa-accent, #d8b23a);
   padding: 2px 8px;
+}
+#hud .hud-feed-row.hud-feed-hidden {
+  display: none;
+}
+
+/* --- score / streak line top-center: hidden until a backend sets it --- */
+#hud .hud-score-line {
+  position: fixed;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  font-size: 14px;
+  opacity: 0.9;
+}
+#hud .hud-score-line-hidden {
+  display: none;
 }
 
 /* --- minimap top-left --- */
@@ -197,7 +268,7 @@
 }
 #hud .hud-score-title {
   font-size: 12px;
-  color: #ffd25c;
+  color: var(--aa-accent, #d8b23a);
   margin-bottom: 6px;
 }
 #hud .hud-score-row {
@@ -205,4 +276,17 @@
   justify-content: space-between;
   gap: 24px;
   padding: 2px 0;
+}
+
+/* Be polite when the OS asks for calm: event flashes go instant. */
+@media (prefers-reduced-motion: reduce) {
+  #hud .hud-vignette.hud-flash {
+    animation: none;
+  }
+  #hud .hud-dmgdir {
+    will-change: auto;
+  }
+  #hud .hud-hitmarker {
+    will-change: auto;
+  }
 }

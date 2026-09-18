@@ -2,44 +2,55 @@
  * Atomic Acres — first-person weapon lane controller (fan project inspired by
  * BO2-era arcade shooters, not a clone or port).
  *
- * Owns two viewmodel rigs (built by ./viewmodel), one transient pool
- * (./effects), and a private overlay scene rendered on top of the world.
+ * Owns five viewmodel rigs (built by ./viewmodel from ./catalog), one transient
+ * pool (./effects), and a private overlay scene rendered on top of the world.
  * After construction only visible flags, transforms, FOV, and preallocated
  * pool slots change: no new materials/geometries/lights, no scene add/remove.
+ *
+ * The BO2 feel, concretely:
+ *  - hitscan, one ray per pellet from the camera, through a spread cone that
+ *    grows while moving/firing (bloom) and shrinks while still/ADS/crouched;
+ *  - two-part recoil: a deterministic per-weapon climb pattern plus a bounded
+ *    random yaw term, split into a fast camera kick and a slow climb that
+ *    recovers toward the original aim when fire stops;
+ *  - ADS on a per-weapon timer (200–280 ms) driving FOV, spread, viewmodel
+ *    pose and the exposed moveScale together.
+ *
+ * Hot-path allocations: three's Raycaster owns its result array per ray —
+ * everything else (spread, recoil, effects, logging rings) is pooled scratch.
+ * The 30 s soak in the lane report measures the heap cost of that choice.
  */
 import * as THREE from 'three';
 import { PAL } from '../core/palette';
 import type { MaterialLibrary } from '../core/materials';
-import type { MoveSample, WeaponSnapshot } from './types';
-export type { MoveSample, WeaponSnapshot } from './types';
-import { buildRifleViewmodel, buildPistolViewmodel, type ViewmodelRig } from './viewmodel';
+import type { GunsHudState, MoveSample, WeaponSnapshot } from './types';
+export type { GunsHudState, MoveSample, WeaponSnapshot } from './types';
+import { WEAPONS, damageAt, patternMult, type WeaponDef } from './catalog';
+import {
+  buildRifleViewmodel,
+  buildSmgViewmodel,
+  buildShotgunViewmodel,
+  buildSniperViewmodel,
+  buildPistolViewmodel,
+  type ViewmodelRig,
+} from './viewmodel';
 import { WeaponEffects } from './effects';
 
 const DEG = Math.PI / 180;
 const BASE_FOV = 72;
-const ADS_FOV = 55;
 const MISS_DISTANCE = 120;
 const MAX_DT = 0.05;
+const SPRINT_REF = 6.6;
+// Slow-climb accumulation caps so a full mag dumps into a learnable band.
+const CLIMB_CAP_PITCH = 5 * DEG;
+const CLIMB_CAP_YAW = 2 * DEG;
+// QA logging rings (construction-time only).
+const IMPACT_RING = 128;
+const RECOIL_RING = 256;
 
 // Camera-local mount points (viewmodel detail, not world placement).
 const HIP_OFFSET = new THREE.Vector3(0.22, -0.2, -0.45);
 const ADS_OFFSET = new THREE.Vector3(0, -0.148, -0.3);
-
-interface WeaponDef {
-  id: string;
-  name: string;
-  auto: boolean;
-  /** seconds between auto shots */
-  interval: number;
-  magSize: number;
-  startMag: number;
-  startReserve: number;
-  reloadTime: number;
-  hipSpread: number;
-  adsSpread: number;
-  recoilPitch: number;
-  recoilYaw: number;
-}
 
 interface WeaponState {
   def: WeaponDef;
@@ -48,6 +59,9 @@ interface WeaponState {
   reserve: number;
   reloading: boolean;
   reloadT: number;
+  reloadDur: number;
+  cool: number;
+  bloom: number;
   shotsFired: number;
 }
 
@@ -59,38 +73,11 @@ interface ControllerOpts {
   onHud: (line: string) => void;
 }
 
-const RIFLE: WeaponDef = {
-  id: 'longhorn',
-  name: 'Longhorn',
-  auto: true,
-  interval: 0.1, // 600 rpm
-  magSize: 30,
-  startMag: 30,
-  startReserve: 90,
-  reloadTime: 2.1,
-  hipSpread: 1.6 * DEG,
-  adsSpread: 0.35 * DEG,
-  recoilPitch: 0.35 * DEG,
-  recoilYaw: 0.09 * DEG,
-};
-
-const PISTOL: WeaponDef = {
-  id: 'duster',
-  name: 'Duster',
-  auto: false,
-  interval: 0,
-  magSize: 12,
-  startMag: 12,
-  startReserve: 36,
-  reloadTime: 1.4,
-  hipSpread: 1.2 * DEG,
-  adsSpread: 0.35 * DEG,
-  recoilPitch: 0.5 * DEG,
-  recoilYaw: 0.12 * DEG,
-};
 
 export class WeaponsController {
   readonly overlay: THREE.Scene;
+  /** Plain readable state for the HUD lane: one live object, mutated in place. */
+  readonly hud: GunsHudState;
 
   private camera: THREE.PerspectiveCamera;
   private targets: THREE.Object3D[];
@@ -102,14 +89,36 @@ export class WeaponsController {
   private visible = true;
   private triggerHeld = false;
   private adsOn = false;
-  private adsBlend = 0;
+  private adsT = 0;
   private autoTimer = 0;
   private sprintBlend = 0;
   private bobPhase = 0;
   private bobScale = 0;
-  private recoilPitch = 0;
-  private recoilYaw = 0;
+  private speed = 0;
+  private crouched = false;
+  // Two-part recoil: fast punch (decays ~11/s) + slow climb (per-weapon recovery).
+  private kickPitch = 0;
+  private kickYaw = 0;
+  private climbPitch = 0;
+  private climbYaw = 0;
   private lastHud = '';
+
+  // Deterministic shot randomness (mulberry32, seeded once — no Math.random
+  // anywhere in the fire path, so bursts are reproducible in the soak test).
+  private rngState = 0x9e3779b9;
+
+  // QA rings: impact points and per-shot recoil deltas, preallocated.
+  private impactPts: THREE.Vector3[] = [];
+  private impactHead = 0;
+  private impactTotal = 0;
+  private recoilLog = new Float32Array(RECOIL_RING * 2);
+  private recoilHead = 0;
+  private recoilTotal = 0;
+
+  private shotsHit = 0;
+  private hitSeq = 0;
+  private lastDamage = 0;
+  private lastDistance = 0;
 
   // Preallocated per-frame scratch: no allocation per shot or per frame.
   private raycaster = new THREE.Raycaster();
@@ -129,49 +138,109 @@ export class WeaponsController {
     this.targets = opts.targets;
     this.onHud = opts.onHud;
 
-    const rifleRig = buildRifleViewmodel(opts.mat);
-    const pistolRig = buildPistolViewmodel(opts.mat);
-    this.weapons = [
-      { def: RIFLE, rig: rifleRig, mag: RIFLE.startMag, reserve: RIFLE.startReserve, reloading: false, reloadT: 0, shotsFired: 0 },
-      { def: PISTOL, rig: pistolRig, mag: PISTOL.startMag, reserve: PISTOL.startReserve, reloading: false, reloadT: 0, shotsFired: 0 },
-    ];
+    this.weapons = WEAPONS.map((def) => {
+      let rig: ViewmodelRig;
+      if (def.id === 'rattler') rig = buildSmgViewmodel(opts.mat);
+      else if (def.id === 'coachman') rig = buildShotgunViewmodel(opts.mat);
+      else if (def.id === 'deadeye') rig = buildSniperViewmodel(opts.mat);
+      else if (def.id === 'duster') rig = buildPistolViewmodel(opts.mat);
+      else rig = buildRifleViewmodel(opts.mat);
+      return {
+        def,
+        rig,
+        mag: def.magSize,
+        reserve: def.startReserve,
+        reloading: false,
+        reloadT: 0,
+        reloadDur: def.reloadTime,
+        cool: 0,
+        bloom: 0,
+        shotsFired: 0,
+      };
+    });
+    for (let i = 0; i < IMPACT_RING; i++) this.impactPts.push(new THREE.Vector3());
 
     this.overlay = new THREE.Scene();
     const hemi = new THREE.HemisphereLight(PAL.skyHorizon, PAL.bounce, 0.9);
     const key = new THREE.DirectionalLight(PAL.sunColor, 1.5);
     key.position.set(2, 3, 1);
-    this.overlay.add(rifleRig.group);
-    this.overlay.add(pistolRig.group);
+    // Lights are siblings of the rigs and are never touched again: toggling a
+    // rig's visibility cannot change the light set (the old project's program-
+    // invalidation bug came from hiding a root that owned lights).
+    for (const w of this.weapons) {
+      w.rig.group.visible = false;
+      this.overlay.add(w.rig.group);
+    }
+    this.weapons[0].rig.group.visible = true;
     this.overlay.add(hemi);
     this.overlay.add(key);
-    rifleRig.group.visible = true;
-    pistolRig.group.visible = false;
 
     this.effects = new WeaponEffects(opts.scene, opts.mat);
     opts.scene.add(this.effects.group);
     this.raycaster.far = 160;
+
+    this.hud = {
+      weaponId: this.weapons[0].def.id,
+      weaponName: this.weapons[0].def.name,
+      mag: this.weapons[0].mag,
+      reserve: this.weapons[0].reserve,
+      magSize: this.weapons[0].def.magSize,
+      reloading: false,
+      ads: false,
+      adsT: 0,
+      moveScale: 1,
+      shotsFired: 0,
+      shotsHit: 0,
+      hitSeq: 0,
+      lastDamage: 0,
+      lastDistance: 0,
+      spread: 0,
+      visible: true,
+    };
 
     this.camera.fov = BASE_FOV;
     this.camera.updateProjectionMatrix();
     this.pushHud(true);
   }
 
+  private rand(): number {
+    let a = (this.rngState + 0x6d2b79f5) | 0;
+    this.rngState = a;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  }
+
   update(dt: number, time: number, move: MoveSample): void {
     if (!this.visible) return;
     dt = Math.min(dt, MAX_DT);
     const cur = this.weapons[this.active];
+    const def = cur.def;
+    this.speed = move.speed;
+    this.crouched = move.crouched === true;
 
-    // Recoil decays exponentially (~8/s); layered onto the camera AFTER the
-    // caller (main.ts runs this after Player.update resets the rotation).
-    const decay = Math.exp(-8 * dt);
-    this.recoilPitch *= decay;
-    this.recoilYaw *= decay;
+    // Recoil: fast kick decays hard, slow climb recovers at the weapon's rate
+    // toward the original aim — the recovery is the BO2 half of the model.
+    const kickDecay = Math.exp(-11 * dt);
+    this.kickPitch *= kickDecay;
+    this.kickYaw *= kickDecay;
+    const climbDecay = Math.exp(-def.recoil.recovery * dt);
+    this.climbPitch *= climbDecay;
+    this.climbYaw *= climbDecay;
 
-    // ADS blend + FOV.
+    // Bloom bleeds off a few seconds after the last shot.
+    if (cur.bloom > 0) cur.bloom = Math.max(0, cur.bloom - def.spread.bloomMax * dt * 1.4);
+    if (cur.cool > 0) cur.cool -= dt;
+
+    // ADS on the weapon's own timer: FOV, spread, pose and moveScale ride adsT.
     const adsTarget = this.adsOn ? 1 : 0;
-    this.adsBlend += (adsTarget - this.adsBlend) * Math.min(1, dt * 12);
-    if (Math.abs(this.adsBlend - adsTarget) < 0.001) this.adsBlend = adsTarget;
-    const fov = BASE_FOV + (ADS_FOV - BASE_FOV) * this.adsBlend;
+    if (this.adsT !== adsTarget) {
+      const step = dt / def.adsTime;
+      this.adsT = adsTarget > this.adsT
+        ? Math.min(adsTarget, this.adsT + step)
+        : Math.max(adsTarget, this.adsT - step);
+    }
+    const fov = BASE_FOV + (def.adsFov - BASE_FOV) * this.adsT;
     if (Math.abs(this.camera.fov - fov) > 0.01) {
       this.camera.fov = fov;
       this.camera.updateProjectionMatrix();
@@ -188,14 +257,14 @@ export class WeaponsController {
     this.bobScale += (bobTarget - this.bobScale) * Math.min(1, dt * 6);
 
     // Auto fire while the trigger is held.
-    if (this.triggerHeld && cur.def.auto && !cur.reloading) {
+    if (this.triggerHeld && def.auto && !cur.reloading) {
       this.autoTimer -= dt;
       while (this.autoTimer <= 0) {
-        if (!this.tryFire()) {
+        if (!this.tryFire(true)) {
           this.autoTimer = 0;
           break;
         }
-        this.autoTimer += cur.def.interval;
+        this.autoTimer += def.interval;
       }
     }
 
@@ -203,11 +272,11 @@ export class WeaponsController {
     let reloadDip = 0;
     if (cur.reloading) {
       cur.reloadT -= dt;
-      const progress = 1 - Math.max(0, cur.reloadT) / cur.def.reloadTime;
+      const progress = 1 - Math.max(0, cur.reloadT) / cur.reloadDur;
       reloadDip = Math.sin(Math.min(1, Math.max(0, progress)) * Math.PI);
       if (cur.reloadT <= 0) {
         cur.reloading = false;
-        const need = cur.def.magSize - cur.mag;
+        const need = def.magSize - cur.mag;
         const take = Math.min(need, cur.reserve);
         cur.mag += take;
         cur.reserve -= take;
@@ -219,9 +288,9 @@ export class WeaponsController {
     // Mount the active rig in the camera frame: hip <-> ADS lerp, idle sway
     // (4 mm hip / 1 mm ADS), walk bob (8 mm vert / 5 mm horiz), sprint-lower
     // (~12 deg pitch + drop), reload dip.
-    const swayAmp = 0.004 + (0.001 - 0.004) * this.adsBlend;
-    const adsDamp = 1 - this.adsBlend * 0.75;
-    this.tmpOffset.lerpVectors(HIP_OFFSET, ADS_OFFSET, this.adsBlend);
+    const swayAmp = 0.004 + (0.001 - 0.004) * this.adsT;
+    const adsDamp = 1 - this.adsT * 0.75;
+    this.tmpOffset.lerpVectors(HIP_OFFSET, ADS_OFFSET, this.adsT);
     this.tmpOffset.x += Math.sin(time * 1.1) * swayAmp * adsDamp
       + Math.cos(this.bobPhase) * 0.005 * this.bobScale * adsDamp;
     this.tmpOffset.y += Math.cos(time * 1.7) * swayAmp * 0.7 * adsDamp
@@ -238,9 +307,10 @@ export class WeaponsController {
     this.tmpQuat.setFromEuler(this.tmpEuler);
     cur.rig.group.quaternion.copy(this.camera.quaternion).multiply(this.tmpQuat);
 
-    this.camera.rotation.x += this.recoilPitch;
-    this.camera.rotation.y += this.recoilYaw;
+    this.camera.rotation.x += this.kickPitch + this.climbPitch;
+    this.camera.rotation.y += this.kickYaw + this.climbYaw;
     this.effects.update(dt);
+    this.syncHudState();
     this.pushHud();
   }
 
@@ -250,7 +320,7 @@ export class WeaponsController {
       this.triggerHeld = true;
       const cur = this.weapons[this.active];
       if (cur.reloading) return;
-      if (this.tryFire() && cur.def.auto) this.autoTimer = cur.def.interval;
+      if (this.tryFire(false) && cur.def.auto) this.autoTimer = cur.def.interval;
       else this.autoTimer = 0;
     } else if (button === 2) {
       this.adsOn = true;
@@ -281,6 +351,18 @@ export class WeaponsController {
       this.switchTo(1);
       return true;
     }
+    if (code === 'Digit3') {
+      this.switchTo(2);
+      return true;
+    }
+    if (code === 'Digit4') {
+      this.switchTo(3);
+      return true;
+    }
+    if (code === 'Digit5') {
+      this.switchTo(4);
+      return true;
+    }
     return false;
   }
 
@@ -294,20 +376,25 @@ export class WeaponsController {
     this.overlay.visible = v;
     if (!v) {
       this.adsOn = false;
-      this.adsBlend = 0;
+      this.adsT = 0;
       this.triggerHeld = false;
       this.autoTimer = 0;
-      this.recoilPitch = 0;
-      this.recoilYaw = 0;
+      this.kickPitch = 0;
+      this.kickYaw = 0;
+      this.climbPitch = 0;
+      this.climbYaw = 0;
       for (const w of this.weapons) {
         w.reloading = false;
         w.reloadT = 0;
+        w.cool = 0;
+        w.bloom = 0;
       }
       this.camera.fov = BASE_FOV;
       this.camera.updateProjectionMatrix();
     } else {
       this.weapons[this.active].rig.group.visible = true;
     }
+    this.syncHudState();
     this.pushHud(true);
   }
 
@@ -322,13 +409,14 @@ export class WeaponsController {
       reloading: cur.reloading,
       visible: this.visible,
       shotsFired: cur.shotsFired,
+      cool: +Math.max(0, cur.cool).toFixed(3),
     };
   }
 
   command(cmd: string, arg?: string | number | boolean): unknown {
     switch (cmd) {
       case 'fire':
-        return this.visible ? this.tryFire() : false;
+        return this.visible ? this.tryFire(false) : false;
       case 'reload':
         return this.startReload();
       case 'ads':
@@ -347,12 +435,100 @@ export class WeaponsController {
       }
       case 'state':
         return this.snapshot();
+      case 'hud':
+        return this.hud;
       case 'visible':
         if (typeof arg === 'boolean') {
           this.setVisible(arg);
           return this.visible;
         }
         return this.visible;
+      case 'impacts': {
+        // QA-only: copy of the impact ring for the spread falsifier.
+        const n = Math.min(this.impactTotal, IMPACT_RING);
+        const pts: number[][] = [];
+        const start = this.impactTotal <= IMPACT_RING ? 0 : this.impactHead;
+        for (let i = 0; i < n; i++) {
+          const p = this.impactPts[(start + i) % IMPACT_RING];
+          pts.push([+p.x.toFixed(3), +p.y.toFixed(3), +p.z.toFixed(3)]);
+        }
+        const out = { total: this.impactTotal, points: pts };
+        if (arg === true) {
+          this.impactHead = 0;
+          this.impactTotal = 0;
+        }
+        return out;
+      }
+      case 'recoil': {
+        // QA-only: per-shot applied aim deltas (pitch, yaw radians).
+        const n = Math.min(this.recoilTotal, RECOIL_RING);
+        const shots: number[][] = [];
+        const start = this.recoilTotal <= RECOIL_RING ? 0 : this.recoilHead;
+        for (let i = 0; i < n; i++) {
+          const j = ((start + i) % RECOIL_RING) * 2;
+          shots.push([+this.recoilLog[j].toFixed(6), +this.recoilLog[j + 1].toFixed(6)]);
+        }
+        const out = { total: this.recoilTotal, shots };
+        if (arg === true) {
+          this.recoilHead = 0;
+          this.recoilTotal = 0;
+        }
+        return out;
+      }
+      case 'accuracy': {
+        // QA-only: dispersion of the impact ring around its own mean.
+        const n = Math.min(this.impactTotal, IMPACT_RING);
+        if (n < 3) return { n, rms: 0, within035: 0, mean: [0, 0, 0] };
+        const start = this.impactTotal <= IMPACT_RING ? 0 : this.impactHead;
+        let mx = 0;
+        let my = 0;
+        let mz = 0;
+        for (let i = 0; i < n; i++) {
+          const p = this.impactPts[(start + i) % IMPACT_RING];
+          mx += p.x;
+          my += p.y;
+          mz += p.z;
+        }
+        mx /= n;
+        my /= n;
+        mz /= n;
+        let ss = 0;
+        let within = 0;
+        for (let i = 0; i < n; i++) {
+          const p = this.impactPts[(start + i) % IMPACT_RING];
+          const dx = p.x - mx;
+          const dy = p.y - my;
+          const dz = p.z - mz;
+          const d2 = dx * dx + dy * dy + dz * dz;
+          ss += d2;
+          if (d2 <= 0.35 * 0.35) within++;
+        }
+        return {
+          n,
+          rms: +Math.sqrt(ss / n).toFixed(3),
+          within035: +(within / n).toFixed(3),
+          mean: [+mx.toFixed(2), +my.toFixed(2), +mz.toFixed(2)],
+        };
+      }
+      case 'inspect': {
+        // QA-only: one live round with stretched lifetimes so a screenshot
+        // catches flash + tracer + impact mid-flight.
+        const ok = this.visible ? this.tryFire(false) : false;
+        if (ok) this.effects.stretchLives(24);
+        return ok;
+      }
+      case 'refill': {
+        // QA-only: top up the active gun so a soak holds the trigger without
+        // spending its wall clock inside reload timers.
+        const cur = this.weapons[this.active];
+        cur.mag = cur.def.magSize;
+        cur.reserve = cur.def.startReserve;
+        cur.reloading = false;
+        cur.reloadT = 0;
+        this.syncHudState();
+        this.pushHud(true);
+        return true;
+      }
       default:
         return undefined;
     }
@@ -367,13 +543,14 @@ export class WeaponsController {
     this.active = index;
     this.weapons[this.active].rig.group.visible = this.visible;
     this.adsOn = false;
-    this.adsBlend = 0;
+    this.adsT = 0;
     this.triggerHeld = false;
     this.autoTimer = 0;
     if (Math.abs(this.camera.fov - BASE_FOV) > 0.01) {
       this.camera.fov = BASE_FOV;
       this.camera.updateProjectionMatrix();
     }
+    this.syncHudState();
     this.pushHud(true);
     return true;
   }
@@ -383,15 +560,23 @@ export class WeaponsController {
     const cur = this.weapons[this.active];
     if (cur.reloading || cur.mag >= cur.def.magSize || cur.reserve <= 0) return false;
     cur.reloading = true;
-    cur.reloadT = cur.def.reloadTime;
+    // A dry gun costs the empty reload; a tactical reload keeps the chambered
+    // round's head start.
+    cur.reloadDur = cur.mag === 0 ? cur.def.emptyReloadTime : cur.def.reloadTime;
+    cur.reloadT = cur.reloadDur;
     this.click(440, 0.05, 0.12);
     this.pushHud(true);
     return true;
   }
 
-  private tryFire(): boolean {
+  private tryFire(fromAuto: boolean): boolean {
     const cur = this.weapons[this.active];
+    const def = cur.def;
     if (!this.visible || cur.reloading) return false;
+    if (!fromAuto || !def.auto) {
+      if (cur.cool > 0) return false;
+      cur.cool = def.interval;
+    }
     if (cur.mag <= 0) {
       this.click(1200, 0.03, 0.1);
       this.pushHud();
@@ -400,45 +585,118 @@ export class WeaponsController {
     cur.mag -= 1;
     cur.shotsFired += 1;
 
-    // Spread jitter in the camera frame, then to world. No allocation.
-    const spread = cur.def.hipSpread + (cur.def.adsSpread - cur.def.hipSpread) * this.adsBlend;
-    this.tmpDir.set(
-      (Math.random() * 2 - 1) * spread,
-      (Math.random() * 2 - 1) * spread,
-      -1,
-    ).normalize().applyQuaternion(this.camera.quaternion);
+    // Spread cone: base (hip<->ADS) + movement + accumulated bloom, crouch bonus.
+    cur.bloom = Math.min(def.spread.bloomMax, cur.bloom + def.spread.bloom);
+    const moveFrac = Math.min(1, this.speed / SPRINT_REF);
+    let spread = def.spread.hip
+      + (def.spread.ads - def.spread.hip) * this.adsT
+      + def.spread.move * moveFrac
+      + cur.bloom;
+    if (this.crouched) spread *= def.spread.crouchMult;
+    if (spread < 0) spread = 0;
 
-    this.raycaster.set(this.camera.position, this.tmpDir);
-    const hits = this.raycaster.intersectObjects(this.targets, true);
+    let anyHit = false;
+    let pullDamage = 0;
+    let pullDist = 0;
+    for (let p = 0; p < def.pellets; p++) {
+      // Uniform-disc sample in the camera frame, then to world. No allocation.
+      const u = this.rand();
+      const v = this.rand();
+      const r = spread * Math.sqrt(u);
+      const a = v * Math.PI * 2;
+      this.tmpDir.set(r * Math.cos(a), r * Math.sin(a), -1)
+        .normalize()
+        .applyQuaternion(this.camera.quaternion);
 
-    cur.rig.muzzle.getWorldPosition(this.tmpMuzzle);
-    if (hits.length > 0) {
-      const hit = hits[0];
-      this.tmpEnd.copy(hit.point).sub(this.tmpMuzzle);
-      this.effects.tracer(this.tmpMuzzle, this.tmpEnd, this.tmpEnd.length());
-      if (hit.face) {
-        // Face normal lives in object space; the pool slot is world space.
-        this.tmpNormal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld);
-        this.effects.impact(hit.point, this.tmpNormal);
+      this.raycaster.set(this.camera.position, this.tmpDir);
+      const hits = this.raycaster.intersectObjects(this.targets, true);
+
+      cur.rig.muzzle.getWorldPosition(this.tmpMuzzle);
+      if (hits.length > 0) {
+        const hit = hits[0];
+        anyHit = true;
+        const dmg = damageAt(def, hit.distance);
+        pullDamage += dmg;
+        pullDist = hit.distance;
+        this.tmpEnd.copy(hit.point).sub(this.tmpMuzzle);
+        this.effects.tracer(this.tmpMuzzle, this.tmpEnd, this.tmpEnd.length());
+        if (hit.face) {
+          // Face normal lives in object space; the pool slot is world space.
+          this.tmpNormal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld);
+          this.effects.impact(hit.point, this.tmpNormal, this.tmpNormal.y > 0.5);
+        } else {
+          this.effects.impact(hit.point, this.tmpDir, false);
+        }
+        const slot = this.impactPts[this.impactHead];
+        slot.copy(hit.point);
+        this.impactHead = (this.impactHead + 1) % IMPACT_RING;
+        this.impactTotal++;
       } else {
-        this.effects.impact(hit.point, this.tmpDir);
+        this.tmpEnd.copy(this.tmpDir).multiplyScalar(MISS_DISTANCE).add(this.camera.position);
+        this.effects.tracer(this.tmpMuzzle, this.tmpDir, MISS_DISTANCE);
       }
-    } else {
-      this.tmpEnd.copy(this.tmpDir).multiplyScalar(MISS_DISTANCE).add(this.camera.position);
-      this.effects.tracer(this.tmpMuzzle, this.tmpDir, MISS_DISTANCE);
     }
-    cur.rig.muzzle.getWorldQuaternion(this.tmpQuat);
-    this.effects.flashAt(this.tmpMuzzle, this.tmpQuat);
+    if (anyHit) {
+      this.shotsHit++;
+      this.hitSeq++;
+      this.lastDamage = pullDamage;
+      this.lastDistance = pullDist;
+    } else {
+      this.lastDamage = 0;
+      this.lastDistance = 0;
+    }
+
+    this.effects.flashAt(this.tmpMuzzle, this.camera.quaternion);
     cur.rig.eject.getWorldPosition(this.tmpMuzzle);
     this.tmpDir.set(1, 0, 0).applyQuaternion(this.camera.quaternion);
     this.tmpEnd.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
     this.effects.shell(this.tmpMuzzle, this.tmpDir, this.tmpEnd);
 
-    this.recoilPitch += cur.def.recoilPitch;
-    this.recoilYaw += (Math.random() * 2 - 1) * cur.def.recoilYaw;
-    this.playShot(cur.def.id === 'duster');
+    // Two-part recoil: deterministic climb pattern in pitch, bounded random
+    // yaw. Most of each shot lands as fast kick; a fraction accumulates as
+    // slow climb that the recovery term bleeds off when fire stops.
+    const n = cur.shotsFired - 1;
+    const pitchAdd = def.recoil.pitch * patternMult(def, n);
+    const yawAdd = (this.rand() * 2 - 1) * def.recoil.yawRandom;
+    this.kickPitch += pitchAdd * 0.75;
+    this.kickYaw += yawAdd * 0.75;
+    this.climbPitch = Math.min(CLIMB_CAP_PITCH, this.climbPitch + pitchAdd * 0.25);
+    this.climbYaw = Math.max(-CLIMB_CAP_YAW, Math.min(CLIMB_CAP_YAW, this.climbYaw + yawAdd * 0.25));
+    const rj = (this.recoilHead % RECOIL_RING) * 2;
+    this.recoilLog[rj] = pitchAdd;
+    this.recoilLog[rj + 1] = yawAdd;
+    this.recoilHead = (this.recoilHead + 1) % RECOIL_RING;
+    this.recoilTotal++;
+
+    this.playShot(def.id);
+    this.syncHudState();
     this.pushHud();
     return true;
+  }
+
+  private syncHudState(): void {
+    const cur = this.weapons[this.active];
+    const h = this.hud;
+    h.weaponId = cur.def.id;
+    h.weaponName = cur.def.name;
+    h.mag = cur.mag;
+    h.reserve = cur.reserve;
+    h.magSize = cur.def.magSize;
+    h.reloading = cur.reloading;
+    h.ads = this.adsOn;
+    h.adsT = +this.adsT.toFixed(3);
+    h.moveScale = +(1 + (cur.def.adsMoveScale - 1) * this.adsT).toFixed(3);
+    h.shotsFired = cur.shotsFired;
+    h.shotsHit = this.shotsHit;
+    h.lastDamage = +this.lastDamage.toFixed(1);
+    h.lastDistance = +this.lastDistance.toFixed(1);
+    let cone = cur.def.spread.hip
+      + (cur.def.spread.ads - cur.def.spread.hip) * this.adsT
+      + cur.def.spread.move * Math.min(1, this.speed / SPRINT_REF)
+      + cur.bloom;
+    if (this.crouched) cone *= cur.def.spread.crouchMult;
+    h.spread = +Math.max(0, cone).toFixed(5);
+    h.visible = this.visible;
   }
 
   private pushHud(force = false): void {
@@ -479,7 +737,29 @@ export class WeaponsController {
     }
   }
 
-  private playShot(high: boolean): void {
+  private playShot(id: string): void {
+    // Free synth only: per-family filter/decay over the shared noise buffer.
+    // Sniper booms low and long, SMG barks high and short.
+    let freq = 1700;
+    let vol = 0.3;
+    let decay = 0.14;
+    if (id === 'deadeye') {
+      freq = 900;
+      vol = 0.34;
+      decay = 0.24;
+    } else if (id === 'coachman') {
+      freq = 1200;
+      vol = 0.34;
+      decay = 0.2;
+    } else if (id === 'rattler') {
+      freq = 2200;
+      vol = 0.24;
+      decay = 0.1;
+    } else if (id === 'duster') {
+      freq = 2600;
+      vol = 0.22;
+      decay = 0.09;
+    }
     try {
       const ctx = this.ensureAudio();
       if (!ctx || !this.noiseBuf) return;
@@ -487,15 +767,15 @@ export class WeaponsController {
       src.buffer = this.noiseBuf;
       const filter = ctx.createBiquadFilter();
       filter.type = 'lowpass';
-      filter.frequency.value = high ? 2600 : 1700;
+      filter.frequency.value = freq;
       const gain = ctx.createGain();
       const t = ctx.currentTime;
-      gain.gain.setValueAtTime(high ? 0.22 : 0.3, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + (high ? 0.09 : 0.14));
+      gain.gain.setValueAtTime(vol, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + decay);
       src.connect(filter);
       filter.connect(gain);
       gain.connect(ctx.destination);
-      src.start(t, Math.random() * 0.1);
+      src.start(t, this.rand() * 0.1);
       src.stop(t + 0.2);
     } catch {
       // Audio is garnish; a headless harness has no AudioContext.
