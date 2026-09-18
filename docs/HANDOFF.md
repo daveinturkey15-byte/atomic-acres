@@ -294,3 +294,13 @@ Trellis.2 weights: 4/4 on disk and visible to the server (`comfy_up.py` prefligh
 adversarial verifier. Three workflows in flight: geometry, gameplay, animation. Street
 gauntlet waits for geometry to land so its critics score final pixels.
 
+**22:15.** Wave 2 landed and is committed (`ea91fe8`): real interiors on both floors,
+visible borders, handedness = ROTATIONAL (settled, `docs/HANDEDNESS.md`). traverse is
+now 5/5. The dressing lane died on a transient DNS error and is re-running
+(`wf_5f9c4647-341` resumed - others replay from cache). Interiors gauntlet launched
+(`wf_6b26f3be-4ab`). Open items from the verifier: draw calls 1851/frame at spawnA;
+white house reads as a round ring vs the minimap's orthogonal L-block (OWNER QUESTION -
+not changed on a hunch); roofless dead-end slot into the white house x 4.3..5.9;
+plan.mjs writes .ppm only; the pool cannot be sunk while player.ts clamps the world
+floor at y=0.
+

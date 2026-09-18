@@ -60,7 +60,10 @@ export const STATIONS: Record<string, Station> = {
       + 'and the garage again on the RIGHT.',
   },
   streetElevation: {
-    pos: [-3, EYE_HEIGHT, 4.0],
+    // Was [-3, eye, 4.0]: after the re-centre that point is INSIDE the pale coach
+    // parked on the circle, and the station photographed its chassis for a day while
+    // reporting green. Now on the orange-side pavement, 7 m off the front wall.
+    pos: [-8, EYE_HEIGHT, -8.5],
     yaw: 0,
     pitch: 4 * D,
     fov: 70,
