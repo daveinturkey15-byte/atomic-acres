@@ -276,3 +276,11 @@ Owner authorised: "we do have trellis 2 … keep working through the waves" (18:
 integration), 4 animation (Kimodo), 5–7 visual gauntlets per `visual-gauntlet-loop`
 (≤6 corrections per loop, fresh blind critic each round, evidence per round).
 Concurrency cap ≈5 Opus xhigh. Pages stays on `master`.
+
+**Runtime baseline, 21:52 (first honest per-frame numbers):** draw calls/frame
+spawnA 1735 · circle 1160 · spawnB 1729 · orangeInside 1505; triangles/frame 296k–356k.
+AGENTS.md budget is 1200 calls / 900k tris. **Over the call budget at 3 of 4 positions**
+(the shadow pass roughly doubles the scene's draws). Holds 60 fps here only because vsync
+caps it. This is gauntlet item S9; mannequin thinning and vehicle batching are the first
+levers. Measured through `scripts/playcap.mjs` — `captures/perframe-summary.json`.
+
