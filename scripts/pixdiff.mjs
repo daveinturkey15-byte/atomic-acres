@@ -29,10 +29,13 @@ function freePort() {
 }
 
 const port = await freePort();
+// windowsHide: node defaults it to FALSE, and with shell:true on Windows every
+// one of these spawns a visible cmd.exe window. Running captures in a loop put
+// console windows over the owner's screen and stole his keyboard focus.
 const server = spawn(
   process.platform === 'win32' ? 'npx.cmd' : 'npx',
   ['vite', '--port', String(port), '--strictPort'],
-  { cwd: ROOT, stdio: 'ignore', shell: process.platform === 'win32' },
+  { cwd: ROOT, stdio: 'ignore', shell: process.platform === 'win32', windowsHide: true },
 );
 const base = 'http://localhost:' + port + '/';
 for (let i = 0; i < 150; i++) {

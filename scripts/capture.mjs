@@ -58,16 +58,24 @@ async function waitForServer(url, ms = 240000) {
 
 const port = await freePort();
 console.log('[capture] starting own dev server on port ' + port);
+// windowsHide: node defaults it to FALSE, and with shell:true on Windows every
+// one of these spawns a visible cmd.exe window. Running captures in a loop put
+// console windows over the owner's screen and stole his keyboard focus.
 const server = spawn(
   process.platform === 'win32' ? 'npx.cmd' : 'npx',
   ['vite', 'preview', '--port', String(port), '--strictPort'],
-  { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32' },
+  { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32', windowsHide: true },
 );
 let serverLog = '';
 server.stdout.on('data', (d) => { serverLog += d; });
 server.stderr.on('data', (d) => { serverLog += d; });
 
-const url = 'http://localhost:' + port + '/';
+// --post=<mode> forwards to the page's ?post= diagnostic (see src/core/post.ts):
+// 'ao' renders the raw occlusion term, 'off' the ungraded scene colour.
+// --post=<mode>, with an equals sign: a space-separated value would be picked up
+// by the positional station filter below and read as a station name.
+const postMode = (process.argv.find((a) => a.startsWith('--post=')) || '').split('=')[1] || '';
+const url = 'http://localhost:' + port + '/' + (postMode ? '?post=' + postMode : '');
 const up = await waitForServer(url);
 if (!up) {
   console.error('[capture] server never came up. log:\n' + serverLog);
@@ -127,7 +135,7 @@ if (exe) {
     '--window-position=2560,0',
     '--window-size=1600,900',
     'about:blank',
-  ], { stdio: 'ignore' });
+  ], { stdio: 'ignore', windowsHide: true });
   const cdp = 'http://127.0.0.1:' + cdpPort;
   let connected = null;
   for (let i = 0; i < 160 && !connected; i++) {

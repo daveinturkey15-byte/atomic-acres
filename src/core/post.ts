@@ -29,6 +29,7 @@ import {
   uv,
 } from 'three/tsl';
 import { ao } from 'three/addons/tsl/display/GTAONode.js';
+import { denoise } from 'three/addons/tsl/display/DenoiseNode.js';
 import { ssr } from 'three/addons/tsl/display/SSRNode.js';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import type { WorldRenderer } from './renderer';
@@ -95,6 +96,16 @@ export function buildPost(
   };
 }
 
+/**
+ * AO remap. AO_OPEN / AO_DEEP are what the GTAO node actually emits on this scene -
+ * measure them again with `npm run capture -- --post=ao` if the scene scale or the
+ * camera's near/far change, because they are properties of the algorithm's output,
+ * not free parameters. AO_STRENGTH is the only taste knob here.
+ */
+const AO_OPEN = 0.895;      // its value on a fully unoccluded surface (NOT 1.0)
+const AO_DEEP = 0.62;       // its value in a deep crevice
+const AO_STRENGTH = 0.55;   // a fully occluded contact lands at 1 - this
+
 function buildChain(
   renderer: WorldRenderer,
   scene: THREE.Scene,
@@ -114,8 +125,37 @@ function buildChain(
     // eave contact in a metre-scale scene. As of 2026-09-18 this chain DOES run:
     // main.ts routes the world through World.render(). Before that it never had.
     const aoNode = ao(depth, normal, camera);
-    aoNode.radius.value = 1.0;
-    const occlusion = aoNode.getTextureNode();
+    aoNode.radius.value = 0.9;
+    aoNode.samples.value = 32;             // 16 and 24 both speckle at this radius
+    aoNode.distanceExponent.value = 1.4;   // bias toward near contacts
+    aoNode.thickness.value = 0.6;
+
+    // GTAO's own output does NOT span 0..1. Measured on this scene (render it with
+    // ?post=ao) it emits about 0.62 in a deep crevice and never exceeds 0.898 on a
+    // fully open surface. Multiplying colour by that raw term does two wrong things
+    // at once: it dims the ENTIRE frame by ~11%, and it squeezes all the real contact
+    // information into a 0.17-wide band where nobody can see it. That is precisely
+    // what "the post chain is on but I can't see any difference" looked like.
+    //
+    // aoNode.scale is a POWER (ao = pow(ao, scale)), so turning it up darkens the
+    // open surfaces too and makes the global dimming worse, not better. The right
+    // move is to remap: pin open surfaces to exactly 1.0 so AO costs nothing where
+    // nothing occludes, and stretch the occluded end down to where it reads.
+    // Raw GTAO at this radius is speckled - the dither pattern reads as noise along
+    // kerb edges rather than as occlusion, which is worse than no AO at all for a
+    // photoreal target. Run it through the edge-aware denoise, which is what three's
+    // own GTAO example does and what the speckle in the first remapped capture was
+    // telling us was missing.
+    const aoDenoised = denoise(aoNode.getTextureNode(), depth, normal, camera);
+    aoDenoised.lumaPhi.value = 8;
+    aoDenoised.depthPhi.value = 3;
+    aoDenoised.normalPhi.value = 6;
+    aoDenoised.radius.value = 6;
+
+    const occRaw = aoDenoised.r;
+    const occlusion = occRaw.remapClamp(
+      float(AO_DEEP), float(AO_OPEN), float(1 - AO_STRENGTH), float(1),
+    );
     const lit = color.mul(occlusion);
 
     // 2 — SSR on road/paving/glazing, opacity-weighted additive. maxDistance 12
@@ -150,7 +190,18 @@ function buildChain(
     );
 
     const post = new PostProcessing(renderer);
-    post.outputNode = bloomed.mul(shade);
+
+    // Diagnostic outputs. "The chain runs" and "the chain does anything" are different
+    // claims, and this project has already shipped the first while believing the
+    // second: GTAO can build, cost frame time and emit a texture that is 1.0
+    // everywhere, which looks exactly like no AO at all. Append ?post=ao to the URL to
+    // render the raw occlusion term, or ?post=off for the ungraded scene colour.
+    const debug = typeof location !== 'undefined'
+      ? new URLSearchParams(location.search).get('post')
+      : null;
+    if (debug === 'ao') post.outputNode = occlusion;
+    else if (debug === 'off') post.outputNode = color;
+    else post.outputNode = bloomed.mul(shade);
 
     // A node graph only builds on the FIRST render, so a malformed node throws deep
     // inside the frame loop rather than at construction - which is how a broken chain

@@ -48,9 +48,12 @@ async function waitForServer(url, ms = 240000) {
 }
 
 const port = await freePort();
+// windowsHide: node defaults it to FALSE, and with shell:true on Windows every
+// one of these spawns a visible cmd.exe window. Running captures in a loop put
+// console windows over the owner's screen and stole his keyboard focus.
 const server = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx',
   ['vite', 'preview', '--port', String(port), '--strictPort'],
-  { cwd: ROOT, stdio: 'ignore', shell: process.platform === 'win32' });
+  { cwd: ROOT, stdio: 'ignore', shell: process.platform === 'win32', windowsHide: true });
 const url = 'http://localhost:' + port + '/';
 if (!await waitForServer(url)) { console.error('[plan] server never came up'); server.kill(); process.exit(1); }
 
