@@ -57,19 +57,28 @@ const T_MARK = T_LAWN + 0.085;        // court markings
 
 /**
  * East boundary fence, closing the map beyond the eastern fringe dressing.
- * It was derived from the turning head's kerb ring, which put it at x 10.8
- * after the recentre - straight through both back yards, sealing the east
- * flank. Anchored to THIRD_HOUSE_X instead so every lane's work stays inside.
- * NOTE (orchestrator): the third-house lane has re-sited that house into the
- * map (~18.5), so this fence no longer abuts it; that lane's "0.8 m off the
- * wall" comments describe a fence position this lane cannot use (it would cut
- * the terrace and the traverse flank lane). Siting the boundary is now a
- * cross-lane decision - this value only guarantees: out of the yards.
+ * Twice now this fence has been derived from something that later moved - first
+ * the turning head's kerb ring (which swung it through both back yards when the
+ * head was recentred), then the third house. It is now anchored to the one thing
+ * it is actually about: the east edge of the apron. It closes the map just past
+ * where the road surface ends, and nothing else may move it.
  */
-const BOUNDARY_X = THIRD_HOUSE_X - 6.7;
+const BOUNDARY_X = ROAD_X_MAX + 0.6;
 
-/** x at fraction t across a back yard */
-const yx = (t: number): number => YARD_X_MIN + t * YARD_W;
+/**
+ * The two flanking lanes down the sides of each yard are gameplay, not leftover space:
+ * one is a 6.8 m run, the other a 2.0 m squeeze past the garage end, and they are the
+ * only way around a house. Props are therefore laid out across an INNER band, not the
+ * full yard, so nothing can be placed into a lane. This matters more since the yards
+ * were re-proportioned to the minimap on 2026-09-18 and lost 14 m of width: every
+ * fraction in this file was tuned against a 40 m yard, and mapping them onto the real
+ * 26 m one un-edited walled both flanks shut.
+ */
+const PROP_LANE = 2.6;
+const PROP_X_MIN = YARD_X_MIN + PROP_LANE;
+const PROP_W = YARD_W - 2 * PROP_LANE;
+/** x at fraction t across the prop band of a back yard (NOT the full yard) */
+const yx = (t: number): number => PROP_X_MIN + t * PROP_W;
 /** z at fraction t from a house's back wall (0) to its back fence (1) */
 const yz = (h: HouseSide, t: number): number => h.side * (HOUSE_BACK + t * YARD_D);
 /** z at fraction t from the pavement edge (0) to a house's front wall (1) */
@@ -735,5 +744,18 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   B.flush(g, 'yard-box');
   C.flush(g, 'yard-cyl');
   S.flush(g, 'yard-sph');
+
+  // A prop is allowed to be wide; it is not allowed to be wide INTO a flanking lane.
+  // Report rather than silently drop: a collider removed here would leave a solid-
+  // looking mesh you can walk through, which is a worse bug than the one it fixes.
+  const LANE_IN = YARD_X_MIN + PROP_LANE * 0.5;
+  const LANE_OUT = YARD_X_MAX - PROP_LANE * 0.5;
+  const intruders = colliders.filter((c) =>
+    Math.abs(c.max.z) > HOUSE_BACK && (c.min.x < LANE_IN || c.max.x > LANE_OUT));
+  if (intruders.length) {
+    console.warn('[yards] %d collider(s) reach into a flanking lane: %s',
+      intruders.length,
+      intruders.map((c) => `x ${c.min.x.toFixed(1)}..${c.max.x.toFixed(1)}`).join(', '));
+  }
   return { group: g, colliders };
 };

@@ -32,7 +32,7 @@
 import * as THREE from 'three';
 import { PAL } from '../core/palette';
 import {
-  HEAD_CENTER_X, HEAD_RADIUS, KERB_HEIGHT,
+  THIRD_HOUSE_X, HEAD_CENTER_X, HEAD_RADIUS, KERB_HEIGHT,
   HOUSE_HALF_LEN, HOUSE_DEPTH, FLOOR_H, UPPER_H,
   WHITE, GARAGE_LEN,
 } from '../core/layout';
@@ -67,16 +67,10 @@ class Batch {
   }
 }
 // ------------------------------------------------------------------ siting
-// layout.THIRD_HOUSE_X (44.5) is stale: 8 m past the OLD east tangent (26.0 +
-// 10.5). After the re-centre (HEAD_CENTER_X 0.0) it strands the house 34 m past
-// the bulb, so the same 8 m is re-derived against the new head (layout.ts is
-// read-only here). Rear (~21.8) stays inside BOUND_X_MAX.
-// +8.0 put the body at x 15.2..21.8, which is INSIDE the play space: YARD_X_MAX is
-// 20 and the east flanking lane runs at x=18, so the house sealed the flank the
-// sibling lane had just opened. This is the out-of-bounds landmark, not cover.
-// +15.8 puts the body at 23.0..29.6 - clear of the yards by 3 m, still only ~26 m
-// east of the centre, so it still closes the view down the street.
-const HOUSE_X = HEAD_CENTER_X + HEAD_RADIUS + 15.8;
+// This house is scenery beyond the east boundary fence, never cover. Twice it has
+// been re-derived locally because THIRD_HOUSE_X was stale; the contract now carries
+// the right value, so take it from there and let layout.ts stay the single source.
+const HOUSE_X = THIRD_HOUSE_X;
 
 // ------------------------------------------------------------------ dimensions
 const BODY_X = HOUSE_DEPTH * 0.72;              // extent along x (toward the map)

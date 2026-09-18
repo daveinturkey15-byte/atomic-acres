@@ -1,11 +1,10 @@
 /**
- * NUKETOWN 2025 - LAYOUT CONTRACT (single source of truth)
+ * ATOMIC ACRES - LAYOUT CONTRACT (single source of truth)
  *
  * Frame: y-up, right-handed. Plan view looks down -y; +x is right of page, +z is down.
- *   Street = CENTRAL turning circle between the houses (BO2 minimap/aerial): the bulb
- *   is the middle of the map, with a single road stem leaving it westward (-x) off-map
- *   to the entrance plaza. The east side is the bulb tangent + driveway apron to the
- *   boundary fence, NOT a through road; +x beyond the fence = THIRD HOUSE end.
+ *   Street = CENTRAL turning circle between the houses. One road stem leaves it WEST
+ *   (-x) through a barrier to the out-of-bounds entrance plaza; the east side is an
+ *   apron to the boundary fence, with the third structure beyond it as a landmark.
  *   -z house = ORANGE  (terracotta upper / cream lower, butterfly roof). Garage at its -x end.
  *   +z house = WHITE   (rounded modernist capsules). Garage at its +x end.
  *
@@ -14,74 +13,104 @@
  *
  * Every builder module imports from here. Never hardcode a dimension in a builder.
  * Units are metres.
+ *
+ * ---------------------------------------------------------------------------------
+ * PROVENANCE OF THESE NUMBERS  (2026-09-18)
+ *
+ * Measured off the official BO2 minimap, `docs/reference/img/nt2025-minimap-boii.png`,
+ * which is an orthographic plan - the only rotation-free source we have. It is a real
+ * download this time: the previous copies of every file in that directory were 5.8 kB
+ * HTML error pages, because the fetch had no browser User-Agent and nobody opened the
+ * result. Any claim sourced from "the minimap" before 2026-09-18 is void.
+ *
+ * SCALE: 0.19 m per minimap pixel.  This is the one assumption everything else rides
+ * on, so it is stated rather than buried. It was chosen where two independent
+ * estimates meet: the parked coach measures ~60 px (a period coach is ~11-12 m), and
+ * the long axis measures 425 px, which at 0.19 gives 81 m - about 12 s of sprinting at
+ * the BO2 sprint speed in `player.ts`, which matches how long the real map takes to
+ * cross. FALSIFIER: if a reliable source gives any single real dimension of Nuketown
+ * 2025, divide it by the pixel count below and this whole table rescales by that ratio.
+ *
+ * Measured, in minimap pixels, circle centre at (271, 281):
+ *   turning circle radius            48 px   -> 9.12 m   (fitted, not eyeballed)
+ *   house front wall from centre     81 px   -> 15.4 m
+ *   house depth front->back          59 px   -> 11.2 m
+ *   house overall width              93 px   -> 17.7 m   (main block + garage wing)
+ *   yard band width                 119 px   -> 22.6 m
+ *   long axis, fence to fence       425 px   -> 80.8 m
+ *   short axis, at the circle       180 px   -> 34.2 m
+ *
+ * WHAT THIS CHANGED. The previous table had the street axis spanning 100 m against a
+ * 76 m house axis. The minimap says the opposite: the house-to-house axis is the LONG
+ * one and the street is SHORT - the turning circle is most of it. The map was roughly
+ * 2.8x too long along the street, which is why it read as an empty boulevard instead
+ * of the tight cul-de-sac it should be.
  */
 
 // ---------------------------------------------------------------- street
-export const ROAD_HALF_WIDTH = 4.6;
+export const ROAD_HALF_WIDTH = 4.4;
 export const KERB_HEIGHT = 0.15;
 export const KERB_WIDTH = 0.3;
-export const PAVEMENT_OUTER = 7.2;        // |z| where pavement ends and lawn begins
-export const ROAD_X_MIN = -52;            // single west stem off-map to the plaza (preserved end)
-export const ROAD_X_MAX = 10.5;           // = HEAD_CENTER_X + HEAD_RADIUS, bulb east tangent + driveway apron to fence, no through road (same construction as before)
+export const PAVEMENT_OUTER = 7.0; // |z| where pavement ends and lawn begins
+export const ROAD_X_MIN = -19.5; // west barrier; the stem continues past it as out-of-bounds scenery
+export const ROAD_X_MAX = 16.0; // east apron to the boundary fence, no through road
 
 // central turning circle between the houses per BO2 minimap/aerial (was lollipop at +x end - corrected error inherited from FINDINGS.md cul-de-sac claim)
 export const HEAD_CENTER_X = 0.0;
-export const HEAD_RADIUS = 10.5;          // 85px diameter x 0.25m/px = 21.25m diameter = 86% of 99px house gap, large fraction per minimap
+export const HEAD_RADIUS = 9.2; // 48 px fitted radius x 0.19 m/px
 
 // ---------------------------------------------------------------- houses
-export const FRONT_LAWN_OUTER = 13.6;     // |z| of the house front wall
-export const HOUSE_DEPTH = 9.2;           // front wall -> back wall
-export const HOUSE_BACK = FRONT_LAWN_OUTER + HOUSE_DEPTH;  // 22.8
-export const HOUSE_HALF_LEN = 9.6;        // main block spans x in [-9.6, +9.6]
+export const FRONT_LAWN_OUTER = 15.4; // |z| of the house front wall (81 px)
+export const HOUSE_DEPTH = 11.2; // front wall -> back wall (59 px)
+export const HOUSE_BACK = FRONT_LAWN_OUTER + HOUSE_DEPTH;  // 26.6
+export const HOUSE_HALF_LEN = 6.4; // main block spans x in [-6.4, +6.4]
 export const FLOOR_H = 3.15;              // ground floor height
 export const UPPER_H = 3.05;              // upper floor height
 export const EAVE_Y = FLOOR_H + UPPER_H;  // 6.20 - top of upper wall
 
 // garage wing (attached to one end of the main block)
-export const GARAGE_LEN = 7.6;
-export const GARAGE_DEPTH = 8.0;
+export const GARAGE_LEN = 4.8; // wing outside the main block; overall house width 17.6 m
+export const GARAGE_DEPTH = 7.4;
 export const GARAGE_H = 3.65;
 export const GARAGE_BAYS = 3;
 
 // rear deck at upper-floor level, opposite end from the garage
 export const DECK_Y = FLOOR_H;
-export const DECK_LEN = 7.2;
+export const DECK_LEN = 6.0;
 export const DECK_OUT = 3.4;              // projection into the back yard
 export const RAIL_H = 1.05;
 
 // deep cantilevered porch canopy on the street face
 export const CANOPY_Y = 3.35;
-export const CANOPY_LEN = 6.4;
+export const CANOPY_LEN = 5.6;
 export const CANOPY_OUT = 2.9;
 
 // ---------------------------------------------------------------- yards
-export const BACK_FENCE = 34.0;           // |z| of the timber back fence
+export const BACK_FENCE = 37.0; // |z| of the timber back fence
 export const FENCE_H = 2.1;
-export const YARD_X_MIN = -20.0;
-export const YARD_X_MAX = 20.0;
+export const YARD_X_MIN = -13.2;
+export const YARD_X_MAX = 13.2; // garage end leaves a 2.0 m squeeze, the far end a 6.8 m flank
 
 // ---------------------------------------------------------------- bounds
-export const BOUND_X_MIN = -54;
-export const BOUND_X_MAX = 46;
-export const BOUND_Z = 38;
-// Far enough east that the house body clears the central turning head's pavement ring
-// (HEAD_CENTER_X + HEAD_RADIUS + kerb + pavement ~ 10.5 + kerb + pavement, ring edge ~18).
-// At 40 the gable face landed at x 36.7, clear of the recentred ring; kept at 44.5.
-// Ends preserved: road -x/plaza, third house +x (kept to avoid blast radius).
-export const THIRD_HOUSE_X = 44.5;        // east of the central head, past the boundary fence
+export const BOUND_X_MIN = -19.5;
+export const BOUND_X_MAX = 25.0;
+export const BOUND_Z = 42;
+// The third structure is scenery beyond the east boundary fence, not cover: it gives
+// the east flank something to read against so the fence is not the end of the world.
+// It must stay clear of ROAD_X_MAX (the apron) and of BOUND_X_MAX (the collider wall).
+export const THIRD_HOUSE_X = 21.0; // out-of-bounds landmark beyond the east fence
 
 // ---------------------------------------------------------------- spawns
 // Camera forward is (-sin(yaw), 0, -cos(yaw)): yaw 0 faces -z, yaw PI faces +z.
 // A spawn stands in its own back yard and must look AT its own house, i.e. inward
 // toward z=0 - spawn A from -z looks +z (PI), spawn B from +z looks -z (0).
-// Stand back near the fence, not under the deck: at z=+/-29 the spawn was ~3 m from
-// the rear deck's outer edge and the whole frame was stair. Offset in x away from each
+// Stand back near the fence, not under the deck, and offset in x away from each
 // house's deck (ORANGE.deckX is +x, WHITE.deckX is -x) so the house reads on spawn.
-export const SPAWN_A = { x: -4.0, y: 0, z: -31.8, yaw: Math.PI }; // orange, faces +z
-// x=+4 put spawn B INSIDE the white yard's sand pit (x 2.8..6.8, z 30.0..33.0) -
-// the first thing that team saw was a timber kerb across the bottom of frame.
-// -1.2 clears both the pit and the deck at WHITE.deckX = -6.
-export const SPAWN_B = { x: -1.2, y: 0, z: 31.2, yaw: 0 };        // white,  faces -z
+// z = +/-34.3 is 2.7 m off the back fence at its new |z| of 37.
+export const SPAWN_A = { x: -4.0, y: 0, z: -34.3, yaw: Math.PI }; // orange, faces +z
+// Mirrored from SPAWN_A through the origin, which is what a 180-degree pair requires:
+// each team stands on the deck-free side of its own yard.
+export const SPAWN_B = { x: 1.2, y: 0, z: 34.3, yaw: 0 };        // white,  faces -z
 
 export const EYE_HEIGHT = 1.68;
 

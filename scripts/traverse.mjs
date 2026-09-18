@@ -26,7 +26,10 @@ function freePort() {
   });
 }
 
-async function waitForServer(url, ms = 60000) {
+// 60 s was not enough with sibling build lanes saturating the CPU: the harness
+// reported 'server never came up' for a server that was merely slow to start,
+// which reads as a map failure rather than a busy machine.
+async function waitForServer(url, ms = 240000) {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) {
     try { if ((await fetch(url)).ok) return true; } catch { /* not up */ }
@@ -60,28 +63,25 @@ await page.waitForTimeout(600);
  * a door, which the door scan below locates rather than assumes.
  */
 const ROUTES = [
-  // The turning circle is now CENTRAL (HEAD_CENTER_X 0, HEAD_RADIUS 10.5) with one
-  // road stem running west. These waypoints follow that plan; the previous set
-  // targeted a cul-de-sac at x=26 that no longer exists.
-  { name: 'spawnA -> spawnB, west flank',
-    pts: [[0, -29], [-13, -27], [-20, -16], [-20, 0], [-20, 16], [-13, 27], [0, 29]] },
-  // x=13 at z=-27 walks into the rear deck's posts (deck spans x 2.4..9.6), so the
-  // east flank clears the house end at x=16 before turning.
-  // A collider scan of the orange yard shows the BACK of the yard (z=-28) is sealed
-  // east of x=9.5 by clutter, while z=-26 is open at 12.5..16.5 and z=-24 at 11.5..19.
-  // That is legitimate cover, so the east flank comes forward before turning out.
-  { name: 'spawnA -> spawnB, east flank',
-    pts: [[0, -29], [6, -26], [14, -25], [18, -16], [18, -8], [18, 8], [18, 16], [14, 25], [6, 27], [0, 29]] },
-  // the house occupies x -9.6..9.6, z -13.6..-22.8, so reaching the circle from the
-  // back yard means going AROUND the house end, not through its footprint.
-  // the garage wing occupies x -17.2..-9.6 down to z=-21.6, so the west route holds
-  // x=-18.5 in the gap between the garage end and the side fence at YARD_X_MIN.
-  { name: 'spawnA -> the central circle',
-    pts: [[0, -29], [-12, -26], [-18.5, -22], [-18.5, -14], [-14, -8], [-8, -3]] },
-  { name: 'spawnA -> west stem off-map',
-    pts: [[0, -29], [-13, -27], [-20, -10], [-30, -2], [-44, 0]] },
-  { name: 'along the street, west stem -> circle',
-    pts: [[-44, 0], [-34, 0], [-24, 0], [-16, 0], [-12, 0]] },
+  // Waypoints READ from the built collision world (scripts/_spans.mjs prints the open
+  // x-spans at a set of z), not guessed from the dimension table. Every previous route
+  // set on this project was written from what the map was supposed to be, so it failed
+  // for two different reasons at once - a real seal, and a waypoint in a flowerbed -
+  // and the two were indistinguishable in the output.
+  //
+  // Geometry after the 2026-09-18 re-proportioning: yards x -13.2..13.2, z +/-26.6..37,
+  // main block x -6.4..6.4, each garage wing on its own end out to +/-11.2.
+  { name: 'spawnA -> spawnB, east flank (the long way round)',
+    pts: [[-4, -34], [0, -33], [0, -30], [4.5, -28], [10, -28], [12.2, -22],
+          [12.2, -10], [12.2, 6], [12.2, 20], [12.2, 27.5], [10.5, 30], [7.5, 33], [1.2, 34.3]] },
+  { name: 'spawnA -> the central circle, west side',
+    pts: [[-4, -34], [-6, -32], [-11, -30], [-12.2, -28], [-12.2, -24], [-9, -21.8]] },
+  { name: 'circle -> west road stem',
+    pts: [[-8, -2], [-12, -1], [-16, -1], [-17.5, -1]] },
+  { name: 'circle -> east apron',
+    pts: [[8, -2], [12, -2], [15, -2]] },
+  { name: 'street crossing, orange lawn -> white lawn',
+    pts: [[-8, -8], [-10, -4], [-10, 4], [-8, 8], [-4, 10]] },
 ];
 
 const results = await page.evaluate(async (routes) => {
@@ -111,11 +111,11 @@ const results = await page.evaluate(async (routes) => {
  */
 const doors = await page.evaluate(() => {
   const nt = window.__NT;
-  const FRONT = 13.6;
-  const BACK = 22.8;
+  const FRONT = 15.4;   // FRONT_LAWN_OUTER
+  const BACK = 26.6;    // HOUSE_BACK
   const scan = (side, wallZ, fromOutside) => {
     const open = [];
-    for (let x = -9.5; x <= 9.5; x += 0.5) {
+    for (let x = -6.2; x <= 6.2; x += 0.4) {
       const startZ = side * (wallZ + (fromOutside ? 2.4 : -2.4));
       const endZ = side * (wallZ - (fromOutside ? 2.6 : -2.6));
       nt.probeReset(x, startZ);
@@ -147,8 +147,8 @@ const verge = await page.evaluate(() => {
   const nt = window.__NT;
   const scan = (side) => {
     const open = [];
-    for (let x = -19; x <= 19; x += 0.5) {
-      nt.probeReset(x, side * 11.0);
+    for (let x = -13; x <= 13; x += 0.5) {
+      nt.probeReset(x, side * 12.5);
       if (nt.probeWalkTo(x, side * 5.5, 420)) open.push(+x.toFixed(1));
     }
     const spans = [];
