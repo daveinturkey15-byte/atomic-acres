@@ -558,5 +558,36 @@ export const buildSurround: Builder = (ctx: BuildContext): BuildResult => {
     o.matrixAutoUpdate = false;
   });
 
-  return { group: g, colliders };
+  // ---------------------------------------------------------------- keep-out
+  // This module is OUT-OF-BOUNDS scenery. A comment further up has claimed since it
+  // was written that "the fringe stays west of YARD_X_MIN and east of YARD_X_MAX" -
+  // prose, enforced by nothing, and untrue: arcColliders() approximates a curved wall
+  // with axis-aligned boxes, and a box fitted to an arc BULGES inward off it. One of
+  // those bulges reached x -13.39..-10.91 beside the orange house and sealed the west
+  // flanking squeeze - a 0.61 m step, just above the controller's 0.38 m STEP_UP, so
+  // it read as an invisible wall rather than as scenery.
+  //
+  // Clipping is the right repair here and not a cover-up: the arc MESH is outside the
+  // play space, so there is nothing to walk through - only its coarse collider
+  // approximation was ever inside. Clip in x, drop if nothing survives, and say so.
+  const PLAY_X0 = YARD_X_MIN;
+  const PLAY_X1 = YARD_X_MAX;
+  let clipped = 0;
+  let dropped = 0;
+  const kept: AABB[] = [];
+  for (const c of colliders) {
+    const inZ = Math.abs(c.min.z) <= BACK_FENCE || Math.abs(c.max.z) <= BACK_FENCE
+      || (c.min.z < 0 && c.max.z > 0);
+    if (!inZ || c.max.x <= PLAY_X0 || c.min.x >= PLAY_X1) { kept.push(c); continue; }
+    if (c.min.x < PLAY_X0) { c.max.x = Math.min(c.max.x, PLAY_X0); clipped++; kept.push(c); }
+    else if (c.max.x > PLAY_X1) { c.min.x = Math.max(c.min.x, PLAY_X1); clipped++; kept.push(c); }
+    else { dropped++; }                       // wholly inside the play space
+  }
+  if (clipped || dropped) {
+    console.warn('[surround] %d collider(s) clipped out of the play space, %d dropped '
+      + 'entirely. Out-of-bounds scenery must not reach inside x %s..%s.',
+      clipped, dropped, PLAY_X0, PLAY_X1);
+  }
+
+  return { group: g, colliders: kept };
 };

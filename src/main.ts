@@ -13,6 +13,7 @@ import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core
 import { STATIONS, type Station } from './core/stations';
 import { WeaponsController } from './weapons/controller';
 import { initUI } from './ui/index';
+import { wireNetcode } from './net/wire';
 
 import { buildGround } from './build/ground';
 import { buildOrangeHouse } from './build/orange-house';
@@ -52,6 +53,9 @@ const mat = buildMaterials();
 const player = new Player(world.camera, world.renderer.domElement);
 
 const colliders: AABB[] = [];
+/** which module contributed colliders[i]. Answers "what IS that?" in one step
+ *  instead of grepping every builder for a matching box size. */
+const colliderOwner: string[] = [];
 const moduleStats: Record<string, { objects: number; colliders: number; ms: number }> = {};
 const worldTargets: THREE.Object3D[] = [];
 
@@ -69,6 +73,7 @@ for (const [name, build] of BUILDERS) {
   world.scene.add(res.group);
   worldTargets.push(res.group);
   colliders.push(...res.colliders);
+  for (let i = 0; i < res.colliders.length; i++) colliderOwner.push(name);
   let objects = 0;
   res.group.traverse(() => objects++);
   moduleStats[name] = {
@@ -103,8 +108,11 @@ hudHelp.textContent =
 hud.append(hudStats, hudMode, hudHelp, ammoDiv);
 // ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
 // initUI owns everything inside #hud and #start, so the capture harness still
-// hides all of it by hiding those two ids.
 const { hud: gameHud } = initUI({ player, world });
+// ---- Multiplayer lobby + host tech (netcode lane). Owns #hud .nt-* nodes and
+// window.__NTNET only; the world, player and QA surface are untouched.
+const netcode = wireNetcode({ player });
+void netcode;
 
 const startOverlay = document.getElementById('start')!;
 // The first click lands on the overlay (it covers the canvas), so dismiss and lock
@@ -369,6 +377,7 @@ const qa: QA = {
       if (y < c.min.y || y > c.max.y) continue;
       hits.push({
         i,
+        owner: colliderOwner[i],
         min: [+c.min.x.toFixed(2), +c.min.y.toFixed(2), +c.min.z.toFixed(2)],
         max: [+c.max.x.toFixed(2), +c.max.y.toFixed(2), +c.max.z.toFixed(2)],
         height: +(c.max.y - c.min.y).toFixed(2),

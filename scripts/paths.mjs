@@ -198,19 +198,49 @@ for (const [name, x, z] of LANDMARKS) {
     + (ok ? `  ~${(steps * STEP).toFixed(0)} m` : ''));
 }
 
-/** compress a cell chain into ~n waypoints traverse.mjs can walk */
-function waypoints(goal, n = 10) {
+/** is every cell on the straight segment a->b standable? */
+function clearLine(a, b) {
+  const [ax, az] = xyOf(a);
+  const [bx, bz] = xyOf(b);
+  const steps = Math.ceil(Math.hypot(bx - ax, bz - az) / (STEP * 0.5));
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const c = idx(ax + (bx - ax) * t, az + (bz - az) * t);
+    if (c < 0 || !standable[c]) return false;
+  }
+  return true;
+}
+
+/**
+ * Compress a cell chain into waypoints a straight-line walker can follow.
+ *
+ * Do NOT do this by taking every Nth cell. The path BFS walks around obstacles, but
+ * the chord between two sampled cells cuts the corner straight back through whatever
+ * the path went around - so the exported route crosses geometry the real route never
+ * touched. That produced five "FAIL" routes on a map this same script had just proved
+ * was fully connected, and cost an hour chasing an interior obstruction that was a
+ * perfectly ordinary partition wall the path had correctly avoided.
+ *
+ * Instead: greedy line-of-sight simplification. Advance to the furthest cell still
+ * reachable in a straight, fully-standable line, and emit that. Every emitted segment
+ * is then walkable by construction.
+ */
+function waypoints(goal) {
   if (!seen[goal]) return null;
   const chain = [];
   for (let c = goal; c !== -1; c = prev[c]) chain.push(c);
   chain.reverse();
+
   const out = [];
-  const stride = Math.max(1, Math.floor(chain.length / n));
-  for (let i = 0; i < chain.length; i += stride) {
+  let i = 0;
+  while (i < chain.length - 1) {
+    let j = chain.length - 1;
+    while (j > i + 1 && !clearLine(chain[i], chain[j])) j--;
     const [x, z] = xyOf(chain[i]);
     out.push([+x.toFixed(1), +z.toFixed(1)]);
+    i = j;
   }
-  const [gx, gz] = xyOf(goal);
+  const [gx, gz] = xyOf(chain[chain.length - 1]);
   out.push([+gx.toFixed(1), +gz.toFixed(1)]);
   return out;
 }
@@ -218,25 +248,16 @@ function waypoints(goal, n = 10) {
 console.log('');
 console.log('[paths] waypoint sets (paste into traverse.mjs ROUTES):');
 for (const [name, x, z] of LANDMARKS.slice(1)) {
-  const w = waypoints(snap(x, z), 8);
+  const w = waypoints(snap(x, z));
   if (w) console.log('  ' + name.padEnd(24) + JSON.stringify(w));
 }
 
 // the actual spawn-to-spawn path, as waypoints traverse.mjs could use
 const goal = snap(1.2, 34.3);
 if (seen[goal]) {
-  const chain = [];
-  for (let c = goal; c !== -1; c = prev[c]) chain.push(c);
-  chain.reverse();
-  const pts = [];
-  for (let i = 0; i < chain.length; i += Math.max(1, Math.floor(chain.length / 12))) {
-    const [x, z] = xyOf(chain[i]);
-    pts.push([+x.toFixed(1), +z.toFixed(1)]);
-  }
-  const [gx, gz] = xyOf(goal);
-  pts.push([+gx.toFixed(1), +gz.toFixed(1)]);
-  console.log('\n[paths] spawn A -> spawn B, a path that exists:');
-  console.log('  ' + JSON.stringify(pts));
+  console.log('');
+  console.log('[paths] spawn A -> spawn B, a path that exists:');
+  console.log('  ' + JSON.stringify(waypoints(goal)));
 }
 
 // write the flood as an image so the shape of any sealed pocket is visible
