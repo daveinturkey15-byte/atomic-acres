@@ -290,8 +290,15 @@ export function createWorld(canvasParent: HTMLElement): World {
   // main.ts is a DIFFERENT scene with different lights, so it gets its own cache key
   // and its own single-output shader - it is not affected by this rule.
   let backendUp = false;
-  boot.ready.then(() => { backendUp = true; }).catch(() => { /* stays dark */ });
+  // If NO backend initialises at all, fall back to direct pixels rather than a
+  // permanently black world. This is the one place a direct render of the scene is
+  // allowed, and it is safe precisely because in that branch the chain has never
+  // rendered and never will - there is no MRT shader variant to poison. (Verifier
+  // concern on the render fix: the last-ditch visible-pixels path had been removed.)
+  let bootFailed = false;
+  boot.ready.then(() => { backendUp = true; }).catch(() => { bootFailed = true; });
   const render = () => {
+    if (bootFailed) { renderer.render(scene, camera); return; }
     if (!backendUp) return;
     post.render();
   };

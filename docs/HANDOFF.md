@@ -37,16 +37,20 @@ committed. Commit it before starting new work.
 
 These each cost hours today. They are all still true.
 
-1. **The post chain does not work on the interactive path.** `world.render()` →
-   `PostProcessing.render()` renders correct frames from the capture harness and
-   **nothing at all** from the rAF loop — a black world with only the viewmodel and HUD
-   drawn, because those are a separate direct render afterwards. The frame loop is
-   therefore back on `renderer.render()`, and the chain is opt-in via **`?post=chain`**.
-   Also available: `?post=ao` (raw occlusion term) and `?post=off` (ungraded colour).
-   **This is the single biggest open bug.** AO/SSR/bloom exist and are tuned but are not
-   in the game. Ruled out already: it is not the viewmodel overlay wiping the frame
-   (suppressing it made the screen blacker), and it is not only the async backend race
-   (that is real, is handled in `world.ts`, and did not fix it).
+1. **The post chain now WORKS on the interactive path** (commit `001324d`, 21:40). Two
+   root causes, both real, neither guessed: (a) three r180's material cache key ignores
+   the MRT, so a direct render of the scene BEFORE the chain's first frame compiles
+   single-output shaders for the session and WebGPU silently refuses the chain's
+   four-attachment pipeline; (b) `Renderer.clear()` blitted an unwritten frame-buffer
+   target over the post frame. The chain is now the first and only thing that renders
+   the world; it draws its own QuadMesh with a linear output node. **Never add a
+   `renderer.render(scene, camera)` anywhere** - `npm run check` now fails on one that
+   is not on the allow-list in `scripts/check-render-sites.mjs`. `?post=chain` is gone
+   (the loop always takes the chain); `?post=off` and `?post=ao` swap the output node
+   without changing the route. `stats().calls` is now per-frame (info.reset() each
+   frame), so the 1200-call budget is measurable; `triangles` still reads 0 on WebGPU.
+   `?post=ao` is contrast-stretched for legibility - do not read its pixels as the
+   shipped AO strength.
 
 2. **The capture harness tests a path the player does not take.** Captures drive
    `qa.render()`; the game drives the frame loop. That difference is exactly how a black

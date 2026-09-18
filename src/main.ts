@@ -195,6 +195,12 @@ function frame(): void {
   const now = performance.now();
   const dt = (now - last) / 1000;
   last = now;
+  // Per-frame counters. The WebGPU renderer's info accumulates across the session, so
+  // stats().calls read 2192 -> 4116 -> 5754 across four captures and could not be
+  // compared with the 1200-call budget in AGENTS.md. Reset at the top of every frame;
+  // a stats() read between frames then reports the LAST frame, which is the number a
+  // budget is about. (Memory counts are not touched by reset().)
+  world.renderer.info.reset();
 
   if (!cameraHeldByQA) {
     player.update(dt);
