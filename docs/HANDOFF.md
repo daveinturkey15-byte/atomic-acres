@@ -284,3 +284,9 @@ AGENTS.md budget is 1200 calls / 900k tris. **Over the call budget at 3 of 4 pos
 caps it. This is gauntlet item S9; mannequin thinning and vehicle batching are the first
 levers. Measured through `scripts/playcap.mjs` — `captures/perframe-summary.json`.
 
+**21:55.** Wave 3 (gameplay, `wf_9803433a-ea2`) launched: vocabulary writer first, then
+lanes A/B/C/D, integrator, verifier - exactly IMPORT-PLAN §3. Wave 4 (Kimodo) and Wave 5
+(visual gauntlet, one script per subsystem via `args`) are drafted at the session
+scratchpad `wave4-animation.js` / `wave5-gauntlet.js` and launch after Wave 2 lands.
+Trellis.2 weights: 4/4 on disk and visible to the server (`comfy_up.py` preflight).
+
