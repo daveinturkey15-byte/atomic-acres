@@ -172,6 +172,10 @@ export const buildWhiteHouse: Builder = (ctx) => {
   const g = group('white-house');
   const colliders: AABB[] = [];
   const bWall = new Batch(), bGlaz = new Batch(), bTrim = new Batch();
+  // Interior room surfaces only - ceiling/floor slab, partitions, chimney breast.
+  // The capsule shell is ONE box per run, so its inner face cannot be split off; what
+  // can be split is everything that is only ever seen from inside. One extra call.
+  const bWallIn = new Batch();
   const bDark = new Batch(), bWood = new Batch(), bSteel = new Batch(), bGlow = new Batch();
   const bPlum = new Batch(), bGold = new Batch(), bMint = new Batch(), bRubble = new Batch();
 
@@ -581,7 +585,7 @@ export const buildWhiteHouse: Builder = (ctx) => {
     if (overlaps(za, zb, wz0, wz1)) cuts.push(wellX);
     for (const [a, c] of subtract(-lim, lim, cuts)) {
       if (c - a < 0.06) continue;
-      bWall.add(c - a, SLAB_T, zb - za, (a + c) / 2, FLOOR_H - SLAB_T / 2, (za + zb) / 2);
+      bWallIn.add(c - a, SLAB_T, zb - za, (a + c) / 2, FLOOR_H - SLAB_T / 2, (za + zb) / 2);
       colliders.push(aabb((a + c) / 2, FLOOR_H - SLAB_T / 2, (za + zb) / 2, c - a, SLAB_T, zb - za));
     }
   }
@@ -620,7 +624,7 @@ export const buildWhiteHouse: Builder = (ctx) => {
   bWood.add(1.7, 0.07, 0.8, bkX, 0.74, bkZ);
   const FP_X = -HOUSE_HALF_LEN * 0.42; // chimney breast on the yard wall
   const fpZ = REAR.cz + REAR.hz - WALL_T - 0.28;
-  bWall.add(1.7, FLOOR_H, 0.55, FP_X, FLOOR_H * 0.5, fpZ);
+  bWallIn.add(1.7, FLOOR_H, 0.55, FP_X, FLOOR_H * 0.5, fpZ);
   bDark.add(0.9, 0.7, 0.2, FP_X, 0.45, fpZ - 0.2);
   bDark.add(1.9, 0.07, 0.8, FP_X, 0.035, fpZ - 0.15);
   colliders.push(aabbSlab(FP_X, 0, fpZ, 1.7, FLOOR_H, 0.55));
@@ -632,8 +636,8 @@ export const buildWhiteHouse: Builder = (ctx) => {
     [-HOUSE_HALF_LEN * 0.34, REAR.cz + S * 1.6, 2.4],
   ];
   for (const [px, pz, pl] of segs) {
-    bWall.add(0.14, 2.5, pl, px, 1.25, pz); // leaf
-    bWall.add(0.18, 0.09, pl, px, 0.045, pz); // skirting
+    bWallIn.add(0.14, 2.5, pl, px, 1.25, pz); // leaf
+    bWallIn.add(0.18, 0.09, pl, px, 0.045, pz); // skirting
     colliders.push(aabbSlab(px, 0, pz, 0.14, 2.5, pl));
   }
   for (const [lx, lz] of [[REAR.cx, REAR.cz], [FRONT.cx, FRONT.cz]]) { // pendants, no scene lights
@@ -700,7 +704,7 @@ export const buildWhiteHouse: Builder = (ctx) => {
     bGlow.add(0.5, 0.05, 0.5, lx, UY + UPPER_H - 0.4, lz);
   }
   // ---- ground-floor back room left behind by the bedroom moving upstairs
-  bWall.add(0.14, 2.4, 2.2, BX, 1.2, REAR.cz + S * 3.4);
+  bWallIn.add(0.14, 2.4, 2.2, BX, 1.2, REAR.cz + S * 3.4);
   colliders.push(aabbSlab(BX, 0, REAR.cz + S * 3.4, 0.14, 2.4, 2.2));
   bWood.add(1.7, 0.44, 0.7, BX - 2.0, 0.22, REAR.cz + S * 3.2);
   colliders.push(aabbSlab(BX - 2.0, 0, REAR.cz + S * 3.2, 1.7, 0.44, 0.7));
@@ -759,7 +763,9 @@ export const buildWhiteHouse: Builder = (ctx) => {
   }
 
   const batched: [Batch, THREE.Material, string][] = [
-    [bWall, ctx.mat.capsuleWhite, 'wh-walls'], [bGlaz, ctx.mat.windowDark, 'wh-glazing'],
+    [bWall, ctx.mat.capsuleWhite, 'wh-walls-out'],
+    [bWallIn, ctx.mat.interiorWall, 'wh-walls-in'],
+    [bGlaz, ctx.mat.windowDark, 'wh-glazing'],
     [bTrim, ctx.mat.painted(PAL.capsuleTrim, 0.5, 0.15), 'wh-trim'],
     [bDark, ctx.mat.painted(PAL.rooftopDrum, 0.6, 0.1), 'wh-recess'],
     [bWood, ctx.mat.deckBoards, 'wh-deck'], [bSteel, ctx.mat.steel, 'wh-balusters'],

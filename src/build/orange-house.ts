@@ -199,6 +199,11 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const sc = new THREE.Vector3();
 
   const frameMat = mat.painted(PAL.houseCream, 0.6, 0.05);
+  // Interior partitions do NOT share the exterior frame cream. frameMat still dresses
+  // the window frames, jamb liners, rails and mullions - all of which are seen from
+  // outside in daylight - so it cannot be repointed wholesale without recolouring the
+  // street elevations. Only the partition leaves and headers move.
+  const partMat = mat.interiorWall;
 
   /** Emit one InstancedMesh from collected rows. Panes never cast shadow. */
   const emit = (rows: Row[], m: THREE.Material, shadow: boolean) => {
@@ -383,11 +388,11 @@ export const buildOrangeHouse: Builder = (ctx) => {
     const [lo, hi] = span(a, b);
     for (const [p0, p1] of subtract(lo, hi, cuts)) {
       if (p1 - p0 < 0.06) continue;
-      put(p1 - p0, FLOOR_H, 0.14, frameMat, (p0 + p1) / 2, FLOOR_H / 2, z, true);
+      put(p1 - p0, FLOOR_H, 0.14, partMat, (p0 + p1) / 2, FLOOR_H / 2, z, true);
     }
     for (const [c0, c1] of cuts) {   // header over the opening - overhead, never solid
       if (head < FLOOR_H - 0.02) {
-        g.add(box(c1 - c0, FLOOR_H - head, 0.14, frameMat, (c0 + c1) / 2, (head + FLOOR_H) / 2, z));
+        g.add(box(c1 - c0, FLOOR_H - head, 0.14, partMat, (c0 + c1) / 2, (head + FLOOR_H) / 2, z));
       }
     }
   };
@@ -396,11 +401,11 @@ export const buildOrangeHouse: Builder = (ctx) => {
     const [lo, hi] = span(a, b);
     for (const [p0, p1] of subtract(lo, hi, cuts)) {
       if (p1 - p0 < 0.06) continue;
-      put(0.14, FLOOR_H, p1 - p0, frameMat, x, FLOOR_H / 2, (p0 + p1) / 2, true);
+      put(0.14, FLOOR_H, p1 - p0, partMat, x, FLOOR_H / 2, (p0 + p1) / 2, true);
     }
     for (const [c0, c1] of cuts) {
       if (head < FLOOR_H - 0.02) {
-        g.add(box(0.14, FLOOR_H - head, c1 - c0, frameMat, x, (head + FLOOR_H) / 2, (c0 + c1) / 2));
+        g.add(box(0.14, FLOOR_H - head, c1 - c0, partMat, x, (head + FLOOR_H) / 2, (c0 + c1) / 2));
       }
     }
   };
@@ -461,7 +466,7 @@ export const buildOrangeHouse: Builder = (ctx) => {
       colliders.push(aabb((a + c) / 2, FLOOR_H - SLAB_T / 2, (z0 + z1) / 2, c - a, SLAB_T, z1 - z0));
     }
   }
-  emit(slabRows, mat.stuccoCream, true);
+  emit(slabRows, mat.interiorWall, true);
 
   /** A 1.0 m balustrade run on the upper floor. Mesh and collider are one box. */
   const upRail = (x0: number, z0: number, x1: number, z1: number): void => {

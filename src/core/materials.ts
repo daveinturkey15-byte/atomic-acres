@@ -157,6 +157,15 @@ export interface MaterialLibrary {
   solar: THREE.Material;
   barrelRoof: THREE.Material;
   capsuleWhite: THREE.Material;
+  /**
+   * Interior room surfaces - partitions, ceiling/floor slabs, chimney breasts.
+   * The same cream stucco set as the outside, but a room is NOT open to the sky:
+   * the albedo multiplies down to ~0.60 and warms off neutral, and envMapIntensity
+   * drops to 0.30 so an enclosed surface stops collecting the full blue hemisphere.
+   * Without this an interior reads BRIGHTER and COOLER than the sunlit street it
+   * opens onto - the inverted S1 contrast the interiors gauntlet round 0 measured.
+   */
+  interiorWall: THREE.Material;
   roofGlazing: THREE.Material;
   glass: THREE.Material;
   windowDark: THREE.Material;
@@ -649,6 +658,9 @@ export function buildMaterials(): MaterialLibrary {
     solar: std({ map: solarTex, roughness: 0.25, metalness: 0.35, envMapIntensity: 1.2 }),
     barrelRoof: std({ color: PAL.barrelRoof, roughness: 1, roughnessMap: barrelRough, metalness: 0.15 }),
     capsuleWhite: std({ map: capsuleSet.map, roughness: 1, roughnessMap: capsuleSet.roughnessMap, normalMap: capsuleSet.normalMap, normalScale: new THREE.Vector2(0.35, 0.35), metalness: 0.02, envMapIntensity: 0.6 }),
+    // Shares creamSet's maps with stuccoCream on purpose (no new texture, no new
+    // program family) - only the tint and the env term differ. See the interface.
+    interiorWall: std({ map: creamSet.map, roughness: 0.85, roughnessMap: creamSet.roughnessMap, normalMap: creamSet.normalMap, normalScale: new THREE.Vector2(0.5, 0.5), metalness: 0, color: 0x8f8a7a, envMapIntensity: 0.3 }),
     roofGlazing: std({
       color: PAL.roofGlazing, roughness: 0.14, metalness: 0.1,
       transparent: true, opacity: 0.86, envMapIntensity: 1.2,
