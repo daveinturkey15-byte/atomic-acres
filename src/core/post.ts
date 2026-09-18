@@ -109,17 +109,34 @@ function buildChain(
     const metal = scenePass.getTextureNode('metalness');
     const rough = scenePass.getTextureNode('roughness');
 
-    // 1 — GTAO: contact darkening under eaves, vehicles, kerbs.
-    const occlusion = ao(depth, normal, camera).getTextureNode();
+    // 1 — GTAO: contact darkening under eaves, vehicles, kerbs. Radius 1.0 m:
+    // the default 0.25 only sees 25 cm crevices and misses every kerb, tyre and
+    // eave contact in a metre-scale scene. As of 2026-09-18 this chain DOES run:
+    // main.ts routes the world through World.render(). Before that it never had.
+    const aoNode = ao(depth, normal, camera);
+    aoNode.radius.value = 1.0;
+    const occlusion = aoNode.getTextureNode();
     const lit = color.mul(occlusion);
 
-    // 2 — SSR on road/paving/glazing, opacity-weighted additive. If the
+    // 2 — SSR on road/paving/glazing, opacity-weighted additive. maxDistance 12
+    // covers the street width (the default 1 m only reflects a bumper); opacity
+    // stays restrained so rough asphalt keeps a dim lobe, not a mirror. If the
     // reflection pass fails to build, the lit colour stands on its own and
     // the existing env maps keep carrying specular response.
     let graded = lit;
     try {
-      const reflection = ssr(lit, depth, normal, metal, rough, camera).getTextureNode();
-      graded = lit.add(reflection.rgb.mul(reflection.a));
+      // SSRNode SAMPLES its colour input at arbitrary UVs (`this.colorNode.sample(...)`),
+      // so it must be handed a real texture node, not a computed expression. Passing
+      // `lit` (which is color.mul(occlusion)) threw
+      //   TypeError: this.colorNode.sample is not a function
+      // at build time - invisible until today, because main.ts never ran this chain.
+      // Feed it the raw scene texture and apply occlusion to the result instead.
+      const ssrNode = ssr(color, depth, normal, metal, rough, camera);
+      ssrNode.maxDistance.value = 12;
+      ssrNode.thickness.value = 0.3;
+      ssrNode.opacity.value = 0.55;
+      const reflection = ssrNode.getTextureNode();
+      graded = lit.add(reflection.rgb.mul(reflection.a).mul(occlusion));
     } catch {
       /* env-map fallback: keep the GTAO-graded colour without SSR */
     }
@@ -135,9 +152,26 @@ function buildChain(
     const post = new PostProcessing(renderer);
     post.outputNode = bloomed.mul(shade);
 
+    // A node graph only builds on the FIRST render, so a malformed node throws deep
+    // inside the frame loop rather than at construction - which is how a broken chain
+    // stayed invisible behind a try/catch that only wrapped construction. Degrade to
+    // direct rendering on the first failure, once, and say so loudly.
+    let chainBroken = false;
     return {
       render: () => {
-        post.render();
+        if (chainBroken) {
+          renderer.render(scene, camera);
+          return;
+        }
+        try {
+          post.render();
+        } catch (err) {
+          chainBroken = true;
+          console.error('[post] chain failed at render; falling back to direct '
+            + 'rendering for the rest of this session. The frame you are looking at '
+            + 'has NO ambient occlusion, reflection, bloom or vignette.', err);
+          renderer.render(scene, camera);
+        }
       },
       setSize: (w, h) => {
         // Effect nodes (GTAO/SSR/bloom) re-derive their targets from the

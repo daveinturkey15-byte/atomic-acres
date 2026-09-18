@@ -40,6 +40,7 @@ import {
   FRONT_LAWN_OUTER, GARAGE_LEN, HEAD_CENTER_X, HEAD_RADIUS, HOUSES, HOUSE_BACK,
   HOUSE_HALF_LEN, KERB_HEIGHT, KERB_WIDTH, ORANGE, PAVEMENT_OUTER, ROAD_HALF_WIDTH,
   ROAD_X_MAX, ROAD_X_MIN, THIRD_HOUSE_X, WHITE, YARD_X_MAX, YARD_X_MIN,
+  DOOR_APRON_HALF_W, DOOR_APRON_DEPTH,
 } from '../core/layout';
 
 // ---------------------------------------------------------------- derived frame
@@ -79,6 +80,26 @@ const PROP_X_MIN = YARD_X_MIN + PROP_LANE;
 const PROP_W = YARD_W - 2 * PROP_LANE;
 /** x at fraction t across the prop band of a back yard (NOT the full yard) */
 const yx = (t: number): number => PROP_X_MIN + t * PROP_W;
+
+/**
+ * Push an x clear of a house's back-door apron, if it landed in it.
+ *
+ * Props are placed at fractions of the yard, doors at fractions of the house, and the
+ * two sets of fractions know nothing about each other - so re-proportioning the map
+ * slid a 2.2 m crate store onto the orange back door and sealed the house. Anything
+ * standing within `halfW` of the door centre line gets shifted to whichever side has
+ * more yard left.
+ */
+const clearOfDoor = (h: HouseSide, x: number, halfW: number): number => {
+  const gap = DOOR_APRON_HALF_W + halfW;
+  if (Math.abs(x - h.backDoorX) >= gap) return x;
+  const left = h.backDoorX - gap;
+  const right = h.backDoorX + gap;
+  const okLeft = left - halfW >= PROP_X_MIN;
+  const okRight = right + halfW <= PROP_X_MIN + PROP_W;
+  if (okLeft && okRight) return (h.backDoorX - PROP_X_MIN) > (PROP_X_MIN + PROP_W - h.backDoorX) ? left : right;
+  return okLeft ? left : right;
+};
 /** z at fraction t from a house's back wall (0) to its back fence (1) */
 const yz = (h: HouseSide, t: number): number => h.side * (HOUSE_BACK + t * YARD_D);
 /** z at fraction t from the pavement edge (0) to a house's front wall (1) */
@@ -529,7 +550,9 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     }
 
     // crate store
-    const cxx = yx(0.38), czz = yz(H, 0.26), cu = 0.72;
+    const cu = 0.72;
+    const czz = yz(H, 0.26);
+    const cxx = clearOfDoor(H, yx(0.38), cu * 1.1);   // 2.2 m wide stack, right outside the door
     for (const [ox, oy, oz] of [[-0.5, 0, -0.5], [0.5, 0, -0.5], [-0.5, 0, 0.5], [0.5, 0, 0.5],
                                 [-0.44, 1, 0.04], [0.47, 1, 0.16], [0.02, 2, 0.1]]) {
       B.put(oy === 1 ? mat.timber : mat.timberDark, cu, cu, cu, cxx + ox * cu,
@@ -756,6 +779,25 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     console.warn('[yards] %d collider(s) reach into a flanking lane: %s',
       intruders.length,
       intruders.map((c) => `x ${c.min.x.toFixed(1)}..${c.max.x.toFixed(1)}`).join(', '));
+  }
+  // Same again for the door aprons. A sealed door is the most expensive bug this
+  // project has had: it looks like a house and behaves like a wall, and no single
+  // module is wrong about it.
+  for (const h of HOUSES) {
+    const nearWall = (c: AABB) => {
+      const d0 = Math.abs(h.backZ), d1 = d0 + DOOR_APRON_DEPTH;
+      const zMin = Math.min(Math.abs(c.min.z), Math.abs(c.max.z));
+      return h.side * c.min.z > 0 && zMin >= d0 - 0.4 && zMin <= d1;
+    };
+    const blocked = colliders.filter((c) => nearWall(c)
+      && c.max.x > h.backDoorX - DOOR_APRON_HALF_W
+      && c.min.x < h.backDoorX + DOOR_APRON_HALF_W
+      && c.max.y - c.min.y > 0.4);
+    if (blocked.length) {
+      console.warn('[yards] %d collider(s) stand in the %s back-door apron (door x=%s): %s',
+        blocked.length, h.side < 0 ? 'ORANGE' : 'WHITE', h.backDoorX.toFixed(2),
+        blocked.map((c) => `x ${c.min.x.toFixed(1)}..${c.max.x.toFixed(1)}`).join(', '));
+    }
   }
   return { group: g, colliders };
 };

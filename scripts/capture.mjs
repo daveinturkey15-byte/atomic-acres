@@ -10,6 +10,8 @@
  *   node scripts/capture.mjs --tag pass2       label the output set
  */
 import { chromium } from 'playwright';
+import { existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -39,7 +41,10 @@ function freePort() {
   });
 }
 
-async function waitForServer(url, ms = 60000) {
+// 60 s was not enough with sibling build lanes saturating the CPU: the harness
+// reported 'server never came up' for a server that was merely slow to start,
+// which reads as a map failure rather than a busy machine.
+async function waitForServer(url, ms = 240000) {
   const t0 = Date.now();
   while (Date.now() - t0 < ms) {
     try {
@@ -80,16 +85,72 @@ for (const f of readdirSync(OUT)) {
   if (f.endsWith('.png') || f.endsWith('.json')) rmSync(join(OUT, f), { force: true });
 }
 
-const browser = await chromium.launch({
-  args: [
-    '--use-gl=angle',
-    '--use-angle=d3d11',
-    '--enable-unsafe-swiftshader',
+/**
+ * Drive REAL Chrome over CDP, not `chromium.launch()`.
+ *
+ * Playwright's bundled Chromium has no WebGPU adapter - `navigator.gpu` is undefined
+ * under `chromium.launch()` even with every GPU flag set. This project renders through
+ * `THREE.WebGPURenderer`, and `buildPost()` falls back to `enabled: false` when the
+ * adapter is missing. So for the whole life of this harness, every frame anyone judged
+ * the look from was the fallback path with the entire post chain switched off: no
+ * ambient occlusion, no screen-space reflection, no bloom, no vignette.
+ *
+ * Spawning the installed Chrome with a remote-debugging port and attaching with
+ * connectOverCDP gets a real adapter, and it still works headless.
+ */
+function chromePath() {
+  const candidates = [
+    process.env.CHROME_PATH,
+    'C:/Program Files/Google/Chrome/Application/chrome.exe',
+    'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
+    process.env.LOCALAPPDATA && join(process.env.LOCALAPPDATA, 'Google/Chrome/Application/chrome.exe'),
+  ].filter(Boolean);
+  for (const c of candidates) if (existsSync(c)) return c;
+  return null;
+}
+
+const cdpPort = await freePort();
+const exe = chromePath();
+let chrome = null;
+let browser;
+if (exe) {
+  chrome = spawn(exe, [
+    '--headless=new',
+    '--remote-debugging-port=' + cdpPort,
+    '--user-data-dir=' + join(tmpdir(), 'aa-capture-' + cdpPort),
+    '--no-first-run', '--no-default-browser-check',
+    '--enable-unsafe-webgpu',
+    '--enable-features=Vulkan,UseSkiaRenderer',
     '--ignore-gpu-blocklist',
     '--enable-gpu-rasterization',
-  ],
-});
-const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
+    // keep it off the owner's main screen if it ever runs headful
+    '--window-position=2560,0',
+    '--window-size=1600,900',
+    'about:blank',
+  ], { stdio: 'ignore' });
+  const cdp = 'http://127.0.0.1:' + cdpPort;
+  let connected = null;
+  for (let i = 0; i < 160 && !connected; i++) {
+    try { connected = await chromium.connectOverCDP(cdp); } catch { await new Promise((r) => setTimeout(r, 250)); }
+  }
+  if (!connected) {
+    console.error('[capture] real Chrome never accepted a CDP connection on ' + cdpPort);
+    chrome.kill();
+    chrome = null;
+  }
+  browser = connected;
+}
+if (!browser) {
+  console.warn('[capture] WARNING: falling back to playwright chromium - NO WebGPU '
+    + 'adapter, so the post chain will be OFF and these frames are not what a player sees.');
+  browser = await chromium.launch({
+    args: ['--use-gl=angle', '--use-angle=d3d11', '--enable-unsafe-swiftshader',
+      '--ignore-gpu-blocklist', '--enable-gpu-rasterization'],
+  });
+}
+const ctx = browser.contexts()[0] ?? await browser.newContext({ viewport: { width: 1600, height: 900 } });
+const page = ctx.pages()[0] ?? await ctx.newPage();
+await page.setViewportSize({ width: 1600, height: 900 });
 
 const consoleErrors = [];
 const pageErrors = [];
@@ -110,6 +171,7 @@ try {
   console.error('  page errors: ' + JSON.stringify(pageErrors, null, 2));
   console.error('  console errors: ' + JSON.stringify(consoleErrors.slice(0, 12), null, 2));
   await browser.close();
+  if (chrome) chrome.kill();
   server.kill();
   process.exit(1);
 }
@@ -176,6 +238,7 @@ writeFileSync(join(OUT, (tag ? tag + '-' : '') + 'summary.json'),
   JSON.stringify(summary, null, 2));
 
 await browser.close();
+if (chrome) chrome.kill();
 server.kill();
 
 console.log('\n[capture] modules:');

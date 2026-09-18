@@ -178,7 +178,17 @@ function frame(): void {
       sprinting: speed > 6.5,
       grounded: player.state.grounded,
     });
-    world.renderer.render(world.scene, world.camera);
+    // The WORLD goes through the post chain (GTAO/SSR/bloom/vignette); the
+    // viewmodel is composited on top of the finished frame with its own cleared
+    // depth, so the gun never intersects the map and never gets its own AO.
+    //
+    // This used to call world.renderer.render() directly, which meant the whole
+    // post chain - and with it the only ambient-occlusion term in the project -
+    // had NEVER run, in any frame, since it was written. post.ts said so in a
+    // comment and nobody read it. That single missing call is most of why the
+    // build looked flat and plastic: no contact darkening anywhere, so every
+    // object read as pasted onto the ground rather than standing on it.
+    world.render();
     world.renderer.clearDepth();
     const ac = world.renderer.autoClear;
     world.renderer.autoClear = false;
@@ -259,7 +269,7 @@ const qa: QA = {
     world.camera.rotation.x = s.pitch;
     world.camera.fov = s.fov ?? 72;
     world.camera.updateProjectionMatrix();
-    world.renderer.render(world.scene, world.camera);
+    world.render();          // post chain, so a capture shows what a player sees
     return true;
   },
   spawn(team) {
@@ -309,7 +319,11 @@ const qa: QA = {
   moduleStats,
   colliderCount: colliders.length,
   render() {
-    world.renderer.render(world.scene, world.camera);
+    // Must be world.render(), not renderer.render(): the capture harness drives
+    // this, and for the whole life of the project it was photographing the scene
+    // with the post chain bypassed - so every frame anyone judged the look from
+    // was missing occlusion, reflection, bloom and vignette.
+    world.render();
   },
 
   // ---- traversability probe. Drives the REAL controller at a fixed timestep.

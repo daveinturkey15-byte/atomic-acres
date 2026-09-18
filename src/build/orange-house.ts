@@ -13,7 +13,7 @@ import { PAL } from '../core/palette';
 import {
   CANOPY_LEN, CANOPY_OUT, CANOPY_Y, DECK_LEN, DECK_OUT, DECK_Y, EAVE_Y, FLOOR_H,
   GARAGE_BAYS, GARAGE_DEPTH, GARAGE_H, GARAGE_LEN, HOUSE_DEPTH, HOUSE_HALF_LEN,
-  KERB_HEIGHT, ORANGE, RAIL_H, UPPER_H,
+  KERB_HEIGHT, ORANGE, RAIL_H, UPPER_H, DOOR_APRON_HALF_W,
 } from '../core/layout';
 
 type P2 = [number, number];
@@ -155,6 +155,19 @@ export const buildOrangeHouse: Builder = (ctx) => {
     };
     let cur = Math.min(a, b);
     for (const h of [...holes].sort((p, r) => p.c - r.c)) {
+      // Overlapping holes silently eat each other: the pier between them collapses to
+      // nothing, and whichever hole is processed FIRST gets to lay its spandrel across
+      // the other. That is how the front door ended up 0.59 m wide - a window centred
+      // on a fraction of HOUSE_HALF_LEN slid on top of a door positioned at
+      // HOUSE_HALF_LEN minus absolute terms when the house was re-proportioned, and a
+      // 0.95 m window sill was laid across most of the doorway. It read as "this house
+      // has no door" three probes later. Fail loudly instead.
+      if (h.c - h.w / 2 < cur - 1e-6) {
+        throw new Error(`[orange-house] overlapping holes on the ${along} wall at `
+          + `fixed=${fixed.toFixed(2)}: a hole spanning ${(h.c - h.w / 2).toFixed(2)}..`
+          + `${(h.c + h.w / 2).toFixed(2)} starts before the previous one ends at `
+          + `${cur.toFixed(2)}. Space them apart - see holesAround().`);
+      }
       add(cur, h.c - h.w / 2, 0, FLOOR_H, true);                    // pier (solid)
       // The spandrel under a sill is WALL. Leaving it hollow let the player walk
       // through every window and made the traverse door scan count one as a door.
@@ -168,15 +181,42 @@ export const buildOrangeHouse: Builder = (ctx) => {
 
   const DOOR: Omit<Hole, 'c'> = { w: 1.5, sill: 0, head: 2.35 };
   const WIN: Omit<Hole, 'c'> = { w: 2.1, sill: 0.95, head: 2.45 };
-  const porchX = FE * (HHL - CORNER_R - CANOPY_LEN / 2);
-  const backDoorX = GE * HHL * 0.32;   // must match the back-wall DOOR hole below
+  // Door centres come from the layout contract now, so the yard builder can keep its
+  // aprons clear of them. The canopy follows the door rather than the door following
+  // the canopy - which is what it was doing when it was derived from CORNER_R.
+  const porchX = H.frontDoorX;
+  const backDoorX = H.backDoorX;
 
-  wallRun('x', GND_FRONT + S * WALL_T / 2, GE * HHL, FE * HHL, OUT, [
-    { c: porchX, ...DOOR }, { c: FE * HHL * 0.1, ...WIN }, { c: GE * HHL * 0.34, ...WIN },
-  ]);
-  wallRun('x', backZ + OUT * WALL_T / 2, GE * HHL, FE * HHL, S, [
-    { c: GE * HHL * 0.32, ...DOOR }, { c: FE * HHL * 0.2, ...WIN }, { c: FE * HHL * 0.74, ...WIN },
-  ]);
+  /**
+   * Lay a door plus as many windows as fit, centred in the wall left over on each side.
+   *
+   * The windows used to sit at their own fractions of HOUSE_HALF_LEN while the door sat
+   * at HOUSE_HALF_LEN minus the corner radius and half the canopy - a mix of relative
+   * and absolute that happened not to collide at the old 19.2 m house width and did
+   * collide at the measured 17.6 m one. Deriving the windows FROM the door means the
+   * two cannot cross however the house is re-proportioned.
+   */
+  const holesAround = (doorC: number): Hole[] => {
+    const out: Hole[] = [{ c: doorC, ...DOOR }];
+    const MARGIN = 0.55;                       // pier left at the house corner
+    const PIER = 0.75;                         // minimum wall between two apertures
+    for (const dir of [-1, 1] as const) {
+      const from = doorC + dir * (DOOR.w / 2 + PIER);
+      const to = dir < 0 ? -HHL + MARGIN : HHL - MARGIN;
+      const run = Math.abs(to - from);
+      const n = Math.floor((run + PIER) / (WIN.w + PIER));   // how many actually fit
+      for (let i = 0; i < n; i++) {
+        // centre the row of windows in the run so the piers come out even
+        const used = n * WIN.w + (n - 1) * PIER;
+        const start = from + dir * (run - used) / 2;
+        out.push({ c: start + dir * (WIN.w / 2 + i * (WIN.w + PIER)), ...WIN });
+      }
+    }
+    return out;
+  };
+
+  wallRun('x', GND_FRONT + S * WALL_T / 2, GE * HHL, FE * HHL, OUT, holesAround(porchX));
+  wallRun('x', backZ + OUT * WALL_T / 2, GE * HHL, FE * HHL, S, holesAround(backDoorX));
   wallRun('z', FE * (HHL - WALL_T / 2), GND_FRONT, backZ, FE, [{ c: midZ, ...WIN }]);
   wallRun('z', GE * (HHL - WALL_T / 2), GND_FRONT, backZ, GE, []);
 
@@ -256,10 +296,15 @@ export const buildOrangeHouse: Builder = (ctx) => {
     put(encX1 - encX0 - 0.24, 0.07, 0.3, mat.deckBoards,
       encXM, 1.25 + k * 0.32, encZ0 + S * (1.45 + k * 0.3));
   }
-  // kitchen counter on a solid back-wall stretch, clear of the door and windows
+  // Kitchen counter. Sitting under a WINDOW is fine - that spandrel is solid wall
+  // anyway - but it may never encroach on the back door's apron. It used to be at a
+  // fixed x=-0.6 which was clear of the door at the old house width and 0.5 m inside
+  // it at the measured one, half-sealing the only way into the yard.
   const kCZ = backZ - S * (WALL_T / 2 + 0.31);
-  put(2.4, 0.9, 0.62, frameMat, -0.6, 0.45, kCZ, true);
-  put(2.48, 0.06, 0.7, topIn, -0.6, 0.93, kCZ);
+  const kW = 2.4;
+  const kX = backDoorX - GE * (DOOR_APRON_HALF_W + kW / 2 + 0.2);
+  put(kW, 0.9, 0.62, frameMat, kX, 0.45, kCZ, true);
+  put(kW + 0.08, 0.06, 0.7, topIn, kX, 0.93, kCZ);
   g.add(box(0.9, 0.03, 0.5, mat.windowDark, -0.9, 0.975, kCZ));
   // chimney breast on the solid back-wall segment by the garage-end corner
   const fBX = GE * (HHL - 0.75), fBZ = backZ - S * (WALL_T / 2 + 0.275);

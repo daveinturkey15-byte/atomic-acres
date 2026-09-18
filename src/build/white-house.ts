@@ -96,7 +96,9 @@ const FRONT: Plan = { cx: -HOUSE_HALF_LEN * 0.12, cz: Z_FRONT + S * FRONT_D * 0.
 const H_REAR = EAVE_Y, H_FRONT = FLOOR_H + UPPER_H * 0.38;
 const G_SILL = FLOOR_H * 0.33, G_HEAD = FLOOR_H * 0.78;
 const U_SILL = FLOOR_H + UPPER_H * 0.31, U_HEAD = FLOOR_H + UPPER_H * 0.755;
-const DOOR_HALF = 0.9, FRONT_DOOR_X = -HOUSE_HALF_LEN * 0.16, YARD_DOOR_X = HOUSE_HALF_LEN * 0.26;
+// Door centres come from the layout contract so the yard builder can keep its keep-clear
+// aprons off them; these two fractions were the source of WHITE's values.
+const DOOR_HALF = 0.9, FRONT_DOOR_X = WHITE.frontDoorX, YARD_DOOR_X = WHITE.backDoorX;
 const GAR_CX = WHITE.garageX, GAR_CZ = Z_FRONT + S * GARAGE_DEPTH * 0.5;
 const GAR_PLAN: Plan = { cx: GAR_CX, cz: GAR_CZ, hx: GARAGE_LEN * 0.5, hz: GARAGE_DEPTH * 0.5, r: GARAGE_LEN * 0.12 };
 const LINK_W = REAR_D * 0.52, LINK_D = REAR_D * 0.7, LINK_CX = HOUSE_HALF_LEN - LINK_W * 0.5 + 0.3;

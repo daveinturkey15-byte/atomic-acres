@@ -127,7 +127,24 @@ export interface HouseSide {
   garageEnd: -1 | 1;
   /** x of the rear deck centre (opposite end from the garage) */
   deckX: number;
+  /** x of the street-face door centre */
+  frontDoorX: number;
+  /** x of the yard-face door centre */
+  backDoorX: number;
 }
+
+/**
+ * Keep-clear apron in front of every door. Nothing - prop, planter, crate, shed - may
+ * stand in it, and the house's own interior dressing may not back onto it either.
+ *
+ * This exists because door positions used to be private to each house builder, so the
+ * yard had no way to know where they were. After the 2026-09-18 re-proportioning a
+ * crate store landed 2.7 m outside the orange back door and a sofa 0.6 m inside it,
+ * and the house reported "no way through this face" - a sealed house that no single
+ * module was wrong about. The doors live here now so everyone can avoid them.
+ */
+export const DOOR_APRON_HALF_W = 1.35;   // half-width, centred on the door
+export const DOOR_APRON_DEPTH = 3.2;     // how far out from the wall it reaches
 
 export const ORANGE: HouseSide = {
   side: -1,
@@ -136,6 +153,8 @@ export const ORANGE: HouseSide = {
   garageEnd: -1,
   garageX: -(HOUSE_HALF_LEN + GARAGE_LEN / 2),
   deckX: HOUSE_HALF_LEN - DECK_LEN / 2,
+  frontDoorX: HOUSE_HALF_LEN * 0.24,
+  backDoorX: -HOUSE_HALF_LEN * 0.32,
 };
 
 export const WHITE: HouseSide = {
@@ -145,6 +164,8 @@ export const WHITE: HouseSide = {
   garageEnd: 1,
   garageX: HOUSE_HALF_LEN + GARAGE_LEN / 2,
   deckX: -(HOUSE_HALF_LEN - DECK_LEN / 2),
+  frontDoorX: -HOUSE_HALF_LEN * 0.16,
+  backDoorX: HOUSE_HALF_LEN * 0.26,
 };
 
 export const HOUSES = [ORANGE, WHITE] as const;
