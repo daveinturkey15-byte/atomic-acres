@@ -10,13 +10,13 @@
  *   node scripts/capture.mjs --tag pass2       label the output set
  */
 import { chromium } from 'playwright';
+import { usePreview } from './lib/preview.mjs';
+import { spawnGuarded, killTree } from './lib/proc-guard.mjs';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { spawn } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, readdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import net from 'node:net';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'captures');
@@ -30,58 +30,22 @@ if (tagIdx !== -1) {
 }
 const wanted = argv.filter((a) => !a.startsWith('--'));
 
+
+
+// ONE shared preview server for the whole repo - see lib/preview.mjs.
+// Previously every harness spawned its own and killed only the vite parent,
+// leaving esbuild behind; 52 of them accumulated in three hours.
+// Still needed for Chrome's CDP port - only the vite server is shared now.
+import net from 'node:net';
 function freePort() {
   return new Promise((res, rej) => {
     const s = net.createServer();
-    s.listen(0, '127.0.0.1', () => {
-      const p = s.address().port;
-      s.close(() => res(p));
-    });
+    s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); });
     s.on('error', rej);
   });
 }
 
-// 60 s was not enough with sibling build lanes saturating the CPU: the harness
-// reported 'server never came up' for a server that was merely slow to start,
-// which reads as a map failure rather than a busy machine.
-async function waitForServer(url, ms = 240000) {
-  const t0 = Date.now();
-  while (Date.now() - t0 < ms) {
-    try {
-      const r = await fetch(url);
-      if (r.ok) return true;
-    } catch { /* not up yet */ }
-    await new Promise((r) => setTimeout(r, 250));
-  }
-  return false;
-}
-
-const port = await freePort();
-console.log('[capture] starting own dev server on port ' + port);
-// windowsHide: node defaults it to FALSE, and with shell:true on Windows every
-// one of these spawns a visible cmd.exe window. Running captures in a loop put
-// console windows over the owner's screen and stole his keyboard focus.
-const server = spawn(
-  process.platform === 'win32' ? 'npx.cmd' : 'npx',
-  ['vite', 'preview', '--port', String(port), '--strictPort'],
-  { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32', windowsHide: true },
-);
-let serverLog = '';
-server.stdout.on('data', (d) => { serverLog += d; });
-server.stderr.on('data', (d) => { serverLog += d; });
-
-// --post=<mode> forwards to the page's ?post= diagnostic (see src/core/post.ts):
-// 'ao' renders the raw occlusion term, 'off' the ungraded scene colour.
-// --post=<mode>, with an equals sign: a space-separated value would be picked up
-// by the positional station filter below and read as a station name.
-const postMode = (process.argv.find((a) => a.startsWith('--post=')) || '').split('=')[1] || '';
-const url = 'http://localhost:' + port + '/' + (postMode ? '?post=' + postMode : '');
-const up = await waitForServer(url);
-if (!up) {
-  console.error('[capture] server never came up. log:\n' + serverLog);
-  server.kill();
-  process.exit(1);
-}
+const { url } = await usePreview();
 
 mkdirSync(OUT, { recursive: true });
 // Clear only THIS run's own outputs. Wiping the whole directory means two concurrent
@@ -122,7 +86,11 @@ const exe = chromePath();
 let chrome = null;
 let browser;
 if (exe) {
-  chrome = spawn(exe, [
+  // spawnGuarded, not spawn: a plain .kill() on Chrome ends the parent and leaves
+  // 8-10 renderer/GPU/network children orphaned. ~600 of those exhausted this
+  // machine's ephemeral port pool on 2026-09-17 and cost the owner 15 hours.
+  // spawnGuarded kills the tree, and reaps it on a throw or Ctrl-C too.
+  chrome = spawnGuarded(exe, [
     '--headless=new',
     '--remote-debugging-port=' + cdpPort,
     '--user-data-dir=' + join(tmpdir(), 'aa-capture-' + cdpPort),
@@ -143,7 +111,7 @@ if (exe) {
   }
   if (!connected) {
     console.error('[capture] real Chrome never accepted a CDP connection on ' + cdpPort);
-    chrome.kill();
+    killTree(chrome.pid);
     chrome = null;
   }
   browser = connected;
@@ -179,8 +147,6 @@ try {
   console.error('  page errors: ' + JSON.stringify(pageErrors, null, 2));
   console.error('  console errors: ' + JSON.stringify(consoleErrors.slice(0, 12), null, 2));
   await browser.close();
-  if (chrome) chrome.kill();
-  server.kill();
   process.exit(1);
 }
 
@@ -246,8 +212,6 @@ writeFileSync(join(OUT, (tag ? tag + '-' : '') + 'summary.json'),
   JSON.stringify(summary, null, 2));
 
 await browser.close();
-if (chrome) chrome.kill();
-server.kill();
 
 console.log('\n[capture] modules:');
 for (const [k, v] of Object.entries(moduleStats)) {

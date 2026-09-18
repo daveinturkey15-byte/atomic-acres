@@ -13,11 +13,10 @@
  *   node scripts/plan.mjs [--out captures/plan.png]
  */
 import { chromium } from 'playwright';
-import { spawn } from 'node:child_process';
+import { usePreview } from './lib/preview.mjs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writeFileSync, mkdirSync } from 'node:fs';
-import net from 'node:net';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const outArg = process.argv.indexOf('--out');
@@ -28,34 +27,11 @@ const X0 = -26, X1 = 30, Z0 = -46, Z1 = 46;
 const PPM = 8;                       // pixels per metre
 const STEP = 0.25;                   // sampling pitch, metres
 
-function freePort() {
-  return new Promise((res, rej) => {
-    const s = net.createServer();
-    s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); });
-    s.on('error', rej);
-  });
-}
-// 60 s was not enough with sibling build lanes saturating the CPU: the harness
-// reported 'server never came up' for a server that was merely slow to start,
-// which reads as a map failure rather than a busy machine.
-async function waitForServer(url, ms = 240000) {
-  const t0 = Date.now();
-  while (Date.now() - t0 < ms) {
-    try { if ((await fetch(url)).ok) return true; } catch { /* not up */ }
-    await new Promise((r) => setTimeout(r, 250));
-  }
-  return false;
-}
 
-const port = await freePort();
-// windowsHide: node defaults it to FALSE, and with shell:true on Windows every
-// one of these spawns a visible cmd.exe window. Running captures in a loop put
-// console windows over the owner's screen and stole his keyboard focus.
-const server = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx',
-  ['vite', 'preview', '--port', String(port), '--strictPort'],
-  { cwd: ROOT, stdio: 'ignore', shell: process.platform === 'win32', windowsHide: true });
-const url = 'http://localhost:' + port + '/';
-if (!await waitForServer(url)) { console.error('[plan] server never came up'); server.kill(); process.exit(1); }
+// ONE shared preview server for the whole repo - see lib/preview.mjs. Every
+// harness used to spawn its own and kill only the vite parent, orphaning esbuild;
+// 52 of them accumulated in three hours and held 52 listening sockets.
+const { url } = await usePreview();
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
@@ -80,7 +56,6 @@ const grid = await page.evaluate(([X0, X1, Z0, Z1, STEP]) => {
 }, [X0, X1, Z0, Z1, STEP]);
 
 await browser.close();
-server.kill();
 
 // ---- rasterise to a PPM, then let the caller convert; no image deps in this repo
 const W = Math.round((X1 - X0) * PPM);

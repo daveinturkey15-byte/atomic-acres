@@ -18,11 +18,10 @@
  *   node scripts/paths.mjs
  */
 import { chromium } from 'playwright';
-import { spawn } from 'node:child_process';
+import { usePreview } from './lib/preview.mjs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { writeFileSync, mkdirSync } from 'node:fs';
-import net from 'node:net';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -37,31 +36,11 @@ const STEP_UP = 0.38;             // must match src/core/player.ts
 const BODY_TOP = 1.7;
 const SAMPLE_Y = [0.45, 0.8, 1.2, 1.6];
 
-function freePort() {
-  return new Promise((res, rej) => {
-    const s = net.createServer();
-    s.listen(0, '127.0.0.1', () => { const p = s.address().port; s.close(() => res(p)); });
-    s.on('error', rej);
-  });
-}
-async function waitForServer(url, ms = 240000) {
-  const t0 = Date.now();
-  while (Date.now() - t0 < ms) {
-    try { if ((await fetch(url)).ok) return true; } catch { /* not up */ }
-    await new Promise((r) => setTimeout(r, 250));
-  }
-  return false;
-}
 
-const port = await freePort();
-// windowsHide: node defaults it to FALSE, and with shell:true on Windows every
-// one of these spawns a visible cmd.exe window. Running captures in a loop put
-// console windows over the owner's screen and stole his keyboard focus.
-const server = spawn(process.platform === 'win32' ? 'npx.cmd' : 'npx',
-  ['vite', 'preview', '--port', String(port), '--strictPort'],
-  { cwd: ROOT, stdio: 'ignore', shell: process.platform === 'win32', windowsHide: true });
-const url = 'http://localhost:' + port + '/';
-if (!await waitForServer(url)) { console.error('[paths] server never came up'); server.kill(); process.exit(1); }
+// ONE shared preview server for the whole repo - see lib/preview.mjs. Every
+// harness used to spawn its own and kill only the vite parent, orphaning esbuild;
+// 52 of them accumulated in three hours and held 52 listening sockets.
+const { url } = await usePreview();
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
@@ -97,7 +76,6 @@ const data = await page.evaluate(([X0, X1, Z0, Z1, STEP, SAMPLE_Y, STEP_UP, BODY
 }, [X0, X1, Z0, Z1, STEP, SAMPLE_Y, STEP_UP, BODY_TOP]);
 
 await browser.close();
-server.kill();
 
 const { nx, nz } = data;
 const blocked = Uint8Array.from(data.blocked);

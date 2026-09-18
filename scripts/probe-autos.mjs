@@ -1,6 +1,6 @@
 /** THROWAWAY autos probe: turningHead re-check + plinth close-up. DELETE AFTER USE. */
 import { chromium } from 'playwright';
-import { spawn } from 'node:child_process';
+import { spawnGuarded, stopServer } from './lib/proc-guard.mjs';
 import net from 'node:net';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,7 +33,12 @@ console.log('[probe] dev server on port ' + port);
 // windowsHide: node defaults it to FALSE, and with shell:true on Windows every
 // one of these spawns a visible cmd.exe window. Running captures in a loop put
 // console windows over the owner's screen and stole his keyboard focus.
-const server = spawn(
+// spawnGuarded, not spawn: this one runs the DEV server on purpose (it tests the
+// source path, not the built artifact), so it cannot share the preview server -
+// but a plain .kill() leaves vite's esbuild child orphaned, and any throw before
+// the kill leaked the whole tree. spawnGuarded reaps on exit, SIGINT, SIGTERM and
+// unhandled errors alike.
+const server = spawnGuarded(
   process.platform === 'win32' ? 'npx.cmd' : 'npx',
   ['vite', '--port', String(port), '--strictPort', '--host', '127.0.0.1'],
   { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32', windowsHide: true },
@@ -43,7 +48,7 @@ server.stderr.on('data', (d) => process.stderr.write('[vite] ' + d));
 
 const url = 'http://127.0.0.1:' + port + '/';
 const up = await waitFor(url);
-if (!up) { console.error('[probe] server never came up'); server.kill(); process.exit(1); }
+if (!up) { console.error('[probe] server never came up'); stopServer(server); process.exit(1); }
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1600, height: 900 } });
@@ -199,5 +204,5 @@ console.log('[probe] plinth shot');
 console.log('[probe] pageErrors:', JSON.stringify(pageErrors));
 console.log('[probe] consoleErrors:', JSON.stringify(consoleErrors.slice(0, 8)));
 await browser.close();
-server.kill();
+stopServer(server);
 process.exit(pageErrors.length ? 2 : 0);

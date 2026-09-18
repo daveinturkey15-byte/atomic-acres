@@ -6,7 +6,7 @@
  * Paths relative to repo root, e.g. captures/zz5.png
  */
 import { chromium } from 'playwright';
-import { spawn } from 'node:child_process';
+import { spawnGuarded, stopServer } from './lib/proc-guard.mjs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import net from 'node:net';
@@ -32,7 +32,12 @@ const port = await freePort();
 // windowsHide: node defaults it to FALSE, and with shell:true on Windows every
 // one of these spawns a visible cmd.exe window. Running captures in a loop put
 // console windows over the owner's screen and stole his keyboard focus.
-const server = spawn(
+// spawnGuarded, not spawn: this one runs the DEV server on purpose (it tests the
+// source path, not the built artifact), so it cannot share the preview server -
+// but a plain .kill() leaves vite's esbuild child orphaned, and any throw before
+// the kill leaked the whole tree. spawnGuarded reaps on exit, SIGINT, SIGTERM and
+// unhandled errors alike.
+const server = spawnGuarded(
   process.platform === 'win32' ? 'npx.cmd' : 'npx',
   ['vite', '--port', String(port), '--strictPort'],
   { cwd: ROOT, stdio: 'ignore', shell: process.platform === 'win32', windowsHide: true },
@@ -100,4 +105,4 @@ for (let i = 0; i < names.length; i++) {
 }
 
 await browser.close();
-server.kill();
+stopServer(server);

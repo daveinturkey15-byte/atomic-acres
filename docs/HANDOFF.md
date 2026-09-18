@@ -1,0 +1,222 @@
+# Atomic Acres — handoff, 2026-09-18 18:30
+
+Written so the next session (Fable, orchestrating) can pick this up cold. Everything
+below is verified state, not intention. Where something is unproven it says so.
+
+---
+
+## 1. Where the code is
+
+- **Branch: `layout-boii-proportions`** — all of today's work, pushed.
+- **`master` is what GitHub Pages serves** and is deliberately stale. It carries the
+  older, wrongly-proportioned but playable build. **Do not publish to Pages** until the
+  branch is genuinely playable; that was the owner's standing instruction all day.
+- Local preview the owner inspects: **http://localhost:4173/** (`npx vite preview`).
+  Port 4173 is pinned in `leak-watch/protected-ports.txt` so the reaper never kills it.
+
+Commits today, newest first:
+
+| | |
+|---|---|
+| `b989327` | Fix the black screen: take the interactive path off the post chain |
+| `911f769` | Land the characters, netcode and weapons lanes; wire characters in |
+| `34d7bf9` | Open the west flank; stop the path exporter cutting its own corners |
+| `3669346` | Make the AO actually visible; stop every harness popping console windows |
+| `c76e1f0` | photoreal lane: light rebalance and two-scale surface breakup |
+| `98bf4d1` | The post chain had never run, and both houses were sealed |
+| `8e4829d` | Re-proportion the map to the official BO2 minimap |
+
+**Uncommitted right now:** the process-leak fix (`scripts/lib/proc-guard.mjs`,
+`scripts/lib/preview.mjs`, and the rewiring of all seven harnesses). It is finished and
+verified — capture writes 10 frames, traverse reports 4/4 house faces — but not yet
+committed. Commit it before starting new work.
+
+---
+
+## 2. The five things that will waste your time if you do not know them
+
+These each cost hours today. They are all still true.
+
+1. **The post chain does not work on the interactive path.** `world.render()` →
+   `PostProcessing.render()` renders correct frames from the capture harness and
+   **nothing at all** from the rAF loop — a black world with only the viewmodel and HUD
+   drawn, because those are a separate direct render afterwards. The frame loop is
+   therefore back on `renderer.render()`, and the chain is opt-in via **`?post=chain`**.
+   Also available: `?post=ao` (raw occlusion term) and `?post=off` (ungraded colour).
+   **This is the single biggest open bug.** AO/SSR/bloom exist and are tuned but are not
+   in the game. Ruled out already: it is not the viewmodel overlay wiping the frame
+   (suppressing it made the screen blacker), and it is not only the async backend race
+   (that is real, is handled in `world.ts`, and did not fix it).
+
+2. **The capture harness tests a path the player does not take.** Captures drive
+   `qa.render()`; the game drives the frame loop. That difference is exactly how a black
+   screen shipped behind ten green captures and a clean traverse. Any visual claim must
+   be checked in the interactive page, not only in a capture.
+
+3. **`traverse.mjs` cannot distinguish "sealed" from "waypoint in a flowerbed".** Use
+   `node scripts/paths.mjs` for the real question — it floods the collision world from a
+   spawn with the player radius eroded out and reports what is genuinely reachable, then
+   emits line-of-sight-simplified waypoints. Never re-simplify a path by taking every
+   Nth cell; the chord cuts the corner back through whatever the path walked around.
+
+4. **`?post=ao` output is tone-mapped.** Its pixel values are display values, not linear
+   shader values. Reading them as linear sends you down a wrong path.
+
+5. **Playwright's bundled Chromium has no WebGPU adapter.** `chromium.launch()` gives
+   `navigator.gpu === undefined`, so `buildPost` silently returns `enabled:false`.
+   `capture.mjs` now spawns real Chrome and attaches over CDP. If you write a new
+   browser harness, do the same or you will be measuring the WebGL2 fallback.
+
+---
+
+## 3. What the map is now
+
+Re-proportioned today from the **genuine** official BO2 minimap at
+`docs/reference/img/nt2025-minimap-boii.png`. Every previous file in that directory was
+a 5.8 kB HTML error page — the fetch had no browser User-Agent and nobody checked the
+bytes, so every "measured off the minimap" claim before today was void.
+
+Scale assumption is stated with its falsifier in the provenance block at the top of
+`src/core/layout.ts`. The headline correction: the **house-to-house axis is the long
+one** and the street is short — the turning circle is most of it. The map had been
+~2.8× too long along the street, which is why it read as an empty boulevard.
+
+Verified by `scripts/paths.mjs`: **every landmark reachable from spawn A** — both
+spawns, both house interiors, all four flanks, the circle, the west road stem, the east
+apron. **4/4 house faces enterable** (was 2/4). Handedness invariant PASS.
+
+Still open on layout:
+- `traverse` reports 1/5 routes. The map is connected; the stalls are a
+  controller-vs-probe disagreement at a point verified clear at every height 0.1–1.7 m.
+- Interior topology has **not** been checked against the real map — garage access,
+  stairs, both floors. That is in the owner's new brief.
+
+---
+
+## 4. Instruments (use these, they are the point)
+
+| script | what it answers |
+|---|---|
+| `scripts/paths.mjs` | what is genuinely reachable; emits safe waypoints |
+| `scripts/plan.mjs` | top-down collision plan next to the reference at matched scale |
+| `scripts/traverse.mjs` | are the specific lanes a player runs still clear |
+| `scripts/capture.mjs` | ten camera stations through real Chrome + WebGPU |
+| `__NT.collidersAt(x,z,y)` | now reports **which module owns** each collider |
+
+`npm run build` first — both harnesses serve the **built** artifact.
+
+---
+
+## 5. Process hygiene — read before spawning anything
+
+Two leaks cost the owner real time. Both are now defended, but the defences only work
+if you use them.
+
+- **`scripts/lib/preview.mjs`** — ONE shared `vite preview` on port **4188** (pinned in
+  `leak-watch/protected-ports.txt`). Every harness uses `usePreview()`. Previously each
+  spawned its own and killed only the vite parent, orphaning esbuild: 52 servers, 104
+  processes, 4.67 GB and 52 listening sockets in three hours.
+- **`scripts/lib/proc-guard.mjs`** — `spawnGuarded` / `killTree` / `stopServer`. Kills
+  the whole tree and reaps on exit, SIGINT, SIGTERM, uncaughtException and
+  unhandledRejection. Chrome in `capture.mjs` uses it; ~600 orphaned Chromes exhausted
+  the ephemeral port pool on 2026-09-17 and made the machine unusable for 15 hours.
+- A scheduled task **`DevLeakReaper`** runs every 15 min as a safety net. It skips
+  anything under 20 min old, anything with an ESTABLISHED connection, and any port in
+  `protected-ports.txt`.
+- **Launching background agents:** `CREATE_NO_WINDOW` is **ignored** by CreateProcess
+  when `DETACHED_PROCESS` is set, and a detached process has no console so its children
+  allocate visible ones. Use `CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP |
+  CREATE_BREAKAWAY_FROM_JOB` (see the scratchpad `spark.py`). Node's `spawn` also
+  defaults `windowsHide` to **false** — always pass `windowsHide: true`.
+
+---
+
+## 6. Characters and animation — the licence position
+
+The owner **will not create an Adobe account**, so Mixamo is out permanently. Do not ask.
+
+The chosen route is **Kimodo** (local text-to-motion) + Blender retarget, with the
+character mesh built procedurally in code. Verified on disk today:
+
+- `C:\Users\david\projects\kimodo.cpp`, binaries built: `kmd-generate.exe`,
+  `kmd-generate-embed.exe`, `kmd-encode.exe`
+- Motion weights `kimodo-soma-rp-v1.1-f32.gguf`, manifest traces to
+  `nvidia/Kimodo-SOMA-RP-v1.1` — NVIDIA Open Model License, commercial use permitted,
+  no country exclusion. The prohibited SMPL-X checkpoint is **not** present.
+
+**Two traps:**
+1. The port's README says Kimodo "gives you SMPL-X". That is true only of the SMPL-X
+   checkpoint, which we may not use. `soma-rp-v1.1` emits **SOMA-30, not 22 joints**.
+   Carry both layouts and select by joint count at import. This has already cost a
+   rewrite once.
+2. **Unresolved licence question.** Kimodo takes a text prompt *or* a precomputed
+   4096-float LLM2Vec embedding. **Both** go through the Llama-3-derived text bundle at
+   `weights/generated/llm2vec-text-bundle/` (present, 2.8 GB, built from
+   `llama3-8b-instruct-base`). So "don't use the Llama bundle" and "drive it from text"
+   are mutually exclusive. Someone must read the Meta Llama 3 Community License and
+   decide. **This blocks the animation lane.**
+
+Reference wiring exists in the OLD project (`stuff/atomic-acres/scripts/animation/…`
+and `scripts/blender/retarget-kimodo-motion.py`) — read it, it is not in this repo.
+`docs/PASS77_KIMODO_SKELETAL_ANIMATION_ASSESSMENT.md` in that project is **stale**: it
+predates the SOMA weights and describes the SMPL-X route we are rejecting.
+
+`src/characters/` already contains a skeleton, retarget, clip library, blend tree,
+procedural mesh and a budgeted system, wired into `main.ts` with six figures spawned.
+The **system** is right and transfers unchanged; only the clip source moves to Kimodo.
+The clips currently in it came from a CMU-mocap brief written before the owner's
+Kimodo direction and are **not** the ones to keep.
+
+---
+
+## 7. What the lanes delivered, and what they did not
+
+Delivered and committed: `src/characters/**`, `src/net/**` (transport, protocol, room,
+snapshot, diagnostics, loopback proof — self-wired via `net/wire.ts`),
+`src/weapons/catalog.ts` plus controller/effects/viewmodel revisions, `src/ui/`
+reskin with `glyphs.ts`, `layout.ts`, `lobby.ts`.
+
+**Not delivered:** `src/game/` was never created — **killstreaks, scoring and match
+state do not exist**. No lane wrote a report except `photoreal` and `light`
+(`docs/report-photoreal.md`, `docs/report-light.md` — both worth reading).
+
+Reference imagery: `docs/reference/gameplay/` has 1371 real BO2 frames across six
+clips; `docs/reference/img/` has the genuine minimap, aerial, load screen and a
+2560×1440 frame; `docs/reference/photoreal/` has 14 agy-generated material studies
+(the run was interrupted at 14 of a planned 24).
+
+---
+
+## 8. The owner's brief for the next phase, in his words
+
+Recorded verbatim in intent so nothing is lost in translation:
+
+- Fable orchestrating, spinning up however many Fable sub-agents are needed; Opus 5 also
+  available; **set sub-agents to extra-high** for density and quality.
+- **Refine the visual art style** — a big visual overhaul. Gameplay "feels like it's
+  moved in the right direction"; the gap is visual quality.
+- **House interiors must match BO2 topology** — the way you access the garage, the
+  stairs, and both floors.
+- **Remove some mannequins** — there are far too many.
+- **Make the map borders much clearer** rather than invisible walls.
+- **Cover more evenly distributed and muted**, and collision must work.
+- **Import guns, gameplay, UI, menus and killstreaks** from the previous build, in a
+  familiar way — minimap, HUD, killstreak behaviour — but implemented more efficiently.
+- **Trellis 2 + Blender locally** for high-quality PBR, mapping, lighting, reflections,
+  in an **iterative gauntlet loop** (see the Dreamloop/gauntlet skills).
+- **Build a reference library**: the map, the surroundings, every camera angle in
+  detail, all guns in all positions, animations, effects, lighting and reflections.
+  Use Fable for image gen, supplement with the existing catalogue, and the Antigravity
+  CLI for more.
+- **Run overnight, ~12 hours, conservative with usage** — slow, steady pace.
+- Looking at BO2 on YouTube/Twitch, screenshots, or the installed Steam copy is
+  explicitly allowed to get the interiors right.
+
+---
+
+## 9. Machine state at handoff
+
+All Muse Spark (`omp`) agents **stopped** at the owner's request — swapping to Fable.
+One `agy` process may still be finishing the photoreal reference images.
+At 18:30: 36 GB RAM free, commit ~32 GB, CPU moderate, preview on 4173 alive.
+`llama-server` holding ~17 GB is the owner's — leave it alone.

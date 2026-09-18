@@ -8,51 +8,18 @@
  *   node scripts/traverse.mjs
  */
 import { chromium } from 'playwright';
-import { spawn } from 'node:child_process';
+import { usePreview } from './lib/preview.mjs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import net from 'node:net';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
-function freePort() {
-  return new Promise((res, rej) => {
-    const s = net.createServer();
-    s.listen(0, '127.0.0.1', () => {
-      const p = s.address().port;
-      s.close(() => res(p));
-    });
-    s.on('error', rej);
-  });
-}
 
-// 60 s was not enough with sibling build lanes saturating the CPU: the harness
-// reported 'server never came up' for a server that was merely slow to start,
-// which reads as a map failure rather than a busy machine.
-async function waitForServer(url, ms = 240000) {
-  const t0 = Date.now();
-  while (Date.now() - t0 < ms) {
-    try { if ((await fetch(url)).ok) return true; } catch { /* not up */ }
-    await new Promise((r) => setTimeout(r, 250));
-  }
-  return false;
-}
 
-const port = await freePort();
-// windowsHide: node defaults it to FALSE, and with shell:true on Windows every
-// one of these spawns a visible cmd.exe window. Running captures in a loop put
-// console windows over the owner's screen and stole his keyboard focus.
-const server = spawn(
-  process.platform === 'win32' ? 'npx.cmd' : 'npx',
-  ['vite', 'preview', '--port', String(port), '--strictPort'],
-  { cwd: ROOT, stdio: 'ignore', shell: process.platform === 'win32', windowsHide: true },
-);
-const url = 'http://localhost:' + port + '/';
-if (!await waitForServer(url)) {
-  console.error('[traverse] server never came up');
-  server.kill();
-  process.exit(1);
-}
+// ONE shared preview server for the whole repo - see lib/preview.mjs.
+// Previously every harness spawned its own and killed only the vite parent,
+// leaving esbuild behind; 52 of them accumulated in three hours.
+const { url } = await usePreview();
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
@@ -166,7 +133,6 @@ const verge = await page.evaluate(() => {
 const hand = await page.evaluate(() => window.__NT.stats().handedness);
 
 await browser.close();
-server.kill();
 
 let bad = 0;
 console.log('[traverse] routes:');
