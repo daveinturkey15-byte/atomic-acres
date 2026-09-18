@@ -1,0 +1,1839 @@
+{
+ "schema": "atomic-acres/reference-library/shot-matrix/1",
+ "generated": "2026-09-18",
+ "style_block_id": "AA-STYLE-2026-09-18",
+ "style_block": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade.",
+ "negative_block": "No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+ "light_slots": {
+  "afternoon": "hard high slightly-warm afternoon sun (the fixed condition)",
+  "lowsun": "golden-hour low raking sun, long shadows (variation slot)",
+  "overcast": "high thin overcast, soft shadowless fill (variation slot)",
+  "interior": "interior lit only by window sun patch plus blue skylight bounce"
+ },
+ "rows": [
+  {
+   "group": "map",
+   "id": "map-plan-official",
+   "subject": "whole map from directly above",
+   "view": "plan",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "img/nt2025-aerial-boii.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-aerial",
+    "builder:core/layout.ts"
+   ],
+   "note": "The authoritative layout source. Every dimension in core/layout.ts traces to this and to the minimap."
+  },
+  {
+   "group": "map",
+   "id": "map-minimap-official",
+   "subject": "HUD minimap silhouette",
+   "view": "plan",
+   "light": "n/a",
+   "status": "HAVE",
+   "have": [
+    "img/nt2025-minimap-boii.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-aerial",
+    "builder:ui/minimap"
+   ],
+   "note": "512x512, dark. The 2026-09-18 re-proportioning was measured off this."
+  },
+  {
+   "group": "map",
+   "id": "map-overview-ingame",
+   "subject": "whole map from an outside raised camera",
+   "view": "high-3/4",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/g-tB35IKluv0g-182.jpg",
+    "gameplay/f-aICKIbuo8zQ-203.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-aerial"
+   ],
+   "note": null
+  },
+  {
+   "group": "map",
+   "id": "map-street-axis",
+   "subject": "eye level in the road along the long axis",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-FKQOEO-1ceE-115.jpg",
+    "gameplay/f-FKQOEO-1ceE-150.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-streetElevation"
+   ],
+   "note": null
+  },
+  {
+   "group": "map",
+   "id": "map-circle-plan",
+   "subject": "turning circle from above, vehicles in place",
+   "view": "plan",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "concept/turning-head-noon-plan.png",
+    "img/nt2025-aerial-boii.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-turningHead"
+   ],
+   "note": null
+  },
+  {
+   "group": "map",
+   "id": "map-quadrant-ne",
+   "subject": "north-east quadrant from outside the fence",
+   "view": "high-3/4",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. High three-quarter aerial of the north-east quarter of the town: one Googie show house with a butterfly roof, its rear yard, the boundary fence, the service road and the plaza edge beyond. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "critic:station-aerial"
+   ],
+   "note": null
+  },
+  {
+   "group": "map",
+   "id": "map-quadrant-sw",
+   "subject": "south-west quadrant from outside the fence",
+   "view": "high-3/4",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. High three-quarter aerial of the south-west quarter of the town: the second show house with rounded capsule volumes and a glazed rooflight, its rear yard with a sand pit and a painted court, the boundary fence and the desert beyond. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "critic:station-aerial"
+   ],
+   "note": null
+  },
+  {
+   "group": "surroundings",
+   "id": "sur-plaza-pylon",
+   "subject": "pylon sign, flags and plaza dressing",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/g-VfcKHcDJXpM-104.jpg",
+    "concept/plaza-pylon-noon-eye.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-plaza"
+   ],
+   "note": null
+  },
+  {
+   "group": "surroundings",
+   "id": "sur-tower-hypar",
+   "subject": "space-needle tower and hypar petal roofs",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-mGpZaLy5_hM-099.jpg",
+    "concept/plaza-tower-noon-eye.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-plaza"
+   ],
+   "note": null
+  },
+  {
+   "group": "surroundings",
+   "id": "sur-skyline-haze",
+   "subject": "distant city skyline in aerial haze",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/g-1icNQzMgLUM-232.jpg",
+    "concept/surround-mountains-noon-eye.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "builder:build/surround",
+    "critic:station-plaza"
+   ],
+   "note": null
+  },
+  {
+   "group": "surroundings",
+   "id": "sur-mountains",
+   "subject": "dry desert mountains on the horizon",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Dry bare desert mountains on the horizon across fifteen kilometres of hazy air, seen over a low boundary fence, showing how much contrast and saturation the range loses to aerial perspective. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:build/surround"
+   ],
+   "note": "Listed as unproduced Subject 14 in docs/reference/photoreal/MANIFEST.md."
+  },
+  {
+   "group": "surroundings",
+   "id": "sur-sky-gradient",
+   "subject": "clear desert sky zenith to horizon",
+   "view": "up",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Clear cloudless desert sky filling the frame from zenith to horizon in early afternoon, showing the deep blue at the top, the pale desaturated band near the horizon and the solar aureole. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:core/sky",
+    "critic:station-aerial"
+   ],
+   "note": null
+  },
+  {
+   "group": "camera-station",
+   "id": "station-aerial",
+   "subject": "capture station `aerial` in src/core/stations.ts",
+   "view": "fixed",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "img/nt2025-aerial-boii.png",
+    "gameplay/g-tB35IKluv0g-182.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-aerial",
+    "scripts/capture.mjs"
+   ],
+   "note": "stations.ts currently names a reference file that does not exist on disk; this row is the replacement pairing."
+  },
+  {
+   "group": "camera-station",
+   "id": "station-yardOrange",
+   "subject": "capture station `yardOrange` in src/core/stations.ts",
+   "view": "fixed",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-FKQOEO-1ceE-205.jpg",
+    "concept/backyard-orange-noon-high34.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-yardOrange",
+    "scripts/capture.mjs"
+   ],
+   "note": "stations.ts currently names a reference file that does not exist on disk; this row is the replacement pairing."
+  },
+  {
+   "group": "camera-station",
+   "id": "station-yardWhite",
+   "subject": "capture station `yardWhite` in src/core/stations.ts",
+   "view": "fixed",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/g-1icNQzMgLUM-100.jpg",
+    "concept/backyard-white-noon-high34.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-yardWhite",
+    "scripts/capture.mjs"
+   ],
+   "note": "stations.ts currently names a reference file that does not exist on disk; this row is the replacement pairing."
+  },
+  {
+   "group": "camera-station",
+   "id": "station-streetElevation",
+   "subject": "capture station `streetElevation` in src/core/stations.ts",
+   "view": "fixed",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-FKQOEO-1ceE-115.jpg",
+    "img/nt2025-sniper-boii.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-streetElevation",
+    "scripts/capture.mjs"
+   ],
+   "note": "stations.ts currently names a reference file that does not exist on disk; this row is the replacement pairing."
+  },
+  {
+   "group": "camera-station",
+   "id": "station-plaza",
+   "subject": "capture station `plaza` in src/core/stations.ts",
+   "view": "fixed",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/g-VfcKHcDJXpM-104.jpg",
+    "img/nt2025-loadscreen-boii.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-plaza",
+    "scripts/capture.mjs"
+   ],
+   "note": "stations.ts currently names a reference file that does not exist on disk; this row is the replacement pairing."
+  },
+  {
+   "group": "camera-station",
+   "id": "station-turningHead",
+   "subject": "capture station `turningHead` in src/core/stations.ts",
+   "view": "fixed",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-aICKIbuo8zQ-030.jpg",
+    "img/nt2025-aerial-boii.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-turningHead",
+    "scripts/capture.mjs"
+   ],
+   "note": "stations.ts currently names a reference file that does not exist on disk; this row is the replacement pairing."
+  },
+  {
+   "group": "camera-station",
+   "id": "station-spawnA",
+   "subject": "capture station `spawnA` in src/core/stations.ts",
+   "view": "fixed",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-FKQOEO-1ceE-026.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-spawnA",
+    "scripts/capture.mjs"
+   ],
+   "note": "stations.ts currently names a reference file that does not exist on disk; this row is the replacement pairing."
+  },
+  {
+   "group": "camera-station",
+   "id": "station-spawnB",
+   "subject": "capture station `spawnB` in src/core/stations.ts",
+   "view": "fixed",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/g-VfcKHcDJXpM-137.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-spawnB",
+    "scripts/capture.mjs"
+   ],
+   "note": "stations.ts currently names a reference file that does not exist on disk; this row is the replacement pairing."
+  },
+  {
+   "group": "camera-station",
+   "id": "station-midStreet",
+   "subject": "capture station `midStreet` in src/core/stations.ts",
+   "view": "fixed",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-FKQOEO-1ceE-115.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-midStreet",
+    "scripts/capture.mjs"
+   ],
+   "note": "stations.ts currently names a reference file that does not exist on disk; this row is the replacement pairing."
+  },
+  {
+   "group": "camera-station",
+   "id": "station-interiorOrange",
+   "subject": "capture station `interiorOrange` in src/core/stations.ts",
+   "view": "fixed",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-FKQOEO-1ceE-160.jpg",
+    "gameplay/f-aICKIbuo8zQ-148.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-interiorOrange",
+    "scripts/capture.mjs"
+   ],
+   "note": "stations.ts currently names a reference file that does not exist on disk; this row is the replacement pairing."
+  },
+  {
+   "group": "camera-station",
+   "id": "station-interiorStairs",
+   "subject": "NEW station: foot of the internal stair looking up",
+   "view": "fixed",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-interiorStairs"
+   ],
+   "note": "No station covers vertical circulation. Reference already HAVE (gameplay/f-mGpZaLy5_hM-049.jpg); what is missing is the station."
+  },
+  {
+   "group": "camera-station",
+   "id": "station-garage",
+   "subject": "NEW station: inside the garage looking out to the drive",
+   "view": "fixed",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": null,
+   "consumed_by": [
+    "critic:station-garage"
+   ],
+   "note": "Reference already HAVE (gameplay/f-FKQOEO-1ceE-141.jpg)."
+  },
+  {
+   "group": "weapon",
+   "id": "wep-longhorn-idle",
+   "subject": "Longhorn - first-person hip-carry idle",
+   "view": "idle",
+   "light": "interior",
+   "status": "PARTIAL",
+   "have": [
+    "gameplay/f-FKQOEO-1ceE-026.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Longhorn for a fan game, 600 rpm automatic rifle, 30-round box magazine. The weapon is held at the hip in the lower right of the frame, barrel to the horizon. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": "Analogue only - the real frame shows a different, real weapon; use it for pose and screen footprint, never for shape."
+  },
+  {
+   "group": "weapon",
+   "id": "wep-longhorn-ads",
+   "subject": "Longhorn - first-person aim-down-sights",
+   "view": "ads",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Longhorn for a fan game, 600 rpm automatic rifle, 30-round box magazine. The weapon is raised and centred, sight picture aligned, the rear of the receiver filling the bottom of the frame. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-longhorn-fire",
+   "subject": "Longhorn - first-person firing",
+   "view": "fire",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Longhorn for a fan game, 600 rpm automatic rifle, 30-round box magazine. The weapon is the instant of firing, a short bright muzzle flash and the receiver kicked up a few degrees. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-longhorn-reload",
+   "subject": "Longhorn - first-person reload",
+   "view": "reload",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Longhorn for a fan game, 600 rpm automatic rifle, 30-round box magazine. The weapon is tilted inboard and lowered with the magazine out of the well and the support hand on it. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-longhorn-sprint",
+   "subject": "Longhorn - first-person sprint carry",
+   "view": "sprint",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Longhorn for a fan game, 600 rpm automatic rifle, 30-round box magazine. The weapon is lowered and rotated about thirty degrees inboard, barrel across the bottom of the frame. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-longhorn-side",
+   "subject": "Longhorn - side profile, neutral",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Longhorn for a fan game, 600 rpm automatic rifle, 30-round box magazine. The weapon is full weapon in frame, orthographic-style three-quarter left side profile on a plain bleached-concrete surface, no hands. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-longhorn-world",
+   "subject": "Longhorn - dropped world model",
+   "view": "world",
+   "light": "afternoon",
+   "status": "PARTIAL",
+   "have": [
+    "gameplay/f-aICKIbuo8zQ-180.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Longhorn for a fan game, 600 rpm automatic rifle, 30-round box magazine. The weapon is lying flat on pale concrete seen from above and slightly behind, as a pickup would appear. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": "Analogue only - the real frame shows a different, real weapon; use it for pose and screen footprint, never for shape."
+  },
+  {
+   "group": "weapon",
+   "id": "wep-rattler-idle",
+   "subject": "Rattler - first-person hip-carry idle",
+   "view": "idle",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Rattler for a fan game, 800 rpm compact automatic carbine, 32-round magazine. The weapon is held at the hip in the lower right of the frame, barrel to the horizon. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-rattler-ads",
+   "subject": "Rattler - first-person aim-down-sights",
+   "view": "ads",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Rattler for a fan game, 800 rpm compact automatic carbine, 32-round magazine. The weapon is raised and centred, sight picture aligned, the rear of the receiver filling the bottom of the frame. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-rattler-fire",
+   "subject": "Rattler - first-person firing",
+   "view": "fire",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Rattler for a fan game, 800 rpm compact automatic carbine, 32-round magazine. The weapon is the instant of firing, a short bright muzzle flash and the receiver kicked up a few degrees. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-rattler-reload",
+   "subject": "Rattler - first-person reload",
+   "view": "reload",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Rattler for a fan game, 800 rpm compact automatic carbine, 32-round magazine. The weapon is tilted inboard and lowered with the magazine out of the well and the support hand on it. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-rattler-sprint",
+   "subject": "Rattler - first-person sprint carry",
+   "view": "sprint",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Rattler for a fan game, 800 rpm compact automatic carbine, 32-round magazine. The weapon is lowered and rotated about thirty degrees inboard, barrel across the bottom of the frame. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-rattler-side",
+   "subject": "Rattler - side profile, neutral",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Rattler for a fan game, 800 rpm compact automatic carbine, 32-round magazine. The weapon is full weapon in frame, orthographic-style three-quarter left side profile on a plain bleached-concrete surface, no hands. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-rattler-world",
+   "subject": "Rattler - dropped world model",
+   "view": "world",
+   "light": "afternoon",
+   "status": "PARTIAL",
+   "have": [
+    "gameplay/f-aICKIbuo8zQ-180.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Rattler for a fan game, 800 rpm compact automatic carbine, 32-round magazine. The weapon is lying flat on pale concrete seen from above and slightly behind, as a pickup would appear. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": "Analogue only - the real frame shows a different, real weapon; use it for pose and screen footprint, never for shape."
+  },
+  {
+   "group": "weapon",
+   "id": "wep-coachman-idle",
+   "subject": "Coachman - first-person hip-carry idle",
+   "view": "idle",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Coachman for a fan game, pump-action shotgun, tube magazine of six, 8 pellets. The weapon is held at the hip in the lower right of the frame, barrel to the horizon. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-coachman-ads",
+   "subject": "Coachman - first-person aim-down-sights",
+   "view": "ads",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Coachman for a fan game, pump-action shotgun, tube magazine of six, 8 pellets. The weapon is raised and centred, sight picture aligned, the rear of the receiver filling the bottom of the frame. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-coachman-fire",
+   "subject": "Coachman - first-person firing",
+   "view": "fire",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Coachman for a fan game, pump-action shotgun, tube magazine of six, 8 pellets. The weapon is the instant of firing, a short bright muzzle flash and the receiver kicked up a few degrees. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-coachman-reload",
+   "subject": "Coachman - first-person reload",
+   "view": "reload",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Coachman for a fan game, pump-action shotgun, tube magazine of six, 8 pellets. The weapon is tilted inboard and lowered with the magazine out of the well and the support hand on it. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-coachman-sprint",
+   "subject": "Coachman - first-person sprint carry",
+   "view": "sprint",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Coachman for a fan game, pump-action shotgun, tube magazine of six, 8 pellets. The weapon is lowered and rotated about thirty degrees inboard, barrel across the bottom of the frame. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-coachman-side",
+   "subject": "Coachman - side profile, neutral",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Coachman for a fan game, pump-action shotgun, tube magazine of six, 8 pellets. The weapon is full weapon in frame, orthographic-style three-quarter left side profile on a plain bleached-concrete surface, no hands. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-coachman-world",
+   "subject": "Coachman - dropped world model",
+   "view": "world",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Coachman for a fan game, pump-action shotgun, tube magazine of six, 8 pellets. The weapon is lying flat on pale concrete seen from above and slightly behind, as a pickup would appear. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-deadeye-idle",
+   "subject": "Deadeye - first-person hip-carry idle",
+   "view": "idle",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Deadeye for a fan game, bolt-action marksman rifle with a long telescopic sight. The weapon is held at the hip in the lower right of the frame, barrel to the horizon. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-deadeye-ads",
+   "subject": "Deadeye - first-person aim-down-sights",
+   "view": "ads",
+   "light": "interior",
+   "status": "PARTIAL",
+   "have": [
+    "gameplay/f-mGpZaLy5_hM-154.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Deadeye for a fan game, bolt-action marksman rifle with a long telescopic sight. The weapon is raised and centred, sight picture aligned, the rear of the receiver filling the bottom of the frame. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": "Analogue only - the real frame shows a different, real weapon; use it for pose and screen footprint, never for shape."
+  },
+  {
+   "group": "weapon",
+   "id": "wep-deadeye-fire",
+   "subject": "Deadeye - first-person firing",
+   "view": "fire",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Deadeye for a fan game, bolt-action marksman rifle with a long telescopic sight. The weapon is the instant of firing, a short bright muzzle flash and the receiver kicked up a few degrees. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-deadeye-reload",
+   "subject": "Deadeye - first-person reload",
+   "view": "reload",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Deadeye for a fan game, bolt-action marksman rifle with a long telescopic sight. The weapon is tilted inboard and lowered with the magazine out of the well and the support hand on it. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-deadeye-sprint",
+   "subject": "Deadeye - first-person sprint carry",
+   "view": "sprint",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Deadeye for a fan game, bolt-action marksman rifle with a long telescopic sight. The weapon is lowered and rotated about thirty degrees inboard, barrel across the bottom of the frame. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-deadeye-side",
+   "subject": "Deadeye - side profile, neutral",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Deadeye for a fan game, bolt-action marksman rifle with a long telescopic sight. The weapon is full weapon in frame, orthographic-style three-quarter left side profile on a plain bleached-concrete surface, no hands. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-deadeye-world",
+   "subject": "Deadeye - dropped world model",
+   "view": "world",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Deadeye for a fan game, bolt-action marksman rifle with a long telescopic sight. The weapon is lying flat on pale concrete seen from above and slightly behind, as a pickup would appear. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-duster-idle",
+   "subject": "Duster - first-person hip-carry idle",
+   "view": "idle",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Duster for a fan game, semi-automatic pistol, 12-round magazine, timber grips. The weapon is held at the hip in the lower right of the frame, barrel to the horizon. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-duster-ads",
+   "subject": "Duster - first-person aim-down-sights",
+   "view": "ads",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Duster for a fan game, semi-automatic pistol, 12-round magazine, timber grips. The weapon is raised and centred, sight picture aligned, the rear of the receiver filling the bottom of the frame. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-duster-fire",
+   "subject": "Duster - first-person firing",
+   "view": "fire",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Duster for a fan game, semi-automatic pistol, 12-round magazine, timber grips. The weapon is the instant of firing, a short bright muzzle flash and the receiver kicked up a few degrees. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-duster-reload",
+   "subject": "Duster - first-person reload",
+   "view": "reload",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Duster for a fan game, semi-automatic pistol, 12-round magazine, timber grips. The weapon is tilted inboard and lowered with the magazine out of the well and the support hand on it. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-duster-sprint",
+   "subject": "Duster - first-person sprint carry",
+   "view": "sprint",
+   "light": "interior",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Duster for a fan game, semi-automatic pistol, 12-round magazine, timber grips. The weapon is lowered and rotated about thirty degrees inboard, barrel across the bottom of the frame. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "weapon",
+   "id": "wep-duster-side",
+   "subject": "Duster - side profile, neutral",
+   "view": "side",
+   "light": "afternoon",
+   "status": "PARTIAL",
+   "have": [
+    "gameplay/f-mGpZaLy5_hM-147.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Duster for a fan game, semi-automatic pistol, 12-round magazine, timber grips. The weapon is full weapon in frame, orthographic-style three-quarter left side profile on a plain bleached-concrete surface, no hands. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": "Analogue only - the real frame shows a different, real weapon; use it for pose and screen footprint, never for shape."
+  },
+  {
+   "group": "weapon",
+   "id": "wep-duster-world",
+   "subject": "Duster - dropped world model",
+   "view": "world",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. An invented fictional Duster for a fan game, semi-automatic pistol, 12-round magazine, timber grips. The weapon is lying flat on pale concrete seen from above and slightly behind, as a pickup would appear. Plain functional military finish, no markings. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/viewmodel.ts",
+    "critic:viewmodel"
+   ],
+   "note": null
+  },
+  {
+   "group": "animation",
+   "id": "anim-idle-side",
+   "subject": "character clip `idle`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-idle, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-idle-front34",
+   "subject": "character clip `idle`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-idle, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-walk-side",
+   "subject": "character clip `walk`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-walk, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-walk-front34",
+   "subject": "character clip `walk`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-walk, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-run-side",
+   "subject": "character clip `run`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "PARTIAL",
+   "have": [
+    "gameplay/f-aICKIbuo8zQ-162.jpg",
+    "gameplay/f-FKQOEO-1ceE-055.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-run, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-run-front34",
+   "subject": "character clip `run`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-run, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-sprint-side",
+   "subject": "character clip `sprint`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "PARTIAL",
+   "have": [
+    "gameplay/f-aICKIbuo8zQ-162.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-sprint, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-sprint-front34",
+   "subject": "character clip `sprint`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-sprint, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-crouch-idle-side",
+   "subject": "character clip `crouch-idle`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-crouch idle, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-crouch-idle-front34",
+   "subject": "character clip `crouch-idle`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-crouch idle, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-crouch-walk-side",
+   "subject": "character clip `crouch-walk`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-crouch walk, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-crouch-walk-front34",
+   "subject": "character clip `crouch-walk`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-crouch walk, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-jump-side",
+   "subject": "character clip `jump`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-jump, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-jump-front34",
+   "subject": "character clip `jump`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-jump, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-land-side",
+   "subject": "character clip `land`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-land, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-land-front34",
+   "subject": "character clip `land`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-land, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-turn-left-side",
+   "subject": "character clip `turn-left`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-turn left, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-turn-left-front34",
+   "subject": "character clip `turn-left`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-turn left, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-turn-right-side",
+   "subject": "character clip `turn-right`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-turn right, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-turn-right-front34",
+   "subject": "character clip `turn-right`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-turn right, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-aim-side",
+   "subject": "character clip `aim`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-aim, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-aim-front34",
+   "subject": "character clip `aim`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-aim, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-fire-side",
+   "subject": "character clip `fire`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-fire, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-fire-front34",
+   "subject": "character clip `fire`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-fire, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-reload-side",
+   "subject": "character clip `reload`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-reload, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-reload-front34",
+   "subject": "character clip `reload`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-reload, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-hit-react-side",
+   "subject": "character clip `hit-react`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-hit react, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-hit-react-front34",
+   "subject": "character clip `hit-react`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-hit react, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-death-side",
+   "subject": "character clip `death`",
+   "view": "side",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-death, full side profile, camera level with the hips, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "animation",
+   "id": "anim-death-front34",
+   "subject": "character clip `death`",
+   "view": "front34",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. A single soldier figure in mid-death, front three-quarter, camera level with the chest, on bleached concrete against a plain cream stucco wall, full body in frame head to boots, contact shadow visible. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:characters/clips.ts",
+    "critic:animation-pose"
+   ],
+   "note": "Pose plate only. The clip DATA comes from Kimodo SOMA-30, not from an image - see README section 'Animation references and the Kimodo licence'."
+  },
+  {
+   "group": "effect",
+   "id": "fx-muzzle-flash",
+   "subject": "muzzle flash at the instant of firing",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-aICKIbuo8zQ-176.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Close study of muzzle flash at the instant of firing in a sunlit suburban street, captured at a short shutter so the event is frozen and its colour ramp and extent are readable. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/effects.ts",
+    "critic:effects"
+   ],
+   "note": null
+  },
+  {
+   "group": "effect",
+   "id": "fx-impact-spark",
+   "subject": "bullet impact on concrete: spark, chip and dust puff",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Close study of bullet impact on concrete: spark, chip and dust puff in a sunlit suburban street, captured at a short shutter so the event is frozen and its colour ramp and extent are readable. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/effects.ts",
+    "critic:effects"
+   ],
+   "note": null
+  },
+  {
+   "group": "effect",
+   "id": "fx-impact-dirt",
+   "subject": "bullet impact on lawn: turf divot and dust",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Close study of bullet impact on lawn: turf divot and dust in a sunlit suburban street, captured at a short shutter so the event is frozen and its colour ramp and extent are readable. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/effects.ts",
+    "critic:effects"
+   ],
+   "note": null
+  },
+  {
+   "group": "effect",
+   "id": "fx-tracer",
+   "subject": "a tracer line in flight across the street",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Close study of a tracer line in flight across the street in a sunlit suburban street, captured at a short shutter so the event is frozen and its colour ramp and extent are readable. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/effects.ts",
+    "critic:effects"
+   ],
+   "note": null
+  },
+  {
+   "group": "effect",
+   "id": "fx-smoke",
+   "subject": "a lingering smoke column after an explosion",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-FKQOEO-1ceE-150.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Close study of a lingering smoke column after an explosion in a sunlit suburban street, captured at a short shutter so the event is frozen and its colour ramp and extent are readable. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/effects.ts",
+    "critic:effects"
+   ],
+   "note": null
+  },
+  {
+   "group": "effect",
+   "id": "fx-explosion",
+   "subject": "the bright core of an explosion at close range",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/g-VfcKHcDJXpM-067.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Close study of the bright core of an explosion at close range in a sunlit suburban street, captured at a short shutter so the event is frozen and its colour ramp and extent are readable. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/effects.ts",
+    "critic:effects"
+   ],
+   "note": null
+  },
+  {
+   "group": "effect",
+   "id": "fx-shell-eject",
+   "subject": "a brass case tumbling in the air",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/g-VfcKHcDJXpM-236.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Close study of a brass case tumbling in the air in a sunlit suburban street, captured at a short shutter so the event is frozen and its colour ramp and extent are readable. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/effects.ts",
+    "critic:effects"
+   ],
+   "note": null
+  },
+  {
+   "group": "effect",
+   "id": "fx-hit-feedback",
+   "subject": "the on-screen feedback of taking damage",
+   "view": "eye",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Close study of the on-screen feedback of taking damage in a sunlit suburban street, captured at a short shutter so the event is frozen and its colour ramp and extent are readable. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:weapons/effects.ts",
+    "critic:effects"
+   ],
+   "note": null
+  },
+  {
+   "group": "lighting",
+   "id": "lit-sun-shade-ratio",
+   "subject": "the luminance ratio between a sunlit and a shaded stucco face meeting at a corner",
+   "view": "macro",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "photoreal/stucco-wall-sun-shade-ratio-01.png",
+    "photoreal/stucco-wall-sun-shade-ratio-02.png"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Material and light study: the luminance ratio between a sunlit and a shaded stucco face meeting at a corner. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:core/materials.ts",
+    "critic:photoreal"
+   ],
+   "note": null
+  },
+  {
+   "group": "lighting",
+   "id": "lit-contact-shadow",
+   "subject": "the contact shadow where grass meets concrete",
+   "view": "macro",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "photoreal/mown-lawn-contact-shadow-01.png",
+    "photoreal/mown-lawn-contact-shadow-02.png"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Material and light study: the contact shadow where grass meets concrete. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:core/materials.ts",
+    "critic:photoreal"
+   ],
+   "note": null
+  },
+  {
+   "group": "lighting",
+   "id": "lit-asphalt-grazing",
+   "subject": "the forward specular lobe on asphalt at a grazing angle",
+   "view": "macro",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "photoreal/asphalt-grazing-specular-01.png",
+    "photoreal/asphalt-grazing-specular-02.png"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Material and light study: the forward specular lobe on asphalt at a grazing angle. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:core/materials.ts",
+    "critic:photoreal"
+   ],
+   "note": null
+  },
+  {
+   "group": "lighting",
+   "id": "lit-paint-reflection",
+   "subject": "curved glossy vehicle paint reflecting ground and sky",
+   "view": "macro",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "photoreal/streamline-bus-paint-reflections-01.png",
+    "gameplay/f-FKQOEO-1ceE-025.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Material and light study: curved glossy vehicle paint reflecting ground and sky. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:core/materials.ts",
+    "critic:photoreal"
+   ],
+   "note": null
+  },
+  {
+   "group": "lighting",
+   "id": "lit-chrome-mirror",
+   "subject": "a chrome bumper and hubcap as a mirror of sky and ground",
+   "view": "macro",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Material and light study: a chrome bumper and hubcap as a mirror of sky and ground. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:core/materials.ts",
+    "critic:photoreal"
+   ],
+   "note": "One of the eight subjects the photoreal run never reached (quota exhausted at 14 of 24)."
+  },
+  {
+   "group": "lighting",
+   "id": "lit-glazing-fresnel",
+   "subject": "a window band reflecting sky versus transmitting into a shaded interior",
+   "view": "macro",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Material and light study: a window band reflecting sky versus transmitting into a shaded interior. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:core/materials.ts",
+    "critic:photoreal"
+   ],
+   "note": "One of the eight subjects the photoreal run never reached (quota exhausted at 14 of 24)."
+  },
+  {
+   "group": "lighting",
+   "id": "lit-soffit-bounce",
+   "subject": "bounced ground light on the underside of a deep porch canopy",
+   "view": "macro",
+   "light": "afternoon",
+   "status": "NEED",
+   "have": [],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Material and light study: bounced ground light on the underside of a deep porch canopy. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:core/materials.ts",
+    "critic:photoreal"
+   ],
+   "note": "One of the eight subjects the photoreal run never reached (quota exhausted at 14 of 24)."
+  },
+  {
+   "group": "lighting",
+   "id": "lit-interior-slider",
+   "subject": "the exposure ratio looking from a dim interior out through a sunlit slider",
+   "view": "macro",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-mGpZaLy5_hM-023.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Material and light study: the exposure ratio looking from a dim interior out through a sunlit slider. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:core/materials.ts",
+    "critic:photoreal"
+   ],
+   "note": null
+  },
+  {
+   "group": "lighting",
+   "id": "lit-emissive-shelf",
+   "subject": "glowing green display shelving throwing light onto a chequerboard floor",
+   "view": "macro",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-FKQOEO-1ceE-141.jpg",
+    "gameplay/f-aICKIbuo8zQ-133.jpg"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Material and light study: glowing green display shelving throwing light onto a chequerboard floor. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:core/materials.ts",
+    "critic:photoreal"
+   ],
+   "note": null
+  },
+  {
+   "group": "lighting",
+   "id": "lit-timber-shade",
+   "subject": "a hard shadow edge cutting across dry timber boards",
+   "view": "macro",
+   "light": "afternoon",
+   "status": "HAVE",
+   "have": [
+    "photoreal/timber-fence-kerb-shadow-01.png",
+    "photoreal/timber-fence-kerb-shadow-02.png"
+   ],
+   "prompt": "Original concept photograph for a fan game. Subject: an invented 1960s American 'world of tomorrow' nuclear-test show town in the Nevada desert - Googie and streamline-moderne architecture, bleached concrete, mown lawns, saturated accent colours on cream and terracotta stucco. Light: hard high slightly-warm afternoon sun about 60 degrees elevation, intense diffuse blue skylight fill into every shaded face so shadows stay open and blue-tinted and never crush to black, clear cloudless desert sky, hazy dry mountains on the horizon. Camera: full-frame stills lens, realistic neutral exposure, unclipped speculars, readable shadow detail, no cinematic grade. Material and light study: a hard shadow edge cutting across dry timber boards. NEGATIVE: No logos, no brand marks, no readable signage, no real-world trademarks, no game HUD, no watermark, no text overlay, no people's faces, no copyrighted character or weapon designs, no 1950s tract housing, no school buses, no snow, no rain, no night.",
+   "consumed_by": [
+    "builder:core/materials.ts",
+    "critic:photoreal"
+   ],
+   "note": null
+  },
+  {
+   "group": "ui",
+   "id": "ui-hud-ingame",
+   "subject": "the in-game HUD: ammo, minimap, killfeed, scorestreak icons",
+   "view": "menu",
+   "light": "n/a",
+   "status": "HAVE",
+   "have": [
+    "gameplay/g-VfcKHcDJXpM-104.jpg",
+    "gameplay/f-aICKIbuo8zQ-117.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "builder:ui/",
+    "builder:game/killstreaks"
+   ],
+   "note": "Layout and information architecture only. Do not copy glyphs, icons, type or colour - the UI lane draws its own."
+  },
+  {
+   "group": "ui",
+   "id": "ui-scorestreaks",
+   "subject": "the scorestreak selection grid",
+   "view": "menu",
+   "light": "n/a",
+   "status": "HAVE",
+   "have": [
+    "gameplay/g-VfcKHcDJXpM-094.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "builder:ui/",
+    "builder:game/killstreaks"
+   ],
+   "note": "Layout and information architecture only. Do not copy glyphs, icons, type or colour - the UI lane draws its own."
+  },
+  {
+   "group": "ui",
+   "id": "ui-choose-class",
+   "subject": "the class / loadout screen",
+   "view": "menu",
+   "light": "n/a",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-FKQOEO-1ceE-001.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "builder:ui/",
+    "builder:game/killstreaks"
+   ],
+   "note": "Layout and information architecture only. Do not copy glyphs, icons, type or colour - the UI lane draws its own."
+  },
+  {
+   "group": "ui",
+   "id": "ui-scoreboard",
+   "subject": "the end-of-match scoreboard",
+   "view": "menu",
+   "light": "n/a",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-aICKIbuo8zQ-209.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "builder:ui/",
+    "builder:game/killstreaks"
+   ],
+   "note": "Layout and information architecture only. Do not copy glyphs, icons, type or colour - the UI lane draws its own."
+  },
+  {
+   "group": "ui",
+   "id": "ui-loadscreen",
+   "subject": "the map load screen with its title card",
+   "view": "menu",
+   "light": "n/a",
+   "status": "HAVE",
+   "have": [
+    "gameplay/g-VfcKHcDJXpM-104.jpg",
+    "img/nt2025-loadscreen-boii.png"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "builder:ui/",
+    "builder:game/killstreaks"
+   ],
+   "note": "Layout and information architecture only. Do not copy glyphs, icons, type or colour - the UI lane draws its own."
+  },
+  {
+   "group": "ui",
+   "id": "ui-killcam",
+   "subject": "the final killcam framing",
+   "view": "menu",
+   "light": "n/a",
+   "status": "HAVE",
+   "have": [
+    "gameplay/f-aICKIbuo8zQ-205.jpg"
+   ],
+   "prompt": null,
+   "consumed_by": [
+    "builder:ui/",
+    "builder:game/killstreaks"
+   ],
+   "note": "Layout and information architecture only. Do not copy glyphs, icons, type or colour - the UI lane draws its own."
+  }
+ ],
+ "summary": {
+  "map": {
+   "HAVE": 5,
+   "NEED": 2
+  },
+  "surroundings": {
+   "HAVE": 3,
+   "NEED": 2
+  },
+  "camera-station": {
+   "HAVE": 10,
+   "NEED": 2
+  },
+  "weapon": {
+   "PARTIAL": 5,
+   "NEED": 30
+  },
+  "animation": {
+   "NEED": 28,
+   "PARTIAL": 2
+  },
+  "effect": {
+   "HAVE": 4,
+   "NEED": 4
+  },
+  "lighting": {
+   "HAVE": 7,
+   "NEED": 3
+  },
+  "ui": {
+   "HAVE": 6
+  }
+ }
+}
