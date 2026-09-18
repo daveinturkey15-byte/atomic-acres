@@ -371,9 +371,11 @@ export function buildMaterials(): MaterialLibrary {
     }
     speckle(c, s, 700, 0.08);
   }, 2);
-  // Asphalt: ~0.9; wheel-polish bands + wet/oil blotches read smoother (darker).
+  // Asphalt: ~0.65 with a wide dim lobe; wheel-polish bands read smoother
+  // (~0.5) and oil spots darker still. Was a flat 0.9, which rendered the
+  // street as matte paper with no sun response at grazing angles.
   const asphaltRough = dataTex(256, 22, (c, s) => {
-    c.fillStyle = R(0.9);
+    c.fillStyle = R(0.65);
     c.fillRect(0, 0, s, s);
     for (let i = 0; i < 7; i++) {
       const r = s * (0.06 + Math.random() * 0.1);
@@ -384,7 +386,7 @@ export function buildMaterials(): MaterialLibrary {
       c.rotate(Math.PI / 5);
       c.scale(1, 0.32);
       const g = c.createRadialGradient(0, 0, 0, 0, 0, r);
-      g.addColorStop(0, 'rgba(165,165,165,0.4)');
+      g.addColorStop(0, 'rgba(128,128,128,0.5)');
       g.addColorStop(1, 'rgba(0,0,0,0)');
       c.fillStyle = g;
       c.beginPath();
@@ -529,12 +531,113 @@ export function buildMaterials(): MaterialLibrary {
     }, 1.6);
     return { map, roughnessMap, normalMap };
   };
+  // ---- concrete apron albedo: the dominant surround was a flat fill and read as
+  // paper from the aerial (NT02 shows tonal drift across the bleached surround).
+  // Subtle per-slab value drift + dust mottling + grit, neutral overlays only so
+  // the PAL.concrete family never shifts hue. Repeat matches the concrete
+  // roughness/normal companions (12) so breakup aligns across maps.
+  const concreteTex = tex(512, 12, (c, s) => {
+    c.fillStyle = hex(PAL.concrete);
+    c.fillRect(0, 0, s, s);
+    const n = 4;
+    const cell = s / n;
+    for (let i = 0; i < n; i++) {
+      for (let j = 0; j < n; j++) {
+        const v = (0.03 + Math.random() * 0.08).toFixed(3);
+        c.fillStyle = Math.random() > 0.5
+          ? 'rgba(255,255,255,' + v + ')'
+          : 'rgba(0,0,0,' + v + ')';
+        c.fillRect(i * cell + 1, j * cell + 1, cell - 2, cell - 2);
+      }
+    }
+    blotches(c, s, 10, s * 0.06, s * 0.2, (a) => 'rgba(255,255,255,' + a + ')', 0.1);
+    blotches(c, s, 7, s * 0.04, s * 0.12, (a) => 'rgba(0,0,0,' + a + ')', 0.1);
+    speckle(c, s, 900, 0.05);
+  });
+  // ---- tree canopy: smooth flat blobs read as plastic baubles at yard distance.
+  // Two-scale breakup (clump blotches + leaf speckle) in albedo and roughness.
+  const leafTex = tex(256, 3, (c, s) => {
+    c.fillStyle = hex(PAL.treeLeaf);
+    c.fillRect(0, 0, s, s);
+    blotches(c, s, 12, s * 0.06, s * 0.2, (a) => 'rgba(0,0,0,' + a + ')', 0.25);
+    blotches(c, s, 8, s * 0.04, s * 0.12, (a) => 'rgba(255,255,255,' + a + ')', 0.12);
+    speckle(c, s, 2500, 0.12);
+    speckle(c, s, 1200, 0.1, false);
+  });
+  const leafRough = dataTex(256, 3, (c, s) => {
+    c.fillStyle = R(0.92);
+    c.fillRect(0, 0, s, s);
+    blotches(c, s, 10, s * 0.06, s * 0.18, (a) => 'rgba(255,255,255,' + a + ')', 0.2);
+    speckle(c, s, 800, 0.08);
+  });
+  // ---- bark: vertical fissure streaks over the trunk base, neutral overlays.
+  const barkTex = tex(256, 2, (c, s) => {
+    c.fillStyle = hex(PAL.treeTrunk);
+    c.fillRect(0, 0, s, s);
+    for (let g = 0; g < 40; g++) {
+      const x = Math.random() * s;
+      c.strokeStyle = Math.random() > 0.4
+        ? 'rgba(0,0,0,' + (0.08 + Math.random() * 0.12).toFixed(3) + ')'
+        : 'rgba(255,255,255,' + (0.04 + Math.random() * 0.06).toFixed(3) + ')';
+      c.lineWidth = 1 + Math.random() * 3;
+      c.beginPath();
+      c.moveTo(x, 0);
+      c.lineTo(x + (Math.random() - 0.5) * 10, s);
+      c.stroke();
+    }
+    speckle(c, s, 600, 0.08);
+  });
+  const barkRough = dataTex(256, 2, (c, s) => {
+    c.fillStyle = R(0.95);
+    c.fillRect(0, 0, s, s);
+    speckle(c, s, 900, 0.08);
+  });
+  // ---- butterfly / vault roofs: large smooth sheets under a grazing sun, so sheen
+  // drift (roughness mottling) sells them harder than albedo does. Roof white
+  // stays near 0.6 mean; barrel vaults near 0.55 with polish drift.
+  const roofTex = tex(256, 6, (c, s) => {
+    c.fillStyle = hex(PAL.roofWhite);
+    c.fillRect(0, 0, s, s);
+    blotches(c, s, 9, s * 0.06, s * 0.2, (a) => 'rgba(0,0,0,' + a + ')', 0.06);
+    blotches(c, s, 7, s * 0.05, s * 0.16, (a) => 'rgba(255,255,255,' + a + ')', 0.08);
+    speckle(c, s, 700, 0.04);
+  });
+  const roofRough = dataTex(256, 6, (c, s) => {
+    c.fillStyle = R(0.6);
+    c.fillRect(0, 0, s, s);
+    blotches(c, s, 10, s * 0.06, s * 0.2, (a) => 'rgba(255,255,255,' + a + ')', 0.3);
+    blotches(c, s, 6, s * 0.04, s * 0.12, (a) => 'rgba(0,0,0,' + a + ')', 0.2);
+    speckle(c, s, 700, 0.06);
+  });
+  const barrelRough = dataTex(256, 6, (c, s) => {
+    c.fillStyle = R(0.55);
+    c.fillRect(0, 0, s, s);
+    blotches(c, s, 9, s * 0.06, s * 0.18, (a) => 'rgba(255,255,255,' + a + ')', 0.3);
+    speckle(c, s, 800, 0.07);
+  });
+  // ---- metals: brushed row streaks break the mirror-flat read. Chrome keeps a
+  // tight ~0.10-0.20 band so the baked sun disc still glints instead of hazing.
+  const steelRough = dataTex(256, 4, (c, s) => {
+    c.fillStyle = R(0.42);
+    c.fillRect(0, 0, s, s);
+    for (let y = 0; y < s; y += 2) {
+      c.fillStyle = R(0.35 + Math.random() * 0.15);
+      c.fillRect(0, y, s, 1);
+    }
+    speckle(c, s, 500, 0.05);
+  });
+  const chromeRough = dataTex(256, 4, (c, s) => {
+    c.fillStyle = R(0.12);
+    c.fillRect(0, 0, s, s);
+    blotches(c, s, 8, s * 0.05, s * 0.16, (a) => 'rgba(255,255,255,' + a + ')', 0.12);
+    speckle(c, s, 500, 0.05);
+  });
   const timberSet = boardSet(PAL.timber, PAL.timberDark, 8, 0.8);
-  const timberDarkSet = boardSet(PAL.timberDark, 0x4d3116, 8, 0.82);
-  const deckSet = boardSet(0xc08a50, PAL.timberDark, 10, 0.78);
+  const timberDarkSet = boardSet(PAL.timberDark, PAL.timberGap, 8, 0.82);
+  const deckSet = boardSet(PAL.deckBoard, PAL.timberDark, 10, 0.78);
 
   const lib: MaterialLibrary = {
-    concrete: std({ color: PAL.concrete, roughness: 1, roughnessMap: concreteRough, normalMap: concreteNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }),
+    concrete: std({ map: concreteTex, roughness: 1, roughnessMap: concreteRough, normalMap: concreteNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }),
     paving: std({ map: pavingTex, roughness: 1, roughnessMap: pavingRough, normalMap: pavingNormal, normalScale: new THREE.Vector2(0.8, 0.8), metalness: 0 }),
     asphalt: std({ map: asphaltTex, roughness: 1, roughnessMap: asphaltRough, normalMap: asphaltNormal, normalScale: new THREE.Vector2(0.6, 0.6), metalness: 0 }),
     kerb: std({ color: PAL.kerb, roughness: 1, roughnessMap: kerbRough, normalMap: kerbNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }),
@@ -542,29 +645,29 @@ export function buildMaterials(): MaterialLibrary {
     sand: std({ color: PAL.sand, roughness: 1, roughnessMap: sandRough, normalMap: sandNormal, normalScale: new THREE.Vector2(0.5, 0.5), metalness: 0 }),
     stuccoCream: std({ map: creamSet.map, roughness: 1, roughnessMap: creamSet.roughnessMap, normalMap: creamSet.normalMap, normalScale: new THREE.Vector2(0.5, 0.5), metalness: 0 }),
     stuccoTerracotta: std({ map: terraSet.map, roughness: 1, roughnessMap: terraSet.roughnessMap, normalMap: terraSet.normalMap, normalScale: new THREE.Vector2(0.6, 0.6), metalness: 0 }),
-    roofWhite: std({ color: PAL.roofWhite, roughness: 0.6, metalness: 0.05 }),
-    solar: std({ map: solarTex, roughness: 0.25, metalness: 0.35 }),
-    barrelRoof: std({ color: PAL.barrelRoof, roughness: 0.55, metalness: 0.15 }),
+    roofWhite: std({ map: roofTex, roughness: 1, roughnessMap: roofRough, metalness: 0.05 }),
+    solar: std({ map: solarTex, roughness: 0.25, metalness: 0.35, envMapIntensity: 1.2 }),
+    barrelRoof: std({ color: PAL.barrelRoof, roughness: 1, roughnessMap: barrelRough, metalness: 0.15 }),
     capsuleWhite: std({ map: capsuleSet.map, roughness: 1, roughnessMap: capsuleSet.roughnessMap, normalMap: capsuleSet.normalMap, normalScale: new THREE.Vector2(0.35, 0.35), metalness: 0.02, envMapIntensity: 0.6 }),
     roofGlazing: std({
       color: PAL.roofGlazing, roughness: 0.14, metalness: 0.1,
-      transparent: true, opacity: 0.86,
+      transparent: true, opacity: 0.86, envMapIntensity: 1.2,
     }),
     glass: std({
       color: PAL.glass, roughness: 0.08, metalness: 0,
       transparent: true, opacity: 0.42, envMapIntensity: 1.6,
     }),
     windowDark: std({
-      color: 0x66808e, roughness: 0.12, metalness: 0.16, envMapIntensity: 2,
+      color: PAL.windowDark, roughness: 0.12, metalness: 0.16, envMapIntensity: 2,
     }),
     timber: std({ map: timberSet.map, roughness: 1, roughnessMap: timberSet.roughnessMap, normalMap: timberSet.normalMap, normalScale: new THREE.Vector2(0.7, 0.7), metalness: 0 }),
     timberDark: std({ map: timberDarkSet.map, roughness: 1, roughnessMap: timberDarkSet.roughnessMap, normalMap: timberDarkSet.normalMap, normalScale: new THREE.Vector2(0.7, 0.7), metalness: 0 }),
     deckBoards: std({ map: deckSet.map, roughness: 1, roughnessMap: deckSet.roughnessMap, normalMap: deckSet.normalMap, normalScale: new THREE.Vector2(0.7, 0.7), metalness: 0 }),
     hedge: std({ map: hedgeTex, roughness: 1, roughnessMap: hedgeRough, normalMap: hedgeNormal, normalScale: new THREE.Vector2(0.8, 0.8), metalness: 0 }),
-    leaf: std({ color: PAL.treeLeaf, roughness: 0.92, metalness: 0 }),
-    bark: std({ color: PAL.treeTrunk, roughness: 0.95, metalness: 0 }),
-    chrome: std({ color: PAL.chrome, roughness: 0.12, metalness: 0.95 }),
-    steel: std({ color: PAL.steel, roughness: 0.42, metalness: 0.7 }),
+    leaf: std({ map: leafTex, roughness: 1, roughnessMap: leafRough, metalness: 0 }),
+    bark: std({ map: barkTex, roughness: 1, roughnessMap: barkRough, metalness: 0 }),
+    chrome: std({ color: PAL.chrome, roughness: 1, roughnessMap: chromeRough, metalness: 0.95, envMapIntensity: 1.25 }),
+    steel: std({ color: PAL.steel, roughness: 1, roughnessMap: steelRough, metalness: 0.7 }),
 
     painted(color: number, rough = 0.42, metal = 0.25) {
       const key = 'p' + color + '_' + rough + '_' + metal;

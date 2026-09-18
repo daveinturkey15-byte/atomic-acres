@@ -106,14 +106,21 @@ function smoothstepCpu(edge0: number, edge1: number, x: number): number {
   return t * t * (3 - 2 * t);
 }
 
-const ENV_W = 256;
-const ENV_H = 128;
+// 512x256: one-time CPU bake at startup plus a 512 KiB upload, zero per-frame
+// cost. 256x128 smeared the sun glow over ~1.4 deg/texel; chrome and glazing
+// need a tighter hot spot to glint against.
+const ENV_W = 512;
+const ENV_H = 256;
 
 /**
  * Procedurally baked equirectangular environment map: the same sky ramp, sun
- * glow and horizon haze as the visible dome, with bleached-concrete bounce
- * below the horizon (where the old code put a ground disc). Byte texture is
- * deliberate — this is low-frequency IBL data, and RGBA8 filters everywhere
+ * glow and horizon haze as the visible dome. Below the horizon, a gradient from
+ * warm pale paving at grazing angles (the bleached surround dominates low
+ * reflection rays) down to the bounce tone at nadir — a flat bounce colour made
+ * every downward-facing reflection the same grey. Above the horizon the sky
+ * terms match makeSky, plus a tight hot disc the byte texture clips to white:
+ * the IBL sun reads hotter than the visible dome so chrome and glass glint.
+ * Byte texture is deliberate — low-frequency IBL data, RGBA8 filters everywhere
  * both backends run. Linear values (NoColorSpace): lighting input, never
  * tone-mapped. Texel (x, y) holds the radiance for the direction three samples
  * it with: u = atan(z, x)/2PI + 0.5, v = asin(y)/PI + 0.5.
@@ -122,6 +129,7 @@ function bakeEnvironment(): THREE.DataTexture {
   const top = new THREE.Color(PAL.skyTop).convertSRGBToLinear();
   const horizon = new THREE.Color(PAL.skyHorizon).convertSRGBToLinear();
   const sun = new THREE.Color(PAL.sunColor).convertSRGBToLinear();
+  const paving = new THREE.Color(PAL.pavingWarm).convertSRGBToLinear();
   const bounce = new THREE.Color(PAL.bounce).convertSRGBToLinear();
   const data = new Uint8Array(ENV_W * ENV_H * 4);
   const d = new THREE.Vector3();
@@ -136,16 +144,19 @@ function bakeEnvironment(): THREE.DataTexture {
       let g: number;
       let b: number;
       if (d.y < 0) {
-        r = bounce.r;
-        g = bounce.g;
-        b = bounce.b;
+        // Grazing rays see the pale surround, steep rays the dirt/bounce tone.
+        const t = Math.pow(Math.min(-d.y * 2.2, 1), 0.6);
+        r = paving.r + (bounce.r - paving.r) * t;
+        g = paving.g + (bounce.g - paving.g) * t;
+        b = paving.b + (bounce.b - paving.b) * t;
       } else {
         const t = Math.pow(Math.min(Math.max(d.y, 0), 1), 0.85);
         r = horizon.r + (top.r - horizon.r) * t;
         g = horizon.g + (top.g - horizon.g) * t;
         b = horizon.b + (top.b - horizon.b) * t;
         const s = Math.max(d.dot(SUN_DIR), 0);
-        const glow = Math.pow(s, 8) * 0.28 + Math.pow(s, 180) * 0.9;
+        const glow = Math.pow(s, 8) * 0.28 + Math.pow(s, 180) * 0.9
+          + Math.pow(s, 1500) * 3.0;
         r += sun.r * glow;
         g += sun.g * glow;
         b += sun.b * glow;
@@ -195,23 +206,31 @@ export function createWorld(canvasParent: HTMLElement): World {
   // roughness on the GPU, on both backends.
   const envTex = bakeEnvironment();
   scene.environment = envTex;
-  scene.environmentIntensity = 1.0;
+  // 0.9: the byte-baked sun disc still clips to white so chrome/glass glints
+  // survive, but flat ambient wash drops and shade sits deeper.
+  scene.environmentIntensity = 0.9;
 
   const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.08, 1400);
 
   // ---- sun. High and slightly behind the +x end so the houses catch a raking light.
-  // Harsh desert noon: the key stays warm (a nudge warmer than PAL.sunColor) and a
-  // touch stronger than before; shadow interiors go dark by starving the fills,
-  // never by touching exposure (still 1.09 in renderer.ts).
+  // Harsh desert noon per NT04/f-FKQOEO-1ceE-105 (hard warm key, crisp edges, cool
+  // sky fill in shade): the key stays warm (a nudge warmer than PAL.sunColor);
+  // shadow interiors go dark by starving the fills, never by touching exposure
+  // (still 1.09 in renderer.ts).
   const sunTint = new THREE.Color(PAL.sunColor).offsetHSL(-0.008, 0.05, -0.004);
-  const sun = new THREE.DirectionalLight(sunTint, 3.2);
+  const sun = new THREE.DirectionalLight(sunTint, 3.35);
   sun.position.set(58, 72, -92);
   sun.castShadow = true;
   sun.shadow.mapSize.set(4096, 4096);
   sun.shadow.bias = -0.00022;
   sun.shadow.normalBias = 0.055;
   // Fit the shadow camera to the playable area only. A shadow camera sized to the
-  // skyline would waste almost all of its texels on empty desert.
+  // skyline would waste almost all of its texels on empty desert. Square fit:
+  // half must cover the worst-case scene extent in LIGHT space, and the light
+  // looks at the map diagonally, so per-world-axis bounds are NOT a safe
+  // tightening (a previous pass tried halfX/halfZ here and falsely shadowed
+  // the west end and the rooftops: out-of-frustum fragments clamp to shadowed
+  // edge texels). ~2.3 cm/texel at 4096 over the 96 m square.
   const cx = (BOUND_X_MIN + BOUND_X_MAX) / 2;
   const halfX = (BOUND_X_MAX - BOUND_X_MIN) / 2 + 6;
   const halfZ = BOUND_Z + 6;
@@ -225,15 +244,16 @@ export function createWorld(canvasParent: HTMLElement): World {
   scene.add(sun);
   scene.add(sun.target);
   // ---- fill. Cool sky above (skyTop family), warm bleached-concrete bounce below.
-  // Kept at 1.05, below the old 1.15, so occlusion — not ambient wash — carries
-  // the shadow interiors.
-  const hemi = new THREE.HemisphereLight(PAL.skyTop, PAL.bounce, 1.05);
+  // Kept at 0.95 so occlusion — not ambient wash — carries the shadow interiors;
+  // the sniper frame's shaded terracotta sits deep while sunlit paving runs
+  // near-white, and that range needs starved shade, not raised exposure.
+  const hemi = new THREE.HemisphereLight(PAL.skyTop, PAL.bounce, 0.95);
   hemi.position.set(0, 60, 0);
   scene.add(hemi);
   // A weak opposing fill so north-facing walls do not go to mud, kept low so that
-  // occlusion still does the work. Cooled a step past skyTop, capped at 0.30.
+  // occlusion still does the work. Cooled a step past skyTop, capped at 0.25.
   const fillTint = new THREE.Color(PAL.skyTop).offsetHSL(0.02, 0.04, -0.02);
-  const fill = new THREE.DirectionalLight(fillTint, 0.3);
+  const fill = new THREE.DirectionalLight(fillTint, 0.25);
   fill.position.set(-70, 40, 80);
   fill.castShadow = false;
   scene.add(fill);

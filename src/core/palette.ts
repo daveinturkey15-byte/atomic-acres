@@ -87,6 +87,11 @@ export const PAL = {
   interiorMint:  0x9dc7b4,
   saucerSoffit:  0x7a6783,   // mauve underside with recessed downlights
   hazardYellow:  0xd8b23a,   // mailbox, markings, DO NOT STACK crates
+
+  // --- moved in from inline literals (same values, now palette-owned per contract)
+  windowDark:    0x66808e,   // shaded glazing that still reflects sky, not black
+  deckBoard:     0xc08a50,   // warm mid-timber deck boards
+  timberGap:     0x4d3116,   // dark board gaps / shadowed timber
 } as const;
 
 export type PaletteKey = keyof typeof PAL;
