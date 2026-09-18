@@ -204,23 +204,18 @@ function frame(): void {
       sprinting: speed > 6.5,
       grounded: player.state.grounded,
     });
-    // RENDER PATH. `?post=chain` drives the world through the post chain
-    // (GTAO/SSR/bloom/vignette); anything else renders direct.
+    // RENDER PATH. The world goes through the post chain (GTAO / SSR / bloom / vignette),
+    // and the viewmodel composites over the finished frame with depth cleared so the
+    // gun can never intersect the map. `?post=off` and `?post=ao` swap the chain's
+    // output node for a diagnostic one inside core/post.ts; they do NOT change the
+    // route, so what you measure there is what the player is looking at.
     //
-    // The chain is NOT the default here, and that is deliberate. Routing the frame
-    // loop through PostProcessing.render() shipped a BLACK world to the owner - the
-    // viewmodel overlay and the HUD still drew, because those are a separate direct
-    // render afterwards, so it looked like a map that had vanished rather than a
-    // renderer fault. The identical call (`world.render()`) works from the capture
-    // harness, which is why it passed every check: captures go through qa.render(),
-    // not through here. Until that difference is understood, the interactive path
-    // stays on the route that is known to put pixels on the screen, and the chain
-    // is opt-in so it can be debugged without shipping a black screen again.
-    if (new URLSearchParams(location.search).get('post') === 'chain') {
-      world.render();
-    } else {
-      world.renderer.render(world.scene, world.camera);
-    }
+    // This used to branch on `?post=chain` because the chain shipped a BLACK world
+    // from here while working from the capture harness. Two separate faults, both
+    // now fixed in core/post.ts - read the note at the top of that file before
+    // touching this block, and re-run `node scripts/playcap.mjs --tag chain
+    // --query "post=chain"`, which photographs THIS loop and fails on a dark frame.
+    world.render();
     world.renderer.clearDepth();
     const ac = world.renderer.autoClear;
     world.renderer.autoClear = false;

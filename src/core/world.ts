@@ -264,25 +264,35 @@ export function createWorld(canvasParent: HTMLElement): World {
   // post path. post.setSize forwards to the renderer, preserving resize.
   const post = buildPost(renderer, scene, camera);
 
-  // The WebGPU backend initialises ASYNCHRONOUSLY. The frame loop starts before it
-  // finishes, and three warns ".render() called before the backend is initialized".
-  // A direct renderer.render() shrugs that off and works from the next frame, but
-  // driving PostProcessing.render() before init leaves the chain dead for the rest of
-  // the session: the page then shows a BLACK world with only the viewmodel overlay
-  // and the HUD, because those are drawn by a separate direct render afterwards.
-  // That is exactly what shipped to the owner, and nothing errored - the only tell
-  // was stats().programs sitting at 0.
+  // THE CHAIN MUST BE THE FIRST THING THAT EVER RENDERS THIS SCENE. Read this before
+  // adding a `renderer.render(scene, camera)` anywhere, however harmless it looks.
   //
-  // So: render direct until the backend reports ready, then switch to the chain. The
-  // first frames look slightly flatter, which is strictly better than none of them
-  // appearing at all.
+  // The chain's scene pass writes a G-buffer (colour + view normal + metalness +
+  // roughness) via MRT, so each material's fragment shader must emit four outputs.
+  // three builds that shader once and caches the result under a key that does NOT
+  // include the MRT (RenderObject.getMaterialCacheKey ignores renderer.getMRT()), so
+  // WHICHEVER PATH RENDERS THE SCENE FIRST DECIDES THE SHADER FOR THE WHOLE SESSION.
+  // If a direct render gets there first, every material is stuck with one output,
+  // pipeline creation fails against the four-attachment pass target with
+  //   "Color target has no corresponding fragment stage output ... targets[1]"
+  // and NOTHING is drawn into the pass. Silently: no exception, no console error,
+  // just a pass target full of zeros and a black world with the viewmodel on top.
+  // That is the bug that shipped, and it was introduced by the code that used to be
+  // here, which rendered direct until the backend reported ready.
+  //
+  // Measured 2026-09-18 on ?post=nrm (an MRT carrying normalView): with the direct
+  // pre-roll the frame is the beauty render, which means the MRT never reached the
+  // shader; with nothing rendering before the chain it is a correct view-normal
+  // buffer. Same build, same machine, one render call apart.
+  //
+  // So: draw nothing at all until the backend is up (a few frames behind the click-to
+  // -play overlay), then the chain and only the chain. The viewmodel overlay in
+  // main.ts is a DIFFERENT scene with different lights, so it gets its own cache key
+  // and its own single-output shader - it is not affected by this rule.
   let backendUp = false;
-  boot.ready.then(() => { backendUp = true; }).catch(() => { /* stays direct */ });
+  boot.ready.then(() => { backendUp = true; }).catch(() => { /* stays dark */ });
   const render = () => {
-    if (!backendUp) {
-      renderer.render(scene, camera);
-      return;
-    }
+    if (!backendUp) return;
     post.render();
   };
   const resize = () => {
