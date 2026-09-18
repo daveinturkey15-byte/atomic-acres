@@ -69,10 +69,10 @@ export const UPPER_H = 3.05;              // upper floor height
 export const EAVE_Y = FLOOR_H + UPPER_H;  // 6.20 - top of upper wall
 
 // garage wing (attached to one end of the main block)
-export const GARAGE_LEN = 4.8; // wing outside the main block; overall house width 17.6 m
+export const GARAGE_LEN = 6.2; // two 2.4 m street-facing bays + jambs; INTERIORS-TOPOLOGY s3 (was 4.8: three notional bays)
 export const GARAGE_DEPTH = 7.4;
 export const GARAGE_H = 3.65;
-export const GARAGE_BAYS = 3;
+export const GARAGE_BAYS = 2; // one open, one shut with a ribbed sectional door; INTERIORS-TOPOLOGY s3
 
 // rear deck at upper-floor level, opposite end from the garage
 export const DECK_Y = FLOOR_H;
@@ -88,8 +88,8 @@ export const CANOPY_OUT = 2.9;
 // ---------------------------------------------------------------- yards
 export const BACK_FENCE = 37.0; // |z| of the timber back fence
 export const FENCE_H = 2.1;
-export const YARD_X_MIN = -13.2;
-export const YARD_X_MAX = 13.2; // garage end leaves a 2.0 m squeeze, the far end a 6.8 m flank
+export const YARD_X_MIN = -14.8; // garage wing now ends at |x| 12.6; keeps the 2.0 m garage-end squeeze that the flank routes are proven against
+export const YARD_X_MAX = 14.8; // see YARD_X_MIN; far end is a 8.4 m flank
 
 // ---------------------------------------------------------------- bounds
 export const BOUND_X_MIN = -19.5;
