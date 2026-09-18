@@ -263,7 +263,26 @@ export function createWorld(canvasParent: HTMLElement): World {
   // so main.ts keeps calling renderer.render safely and render() here is the
   // post path. post.setSize forwards to the renderer, preserving resize.
   const post = buildPost(renderer, scene, camera);
+
+  // The WebGPU backend initialises ASYNCHRONOUSLY. The frame loop starts before it
+  // finishes, and three warns ".render() called before the backend is initialized".
+  // A direct renderer.render() shrugs that off and works from the next frame, but
+  // driving PostProcessing.render() before init leaves the chain dead for the rest of
+  // the session: the page then shows a BLACK world with only the viewmodel overlay
+  // and the HUD, because those are drawn by a separate direct render afterwards.
+  // That is exactly what shipped to the owner, and nothing errored - the only tell
+  // was stats().programs sitting at 0.
+  //
+  // So: render direct until the backend reports ready, then switch to the chain. The
+  // first frames look slightly flatter, which is strictly better than none of them
+  // appearing at all.
+  let backendUp = false;
+  boot.ready.then(() => { backendUp = true; }).catch(() => { /* stays direct */ });
   const render = () => {
+    if (!backendUp) {
+      renderer.render(scene, camera);
+      return;
+    }
     post.render();
   };
   const resize = () => {

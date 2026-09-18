@@ -204,18 +204,23 @@ function frame(): void {
       sprinting: speed > 6.5,
       grounded: player.state.grounded,
     });
-    // The WORLD goes through the post chain (GTAO/SSR/bloom/vignette); the
-    // viewmodel is composited on top of the finished frame with its own cleared
-    // depth, so the gun never intersects the map and never gets its own AO.
+    // RENDER PATH. `?post=chain` drives the world through the post chain
+    // (GTAO/SSR/bloom/vignette); anything else renders direct.
     //
-    // This used to call world.renderer.render() directly, which meant the whole
-    // post chain - and with it the only ambient-occlusion term in the project -
-    // had NEVER run, in any frame, since it was written. post.ts said so in a
-    // comment and nobody read it. That single missing call is most of why the
-    // build looked flat and plastic: no contact darkening anywhere, so every
-    // object read as pasted onto the ground rather than standing on it.
-    characters.update(dt, world.camera.position);
-    world.render();
+    // The chain is NOT the default here, and that is deliberate. Routing the frame
+    // loop through PostProcessing.render() shipped a BLACK world to the owner - the
+    // viewmodel overlay and the HUD still drew, because those are a separate direct
+    // render afterwards, so it looked like a map that had vanished rather than a
+    // renderer fault. The identical call (`world.render()`) works from the capture
+    // harness, which is why it passed every check: captures go through qa.render(),
+    // not through here. Until that difference is understood, the interactive path
+    // stays on the route that is known to put pixels on the screen, and the chain
+    // is opt-in so it can be debugged without shipping a black screen again.
+    if (new URLSearchParams(location.search).get('post') === 'chain') {
+      world.render();
+    } else {
+      world.renderer.render(world.scene, world.camera);
+    }
     world.renderer.clearDepth();
     const ac = world.renderer.autoClear;
     world.renderer.autoClear = false;
