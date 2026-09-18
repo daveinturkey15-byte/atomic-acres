@@ -311,3 +311,11 @@ WIRING PENDING until Wave 3's integrator releases `src/main.ts` / `src/ui`: two 
 the credits line in the UI. Brief corrected: SOMA is Y-up and mirrored; Blender optional.
 Wave 3: vocabulary + lanes A-D returned; integrator running.
 
+**00:05.** Wave 4 committed (see its message for the open list). BLOCKED ON WAVE 3 LANDING:
+(1) wire clips - `import { loadBakedClips } from './characters/kimodo-clips'` +
+`await loadBakedClips()` immediately before `createCharacterSystem` in main.ts;
+(2) a credits surface in src/ui carrying "Built with Meta Llama 3" and "Motion: NVIDIA
+Kimodo SOMA-RP v1.1 (NVIDIA Open Model License)"; (3) a LEAK HUNT - heap post-GC floor
+climbs ~4.2 MB/min with zero figures (verifier's control run) - heap snapshots at t+30/90/
+150 s through the real loop, diff retained objects, one bounded fix.
+
