@@ -51,10 +51,11 @@ yours, put the exact text in your report and the orchestrator wires it.
 4. **Inspect before Blender.** Port the inspector: assert joint count (must be 30 —
    if 22 appears you loaded the wrong weights, stop), frame count, root-translation
    range, no NaNs, no joint further than 1.3 m from the pelvis. Print a per-clip table.
-5. **Retarget in Blender, headless.** Port `retarget-kimodo-motion.py`: SOMA-30 →
-   our skeleton in `src/characters/skeleton.ts`. Calibrate first and record each:
-   rest pose match, bone names, axis (Kimodo Z-up → glTF Y-up), scale (metres), **hip
-   ownership** (who owns root translation — the clip or the controller; for locomotion
+5. **Retarget.** SOMA-30 → our skeleton in `src/characters/skeleton.ts`. Calibrate first
+   and record each: rest pose match, bone names, **axis — soma-rp-v1.1 is already Y-UP
+   (root at 0.93 m on Y); apply NO -90° X swing or every figure lies face-down**, **the
+   source is MIRRORED — reflect in X and keep the labels, do not swap Left/Right**, scale
+   (metres), **hip ownership** (who owns root translation — the clip or the controller; for locomotion
    the controller does, so strip root XZ and keep Y), foot contacts. Export glTF.
 6. **ONE canary first.** `walk` only. Load it through `src/characters/clips.ts`, spawn
    one figure, and run `node scripts/playcap.mjs --tag anim` plus captures from four
@@ -65,6 +66,15 @@ yours, put the exact text in your report and the orchestrator wires it.
    direction, upper-body aim layer so a figure aims while running, loop seams checked.
 8. **Budget.** Twelve figures on screen: frame time, draw calls, JS heap over two
    minutes. State the budget you set and whether you met it.
+
+## Corrections measured on 2026-09-18 (Wave 4)
+
+- Y-up, not Z-up. Mirrored source, fixed by an X reflection with labels kept.
+- Blender was NOT needed: our rig's rest is identity on every bone, so an exact
+  quaternion retarget in Node (`scripts/animation/retarget-soma.mjs`) emits glTF that
+  `AnimationMixer` binds with no remap; a Blender round-trip would force a per-bone
+  roll basis and need a second remap. Use Blender only if the target rig demands it.
+- 16 clips landed in `public/anim/` (350 kB). Wiring lines are in the Wave 4 report.
 
 ## Never
 

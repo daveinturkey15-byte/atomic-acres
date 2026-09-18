@@ -304,3 +304,10 @@ not changed on a hunch); roofless dead-end slot into the white house x 4.3..5.9;
 plan.mjs writes .ppm only; the pool cannot be sunk while player.ts clamps the world
 floor at y=0.
 
+**23:50.** Wave 4 bake landed: 16 Kimodo clips in `public/anim/`, 30 joints on every
+export, canary through four views, foot-slide measured (walk 3.8 cm). Verifier running.
+WIRING PENDING until Wave 3's integrator releases `src/main.ts` / `src/ui`: two lines
+(`import { loadBakedClips }` + `await loadBakedClips()` before createCharacterSystem) and
+the credits line in the UI. Brief corrected: SOMA is Y-up and mirrored; Blender optional.
+Wave 3: vocabulary + lanes A-D returned; integrator running.
+
