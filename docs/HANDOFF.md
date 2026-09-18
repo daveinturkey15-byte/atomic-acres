@@ -290,3 +290,7 @@ lanes A/B/C/D, integrator, verifier - exactly IMPORT-PLAN §3. Wave 4 (Kimodo) a
 scratchpad `wave4-animation.js` / `wave5-gauntlet.js` and launch after Wave 2 lands.
 Trellis.2 weights: 4/4 on disk and visible to the server (`comfy_up.py` preflight).
 
+**21:58.** Wave 4 (Kimodo animation, `wf_8faff9c6-e08`) launched - single bake agent then
+adversarial verifier. Three workflows in flight: geometry, gameplay, animation. Street
+gauntlet waits for geometry to land so its critics score final pixels.
+
