@@ -54,6 +54,43 @@ const GND_FRONT = frontZ + S * RECESS;      // recessed ground-floor street plan
 const STAIR_W = 1.25;
 const STEPS = 14;
 
+// -------------------------------------------------- rear deck + external stair
+// The flight runs ALONG the back wall, parallel to it, leaving the deck at its FREE
+// end and descending sideways - docs/HANDEDNESS.md s2 / s8.1, six frames across three
+// clips, both houses (g-tB35IKluv0g-148 and g-1icNQzMgLUM-102 are the orange reads).
+// It used to run yard-ward in z, which is the one thing every one of those frames
+// rules out. Direction is FE - the free end, derived from ORANGE.garageEnd - never a
+// bare sign: the two houses are a 180-degree ROTATIONAL pair, so the white flight and
+// this one are point reflections of each other through the origin.
+const DECK_X = H.deckX;
+const DECK_OUT_Z = backZ + S * DECK_OUT;             // outer (yard-ward) deck edge
+const DECK_CZ = backZ + S * (DECK_OUT / 2 - 0.05);   // deck centre in z
+const STAIR_GOING = 0.28;
+const STAIR_RUN = STEPS * STAIR_GOING;               // 3.92 m along x
+const STAIR_FOOT_Y = 0.2;
+const STAIR_HEAD_X = DECK_X + FE * (DECK_LEN / 2);   // the deck's free-end edge
+const STAIR_FOOT_X = STAIR_HEAD_X + FE * STAIR_RUN;
+/** landing a player needs past the bottom tread, and clearance either side */
+const STAIR_LANDING = 0.8;
+const STAIR_SIDE = 0.3;
+
+/**
+ * The ground this house's external rear stair owns, as an AABB in world x/z.
+ *
+ * yards.ts imports this and keeps every prop out of it. It exists because the deck
+ * keep-out yards.ts already had (DECK_LEN / DECK_OUT) stops at the deck, and both
+ * flights run PAST that volume - so a planter could be, and was, built into the
+ * bottom four treads of the white stair with no module being wrong about it.
+ * Derived from the SAME constants that build the treads below, so a re-proportioning
+ * moves the keep-out with the stair instead of separating them.
+ */
+export const ORANGE_STAIR_FOOTPRINT = {
+  minX: Math.min(STAIR_HEAD_X, STAIR_FOOT_X + FE * STAIR_LANDING),
+  maxX: Math.max(STAIR_HEAD_X, STAIR_FOOT_X + FE * STAIR_LANDING),
+  minZ: DECK_CZ - STAIR_W / 2 - STAIR_SIDE,
+  maxZ: DECK_CZ + STAIR_W / 2 + STAIR_SIDE,
+};
+
 // glazing: a pane sits BEHIND the outer wall face so the jamb casts a reveal shadow
 const PANE_T = 0.04;                        // leaf thickness
 const REVEAL = 0.075;                       // setback of the pane from the outer face
@@ -935,25 +972,31 @@ export const buildOrangeHouse: Builder = (ctx) => {
   colliders.push(aabbSlab(porchX, 0, pdZ, pdW, DECK_T, CANOPY_OUT));
 
   // -------------------------------------------------- rear deck at upper-floor level
-  const dX = H.deckX;
-  const dOut = backZ + S * DECK_OUT;
-  const dCz = backZ + S * (DECK_OUT / 2 - 0.05);
+  const dX = DECK_X;
+  const dOut = DECK_OUT_Z;
+  const dCz = DECK_CZ;
   g.add(box(DECK_LEN, 0.18, DECK_OUT + 0.1, mat.deckBoards, dX, DECK_Y - 0.09, dCz));
   colliders.push(aabb(dX, DECK_Y - 0.09, dCz, DECK_LEN, 0.18, DECK_OUT + 0.1));
   const dL = dX - DECK_LEN / 2, dR = dX + DECK_LEN / 2;
-  for (const px of [dL + 0.3, dX - STAIR_W / 2 - 0.2, dX + STAIR_W / 2 + 0.2, dR - 0.3]) {
+  // The deck's four legs used to flank a gap at the OUTER edge's centre, because that
+  // is where the old yard-ward flight left. That gap has moved to the free-end edge,
+  // so the legs space evenly again.
+  const deckLegX = [dL + 0.3, dX - DECK_LEN * 0.18, dX + DECK_LEN * 0.18, dR - 0.3];
+  for (const px of deckLegX) {
     postRows.push([0.2, DECK_Y - 0.18, 0.2, px, (DECK_Y - 0.18) / 2, dOut + OUT * 0.18, 0]);
   }
 
-  // NT03: the flight leaves the OUTER edge at its centre and runs yard-ward (S),
-  // landing on the yards.ts patio disc (centre deckX, offset DECK_OUT + pr*1.12).
-  // Chosen over reversing along x: an x-run foot lands metres off the disc by the
-  // side fence, while the yard-ward run drops onto it. Gap + newels serve the stair.
+  // The balustrade is continuous except where the flight meets it: the gap is now in
+  // the FREE-END edge (x = STAIR_HEAD_X), spanning exactly the flight's own width in
+  // z, and the outer yard-ward edge is unbroken.
+  const gapLo = dCz - STAIR_W / 2, gapHi = dCz + STAIR_W / 2;
+  const edgeLo = Math.min(backZ, dOut), edgeHi = Math.max(backZ, dOut);
+  const dNear = dX - FE * (DECK_LEN / 2);   // the garage-ward end, opposite the flight
   const runs: [number, number, number, number][] = [
-    [dL, dOut, dX - STAIR_W / 2, dOut],
-    [dX + STAIR_W / 2, dOut, dR, dOut],
-    [dR, dOut, dR, backZ],
-    [dL, backZ, dL, dOut],
+    [dL, dOut, dR, dOut],
+    [dNear, backZ, dNear, dOut],
+    [STAIR_HEAD_X, edgeLo, STAIR_HEAD_X, gapLo],
+    [STAIR_HEAD_X, gapHi, STAIR_HEAD_X, edgeHi],
   ];
   const railY = DECK_Y + RAIL_H;
   const bal: { x: number; z: number; a: number }[] = [];
@@ -980,32 +1023,35 @@ export const buildOrangeHouse: Builder = (ctx) => {
       q.setFromAxisAngle(UP, b.a), sc.set(1, 1, 1)));
   });
   g.add(balusters);
-  for (const [nx, nz] of [[dL, dOut], [dR, dOut], [dR, backZ], [dL, backZ],
-    [dX - STAIR_W / 2, dOut], [dX + STAIR_W / 2, dOut]] as P2[]) {
+  for (const [nx, nz] of [[dL, dOut], [dR, dOut], [dNear, backZ], [dNear, dOut],
+    [STAIR_HEAD_X, gapLo], [STAIR_HEAD_X, gapHi], [STAIR_HEAD_X, backZ]] as P2[]) {
     postRows.push([0.14, RAIL_H + 0.1, 0.14, nx, DECK_Y + (RAIL_H + 0.1) / 2, nz, 0]);
   }
 
   // -------------------------------------------------- exterior timber stair
-  // Yard-ward flight from the deck-edge gap: the foot (z = dOut + S*run) lands
-  // ~1 m past the patio centre, inside its radius. Treads finish on the disc;
-  // stringer/handrail slope signs derive from S, never a bare sign.
-  const runL = STEPS * 0.28, topZ = dOut, botZ = dOut + S * runL;
-  const footY = 0.2, yAt = (t: number): number => DECK_Y + (footY - DECK_Y) * t;
-  const slopeA = Math.atan2(DECK_Y - footY, runL);
+  // Flight ALONG the back wall, in the deck's own depth band, leaving the free-end
+  // edge and descending in FE. See the ORANGE_STAIR_FOOTPRINT block at the top of
+  // this file for the evidence; the white house's flight is this one point-reflected.
+  const topX = STAIR_HEAD_X, botX = STAIR_FOOT_X;
+  const footY = STAIR_FOOT_Y, yAt = (t: number): number => DECK_Y + (footY - DECK_Y) * t;
+  const slopeA = Math.atan2(DECK_Y - footY, STAIR_RUN);
+  const stringHyp = Math.hypot(STAIR_RUN, DECK_Y - footY);
   const railM = mat.painted(PAL.timber, 0.88, 0);
-  for (const sx of [dX - (STAIR_W / 2 - 0.05), dX + (STAIR_W / 2 - 0.05)]) {
-    const st = box(0.1, 0.34, Math.hypot(runL, DECK_Y - footY) + 0.3,
-      mat.timberDark, sx, (DECK_Y + footY) / 2 - 0.1, (topZ + botZ) / 2);
-    st.rotation.x = S * slopeA;
+  for (const sz of [dCz - (STAIR_W / 2 - 0.05), dCz + (STAIR_W / 2 - 0.05)]) {
+    // A box is symmetric about its own centre, so -FE * slopeA gives the right LINE
+    // for either hand; the tread boxes below carry the direction.
+    const st = box(stringHyp + 0.3, 0.34, 0.1,
+      mat.timberDark, (topX + botX) / 2, (DECK_Y + footY) / 2 - 0.1, sz);
+    st.rotation.z = -FE * slopeA;
     g.add(st);
-    const hr = box(0.08, 0.08, Math.hypot(runL, DECK_Y - footY) + 0.2,
-      railM, sx + Math.sign(sx - dX) * 0.05, (DECK_Y + footY) / 2 + RAIL_H, (topZ + botZ) / 2);
-    hr.rotation.x = S * slopeA;
+    const hr = box(stringHyp + 0.2, 0.08, 0.08,
+      railM, (topX + botX) / 2, (DECK_Y + footY) / 2 + RAIL_H, sz + Math.sign(sz - dCz) * 0.05);
+    hr.rotation.z = -FE * slopeA;
     g.add(hr);
   }
   for (const t of [0.08, 0.5, 0.92]) {
-    for (const sx of [dX - STAIR_W / 2, dX + STAIR_W / 2]) {
-      postRows.push([0.07, RAIL_H, 0.07, sx, yAt(t) + RAIL_H / 2, topZ + (botZ - topZ) * t, 0]);
+    for (const sz of [dCz - STAIR_W / 2, dCz + STAIR_W / 2]) {
+      postRows.push([0.07, RAIL_H, 0.07, topX + (botX - topX) * t, yAt(t) + RAIL_H / 2, sz, 0]);
     }
   }
   emit(postRows, mat.timberDark, true);
@@ -1014,15 +1060,15 @@ export const buildOrangeHouse: Builder = (ctx) => {
   // (STEP_UP is 0.38) and above it three metres of nothing. It was decoration: the
   // "second way up" INTERIORS-TOPOLOGY s4.3 calls the most important thing about these
   // houses did not exist. One solid box PER TREAD now, 14 risers over 2.95 m = 0.211 m
-  // a step, and the deck top is another 0.30 m from the last tread. The corridor under
-  // the DECK (z between backZ and dOut) is untouched - only the flight's own footprint
-  // past dOut is solid, which is what a real closed-string stair does.
+  // a step, and the deck top is another 0.21 m from the last tread. The undercroft
+  // (x inboard of the deck's free-end edge) is untouched - only the flight's own
+  // footprint past that edge is solid, which is what a closed-string stair does.
   const stepRows: Row[] = [];
   for (let i = 0; i < STEPS; i++) {
     const y = yAt((i + 1) / STEPS);
-    const zc = topZ + S * (i + 0.5) * 0.28;
-    stepRows.push([STAIR_W, y, 0.28, dX, y / 2, zc, 0]);
-    colliders.push(aabbSlab(dX, 0, zc, STAIR_W, y, 0.28));
+    const xc = topX + FE * (i + 0.5) * STAIR_GOING;
+    stepRows.push([STAIR_GOING, y, STAIR_W, xc, y / 2, dCz, 0]);
+    colliders.push(aabbSlab(xc, 0, dCz, STAIR_GOING, y, STAIR_W));
   }
   emit(stepRows, mat.deckBoards, true);
   // deck balustrade and the posts carrying the deck: honest, not walk-through
@@ -1031,7 +1077,7 @@ export const buildOrangeHouse: Builder = (ctx) => {
     colliders.push(aabb((ra0 + ra1) / 2, DECK_Y + RAIL_H / 2, (rb0 + rb1) / 2,
       Math.max(0.12, ra1 - ra0), RAIL_H, Math.max(0.12, rb1 - rb0)));
   }
-  for (const px of [dL + 0.3, dX - STAIR_W / 2 - 0.2, dX + STAIR_W / 2 + 0.2, dR - 0.3]) {
+  for (const px of deckLegX) {
     colliders.push(aabbSlab(px, 0, dOut + OUT * 0.18, 0.2, DECK_Y - 0.18, 0.2));
   }
   // -------------------------------------------------- exterior close-up detail

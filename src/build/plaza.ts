@@ -14,9 +14,15 @@
  * the road and x = -69.9 around z = +16. Nothing that must stand on CONCRETE goes
  * past x = -73; past that is desert, and only poles and pavilions go there.
  *
- * NO COLLIDERS and NO SHADOWS. All of it is outside the playable boundary (the
- * ground module walls the player in) and outside the shadow camera, which world.ts
- * fits to the playable area only - casting here would spend the cascade on nothing.
+ * NO SHADOWS. All of it is outside the shadow camera, which world.ts fits to the
+ * playable area only - casting here would spend the cascade on nothing.
+ *
+ * Colliders: the planters, the AC boxes, the lamp plinths, the interpretive boards
+ * and the pylon island DO return them (19 of them), even though the header said
+ * "NO COLLIDERS" until 2026-09-18. They are all at x < -21.5, beyond BOUND_X_MIN, so
+ * the ground module's wall reaches the player first and none of them is ever touched
+ * - but an out-of-date comment about collision is exactly the kind of thing the next
+ * lane trusts instead of measuring, so it says what the code does now.
  */
 import * as THREE from 'three';
 import type { BuildContext, Builder, BuildResult } from '../core/kit';

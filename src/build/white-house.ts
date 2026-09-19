@@ -106,6 +106,29 @@ const LINK: Plan = { cx: LINK_CX, cz: REAR.cz, hx: LINK_W * 0.5, hz: LINK_D * 0.
 const DECK_CX = WHITE.deckX, DECK_CZ = Z_BACK + S * DECK_OUT * 0.5, DECK_END = -WHITE.garageEnd;
 const DECK_EDGE_X = DECK_CX + DECK_END * DECK_LEN * 0.5;
 const STEPS = 13, STEP_RISE = DECK_Y / STEPS, STEP_GOING = 0.29, DECK_T = KERB_HEIGHT + 0.1;
+const STAIR_W = 1.35;                     // tread width, across the flight
+const STAIR_RUN = STEPS * STEP_GOING;     // 3.77 m along x
+const STAIR_FOOT_X = DECK_EDGE_X + DECK_END * STAIR_RUN;
+/** landing a player needs past the bottom tread, and clearance either side */
+const STAIR_LANDING = 0.8;
+const STAIR_SIDE = 0.3;
+
+/**
+ * The ground this house's external rear stair owns, as an AABB in world x/z.
+ *
+ * yards.ts imports this and keeps every prop out of it. It exists because the deck
+ * keep-out yards.ts already had (DECK_LEN / DECK_OUT) stops at the deck, and this
+ * flight runs 3.77 m PAST that volume in x - so a yards.ts planterBox was built into
+ * the bottom four treads (captures/verify/stair-white-foot.png: a hedge sitting on
+ * the steps) with no module being wrong about it. Derived from the SAME constants
+ * that build the treads, so a re-proportioning moves the keep-out with the stair.
+ */
+export const WHITE_STAIR_FOOTPRINT = {
+  minX: Math.min(DECK_EDGE_X, STAIR_FOOT_X + DECK_END * STAIR_LANDING),
+  maxX: Math.max(DECK_EDGE_X, STAIR_FOOT_X + DECK_END * STAIR_LANDING),
+  minZ: DECK_CZ - STAIR_W / 2 - STAIR_SIDE,
+  maxZ: DECK_CZ + STAIR_W / 2 + STAIR_SIDE,
+};
 
 // ---------------------------------------------------- interior plan (s2/s6 topology)
 // Signed off WHITE so a later handedness flip moves the whole plan with one sign.
@@ -539,12 +562,12 @@ export const buildWhiteHouse: Builder = (ctx) => {
       [(i + 1) * STEP_GOING, DECK_Y - i * STEP_RISE], [(i + 1) * STEP_GOING, DECK_Y - (i + 1) * STEP_RISE]);
   }
   stairPts.push([0, 0]);
-  const stair = extrude(stairPts, 1.35, ctx.mat.deckBoards);
+  const stair = extrude(stairPts, STAIR_W, ctx.mat.deckBoards);
   stair.position.set(DECK_EDGE_X, 0, DECK_CZ); stair.rotation.y = DECK_END === 1 ? 0 : Math.PI;
   g.add(stair);
   for (let i = 0; i < STEPS; i++) {
     colliders.push(aabbSlab(DECK_EDGE_X + DECK_END * (i + 0.5) * STEP_GOING, 0, DECK_CZ,
-      STEP_GOING, DECK_Y - i * STEP_RISE, 1.35));
+      STEP_GOING, DECK_Y - i * STEP_RISE, STAIR_W));
   }
 
   // ==================== internal stair + UPPER FLOOR ===============================
@@ -598,12 +621,75 @@ export const buildWhiteHouse: Builder = (ctx) => {
     bDark.add(w + 0.06, 0.08, d + 0.06, cx, FLOOR_H + RAIL_IN - 0.04, cz);
     colliders.push(aabb(cx, FLOOR_H + RAIL_IN / 2, cz, w, RAIL_IN, d));
   };
-  for (const [ra, rb] of subtract(-rearX(VOID_Z), rearX(VOID_Z), [wellX])) {
-    if (rb - ra < 0.2) continue;
-    upRail(ra, VOID_Z, rb, VOID_Z);
-  }
   upRail(wellX[0], VOID_Z, wellX[0], ST_Z1);
   upRail(wellX[1], VOID_Z, wellX[1], ST_Z1);
+
+  // ==================== the upper floor's -z FACE ==================================
+  // This face did not exist. From the landing you looked over a 1.0 m void rail, over
+  // the entry capsule's roof and straight out to the plaza, the umbrellas and the TEST
+  // SITE sign - captures/verify/wup-edge-side.png and wup-edge-from-landing.png. The
+  // rear capsule is two-storey and the entry capsule is single-storey, and shell()
+  // DROPS every REAR chord whose midpoint falls inside FRONT, so from H_FRONT up to
+  // the eave along that whole stretch there was no wall, no glazing and no collider.
+  // The orange house has a glazed clerestory ring in exactly this position
+  // (captures/verify/up-orange-landing.png).
+  //
+  // Closed the way INTERIORS-TOPOLOGY s4.2 describes the real rooms, and
+  // g-1icNQzMgLUM-249 / -256 / -263 show them: TALL WINDOWS IN A SOLID WALL. Same band
+  // heights as the rest of this house's upper storey (U_SILL / U_HEAD), same
+  // materials, same set-back pane and cill/head lines. The collider convention is the
+  // shell's - exact AABBs with the aperture clipped ALONG the run - but because this
+  // run is straight and axis-aligned, one exact AABB per band IS the wall rather than
+  // a chord approximation of it.
+  //
+  // THE ONE APERTURE, and why it is not a hole. Below H_FRONT the wall skips the
+  // stairwell span (wellX). A solid wall there blocks the INTERNAL stair: its bottom
+  // five risers are street-side of VOID_Z, and a climber's head - player.ts puts the
+  // body box BODY_H 1.78 above the tread it snapped to - crosses FLOOR_H at riser 5,
+  // exactly in this plane. Based at H_FRONT instead, the highest head that still
+  // overlaps this wall's z band is 4.14 m, 0.17 m clear, and the climb survives. It
+  // opens nothing: the entry capsule's own street wall stands 0..H_FRONT across that
+  // whole line, so nothing passes or shoots out through it.
+  // The wall hangs on the STREET side of the floor edge, so its inner face is flush
+  // with VOID_Z and it takes nothing off a room that has nothing to give: built inboard
+  // instead, its 0.26 m ate the bed's foot, and moving the bed north by that much
+  // pinched the one route into the bedroom - round the partition's deep end and back
+  // west down a 1.4 m corridor against the curve - below the eroded player radius.
+  // paths.mjs --y 3.3 turned the bedroom NO and said so.
+  const faceZ0 = VOID_Z - S * WALL_T, faceZ1 = VOID_Z;
+  const faceCz = (faceZ0 + faceZ1) / 2;
+  const faceHX = Math.max(rearX(faceZ0), rearX(faceZ1));
+  const faceFull: [number, number][] = [[-faceHX, faceHX]];
+  const faceOpen = subtract(-faceHX, faceHX, [wellX]);   // below H_FRONT: stairwell out
+  for (const [y0, y1, glass] of [
+    [FLOOR_H, U_SILL, false], [U_SILL, H_FRONT, true],
+    [H_FRONT, U_HEAD, true], [U_HEAD, H_REAR, false],
+  ] as [number, number, boolean][]) {
+    if (y1 - y0 < 0.04) continue;
+    for (const [xa, xb] of y1 <= H_FRONT + 1e-6 ? faceOpen : faceFull) {
+      if (xb - xa < 0.06) continue;
+      colliders.push(aabb((xa + xb) / 2, (y0 + y1) / 2, faceCz, xb - xa, y1 - y0, WALL_T));
+      const n = Math.max(1, Math.round((xb - xa) / CHORD));
+      for (let i = 0; i < n; i++) {
+        const a = xa + (xb - xa) * i / n, c = xa + (xb - xa) * (i + 1) / n;
+        const cx = (a + c) / 2;
+        if (glass && i % PIER_EVERY !== 0) {
+          bGlaz.add(c - a, y1 - y0, GLAZ_T, cx, (y0 + y1) / 2, faceCz + S * GLAZ_IN);
+          if (i % 2 === 0) bTrim.add(0.12, y1 - y0, WALL_T * 0.7, cx, (y0 + y1) / 2, faceCz + S * GLAZ_IN * 0.45);
+        } else {
+          bWall.add(c - a + WALL_T * 0.6, y1 - y0, WALL_T, cx, (y0 + y1) / 2, faceCz);
+        }
+      }
+    }
+  }
+  // deep cill under the window band and a head drip over it - the two lines the
+  // capsule shell draws round every other opening in this house
+  for (const [xa, xb] of faceOpen) {
+    if (xb - xa < 0.06) continue;
+    bWall.add(xb - xa, 0.18, WALL_T + 0.24, (xa + xb) / 2, U_SILL - 0.03, faceCz);
+  }
+  bTrim.add(faceHX * 2, 0.16, WALL_T + 0.14, 0, U_HEAD + 0.02, faceCz);
+  bTrim.add(faceHX * 2, 0.18, WALL_T + 0.14, 0, FLOOR_H + 0.06, faceCz);   // skirting line
   // NO rail across ST_Z1: that is the head of the flight, i.e. the one cell a player
   // arriving from below has to step onto. It was railed for one build and the probe
   // climbed the whole stair and then stood there unable to get off it.
@@ -667,13 +753,18 @@ export const buildWhiteHouse: Builder = (ctx) => {
   // the bedroom and a double bed in the middle of it pinched the room shut: paths.mjs
   // --y 3.3 reported the bedroom standable but SEALED, which is exactly the failure
   // that instrument exists to catch.
+  // Unmoved: the -z face wall above hangs street-side of VOID_Z precisely so this bed
+  // does not have to move. Two attempts at moving it instead (+0.26 m and +0.56 m) both
+  // turned paths.mjs --y 3.3's bedroom landmark NO.
   const bedX = BX - 1.3, bedZ = VOID_Z + S * 1.05;
   bGold.add(1.0, 0.42, 1.9, bedX, UY + 0.21, bedZ);
   bWall.add(1.1, 0.85, 0.22, bedX, UY + 0.42, bedZ - S * 1.0);
   colliders.push(aabbSlab(bedX, UY, bedZ, 1.05, 0.55, 1.95));
-  bPlum.add(2.2, 0.04, 2.4, bedX - 0.55, UY + 0.03, bedZ);
-  bDark.add(0.42, 0.5, 0.42, bedX - 0.85, UY + 0.25, bedZ - S * 1.05);
-  bGlow.add(0.22, 0.2, 0.22, bedX - 0.85, UY + 0.62, bedZ - S * 1.05);
+  // Rug 2.4 -> 2.0 deep and the side table 1.05 -> 0.75 m off the bed centre: at their
+  // old sizes both crossed the new -z face wall's inner plane and poked out of it.
+  bPlum.add(2.2, 0.04, 2.0, bedX - 0.55, UY + 0.03, bedZ);
+  bDark.add(0.42, 0.5, 0.42, bedX - 0.85, UY + 0.25, bedZ - S * 0.75);
+  bGlow.add(0.22, 0.2, 0.22, bedX - 0.85, UY + 0.62, bedZ - S * 0.75);
   bSteel.add(0.06, 1.05, 0.06, bedX - 1.0, UY + 0.52, bedZ + S * 1.3);
   bGlow.add(0.26, 0.22, 0.26, bedX - 1.0, UY + 1.15, bedZ + S * 1.3);
   // pale-green room: striped wall panel, circular rug, starburst clock (g-1icNQzMgLUM-256)

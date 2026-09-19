@@ -1,8 +1,17 @@
 /**
  * MANNEQUINS - the shop dummies that make this a nuclear test town and not a suburb.
  *
- * ONE figure factory, reused 40 times. Every part is a unit primitive pushed into a
- * per-geometry batch, so the population costs ~26 InstancedMesh draw calls.
+ * ONE figure factory, reused 14 times. Every part is a unit primitive pushed into a
+ * per-geometry batch, so the population costs one InstancedMesh per geometry+material.
+ *
+ * FOURTEEN, NOT FORTY (owner, 2026-09-18: "way too many"). The count is not the point
+ * on its own - forty figures spread evenly over a 90 m map is wallpaper, and wallpaper
+ * that moves in your peripheral vision is worse than wallpaper. Nuketown 2025 puts its
+ * dummies in a handful of places you remember: the family on a front lawn, a pair by a
+ * porch, a queue at the stop, one toppled in a yard. Every entry in PLACES below now
+ * names the reason it is there, and none of them stands in a lane a player runs, on a
+ * door approach, or where a silhouette at head height reads as an enemy first and a
+ * dummy second.
  *
  * The rig is built in the figure's OWN frame - feet at y=0, facing -z (the camera
  * convention in core/stations.ts), every length a fraction of the figure's height -
@@ -12,30 +21,32 @@
  * TABLE OF ANGLES, never copy-pasted geometry.
  *
  * Placement dodges every parked vehicle, house, garage, fence, hedge and yard prop;
- * nothing stands on a garage apron or lies toppled on the carriageway.
+ * nothing stands on a garage apron, on a rear deck, or toppled on the carriageway.
+ * `notOurs()` below re-checks that at build time rather than trusting this comment.
  *
- * COLLIDERS: none, deliberately. Players walk through the mannequins, exactly as
- * yards.ts chose when it owned the handful this module replaces.
+ * COLLIDERS: one honest slab per figure, since 2026-09-19. There were none - inherited
+ * from yards.ts, where the handful this module replaced had none either - and that is a
+ * lie the moment a player walks through a figure, or takes cover behind one and the
+ * round goes through it. A standing figure gets a 0.5 m post at its feet (0.38 m for a
+ * child) the height of that figure; a toppled one gets a low box the length of the body,
+ * laid along the yaw it fell on and centred on the BODY, not on the placement point.
+ * The slab is the torso, not the outstretched arms: a raised arm is 60 mm of plastic and
+ * collidng with it would read as an invisible wall.
  */
 import * as THREE from 'three';
 import type { AABB, BuildContext, Builder, BuildResult } from '../core/kit';
-import { group } from '../core/kit';
+import { aabbSlab, group } from '../core/kit';
 import { PAL } from '../core/palette';
 import type { HouseSide } from '../core/layout';
 import {
-  BACK_FENCE, DECK_LEN, DECK_OUT, DECK_Y, FRONT_LAWN_OUTER, HEAD_CENTER_X,
-  HEAD_RADIUS, HOUSE_BACK, HOUSE_HALF_LEN, KERB_HEIGHT, KERB_WIDTH, ORANGE,
-  PAVEMENT_OUTER, ROAD_HALF_WIDTH, ROAD_X_MAX, ROAD_X_MIN, WHITE,
-  YARD_X_MAX, YARD_X_MIN,
+  BACK_FENCE, CANOPY_OUT, DECK_LEN, DECK_OUT, FRONT_LAWN_OUTER, HOUSE_BACK,
+  HOUSE_HALF_LEN, KERB_HEIGHT, KERB_WIDTH, ORANGE, PAVEMENT_OUTER,
+  ROAD_HALF_WIDTH, ROAD_X_MAX, ROAD_X_MIN, WHITE, YARD_X_MAX, YARD_X_MIN,
 } from '../core/layout';
 
 // ------------------------------------------------- surface y ladder (from ground.ts)
 // A figure's feet sit ON the surface named. These must track the y-ladder comment at
 // the top of src/build/ground.ts - the same contract vehicles.ts keeps for T_DRIVE.
-const Y_APRON = 0;                    // base apron, outside the kerb plateau
-const Y_ROAD = 0.030;                 // asphalt strip
-const Y_HEAD = 0.044;                 // turning-head disc
-const Y_ARC = KERB_HEIGHT - 0.002;    // circular kerb + pavement ring (T_ARC)
 const Y_PAVE = KERB_HEIGHT;           // straight pavement (T_PAVE)
 const Y_LAWN = KERB_HEIGHT + 0.001;   // lawns and back yards (T_LAWN)
 
@@ -43,7 +54,8 @@ const Y_LAWN = KERB_HEIGHT + 0.001;   // lawns and back yards (T_LAWN)
 const O = ORANGE, W = WHITE;
 const PAVE_MID = (ROAD_HALF_WIDTH + KERB_WIDTH + PAVEMENT_OUTER) / 2;
 const KERB_EDGE = ROAD_HALF_WIDTH + KERB_WIDTH + 0.45;   // just behind the kerb face
-const RING_R = HEAD_RADIUS + KERB_WIDTH + 1.1;           // mid pavement ring of the bulb
+/** Waiting line at a stop: back from the kerb face, but NOT out in the crossing. */
+const STOP_LINE = ROAD_HALF_WIDTH + KERB_WIDTH + 0.55;
 
 /** x at fraction t across a back yard */
 const yx = (t: number): number => YARD_X_MIN + t * (YARD_X_MAX - YARD_X_MIN);
@@ -57,8 +69,44 @@ const fz = (h: HouseSide, t: number): number =>
 const hx = (t: number): number => t * HOUSE_HALF_LEN;
 /** x at fraction t along the road stem */
 const stx = (t: number): number => ROAD_X_MIN + t * (ROAD_X_MAX - ROAD_X_MIN);
-const ringX = (a: number): number => HEAD_CENTER_X + Math.cos(a) * RING_R;
-const ringZ = (a: number): number => Math.sin(a) * RING_R;
+
+// ------------------------------------------------------------------ region guard
+/**
+ * The map is split between three builders. The houses, the garage wings, the porch
+ * pads and the rear decks / undercrofts / external stairs belong to the house
+ * builders; this module may only dress the back yards, the front lawns, the street
+ * and the plaza. Placements here are fractions of the MAP and the deck is a fraction
+ * of the HOUSE, so the two drift apart every time layout.ts moves - which is exactly
+ * how yards.ts once parked a crate store under a deck and inside a back door. Checked
+ * once at build time over 14 entries; it costs nothing and it cannot rot silently.
+ *
+ * Local dimensions (not in layout.ts, named here per the lane contract):
+ *   DECK_KEEP_HALF / DECK_KEEP_D - the rear-deck volume, half-length and depth
+ *   PORCH_PAD_Z                  - |z| at which the porch pad starts and the lawn ends
+ */
+const DECK_KEEP_HALF = DECK_LEN / 2 + 0.5;
+const DECK_KEEP_D = DECK_OUT + 1.0;
+const PORCH_PAD_Z = FRONT_LAWN_OUTER - CANOPY_OUT;
+
+/** null when (x, z) is ours to dress; otherwise whose it is. */
+function notOurs(x: number, z: number): string | null {
+  const az = Math.abs(z);
+  if (az >= BACK_FENCE) return 'behind the back fence (perimeter)';
+  if (az > HOUSE_BACK) {
+    if (Math.abs(x) > YARD_X_MAX) return 'outside the yard edge (perimeter)';
+    for (const h of [O, W]) {
+      if (h.side * z > 0 && az <= HOUSE_BACK + DECK_KEEP_D
+        && Math.abs(x - h.deckX) <= DECK_KEEP_HALF) return 'in a rear-deck volume (house)';
+    }
+    return null;                                          // a back yard
+  }
+  if (az >= PORCH_PAD_Z) return 'in a house / garage / porch footprint (house)';
+  if (az > PAVEMENT_OUTER) {
+    return Math.abs(x) > YARD_X_MAX ? 'outside the lawn edge (perimeter)' : null;
+  }
+  if (x < ROAD_X_MIN) return null;                        // the plaza, past the barrier
+  return x > ROAD_X_MAX ? 'past the east apron (perimeter)' : null;
+}
 
 // ------------------------------------------------------------------ figure proportions
 // All fractions of the figure's height H. The standing pelvis sits at HIP_Y; every pose
@@ -138,7 +186,12 @@ const POSES: Record<PoseName, Pose> = {
 };
 
 // ------------------------------------------------------- dress (flat 1960s colours)
-const DRESS = [PAL.signMaroon, PAL.signTeal, PAL.applianceRed, PAL.applianceBlue];
+// applianceRed and applianceBlue came out of this list on 2026-09-18. They are the
+// front-lawn appliance banks' two colours - the map's chirality anchor, one per lawn -
+// and a dress in the same red standing on the same lawn is the one thing that can make
+// that anchor ambiguous. The two sign colours are left: they belong to the show town's
+// own signage, so a dressed dummy reads as part of the display.
+const DRESS = [PAL.signMaroon, PAL.signTeal];
 const SUIT = [PAL.truckCab, PAL.carBlue];
 const BARE = DRESS.length + SUIT.length;   // wear code for undressed pale plastic
 
@@ -203,76 +256,71 @@ function bone(b: Batch, m: THREE.Material, p: THREE.Vector3,
 type Place = [number, number, number, number, PoseName, number];
 
 const PLACES: Place[] = [
-  // --- orange front lawn and pavement (-z)
-  [hx(0.05), fz(O, 0.28), Y_LAWN, 2.9, 'stand', -1],
-  [hx(0.30), fz(O, 0.50), Y_LAWN, 3.6, 'armOut', -1],
-  [hx(-0.88), fz(O, 0.35), Y_LAWN, 2.2, 'lean', -1],
-  [hx(-0.62), O.side * PAVE_MID, Y_PAVE, Math.PI, 'stand', 0],   // NT05's magenta shift
-  [hx(-0.30), O.side * KERB_EDGE, Y_PAVE, 2.1, 'armsUp', -1],
+  // --- ORANGE FRONTAGE: the family group, and the only tableau on the map. EAST of
+  //     the porch path (yards.ts leaves that gap open at x 1.8..4.0) so it breaks the
+  //     look from the circle to the orange front door from the side instead of
+  //     standing in it, and 4.4 m clear of the nearest of the six character figures
+  //     main.ts spawns at (-6.5, -9.0) and (6.0, -6.0) - see the report. A dummy and
+  //     an animated bot standing a metre apart in identical teal is the single worst
+  //     thing either of them can do to the other.
+  //     Moved east by 0.52 of a house half-length on 2026-09-19: with colliders on,
+  //     the group stood across the orange verge at x 4.5..6.5 and traverse's verge
+  //     scan dropped from 10.0 m of open boundary to 5.0 m - "this team is walled into
+  //     its own half" territory, which the scan exists to catch. At x 8.3..9.9 the
+  //     group sits behind the yards verge hedge (x 7.0..12.6), which already closes
+  //     that stretch, so the tableau costs the crossing nothing.
+  //     Spaced round the lawn tree at x 8.23..9.05 / z -10.93..-10.12 (a yards
+  //     collider, 3.2 m tall) - the child stood inside it on the first placement.
+  [hx(1.20), fz(O, 0.39), Y_LAWN, Math.PI, 'stand', -1],
+  [hx(1.52), fz(O, 0.40), Y_LAWN, 2.72, 'armOut', -1],
+  [hx(1.34), fz(O, 0.32), Y_LAWN, 3.02, 'stand', -1],      // the child
 
-  // --- white front lawn and pavement (+z)
-  [hx(-0.10), fz(W, 0.40), Y_LAWN, 0.3, 'stand', -1],
-  [hx(-0.42), fz(W, 0.62), Y_LAWN, 0.9, 'lean', -1],
-  [hx(0.72), fz(W, 0.24), Y_LAWN, -0.4, 'stand', -1],   // clear of the blue appliance bank
-  [hx(-0.02), W.side * PAVE_MID, Y_PAVE, 0.1, 'armOut', -1],
-  [hx(-0.85), W.side * KERB_EDGE, Y_PAVE, -0.7, 'stand', -1],
+  // --- WHITE FRONTAGE: the couple. BESIDE the porch, not on it - the porch pad
+  //     belongs to the house builder - clear of the white door path at x -4.0..-1.8,
+  //     of the lawn tree at x 3.5, and of the character at (-2.0, 12.0). One more on
+  //     the white drive so that half is not bare from the circle.
+  [hx(0.20), fz(W, 0.63), Y_LAWN, -0.36, 'stand', -1],
+  [hx(0.38), fz(W, 0.57), Y_LAWN, 2.88, 'lean', -1],
+  //     The drive figure moved from hx(1.30) to hx(1.55) on 2026-09-19: at x 8.1..8.6
+  //     it was the ONLY thing shutting the white verge at x 8, and that one position
+  //     took the white boundary from 8.0 m of open crossing to 7.5. Two paces east it
+  //     stands behind the drum pair, which already closes x 9.5..10.5.
+  [hx(1.55), fz(W, 0.30), Y_LAWN, -1.15, 'stand', -1],
 
-  // --- the road. Clear of the teal saloon and of the two eye-level stations parked at
-  //     x=6. NOTHING TOPPLED on the carriageway: splayed there it reads as a body.
-  [stx(0.50), O.side * ROAD_HALF_WIDTH * 0.42, Y_ROAD, 1.5, 'stand', -1],
-  [stx(0.94), W.side * ROAD_HALF_WIDTH * 0.62, Y_ROAD, -1.2, 'stand', -1],
+  // --- THE BUS STOP. Two waiting mid-pavement and one at the kerb with an arm up,
+  //     on the orange stem pavement facing the coach on the bulb. yards.ts stands
+  //     the stop sign at the same x, which is what makes the group read as a joke
+  //     and not as three strangers loitering.
+  //     The two waiting figures moved from mid-pavement to the STOP_LINE on
+  //     2026-09-19: mid-pavement is the middle of the lawn-to-street crossing, and
+  //     with colliders on they shut 2.5 m of the orange verge on their own. A figure
+  //     waiting for a coach stands at the kerb anyway.
+  //     The group also slid ~1.8 m WEST and spread from 0.71 m to 1.0 m apart. At
+  //     stx 0.21..0.25 three 0.5 m boxes with 0.21 m between them were a wall across
+  //     the pavement exactly where traverse's "west road stem" route crosses it
+  //     (the leg (-7,-8.2) -> (-17.4,0) is on the footway between x -8.5 and -11.4),
+  //     and the route went 9/10. West of x -11.9 that leg is already out on the road.
+  [stx(0.200), O.side * STOP_LINE, Y_PAVE, Math.PI, 'stand', -1],
+  [stx(0.144), O.side * STOP_LINE, Y_PAVE, 2.85, 'stand', 0],
+  [stx(0.172), O.side * KERB_EDGE, Y_PAVE, 3.05, 'armsUp', -1],
 
-  // --- turning head. The coach fills the -z half and the truck + saloon the +z half,
-  //     so these take the outboard arc and the +x apex only.
-  [HEAD_CENTER_X - HEAD_RADIUS * 0.45, -HEAD_RADIUS * 0.80, Y_HEAD, -1.9, 'stand', -1],
-  [HEAD_CENTER_X + HEAD_RADIUS * 0.70, -HEAD_RADIUS * 0.12, Y_HEAD, 1.7, 'armsUp', -1],
-  [ringX(-1.15), ringZ(-1.15), Y_ARC, 0.6, 'lean', -1],
-  [ringX(1.35), ringZ(1.35), Y_ARC, -2.4, 'stand', -1],
+  // --- one on the white pavement by the east apron, so the east half of the street
+  //     has a figure in it and the long look down that pavement is broken once.
+  [stx(0.80), W.side * PAVE_MID, Y_PAVE, -1.9, 'armOut', -1],
 
-  // --- back yards, a couple apiece, clear of every prop yards.ts puts there.
-  //     The toppled ones live here and behind the fences, out of the street frames.
-  [yx(0.32), yz(O, 0.18), Y_LAWN, 2.8, 'stand', -1],
-  [yx(0.72), yz(O, 0.70), Y_LAWN, 1.6, 'fallen', -1],
-  [yx(0.78), yz(W, 0.18), Y_LAWN, 0.4, 'lean', -1],
-  [yx(0.72), yz(W, 0.88), Y_LAWN, -0.9, 'fallen', -1],
-
-  // --- one on each rear deck, at upper-floor level, reading over the fence line
-  [O.deckX + DECK_LEN * 0.22, O.side * (HOUSE_BACK + DECK_OUT * 0.45), DECK_Y, 3, 'stand', -1],
-  [W.deckX - DECK_LEN * 0.22, W.side * (HOUSE_BACK + DECK_OUT * 0.45), DECK_Y, 0.2, 'armsUp', -1],
-
-  // --- just outside the back fences, out on the apron
-  [yx(0.30), -(BACK_FENCE + 1.9), Y_APRON, 2.6, 'stand', -1],
-  [yx(0.68), -(BACK_FENCE + 2.9), Y_APRON, 3.3, 'lean', -1],
-  [yx(0.36), BACK_FENCE + 2.2, Y_APRON, 0.5, 'armOut', -1],
-  [yx(0.80), BACK_FENCE + 1.6, Y_APRON, -0.3, 'fallen', -1],
-
-  // --- the plaza end of the stem
-  [stx(0.13), O.side * PAVE_MID, Y_PAVE, 1.4, 'stand', -1],
-  [stx(0.17), O.side * (PAVEMENT_OUTER + 1.6), Y_APRON, 1.9, 'stand', -1],
-  [stx(0.10), W.side * PAVE_MID, Y_PAVE, -1.5, 'armsUp', 1],
-  [stx(0.22), W.side * (PAVEMENT_OUTER + 2.4), Y_APRON, -1.1, 'stand', -1],
-  [stx(0.05), W.side * (PAVEMENT_OUTER + 1.2), Y_APRON, 0.8, 'armOut', -1],
-
-  // --- along the stem pavements between the plaza and the houses
-  [stx(0.48), O.side * PAVE_MID, Y_PAVE, 2.7, 'lean', -1],
-  [stx(0.53), O.side * KERB_EDGE, Y_PAVE, 3.5, 'stand', -1],
-  [stx(0.66), W.side * PAVE_MID, Y_PAVE, -0.2, 'stand', -1],
-  [stx(0.72), W.side * KERB_EDGE, Y_PAVE, -2.6, 'armOut', -1],
-  // --- close-up pass: five more, each somewhere the first 35 never stood. Porch
-  //     drip-edge under the orange canopy; a loiterer by the stem saloon (a metre
-  //     and a half clear of its flanks); a greeter stepped into the orange rear
-  //     deck's glazed doorway upstairs; a child with the white lawn group; one more
-  //     beyond the +z fence. All off the x=6 station sight-lines, none fallen on
-  //     the carriageway.
-  [hx(0.49), fz(O, 0.53), Y_LAWN, 3.1, 'stand', -1],
-  [stx(0.72), O.side * KERB_EDGE, Y_PAVE, 2.4, 'lean', -1],
-  [O.deckX, O.side * (HOUSE_BACK + 0.3), DECK_Y, -0.2, 'stand', -1],
-  [hx(-0.60), fz(W, 0.45), Y_LAWN, -0.9, 'stand', -1],
-  [yx(0.52), BACK_FENCE + 2.8, Y_APRON, 2.2, 'armsUp', -1],
+  // --- BACK YARDS, two apiece: a spawn dressing and a joke each. None within
+  //     3.5 m of a deck, none on a fence hole, none on the 2.6 m flanking lanes.
+  [yx(0.32), yz(O, 0.18), Y_LAWN, 2.8, 'stand', -1],       // beside the crate store
+  // Toppled under the carport. Moved from yx(0.74) / yz(0.72) on 2026-09-19: once this
+  // figure had the collider it had always been missing, its 1.8 m box lay across the
+  // x = +7.1 back-fence hole's approach AND 90 mm into the grey trash can.
+  [yx(0.86), yz(O, 0.63), Y_LAWN, 1.6, 'fallen', -1],      // toppled under the carport
+  [yx(0.78), yz(W, 0.20), Y_LAWN, 0.4, 'lean', -1],        // hanging out the washing
+  [yx(0.28), yz(W, 0.88), Y_LAWN, 0.3, 'stand', -1],       // deep, facing its own house
 ];
 
 /** indices given a child-sized figure */
-const CHILD = new Set([1, 7, 18, 26, 38]);
+const CHILD = new Set([2]);
 const ADULT_H = 1.78;
 
 // ================================================================= builder
@@ -285,13 +333,27 @@ export const buildMannequins: Builder = (ctx: BuildContext): BuildResult => {
   // nearly straight instead of belling out.
   // HEAD is detail-0: twenty broad facets catch the sun as flat chips, which is what
   // sells moulded plastic up close; detail-1 shaded smooth and read as skin.
-  const HEAD = new Batch(new THREE.IcosahedronGeometry(0.5, 0));
+  // HEAD and JOINT were two Batches over an IDENTICAL geometry, so every material
+  // they shared paid for two InstancedMeshes instead of one. Same batch now.
   const JOINT = new Batch(new THREE.IcosahedronGeometry(0.5, 0));
+  const HEAD = JOINT;
   const CYL = new Batch(new THREE.CylinderGeometry(0.5, 0.5, 1, 10));
   const TAP_UP = new Batch(new THREE.CylinderGeometry(0.35, 0.5, 1, 8));
   const TAP_DN = new Batch(new THREE.CylinderGeometry(0.5, 0.35, 1, 8));
   const SHIFT = new Batch(new THREE.CylinderGeometry(0.44, 0.5, 1, 10));
 
+  // Region guard, once, before anything is placed. Reported rather than dropped: a
+  // figure silently removed is a hole nobody can see, and the point of the check is
+  // to catch layout.ts moving under the table, not to paper over it.
+  const strays = PLACES
+    .map((p, i) => ({ i, why: notOurs(p[0], p[1]) }))
+    .filter((r) => r.why !== null);
+  if (strays.length) {
+    console.warn('[mannequins] %d figure(s) outside this module\'s region: %s',
+      strays.length, strays.map((r) => `#${r.i} ${r.why}`).join('; '));
+  }
+
+  const colliders: AABB[] = [];
   const SKIN = mat.painted(PAL.mannequin, 0.72, 0);
   // Bare limbs run one step darker/richer than the torso so the two read as separate
   // pressings; SEAM is the same warm-grey family sunk to a groove tone for the waist
@@ -324,6 +386,18 @@ export const buildMannequins: Builder = (ctx: BuildContext): BuildResult => {
     _e.set(pose.tilt, yaw, pose.roll, 'YXZ');
     _root.compose(
       _p.set(px, py + pose.lift * H, pz), _q.setFromEuler(_e), _s.set(H, H, H));
+
+    // One honest slab. A toppled figure's body lies along the yawed local +z from its
+    // feet, so its box is centred half a body-length down that direction - centring it
+    // on the placement point would put half the collider behind the figure's heels.
+    const cw = CHILD.has(i) ? 0.38 : 0.5;
+    if (poseName === 'fallen') {
+      const sx = Math.sin(yaw), sz = Math.cos(yaw);
+      colliders.push(aabbSlab(px + sx * H * 0.48, py, pz + sz * H * 0.48,
+        H * Math.abs(sx) + cw * Math.abs(sz), 0.45, H * Math.abs(sz) + cw * Math.abs(sx)));
+    } else {
+      colliders.push(aabbSlab(px, py, pz, cw, H * (pose.base ? 1.0 : 0.62), cw));
+    }
 
     const o = pose.hipY - HIP_Y;   // whole upper body rides with the pelvis
     part(HEAD, SKIN, P.headW, P.headH, P.headD, 0, P.headY + o, 0);
@@ -374,13 +448,28 @@ export const buildMannequins: Builder = (ctx: BuildContext): BuildResult => {
     if (pose.base && py !== Y_LAWN) part(CYL, DISC, P.discD, P.discH, P.discD, 0, 0.007, 0);
   }
 
-  HEAD.flush(g, 'mq-head');
-  JOINT.flush(g, 'mq-joint');
+  JOINT.flush(g, 'mq-ico');   // heads and joints, one batch
   CYL.flush(g, 'mq-cyl');
   TAP_UP.flush(g, 'mq-up');
   TAP_DN.flush(g, 'mq-dn');
   SHIFT.flush(g, 'mq-dress');
 
-  // No colliders: the mannequins are scenery you walk through, as yards.ts had them.
-  return { group: g, colliders: [] as AABB[] };
+  // Self-check: two figures inside each other. Reported, never dropped - a collider
+  // removed here leaves a solid-looking figure you walk through, the exact bug the
+  // slabs were added to end.
+  const pairs: AABB[] = [];
+  for (let i = 0; i < colliders.length; i++) {
+    for (let j = i + 1; j < colliders.length; j++) {
+      const a = colliders[i], b = colliders[j];
+      if (Math.min(a.max.x, b.max.x) - Math.max(a.min.x, b.min.x) <= 0.02) continue;
+      if (Math.min(a.max.z, b.max.z) - Math.max(a.min.z, b.min.z) <= 0.02) continue;
+      pairs.push(a, b);
+    }
+  }
+  if (pairs.length) {
+    console.warn('[mannequins] %d figure collider(s) interpenetrate another figure: %s',
+      pairs.length, pairs.map((c) => `x ${c.min.x.toFixed(1)}..${c.max.x.toFixed(1)} `
+        + `z ${c.min.z.toFixed(1)}..${c.max.z.toFixed(1)}`).join(' | '));
+  }
+  return { group: g, colliders };
 };

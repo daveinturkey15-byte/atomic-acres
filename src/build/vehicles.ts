@@ -44,7 +44,16 @@ const BULB_MARGIN = 1.15;
  * square-parked vehicle never pays for boxes it does not need.
  */
 const SEG_OVERHANG = 0.35;
-const SEG_MAX = 6;
+/**
+ * Cap on that segment count. It used to be 6, which was below what the one vehicle
+ * that actually needs segmenting asks for: the hero coach sits at 2.70 rad on the
+ * bulb, wants 13 segments, got 6, and so carried 0.75 m of phantom box down each
+ * flank instead of the 0.35 m the constant above promises - 0.4 m of clear asphalt
+ * between its collision and the kerb where a player should have 1.15 m. 14 covers the
+ * coach exactly; every other vehicle on the map lands on 1-3 segments and pays
+ * nothing for the higher cap.
+ */
+const SEG_MAX = 14;
 
 /**
  * Big brightwork - bumpers, grilles, spears, arches, hubcaps. world.ts now
@@ -354,14 +363,15 @@ function makeCoach(ctx: BuildContext): Vehicle {
   }
   g.add(inst(rivet, ctx.mat.chrome, rivets));
 
-  // NT07's single most identifying detail: "Nuketown" in signwriter's script
+  // NT07's single most identifying detail: a name in signwriter's script - OURS, not the
+  // source map's (VISUAL-BAR B5; the project was renamed Atomic Acres on 2026-09-17) -
   // along the flank. One instanced plane per side; the -z copy is turned about y
   // so the word runs left-to-right for a viewer standing on either flank.
   const scriptW = 2.9;
   const scriptZ = flankHalf(1.62) + 0.055;
   const script = new THREE.InstancedMesh(
-    new THREE.PlaneGeometry(scriptW, scriptW / 4.5),
-    ctx.mat.signText({ text: 'Nuketown', color: PAL.coachMaroon, aspect: 4.5, script: true }),
+    new THREE.PlaneGeometry(scriptW, scriptW / 6.0),
+    ctx.mat.signText({ text: 'Atomic Acres', color: PAL.coachMaroon, aspect: 6.0, script: true }),
     2,
   );
   script.setMatrixAt(0, xform(-2.65, 1.62, scriptZ));

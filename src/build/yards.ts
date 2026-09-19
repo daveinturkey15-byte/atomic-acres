@@ -40,8 +40,12 @@ import {
   FRONT_LAWN_OUTER, GARAGE_LEN, HEAD_CENTER_X, HEAD_RADIUS, HOUSES, HOUSE_BACK,
   HOUSE_HALF_LEN, KERB_HEIGHT, KERB_WIDTH, ORANGE, PAVEMENT_OUTER, ROAD_HALF_WIDTH,
   ROAD_X_MAX, ROAD_X_MIN, THIRD_HOUSE_X, WHITE, YARD_X_MAX, YARD_X_MIN,
-  DOOR_APRON_HALF_W, DOOR_APRON_DEPTH,
+  DOOR_APRON_HALF_W, DOOR_APRON_DEPTH, SPAWN_A, SPAWN_B,
 } from '../core/layout';
+// The two house builders own their external rear stairs and EXPORT the ground each
+// flight stands on. This module imports them; neither of them may import this one.
+import { ORANGE_STAIR_FOOTPRINT } from './orange-house';
+import { WHITE_STAIR_FOOTPRINT } from './white-house';
 
 // ---------------------------------------------------------------- derived frame
 const YARD_W = YARD_X_MAX - YARD_X_MIN;
@@ -82,23 +86,82 @@ const PROP_W = YARD_W - 2 * PROP_LANE;
 const yx = (t: number): number => PROP_X_MIN + t * PROP_W;
 
 /**
- * Push an x clear of a house's back-door apron, if it landed in it.
- *
- * Props are placed at fractions of the yard, doors at fractions of the house, and the
- * two sets of fractions know nothing about each other - so re-proportioning the map
- * slid a 2.2 m crate store onto the orange back door and sealed the house. Anything
- * standing within `halfW` of the door centre line gets shifted to whichever side has
- * more yard left.
+ * The rear deck / undercroft / external stair belongs to the house builder, not to
+ * this module. Half-length and depth of that volume, derived so one edit to DECK_LEN
+ * or DECK_OUT moves the keep-out with the deck.
  */
-const clearOfDoor = (h: HouseSide, x: number, halfW: number): number => {
-  const gap = DOOR_APRON_HALF_W + halfW;
-  if (Math.abs(x - h.backDoorX) >= gap) return x;
-  const left = h.backDoorX - gap;
-  const right = h.backDoorX + gap;
-  const okLeft = left - halfW >= PROP_X_MIN;
-  const okRight = right + halfW <= PROP_X_MIN + PROP_W;
-  if (okLeft && okRight) return (h.backDoorX - PROP_X_MIN) > (PROP_X_MIN + PROP_W - h.backDoorX) ? left : right;
-  return okLeft ? left : right;
+const DECK_KEEP_HALF = DECK_LEN / 2 + 0.5;
+const DECK_KEEP_D = DECK_OUT + 1.0;
+
+/**
+ * An external rear stair's ground footprint, as its house builder exports it. The
+ * deck keep-out above stops at the deck; BOTH flights run past it - the orange one
+ * 3.92 m along +x from the deck's free-end edge, the white one 3.77 m along -x - so
+ * DECK_KEEP_HALF says nothing at all about the ground the treads stand on.
+ */
+interface StairFootprint { minX: number; maxX: number; minZ: number; maxZ: number }
+const stairFootprint = (h: HouseSide): StairFootprint =>
+  (h.side === ORANGE.side ? ORANGE_STAIR_FOOTPRINT : WHITE_STAIR_FOOTPRINT);
+/** Nothing of ours touches a keep-out edge exactly; leave a hair of daylight. */
+const KEEP_PAD = 0.05;
+
+/**
+ * Push an x clear of the things in a back yard that are not ours to stand on: the
+ * house's back-door apron, the deck / undercroft volume within the deck's own depth,
+ * and the external stair's exported footprint within the stair's own depth.
+ *
+ * Props are placed at fractions of the YARD, doors and decks at fractions of the
+ * HOUSE, and the two sets of fractions know nothing about each other. Re-proportioning
+ * the map on 2026-09-18 slid a 2.2 m crate store onto the orange back door and sealed
+ * the house; the door half of this helper was the fix. It then pushed the same crate
+ * store EAST, straight under the orange rear deck, because it only knew about doors.
+ * The stair third arrived on 2026-09-19, after a planterBox was found built into the
+ * bottom four treads of the white flight.
+ *
+ * The bans are MERGED before the shift. The previous version pushed to one ban's edge
+ * and re-ran the list, which cannot converge when two bans overlap: with the stair ban
+ * added, the white planter bounced between the deck volume and the stair footprint for
+ * all four passes and finished inside the deck volume.
+ */
+const clearOfHouse = (h: HouseSide, x: number, z: number, halfW: number): number => {
+  const f = stairFootprint(h);
+  const pad = halfW + KEEP_PAD;
+  const bans: [number, number][] = [
+    [h.backDoorX - DOOR_APRON_HALF_W - pad, h.backDoorX + DOOR_APRON_HALF_W + pad],
+  ];
+  if (Math.abs(z) <= HOUSE_BACK + DECK_KEEP_D) {
+    bans.push([h.deckX - DECK_KEEP_HALF - pad, h.deckX + DECK_KEEP_HALF + pad]);
+  }
+  // The footprint is a real x/z box, so it only bans x where the prop is level with
+  // it. Widened by 1 m in z because all this helper is given is the prop's CENTRE.
+  if (z >= f.minZ - 1.0 && z <= f.maxZ + 1.0) {
+    bans.push([f.minX - pad, f.maxX + pad]);
+  }
+  const merged: [number, number][] = [];
+  for (const b of bans.slice().sort((p, q) => p[0] - q[0])) {
+    const last = merged[merged.length - 1];
+    if (last && b[0] <= last[1]) last[1] = Math.max(last[1], b[1]);
+    else merged.push([b[0], b[1]]);
+  }
+  if (!merged.some((b) => x > b[0] && x < b[1])) return x;
+  const lo = PROP_X_MIN + halfW, hi = PROP_X_MIN + PROP_W - halfW;
+  let best = x, bestD = Infinity;
+  for (const b of merged) {
+    for (const c of b) {
+      if (c < lo || c > hi) continue;
+      if (merged.some((o) => c > o[0] + 1e-6 && c < o[1] - 1e-6)) continue;
+      const d = Math.abs(c - x);
+      if (d < bestD) { bestD = d; best = c; }
+    }
+  }
+  if (bestD === Infinity) {
+    // Reported, never silently placed anyway: a prop left inside a keep-out is what
+    // the self-check at the end of this file exists to catch, and it will.
+    console.warn('[yards] no free x for a %s m prop at z %s - left at %s',
+      (halfW * 2).toFixed(2), z.toFixed(1), x.toFixed(2));
+    return x;
+  }
+  return best;
 };
 /** z at fraction t from a house's back wall (0) to its back fence (1) */
 const yz = (h: HouseSide, t: number): number => h.side * (HOUSE_BACK + t * YARD_D);
@@ -184,7 +247,13 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   // grey, matte - nearer the lawn in value so the run reads as a path, not plates.
   const SLAB = mat.painted(PAL.concrete, 0.95, 0);        // pale dwarf walls / plinths
   const SOIL = mat.painted(PAL.dirt, 1, 0);
+  // Bedding. FLOWER (carRed) was on every pot, bloom, cold frame and washing line -
+  // forty-odd pure-red heads across two yards, which is what made the yards read as a
+  // scatter of primaries rather than a garden. BLOOM is the bulk key now: a dusty
+  // clay-red that sits in the same family as the terracotta pots it grows out of.
+  // FLOWER survives on a handful of accents, where one saturated spot is the point.
   const FLOWER = mat.painted(PAL.carRed, 0.8, 0);
+  const BLOOM = mat.painted(PAL.terracottaDk, 0.85, 0);
   // Shuffleboard court: SPEC's "green court" (NT02). carTeal read as a swimming
   // pool from spawn B - deep saturated fill, pale lip, white coping. lawnLight is
   // the palest green in the palette: it separates from mown lawn by VALUE, keeps
@@ -193,6 +262,7 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   const LAMP = mat.painted(PAL.terracotta, 0.45, 0.2);    // orange lamp head
   const POT = mat.painted(PAL.terracottaDk, 0.85, 0);       // plant pots
   const CLOTHB = mat.painted(PAL.capsuleTrim, 0.8, 0);      // blue wash, chair accents
+  const LINEN = mat.painted(PAL.pavingWarm, 0.95, 0);       // warm off-white wash
 
   /** rotate a local offset into world space about (x,z) by yaw ry */
   const l2w = (x: number, z: number, ry: number, ox: number, oz: number): [number, number] =>
@@ -210,7 +280,7 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     C.put(POT, 0.36 * s, 0.30 * s, 0.36 * s, x, T_LAWN + 0.15 * s, z);
     C.put(SOIL, 0.30 * s, 0.05 * s, 0.30 * s, x, T_LAWN + 0.30 * s, z);
     S.put(mat.leaf, 0.30 * s, 0.24 * s, 0.30 * s, x, T_LAWN + 0.42 * s, z);
-    S.put(FLOWER, 0.16 * s, 0.14 * s, 0.16 * s, x, T_LAWN + 0.55 * s, z);
+    S.put(BLOOM, 0.16 * s, 0.14 * s, 0.16 * s, x, T_LAWN + 0.55 * s, z);
   };
   /** white garden chair, seat facing local +z rotated by ry, standing on y0 */
   const chair = (x: number, z: number, ry: number, y0: number): void => {
@@ -235,7 +305,7 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   /** one bedding blob on rung y0: leaf mass + flower head */
   const bloom = (x: number, z: number, y0: number, s = 1): void => {
     S.put(mat.leaf, 0.26 * s, 0.2 * s, 0.26 * s, x, y0 + 0.10 * s, z);
-    S.put(FLOWER, 0.15 * s, 0.13 * s, 0.15 * s, x, y0 + 0.22 * s, z);
+    S.put(BLOOM, 0.15 * s, 0.13 * s, 0.15 * s, x, y0 + 0.22 * s, z);
   };
 
   // ---------------------------------------------------------------- fences
@@ -316,6 +386,8 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     fence(YARD_X_MAX, zf, YARD_X_MAX, h.side * HOUSE_BACK, []);
   }
   fence(BOUNDARY_X, -BOUND_Z, BOUNDARY_X, BOUND_Z, []);           // cul-de-sac boundary
+  /** Fence runs meet at the yard corners on purpose; the prop overlap check skips them. */
+  const FENCE_END = colliders.length;
 
   // ---------------------------------------------------------------- hedges
   function hedge(ax: number, az: number, bx: number, bz: number, hgt: number): void {
@@ -348,6 +420,8 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     hedge(ve * (HOUSE_HALF_LEN + GARAGE_LEN * 0.1), fz(h, 0.08),
       ve * (HOUSE_HALF_LEN + GARAGE_LEN), fz(h, 0.08), rr(1.2, 1.4));
   }
+  /** Fences and yard-edge hedges define the flanking lanes; props may not enter them. */
+  const EDGE_END = colliders.length;
   function chain(ax: number, az: number, bx: number, bz: number): void {
     const L = Math.hypot(bx - ax, bz - az);
     const n = Math.max(2, Math.round(L / 2.3));
@@ -394,14 +468,19 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     colliders.push(aabbSlab(x, 0, z, tr * 2.6, th, tr * 2.6));
   }
 
+  // Six behind the back fences as backdrop, and four ON the front lawns as a true
+  // 180-degree rotational pair. The lawn four used to be positioned off HEAD_RADIUS
+  // and BOUND_X_MIN - two dimensions that have nothing to do with a lawn - which after
+  // the re-proportioning left one tree 1.5 m from the orange porch and another
+  // pinching the orange west flank down to a 1.03 m gap beside the garage wing. They
+  // are fractions of the lawn now, and they are cover: a trunk is the only thing on
+  // either lawn that breaks a sightline above head height.
   for (const [tx, tz] of [
     [yx(0.10), -(BACK_FENCE + 2.6)], [yx(0.52), -(BACK_FENCE + 3.4)],
     [yx(0.90), -(BACK_FENCE + 2.2)], [yx(0.16), BACK_FENCE + 3.0],
     [yx(0.58), BACK_FENCE + 2.3], [yx(0.93), BACK_FENCE + 3.6],
-    [HEAD_CENTER_X - HEAD_RADIUS * 0.5, -(HEAD_RADIUS + PAVE_MID * 0.9)],
-    [HEAD_CENTER_X + HEAD_RADIUS * 0.6, HEAD_RADIUS + PAVE_MID * 0.8],
-    [BOUND_X_MIN * 0.72, -(PAVEMENT_OUTER + hx(0.6))],
-    [BOUND_X_MIN * 0.55, PAVEMENT_OUTER + hx(0.8)],
+    [hx(1.35), fz(ORANGE, 0.42)], [hx(-0.55), fz(ORANGE, 0.60)],
+    [hx(-1.35), fz(WHITE, 0.42)], [hx(0.55), fz(WHITE, 0.60)],
   ]) tree(tx, tz);
 
   // ---------------------------------------------------------------- street lamps
@@ -472,7 +551,10 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   // ================================ ORANGE back yard (-z) ================================
   {
     const H = ORANGE;
-    // circular patio off the rear deck (the deck and its stair are another module)
+    // Circular patio off the rear deck (the deck and its stair are another module).
+    // It was laid where the OLD yard-ward flight landed; the flight now runs along the
+    // back wall instead, so nothing lands on the disc. The disc stays - it is 60 mm of
+    // dressing and it still reads as the terrace the back door opens onto.
     const pr = DECK_LEN * 0.36;
     const pxx = H.deckX, pzz = yz(H, (DECK_OUT + pr * 1.12) / YARD_D);  // clear of the deck
     padDisc(SLAB, pr * 2.2, pxx, pzz, T_STEP);   // pale kerb ring, 30 mm proud of the lawn
@@ -521,25 +603,40 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     B.put(SLAB, 0.7, 0.2, 1.1, gxx + gw / 2 + 0.4, 0.10, gzz);
     colliders.push(aabbSlab(gxx, 0, gzz, gw + 0.2, gwall + grise, gd + 0.2));
 
-    // cold frames with red flowers
+    // Cold frames. They were the densest patch of saturated red on the map - sixteen
+    // carRed heads in a 4 m square - and they were solid 0.6 m timber boxes with NO
+    // collider, so the player walked through them. Four heads each now, in the muted
+    // clay key, and an honest slab apiece.
     for (const i of [-1, 1]) {
-      const cx = yx(0.30) + i * 1.2, cz = yz(H, 0.8), cw = 1.9, cd = 0.95, ch = 0.4;
+      // Moved from yx(0.30) / yz(H, 0.8). Once these carried the collider they had
+      // always been missing, the pair reached z -34.39 with SPAWN_A standing at
+      // z -34.30: the orange team spawned inside a cold frame. They tuck in south of
+      // the glasshouse now, 2.2 m west of the spawn and clear of both fences.
+      const cx = yx(0.16) + i * 1.2, cz = yz(H, 0.90), cw = 1.9, cd = 0.95, ch = 0.4;
       B.put(mat.timberDark, cw, ch, cd, cx, ch / 2, cz);
       B.put(SOIL, cw - 0.16, 0.08, cd - 0.16, cx, ch - 0.02, cz);
       B.put(mat.glass, cw, 0.05, cd * 1.1, cx, ch + 0.34, cz, 0, -0.5);
-      for (let k = 0; k < 8; k++) {
-        const fx = cx + rr(-0.8, 0.8), fzz2 = cz + rr(-0.32, 0.32);
+      for (let k = 0; k < 4; k++) {
+        const fx = cx + rr(-0.75, 0.75), fzz2 = cz + rr(-0.28, 0.28);
         S.put(mat.leaf, 0.2, 0.14, 0.2, fx, ch + 0.05, fzz2);
-        S.put(FLOWER, 0.14, 0.13, 0.14, fx, ch + 0.15, fzz2);
+        S.put(BLOOM, 0.14, 0.13, 0.14, fx, ch + 0.15, fzz2);
       }
+      colliders.push(aabbSlab(cx, 0, cz, cw, ch + 0.22, cd * 1.12));
     }
 
     // white curved-roof carport
-    const kx = yx(0.86), kz = yz(H, 0.45), kw = 5.8, kd = 4.6, kph = 2.5;
+    // kx/kw moved east and in from 0.86 / 5.8: the north-west post stood at x 6.08,
+    // 0.8 m inside the orange rear deck's own footprint, which is the house builder's.
+    // kz 0.45 -> 0.49 (0.42 m deeper) on 2026-09-19: the orange external stair now
+    // runs ALONG the back wall into this quarter, and the carport's two shallow posts
+    // reached 0.10 m into its exported footprint. The house owns that ground.
+    const kx = yx(0.90), kz = yz(H, 0.49), kw = 5.0, kd = 4.6, kph = 2.5;
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
       const ppx = kx + sx * (kw / 2 - 0.2), ppz = kz + sz * (kd / 2 - 0.2);
       C.put(mat.steel, 0.16, kph, 0.16, ppx, kph / 2, ppz);
-      colliders.push(aabbSlab(ppx, 0, ppz, 0.36, kph, 0.36));
+      // 0.20, not 0.36: a 0.16 m post inside a 0.36 m box is 100 mm of air you cannot
+      // walk through on every side, four times over, in the tightest part of the yard.
+      colliders.push(aabbSlab(ppx, 0, ppz, 0.20, kph, 0.20));
     }
     for (let i = 0; i < 7; i++) {
       const u0 = i / 7 - 0.5, u1 = (i + 1) / 7 - 0.5;
@@ -549,16 +646,19 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
         kz + (u0 + u1) / 2 * kd, 0, -Math.atan2(dy, dzz));
     }
 
-    // crate store
+    // Crate store. Two courses, not three: at 2.16 m the stack was a wall in the one
+    // shallow corner of this yard that is not the deck, and the owner asked for cover,
+    // not walls. clearOfHouse now also pushes it out of the rear-deck volume - the
+    // door-only version had moved it EAST, straight under the orange deck.
     const cu = 0.72;
     const czz = yz(H, 0.26);
-    const cxx = clearOfDoor(H, yx(0.38), cu * 1.1);   // 2.2 m wide stack, right outside the door
+    const cxx = clearOfHouse(H, yx(0.38), czz, cu * 1.1);
     for (const [ox, oy, oz] of [[-0.5, 0, -0.5], [0.5, 0, -0.5], [-0.5, 0, 0.5], [0.5, 0, 0.5],
-                                [-0.44, 1, 0.04], [0.47, 1, 0.16], [0.02, 2, 0.1]]) {
+                                [-0.44, 1, 0.04], [0.47, 1, 0.16]]) {
       B.put(oy === 1 ? mat.timber : mat.timberDark, cu, cu, cu, cxx + ox * cu,
         oy * cu + cu / 2, czz + oz * cu, rr(-0.13, 0.13));
     }
-    colliders.push(aabbSlab(cxx, 0, czz, cu * 2.2, cu * 3, cu * 2.2));
+    colliders.push(aabbSlab(cxx, 0, czz, cu * 2.2, cu * 2, cu * 2.2));
 
     // a straight stone run: patio rim -> glasshouse door. It starts OUTSIDE the ring,
     // not at the disc centre, so no stone is ever laid on top of the patio.
@@ -580,11 +680,16 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     for (const s of [-1, 1]) B.put(mat.timberDark, 0.08, 0.7, 0.5, hrx + s * 0.3, T_LAWN + 0.35, hrz);
     C.put(mat.hedge, 0.5, 0.52, 0.5, hrx, T_LAWN + 0.45, hrz, Math.PI / 2, Math.PI / 2);
     colliders.push(aabbSlab(hrx, T_LAWN, hrz, 0.75, 0.7, 0.55));
-    // patio set on the SOUTH half: the deck stair lands mid-disc from the north
-    // and the east-west walk corridor crosses just north of it. Keep both clear.
-    chair(pxx - 1.3, pzz - 1.2, Math.PI * 0.75, T_SURF);
-    chair(pxx + 1.3, pzz - 1.2, -Math.PI * 0.6, T_SURF);
-    table(pxx, pzz - 1.35, T_SURF);
+    // Patio set on the SOUTH half, leaving the north half of the disc as the landing
+    // for the stone run and the east-west walk corridor. Every piece goes through
+    // clearOfHouse even though none of them is anywhere near a keep-out today: the
+    // TABLE was placed directly, and when the orange flight still ran yard-ward it
+    // was parked in that flight's bottom tread (captures/verify/stair-orange-foot.png)
+    // for a whole wave. A prop this module places directly is a prop nothing checks.
+    const pSet = (x: number, z: number, halfW: number): number => clearOfHouse(H, x, z, halfW);
+    chair(pSet(pxx - 1.3, pzz - 1.2, 0.31), pzz - 1.2, Math.PI * 0.75, T_SURF);
+    chair(pSet(pxx + 1.3, pzz - 1.2, 0.31), pzz - 1.2, -Math.PI * 0.6, T_SURF);
+    table(pSet(pxx, pzz - 1.35, 0.375), pzz - 1.35, T_SURF);
     for (let i = 0; i < 8; i++) {                                   // patio bedding ring
       const a = -Math.PI * 0.45 + (i / 7) * Math.PI * 0.75;
       bloom(pxx + Math.cos(a) * (pr * 1.1 + 0.55), pzz + Math.sin(a) * (pr * 1.1 + 0.55),
@@ -605,7 +710,9 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   {
     const H = WHITE;
     // rounded modernist garden pod
-    const pxx = yx(0.20), pzz = yz(H, 0.55), pr = 2.0;
+    // pxx was yx(0.20): the pod's east side reached into the white rear deck's
+    // volume, 0.22 m off the deck itself. West by 1.5 m and it clears with 1.3 m.
+    const pxx = yx(0.11), pzz = yz(H, 0.55), pr = 2.0;
     C.put(SLAB, pr * 2.3, 0.36, pr * 2.3, pxx, 0.18, pzz);
     S.put(mat.capsuleWhite, pr * 2, 2.5, pr * 2, pxx, 1.4, pzz);
     C.put(mat.windowDark, pr * 2.04, 0.72, pr * 2.04, pxx, 1.45, pzz);
@@ -662,14 +769,21 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     }
     C.span(IRON, 0.015, yx(0.70), T_LAWN + 1.68, wlz, yx(0.80), T_LAWN + 1.68, wlz);
     B.put(WHITEP, 0.55, 0.65, 0.04, yx(0.725), T_LAWN + 1.32, wlz);
-    B.put(FLOWER, 0.5, 0.6, 0.04, yx(0.755), T_LAWN + 1.35, wlz);
+    B.put(LINEN, 0.5, 0.6, 0.04, yx(0.755), T_LAWN + 1.35, wlz);
     B.put(CLOTHB, 0.55, 0.62, 0.04, yx(0.7775), T_LAWN + 1.34, wlz);
-    colliders.push(aabbSlab(yx(0.75), T_LAWN, wlz, 4.3, 1.75, 0.4));
-    chair(yx(0.11), yz(H, 0.58), Math.PI / 2, T_LAWN);                // chairs west of the pod
-    chair(yx(0.11), yz(H, 0.723), Math.PI / 2 + 0.3, T_LAWN);
-    table(yx(0.1275), yz(H, 0.652), T_LAWN);
-    pot(yx(0.165), yz(H, 0.30), 1.1);                                  // pair flanking the pod door
-    pot(yx(0.235), yz(H, 0.30), 0.95);
+    // One collider per POST. The single 4.3 x 1.75 m box across the whole run was the
+    // worst phantom in the map: the mesh is two 0.12 m posts and a wire, and a player
+    // walking the 2.4 m of open grass between them hit a wall at chest height.
+    for (const wx of [yx(0.70), yx(0.80)]) {
+      colliders.push(aabbSlab(wx, T_LAWN, wlz, 0.5, 1.75, 0.16));
+    }
+    // Chairs and table SOUTH-WEST of the pod, not west of it: at yx(0.11) a chair sat
+    // 0.21 m inside the pod's own collider, and the pod is 4.2 m across.
+    chair(yx(0.05), yz(H, 0.85), Math.PI / 2, T_LAWN);
+    chair(yx(0.12), yz(H, 0.885), Math.PI / 2 + 0.3, T_LAWN);
+    table(yx(0.085), yz(H, 0.815), T_LAWN);
+    pot(yx(0.075), yz(H, 0.30), 1.1);                                  // pair flanking the pod door
+    pot(yx(0.145), yz(H, 0.30), 0.95);
     C.put(FLOWER, 0.3, 0.28, 0.3, yx(0.6025), T_SAND + 0.14, yz(H, 0.741)); // sand toys
     B.put(IRON, 0.06, 0.5, 0.12, yx(0.635), T_SAND + 0.1, yz(H, 0.8125), 0.5);
     S.put(mat.sand, 0.35, 0.18, 0.35, yx(0.6225), T_SAND + 0.06, yz(H, 0.830));
@@ -681,34 +795,45 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     colliders.push(aabbSlab(yx(0.9125), T_LAWN, yz(H, 0.464), 0.4, 1.0, 3.2));
   }
 
-  // ---------------------------------------------------------------- yard cover clusters
-  // REAL-REFERENCE item 10 (yards side): DESIGNED cover at 3-4 m rhythm, not
-  // scatter - every piece instanced via B/C/S, founded on the T_* ladder, honest
-  // aabbSlab colliders for anything knee-high+. Placed clear of the spawn
-  // sightlines (SPAWN_A/B), deck/stair landings, glasshouse/carport/pod/sandpit/
-  // court footprints, the stone runs and every existing collider; nothing inside
-  // house footprints. Frames: f-FKQOEO-1ceE-100.jpg (mailbox on stone pier),
-  // f-FKQOEO-1ceE-055.jpg (dome bins + stepping pads), f-aICKIbuo8zQ-055.jpg
-  // (DO NOT STACK boxes), f-aICKIbuo8zQ-175.jpg (turf rolls),
-  // f-FKQOEO-1ceE-115.jpg (hydrant-ish + round vent).
+  // ---------------------------------------------------------------- cover
+  // Owner, 2026-09-18: "make sure the cover is more evenly distributed, muted, and
+  // collision works and everything."
+  //
+  // WAS: a set authored for a 40 m yard, inherited unchanged into the 29.6 m one. Nine
+  // pieces in the two back yards and NOTHING on either frontage but a hedge and the
+  // appliance bank; four pairs placed inside each other (two cans overlapping 0.14 m,
+  // two dome bins 0.05 m, a chair 0.21 m inside the garden pod, a hydrant and a vent
+  // 0.07 m apart against the glasshouse); a carRed flower head on every pot, bloom,
+  // cold frame and washing line, where the gameplay frames read timber, concrete,
+  // terracotta and dust.
+  //
+  // NOW: four areas - two back yards, two frontages - each with three to five pieces of
+  // 0.6-1.2 m cover on a 3-4 m rhythm, in those four colour families, each aabbSlab the
+  // box its own mesh occupies. The only tall things left in a yard are the landmarks
+  // that were already there, one per yard. The self-check at the end of this module
+  // tests all of that rather than trusting this paragraph.
+  //
+  // Frames: f-FKQOEO-1ceE-100.jpg (mailbox on a stone pier), f-FKQOEO-1ceE-055.jpg
+  // (dome bins + stepping pads), f-aICKIbuo8zQ-055.jpg (DO NOT STACK crates),
+  // f-aICKIbuo8zQ-175.jpg (turf rolls).
   const YELLOW = mat.painted(PAL.hazardYellow, 0.6, 0.05);
   const CANGREY = mat.painted(PAL.steel, 0.45, 0.6);
-  const CANGREEN = mat.painted(PAL.lawn, 1, 0);
-  const CANRED = mat.painted(PAL.applianceRed, 0.5, 0.3);
-  /** trash can 0.9-1.0 m: body + lid + knob, standing on rung y0 */
+  /** galvanised-gone-dull: the dust key that replaced the reds and the bright green */
+  const DUST = mat.painted(PAL.pavingStain, 0.9, 0.05);
+  /** trash can 1.05 m: body + lid + knob, standing on rung y0 */
   const trashCan = (m: THREE.Material, x: number, z: number, y0: number): void => {
     C.put(m, 0.55, 0.9, 0.55, x, y0 + 0.45, z);
     C.put(WHITEP, 0.62, 0.08, 0.62, x, y0 + 0.94, z);
     S.put(WHITEP, 0.14, 0.12, 0.14, x, y0 + 1.02, z);
     colliders.push(aabbSlab(x, y0, z, 0.62, 1.05, 0.62));
   };
-  /** dome bin: olive/pale body + white dome lid (f-FKQOEO-1ceE-055.jpg) */
+  /** dome bin 0.95 m: body + white dome lid (f-FKQOEO-1ceE-055.jpg) */
   const domeBin = (m: THREE.Material, x: number, z: number): void => {
     C.put(m, 0.55, 0.72, 0.55, x, T_LAWN + 0.36, z);
     S.put(WHITEP, 0.58, 0.34, 0.58, x, T_LAWN + 0.82, z);
     colliders.push(aabbSlab(x, T_LAWN, z, 0.6, 0.95, 0.6));
   };
-  /** yellow mailbox on a stone pier (f-FKQOEO-1ceE-100.jpg) */
+  /** mailbox on a stone pier, 1.35 m (f-FKQOEO-1ceE-100.jpg) */
   const mailbox = (x: number, z: number): void => {
     B.put(PLINTH, 0.4, 1.0, 0.4, x, T_LAWN + 0.5, z);
     B.put(COPING, 0.48, 0.08, 0.48, x, T_LAWN + 1.04, z);
@@ -716,88 +841,248 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     B.put(YELLOW, 0.04, 0.22, 0.2, x + 0.28, T_LAWN + 1.32, z);  // flag
     colliders.push(aabbSlab(x, T_LAWN, z, 0.55, 1.35, 0.5));
   };
-  /** turf roll: horizontal cylinder lying along x (f-aICKIbuo8zQ-175.jpg) */
+  /** turf roll 0.6 m: horizontal cylinder lying along x (f-aICKIbuo8zQ-175.jpg) */
   const turfRoll = (x: number, z: number): void => {
     C.put(mat.leaf, 1.8, 0.6, 0.6, x, T_LAWN + 0.3, z, Math.PI / 2, Math.PI / 2);
     colliders.push(aabbSlab(x, T_LAWN, z, 1.8, 0.6, 0.6));
   };
-  /** hydrant-ish: body + cap + side lug, painted only (f-FKQOEO-1ceE-115.jpg) */
-  const hydrant = (x: number, z: number): void => {
-    C.put(CANRED, 0.24, 0.62, 0.24, x, T_LAWN + 0.31, z);
-    S.put(CANRED, 0.26, 0.2, 0.26, x, T_LAWN + 0.68, z);
-    C.put(CANRED, 0.36, 0.12, 0.12, x, T_LAWN + 0.42, z, Math.PI / 2, Math.PI / 2);
-    colliders.push(aabbSlab(x, T_LAWN, z, 0.4, 0.75, 0.4));
+  /**
+   * Two timber crates side by side, optionally a third on top: 0.60 m or 1.18 m.
+   * The pair is jittered in yaw, so the collider carries 60 mm over the nominal
+   * footprint - that is the corner swing at 0.1 rad and nothing more.
+   */
+  const CU = 0.58;
+  const crateStack = (x: number, z: number, ry: number, high: boolean): void => {
+    const rows: [number, number][] = high
+      ? [[-0.5, 0], [0.5, 0], [0.04, 1]] : [[-0.5, 0], [0.5, 0]];
+    for (const [ox, oy] of rows) {
+      const [bx, bz] = l2w(x, z, ry, ox * CU, 0);
+      B.put(oy ? mat.timber : mat.timberDark, CU, CU, CU,
+        bx, T_LAWN + oy * CU + CU / 2, bz, ry + rr(-0.1, 0.1));
+    }
+    const len = CU * 2 + 0.06, wid = CU + 0.06;
+    const c = Math.abs(Math.cos(ry)), s = Math.abs(Math.sin(ry));
+    colliders.push(aabbSlab(x, T_LAWN, z, c * len + s * wid,
+      CU * (high ? 2 : 1) + 0.02, s * len + c * wid));
   };
-  /** round vent: low drum + cap (f-FKQOEO-1ceE-115.jpg) */
-  const vent = (x: number, z: number): void => {
-    C.put(mat.steel, 0.5, 0.5, 0.5, x, T_LAWN + 0.25, z);
-    S.put(mat.steel, 0.54, 0.22, 0.54, x, T_LAWN + 0.56, z);
-    colliders.push(aabbSlab(x, T_LAWN, z, 0.55, 0.65, 0.55));
+  /** Dust-toned drum on a timber pallet - 1.0 m, the yards' standard waist cover. */
+  const drum = (x: number, z: number): void => {
+    B.put(mat.timberDark, 0.86, 0.12, 0.86, x, T_LAWN + 0.06, z);
+    C.put(DUST, 0.60, 0.84, 0.60, x, T_LAWN + 0.54, z);
+    C.put(PAVE, 0.64, 0.05, 0.64, x, T_LAWN + 0.955, z);          // rolled lid
+    C.put(PAVE, 0.62, 0.04, 0.62, x, T_LAWN + 0.70, z);           // rolling hoop
+    colliders.push(aabbSlab(x, T_LAWN, z, 0.86, 1.0, 0.86));
   };
+  /** Low rubble block wall, 1.05 m; `len` runs along local +z before the yaw. */
+  const lowWall = (x: number, z: number, len: number, ry: number): void => {
+    B.put(PLINTH, 0.34, 0.92, len, x, T_LAWN + 0.46, z, ry);
+    B.put(COPING, 0.44, 0.13, len + 0.12, x, T_LAWN + 0.985, z, ry);
+    const c = Math.abs(Math.cos(ry)), s = Math.abs(Math.sin(ry));
+    colliders.push(aabbSlab(x, T_LAWN, z,
+      c * 0.44 + s * (len + 0.12), 1.05, s * 0.44 + c * (len + 0.12)));
+  };
+  /** Timber sleeper planter with a clipped box hedge in it - 1.1 m of soft cover. */
+  const planterBox = (x: number, z: number, len: number, ry: number): void => {
+    const w = 0.86;
+    B.put(mat.timber, w, 0.52, len, x, T_LAWN + 0.26, z, ry);
+    B.put(mat.timberDark, w + 0.08, 0.09, len + 0.08, x, T_LAWN + 0.555, z, ry);
+    B.put(SOIL, w - 0.2, 0.06, len - 0.2, x, T_LAWN + 0.55, z, ry);
+    const n = Math.max(2, Math.round(len / 0.8));
+    for (let i = 0; i < n; i++) {
+      const [bx, bz] = l2w(x, z, ry, 0, ((i + 0.5) / n - 0.5) * len);
+      S.put(mat.hedge, w * 0.92, 0.54, (len / n) * 1.12, bx, T_LAWN + 0.83, bz, ry);
+    }
+    const c = Math.abs(Math.cos(ry)), s = Math.abs(Math.sin(ry));
+    colliders.push(aabbSlab(x, T_LAWN, z,
+      c * (w + 0.08) + s * (len + 0.08), 1.10, s * (w + 0.08) + c * (len + 0.08)));
+  };
+  const ACROSS = Math.PI / 2;   // a run laid along x rather than along z
 
-  { // ORANGE back yard cover (-z): mailbox + discs west, cans south of carport,
-    // turf rolls along the east fence, hydrant + vent near the back fence
+  { // ORANGE back yard (-z). The two empty quarters were WEST-shallow and
+    // EAST-shallow; the deep half already carries glasshouse, carport, cold frames
+    // and the patio set. A block wall and a crate stack fill them, the two cans move
+    // apart and off the line of the x = +7.1 fence hole, and one turf roll goes -
+    // two of them lying 0.65 m apart read as one lump anyway.
     const H = ORANGE;
-    mailbox(yx(0.3375), yz(H, 0.12));                            // clear of crate store + run
-    for (let i = 0; i < 3; i++)                                  // discs mailbox -> walk
-      padDisc(STONE, 0.7, yx(0.3375), yz(H, 0.12) - 1.1 - i * 0.9, T_STEP);
-    trashCan(CANGREY, yx(0.8125), yz(H, 0.768), T_LAWN);          // clear of hole + hedge
-    trashCan(CANGREEN, yx(0.8325), yz(H, 0.75), T_LAWN);
-    turfRoll(yx(0.9475), yz(H, 0.12));                           // clear of carport posts
-    turfRoll(yx(0.9475), yz(H, 0.185));
-    hydrant(yx(0.2125), yz(H, 0.85));
-    vent(yx(0.235), yz(H, 0.85));
+    lowWall(yx(0.14), yz(H, 0.17), 2.6, ACROSS);                 // west-shallow
+    // The east-SHALLOW quarter is the external stair's ground now - the flight runs
+    // along the back wall from the deck's free end out to x 10.32 - so these two drop
+    // ~2 m deeper, under the carport canopy, where crates and a turf roll belong
+    // anyway. z 0.11 -> 0.31 and 0.15 -> 0.34; x unchanged.
+    crateStack(yx(0.86), yz(H, 0.31), 0.24, true);               // east, under the carport
+    turfRoll(yx(0.96), yz(H, 0.34));                             // clear of carport posts
+    trashCan(CANGREY, yx(0.84), yz(H, 0.77), T_LAWN);            // south of the carport
+    trashCan(DUST, yx(0.90), yz(H, 0.73), T_LAWN);
+    drum(yx(0.10), yz(H, 0.38));                                 // west walk, mid depth
   }
 
-  { // WHITE back yard cover (+z): lettered crates west of the pod, dome bins by
-    // the court, discs on the pod approach - all clear of pod/court/pit/run
+  { // WHITE back yard (+z). Same read: the pod, the court, the pit and the washing
+    // line fill the middle and the deep half, so cover goes WEST-shallow (a planter
+    // in the gap between the west fence and the pod) and EAST (a drum at the shallow
+    // end, the lettered crates at mid depth), with the dome bins moved apart and west
+    // of the x = +10.7 fence hole. The lettered crates used to stand in the west
+    // corner where the pod now is; they ARE a crate stack, so they do that job here
+    // rather than a plain one being added beside them.
     const H = WHITE;
-    const qx = yx(0.06), qz = yz(H, 0.55);
-    B.put(YELLOW, 0.72, 0.72, 0.72, qx, T_LAWN + 0.36, qz);
-    B.put(YELLOW, 0.66, 0.66, 0.66, qx + 0.15, T_LAWN + 1.05, qz - 0.1, 0.18);
+    const qx = yx(0.80), qz = yz(H, 0.66);
+    B.put(YELLOW, 0.72, 0.72, 0.72, qx, T_LAWN + 0.36, qz);       // the one hazard pair
+    B.put(mat.timber, 0.66, 0.66, 0.66, qx + 0.15, T_LAWN + 1.05, qz - 0.1, 0.18);
     B.put(mat.signText({ text: 'DO NOT STACK', color: PAL.busBlack, background: PAL.hazardYellow, aspect: 1.7 }),
       0.62, 0.36, 0.03, qx, T_LAWN + 0.75, qz - 0.38);            // the one signText
     colliders.push(aabbSlab(qx, T_LAWN, qz, 1.0, 1.4, 1.0));
-    domeBin(mat.hedge, yx(0.7625), yz(H, 0.80));                 // olive ...
-    domeBin(WHITEP, yx(0.785), yz(H, 0.80));                     // ... and pale
+    // The planter was the west-shallow piece at yx(0.08) / yz(0.19), and
+    // captures/verify/stair-white-foot.png is a photograph of it standing on the
+    // bottom four treads of the white external stair. That whole quarter IS the
+    // stair's footprint (x -10.97..-6.40 at z 27.33..29.28) and the garden pod takes
+    // everything behind it, so there is no west-shallow spot left for a 2.48 m box:
+    // it moves to the east-shallow face, which had nothing between the back door and
+    // the drum. clearOfHouse now guards it either way.
+    const plx = yx(0.70), plz = yz(H, 0.12);
+    planterBox(clearOfHouse(H, plx, plz, 1.24), plz, 2.4, ACROSS);
+    drum(yx(0.94), yz(H, 0.22));                                  // east-shallow
+    domeBin(mat.hedge, yx(0.80), yz(H, 0.86));                    // olive ...
+    domeBin(WHITEP, yx(0.86), yz(H, 0.83));                       // ... and pale
     padDisc(STONE, 0.7, yx(0.125), yz(H, 0.28), T_STEP);          // pod approach discs
     padDisc(STONE, 0.7, yx(0.1475), yz(H, 0.28), T_STEP);
+  }
+
+  // ---------------------------------------------------------------- front lawns
+  // Both lawns had one hedge run and one appliance bank between the pavement and the
+  // porch - 8.4 m of open grass you cross under fire from an upper window with nothing
+  // to drop behind. Three pieces each now, placed to the same rhythm but from
+  // different objects, because the lawns are a 180-degree rotational pair and the two
+  // houses are not meant to dress alike. Everything stays clear of the porch path that
+  // the chain run leaves open, of the front-door apron, and of the drive each garage
+  // wing faces: the orange drive already has the red saloon parked on it, the white
+  // drive gets the drum pair instead.
+  {
+    const O = ORANGE, W = WHITE;
+    mailbox(hx(-0.30), O.side * (PAVEMENT_OUTER + 0.95));         // orange verge
+    lowWall(hx(1.45), fz(O, 0.58), 2.8, ACROSS);                  // orange lawn, east
+    crateStack(hx(0.0), fz(O, 0.25), 0.1, true);                  // orange lawn, west
+    planterBox(hx(-0.80), W.side * (PAVEMENT_OUTER + 0.95), 2.4, ACROSS);
+    drum(hx(1.45), fz(W, 0.58));                                  // white drive
+    drum(hx(1.62), fz(W, 0.50));
+    crateStack(hx(0.0), fz(W, 0.25), -0.1, true);                 // white lawn, east
   }
 
   B.flush(g, 'yard-box');
   C.flush(g, 'yard-cyl');
   S.flush(g, 'yard-sph');
 
-  // A prop is allowed to be wide; it is not allowed to be wide INTO a flanking lane.
-  // Report rather than silently drop: a collider removed here would leave a solid-
-  // looking mesh you can walk through, which is a worse bug than the one it fixes.
+  // ---------------------------------------------------------------- self-check
+  // Four things this module has got wrong before, each once it had already shipped a
+  // green gate. They are cheap to test and the test cannot go stale, so they run at
+  // build time over our own colliders. Everything is REPORTED, never silently
+  // dropped: a collider deleted here leaves a solid-looking mesh you walk through,
+  // which is a worse bug than the one it would hide.
+  const span = (c: AABB): string =>
+    `x ${c.min.x.toFixed(1)}..${c.max.x.toFixed(1)} z ${c.min.z.toFixed(1)}..${c.max.z.toFixed(1)}`;
+  const warn = (what: string, bad: AABB[]): void => {
+    if (bad.length) console.warn('[yards] %d collider(s) %s: %s',
+      bad.length, what, bad.map(span).join(' | '));
+  };
+
+  // 1. A prop is allowed to be wide; it is not allowed to be wide INTO a flanking
+  //    lane. Those two runs down the sides of each house are the only way round it.
+  //    PROPS only: the boundary fences ARE the lane's outer wall and the yard-edge
+  //    hedges are the yard's own planting, both deliberately in that band (they leave
+  //    a 1.3 m walk at the deep end and nothing at all across the garage squeeze).
+  //    Counting them made this warning fire fifteen times on every load, which is the
+  //    same as not having it.
   const LANE_IN = YARD_X_MIN + PROP_LANE * 0.5;
   const LANE_OUT = YARD_X_MAX - PROP_LANE * 0.5;
-  const intruders = colliders.filter((c) =>
-    Math.abs(c.max.z) > HOUSE_BACK && (c.min.x < LANE_IN || c.max.x > LANE_OUT));
-  if (intruders.length) {
-    console.warn('[yards] %d collider(s) reach into a flanking lane: %s',
-      intruders.length,
-      intruders.map((c) => `x ${c.min.x.toFixed(1)}..${c.max.x.toFixed(1)}`).join(', '));
-  }
-  // Same again for the door aprons. A sealed door is the most expensive bug this
-  // project has had: it looks like a house and behaves like a wall, and no single
-  // module is wrong about it.
+  warn('reach into a flanking lane', colliders.slice(EDGE_END).filter((c) =>
+    Math.abs(c.max.z) > HOUSE_BACK && (c.min.x < LANE_IN || c.max.x > LANE_OUT)));
+
+  // 2. Door aprons. A sealed door is the most expensive bug this project has had: it
+  //    looks like a house and behaves like a wall, and no single module is wrong
+  //    about it. Both faces now - props stand on the front lawns too.
   for (const h of HOUSES) {
-    const nearWall = (c: AABB) => {
-      const d0 = Math.abs(h.backZ), d1 = d0 + DOOR_APRON_DEPTH;
-      const zMin = Math.min(Math.abs(c.min.z), Math.abs(c.max.z));
-      return h.side * c.min.z > 0 && zMin >= d0 - 0.4 && zMin <= d1;
-    };
-    const blocked = colliders.filter((c) => nearWall(c)
-      && c.max.x > h.backDoorX - DOOR_APRON_HALF_W
-      && c.min.x < h.backDoorX + DOOR_APRON_HALF_W
-      && c.max.y - c.min.y > 0.4);
-    if (blocked.length) {
-      console.warn('[yards] %d collider(s) stand in the %s back-door apron (door x=%s): %s',
-        blocked.length, h.side < 0 ? 'ORANGE' : 'WHITE', h.backDoorX.toFixed(2),
-        blocked.map((c) => `x ${c.min.x.toFixed(1)}..${c.max.x.toFixed(1)}`).join(', '));
+    for (const [face, wallZ, doorX] of [
+      ['back', h.backZ, h.backDoorX], ['front', h.frontZ, h.frontDoorX],
+    ] as [string, number, number][]) {
+      const out = Math.sign(wallZ);   // which way the apron reaches from that wall
+      warn(`stand in the ${h.side < 0 ? 'ORANGE' : 'WHITE'} ${face}-door apron`,
+        colliders.filter((c) => {
+          const zNear = out > 0 ? c.min.z : c.max.z;
+          const d = (zNear - wallZ) * out;
+          return d >= -0.4 && d <= DOOR_APRON_DEPTH
+            && c.max.x > doorX - DOOR_APRON_HALF_W && c.min.x < doorX + DOOR_APRON_HALF_W
+            && c.max.y - c.min.y > 0.4;
+        }));
     }
   }
+
+  // 3. The rear deck, its undercroft and its external stair belong to the house
+  //    builder. clearOfHouse keeps props out of that volume; this proves it did.
+  for (const h of HOUSES) {
+    warn(`stand in the ${h.side < 0 ? 'ORANGE' : 'WHITE'} rear-deck volume`,
+      colliders.filter((c) => {
+        const az = Math.min(Math.abs(c.min.z), Math.abs(c.max.z));
+        return h.side * c.min.z > 0 && az >= Math.abs(h.backZ) - 0.2
+          && az <= Math.abs(h.backZ) + DECK_KEEP_D
+          && c.max.x > h.deckX - DECK_KEEP_HALF && c.min.x < h.deckX + DECK_KEEP_HALF;
+      }));
+  }
+
+  // 4. Two of our own props standing inside each other. Four pairs did before this
+  //    pass - a chair 0.21 m into the garden pod, two bins overlapping by 0.05 m -
+  //    and none of them is visible in a plan render or catchable by a traverse.
+  //    O(n^2) over ~70 boxes, once, at build time.
+  const OVERLAP = 0.02;       // touching is fine; interpenetrating is not
+  const pairs: AABB[] = [];
+  for (let i = 0; i < colliders.length; i++) {
+    for (let j = i + 1; j < colliders.length; j++) {
+      if (i < FENCE_END && j < FENCE_END) continue;
+      const a = colliders[i], b = colliders[j];
+      if (Math.min(a.max.x, b.max.x) - Math.max(a.min.x, b.min.x) <= OVERLAP) continue;
+      if (Math.min(a.max.z, b.max.z) - Math.max(a.min.z, b.min.z) <= OVERLAP) continue;
+      if (Math.min(a.max.y, b.max.y) - Math.max(a.min.y, b.min.y) <= OVERLAP) continue;
+      pairs.push(a, b);
+    }
+  }
+  warn('interpenetrate another yard prop (listed in pairs)', pairs);
+
+  // 5. Nothing of ours within SPAWN_CLEAR of either spawn point. Giving the cold
+  //    frames the honest collider they had always been missing put one of them 90 mm
+  //    from SPAWN_A, and a player who spawns inside the scenery has no idea why he
+  //    cannot walk. paths.mjs only reports the nearest standable cell, so it shows
+  //    this as a 0.6 m shrug rather than as a failure.
+  const SPAWN_CLEAR = 1.2;
+  for (const [name, sp] of [['A', SPAWN_A], ['B', SPAWN_B]] as const) {
+    warn(`stand within ${SPAWN_CLEAR} m of spawn ${name}`, colliders.filter((c) =>
+      sp.x > c.min.x - SPAWN_CLEAR && sp.x < c.max.x + SPAWN_CLEAR
+      && sp.z > c.min.z - SPAWN_CLEAR && sp.z < c.max.z + SPAWN_CLEAR
+      && c.max.y - c.min.y > 0.4));
+  }
+
+  // 6. THE EXTERNAL STAIRS. Check 3 tests the deck volume, and both flights run PAST
+  //    it: the white one 3.77 m along -x, the orange one 3.92 m along +x. So a
+  //    planterBox could be, and for a whole wave was, built into the bottom four
+  //    treads of the white stair with no module being wrong about it - the yard did
+  //    not know the stair existed. Each house now EXPORTS its flight's footprint and
+  //    this asserts on it. Unlike the warnings above it THROWS in dev, because the
+  //    thing it guards against is a future re-proportioning silently recreating the
+  //    same defect; in a built artifact it reports loudly rather than taking the map
+  //    down in front of a player.
+  const inStair: string[] = [];
+  for (const h of HOUSES) {
+    const f = stairFootprint(h);
+    const name = h.side < 0 ? 'ORANGE' : 'WHITE';
+    for (const c of colliders) {
+      if (c.max.x <= f.minX || c.min.x >= f.maxX) continue;
+      if (c.max.z <= f.minZ || c.min.z >= f.maxZ) continue;
+      inStair.push(`${name} stair footprint (x ${f.minX.toFixed(2)}..${f.maxX.toFixed(2)} `
+        + `z ${f.minZ.toFixed(2)}..${f.maxZ.toFixed(2)}) <- ${span(c)}`);
+    }
+  }
+  if (inStair.length) {
+    const msg = `[yards] ${inStair.length} collider(s) stand in an external-stair `
+      + `footprint: ${inStair.join(' | ')}`;
+    if (import.meta.env.DEV) throw new Error(msg);
+    console.error(msg);
+  }
+
   return { group: g, colliders };
 };
