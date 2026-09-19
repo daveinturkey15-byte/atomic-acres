@@ -28,6 +28,7 @@
 
 import { MAX_PLAYERS, type MatchStateMsg, type PlayerSample, type ShotMsg, type StreakStateMsg } from '../net/protocol';
 import { TICK_HZ } from '../net/snapshot';
+import type { PlayerStance } from '../net/room-core';
 import type { ShotClaim } from '../weapons/controller';
 import { BotDirector, nextBotTeam, type BotActorView } from './bots';
 import { GameClient } from './client';
@@ -61,6 +62,8 @@ export interface SoloDriverOptions {
   readonly localId: ActorId;
   readonly localName: string;
   readonly localTeam?: TeamId;
+  /** Authored loadout primary, or a provider read at each deploy boundary. */
+  readonly localPrimaryId?: string | (() => string | undefined);
   /** Shared across drivers so `counters()` stays session-cumulative. */
   readonly instrument: SessionLog;
 }
@@ -73,19 +76,21 @@ interface RemoteSeat {
   x: number; y: number; z: number; yaw: number;
   speed: number;
   alive: boolean;
+  stance: PlayerStance;
+  primaryId?: string;
   seq: number;
 }
 
 /** Mutable body record reused every frame, so `bots()` allocates nothing. */
-interface Body { id: ActorId; x: number; y: number; z: number; yaw: number; speed: number; alive: boolean }
+interface Body { id: ActorId; x: number; y: number; z: number; yaw: number; speed: number; alive: boolean; stance: PlayerStance }
 
 export type EventSink = (events: readonly GameEvent[], now: number) => void;
 
 export interface SoloDriver extends MatchDriver {
-  addRemote(id: ActorId, name: string, team: TeamId): void;
+  addRemote(id: ActorId, name: string, team: TeamId, primaryId?: string): void;
   removeRemote(id: ActorId): void;
   /** The room integrated this seat to here. Called once per room tick. */
-  remotePose(id: ActorId, x: number, y: number, z: number, yaw: number): void;
+  remotePose(id: ActorId, x: number, y: number, z: number, yaw: number, stance?: PlayerStance, primaryId?: string): void;
   remoteShot(id: ActorId, claim: ShotMsg, receivedAt: number): ShotAdmission | null;
   remoteStreak(id: ActorId, slot: number, toggle: boolean): void;
   /** Every event the host produced, after the local client has seen it. One sink. */
@@ -128,8 +133,10 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
   let inputSeq = 0;
   let endedAt: number | null = null;
   let disposed = false;
-  const pose = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 };
+  const pose = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, stance: 'stand' as PlayerStance };
   const sampleBuf: PlayerSample[] = [];
+  const primaryForLocal = (): string | undefined =>
+    typeof opts.localPrimaryId === 'function' ? opts.localPrimaryId() : opts.localPrimaryId;
 
   const pushNames = (): void => {
     const names: [string, string][] = [[localId, opts.localName]];
@@ -149,8 +156,8 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       deps: { streaks: streakPort(runtime, epoch) },
     });
     const d = new BotDirector({ host: h, world, rand: h.rand, maxBots: MAX_PLAYERS - 1, difficulty });
-    h.addActor(localId, localTeam);
-    for (const s of seats.values()) h.addActor(s.id, s.team);
+    h.addActor(localId, localTeam, { primaryId: primaryForLocal() });
+    for (const s of seats.values()) h.addActor(s.id, s.team, { primaryId: s.primaryId });
     const humans = [{ team: localTeam }, ...[...seats.values()].map((s) => ({ team: s.team }))];
     for (let i = 0; i < botCount; i++) {
       const team = rules.mode !== 'ffa' && setup.teams === 'enemies'
@@ -178,7 +185,9 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
         d.onSpawn(e.actorId, e.x, e.y, e.z, e.yaw);
         if (e.actorId === localId) opts.placeLocal?.(e.x, e.y, e.z, e.yaw);
         const s = seats.get(e.actorId);
-        if (s !== undefined) { s.x = e.x; s.y = e.y; s.z = e.z; s.yaw = e.yaw; s.alive = true; }
+        if (s !== undefined) {
+          s.x = e.x; s.y = e.y; s.z = e.z; s.yaw = e.yaw; s.alive = true; s.stance = 'stand';
+        }
       } else if (e.type === 'death') {
         d.onDeath(e.victimId, localTeam);
       } else if (e.type === 'match-phase' && e.phase === 'ended' && endedAt === null) {
@@ -196,26 +205,33 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
    */
   const samples = (h: GameHost, d: BotDirector): PlayerSample[] => {
     sampleBuf.length = 0;
-    sampleBuf.push(h.stampSample({ id: localId, x: pose.x, y: pose.y, z: pose.z, yaw: pose.yaw, ack: inputSeq }));
+    sampleBuf.push(h.stampSample({
+      id: localId, x: pose.x, y: pose.y, z: pose.z, yaw: pose.yaw, ack: inputSeq, stance: pose.stance,
+    }));
     for (const s of seats.values()) {
-      sampleBuf.push(h.stampSample({ id: s.id, x: s.x, y: s.y, z: s.z, yaw: s.yaw, ack: s.seq }));
+      sampleBuf.push(h.stampSample({
+        id: s.id, x: s.x, y: s.y, z: s.z, yaw: s.yaw, ack: s.seq, stance: s.stance,
+      }));
     }
     for (const b of d.roster) {
-      sampleBuf.push(h.stampSample({ id: b.id, x: b.x, y: b.y, z: b.z, yaw: b.yaw, ack: 0 }));
+      sampleBuf.push(h.stampSample({ id: b.id, x: b.x, y: b.y, z: b.z, yaw: b.yaw, ack: 0, stance: 'stand' }));
     }
     return sampleBuf;
   };
 
   const step = (h: GameHost, d: BotDirector, now: number): void => {
     const dt = TICK_MS / 1000;
-    h.updatePose(localId, pose.x, pose.y, pose.z, now);
+    h.updatePose(localId, pose.x, pose.y, pose.z, now, pose.stance, pose.yaw);
     h.submitInput(localId, {
       type: 'input', seq: ++inputSeq, mx: 0, mz: 0,
-      yaw: pose.yaw, pitch: pose.pitch, fire: false, jump: false,
+      yaw: pose.yaw, pitch: pose.pitch, fire: false, jump: false, stance: pose.stance,
     });
     for (const s of seats.values()) {
-      h.updatePose(s.id, s.x, s.y, s.z, now);
-      h.submitInput(s.id, { type: 'input', seq: ++s.seq, mx: 0, mz: 0, yaw: s.yaw, pitch: 0, fire: false, jump: false });
+      h.updatePose(s.id, s.x, s.y, s.z, now, s.stance, s.yaw);
+      h.submitInput(s.id, {
+        type: 'input', seq: ++s.seq, mx: 0, mz: 0, yaw: s.yaw, pitch: 0,
+        fire: false, jump: false, stance: s.stance,
+      });
     }
     const snap = h.snapshot();
     const humans: BotActorView[] = [];
@@ -228,6 +244,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       }
     }
     d.tick(now, dt, humans, snap.actors, snap.ordnance.drops);
+    h.setPrimary(localId, primaryForLocal());
     route(d, h.tick(now), now);
     const after = h.snapshot();
     lastMatch = after.match;
@@ -241,7 +258,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
   const body = (id: ActorId): Body => {
     let b = bodyById.get(id);
     if (b === undefined) {
-      b = { id, x: 0, y: 0, z: 0, yaw: 0, speed: 0, alive: true };
+      b = { id, x: 0, y: 0, z: 0, yaw: 0, speed: 0, alive: true, stance: 'stand' };
       bodyById.set(id, b);
       bodies.push(b);
     }
@@ -263,9 +280,9 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     ended: () => endedAt !== null,
     netLine: () => null,
 
-    tick(now, x, y, z, yaw, pitch): void {
+    tick(now, x, y, z, yaw, pitch, stance: PlayerStance = 'stand'): void {
       if (disposed) return;
-      pose.x = x; pose.y = y; pose.z = z; pose.yaw = yaw; pose.pitch = pitch;
+      pose.x = x; pose.y = y; pose.z = z; pose.yaw = yaw; pose.pitch = pitch; pose.stance = stance;
       if (pending) {
         // Built on the first tick so the host clock starts in the same
         // `performance.now()` domain the frame loop will feed it.
@@ -323,7 +340,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       }
       for (const s of seats.values()) {
         const b = body(s.id);
-        b.x = s.x; b.y = s.y; b.z = s.z; b.yaw = s.yaw; b.speed = s.speed; b.alive = s.alive;
+        b.x = s.x; b.y = s.y; b.z = s.z; b.yaw = s.yaw; b.speed = s.speed; b.alive = s.alive; b.stance = s.stance;
       }
       return bodies;
     },
@@ -335,15 +352,22 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
 
     // ---- remote seats (the room host binding) --------------------------------
 
-    addRemote(id, name, team): void {
+    addRemote(id, name, team, primaryId): void {
       let s = seats.get(id);
       if (s === undefined) {
-        s = { id, name, team, x: 0, y: 0, z: 0, yaw: 0, speed: 0, alive: true, seq: 0 };
+        s = {
+          id, name, team, x: 0, y: 0, z: 0, yaw: 0, speed: 0, alive: true,
+          stance: 'stand', primaryId, seq: 0,
+        };
         seats.set(id, s);
       }
       s.name = name;
       s.team = team;
-      host?.addActor(id, team);
+      // The first roster sync happens before the first host snapshot. After
+      // that point a lobby declaration is immutable for the current life;
+      // later input cannot swap the live kit.
+      if (s.primaryId === undefined && primaryId !== undefined) s.primaryId = primaryId;
+      host?.addActor(id, team, { primaryId: s.primaryId });
       pushNames();
     },
 
@@ -358,11 +382,16 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       pushNames();
     },
 
-    remotePose(id, x, y, z, yaw): void {
+    remotePose(
+      id, x, y, z, yaw, stance: PlayerStance = 'stand', primaryId?: string,
+    ): void {
       const s = seats.get(id);
       if (s === undefined) return;
       s.speed = Math.hypot(x - s.x, z - s.z) * TICK_HZ;
-      s.x = x; s.y = y; s.z = z; s.yaw = yaw;
+      s.x = x; s.y = y; s.z = z; s.yaw = yaw; s.stance = stance;
+      // Kept in the internal signature for old driver callers, but only the
+      // pre-Start roster declaration is authoritative for this life.
+      void primaryId;
     },
 
     remoteShot(id, claim, receivedAt): ShotAdmission | null {
@@ -381,7 +410,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     botSamples(into): void {
       if (director === null || host === null) return;
       for (const b of director.roster) {
-        into.push(host.stampSample({ id: b.id, x: b.x, y: b.y, z: b.z, yaw: b.yaw, ack: 0 }));
+        into.push(host.stampSample({ id: b.id, x: b.x, y: b.y, z: b.z, yaw: b.yaw, ack: 0, stance: 'stand' }));
       }
     },
 

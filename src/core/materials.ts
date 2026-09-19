@@ -7,6 +7,7 @@
  * compiles a small, fixed set of programs.
  */
 import * as THREE from 'three';
+import { createOperatorMaterial } from '../characters/operator-materials';
 import { MeshBasicNodeMaterial, MeshStandardNodeMaterial } from 'three/webgpu';
 import type { Node } from 'three/webgpu';
 import type { ShaderNodeObject } from 'three/tsl';
@@ -21,20 +22,27 @@ import {
   length,
   materialColor,
   materialRoughness,
+  mrt,
   normalize,
   oneMinus,
   positionLocal,
   smoothstep,
+  texture,
   time,
   uniform,
   uv,
   varying,
+  vec2,
   vec3,
   vec4,
 } from 'three/tsl';
 import { PAL } from './palette';
 import { createPaintedSurfaceMaps, loadExternalSurfaceSet } from './material-surfaces';
 import type { SurfaceTextureSet } from './material-surfaces';
+import type { RainShelter } from './rain-shelter';
+import { createVegetationMaterials } from './vegetation-materials';
+import { createImpactMaterial } from './impact-material';
+import { createViewmodelMaterials, type ViewmodelMaterialSet } from '../weapons/viewmodel-materials';
 
 type Ctx2D = CanvasRenderingContext2D;
 type N = ShaderNodeObject<Node>;
@@ -237,9 +245,12 @@ export interface MaterialLibrary {
   deckBoards: THREE.Material;
   hedge: THREE.Material;
   leaf: THREE.Material;
+  leafCards: THREE.Material;
   bark: THREE.Material;
   chrome: THREE.Material;
   steel: THREE.Material;
+  impactDecal: THREE.Material;
+  viewmodel: ViewmodelMaterialSet;
   painted: (color: number, rough?: number, metal?: number) => THREE.Material;
   /**
    * ONE material for a whole character (src/characters/mesh.ts).
@@ -277,6 +288,12 @@ export function buildMaterials(): MaterialLibrary {
   const cache = new Map<string, THREE.Material>();
   const owned = new Set<{ dispose: () => void }>();
   const own = (resource: { dispose: () => void }): void => { owned.add(resource); };
+  const vegetation = createVegetationMaterials();
+  own(vegetation);
+  const impact = createImpactMaterial();
+  own(impact);
+  const viewmodel = createViewmodelMaterials();
+  own(viewmodel);
   let disposed = false;
   const wetRefresh = new Map<THREE.Material, () => void>();
 
@@ -799,6 +816,9 @@ export function buildMaterials(): MaterialLibrary {
     deckBoards: std({ map: deckSet.map, roughness: 1, roughnessMap: deckSet.roughnessMap, normalMap: deckSet.normalMap, normalScale: new THREE.Vector2(0.7, 0.7), metalness: 0 }),
     hedge: std({ map: hedgeTex, roughness: 1, roughnessMap: hedgeRough, normalMap: hedgeNormal, normalScale: new THREE.Vector2(0.8, 0.8), metalness: 0 }),
     leaf: std({ map: leafTex, roughness: 1, roughnessMap: leafRough, metalness: 0 }),
+    leafCards: vegetation.leafCards,
+    impactDecal: impact.material,
+    viewmodel,
     bark: std({ map: barkTex, roughness: 1, roughnessMap: barkRough, metalness: 0 }),
     chrome: std({ color: PAL.chrome, roughness: 1, roughnessMap: chromeRough, metalness: 0.95, envMapIntensity: 1.25 }),
     steel: std({ color: PAL.steel, roughness: 1, roughnessMap: steelRough, metalness: 0.7 }),
@@ -824,9 +844,9 @@ export function buildMaterials(): MaterialLibrary {
       const key = 'op' + rough + '_' + metal;
       let m = cache.get(key);
       if (!m) {
-        // No maps: the two-scale breakup a character needs at 5-30 m is baked
-        // into the vertex colours, where it costs no texture and no fetch.
-        m = std({ color: 0xffffff, roughness: rough, metalness: metal, vertexColors: true });
+        const surface = createOperatorMaterial(rough, metal);
+        own(surface);
+        m = surface.material;
         cache.set(key, m);
       }
       return m;
@@ -1003,6 +1023,7 @@ export interface RainMaterialInputs {
   amount: Node;
   /** color uniform, linear: the streak tint (the horizon sky, lit by the key). */
   tint: Node;
+  shelter: RainShelter;
 }
 /** @types/three's ShaderNodeObject<UniformNode<T>> does not assign to ShaderNodeObject<Node>; widen. */
 const nn = (x: Node): N => x as unknown as N;
@@ -1041,16 +1062,28 @@ export function buildRainMaterial(inp: RainMaterialInputs): THREE.Material {
   // width grows with distance so a far streak still covers ~2 px instead of shimmering
   const width = float(0.012).add(dist.mul(0.0035));
   const scale = amount.mul(4).clamp(0, 1);
-  m.positionNode = centre
+  const worldPoint = centre
     .add(right.mul(positionLocal.x.mul(width).mul(scale)))
     .add(fallDir.mul(positionLocal.y.mul(len).mul(scale)));
+  m.positionNode = worldPoint;
 
   const distV = varying(dist);
   const fadeNear = smoothstep(float(0.4), float(1.2), distV);
   const fadeFar = oneMinus(smoothstep(float(9), float(13), distV));
   const along = oneMinus(abs(uv().y.mul(2).sub(1)).mul(abs(uv().y.mul(2).sub(1))));
   const across = oneMinus(abs(uv().x.mul(2).sub(1)));
-  m.opacityNode = amount.mul(0.30).mul(fadeNear).mul(fadeFar).mul(along).mul(across);
+  const rainWorld = varying(worldPoint);
+  const roofUV = vec2(
+    rainWorld.x.sub(inp.shelter.minX).div(inp.shelter.spanX),
+    rainWorld.z.sub(inp.shelter.minZ).div(inp.shelter.spanZ),
+  );
+  const roofHeight = texture(inp.shelter.texture, roofUV).r;
+  const aboveRoof = smoothstep(roofHeight.add(0.02), roofHeight.add(0.12), rainWorld.y);
+  m.opacityNode = amount.mul(0.30).mul(fadeNear).mul(fadeFar).mul(along).mul(across).mul(aboveRoof);
   m.colorNode = nn(inp.tint);
+  // Rain changes colour only. With depthWrite off, opaque normal/roughness MRT
+  // writes described a raindrop at the background depth and GTAO drew dark rods.
+  // Alpha-zero auxiliary attachments preserve the opaque surface below it.
+  m.mrtNode = mrt({ normal: vec4(0), metalness: vec4(0), roughness: vec4(0) });
   return m;
 }

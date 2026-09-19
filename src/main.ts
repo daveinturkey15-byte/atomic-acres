@@ -19,6 +19,9 @@ import { createCharacterSystem, type CharacterHandle } from './characters';
 import { loadBakedClips } from './characters/kimodo-clips';
 import { createLocalMatch, type LocalMatch, type MatchUi } from './game/session';
 import { PAL } from './core/palette';
+import { loadLoadout, resolveLoadout } from './game/loadout';
+import { WorldAudio } from './audio/world-audio';
+import { createStaticReflectionProbe, type StaticReflectionProbe } from './core/static-reflection-probe';
 
 import { buildGround } from './build/ground';
 import { buildOrangeHouse } from './build/orange-house';
@@ -32,6 +35,8 @@ import { buildMannequins } from './build/mannequins';
 import { buildSurround } from './build/surround';
 import { buildFieldCases } from './build/field-cases';
 import { loadFieldCase } from './assets/field-case';
+import { buildIndustrialBarrels } from './build/industrial-barrels';
+import { preloadIndustrialBarrel } from './props/industrial-barrel';
 
 const BUILDERS: [string, Builder][] = [
   ['ground', buildGround],
@@ -45,6 +50,7 @@ const BUILDERS: [string, Builder][] = [
   ['mannequins', buildMannequins],
   ['surround', buildSurround],
   ['field-cases', buildFieldCases],
+  ['industrial-barrels', buildIndustrialBarrels],
 ];
 
 // The one invariant, asserted rather than commented. From either back yard, facing
@@ -69,7 +75,10 @@ const worldTargets: THREE.Object3D[] = [];
 
 // Load the reviewed asset once before scene assembly. A failed optional prop
 // remains absent instead of blocking the playable map or retrying each frame.
-await loadFieldCase().catch((error: unknown) => console.warn('[field-case] unavailable', error));
+await Promise.all([
+  loadFieldCase().catch((error: unknown) => console.warn('[field-case] unavailable', error)),
+  preloadIndustrialBarrel().catch((error: unknown) => console.warn('[industrial-barrel] unavailable', error)),
+]);
 
 for (const [name, build] of BUILDERS) {
   const t0 = performance.now();
@@ -95,6 +104,7 @@ for (const [name, build] of BUILDERS) {
   };
 }
 player.setColliders(colliders);
+world.atmosphere.setRainShelter(worldTargets);
 
 // Characters lane, wired per the contract documented in src/characters/index.ts.
 // Materials are ctx.mat singletons: painted() with a new uniform set is fine, a new
@@ -155,6 +165,9 @@ const weapons = new WeaponsController({
   onHud: (line) => { ammoDiv.textContent = line; },
   onShot: (claim) => match?.localShot(claim),
 });
+// Share the already-baked sky for rough-metal reflections on held weapons.
+// The world owns this texture; the overlay neither allocates nor disposes it.
+weapons.overlay.environment = world.scene.environment;
 
 // ---------------------------------------------------------------- HUD
 // All overlay UI lives in #hud and #start: scripts/capture.mjs removes #start and
@@ -191,12 +204,15 @@ const ordnance = new OrdnanceScene({
   scene: world.scene, mat, colliders, hud: gameHud, weapons,
   volumetricSmoke: () => world.post.enabled,
 });
+const worldAudio = new WorldAudio(worldTargets, mat, weapons, colliders,
+  (a, b) => match?.los(a.x, a.y, a.z, b.x, b.y, b.z) ?? true);
 const matchUi: MatchUi = {
   bindClient: (c) => {
     // Client projection is the common solo/host/guest boundary. Rebinding also
     // releases the previous match's smoke list; no bus subscription can leak.
     world.atmosphere.smoke.bind(c ? () => c.ordnance.smokes : null);
     ordnance.bind(c);
+    worldAudio.bindClient(c);
     ui.bindClient(c);
   },
   setNames: (n) => ui.setNames(n),
@@ -204,7 +220,12 @@ const matchUi: MatchUi = {
 // ---- The match. Host + local player + bots, started by the same click that
 // dismisses the lobby overlay, so nothing runs before a player asks for it.
 match = createLocalMatch({
-  colliders, ui: matchUi, placeLocal: (x, y, z, yaw) => player.teleport(x, y, z, yaw),
+  colliders, ui: matchUi,
+  localPrimaryId: () => resolveLoadout(loadLoadout()).primary,
+  placeLocal: (x, y, z, yaw) => {
+    player.teleport(x, y, z, yaw);
+    player.setStance('stand');
+  },
 });
 const botBodies = new Map<string, CharacterHandle>();
 
@@ -287,8 +308,11 @@ let lastSpeed = -1;
  * photographs the spawn view - identical stats at every station is the tell.
  */
 let cameraHeldByQA = false;
+let reflectionCaptureBusy = false;
+let reflectionProbe: StaticReflectionProbe | null = null;
 
 function frame(): void {
+  if (reflectionCaptureBusy) { last = performance.now(); requestAnimationFrame(frame); return; }
   const now = performance.now();
   const dt = (now - last) / 1000;
   last = now;
@@ -307,10 +331,12 @@ function frame(): void {
   if (!cameraHeldByQA) {
     player.update(dt);
     const speed = Math.hypot(player.state.vel.x, player.state.vel.z);
+    worldAudio.update(player.state, player.getStance(), player.getMode() === 'walk' && !!match && match.mode() !== 'idle', world.atmosphere.weather());
     weapons.update(dt, now / 1000, {
       speed,
       sprinting: speed > 6.5,
       grounded: player.state.grounded,
+      crouched: player.getStance() !== 'stand',
     });
     // RENDER PATH. The world goes through the post chain (GTAO / SSR / bloom / vignette),
     // and the viewmodel composites over the finished frame with depth cleared so the
@@ -324,6 +350,7 @@ function frame(): void {
     // touching this block, and re-run `node scripts/playcap.mjs --tag chain
     // --query "post=chain"`, which photographs THIS loop and fails on a dark frame.
     world.render();
+    weapons.overlay.environmentIntensity = world.scene.environmentIntensity;
     world.renderer.clearDepth();
     const ac = world.renderer.autoClear;
     world.renderer.autoClear = false;
@@ -346,7 +373,7 @@ function frame(): void {
   if (!cameraHeldByQA && match) {
     characters.update(dt, world.camera.position);
     const st = player.state;
-    match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch);
+    match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch, player.getStance());
     ordnance.update(dt, now, st.pos.x, st.pos.y, st.pos.z);
     for (const b of match.bots()) {
       let h = botBodies.get(b.id);
@@ -355,6 +382,12 @@ function frame(): void {
       h.root.rotation.y = b.yaw;
       h.yaw = b.yaw;
       h.input.speed = b.alive ? b.speed : 0;
+      // Presentation-only hysteresis separates the authoritative 4.8 m/s jog
+      // from 6.6 m/s sprint without changing movement or the network protocol.
+      h.input.sprinting = b.alive && b.stance === 'stand'
+        && b.speed > (h.input.sprinting ? 5.3 : 5.5);
+      h.input.crouch = b.stance === 'crouch';
+      h.input.prone = b.stance === 'prone';
       if (b.alive && h.rig.isDead) h.rig.revive();
       else if (!b.alive && !h.rig.isDead) h.rig.playDeath();
     }
@@ -390,6 +423,7 @@ requestAnimationFrame(frame);
 // ---------------------------------------------------------------- QA surface
 // The capture harness drives the map through this. Keep it small and stable.
 interface QA {
+  reflection: (enabled: boolean) => Promise<unknown>;
   ready: boolean;
   stations: Record<string, Station>;
   goto: (name: string) => boolean;
@@ -400,7 +434,7 @@ interface QA {
   colliderCount: number;
   render: () => void;
   probeReset: (x: number, z: number) => void;
-  probeWalkTo: (tx: number, tz: number, maxSteps: number) => boolean;
+  probeWalkTo: (tx: number, tz: number, maxSteps: number, tolerance?: number) => boolean;
   probePos: () => [number, number, number];
   collidersAt: (x: number, z: number, y?: number) => unknown[];
   /** Inspection-mode control for headless fly/noclip checks. Additive only. */
@@ -412,10 +446,37 @@ interface QA {
   /** Ordnance lane: the client projection's log, counts and pools. Read-only. */
   ordnance: () => Record<string, unknown>;
   audio: () => ReturnType<WeaponsController['audioStats']>;
+  /** Bounded visual A/B controls; never persisted into player settings. */
+  look: (options?: { exposure?: number; environment?: number; glass?: number }) => { exposure: number; environment: number; glass: number };
+  remoteBodies: () => Array<{ id: string; x: number; y: number; z: number; crouch: boolean; prone: boolean; locomotion: string }>;
 }
 
 const qa: QA = {
-  ready: true,
+  async reflection(enabled) {
+    if (!enabled) { reflectionProbe?.dispose(); reflectionProbe = null; return { status: 'disposed' }; }
+    if (reflectionCaptureBusy || reflectionProbe) return { status: 'already-attempted' };
+    reflectionCaptureBusy = true;
+    try {
+      await world.backendReady;
+      world.render(); // Compile against the normal post chain before any cube capture.
+      const windows: THREE.Object3D[] = [];
+      world.scene.traverse(o => { if (o instanceof THREE.Mesh && o.material === mat.windowDark) windows.push(o); });
+      reflectionProbe = createStaticReflectionProbe({ renderer: world.renderer, scene: world.scene,
+        material: mat.windowDark as THREE.MeshStandardMaterial, mrt: world.post.captureMrt,
+        anchor: new THREE.Vector3(0, 4.2, 0), reflectiveMeshes: windows, size: 128 });
+      const result = await reflectionProbe.capture();
+      if (result.status !== 'captured') { reflectionProbe.dispose(); reflectionProbe = null; }
+      return result;
+    } finally { reflectionCaptureBusy = false; }
+  },
+  ready: false,
+  look(options = {}) {
+    const glass = mat.windowDark as THREE.MeshStandardMaterial;
+    if (Number.isFinite(options.exposure)) world.renderer.toneMappingExposure = Math.max(0.5, Math.min(1.5, options.exposure!));
+    if (Number.isFinite(options.environment)) world.scene.environmentIntensity = Math.max(0.1, Math.min(1.5, options.environment!));
+    if (Number.isFinite(options.glass)) glass.metalness = Math.max(0, Math.min(0.5, options.glass!));
+    return { exposure: world.renderer.toneMappingExposure, environment: world.scene.environmentIntensity, glass: glass.metalness };
+  },
   stations: STATIONS,
   goto(name) {
     weapons.setVisible(false);
@@ -465,6 +526,12 @@ const qa: QA = {
   audio() {
     return weapons.audioStats();
   },
+  remoteBodies() {
+    return Array.from(botBodies, ([id, body]) => ({
+      id, x: body.root.position.x, y: body.root.position.y, z: body.root.position.z,
+      crouch: !!body.input.crouch, prone: !!body.input.prone, locomotion: body.rig.currentLocomotion,
+    }));
+  },
   stats() {
     const i = world.renderer.info;
     return {
@@ -508,8 +575,9 @@ const qa: QA = {
     player.setProbeWish(null);
     player.teleport(x, 0, z, 0);
   },
-  probeWalkTo(tx, tz, maxSteps) {
+  probeWalkTo(tx, tz, maxSteps, tolerance = 0.7) {
     const dt = 1 / 60;
+    const arrival = Math.max(0.03, Math.min(0.7, tolerance));
     let closest = Infinity;
     let sinceImproved = 0;
     for (let i = 0; i < maxSteps; i++) {
@@ -517,7 +585,7 @@ const qa: QA = {
       const dx = tx - p.x;
       const dz = tz - p.z;
       const d = Math.hypot(dx, dz);
-      if (d < 0.7) { player.setProbeWish(null); return true; }
+      if (d < arrival) { player.setProbeWish(null); return true; }
       // bail early once it is clearly wedged rather than burning the whole budget
       if (d < closest - 0.02) { closest = d; sinceImproved = 0; }
       else if (++sinceImproved > 120) break;
@@ -552,6 +620,9 @@ const qa: QA = {
 };
 
 (window as unknown as { __NT: QA }).__NT = qa;
+// Assembly can finish before the asynchronous GPU device does. A capture must
+// never mistake that interval for a rendered, usable scene.
+void world.backendReady.then(() => { qa.ready = true; }, () => { /* world reports backend failure */ });
 // The match's QA surface, additive and read-only: the integration proof drives
 // the REAL built page and reads the host's own snapshot through it, because a
 // proof that instantiates the modules itself is not evidence that the shipped

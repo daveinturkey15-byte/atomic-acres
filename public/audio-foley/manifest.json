@@ -1,0 +1,340 @@
+{
+  "pack": "recorded-foley",
+  "sources": {
+    "footsteps_page": "https://opengameart.org/content/fantozzis-footsteps-grasssand-stone",
+    "footsteps_archive": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+    "footsteps_archive_sha256": "415d360e0911c1c1c5355ee94023b772e6f4044f59b9b580610e7dbffd1840fd",
+    "footsteps_archive_bytes": 476363,
+    "footsteps_author": "Fantozzi (recordist), submitted/sliced by qubodup",
+    "reloads_page": "https://opengameart.org/content/gun-reload-sounds",
+    "reload_files": {
+      "gunreload1.wav": {
+        "url": "https://opengameart.org/sites/default/files/gunreload1.wav",
+        "sha256": "685cac6a184e3cc3ec09a25b6ddb1d6feffd86d469778f339aa423d384035c50",
+        "bytes": 278572
+      },
+      "assaultriflereload1_0.wav": {
+        "url": "https://opengameart.org/sites/default/files/assaultriflereload1_0.wav",
+        "sha256": "efb2d724d634eabe6ba8d3065686abca848bb7497d4d43a5e4aed5e5ea23016f",
+        "bytes": 274476
+      },
+      "shotguncock_0.wav": {
+        "url": "https://opengameart.org/sites/default/files/shotguncock_0.wav",
+        "sha256": "33e007321ba83301c861aef573f2c40b70bc62f8f24c0164877e6dd123e24371",
+        "bytes": 83628
+      }
+    },
+    "reload_author": "SpringySpringo (recorded airsoft mechanisms)",
+    "license": "CC0 1.0 Universal (public domain)",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/"
+  },
+  "transform": "mono (L+R)/2 -> trim (onset-5ms; steps full tail, reload-start 0.60s fixed, reload-end EOF-capped 0.65s) -> no resample (native 44.1k) -> biquad HP 80Hz Q0.7071 -> 2ms raised-cosine attack + 20ms raised-cosine tail -> peak-normalize -3dBFS steps / -2dBFS mechanisms -> PCM16",
+  "tool_versions": {
+    "ffmpeg": "ffmpeg version 8.1.1-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+  },
+  "format": "44100Hz mono PCM16 WAV",
+  "surface_mapping": {
+    "hard": "Stone (page: Stone suits most hard surfaces)",
+    "grass": "Sand-as-grass (page: Sand sounds like grass too)",
+    "gravel": "APPROXIMATION ONLY: Stone takes distinct from hard's; source pack contains no gravel recording"
+  },
+  "budgets": {
+    "each_step_s_max": 0.6,
+    "each_mech_s_max": 0.7,
+    "steps_peak_dbfs_max": -3.0,
+    "mech_peak_dbfs_max": -2.0,
+    "total_bytes_max": 1572864,
+    "audition_bytes_max": 1048576
+  },
+  "files": {
+    "rec-step-hard-a": {
+      "file": "rec-step-hard-a.wav",
+      "role": "hard: Stone, generic hard surface per page",
+      "source_archive": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+      "source_member": "Fantozzi-footsteps/flac/Fantozzi-StoneL1.flac",
+      "source_sha256": "7cfa4a2f500ae2bd19a961022296611d837c34ca2e556fe68deb692388f49971",
+      "source_stream": {
+        "codec_name": "flac",
+        "sample_rate": "44100",
+        "channels": 2,
+        "bits_per_sample": 0,
+        "bits_per_raw_sample": "16"
+      },
+      "source_clip_ge_fullscale": {
+        "L": 0,
+        "R": 0
+      },
+      "trim_start_s": 0.0,
+      "trim_start_samples": 0,
+      "onset_s": 0.002336,
+      "trim_window_s": 0.372902,
+      "duration_s": 0.372902,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -23.407,
+      "dc": 5.1e-07,
+      "sha256": "2f7e1cca0caa4e5970820dca16c29be204b06ded1f3e00d40818c9eff77d892b",
+      "bytes": 32934
+    },
+    "rec-step-hard-b": {
+      "file": "rec-step-hard-b.wav",
+      "role": "hard: Stone, generic hard surface per page",
+      "source_archive": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+      "source_member": "Fantozzi-footsteps/flac/Fantozzi-StoneR1.flac",
+      "source_sha256": "7073bddd2e3ba432e15a83844180c0ebc52835c2c6bab0fa902ee5952499c729",
+      "source_stream": {
+        "codec_name": "flac",
+        "sample_rate": "44100",
+        "channels": 2,
+        "bits_per_sample": 0,
+        "bits_per_raw_sample": "16"
+      },
+      "source_clip_ge_fullscale": {
+        "L": 0,
+        "R": 0
+      },
+      "trim_start_s": 0.0,
+      "trim_start_samples": 0,
+      "onset_s": 0.002109,
+      "trim_window_s": 0.356667,
+      "duration_s": 0.356667,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -24.197,
+      "dc": 2.4e-07,
+      "sha256": "73a4f8c6b09f899b505ff2998f9aa4ed45ca029ce244edfb827892b60225449d",
+      "bytes": 31502
+    },
+    "rec-step-grass-a": {
+      "file": "rec-step-grass-a.wav",
+      "role": "grass: Sand-as-grass per page note",
+      "source_archive": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+      "source_member": "Fantozzi-footsteps/flac/Fantozzi-SandL1.flac",
+      "source_sha256": "93a2630579a82507e3c6ceab9b012f71a50cf8922f4beadb14057dcc0636b099",
+      "source_stream": {
+        "codec_name": "flac",
+        "sample_rate": "44100",
+        "channels": 2,
+        "bits_per_sample": 0,
+        "bits_per_raw_sample": "16"
+      },
+      "source_clip_ge_fullscale": {
+        "L": 0,
+        "R": 0
+      },
+      "trim_start_s": 0.0,
+      "trim_start_samples": 0,
+      "onset_s": 0.003333,
+      "trim_window_s": 0.44254,
+      "duration_s": 0.44254,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -27.516,
+      "dc": 1.4e-07,
+      "sha256": "e006944d162a650dfeddda018a41c1b2a79a1b83e647fa40dc44a243c2745004",
+      "bytes": 39076
+    },
+    "rec-step-grass-b": {
+      "file": "rec-step-grass-b.wav",
+      "role": "grass: Sand-as-grass per page note",
+      "source_archive": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+      "source_member": "Fantozzi-footsteps/flac/Fantozzi-SandR1.flac",
+      "source_sha256": "3514d12f3369297233e915814364ed02902003d4103b010371c2ac15c2aa48fe",
+      "source_stream": {
+        "codec_name": "flac",
+        "sample_rate": "44100",
+        "channels": 2,
+        "bits_per_sample": 0,
+        "bits_per_raw_sample": "16"
+      },
+      "source_clip_ge_fullscale": {
+        "L": 0,
+        "R": 0
+      },
+      "trim_start_s": 0.003424,
+      "trim_start_samples": 151,
+      "onset_s": 0.008413,
+      "trim_window_s": 0.402336,
+      "duration_s": 0.402336,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -28.705,
+      "dc": 1.9e-07,
+      "sha256": "5afcc1b2a9bf7b77c5263887596b03a139bf38093940639757d6d9fc5631f994",
+      "bytes": 35530
+    },
+    "rec-step-gravel-a": {
+      "file": "rec-step-gravel-a.wav",
+      "role": "APPROXIMATION: Stone for gravel; no true gravel in pack",
+      "source_archive": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+      "source_member": "Fantozzi-footsteps/flac/Fantozzi-StoneL2.flac",
+      "source_sha256": "dcbd6be44af4b3206daa36c5398035ca527bb057c51ce00482b9ca6356be2468",
+      "source_stream": {
+        "codec_name": "flac",
+        "sample_rate": "44100",
+        "channels": 2,
+        "bits_per_sample": 0,
+        "bits_per_raw_sample": "16"
+      },
+      "source_clip_ge_fullscale": {
+        "L": 0,
+        "R": 0
+      },
+      "trim_start_s": 0.0,
+      "trim_start_samples": 0,
+      "onset_s": 0.004943,
+      "trim_window_s": 0.331633,
+      "duration_s": 0.331633,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -22.669,
+      "dc": 3.2e-07,
+      "sha256": "675a6cb81adcc125f7fdd71beda93964228caf99f364a0a966bd8ba026f36f13",
+      "bytes": 29294
+    },
+    "rec-step-gravel-b": {
+      "file": "rec-step-gravel-b.wav",
+      "role": "APPROXIMATION: Stone for gravel; no true gravel in pack",
+      "source_archive": "https://opengameart.org/sites/default/files/Fantozzi-footsteps.7z",
+      "source_member": "Fantozzi-footsteps/flac/Fantozzi-StoneR2.flac",
+      "source_sha256": "d66330b4a32e93b0dfdcb8c53667654de8702a0fa48b2d06c48d94dc66b3e1cc",
+      "source_stream": {
+        "codec_name": "flac",
+        "sample_rate": "44100",
+        "channels": 2,
+        "bits_per_sample": 0,
+        "bits_per_raw_sample": "16"
+      },
+      "source_clip_ge_fullscale": {
+        "L": 0,
+        "R": 0
+      },
+      "trim_start_s": 0.005397,
+      "trim_start_samples": 238,
+      "onset_s": 0.010385,
+      "trim_window_s": 0.317211,
+      "duration_s": 0.317211,
+      "peak_dbfs": -3.0,
+      "rms_dbfs": -21.741,
+      "dc": 1.79e-06,
+      "sha256": "3d0719d8e21359db22b596a01abd51f8db0ce4254d6e69ac6f993fb2222e0d97",
+      "bytes": 28022
+    },
+    "rec-reload-start": {
+      "file": "rec-reload-start.wav",
+      "role": "early mechanism cluster of gunreload1.wav (magazine/mechanism release region)",
+      "source_file": "gunreload1.wav",
+      "source_sha256": "685cac6a184e3cc3ec09a25b6ddb1d6feffd86d469778f339aa423d384035c50",
+      "source_stream": {
+        "codec_name": "pcm_s16le",
+        "sample_rate": "44100",
+        "channels": 2,
+        "bits_per_sample": 16
+      },
+      "source_clip_ge_fullscale": {
+        "L": 250,
+        "R": 229
+      },
+      "trim_start_s": 0.065374,
+      "trim_start_samples": 2883,
+      "onset_s": 0.070363,
+      "anchor_s": 0.0,
+      "trim_window_s": 0.6,
+      "duration_s": 0.6,
+      "peak_dbfs": -2.0,
+      "rms_dbfs": -28.862,
+      "dc": 2.3e-07,
+      "sha256": "0e3098de6b7495fb9f69129cfc666fe48dbb641c716cd02103362899847aefd1",
+      "bytes": 52964
+    },
+    "rec-reload-end": {
+      "file": "rec-reload-end.wav",
+      "role": "late double-hit of assaultriflereload1_0.wav (seat/bolt region)",
+      "source_file": "assaultriflereload1_0.wav",
+      "source_sha256": "efb2d724d634eabe6ba8d3065686abca848bb7497d4d43a5e4aed5e5ea23016f",
+      "source_stream": {
+        "codec_name": "pcm_s16le",
+        "sample_rate": "44100",
+        "channels": 2,
+        "bits_per_sample": 16
+      },
+      "source_clip_ge_fullscale": {
+        "L": 20,
+        "R": 22
+      },
+      "trim_start_s": 1.040204,
+      "trim_start_samples": 45873,
+      "onset_s": 1.045193,
+      "anchor_s": 0.9,
+      "trim_window_s": 0.515533,
+      "duration_s": 0.515533,
+      "peak_dbfs": -2.0,
+      "rms_dbfs": -22.098,
+      "dc": 5.2e-07,
+      "sha256": "e559a9c7ede44efc92ad65088ae6b974cf7083447715828b154a83fd43f03056",
+      "bytes": 45514
+    }
+  },
+  "inspected_not_shipped": {
+    "file": "shotguncock_0.wav",
+    "reason_not_shipped": "single merged cock transient, recorded hot with DC offset; the two shipped cues already give distinct start/end mechanics without declipping invented data",
+    "source_sha256": "33e007321ba83301c861aef573f2c40b70bc62f8f24c0164877e6dd123e24371",
+    "duration_s": 0.473832,
+    "peak_dbfs": 0.0,
+    "rms_dbfs": -11.779,
+    "dc": -0.0151,
+    "clip_ge_fullscale": {
+      "L": 375,
+      "R": 383
+    }
+  },
+  "audition": {
+    "file": "docs/audio-auditions/recorded-foley.wav",
+    "spans_s": {
+      "rec-step-hard-a": [
+        0.0,
+        0.373
+      ],
+      "rec-step-hard-b": [
+        0.623,
+        0.98
+      ],
+      "rec-step-grass-a": [
+        1.23,
+        1.672
+      ],
+      "rec-step-grass-b": [
+        1.922,
+        2.324
+      ],
+      "rec-step-gravel-a": [
+        2.574,
+        2.906
+      ],
+      "rec-step-gravel-b": [
+        3.156,
+        3.473
+      ],
+      "rec-reload-start": [
+        3.723,
+        4.323
+      ],
+      "rec-reload-end": [
+        4.573,
+        5.089
+      ]
+    },
+    "order": [
+      "rec-step-hard-a",
+      "rec-step-hard-b",
+      "rec-step-grass-a",
+      "rec-step-grass-b",
+      "rec-step-gravel-a",
+      "rec-step-gravel-b",
+      "rec-reload-start",
+      "rec-reload-end"
+    ],
+    "duration_s": 5.088821,
+    "peak_dbfs": -2.0,
+    "rms_dbfs": -26.18,
+    "sha256": "463f8f202f07dc6c3e5f166810be4382c76d83da7e3678555a6d0dc901552ff8",
+    "bytes": 448878
+  },
+  "total_bank_bytes": 294836,
+  "quality": "OPEN: author did not audition by ear; metrics only. Root listens before wiring."
+}

@@ -1,0 +1,318 @@
+{
+  "capturedAt": "2026-09-19T05:58:44.601Z",
+  "attempt": 1,
+  "gitRev": "3067718",
+  "bundle": {
+    "asset": "index-DCMmJGBJ.js",
+    "sha256": "14aa8503b0b0"
+  },
+  "bundleOnDiskAtEnd": {
+    "asset": "index-DCMmJGBJ.js",
+    "sha256": "14aa8503b0b0"
+  },
+  "bundleChangedOnDiskDuringRun": false,
+  "url": "http://localhost:4188/",
+  "viewport": "1600x900",
+  "renderer": "real Chrome over CDP, WebGPU, post chain (default route)",
+  "mathRandomSeed": 2654435769,
+  "seededHow": "page.addInitScript mulberry32 before any page script",
+  "frames": [
+    {
+      "id": "station-aerial",
+      "set": "station",
+      "file": "sources/station-aerial.png",
+      "sha256": "32c0e2eef9637072bca14a36a926303573c498d987004aab6afc2fad19e83069",
+      "pose": {
+        "pos": [
+          -4,
+          82,
+          52
+        ],
+        "yaw": 0.13962634015954636,
+        "pitch": -0.9948376736367679,
+        "fov": 58
+      },
+      "viewmodel": false,
+      "ref": "NT02 Nuketown_2025_Aerial_View_BOII.jpg",
+      "meanLuma": 147.7,
+      "drawCalls": 1138,
+      "renders": 24
+    },
+    {
+      "id": "station-yardOrange",
+      "set": "station",
+      "file": "sources/station-yardOrange.png",
+      "sha256": "67c56f9a0ad8a9994ff3f62d95610a0374df612f64d7d48d808fb0eb472ed3dc",
+      "pose": {
+        "pos": [
+          10,
+          8.5,
+          -38
+        ],
+        "yaw": 2.609267231731523,
+        "pitch": -0.24434609527920614,
+        "fov": 62
+      },
+      "viewmodel": false,
+      "ref": "NT03 Nuketown_2025_BOII.jpg",
+      "meanLuma": 146.2,
+      "drawCalls": 1133,
+      "renders": 24
+    },
+    {
+      "id": "station-yardWhite",
+      "set": "station",
+      "file": "sources/station-yardWhite.png",
+      "sha256": "06428b79e2b75813a462da60a6395821dcb899cfd7758e3d6fe279184ba62ae6",
+      "pose": {
+        "pos": [
+          -10,
+          8.5,
+          38
+        ],
+        "yaw": -0.5323254218582705,
+        "pitch": -0.24434609527920614,
+        "fov": 62
+      },
+      "viewmodel": false,
+      "ref": "NT02 Nuketown_2025_Aerial_View_BOII.jpg",
+      "meanLuma": 118.3,
+      "drawCalls": 1066,
+      "renders": 24
+    },
+    {
+      "id": "station-streetElevation",
+      "set": "station",
+      "file": "sources/station-streetElevation.png",
+      "sha256": "0d86c3e01fcf5bf57e8b390eddef85b8922b0935740c0e45a72e33296e1b86c0",
+      "pose": {
+        "pos": [
+          -8,
+          1.68,
+          -8.5
+        ],
+        "yaw": 0,
+        "pitch": 0.06981317007977318,
+        "fov": 70
+      },
+      "viewmodel": false,
+      "ref": "NT04 Nuketown_2025_Sniper_BOII.jpg",
+      "meanLuma": 97.8,
+      "drawCalls": 828,
+      "renders": 24
+    },
+    {
+      "id": "station-plaza",
+      "set": "station",
+      "file": "sources/station-plaza.png",
+      "sha256": "a62722682c6b5bf2469aae594a0a7d017bf85e46cbcdbd419e895c829ae5b03c",
+      "pose": {
+        "pos": [
+          -14,
+          2.6,
+          -1
+        ],
+        "yaw": 1.5707963267948966,
+        "pitch": -0.017453292519943295,
+        "fov": 72
+      },
+      "viewmodel": false,
+      "ref": "NT05 Nuketown_2025_Load_Screen_BOII.png",
+      "meanLuma": 120.9,
+      "drawCalls": 702,
+      "renders": 24
+    },
+    {
+      "id": "station-turningHead",
+      "set": "station",
+      "file": "sources/station-turningHead.png",
+      "sha256": "c04bf1f04a9edd28a00fbb673af45488ef4665d36f2196128c42af5382e19ce0",
+      "pose": {
+        "pos": [
+          -14,
+          2.6,
+          1
+        ],
+        "yaw": -1.5707963267948966,
+        "pitch": -0.017453292519943295,
+        "fov": 72
+      },
+      "viewmodel": false,
+      "ref": "NT02 Nuketown_2025_Aerial_View_BOII.jpg",
+      "meanLuma": 116.3,
+      "drawCalls": 875,
+      "renders": 24
+    },
+    {
+      "id": "station-spawnA",
+      "set": "station",
+      "file": "sources/station-spawnA.png",
+      "sha256": "820978e13b85a2c62a26eb694b4066e5f0a4469038679695189a6d2e118f603a",
+      "pose": {
+        "pos": [
+          -4,
+          1.68,
+          -34.3
+        ],
+        "yaw": 3.141592653589793,
+        "pitch": 0,
+        "fov": 72
+      },
+      "viewmodel": false,
+      "ref": null,
+      "meanLuma": 135.8,
+      "drawCalls": 1125,
+      "renders": 24
+    },
+    {
+      "id": "station-spawnB",
+      "set": "station",
+      "file": "sources/station-spawnB.png",
+      "sha256": "011f8ed25ac9d9e29f923053365df89fa8b574bb8b0e07ee8d685b2fcb10facf",
+      "pose": {
+        "pos": [
+          1.2,
+          1.68,
+          34.3
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "fov": 72
+      },
+      "viewmodel": false,
+      "ref": null,
+      "meanLuma": 107,
+      "drawCalls": 1123,
+      "renders": 24
+    },
+    {
+      "id": "station-midStreet",
+      "set": "station",
+      "file": "sources/station-midStreet.png",
+      "sha256": "f4d206e9b96012f04f4b21da7b4fa9ca94aacf2d7df6892292a0fa1d16715c7e",
+      "pose": {
+        "pos": [
+          0,
+          1.68,
+          0
+        ],
+        "yaw": 3.141592653589793,
+        "pitch": 0,
+        "fov": 72
+      },
+      "viewmodel": false,
+      "ref": null,
+      "meanLuma": 90.8,
+      "drawCalls": 753,
+      "renders": 24
+    },
+    {
+      "id": "station-interiorOrange",
+      "set": "station",
+      "file": "sources/station-interiorOrange.png",
+      "sha256": "6b2415554aae8b7e2cd2380acf709adea5f3831919c9534167c502e045f74e3e",
+      "pose": {
+        "pos": [
+          0,
+          1.68,
+          -18.5
+        ],
+        "yaw": 3.141592653589793,
+        "pitch": 0,
+        "fov": 72
+      },
+      "viewmodel": false,
+      "ref": null,
+      "meanLuma": 105.4,
+      "drawCalls": 905,
+      "renders": 24
+    },
+    {
+      "id": "playcap-spawnA",
+      "set": "playcap",
+      "file": "sources/playcap-spawnA.png",
+      "sha256": "bf21b70c5513c3898446e1f69900bf31dd2e94fd4192d41f5d99442ccddd51fb",
+      "pose": {
+        "pos": [
+          -4,
+          0,
+          -34.3
+        ],
+        "yaw": 3.141592653589793,
+        "pitch": 0,
+        "fov": null
+      },
+      "viewmodel": true,
+      "ref": null,
+      "meanLuma": 130.1,
+      "drawCalls": 1162,
+      "renders": null
+    },
+    {
+      "id": "playcap-circle",
+      "set": "playcap",
+      "file": "sources/playcap-circle.png",
+      "sha256": "5dc1c0618ff801c811361338843723e63ff46ada8fa96f5660d49521057447da",
+      "pose": {
+        "pos": [
+          -6,
+          0,
+          0
+        ],
+        "yaw": -1.5707963267948966,
+        "pitch": 0,
+        "fov": null
+      },
+      "viewmodel": true,
+      "ref": null,
+      "meanLuma": 98.1,
+      "drawCalls": 772,
+      "renders": null
+    },
+    {
+      "id": "playcap-spawnB",
+      "set": "playcap",
+      "file": "sources/playcap-spawnB.png",
+      "sha256": "ba73255f811a10ec56acd91a94d583c8aed8cd3be0f2e14f7be125034ed514ff",
+      "pose": {
+        "pos": [
+          1.2,
+          0,
+          34.3
+        ],
+        "yaw": 0,
+        "pitch": 0,
+        "fov": null
+      },
+      "viewmodel": true,
+      "ref": null,
+      "meanLuma": 99.8,
+      "drawCalls": 1159,
+      "renders": null
+    },
+    {
+      "id": "playcap-orangeInside",
+      "set": "playcap",
+      "file": "sources/playcap-orangeInside.png",
+      "sha256": "806f5f69fdab0afd309f3429f61b3d5418ec42e09f9cd7012a732401697aa8e0",
+      "pose": {
+        "pos": [
+          0.8,
+          0,
+          -20.5
+        ],
+        "yaw": 3.141592653589793,
+        "pitch": 0,
+        "fov": null
+      },
+      "viewmodel": true,
+      "ref": null,
+      "meanLuma": 96.4,
+      "drawCalls": 974,
+      "renders": null
+    }
+  ],
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

@@ -29,6 +29,7 @@ import type { DamageInput, DamageResult } from './damage';
 import type { SpawnContext, SpawnSelection } from './spawns';
 import type { StreakRuntimePort } from './host-streaks';
 import type { OrdnanceSnapshot } from './host-ordnance';
+import type { PlayerStance } from '../net/room-core';
 
 /**
  * `StreakRuntimePort` MOVED to `./host-streaks` by the integration lane, and
@@ -100,6 +101,7 @@ export interface ActorSnapshot {
   readonly armed: string | null;
   /** Host time the flash blindness ends; 0 when not blinded. */
   readonly blindUntil: number;
+  readonly stance: PlayerStance;
 }
 
 /** Counters, for a harness that needs a number rather than an adjective. */

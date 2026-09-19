@@ -1,0 +1,37 @@
+[
+  {
+    "id": "station-aerial",
+    "attempt": 1,
+    "agyExit": 0,
+    "seconds": 75.6,
+    "stdoutTail": "root agent idle; waiting up to 5s for 1 background task(s)\nI'm searching for `PROMPT.txt` right now to read its contents and follow its instructions. I'll proceed as soon as it's found!\nterminating 1 background task(s) on exit",
+    "result": "no target.png"
+  },
+  {
+    "id": "station-aerial",
+    "attempt": 2,
+    "agyExit": 0,
+    "seconds": 152.4,
+    "stdoutTail": "root agent idle; waiting up to 5s for 1 background task(s)\nDONE target.png\nterminating 1 background task(s) on exit",
+    "fidelity": {
+      "edgeOverlap": 0.797,
+      "srcEdgesFound": 0.819,
+      "tgtEdgesFound": 0.776,
+      "movedBlocks": [],
+      "blockGrid": "6x8",
+      "method": "blur3+sobel, top10% edges, tol 2px @800x450",
+      "ssim": 0.634,
+      "sourceSize": [
+        1600,
+        900
+      ],
+      "targetSize": [
+        1376,
+        768
+      ],
+      "pass": true,
+      "reason": ""
+    },
+    "result": "accepted"
+  }
+]

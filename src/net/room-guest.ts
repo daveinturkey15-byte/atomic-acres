@@ -32,7 +32,10 @@ import {
   type ShotMsg,
   type StreakIntentMsg,
 } from './protocol';
-import { cleanName, createPose, integrateInput, roomClosed, roomOpened, type Pose, type TimerId } from './room-core';
+import {
+  cleanName, createPose, integrateInput, roomClosed, roomOpened,
+  type PlayerStance, type Pose, type TimerId,
+} from './room-core';
 import { SnapshotRing, TICK_DT, reconcileSelf } from './snapshot';
 import type { PeerId, Transport } from './transport';
 
@@ -42,6 +45,8 @@ export interface GuestOptions {
   now?: () => number;
   onChange?: () => void;
   joinTimeoutMs?: number;
+  /** The current menu primary, read when hello/ready is sent. */
+  localPrimaryId?: string | (() => string | undefined);
   /** A seat this guest held before: resumed by the host inside the rejoin grace. */
   resume?: ResumeClaim | null;
 }
@@ -57,7 +62,7 @@ export interface SelfAck {
 
 /** Game-tag message tags a guest forwards to its match driver. */
 const GAME_TAGS: ReadonlySet<string> = new Set([
-  'shot-reject', 'damage', 'kill', 'spawn', 'streak-state', 'match-state', 'ordnance',
+  'shot-reject', 'shot-fired', 'damage', 'kill', 'spawn', 'streak-state', 'match-state', 'ordnance',
 ]);
 
 export class GuestClient {
@@ -95,6 +100,7 @@ export class GuestClient {
   private joinAttempts = 0;
   private joinTimeoutMs = 5000;
   private readonly resume: ResumeClaim | null;
+  private readonly localPrimaryId: string | (() => string | undefined) | undefined;
   private disposed = false;
   private clockOffset = 0;
   private clockSamples = 0;
@@ -110,6 +116,7 @@ export class GuestClient {
     this.now = opts?.now ?? Date.now;
     this.onChange = opts?.onChange ?? (() => undefined);
     this.resume = opts?.resume ?? null;
+    this.localPrimaryId = opts?.localPrimaryId;
     roomOpened();
     this.diag.reset('guest');
     this.unsubscribe = transport.onMessage((from, msg) => this.handle(from, msg));
@@ -142,8 +149,10 @@ export class GuestClient {
   /** (Re)send the admission hello. No-op once the join has settled. */
   retryJoin(): void {
     if (this.disposed || this.state !== 'joining') return;
+    const primaryId = typeof this.localPrimaryId === 'function' ? this.localPrimaryId() : this.localPrimaryId;
     this.transport.send(this.hostPeer, {
       type: 'hello', code: this.joinCode, name: this.joinName, nonce: this.joinNonce,
+      ...(primaryId === undefined ? {} : { primaryId }),
       ...(this.resume === null ? {} : { resume: this.resume }),
     });
   }
@@ -175,15 +184,21 @@ export class GuestClient {
 
   setReady(ready: boolean): void {
     if (this.state !== 'lobby') return;
-    this.transport.send(this.hostPeer, { type: 'ready', ready });
+    const primaryId = typeof this.localPrimaryId === 'function' ? this.localPrimaryId() : this.localPrimaryId;
+    this.transport.send(this.hostPeer, {
+      type: 'ready', ready, ...(primaryId === undefined ? {} : { primaryId }),
+    });
   }
 
   /** Send one input sample AND predict it locally (the proof path). */
-  sendInput(mx: number, mz: number, yaw: number, pitch: number, fire: boolean, jump: boolean): void {
+  sendInput(
+    mx: number, mz: number, yaw: number, pitch: number, fire: boolean, jump: boolean,
+    stance: PlayerStance = 'stand', primaryId?: string,
+  ): void {
     if (this.state !== 'playing' && this.state !== 'starting') return;
     const seq = this.seq++;
     const sprint = fire && mz > 0.1;
-    integrateInput(this.self, mx, mz, yaw, sprint, TICK_DT);
+    integrateInput(this.self, mx, mz, yaw, sprint, TICK_DT, stance);
     const o = this.predHead * 4;
     this.predHist[o] = seq;
     this.predHist[o + 1] = this.self.x;
@@ -191,14 +206,19 @@ export class GuestClient {
     this.predHist[o + 3] = this.self.z;
     this.predHead = (this.predHead + 1) % 128;
     if (this.predCount < 128) this.predCount += 1;
-    this.transport.send(this.hostPeer, { type: 'input', seq, mx, mz, yaw, pitch, fire, jump });
+    this.transport.send(this.hostPeer, { type: 'input', seq, mx, mz, yaw, pitch, fire, jump, stance, primaryId });
   }
 
   /** Send one input sample with NO local prediction. Returns its seq, or -1. */
-  sendMove(mx: number, mz: number, yaw: number, pitch: number, sprint: boolean, fire: boolean): number {
+  sendMove(
+    mx: number, mz: number, yaw: number, pitch: number, sprint: boolean, fire: boolean,
+    stance: PlayerStance = 'stand', primaryId?: string,
+  ): number {
     if (this.state !== 'playing' && this.state !== 'starting') return -1;
     const seq = this.seq++;
-    this.transport.send(this.hostPeer, { type: 'input', seq, mx, mz, yaw, pitch, fire, jump: false, sprint });
+    this.transport.send(this.hostPeer, {
+      type: 'input', seq, mx, mz, yaw, pitch, fire, jump: false, sprint, stance, primaryId,
+    });
     return seq;
   }
 
@@ -206,10 +226,16 @@ export class GuestClient {
    * `sendMove` with the interval the sample covers and the body's height, so
    * the host integrates exactly what the controller walked. Returns the seq.
    */
-  sendMoveAt(mx: number, mz: number, yaw: number, pitch: number, sprint: boolean, dt: number, y: number): number {
+  sendMoveAt(
+    mx: number, mz: number, yaw: number, pitch: number, sprint: boolean, dt: number, y: number,
+    stance: PlayerStance = 'stand', primaryId?: string,
+  ): number {
     if (this.state !== 'playing' && this.state !== 'starting') return -1;
     const seq = this.seq++;
-    this.transport.send(this.hostPeer, { type: 'input', seq, mx, mz, yaw, pitch, fire: false, jump: false, sprint, dt, y });
+    this.transport.send(this.hostPeer, {
+      type: 'input', seq, mx, mz, yaw, pitch, fire: false, jump: false, sprint, dt, y, stance,
+      primaryId,
+    });
     return seq;
   }
 
@@ -389,7 +415,7 @@ export class GuestClient {
         ring = new SnapshotRing();
         this.remotes.set(p.id, ring);
       }
-      ring.push({ tick, hostNow, x: p.x, y: p.y, z: p.z, yaw: p.yaw, ack: p.ack });
+      ring.push({ tick, hostNow, x: p.x, y: p.y, z: p.z, yaw: p.yaw, ack: p.ack, stance: p.stance });
     }
     this.stateHandler?.(players, hostNow);
     this.onChange();

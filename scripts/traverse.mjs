@@ -7,22 +7,20 @@
  *
  *   node scripts/traverse.mjs
  */
-import { chromium } from 'playwright';
+import { stockBrowser } from './lib/stock-browser.mjs';
 import { usePreview } from './lib/preview.mjs';
-import { join, dirname } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-
-
-
 // ONE shared preview server for the whole repo - see lib/preview.mjs.
 // Previously every harness spawned its own and killed only the vite parent,
 // leaving esbuild behind; 52 of them accumulated in three hours.
 const { url } = await usePreview();
 
-const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 800, height: 600 } });
+const owned = await stockBrowser('traverse');
+const { page } = owned;
+const errors = [];
+page.on('pageerror', e => errors.push(String(e)));
+page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+try {
+await page.setViewportSize({ width: 800, height: 600 });
 await page.goto(url, { waitUntil: 'load', timeout: 90000 });
 await page.waitForFunction(() => window.__NT && window.__NT.ready === true, null, { timeout: 180000 });
 await page.waitForTimeout(600);
@@ -132,7 +130,7 @@ const verge = await page.evaluate(() => {
 // the one invariant, read from the running scene rather than re-derived here
 const hand = await page.evaluate(() => window.__NT.stats().handedness);
 
-await browser.close();
+const backend = await page.evaluate(() => window.__NTPOST?.backend);
 
 let bad = 0;
 console.log('[traverse] routes:');
@@ -171,4 +169,7 @@ for (const [k, spans] of Object.entries(verge)) {
 
 console.log('\n[traverse] ' + (results.length - bad) + '/' + results.length
   + ' routes passed;  ' + (4 - faceless) + '/4 house faces enterable');
-process.exit(bad || faceless || walled || !handOk ? 1 : 0);
+console.log('[traverse] backend=' + backend + ' runtimeErrors=' + errors.length);
+if (errors.length) console.error(errors);
+process.exitCode = bad || faceless || walled || !handOk || backend !== 'webgpu' || errors.length ? 1 : 0;
+} finally { await owned.close(); }

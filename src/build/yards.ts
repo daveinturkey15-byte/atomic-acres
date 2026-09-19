@@ -46,6 +46,7 @@ import {
 // flight stands on. This module imports them; neither of them may import this one.
 import { ORANGE_STAIR_FOOTPRINT } from './orange-house';
 import { WHITE_STAIR_FOOTPRINT } from './white-house';
+import { buildVegetationTrees, type TreeSpec } from './vegetation-tree';
 
 // ---------------------------------------------------------------- derived frame
 const YARD_W = YARD_X_MAX - YARD_X_MIN;
@@ -470,18 +471,19 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   }
 
   // ---------------------------------------------------------------- trees
+  const treeSpecs: TreeSpec[] = [];
   function tree(x: number, z: number): void {
     const s = rr(0.85, 1.25);
     const th = rr(2.5, 3.5) * s, tr = 0.27 * s;
-    C.put(mat.bark, tr * 2, th, tr * 2, x, th / 2, z);
-    C.put(mat.bark, tr * 2.9, 0.6 * s, tr * 2.9, x, 0.26 * s, z);      // root flare
     const R = rr(2.0, 2.7) * s;
-    S.put(mat.leaf, R * 2, R * 1.75, R * 2, x, th + R * 0.5, z);
+    const branches: TreeSpec['branches'][number][] = [];
     for (let i = 0; i < 3; i++) {
       const a = rand() * Math.PI * 2, d = R * rr(0.45, 0.78), q = R * rr(0.5, 0.78);
-      S.put(mat.leaf, q * 2, q * 1.8, q * 2, x + Math.cos(a) * d, th + R * rr(0.25, 0.85),
-        z + Math.sin(a) * d);
+      branches.push({ angle: a, distance: d, lobe: q, lift: rr(0.25, 0.85) });
     }
+    treeSpecs.push({ x, z, scale: s, height: th, trunkRadius: tr, canopyRadius: R, branches });
+    // Keep this collider expression byte-for-byte equivalent to the pre-canary
+    // tree. The canary is presentation geometry only; gameplay cover is unchanged.
     colliders.push(aabbSlab(x, 0, z, tr * 2.6, th, tr * 2.6));
   }
 
@@ -499,6 +501,7 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     [hx(1.35), fz(ORANGE, 0.42)], [hx(-0.55), fz(ORANGE, 0.60)],
     [hx(-1.35), fz(WHITE, 0.42)], [hx(0.55), fz(WHITE, 0.60)],
   ]) tree(tx, tz);
+  g.add(buildVegetationTrees({ bark: mat.bark, leaf: mat.leaf, leafCards: mat.leafCards }, treeSpecs).group);
 
   // ---------------------------------------------------------------- street lamps
   function lamp(x: number, z: number, dx: number, dz: number): void {

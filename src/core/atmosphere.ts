@@ -82,6 +82,7 @@ import type { Node, TextureNode, UniformNode, UniformArrayNode, WebGPURenderer }
 import { PAL } from './palette';
 import { BOUND_X_MIN, BOUND_X_MAX, BOUND_Z } from './layout';
 import { RAIN_STREAKS, buildRainMaterial, setWetness } from './materials';
+import { RainShelter } from './rain-shelter';
 
 type N = ShaderNodeObject<Node>;
 /** @types/three's ShaderNodeObject<UniformNode<T>> is not assignable to ShaderNodeObject<Node>
@@ -836,6 +837,9 @@ export interface Atmosphere {
   weather(): WeatherName;
   set(tod: TodName): boolean;
   setWeather(w: WeatherName): boolean;
+  /** Configure once after static builders; never traverses geometry per frame. */
+  setRainShelter(roots: readonly THREE.Object3D[]): void;
+  readonly rainShelter: RainShelter;
   /** Per frame, from world.render(). Host time in ms (performance.now()). */
   update(now: number): void;
   smoke: SmokeAdapter;
@@ -849,7 +853,7 @@ export interface Atmosphere {
   dispose(): void;
 }
 
-function makeRain(u: AtmosphereUniforms): THREE.Mesh {
+function makeRain(u: AtmosphereUniforms, shelter: RainShelter): THREE.Mesh {
   const base = new THREE.PlaneGeometry(1, 1);
   const geo = new THREE.InstancedBufferGeometry();
   geo.index = base.index;
@@ -857,7 +861,7 @@ function makeRain(u: AtmosphereUniforms): THREE.Mesh {
   geo.setAttribute('uv', base.getAttribute('uv'));
   geo.instanceCount = RAIN_STREAKS;
   geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6);
-  const mat = buildRainMaterial({ wind: u.wind, amount: u.rainAmount, tint: u.rainTint });
+  const mat = buildRainMaterial({ wind: u.wind, amount: u.rainAmount, tint: u.rainTint, shelter });
   const mesh = new THREE.Mesh(geo, mat);
   mesh.name = 'rain';
   mesh.frustumCulled = false;
@@ -883,7 +887,8 @@ export function createAtmosphere(rig: AtmosphereRig, initialTod: TodName = 'noon
   let weather: WeatherName = initialWeather;
   let lastBakeMs = 0;
   const smoke = new SmokeAdapter(u);
-  const rain = makeRain(u);
+  const rainShelter = new RainShelter();
+  const rain = makeRain(u, rainShelter);
   rig.scene.add(rain);
   const envData = rig.envTex.image.data as Uint8Array;
   const sc = rig.sun.shadow.camera;
@@ -970,6 +975,8 @@ export function createAtmosphere(rig: AtmosphereRig, initialTod: TodName = 'noon
       if (!(name in WEATHER)) return false;
       weather = name; apply(); return true;
     },
+    setRainShelter: roots => rainShelter.build(roots),
+    rainShelter,
     update(now) { smoke.update(now); },
     smoke,
     lightCount() {
@@ -984,6 +991,7 @@ export function createAtmosphere(rig: AtmosphereRig, initialTod: TodName = 'noon
       rig.scene.remove(rain);
       rain.geometry.dispose();
       (rain.material as THREE.Material).dispose();
+      rainShelter.dispose();
     },
   };
   installQA(api);
@@ -1038,6 +1046,7 @@ function installQA(api: Atmosphere): void {
       presets: TOD_NAMES,
       weathers: WEATHER_NAMES,
       lightCount: () => api.lightCount(),
+      rainShelter: (x: number, z: number) => ({ height: api.rainShelter.heightAt(x, z), ...api.rainShelter.stats() }),
       smoke: {
         test: (kind: 'grenade' | 'blast', x: number, y: number, z: number, r?: number, lifeMs?: number) => api.smoke.test(kind, x, y, z, r, lifeMs),
         clear: () => api.smoke.clear(),

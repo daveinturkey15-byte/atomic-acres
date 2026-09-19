@@ -33,6 +33,7 @@ import type { ShotClaim } from '../weapons/controller';
 import type { GameNetMessage, MatchStateMsg, PlayerSample } from './protocol';
 import type { GuestClient } from './room';
 import { createPose, intentFromVelocity, type Pose } from './room-core';
+import type { PlayerStance } from './room-core';
 import { INTERP_DELAY_MS, TICK_HZ } from './snapshot';
 import { localizeGameMessage } from './event-clock';
 
@@ -42,12 +43,16 @@ export const GUEST_SNAP_M = 1.0;
 /** Own-position history depth: [seq, x, z] triples. 64 ≈ 3.2 s at 20 Hz. */
 const HIST = 64;
 
-interface Body { id: ActorId; x: number; y: number; z: number; yaw: number; speed: number; alive: boolean; seen: number }
+interface Body {
+  id: ActorId; x: number; y: number; z: number; yaw: number; speed: number;
+  alive: boolean; stance: PlayerStance; seen: number;
+}
 
 export interface GuestDriverOptions {
   readonly ui: MatchUi;
   readonly instrument: SessionLog;
   readonly placeLocal?: (x: number, y: number, z: number, yaw: number) => void;
+  readonly localPrimaryId?: string | (() => string | undefined);
 }
 
 export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions): MatchDriver {
@@ -60,7 +65,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   let histHead = 0;
   let histCount = 0;
   const intent = { mx: 0, mz: 0, sprint: false };
-  const pose = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0 };
+  const pose = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, stance: 'stand' as PlayerStance };
   const lastPose = { x: 0, z: 0, at: 0, valid: false };
   let acc = 0;
   let last = 0;
@@ -75,6 +80,8 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   const scratch: Pose = createPose();
   const named = new Set<ActorId>();
   let frame = 0;
+  const primaryForLocal = (): string | undefined =>
+    typeof opts.localPrimaryId === 'function' ? opts.localPrimaryId() : opts.localPrimaryId;
 
   const pushNames = (): void => {
     const names: [string, string][] = [];
@@ -119,6 +126,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
       case 'shot-reject':
         record(msg.e);
         break;
+      case 'shot-fired':
+        record(msg.e);
+        break;
       case 'match-state':
         if (lastMatch !== null && lastMatch.phase === 'ended' && msg.phase !== 'ended') matches += 1;
         if (lastMatch === null) matches = 1;
@@ -148,7 +158,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   const body = (id: ActorId): Body => {
     let b = bodyById.get(id);
     if (b === undefined) {
-      b = { id, x: 0, y: 0, z: 0, yaw: 0, speed: 0, alive: true, seen: 0 };
+      b = { id, x: 0, y: 0, z: 0, yaw: 0, speed: 0, alive: true, stance: 'stand', seen: 0 };
       bodyById.set(id, b);
       bodies.push(b);
     }
@@ -159,13 +169,18 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   const sample = (now: number): void => {
     if (!lastPose.valid) {
       lastPose.x = pose.x; lastPose.z = pose.z; lastPose.at = now; lastPose.valid = true;
-      guest.sendMove(0, 0, pose.yaw, pose.pitch, false, false);
+      guest.sendMove(0, 0, pose.yaw, pose.pitch, false, false, pose.stance, primaryForLocal());
       return;
     }
     const dt = Math.max(1e-3, (now - lastPose.at) / 1000);
-    intentFromVelocity((pose.x - lastPose.x) / dt, (pose.z - lastPose.z) / dt, pose.yaw, intent);
+    intentFromVelocity(
+      (pose.x - lastPose.x) / dt, (pose.z - lastPose.z) / dt, pose.yaw, intent, pose.stance,
+    );
     lastPose.x = pose.x; lastPose.z = pose.z; lastPose.at = now;
-    const seq = guest.sendMoveAt(intent.mx, intent.mz, pose.yaw, pose.pitch, intent.sprint, dt, pose.y);
+    const seq = guest.sendMoveAt(
+      intent.mx, intent.mz, pose.yaw, pose.pitch, intent.sprint, dt, pose.y, pose.stance,
+      primaryForLocal(),
+    );
     if (seq < 0) return;
     const o = histHead * 3;
     hist[o] = seq; hist[o + 1] = pose.x; hist[o + 2] = pose.z;
@@ -218,9 +233,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
       guest.sendGame({ type: 'streak-intent', slot, toggle: false });
     },
 
-    tick(now, x, y, z, yaw, pitch): void {
+    tick(now, x, y, z, yaw, pitch, stance: PlayerStance = 'stand'): void {
       if (disposed) return;
-      pose.x = x; pose.y = y; pose.z = z; pose.yaw = yaw; pose.pitch = pitch;
+      pose.x = x; pose.y = y; pose.z = z; pose.yaw = yaw; pose.pitch = pitch; pose.stance = stance;
       frame += 1;
       if (last === 0) last = now;
       acc += Math.max(0, now - last);
@@ -245,6 +260,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
           scratch.x = p.x; scratch.y = p.y; scratch.z = p.z; scratch.yaw = p.yaw;
         }
         b.x = scratch.x; b.y = scratch.y; b.z = scratch.z; b.yaw = scratch.yaw;
+        b.stance = scratch.stance ?? p.stance ?? 'stand';
         b.alive = p.alive !== false;
         // Speed from the interpolated track at frame rate, smoothed: the rig's
         // walk cycle wants a level, not a 60 Hz square wave.

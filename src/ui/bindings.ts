@@ -16,8 +16,8 @@
  */
 
 export const ACTIONS = [
-  'forward', 'back', 'left', 'right', 'jump', 'sprint', 'crouch',
-  'fire', 'ads', 'reload', 'weapon1', 'weapon2', 'grenade', 'knife', 'use', 'scoreboard',
+  'forward', 'back', 'left', 'right', 'jump', 'sprint', 'crouch', 'prone',
+  'fire', 'ads', 'reload', 'weapon1', 'weapon2', 'grenade', 'tactical', 'knife', 'use', 'scoreboard',
 ] as const;
 export type Action = (typeof ACTIONS)[number];
 
@@ -37,13 +37,15 @@ export const ACTION_DEFS: readonly ActionDef[] = Object.freeze([
   { id: 'right', label: 'Strafe right', code: 'KeyD', rebindable: true, consumer: 'core/player.ts' },
   { id: 'jump', label: 'Jump', code: 'Space', rebindable: true, consumer: 'core/player.ts' },
   { id: 'sprint', label: 'Sprint', code: 'ShiftLeft', rebindable: true, consumer: 'core/player.ts' },
-  { id: 'crouch', label: 'Crouch', code: 'ControlLeft', rebindable: true, consumer: 'none' },
+  { id: 'crouch', label: 'Crouch (hold)', code: 'ControlLeft', rebindable: true, consumer: 'core/player.ts' },
+  { id: 'prone', label: 'Prone (toggle)', code: 'KeyZ', rebindable: true, consumer: 'core/player.ts' },
   { id: 'fire', label: 'Fire', code: 'Mouse0', rebindable: false, consumer: 'main.ts mousedown' },
   { id: 'ads', label: 'Aim down sights', code: 'Mouse2', rebindable: false, consumer: 'main.ts mousedown' },
   { id: 'reload', label: 'Reload', code: 'KeyR', rebindable: true, consumer: 'main.ts keydown' },
   { id: 'weapon1', label: 'Primary weapon', code: 'Digit1', rebindable: true, consumer: 'main.ts keydown' },
   { id: 'weapon2', label: 'Secondary weapon', code: 'Digit2', rebindable: true, consumer: 'main.ts keydown' },
   { id: 'grenade', label: 'Grenade', code: 'KeyG', rebindable: true, consumer: 'ordnance lane' },
+  { id: 'tactical', label: 'Tactical grenade', code: 'KeyQ', rebindable: true, consumer: 'weapons/ordnance-input.ts' },
   { id: 'knife', label: 'Knife', code: 'KeyV', rebindable: true, consumer: 'main.ts keydown (walk only) -> weapons.controller' },
   { id: 'use', label: 'Use / pick up', code: 'KeyE', rebindable: true, consumer: 'ordnance lane (E is also fly-up in core/player.ts)' },
   { id: 'scoreboard', label: 'Scoreboard (hold)', code: 'Tab', rebindable: true, consumer: 'ui/hud.ts' },

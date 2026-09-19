@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import type { MaterialLibrary } from '../core/materials';
 import { PAL } from '../core/palette';
+import { createFirstPersonHands } from './first-person-hands';
 import type { ViewmodelRig } from './types';
 export type { ViewmodelRig } from './types';
 
@@ -43,82 +44,6 @@ function roundedBox(
   return mesh;
 }
 
-type ArmPoint = readonly [number, number, number];
-
-/** Static limb fitted between actual joint centres; no disconnected offsets. */
-function armSegment(
-  wristRadius: number, elbowRadius: number, material: THREE.Material,
-  elbow: ArmPoint, wrist: ArmPoint,
-): THREE.Mesh {
-  const start = new THREE.Vector3(...elbow);
-  const end = new THREE.Vector3(...wrist);
-  const direction = end.clone().sub(start);
-  const mesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(wristRadius, elbowRadius, direction.length(), 10, 1), material,
-  );
-  mesh.position.copy(start).add(end).multiplyScalar(0.5);
-  mesh.quaternion.setFromUnitVectors(THREE.Object3D.DEFAULT_UP, direction.normalize());
-  mesh.castShadow = false;
-  mesh.receiveShadow = false;
-  return mesh;
-}
-
-function palm(
-  material: THREE.Material,
-  x: number,
-  y: number,
-  z: number,
-  rz = 0,
-  sx = 0.034,
-  sy = 0.047,
-  sz = 0.054,
-): THREE.Mesh {
-  const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), material);
-  mesh.position.set(x, y, z);
-  mesh.scale.set(sx, sy, sz);
-  mesh.rotation.z = rz;
-  mesh.castShadow = false;
-  mesh.receiveShadow = false;
-  return mesh;
-}
-
-/**
- * Shared first-person arms. The controller mounts each weapon at the same
- * camera-local grip frame, so one low-poly sleeve/glove rig can support every
- * catalog identity without a second skeletal system or per-frame allocations.
- * The palms overlap the grip/handguard deliberately; the weapon remains the
- * depth authority while the cuff and sleeve establish believable anatomy.
- * Each hand uses one palm and one smaller thumb/finger mass so articulation
- * remains legible without adding geometry to the overlay.
- */
-function addFirstPersonHands(
-  group: THREE.Group,
-  mat: MaterialLibrary,
-  supportZ: number,
-  supportY = -0.055,
-): void {
-  const sleeve = mat.painted(PAL.opFatigueOlive, 0.94, 0);
-  const cuff = mat.painted(PAL.opWebbingDark, 0.99, 0);
-  const glove = mat.painted(PAL.opBoot, 0.78, 0.01);
-
-  // Trigger hand: forearm enters from the lower-right and settles over the
-  // pistol grip. The two palm volumes give the silhouette a thumb-side break.
-  group.add(armSegment(0.031, 0.047, sleeve, [0.19, -0.39, 0.28], [0.025, -0.15, 0.045]));
-  group.add(armSegment(0.033, 0.034, cuff, [0.039, -0.17, 0.066], [0.015, -0.135, 0.025]));
-  group.add(palm(glove, 0.010, -0.112, 0.012, -0.16, 0.034, 0.046, 0.054));
-  // Smaller near-side volume reads as thumb/index articulation rather than a
-  // second mitten-shaped palm.
-  group.add(palm(glove, 0.039, -0.092, -0.014, -0.22, 0.017, 0.027, 0.039));
-
-  // Support hand: a shorter sleeve reaches forward under the handguard. It is
-  // intentionally offset per weapon through supportZ so the fingers sit on
-  // the actual fore-end rather than floating at a universal screen point.
-  group.add(armSegment(0.030, 0.045, sleeve, [-0.16, -0.39, supportZ + 0.20], [-0.024, supportY - 0.047, supportZ + 0.025]));
-  group.add(armSegment(0.031, 0.033, cuff, [-0.034, supportY - 0.073, supportZ + 0.040], [-0.017, supportY - 0.030, supportZ + 0.013]));
-  group.add(palm(glove, -0.010, supportY, supportZ, 0.15, 0.034, 0.046, 0.054));
-  group.add(palm(glove, -0.036, supportY + 0.012, supportZ - 0.018, 0.22, 0.016, 0.026, 0.038));
-}
-
 function tube(
   radius: number,
   length: number,
@@ -141,9 +66,9 @@ function tube(
  */
 export function buildRifleViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const group = new THREE.Group();
-  const body = mat.painted(PAL.truckCab, 0.6, 0.35);
-  const furniture = mat.timber;
-  const darkMetal = mat.steel;
+  const body = mat.viewmodel.parkerizedSteel;
+  const furniture = mat.viewmodel.woodFurniture;
+  const darkMetal = mat.viewmodel.parkerizedSteel;
   const brightMetal = mat.chrome;
   const gripMat = mat.painted(PAL.timberDark, 0.85, 0.0);
 
@@ -209,9 +134,9 @@ export function buildRifleViewmodel(mat: MaterialLibrary): ViewmodelRig {
   eject.position.set(0.035, 0.03, -0.1);
   group.add(eject);
 
-  addFirstPersonHands(group, mat, -0.36);
+  const hands = createFirstPersonHands(group, mat, -0.36, -0.055, [0.010, -0.065, 0.230]);
 
-  return { group, muzzle, eject };
+  return { group, muzzle, eject, hands };
 }
 
 /**
@@ -220,10 +145,10 @@ export function buildRifleViewmodel(mat: MaterialLibrary): ViewmodelRig {
  */
 export function buildPistolViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const group = new THREE.Group();
-  const body = mat.painted(PAL.truckCab, 0.55, 0.4);
-  const darkMetal = mat.steel;
+  const body = mat.viewmodel.parkerizedSteel;
+  const darkMetal = mat.viewmodel.parkerizedSteel;
   const brightMetal = mat.chrome;
-  const gripMat = mat.timber;
+  const gripMat = mat.viewmodel.woodFurniture;
 
   // Slide + frame.
   group.add(roundedBox(0.04, 0.045, 0.19, body, 0, 0.02, -0.085, 0.008));
@@ -255,9 +180,9 @@ export function buildPistolViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const eject = new THREE.Object3D();
   eject.position.set(0.022, 0.025, -0.05);
   group.add(eject);
-  addFirstPersonHands(group, mat, -0.08, -0.055);
+  const hands = createFirstPersonHands(group, mat, -0.08, -0.055, [0.010, -0.020, 0.080]);
 
-  return { group, muzzle, eject };
+  return { group, muzzle, eject, hands };
 }
 
 /**
@@ -268,8 +193,8 @@ export function buildPistolViewmodel(mat: MaterialLibrary): ViewmodelRig {
  */
 export function buildSmgViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const group = new THREE.Group();
-  const body = mat.painted(PAL.truckCab, 0.6, 0.35);
-  const darkMetal = mat.steel;
+  const body = mat.viewmodel.parkerizedSteel;
+  const darkMetal = mat.viewmodel.parkerizedSteel;
   const brightMetal = mat.chrome;
   const gripMat = mat.painted(PAL.timberDark, 0.85, 0.0);
 
@@ -309,9 +234,9 @@ export function buildSmgViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const eject = new THREE.Object3D();
   eject.position.set(0.031, 0.025, -0.06);
   group.add(eject);
-  addFirstPersonHands(group, mat, -0.22, -0.05);
+  const hands = createFirstPersonHands(group, mat, -0.22, -0.05, [0.010, -0.040, 0.130]);
 
-  return { group, muzzle, eject };
+  return { group, muzzle, eject, hands };
 }
 
 /**
@@ -321,9 +246,9 @@ export function buildSmgViewmodel(mat: MaterialLibrary): ViewmodelRig {
  */
 export function buildShotgunViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const group = new THREE.Group();
-  const body = mat.painted(PAL.truckCab, 0.6, 0.35);
-  const furniture = mat.timber;
-  const darkMetal = mat.steel;
+  const body = mat.viewmodel.parkerizedSteel;
+  const furniture = mat.viewmodel.woodFurniture;
+  const darkMetal = mat.viewmodel.parkerizedSteel;
   const brightMetal = mat.chrome;
   const gripMat = mat.painted(PAL.timberDark, 0.85, 0.0);
 
@@ -356,9 +281,9 @@ export function buildShotgunViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const eject = new THREE.Object3D();
   eject.position.set(0.033, 0.03, -0.02);
   group.add(eject);
-  addFirstPersonHands(group, mat, -0.30, -0.045);
+  const hands = createFirstPersonHands(group, mat, -0.30, -0.045, [0.010, 0.020, 0.280]);
 
-  return { group, muzzle, eject };
+  return { group, muzzle, eject, hands };
 }
 
 /**
@@ -369,9 +294,9 @@ export function buildShotgunViewmodel(mat: MaterialLibrary): ViewmodelRig {
  */
 export function buildSniperViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const group = new THREE.Group();
-  const body = mat.painted(PAL.truckCab, 0.6, 0.35);
-  const furniture = mat.timber;
-  const darkMetal = mat.steel;
+  const body = mat.viewmodel.parkerizedSteel;
+  const furniture = mat.viewmodel.woodFurniture;
+  const darkMetal = mat.viewmodel.parkerizedSteel;
   const brightMetal = mat.chrome;
   const gripMat = mat.painted(PAL.timberDark, 0.85, 0.0);
   const lens = mat.glass;
@@ -414,9 +339,9 @@ export function buildSniperViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const eject = new THREE.Object3D();
   eject.position.set(0.033, 0.03, -0.05);
   group.add(eject);
-  addFirstPersonHands(group, mat, -0.32, -0.045);
+  const hands = createFirstPersonHands(group, mat, -0.32, -0.045, [0.010, 0.000, 0.220]);
 
-  return { group, muzzle, eject };
+  return { group, muzzle, eject, hands };
 }
 
 /**

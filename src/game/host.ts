@@ -62,6 +62,8 @@ import { clearRespawns, dueRespawns } from './respawn';
 import { acceptShot, admitShot, pickTarget, type TargetCandidate } from './host-shot';
 import { HostOrdnance } from './host-ordnance';
 import { isOrdnanceId } from './ordnance';
+import { PRIMARY_IDS } from './loadout';
+import { normalizeStance, type PlayerStance } from '../net/room-core';
 
 /** id → definition, DERIVED from the authored list (§5.5). */
 const WEAPON_BY_ID: ReadonlyMap<string, WeaponDef> = new Map(WEAPONS.map((w) => [w.id, w]));
@@ -122,7 +124,8 @@ export class GameHost {
       return;
     }
     const a = this.life.newActor(id, team, opts.bot === true, this.clock);
-    a.primaryHint = opts.primaryId ?? null;
+    a.primaryHint = opts.primaryId !== undefined && PRIMARY_IDS.includes(opts.primaryId)
+      ? opts.primaryId : null;
     this.life.actors.set(id, a);
     this.deps.streaks?.registerActor(id, team);
     this.life.deploy(a, this.clock, 'initial');
@@ -140,8 +143,21 @@ export class GameHost {
   /** Position, from `net/room.ts` which owns it — and the shot-rewind history.
    *  Without a call every tick, `bad-origin` refuses every claim: a loud failure,
    *  in preference to an unrewound hit test nobody notices. */
-  updatePose(id: ActorId, x: number, y: number, z: number, at: number = this.clock): void {
-    this.life.actors.get(id)?.poses.push(at, x, y, z);
+  updatePose(
+    id: ActorId, x: number, y: number, z: number, at: number = this.clock,
+    stance: PlayerStance = 'stand', yaw?: number,
+  ): void {
+    const actor = this.life.actors.get(id);
+    if (actor === undefined) return;
+    actor.stance = stance;
+    actor.poses.push(at, x, y, z, stance, yaw ?? actor.yaw);
+  }
+
+  /** Refresh the authored primary for the next deploy without rewriting the current kit. */
+  setPrimary(id: ActorId, primaryId: string | undefined): void {
+    const a = this.life.actors.get(id);
+    if (a === undefined || primaryId === undefined || !PRIMARY_IDS.includes(primaryId)) return;
+    a.primaryHint = primaryId;
   }
 
   /** Aim and buttons. Position is deliberately absent from `InputMsg`. */
@@ -150,6 +166,11 @@ export class GameHost {
     if (!a || msg.seq <= a.ack) return;
     a.ack = msg.seq;
     if (Number.isFinite(msg.yaw)) a.yaw = msg.yaw;
+    const stance = normalizeStance(msg.stance);
+    if (stance !== null) a.stance = stance;
+    // A guest's loadout is admitted before Start and supplied to addActor.
+    // Input is intent only; accepting a later primary declaration here would
+    // let a client rewrite the next-life hint after the lobby fence.
   }
 
   /**
@@ -216,6 +237,19 @@ export class GameHost {
     const shooter = a as HostActor;
     acceptShot(shooter.window, claim.seq);
     if (ordnance) return this.ordnance.claim(shooter, claim, receivedAt);
+    // This is the single authoritative presentation edge for firearm shots.
+    // It is emitted after exactly-once admission and before hit resolution, so
+    // misses are audible while rejected/duplicate claims never reach clients.
+    const muzzle = shooter.poses.at(claim.firedAt);
+    if (muzzle !== null) {
+      this.life.emit({
+        type: 'shot-fired', at: receivedAt, actorId: shooter.id,
+        life: claim.life, seq: claim.seq, weaponId: claim.weaponId,
+        // The admitted claim's origin is validated against the rewound pose.
+        // Pose y is the feet; using it falsely muffles shots against the ground.
+        x: claim.ox, y: claim.oy, z: claim.oz,
+      });
+    }
     this.life.stats = { ...this.life.stats, shotsAdmitted: this.life.stats.shotsAdmitted + 1 };
     this.ordnance.noteShot(shooter, claim.weaponId);
 
@@ -311,7 +345,7 @@ export class GameHost {
         kills: e?.kills ?? 0, deaths: e?.deaths ?? 0, score: e?.score ?? 0, streak: e?.streak ?? 0,
         slots: this.deps.streaks?.snapshotFor(a.id) ?? [],
         lethal: kit.lethal, tactical: kit.tactical, primaryId: kit.primaryId, rounds: kit.rounds,
-        armed: kit.armed, blindUntil: kit.blindUntil,
+        armed: kit.armed, blindUntil: kit.blindUntil, stance: a.stance,
       });
     }
     return { at: this.clock, match, actors, stats: this.life.stats, ordnance: this.ordnance.snapshot() };
@@ -320,7 +354,9 @@ export class GameHost {
   /** The three optional `PlayerSample` fields, added to a sample `room.ts` authored. */
   stampSample(sample: PlayerSample): PlayerSample {
     const a = this.life.actors.get(sample.id);
-    return a ? { ...sample, hp: a.health.hp, team: a.team, alive: a.health.alive } : sample;
+    return a ? {
+      ...sample, hp: a.health.hp, team: a.team, alive: a.health.alive, stance: a.stance,
+    } : sample;
   }
 
   get matchState(): MatchState { return this.match; }

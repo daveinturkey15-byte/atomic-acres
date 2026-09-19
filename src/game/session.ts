@@ -36,6 +36,7 @@ import { createSessionLog } from './session-log';
 import { createSoloDriver, REMATCH_MS } from './session-solo';
 import type { BotBody, MatchDriver, MatchUi, SessionSnapshot } from './session-types';
 import { createWorldQuery } from './world-query';
+import { stanceBodyHeight, type PlayerStance, type Pose } from '../net/room-core';
 
 export { REMATCH_MS } from './session-solo';
 export type { BotBody, MatchUi } from './session-types';
@@ -54,6 +55,8 @@ export interface LocalMatchOptions {
   readonly seed?: number;
   /** Put the human where the host deployed them. `core/player.ts` owns position. */
   readonly placeLocal?: (x: number, y: number, z: number, yaw: number) => void;
+  /** Current menu primary, or a provider read at match/deploy boundaries. */
+  readonly localPrimaryId?: string | (() => string | undefined);
 }
 
 export interface LocalMatch extends MatchDriver {
@@ -84,7 +87,48 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
   const world = createWorldQuery(opts.colliders);
   const ui = opts.ui;
   const instrument = createSessionLog(LOCAL_ACTOR_ID);
-  const lobby = new LobbySession({ now: () => performance.now() });
+  /**
+   * `HostRoom` historically keeps seat feet at y=0, while the rendered map's
+   * pavement is often a thin slab whose top is around y=.15.  Testing that
+   * raw seat y against the slab rejects every stance change before the host
+   * has even considered a ceiling.  Mirror Player.groundUnder's small step
+   * probe instead: only a collider top within .35 m below/above the current
+   * feet can lift the occupancy box.  An overhead low roof is deliberately
+   * ignored as ground, then tested normally by the occupancy box.
+   */
+  const feetYForPose = (pose: Readonly<Pose>): number => {
+    const half = 0.3;
+    const maxGroundY = pose.y + 0.35;
+    let groundY = pose.y;
+    for (const c of opts.colliders) {
+      if (pose.x + half <= c.min.x || pose.x - half >= c.max.x) continue;
+      if (pose.z + half <= c.min.z || pose.z - half >= c.max.z) continue;
+      if (c.max.y <= maxGroundY + 0.001 && c.max.y > groundY) groundY = c.max.y;
+    }
+    return groundY;
+  };
+  const canOccupy = (pose: Readonly<Pose>, target: PlayerStance): boolean => {
+    const half = 0.3;
+    const minX = pose.x - half;
+    const maxX = pose.x + half;
+    const minZ = pose.z - half;
+    const maxZ = pose.z + half;
+    const feetY = feetYForPose(pose);
+    const minY = feetY + 0.02;
+    const maxY = feetY + stanceBodyHeight(target);
+    for (const c of opts.colliders) {
+      if (maxX <= c.min.x || minX >= c.max.x) continue;
+      if (maxZ <= c.min.z || minZ >= c.max.z) continue;
+      if (maxY <= c.min.y || minY >= c.max.y) continue;
+      return false;
+    }
+    return true;
+  };
+  const primaryForLocal = (): string | undefined =>
+    typeof opts.localPrimaryId === 'function' ? opts.localPrimaryId() : opts.localPrimaryId;
+  const lobby = new LobbySession({
+    now: () => performance.now(), canStand: canOccupy, localPrimaryId: primaryForLocal,
+  });
   let setup: SoloSetup = opts.bots === undefined
     ? DEFAULT_SOLO_SETUP
     : sanitizeSoloSetup({ ...DEFAULT_SOLO_SETUP, bots: opts.bots });
@@ -93,7 +137,6 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
   let endedAt: number | null = null;
   let localId: ActorId = LOCAL_ACTOR_ID;
   let lastNow = 0;
-
   const swap = (next: MatchDriver | null, nextMode: SessionMode): void => {
     if (driver !== null && driver !== next) driver.dispose();
     driver = next;
@@ -105,7 +148,7 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
   const startSolo = (): void => {
     swap(createSoloDriver({
       world, ui, setup, seed: opts.seed, placeLocal: opts.placeLocal,
-      localId: LOCAL_ACTOR_ID, localName: 'YOU', instrument,
+      localId: LOCAL_ACTOR_ID, localName: 'YOU', localPrimaryId: primaryForLocal, instrument,
     }), 'solo');
   };
 
@@ -123,13 +166,16 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
         world, ui, seed: opts.seed, placeLocal: opts.placeLocal, instrument,
         setup: lobby.hostBots() === 0 ? { ...roomSetup, bots: 0 } : roomSetup,
         localId: room.hostId, localName: room.hostName(), localTeam: TEAM_A,
+        localPrimaryId: primaryForLocal,
       });
       swap(createHostDriver(room, solo, { world }), 'host');
       return;
     }
     const guest = lobby.guestClient();
     if (guest !== null && mode !== 'guest' && guest.getPlayerId() !== null) {
-      swap(createGuestDriver(guest, { ui, placeLocal: opts.placeLocal, instrument }), 'guest');
+      swap(createGuestDriver(guest, {
+        ui, placeLocal: opts.placeLocal, instrument, localPrimaryId: primaryForLocal,
+      }), 'guest');
     }
   };
 
@@ -175,7 +221,7 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
       return Math.max(0, REMATCH_MS - (now - endedAt));
     },
 
-    tick(now, x, y, z, yaw, pitch): void {
+    tick(now, x, y, z, yaw, pitch, stance: PlayerStance = 'stand'): void {
       lastNow = now;
       // A room that reached its start while we were idle (or while a solo
       // match was running) takes over; a room that closed hands back to idle.
@@ -186,7 +232,7 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
         swap(null, 'idle');
       }
       if (driver === null) return;
-      driver.tick(now, x, y, z, yaw, pitch);
+      driver.tick(now, x, y, z, yaw, pitch, stance);
       if (!driver.ended()) endedAt = null;
     },
 

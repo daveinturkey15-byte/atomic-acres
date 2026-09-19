@@ -4,6 +4,7 @@ dist
 dist-next
 captures/*.png
 captures/*.json
+captures/
 docs/reference/img
 docs/reference/concept/*.png
 

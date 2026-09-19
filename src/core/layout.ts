@@ -113,6 +113,8 @@ export const SPAWN_A = { x: -4.0, y: 0, z: -34.3, yaw: Math.PI }; // orange, fac
 export const SPAWN_B = { x: 1.2, y: 0, z: 34.3, yaw: 0 };        // white,  faces -z
 
 export const EYE_HEIGHT = 1.68;
+export const CROUCH_EYE = 1.08;
+export const PRONE_EYE = 0.50;
 
 /** House side descriptor. side = -1 is the ORANGE house, +1 is the WHITE house. */
 export interface HouseSide {

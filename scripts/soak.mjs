@@ -177,8 +177,6 @@ const chrome = spawnGuarded(exe, [
   '--headless=new', '--remote-debugging-port=' + cdpPort,
   '--user-data-dir=' + userDataDir,
   '--no-first-run', '--no-default-browser-check',
-  '--enable-unsafe-webgpu', '--enable-features=Vulkan,UseSkiaRenderer',
-  '--ignore-gpu-blocklist', '--enable-gpu-rasterization',
   '--window-position=2560,0', '--window-size=1600,900', 'about:blank',
 ], { stdio: 'ignore', windowsHide: true });
 

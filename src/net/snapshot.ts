@@ -15,6 +15,8 @@
  * bandwidth for no perceptible gain with 8 players on this map. If rooms ever
  * grow past MAX_PLAYERS, raise bandwidth by delta-compression, not by tick.
  */
+import type { PlayerStance } from './room-core';
+
 export const TICK_HZ = 20;
 /** Seconds per tick, derived — never re-literalised elsewhere. */
 export const TICK_DT = 1 / TICK_HZ;
@@ -54,6 +56,7 @@ export interface RemoteSample {
   z: number;
   yaw: number;
   ack: number;
+  stance?: PlayerStance;
 }
 
 /**
@@ -63,6 +66,7 @@ export interface RemoteSample {
  */
 export class SnapshotRing {
   private readonly data: Float64Array;
+  private readonly stances: PlayerStance[];
   private write = 0;
   private count = 0;
   /** Newest tick admitted; older-or-equal ticks are stale duplicates. */
@@ -70,6 +74,7 @@ export class SnapshotRing {
 
   constructor(capacity: number = SNAPSHOT_BUFFER) {
     this.data = new Float64Array(capacity * 7);
+    this.stances = new Array<PlayerStance>(capacity).fill('stand');
   }
 
   get length(): number {
@@ -88,6 +93,7 @@ export class SnapshotRing {
     this.write = 0;
     this.count = 0;
     this.newestTick = -1;
+    this.stances.fill('stand');
   }
 
   /**
@@ -104,6 +110,7 @@ export class SnapshotRing {
     this.data[o + 4] = s.z;
     this.data[o + 5] = s.yaw;
     this.data[o + 6] = s.ack;
+    this.stances[this.write] = s.stance ?? 'stand';
     this.write = (this.write + 1) % this.capacity;
     if (this.count < this.capacity) this.count += 1;
     this.newestTick = s.tick;
@@ -116,7 +123,7 @@ export class SnapshotRing {
    * (fewer than 2 samples) so the caller holds the last pose instead of
    * extrapolating into the void.
    */
-  sampleAt(renderTime: number, out: { x: number; y: number; z: number; yaw: number }): boolean {
+  sampleAt(renderTime: number, out: { x: number; y: number; z: number; yaw: number; stance?: PlayerStance }): boolean {
     if (this.count < 2) return false;
     const cap = this.capacity;
     const n = this.count;
@@ -137,6 +144,7 @@ export class SnapshotRing {
       out.y = this.data[idx * 7 + 3];
       out.z = this.data[idx * 7 + 4];
       out.yaw = this.data[idx * 7 + 5];
+      out.stance = this.stances[idx];
       return true;
     }
     if (newer >= n - 1) {
@@ -146,6 +154,7 @@ export class SnapshotRing {
       out.y = this.data[idx * 7 + 3];
       out.z = this.data[idx * 7 + 4];
       out.yaw = this.data[idx * 7 + 5];
+      out.stance = this.stances[idx];
       return true;
     }
     const iNew = (this.write - 1 - newer + cap * 2) % cap;
@@ -162,6 +171,9 @@ export class SnapshotRing {
     while (dy > Math.PI) dy -= Math.PI * 2;
     while (dy < -Math.PI) dy += Math.PI * 2;
     out.yaw = this.data[iOld * 7 + 5] + dy * f;
+    // Stance is a discrete pose, so switch at the newer authoritative sample
+    // rather than inventing a fractional body height during interpolation.
+    out.stance = f >= 0.5 ? this.stances[iNew] : this.stances[iOld];
     return true;
   }
 

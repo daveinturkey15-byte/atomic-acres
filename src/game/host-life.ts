@@ -39,6 +39,7 @@ import { applyDamage as applyHealthDamage, createHealth, revive, type ActorHealt
 import { RECENT_USE_AVOIDANCE_MS, selectSpawn as selectSpawnDefault, type SpawnUse } from './spawns';
 import { createRespawnState, invulnerableUntil, scheduleRespawn, type RespawnState } from './respawn';
 import { PoseTrack, createShotWindow, type ShotWindow } from './host-shot';
+import type { PlayerStance } from '../net/room-core';
 
 /**
  * id → definition, DERIVED from the authored list (§5.5). A second roster
@@ -84,6 +85,8 @@ export interface HostActor {
   health: ActorHealth;
   spawnIndex: number; yaw: number; ack: number;
   window: ShotWindow; poses: PoseTrack;
+  /** Host-authoritative stance used by pose rewind and snapshots. */
+  stance: PlayerStance;
   /** Per-actor monotonic streak-press counter. Mints the exactly-once claim id. */
   streakSeq: number;
   /** The primary the seat said it carries (`addActor`), for the ordnance kit. null = assume the default kit's. */
@@ -116,7 +119,7 @@ export class HostLife {
   newActor(id: ActorId, team: TeamId, bot: boolean, now: number): HostActor {
     return {
       id, team, bot, health: createHealth(now), spawnIndex: -1, yaw: 0, ack: -1,
-      window: createShotWindow(), poses: new PoseTrack(), streakSeq: 0, primaryHint: null,
+      window: createShotWindow(), poses: new PoseTrack(), stance: 'stand', streakSeq: 0, primaryHint: null,
     };
   }
 
@@ -297,7 +300,8 @@ export class HostLife {
     // A new life is a new exactly-once window: seq numbering restarts with it,
     // and retaining the old one would refuse the first shots of this life.
     a.window = createShotWindow();
-    a.poses.push(now, at.x, at.y, at.z);
+    a.stance = 'stand';
+    a.poses.push(now, at.x, at.y, at.z, a.stance, a.yaw);
     this.recentUses.push({ index: sel.index, at: now });
     if (this.recentUses.length > RECENT_USES) this.recentUses.shift();
     this.emit({

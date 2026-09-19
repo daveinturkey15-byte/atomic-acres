@@ -1,0 +1,44 @@
+{
+  "schema": "nuketown-2025/vegetation-texture-manifest/1",
+  "asset": {
+    "slug": "island_tree_01",
+    "page": "https://polyhaven.com/a/island_tree_01",
+    "api": "https://api.polyhaven.com/files/island_tree_01",
+    "license": "https://polyhaven.com/license",
+    "licenseName": "CC0 1.0 Universal"
+  },
+  "files": [
+    {
+      "path": "public/textures/vegetation/island_tree_01_leaves_diff_1k.png",
+      "bytes": 1638916,
+      "sha256": "63d3563a22a62151f338ceb4e992de7c31b62e8e3582e2762d5071f02d286349",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/island_tree_01/island_tree_01_leaves_diff_1k.png",
+      "role": "sRGB leaf albedo",
+      "sourceMd5": "f5dcd85f170c154cba9cb8367af5dbdd"
+    },
+    {
+      "path": "public/textures/vegetation/island_tree_01_leaves_alpha_1k.png",
+      "bytes": 57438,
+      "sha256": "f4341f147988dbe6b58d9ca841a8f0e4bcff25bc40d05f9877da82006d489c39",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/island_tree_01/island_tree_01_leaves_alpha_1k.png",
+      "role": "leaf cutout mask",
+      "sourceMd5": "5ad9fb9a06e70c069bd3d3ba23577375"
+    },
+    {
+      "path": "public/textures/vegetation/island_tree_01_leaves_nor_gl_1k.png",
+      "bytes": 2886859,
+      "sha256": "e58402f30c7108ec6321e0c689009508f6ab138c81612d9a67238038ac108211",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/island_tree_01/island_tree_01_leaves_nor_gl_1k.png",
+      "role": "linear tangent-space normal",
+      "sourceMd5": "13a7610b0459f3175ca049b70eadbfea"
+    },
+    {
+      "path": "public/textures/vegetation/island_tree_01_leaves_rough_1k.png",
+      "bytes": 879599,
+      "sha256": "b7e9a1857f63617344968bb43693786bfed7dd15bedca3193ce333f233fbab78",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/island_tree_01/island_tree_01_leaves_rough_1k.png",
+      "role": "linear leaf roughness",
+      "sourceMd5": "6195150c02ed2522f8ab60c2ec02f1b9"
+    }
+  ]
+}

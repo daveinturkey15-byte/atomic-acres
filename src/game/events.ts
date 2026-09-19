@@ -140,6 +140,19 @@ export interface ShotRejectedEvent {
   readonly reason: ShotRejectReason;
 }
 
+/** A host-admitted firearm shot, including a miss, for remote presentation. */
+export interface ShotFiredEvent {
+  readonly type: 'shot-fired';
+  readonly at: number;
+  readonly actorId: ActorId;
+  readonly life: number;
+  readonly seq: number;
+  readonly weaponId: string;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
 /** A streak charge banked. `charges` is the total held for that streak after. */
 export interface StreakEarnedEvent {
   readonly type: 'streak-earned';
@@ -223,6 +236,7 @@ export type GameEvent =
   | DeathEvent
   | SpawnEvent
   | ShotRejectedEvent
+  | ShotFiredEvent
   | StreakEarnedEvent
   | StreakActivatedEvent
   | StreakDeniedEvent
@@ -241,6 +255,7 @@ export const GAME_EVENT_TYPES = [
   'death',
   'spawn',
   'shot-rejected',
+  'shot-fired',
   'streak-earned',
   'streak-activated',
   'streak-denied',

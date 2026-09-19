@@ -935,6 +935,11 @@ export const buildWhiteHouse: Builder = (ctx) => {
   const U_TOP = UY + UPPER_H;                        // roof prism underside
   const P_T = 0.14, LEAF = P_T / 2;
   const DOOR_W = 1.6, DOOR_H = 2.1;
+  // Move the complete bed/headboard/rug set toward the curved wall. The hall door
+  // remains in its authored position, while the bed's +x edge leaves a full capsule
+  // corridor on the door's +x side and the lower bedroom floor stays wide enough
+  // for the green-room opening.
+  const BED_SET_X = -1.25;
   const BX = -HOUSE_HALF_LEN * 0.375;                // -2.4: bedroom | green-room partition (x)
   const HALL_Z = Z_BACK - S * 2.0;                   // 24.6: rooms | rear hall partition (z)
   const WELL_X = wellX[0];                           // the stairwell's room-side rail line
@@ -1068,7 +1073,7 @@ export const buildWhiteHouse: Builder = (ctx) => {
   // hall end, its foot toward the curve, the opening to the green room beside it.
   finish(bPlum, -HOUSE_HALF_LEN, BX - LEAF, VOID_Z, HALL_Z - S * LEAF, 0.02);
   const CPT = 0.02;                                   // carpet; everything in here stands on it
-  const unitX = BX - LEAF - 0.16;
+  const unitX = BX - LEAF - 0.16 + BED_SET_X;
   bWall.add(0.32, 2.0, 0.8, unitX, UY + CPT + 1.0, bedZc);
   colliders.push(aabbSlab(unitX, UY, bedZc, 0.32, 2.0, 0.8));
   for (const sy of [1.42, 1.72]) bWood.add(0.24, 0.04, 0.7, unitX - 0.02, UY + sy, bedZc);

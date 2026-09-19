@@ -59,3 +59,23 @@ authority, game balance, room admission, or snapshot interpolation. The parent
 lane should run the existing two-browser proof after review so the full wire path
 confirms that the NTP offset learned by `GuestClient` reaches the conversion
 exactly once.
+
+## Stance boundary and geometry
+
+Stance is host-authoritative. Missing or invalid wire stance values resolve to
+standing only for old peers; crouch and prone clamp movement speed and are
+replicated in room poses, snapshots, and the local session facade. Rising
+transitions call the host world's occupancy query. The session query mirrors the
+player controller's ground probe, so a room seat at y=0 can stand on a thin
+pavement slab without treating the slab volume as a wall, while a low roof still
+rejects the full standing body.
+
+The prone character clips are horizontal along the root's local Z axis. Shot
+rewind therefore uses a yawed 1.70 m by 0.70 m footprint for prone actors; the
+standing and crouch vertical-cylinder geometry is unchanged. The focused stance
+proof covers an open-yard rise over a floor slab, low-roof rejection,
+prone-to-crouch recovery, facade tick forwarding, and yawed prone hits:
+
+```text
+node scripts/_verify-stance.mjs
+```

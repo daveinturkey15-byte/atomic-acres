@@ -1,0 +1,129 @@
+{
+  "pack": "recorded-audio-canary",
+  "license": "CC0 1.0 Universal (public domain)",
+  "attribution": "Recorded by Ben Jaszczak, Brian Nelson, Kevin Heras, Matthew Nanney (The Free Firearm Sound Library).",
+  "source_page": "https://opengameart.org/content/the-free-firearm-sound-library",
+  "source_archive": "https://opengameart.org/sites/default/files/Prepared%20SFX%20Library.7z",
+  "source_archive_sha256": "cc1ab5a99a0a365105c7c5dd783f4b0b1fe90938114d3ceec53856bfe005f7d6",
+  "source_archive_bytes": 193954738,
+  "transform": "mono (L+R)/2 -> trim (50ms pre-roll) -> SoXR 96k>44.1k -> biquad HP 60Hz Q0.7071 -> 2ms raised-cosine attack + 20ms raised-cosine tail -> peak-normalize -1dBFS -> PCM16",
+  "tool_versions": {
+    "ffmpeg": "ffmpeg version 8.1.1-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers"
+  },
+  "format": "44100Hz mono PCM16 WAV",
+  "budgets": {
+    "each_shot_s_max": 1.2,
+    "peak_dbfs_max": -1.0,
+    "total_bytes_max": 4194304
+  },
+  "files": {
+    "longhorn": {
+      "file": "rec-shot-longhorn.wav",
+      "description": "Winchester Model 1894 lever-action .32WS, mid-distance single shot",
+      "source_member": "Prepared SFX Library/Model 1894/L_17P.wav",
+      "source_sha256": "f2d381043f74967786367d2b23f68a6d5a3fe74c26ff4d3a00002ab05e913117",
+      "trim_start_s": 0.546,
+      "trim_window_s": 1.1,
+      "onset_s": 0.596,
+      "duration_s": 1.1,
+      "peak_dbfs": -1.0,
+      "rms_dbfs": -27.246,
+      "dc": -2e-08,
+      "sha256": "22df6fc6dc62a55baf521710ee1d7adb3050fc137a5a2786c3bc5df1a38a9cf7",
+      "bytes": 97064
+    },
+    "rattler": {
+      "file": "rec-shot-rattler.wav",
+      "description": "Carl Gustav M45 SMG 9mm, mid-distance single shot",
+      "source_member": "Prepared SFX Library/Carl Gustav M45/G_20P.wav",
+      "source_sha256": "137630298417203c83f885402f1b5d10913c1b96ca0ad31fde50d30314bf3223",
+      "trim_start_s": 0.298,
+      "trim_window_s": 1.0,
+      "onset_s": 0.348,
+      "duration_s": 1.0,
+      "peak_dbfs": -1.0,
+      "rms_dbfs": -31.02,
+      "dc": -4e-08,
+      "sha256": "4a77192f1206630e2556b3df7460dab9b235b03434e2cc1f71e0e6f6f82464e2",
+      "bytes": 88244
+    },
+    "coachman": {
+      "file": "rec-shot-coachman.wav",
+      "description": "Winchester Model 12 pump 12ga, mid-distance single shot",
+      "source_member": "Prepared SFX Library/Model 12/K_17P.wav",
+      "source_sha256": "df18e60e5742bc18373ff46e5c471ef71849b138120d165f26104b249679ace0",
+      "trim_start_s": 0.857,
+      "trim_window_s": 1.2,
+      "onset_s": 0.907,
+      "duration_s": 1.2,
+      "peak_dbfs": -1.0,
+      "rms_dbfs": -28.997,
+      "dc": 6e-08,
+      "sha256": "3c9fa38ec212bc428b3471dcc73107d8bb97376f760b48679984152b698524a2",
+      "bytes": 105884
+    },
+    "deadeye": {
+      "file": "rec-shot-deadeye.wav",
+      "description": "Mosin Nagant bolt 7.62x54R, mid-distance single shot",
+      "source_member": "Prepared SFX Library/Mosin Nagant/M_26P.wav",
+      "source_sha256": "51261c62c8c1dce64cd700e948dda4794473797753457621b480eff54ba30445",
+      "trim_start_s": 1.088,
+      "trim_window_s": 1.2,
+      "onset_s": 1.138,
+      "duration_s": 1.2,
+      "peak_dbfs": -1.0,
+      "rms_dbfs": -28.401,
+      "dc": 7e-08,
+      "sha256": "15436310adeb825592090fe1af013f2ca01e8dc90b0714095750e1754d3015d4",
+      "bytes": 105884
+    },
+    "duster": {
+      "file": "rec-shot-duster.wav",
+      "description": "M1911 .45 pistol, mid-distance single shot",
+      "source_member": "Prepared SFX Library/1911/A_34P.wav",
+      "source_sha256": "df95fc52049f3d1e4cf0a8c018fc0f0b4abded12de1d615a279422206c415935",
+      "trim_start_s": 1.492,
+      "trim_window_s": 1.2,
+      "onset_s": 1.542,
+      "duration_s": 1.2,
+      "peak_dbfs": -1.0,
+      "rms_dbfs": -25.017,
+      "dc": 4.8e-07,
+      "sha256": "0c10a5dbdffcade7860c81d6aeaca385a0e5a558b666873416bbf7b4c0e6383f",
+      "bytes": 105884
+    }
+  },
+  "audition": {
+    "file": "docs/audio-auditions/recorded-guns.wav",
+    "spans_s": {
+      "longhorn": [
+        0.0,
+        1.1
+      ],
+      "rattler": [
+        1.45,
+        2.45
+      ],
+      "coachman": [
+        2.8,
+        4.0
+      ],
+      "deadeye": [
+        4.35,
+        5.55
+      ],
+      "duster": [
+        5.9,
+        7.1
+      ]
+    },
+    "duration_s": 7.1,
+    "peak_dbfs": -1.0,
+    "rms_dbfs": -28.56,
+    "sha256": "896d93968295a4f1494bb828b4b2c2d1b1b27a04b23baee8e221a3cd6af69e4f",
+    "bytes": 626264
+  },
+  "total_bytes": 1129224,
+  "reload_cues": "OPEN: Prepared SFX Library contains gunshots only (master sheet: 57 shot/burst files, 0 mechanical-only files); no recorded reload cues shipped in this pass.",
+  "note": "Normalization sets level only; brief recorded transient flat-topping at 0dBFS is preserved, not repaired. See docs/recorded-audio.md OPEN-CLIP."
+}

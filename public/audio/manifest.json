@@ -1,5 +1,5 @@
 {
-  "bankVersion": 2,
+  "bankVersion": 3,
   "sampleRate": 44100,
   "channels": 1,
   "bitDepth": 16,
@@ -135,7 +135,87 @@
       "bytes": 141164,
       "sha256": "ddc6d49c656fd6f2f6cc3aba06ade52a42af9afcc36f16a272fec31cd3718c8c",
       "durationS": 1.6
+    },
+    {
+      "key": "concreteA",
+      "file": "step-concrete-a.wav",
+      "seed": 3101,
+      "peak": 0.55,
+      "rms": 0.0744,
+      "bytes": 12392,
+      "sha256": "f271fc5bcbbbb6b57e59959f6990964d18bd44556ee16f0e4eb546cf24d5ad7b",
+      "durationS": 0.14
+    },
+    {
+      "key": "concreteB",
+      "file": "step-concrete-b.wav",
+      "seed": 3102,
+      "peak": 0.55,
+      "rms": 0.0783,
+      "bytes": 12392,
+      "sha256": "be5390f7802605751effa413c8f1efa21f6da77b3dbf63ca268de9d9029ab689",
+      "durationS": 0.14
+    },
+    {
+      "key": "grassA",
+      "file": "step-grass-a.wav",
+      "seed": 3103,
+      "peak": 0.5,
+      "rms": 0.0629,
+      "bytes": 15038,
+      "sha256": "e95a23a2285c364e4c6551797dcc4fa991fb6f689e3cebf20bb5860dbb062ad6",
+      "durationS": 0.17
+    },
+    {
+      "key": "grassB",
+      "file": "step-grass-b.wav",
+      "seed": 3104,
+      "peak": 0.5,
+      "rms": 0.0689,
+      "bytes": 15920,
+      "sha256": "2ebc13c67a1c7f2cf61de8a6a859dd4685c2774fe8406431da8f3ebcd18e6fa6",
+      "durationS": 0.18
+    },
+    {
+      "key": "gravelA",
+      "file": "step-gravel-a.wav",
+      "seed": 3105,
+      "peak": 0.5,
+      "rms": 0.0442,
+      "bytes": 13274,
+      "sha256": "a56b85ffd5ff3828150640db04f39371f842c1f4a70180a0645f11d3b41c3fd6",
+      "durationS": 0.15
+    },
+    {
+      "key": "gravelB",
+      "file": "step-gravel-b.wav",
+      "seed": 3106,
+      "peak": 0.5,
+      "rms": 0.0549,
+      "bytes": 14156,
+      "sha256": "5718e24329594784a725c0338a2ad60710aabfed74aed05e1ae8014087dc53bb",
+      "durationS": 0.16
+    },
+    {
+      "key": "wind",
+      "file": "ambient-wind.wav",
+      "seed": 3201,
+      "peak": 0.2889,
+      "rms": 0.0626,
+      "bytes": 308744,
+      "sha256": "facd006dcf1c0cab6f2f4ea05aab9c4f630db8704d40a5f626151e3d79fa008e",
+      "durationS": 3.5
+    },
+    {
+      "key": "rain",
+      "file": "ambient-rain.wav",
+      "seed": 3202,
+      "peak": 0.3187,
+      "rms": 0.1123,
+      "bytes": 229364,
+      "sha256": "993f9f7cc4044b186c7923e08d5e48f43f79e7af0ec094e933ae271c6fd1d9da",
+      "durationS": 2.6
     }
   ],
-  "totalBytes": 580924
+  "totalBytes": 1202204
 }

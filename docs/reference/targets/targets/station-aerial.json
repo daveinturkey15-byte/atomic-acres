@@ -1,0 +1,47 @@
+{
+  "file": "targets/station-aerial.png",
+  "source": "sources/station-aerial.png",
+  "sourceSha256": "32c0e2eef9637072bca14a36a926303573c498d987004aab6afc2fad19e83069",
+  "sha256": "9a8790538db5c48249c2fe3f1d76c5a975987a62f9aa11b84f3d9b7b2b3e76d0",
+  "route": "A:agy-generate_image",
+  "model": "agy --model gemini-3.1-pro-high -> generate_image (ImagePaths=[source], AspectRatio 16:9); image model as reported by the agent: terminating 1 background task(s) on exit",
+  "prompt": "You are in a directory containing `source.png` (1600x900, 16:9), a frame rendered by our own browser game engine.\n\nCall your `generate_image` tool EXACTLY ONCE with these arguments:\n  ImagePaths: [\"<absolute path of source.png in this directory>\"]\n  AspectRatio: '16:9'\n  ImageName: 'target'\n  Prompt: \"Re-render this exact frame as a real photograph. Keep the same camera, the same composition, the same geometry and every object exactly where it is; add nothing, remove nothing, do not move the camera. Make it hyper-realistic and photorealistic: real-world materials (weathered asphalt with aggregate, cracked concrete kerbs and paving, painted stucco with subtle grime and edge wear, real glass reflecting the sky, painted metal with chrome trim and micro-scratches, dense leafy trees, lawn with individual grass blades), physically correct hard sunlight and blue sky light, soft contact shadows and ambient occlusion under every object, subtle volumetric haze and aerial perspective, natural film response with fine grain and gentle highlight roll-off. No text, no logos, no HUD, no watermark.\"\n\nThe output MUST be saved as target.png in this same directory (move or copy it there if the tool saves elsewhere). Do not describe the scene in words to the tool; the image itself is the input. Do not edit source.png. Do not generate more than one image.\nWhen done, print exactly: DONE target.png <the image model the tool reported, if any>\nIf the tool call fails, print exactly: FAILED <the error text verbatim> and stop.",
+  "variant": null,
+  "seed": null,
+  "seedNote": "generate_image exposes no seed; not reproducible bit-for-bit",
+  "strength": null,
+  "steps": null,
+  "generatedSize": [
+    1376,
+    768
+  ],
+  "resizedTo": [
+    1600,
+    900
+  ],
+  "resample": "LANCZOS",
+  "seconds": 152.4,
+  "attempt": 2,
+  "agyLog": "C:\\Users\\david\\AppData\\Local\\Temp\\claude\\C--Users-david-Desktop-stuff\\503f5c1d-b1c5-4f2f-99fb-c25240f4a623\\scratchpad\\targets\\agy-work\\station-aerial-a2\\agy.log",
+  "fidelity": {
+    "edgeOverlap": 0.797,
+    "srcEdgesFound": 0.819,
+    "tgtEdgesFound": 0.776,
+    "movedBlocks": [],
+    "blockGrid": "6x8",
+    "method": "blur3+sobel, top10% edges, tol 2px @800x450",
+    "ssim": 0.634,
+    "sourceSize": [
+      1600,
+      900
+    ],
+    "targetSize": [
+      1376,
+      768
+    ],
+    "pass": true,
+    "reason": "",
+    "gatedAt": "generated size"
+  },
+  "date": "2026-09-19T06:18:27.702Z"
+}

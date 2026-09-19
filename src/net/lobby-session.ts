@@ -20,7 +20,7 @@
  */
 import { LOBBY_START_LABELS, REJOIN_GRACE_MS, type LobbyStartRefusal } from '../game/rules';
 import { REJECT_LABELS, createJoinCode, isJoinCode, type RejectReason, type ResumeClaim, type RosterEntry } from './protocol';
-import { GuestClient, HostRoom } from './room';
+import { GuestClient, HostRoom, type HostOptions, type Pose, type PlayerStance } from './room';
 import { createRtcTransport, rtcAvailable, type RtcTransport } from './rtc';
 import { createLocalTransport, type Transport } from './transport';
 
@@ -102,6 +102,8 @@ function storage(kind: 'session' | 'local'): Storage | null {
 
 export class LobbySession {
   private readonly now: () => number;
+  private readonly canStand: HostOptions['canStand'] | undefined;
+  private readonly localPrimaryId: string | (() => string | undefined) | undefined;
   private room: HostRoom | null = null;
   private guest: GuestClient | null = null;
   private transport: Transport | null = null;
@@ -112,8 +114,14 @@ export class LobbySession {
   private listener: (() => void) | null = null;
   private joinName = 'player';
 
-  constructor(opts: { now: () => number }) {
+  constructor(opts: {
+    now: () => number;
+    canStand?: (pose: Readonly<Pose>, target: PlayerStance) => boolean;
+    localPrimaryId?: string | (() => string | undefined);
+  }) {
     this.now = opts.now;
+    this.canStand = opts.canStand;
+    this.localPrimaryId = opts.localPrimaryId;
   }
 
   onChange(fn: (() => void) | null): void { this.listener = fn; }
@@ -179,6 +187,7 @@ export class LobbySession {
     this.bots = Math.max(0, Math.min(7, a.bots ?? 0));
     this.room = new HostRoom(this.transport as Transport, {
       hostName: a.name, code, now: this.now, capacity: a.capacity, onChange: () => this.changed(),
+      canStand: this.canStand,
     });
     this.room.startAuto();
     this.changed();
@@ -211,7 +220,7 @@ export class LobbySession {
     // more than two tabs on one channel do.
     const joinTimeoutMs = a.tier === 'lan' ? 15_000 : 6_000;
     this.guest = new GuestClient(this.transport as Transport, 'host', code, a.name, {
-      now: this.now, resume, joinTimeoutMs,
+      now: this.now, resume, joinTimeoutMs, localPrimaryId: this.localPrimaryId,
       onChange: () => this.onGuestChange(code, signalUrl),
     });
     this.guest.startAutoPing();

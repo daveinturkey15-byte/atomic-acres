@@ -110,7 +110,7 @@ export class OrdnanceScene {
     // Verdicts the controller must act on, as edges off the projection's counters.
     if (self.spawnSeq !== this.lastSpawnSeq) {
       this.lastSpawnSeq = self.spawnSeq;
-      this.weapons.onSelfSpawn();
+      this.weapons.onSelfSpawn(self.primaryId, self.rounds);
     }
     if (self.pickupSeq !== this.lastPickupSeq) {
       this.lastPickupSeq = self.pickupSeq;

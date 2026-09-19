@@ -6,6 +6,25 @@
  */
 import type * as THREE from 'three';
 
+/**
+ * Camera-local first-person hands. Geometry is authored once; updateReload only
+ * changes the pre-existing support-hand transform and allocates nothing.
+ */
+export interface FirstPersonHandsRig {
+  /** named container for both hands, useful to root-level QA and visibility. */
+  root: THREE.Group;
+  /** trigger-side hand and forearm container, held in the bind pose. */
+  triggerHand: THREE.Group;
+  /** support-side hand container; reload moves this group only. */
+  supportHand: THREE.Group;
+  /** named forearm child inside supportHand for inspection and future IK. */
+  supportForearm: THREE.Group;
+  /** Normalized reload phase [0, 1], with the hand at the bind pose at both ends. */
+  updateReload(progress: number): void;
+  /** Restore the exact construction-time bind pose after cancel/switch/finish. */
+  resetReload(): void;
+}
+
 /** A procedurally built first-person rig. Origin at the grip/trigger area. */
 export interface ViewmodelRig {
   /** everything, barrel pointing down local -z */
@@ -14,6 +33,8 @@ export interface ViewmodelRig {
   muzzle: THREE.Object3D;
   /** empty at the ejection port: shell spawn frame */
   eject: THREE.Object3D;
+  /** Optional for non-firearm viewmodels such as the knife and grenade. */
+  hands?: FirstPersonHandsRig;
 }
 
 /** Per-frame movement sample. main.ts derives it from Player; read-only. */

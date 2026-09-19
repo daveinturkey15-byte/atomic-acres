@@ -20,6 +20,12 @@ import type { ClipLibrary, ClipName, LocomotionName } from './clips';
 export interface RigInput {
   /** Forward speed in m/s. The rig picks the gait and match its timeScale. */
   speed: number;
+  /**
+   * Explicit gameplay gait state. When supplied, this owns the walk/jog/sprint
+   * semantic choice even when a baked clip advertises a lower authored speed.
+   * Omit it for the legacy measured-speed fallback used by offline QA callers.
+   */
+  sprinting?: boolean;
   /** Yaw rate in rad/s (+ = turning left). Drives a procedural lean. */
   turnRate: number;
   crouch: boolean;
@@ -129,8 +135,18 @@ const BARREL_LOCAL = new THREE.Vector3(0, 0, 1);
 const CARRY_HAND = new THREE.Vector3(0.10, 0.02, 0.15);
 /** RightHand bone origin in CHEST space: rifle up on the shoulder, aiming. */
 const AIM_HAND = new THREE.Vector3(0.08, 0.26, 0.20);
+/**
+ * RightHand origins for the face-down carry. In the prone clip the chest's
+ * local +Y points along the body toward the head and local -Z points up from
+ * the lawn. Reusing the standing anchors therefore sends the rifle toward the
+ * feet; these anchors keep the grip ahead of the shoulder and above the floor.
+ */
+const PRONE_CARRY_HAND = new THREE.Vector3(0.10, 0.20, -0.14);
+const PRONE_AIM_HAND = new THREE.Vector3(0.08, 0.32, -0.16);
 /** Barrel direction in CHEST space at rest carry - forward, across, a little up. */
 const CARRY_BARREL = new THREE.Vector3(-0.30, 0.12, 0.95).normalize();
+/** In prone, forward belongs to the actor root, not the floor-facing chest frame. */
+const PRONE_BARREL = new THREE.Vector3(0, 0.05, 1).normalize();
 /** Where each elbow should fall, in CHEST space. Only the direction matters. */
 const POLE_RIGHT = new THREE.Vector3(0.70, -1.0, -0.50).normalize();
 const POLE_LEFT = new THREE.Vector3(-0.70, -1.0, -0.30).normalize();
@@ -218,19 +234,42 @@ function solveTwoBone(
   aimBone(fore, _cU.normalize(), w);
 }
 
-function pickLocomotion(speed: number, crouch: boolean, prone: boolean, library: ClipLibrary): LocomotionName {
+export function pickLocomotion(
+  speed: number,
+  crouch: boolean,
+  prone: boolean,
+  sprinting: boolean | undefined,
+  library: ClipLibrary,
+): LocomotionName {
   if (prone) return speed < 0.25 ? 'prone-idle' : 'prone-crawl';
   if (crouch) return speed < 0.25 ? 'crouch-idle' : 'crouch-walk';
   if (speed < 0.25) return 'idle';
-  // Use the measured speeds of the loaded clips. The baked sprint is 2.84 m/s
-  // while the procedural fallback is 5.5 m/s; a fixed 4.1 threshold makes the
-  // baked clip run at an avoidable 1.44x timeScale before sprint is selected.
+  // A baked source speed is a playback calibration, not a gameplay-state
+  // boundary. Use the measured walk/run band for explicit non-sprint movement:
+  // the player's 4.8 m/s normal pace should read as a jog/run, not walk at
+  // 2.44x cadence. Explicit sprint still owns the sprint clip. The measured
+  // fallback below remains for old QA/demo callers without the flag.
   const walk = Math.max(0.01, library.walk.speed);
   const run = Math.max(walk + 0.01, library.run.speed);
   const sprint = Math.max(run + 0.01, library.sprint.speed);
+  if (sprinting === false) return speed < (walk + run) * 0.5 ? 'walk' : 'run';
+  if (sprinting === true) return 'sprint';
+  // Use the measured speeds of the loaded clips. The baked sprint is 2.84 m/s
+  // while the procedural fallback is 5.5 m/s. This fallback is only for callers
+  // that have not supplied the gameplay gait flag.
   if (speed < (walk + run) * 0.5) return 'walk';
   if (speed < (run + sprint) * 0.5) return 'run';
   return 'sprint';
+}
+
+/**
+ * Match root travel to the clip's measured authored speed. A zero or malformed
+ * rate is an in-place/invalid clip and must never freeze a moving action or
+ * inject Infinity into AnimationMixer.
+ */
+export function locomotionTimeScale(speed: number, clipSpeed: number): number {
+  if (!Number.isFinite(speed) || !Number.isFinite(clipSpeed) || clipSpeed <= 0.01) return 1;
+  return Math.max(0, Math.abs(speed)) / clipSpeed;
 }
 
 export class CharacterRig {
@@ -403,8 +442,8 @@ export class CharacterRig {
       // body. Zero is never a rate, it is an off switch, and nothing should be
       // able to reach it by omission.
       const ex = this.external;
-      ex.action.timeScale = ex.loop && ex.speed > 0.01 && input.speed > 0.001
-        ? input.speed / ex.speed
+      ex.action.timeScale = ex.loop && input.speed > 0.001
+        ? locomotionTimeScale(input.speed, ex.speed)
         : 1;
     } else if (this.air) {
       this.air.elapsed += dt;
@@ -414,7 +453,7 @@ export class CharacterRig {
         this.actions.get(this.locomotion)?.reset().play();
       }
     } else {
-      const want = pickLocomotion(input.speed, input.crouch, input.prone === true, this.library);
+      const want = pickLocomotion(input.speed, input.crouch, input.prone === true, input.sprinting, this.library);
       if (want !== this.locomotion) {
         const prev = this.actions.get(this.locomotion);
         const next = this.actions.get(want);
@@ -430,7 +469,7 @@ export class CharacterRig {
       const spec = this.library[this.locomotion];
       const action = this.actions.get(this.locomotion);
       if (action && spec.speed > 0.01) {
-        action.timeScale = input.speed / spec.speed;
+        action.timeScale = locomotionTimeScale(input.speed, spec.speed);
       } else if (action) {
         action.timeScale = 1;
       }
@@ -494,7 +533,10 @@ export class CharacterRig {
     const wantCarry = this.upper?.clip === 'hit-react'
       ? 0
       : input.prone
-        ? 0
+        // The prone locomotion clips intentionally leave the arms available for
+        // this constraint. Zero carry here made the right-hand baked orientation
+        // rotate the rifle back across the torso toward the feet.
+        ? 0.9
       // Reload is a hand action. Leave just enough carry to keep the rifle
       // stable while allowing the authored right-arm/forearm excursion to
       // read instead of being overwritten by the IK solve.
@@ -519,9 +561,12 @@ export class CharacterRig {
     const chest = this.bones.Chest;
     chest.updateWorldMatrix(true, false);
     const aim = THREE.MathUtils.clamp(input.aimWeight, 0, 1);
+    const prone = input.prone === true;
 
     // ---- right hand: the carry anchor, in CHEST space, lerped by aim weight.
-    _cT.copy(CARRY_HAND).lerp(AIM_HAND, aim).applyMatrix4(chest.matrixWorld);
+    _cT.copy(prone ? PRONE_CARRY_HAND : CARRY_HAND)
+      .lerp(prone ? PRONE_AIM_HAND : AIM_HAND, aim)
+      .applyMatrix4(chest.matrixWorld);
     // _cChestQ, not a shared scratch: solveTwoBone clobbers every _cq* it can
     // reach, and the chest frame has to outlive all three solves below.
     chest.getWorldQuaternion(_cChestQ);
@@ -541,12 +586,21 @@ export class CharacterRig {
     // because the idle clip under it pitched the chest forward by exactly that
     // much. A rifle that points where the animation's spine happens to point is
     // not aiming at anything.
-    const pitch = input.aimPitch * 0.7;
     this.root.getWorldQuaternion(_cRootQ);
-    _cDir.set(0, Math.sin(pitch), Math.cos(pitch)).applyQuaternion(_cRootQ);
-    _cDir2.copy(CARRY_BARREL).applyQuaternion(_cChestQ);
-    _cDir.lerpVectors(_cDir2, _cDir, aim).normalize();
-    _cUp.set(0, 1, 0).applyQuaternion(_cChestQ).lerp(_cWorldUp, aim).normalize();
+    const pitch = input.aimPitch * 0.7;
+    _cDir.set(0, Math.sin(pitch), Math.cos(pitch)).applyQuaternion(_cRootQ).normalize();
+    if (prone) {
+      // The prone chest frame is rotated onto the ground by the hips clip. A
+      // chest-relative barrel therefore points down into the lawn; the weapon
+      // must follow actor-forward (+Z) in the root frame instead.
+      _cDir2.copy(PRONE_BARREL).applyQuaternion(_cRootQ).normalize();
+      _cDir.lerpVectors(_cDir2, _cDir, aim).normalize();
+      _cUp.set(0, 1, 0).applyQuaternion(_cRootQ).lerp(_cWorldUp, aim).normalize();
+    } else {
+      _cDir2.copy(CARRY_BARREL).applyQuaternion(_cChestQ);
+      _cDir.lerpVectors(_cDir2, _cDir, aim).normalize();
+      _cUp.set(0, 1, 0).applyQuaternion(_cChestQ).lerp(_cWorldUp, aim).normalize();
+    }
     _cMat.lookAt(_cDir, _cZero, _cUp);        // +Z of the result IS the barrel
     _cqB.setFromRotationMatrix(_cMat);
     this.bones.RightForeArm.getWorldQuaternion(_cqC);

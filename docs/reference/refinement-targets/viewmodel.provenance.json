@@ -1,0 +1,11 @@
+{
+  "kind": "2D generated visual reference only",
+  "run_id": "delegated-agy-4f225948-f185-451b-ad32-76a48c7f3d0f",
+  "requested_model": "gemini-3.8-flash-high",
+  "requested_effort": "high",
+  "image_model": "unreported",
+  "source": "captures/candidate-stock-circle.png",
+  "source_sha256": "59b2bc687954f4448887da1fa5a9e1870b24dda5ecfea8d5310770ae4182a5a3",
+  "result_sha256": "0da577f7406c1bcb028f8615702ccb54aac1653219951317c1fb54c5b5912102",
+  "review": "Root inspected image; material reference only, not a 3D asset or game screenshot"
+}

@@ -47,6 +47,10 @@
 
 import type { HitZone, ShotRejectReason } from './events';
 import type { ShotMsg } from '../net/protocol';
+import {
+  isPlayerStance, stanceBodyHeight, STAND_HEIGHT, CROUCH_HEIGHT as CORE_CROUCH_HEIGHT,
+  PRONE_HEIGHT as CORE_PRONE_HEIGHT, type PlayerStance,
+} from '../net/room-core';
 
 // ---------------------------------------------------------------------------
 // Tuned constants — each names where it came from (§5.9)
@@ -64,6 +68,10 @@ export const CLOCK_ALLOWANCE_MS = 25;
 export const MAX_SEQ_GAP = 512;
 /** Predicted muzzle vs the shooter pose at fire time. Old `validateShotOrigin`: 2.25 m. */
 export const MAX_MUZZLE_OFFSET_M = 2.25;
+/** Lower stances expose less vertical muzzle slack; standing keeps the old bound. */
+export const MAX_MUZZLE_OFFSET_BY_STANCE: Readonly<Record<PlayerStance, number>> = Object.freeze({
+  stand: MAX_MUZZLE_OFFSET_M, crouch: 1.75, prone: 1.25,
+});
 
 /**
  * The hit capsule. These are a MIRROR and are flagged as one: `core/player.ts`
@@ -75,11 +83,48 @@ export const MAX_MUZZLE_OFFSET_M = 2.25;
  * tighter than the body reads as "my bullets go through people".
  */
 export const HIT_RADIUS = 0.35;
-export const HIT_HEIGHT = 1.78;
+export const HIT_HEIGHT = STAND_HEIGHT;
 /** Height above the feet at or above which a hit is a headshot. */
 export const HEAD_Y = 1.55;
 /** Below this height above the feet a hit is a limb; between the two, the body. */
 export const LIMB_Y = 0.9;
+export const CROUCH_HEIGHT = CORE_CROUCH_HEIGHT;
+export const PRONE_HEIGHT = CORE_PRONE_HEIGHT;
+
+/**
+ * The authored prone-idle/prone-crawl clips rotate the hips about +X and lay
+ * the rig along its local Z axis.  The old vertical capsule only covered the
+ * hips, so a shot through the visible legs or arms could pass beside it.  This
+ * conservative box is the clip's measured footprint: roughly 0.85 m from the
+ * hip in either local-Z direction and 0.35 m across, with the existing .52 m
+ * gameplay height.  It is intentionally used for prone only; standing and
+ * crouch retain the old vertical-cylinder geometry.
+ */
+export const PRONE_HIT_HALF_LENGTH = 0.85;
+export const PRONE_HIT_HALF_WIDTH = 0.35;
+
+function lerpAngle(a: number, b: number, f: number): number {
+  const d = ((b - a + Math.PI * 3) % (Math.PI * 2)) - Math.PI;
+  return a + d * f;
+}
+
+export function hitHeight(stance: PlayerStance | undefined): number {
+  return stance === undefined ? HIT_HEIGHT : stanceBodyHeight(stance);
+}
+
+function headThreshold(stance: PlayerStance | undefined): number {
+  if (stance === 'stand' || stance === undefined) return HEAD_Y;
+  return hitHeight(stance) * (HEAD_Y / HIT_HEIGHT);
+}
+
+function limbThreshold(stance: PlayerStance | undefined): number {
+  if (stance === 'stand' || stance === undefined) return LIMB_Y;
+  return hitHeight(stance) * (LIMB_Y / HIT_HEIGHT);
+}
+
+function muzzleOffsetLimit(stance: PlayerStance | undefined): number {
+  return isPlayerStance(stance) ? MAX_MUZZLE_OFFSET_BY_STANCE[stance] : MAX_MUZZLE_OFFSET_M;
+}
 
 /** Pose samples retained per actor. 24 at the 20 Hz tick is 1.2 s, past the 250 ms ceiling. */
 export const POSE_SAMPLES = 24;
@@ -93,6 +138,9 @@ export interface PoseSample {
   readonly x: number;
   readonly y: number;
   readonly z: number;
+  /** Root yaw, used by the prone footprint; absent means the legacy +Z axis. */
+  readonly yaw?: number;
+  readonly stance?: PlayerStance;
 }
 
 /**
@@ -107,9 +155,9 @@ export class PoseTrack {
   private readonly ring: PoseSample[] = [];
   private cursor = 0;
 
-  push(at: number, x: number, y: number, z: number): void {
+  push(at: number, x: number, y: number, z: number, stance: PlayerStance = 'stand', yaw?: number): void {
     if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z) || !Number.isFinite(at)) return;
-    const s: PoseSample = { at, x, y, z };
+    const s: PoseSample = { at, x, y, z, stance, ...(Number.isFinite(yaw) ? { yaw } : {}) };
     if (this.ring.length < POSE_SAMPLES) this.ring.push(s);
     else this.ring[this.cursor % POSE_SAMPLES] = s;
     this.cursor++;
@@ -136,6 +184,9 @@ export class PoseTrack {
       x: before.x + (after.x - before.x) * f,
       y: before.y + (after.y - before.y) * f,
       z: before.z + (after.z - before.z) * f,
+      yaw: before.yaw === undefined ? after.yaw : after.yaw === undefined
+        ? before.yaw : lerpAngle(before.yaw, after.yaw, f),
+      stance: f >= 0.5 ? (after.stance ?? 'stand') : (before.stance ?? 'stand'),
     };
   }
 }
@@ -214,7 +265,7 @@ export function admitShot(c: ShotMsg, ctx: ShotAdmissionCtx | null): ShotRejectR
   if (age < -(MAX_FUTURE_MS + CLOCK_ALLOWANCE_MS)) return 'future';
 
   const p = ctx.pose;
-  if (p === null || Math.hypot(c.ox - p.x, c.oy - p.y, c.oz - p.z) > MAX_MUZZLE_OFFSET_M) return 'bad-origin';
+  if (p === null || Math.hypot(c.ox - p.x, c.oy - p.y, c.oz - p.z) > muzzleOffsetLimit(p.stance)) return 'bad-origin';
   return null;
 }
 
@@ -248,13 +299,17 @@ export function pickTarget(c: ShotMsg, candidates: readonly TargetCandidate[]): 
   let best: TargetHit | null = null;
   for (const cand of candidates) {
     const p = cand.pose;
-    const t = rayCylinder(c.ox, c.oy, c.oz, c.dx, c.dy, c.dz, p.x, p.y, p.z, HIT_RADIUS, HIT_HEIGHT);
+    const height = hitHeight(p.stance);
+    const t = p.stance === 'prone'
+      ? rayProneBox(c.ox, c.oy, c.oz, c.dx, c.dy, c.dz, p.x, p.y, p.z,
+        p.yaw ?? 0, PRONE_HIT_HALF_WIDTH, PRONE_HIT_HALF_LENGTH, height)
+      : rayCylinder(c.ox, c.oy, c.oz, c.dx, c.dy, c.dz, p.x, p.y, p.z, HIT_RADIUS, height);
     if (t === null || (best !== null && t >= best.distance)) continue;
     const hy = c.oy + c.dy * t - p.y;
     best = {
       id: cand.id,
       distance: t,
-      zone: hy >= HEAD_Y ? 'head' : hy >= LIMB_Y ? 'body' : 'limb',
+      zone: hy >= headThreshold(p.stance) ? 'head' : hy >= limbThreshold(p.stance) ? 'body' : 'limb',
       x: c.ox + c.dx * t,
       y: c.oy + c.dy * t,
       z: c.oz + c.dz * t,
@@ -290,4 +345,43 @@ export function rayCylinder(
   if (t < 0) return null;
   const y = oy + dy * t;
   return y >= cy && y <= cy + h ? t : null;
+}
+
+/** Ray against a yawed prone footprint, with a finite vertical band. */
+export function rayProneBox(
+  ox: number, oy: number, oz: number,
+  dx: number, dy: number, dz: number,
+  cx: number, cy: number, cz: number,
+  yaw: number, halfWidth: number, halfLength: number, height: number,
+): number | null {
+  // CharacterSystem's root faces +Z at yaw 0. In its local frame X is right,
+  // Z is forward; transform the ray into that frame and use slab clipping.
+  const sy = Math.sin(yaw);
+  const cyaw = Math.cos(yaw);
+  const rx = cyaw;
+  const rz = -sy;
+  const fx = sy;
+  const fz = cyaw;
+  const px = ox - cx;
+  const pz = oz - cz;
+  const lx = px * rx + pz * rz;
+  const lz = px * fx + pz * fz;
+  const ldx = dx * rx + dz * rz;
+  const ldz = dx * fx + dz * fz;
+
+  let near = 0;
+  let far = Infinity;
+  const slab = (o: number, d: number, lo: number, hi: number): boolean => {
+    if (Math.abs(d) <= 1e-9) return o >= lo && o <= hi;
+    let a = (lo - o) / d;
+    let b = (hi - o) / d;
+    if (a > b) [a, b] = [b, a];
+    near = Math.max(near, a);
+    far = Math.min(far, b);
+    return near <= far;
+  };
+  if (!slab(lx, ldx, -halfWidth, halfWidth)) return null;
+  if (!slab(oy - cy, dy, 0, height)) return null;
+  if (!slab(lz, ldz, -halfLength, halfLength)) return null;
+  return far >= 0 ? Math.max(0, near) : null;
 }

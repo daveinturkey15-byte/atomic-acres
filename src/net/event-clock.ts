@@ -89,6 +89,8 @@ export function localizeGameMessage(message: GameNetMessage, offset: number): Ga
       return { ...message, e: localizeEvent(message.e, offset) };
     case 'shot-reject':
       return { ...message, e: localizeEvent(message.e, offset) };
+    case 'shot-fired':
+      return { ...message, e: localizeEvent(message.e, offset) };
     case 'kill':
       return {
         ...message,

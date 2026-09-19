@@ -24,24 +24,61 @@ export type TimerId = number | null;
 
 export const WALK_SPEED = 4.8;
 export const SPRINT_SPEED = 6.6;
+export const CROUCH_SPEED = 2.75;
+export const PRONE_SPEED = 1.25;
+export const STAND_HEIGHT = 1.78;
+export const CROUCH_HEIGHT = 1.16;
+export const PRONE_HEIGHT = 0.52;
+
+/** Wire-safe stance intent. Missing on old peers means standing. */
+export const PLAYER_STANCES = ['stand', 'crouch', 'prone'] as const;
+export type PlayerStance = (typeof PLAYER_STANCES)[number];
+
+export function isPlayerStance(value: unknown): value is PlayerStance {
+  return typeof value === 'string' && (PLAYER_STANCES as readonly string[]).includes(value);
+}
+
+export function normalizeStance(value: unknown): PlayerStance | null {
+  if (value === undefined) return 'stand';
+  return isPlayerStance(value) ? value : null;
+}
+
+export function stanceSpeed(stance: PlayerStance): number {
+  if (stance === 'prone') return PRONE_SPEED;
+  if (stance === 'crouch') return CROUCH_SPEED;
+  return WALK_SPEED;
+}
+
+export function stanceBodyHeight(stance: PlayerStance): number {
+  if (stance === 'prone') return PRONE_HEIGHT;
+  if (stance === 'crouch') return CROUCH_HEIGHT;
+  return STAND_HEIGHT;
+}
 
 export interface Pose {
   x: number;
   y: number;
   z: number;
   yaw: number;
+  /** Optional for compatibility with pre-stance callers; authority fills stand. */
+  stance?: PlayerStance;
 }
 
 export function createPose(x = 0, y = 0, z = 0, yaw = 0): Pose {
-  return { x, y, z, yaw };
+  return { x, y, z, yaw, stance: 'stand' };
 }
 
 /** Integrate one input sample. Pure: mutates `pose`, allocates nothing. */
-export function integrateInput(pose: Pose, mx: number, mz: number, yaw: number, sprint: boolean, dt: number): void {
+export function integrateInput(
+  pose: Pose, mx: number, mz: number, yaw: number, sprint: boolean, dt: number,
+  stance: PlayerStance = pose.stance ?? 'stand',
+): void {
   const cx = Math.max(-1, Math.min(1, mx));
   const cz = Math.max(-1, Math.min(1, mz));
   if (!Number.isFinite(yaw) || !Number.isFinite(dt) || dt <= 0) return;
-  const speed = sprint ? SPRINT_SPEED : WALK_SPEED;
+  // Sprint is never a second speed multiplier: a crouched or prone actor is
+  // always clamped to that stance's authored walk speed.
+  const speed = stance === 'stand' && sprint ? SPRINT_SPEED : stanceSpeed(stance);
   const fx = -Math.sin(yaw);
   const fz = -Math.cos(yaw);
   const rx = Math.cos(yaw);
@@ -49,6 +86,7 @@ export function integrateInput(pose: Pose, mx: number, mz: number, yaw: number, 
   pose.x += (rx * cx + fx * cz) * speed * dt;
   pose.z += (rz * cx + fz * cz) * speed * dt;
   pose.yaw = yaw;
+  pose.stance = stance;
   // The host owns position: clamp into the arena instead of trusting anyone.
   if (pose.x < BOUND_X_MIN) pose.x = BOUND_X_MIN;
   else if (pose.x > BOUND_X_MAX) pose.x = BOUND_X_MAX;
@@ -68,14 +106,16 @@ export function integrateInput(pose: Pose, mx: number, mz: number, yaw: number, 
 export function intentFromVelocity(
   vx: number, vz: number, yaw: number,
   out: { mx: number; mz: number; sprint: boolean },
+  stance: PlayerStance = 'stand',
 ): void {
   const speed = Math.hypot(vx, vz);
   if (speed < 1e-3) {
     out.mx = 0; out.mz = 0; out.sprint = false;
     return;
   }
-  const sprint = speed > WALK_SPEED + 0.05;
-  const scale = 1 / (sprint ? SPRINT_SPEED : WALK_SPEED);
+  const base = stanceSpeed(stance);
+  const sprint = stance === 'stand' && speed > WALK_SPEED + 0.05;
+  const scale = 1 / (sprint ? SPRINT_SPEED : base);
   const fx = -Math.sin(yaw);
   const fz = -Math.cos(yaw);
   const rx = Math.cos(yaw);

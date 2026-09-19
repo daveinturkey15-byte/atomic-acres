@@ -10,15 +10,11 @@
  * References: NT05 load screen (sign, saucer, dome, needle, flags), NT03 (hypar).
  *
  * BACKDROP MATERIALS, fitted to measured capture pixels - do not "tidy" these.
- * At metalness 0 the mountains measured (205,206,204) and the city (206,207,205):
- * flat white, no blue left. The sun here is warm and strong, so the diffuse gain on
- * a distant matt surface came out (2.00, 1.30, 0.76) - it SUPPRESSES blue - and ACES
- * compresses what survives to white. So every backdrop ring is roughness 1 with high
- * metalness, which drops the diffuse lobe the warm sun rides in on and lets the
- * palette and the haze set the colour. Metalness is the aerial-perspective dial,
- * graded per ring, and it only works while the fog is dense (FogExp2): under thin
- * fog these rings go near-black at the frame EDGE, because three.js fogs on view
- * depth, not on distance to the camera.
+ * Mountains are distant rock, so their material must stay rough and non-metallic;
+ * the colour ladder and FogExp2 supply aerial perspective. The former metalness
+ * 0.9-1.0 workaround suppressed the warm diffuse lobe but made every face read as
+ * flat grey metal. The current mountain ladder uses matte palette colours and lets
+ * the atmosphere do the distance work instead.
  */
 import * as THREE from 'three';
 import type { Builder } from '../core/kit';
@@ -27,6 +23,7 @@ import { PAL } from '../core/palette';
 import {
   BOUND_X_MAX, BOUND_X_MIN, BOUND_Z, PAVEMENT_OUTER,
 } from '../core/layout';
+import { buildRidgeGeometry } from './terrain-ridges';
 
 /** half the playable footprint - used only for things that belong TO the map */
 const MAP_R = (BOUND_X_MAX - BOUND_X_MIN) / 2;   // 22.25
@@ -253,57 +250,6 @@ function hyparGeo(half: number, rise: number, thick: number, seg: number) {
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.setIndex(idx);
-  g.computeVertexNormals();
-  return g;
-}
-
-/**
- * One desert massif. Unit space is x in [-1,1], crest at y <= ~1, base skirt either
- * side of z = 0, so the instance scale sets width / height / depth independently and
- * the height-to-width ratio can stay near 0.4 - one cone at ratio 1.0 is what made
- * the old ring read as ice-cream cones. Several summits ride a broad body, undulating
- * coherently (per-vertex jitter at 300 m reads as a comb, not as strata). Both ends
- * fall to y = 0, so a sunk instance melts into the haze with no base line and
- * neighbours overlap into a continuous, irregular range.
- */
-function ridgeGeo(rand: () => number, seg: number): THREE.BufferGeometry {
-  const nSum = 2 + Math.floor(rand() * 2);
-  const sums: [number, number, number][] = [];   // [along the ridge, height, half-width]
-  for (let i = 0; i < nSum; i++) {
-    sums.push([(i + 0.5) / nSum + (rand() - 0.5) * 0.26,
-      0.46 + rand() * 0.40, 0.30 + rand() * 0.28]);
-  }
-  const f1 = 3 + rand() * 3, p1 = rand() * 6.28;
-  const f2 = 8 + rand() * 6, p2 = rand() * 6.28;
-  const fz = 1.2 + rand() * 1.6, pz = rand() * 6.28;
-  const pb1 = rand() * 6.28, pb2 = rand() * 6.28;
-  const cr: number[][] = [], fb: number[][] = [], bb: number[][] = [];
-  for (let i = 0; i <= seg; i++) {
-    const t = i / seg;
-    let h = 0.36 * Math.pow(Math.sin(Math.PI * t), 0.5);           // the massif body
-    // exponent 2.6, not 2: a gaussian summit comes to a POINT, and a point at this
-    // horizontal scale IS the white ice-cream cone. 2.6 gives a mesa crown instead.
-    for (const [p, a, w] of sums) {
-      h = Math.max(h, a * Math.exp(-(Math.abs((t - p) / w) ** 2.6)));
-    }
-    h *= 1 + 0.11 * Math.sin(t * Math.PI * f1 + p1)
-           + 0.05 * Math.sin(t * Math.PI * f2 + p2);               // ridge strata
-    h *= Math.min(1, t / 0.12, (1 - t) / 0.12);                    // ends into the floor
-    const zc = 0.30 * Math.sin(t * Math.PI * fz + pz);             // the ridge meanders
-    const x = t * 2 - 1;
-    cr.push([x, Math.max(h, 0), zc]);
-    fb.push([x, 0, zc + 0.62 + 0.34 * Math.sin(t * 5.1 + pb1)]);
-    bb.push([x, 0, zc - 0.62 - 0.34 * Math.sin(t * 4.3 + pb2)]);
-  }
-
-  const pos: number[] = [];
-  const tri = (a: number[], b: number[], c: number[]) => { pos.push(...a, ...b, ...c); };
-  for (let i = 0; i < seg; i++) {
-    tri(fb[i], fb[i + 1], cr[i + 1]); tri(fb[i], cr[i + 1], cr[i]);   // sunward flank
-    tri(bb[i + 1], bb[i], cr[i]); tri(bb[i + 1], cr[i], cr[i + 1]);   // far flank
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
   g.computeVertexNormals();
   return g;
 }
@@ -618,9 +564,8 @@ export const buildSkyline: Builder = (ctx) => {
   // one. The three-layer set was mountain / mountainFar / skyHorizon - three pale greys
   // within ~12% of each other, at 118-180 m where the haze contributes 3-8%. Nothing in
   // that set could read as depth, because depth is a VALUE LADDER and there was no dark
-  // end to the ladder. A steel-toned foothill ring at 300 m gives the ladder a floor;
-  // 450 m and 640 m step up through mountain / mountainFar to skyHorizon, which at 65%
-  // haze is meant to be almost gone.
+  // end to the ladder. A warm matte foothill ring gives the ladder a rock floor; the
+  // outer rings step through dirt, mountainFar and skyHorizon as haze increases.
   //
   // Counts are up from 9-10 to 14-18 per ring: at MAP_R*5.3 = 118 m nine massifs closed
   // the circle, at 300 m they leave 100 m gaps between them and the range reads as
@@ -629,10 +574,10 @@ export const buildSkyline: Builder = (ctx) => {
     // [count, ring index, half-width min/span, height min/span, half-depth min/span]
     const layers: [number, number, number, number, number, number, number, number,
       THREE.Material][] = [
-      [18, 0, 95, 70, 55, 45, 16, 9, m.painted(PAL.steel, 1, 1)],
-      [16, 1, 110, 80, 46, 50, 17, 9, m.painted(PAL.mountain, 1, 1)],
-      [16, 2, 130, 95, 50, 54, 20, 11, m.painted(PAL.mountainFar, 1, 1)],
-      [14, 3, 150, 110, 54, 58, 23, 13, m.painted(PAL.skyHorizon, 1, 0.9)],
+      [18, 0, 95, 70, 55, 45, 16, 9, m.painted(PAL.dirt, 0.98, 0)],
+      [16, 1, 110, 80, 46, 50, 17, 9, m.painted(PAL.mountain, 0.99, 0)],
+      [16, 2, 130, 95, 50, 54, 20, 11, m.painted(PAL.mountainFar, 1, 0)],
+      [14, 3, 150, 110, 54, 58, 23, 13, m.painted(PAL.skyHorizon, 1, 0)],
     ];
     let phase = 0;
     for (const [n, ring, wMin, wSpan, hMin, hSpan, dMin, dSpan, mat] of layers) {
@@ -650,7 +595,13 @@ export const buildSkyline: Builder = (ctx) => {
           (dMin + r() * dSpan) * k,
         ));
       }
-      for (let b = 0; b < 2; b++) g.add(inst(ridgeGeo(r, 22), mat, buckets[b]));
+      for (let b = 0; b < 2; b++) {
+        // Build one deterministic heightfield per bucket. This keeps the
+        // established RNG order while letting each half of the ring carry a
+        // slightly different erosion phase. Geological detail is integrated
+        // in the indexed surface, so there is no coplanar overlay draw.
+        g.add(inst(buildRidgeGeometry(r, 26), mat, buckets[b]));
+      }
     }
   }
 

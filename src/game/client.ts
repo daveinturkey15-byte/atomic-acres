@@ -31,6 +31,7 @@ import type {
   HitZone,
   MatchEndReason,
   MatchPhaseName,
+  ShotFiredEvent,
   TeamId,
 } from './events';
 import type { MatchMode } from './rules';
@@ -116,6 +117,11 @@ export const BANNER_ANNOUNCE_MS = 2_600;
 /** Match phase changes hold longer — they are the thing players wait for. */
 export const BANNER_MATCH_MS = 3_200;
 
+/** Remote presentation edges are intentionally short-lived and bounded. */
+export const REMOTE_SHOT_MAX_AGE_MS = 750;
+export const REMOTE_SHOT_QUEUE_LIMIT = 24;
+export const REMOTE_SHOT_RECENT_LIMIT = 128;
+
 // ---------------------------------------------------------------------------
 // The client
 // ---------------------------------------------------------------------------
@@ -124,6 +130,10 @@ export class GameClient {
   private readonly names = new Map<ActorId, string>();
   private readonly streakNames = new Map<string, string>();
   private readonly lastShotAt = new Map<ActorId, number>();
+  private readonly remoteShots: ShotFiredEvent[] = [];
+  /** Recent identity cache survives presentation drains, unlike the pending queue. */
+  private readonly remoteShotKeys = new Set<string>();
+  private readonly remoteShotKeyOrder: string[] = [];
   private readonly samples = new Map<ActorId, PlayerSample>();
   private readonly edges: ClientEdge[] = [];
   private readonly banners = new BannerArbiter();
@@ -226,6 +236,25 @@ export class GameClient {
           this.ordnance.note(e.at, 'shot-rejected you seq=' + e.seq + ' ' + e.reason);
         }
         return;
+      case 'shot-fired': {
+        // Local prediction already played this shot. Host echo must not double it.
+        if (e.actorId === this.selfId) return;
+        const age = this.now - e.at;
+        if (age > REMOTE_SHOT_MAX_AGE_MS) return;
+        const key = remoteShotKey(e);
+        if (this.remoteShotKeys.has(key)) return;
+        if (this.remoteShotKeys.size >= REMOTE_SHOT_RECENT_LIMIT) {
+          const evicted = this.remoteShotKeyOrder.shift();
+          if (evicted !== undefined) this.remoteShotKeys.delete(evicted);
+        }
+        this.remoteShotKeys.add(key);
+        this.remoteShotKeyOrder.push(key);
+        if (this.remoteShots.length >= REMOTE_SHOT_QUEUE_LIMIT) {
+          this.remoteShots.shift();
+        }
+        this.remoteShots.push(e);
+        return;
+      }
       case 'streak-earned':
         this.pushLine(feedLineForStreakEarned(e, this.ctx()));
         return;
@@ -361,6 +390,18 @@ export class GameClient {
     this.applyBanner(this.banners.tick(this.now));
   }
 
+  /** Zero-allocation liveness read for world presentation code. */
+  isAlive(): boolean { return this.alive; }
+
+  /** Drain remote shot edges into caller-owned storage; empty drains allocate nothing. */
+  drainRemoteShots(out: ShotFiredEvent[]): number {
+    if (this.remoteShots.length === 0) return 0;
+    out.length = 0;
+    for (let i = 0; i < this.remoteShots.length; i++) out.push(this.remoteShots[i]);
+    this.remoteShots.length = 0;
+    return out.length;
+  }
+
   view(): ClientView {
     return {
       selfId: this.selfId,
@@ -385,4 +426,8 @@ export class GameClient {
 /** Hitmarker kind from the hit zone. `limb` reads as a body hit, not a miss. */
 function markerFor(zone: HitZone): 'body' | 'head' {
   return zone === 'head' ? 'head' : 'body';
+}
+
+function remoteShotKey(e: ShotFiredEvent): string {
+  return `${e.actorId}:${e.life}:${e.seq}`;
 }

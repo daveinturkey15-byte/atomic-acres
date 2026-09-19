@@ -38,6 +38,18 @@
       "colorspace": "sRGB"
     },
     {
+      "name": "FieldCase_MetalBase",
+      "width": 128,
+      "height": 128,
+      "colorspace": "sRGB"
+    },
+    {
+      "name": "FieldCase_MetalRoughness",
+      "width": 128,
+      "height": 128,
+      "colorspace": "Non-Color"
+    },
+    {
       "name": "FieldCase_Normal",
       "width": 256,
       "height": 256,
@@ -84,13 +96,13 @@
       0.564
     ]
   },
-  "glb_bytes": 463824,
-  "glb_sha256": "cf185ce8e9a2ecc3fa928c253fd04e70712a05e8f40abe96dec9f5441109c7b9",
-  "build_seconds": 0.469,
+  "glb_bytes": 487972,
+  "glb_sha256": "d3286def0cc476edcebe3f038503168694821fc38916b554860bfcc764036d56",
+  "build_seconds": 0.521,
   "budgets": {
     "triangles_max": 5000,
     "materials_max": 4,
     "texture_edge_max": 2048,
-    "glb_bytes_max": 4000000
+    "glb_bytes_max": 2000000
   }
 }

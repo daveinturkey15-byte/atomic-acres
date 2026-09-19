@@ -56,7 +56,7 @@ function readWav16Mono(path) {
     if (a > peak) peak = a;
     sq += s * s;
   }
-  return { sr, n, peak, rms: Math.sqrt(sq / n), dc: sum / n, bytes: b.length, hash: createHash('sha256').update(b).digest('hex') };
+  return { sr, n, peak, rms: Math.sqrt(sq / n), dc: sum / n, bytes: b.length, hash: createHash('sha256').update(b).digest('hex'), x };
 }
 
 const manifestPath = join(OUT, 'manifest.json');
@@ -80,13 +80,39 @@ for (const e of manifest.files) {
   }
   ok(w.bytes === e.bytes, `${e.file} size ${w.bytes} matches manifest`);
   ok(w.peak < 1.0, `${e.file} peak ${w.peak.toFixed(3)} < 0 dBFS`);
-  ok(w.peak >= 0.3, `${e.file} peak ${w.peak.toFixed(3)} audible (>= 0.3)`);
   const isCue = e.file.startsWith('cue-') && e.file !== 'cue-blast.wav';
-  ok(isCue ? w.rms >= 0.02 : w.rms >= 0.05, `${e.file} rms ${w.rms.toFixed(3)} audible`);
+  const isStep = e.file.startsWith('step-');
+  const isAmbient = e.file.startsWith('ambient-');
+  // Audibility bands per class (shot/cue bands unchanged from v2).
+  ok(isAmbient ? w.peak >= 0.2 : w.peak >= 0.3, `${e.file} peak ${w.peak.toFixed(3)} audible`);
+  ok(isCue || isStep ? w.rms >= 0.02 : isAmbient ? w.rms >= 0.03 : w.rms >= 0.05, `${e.file} rms ${w.rms.toFixed(3)} audible`);
   ok(w.rms <= 0.5, `${e.file} rms ${w.rms.toFixed(3)} not a brick (<= 0.5)`);
   ok(Math.abs(w.dc) < 0.01, `${e.file} DC offset ${w.dc.toFixed(4)} ~ 0`);
-  const maxDur = e.file === 'cue-blast.wav' ? 2.0 : e.file.startsWith('shot-') ? 1.2 : 0.5;
+  const maxDur = e.file === 'cue-blast.wav' ? 2.0 : e.file.startsWith('shot-') ? 1.2 : isAmbient ? 5.0 : 0.5;
   ok(w.n / w.sr <= maxDur, `${e.file} duration ${(w.n / w.sr).toFixed(2)}s <= ${maxDur}s`);
+  if (isAmbient) {
+    // Seamless-loop gates: (a) head/tail means meet, proving the swell
+    // phase aligns across the wrap; (b) the wrap step stays within the
+    // bed's own texture slew — a click transient exceeds local slew by an
+    // order of magnitude, while an absolute bound false-fails on noise
+    // texture (one-sample HF slew routinely tops 0.06 at these peaks).
+    const edge = Math.min(2048, w.n);
+    let meanHead = 0;
+    let meanTail = 0;
+    for (let i = 0; i < edge; i++) {
+      meanHead += w.x[i];
+      meanTail += w.x[w.n - edge + i];
+    }
+    meanHead /= edge;
+    meanTail /= edge;
+    ok(Math.abs(meanHead - meanTail) < 0.015, `${e.file} loop means meet (${meanHead.toFixed(4)} vs ${meanTail.toFixed(4)})`);
+    const diffs = [];
+    for (let i = 0; i + 1 < w.n; i += 16) diffs.push(Math.abs(w.x[i + 1] - w.x[i]));
+    diffs.sort((a, b) => a - b);
+    const med = diffs[Math.floor(diffs.length / 2)];
+    const seam = Math.abs(w.x[0] - w.x[w.n - 1]);
+    ok(seam < Math.max(0.06, med * 6), `${e.file} loop seam ${seam.toFixed(4)} within texture (med slew ${med.toFixed(4)})`);
+  }
 }
 
 console.log('budget:');
@@ -109,6 +135,14 @@ ok((svc.match(/new\s+AC\(\)/g) ?? []).length <= 1, 'single AudioContext construc
 ok(!/Math\.random/.test(svcCode), 'service uses deterministic LCG, no Math.random');
 ok(!/Math\.random/.test(renderCode), 'renderer uses seeded PRNG, no Math.random');
 ok(/createDynamicsCompressor/.test(svc), 'service has a master limiter (compressor)');
+ok(/step\s*\(surface/.test(svc), 'service exposes step(surface, opts)');
+ok(/setEnvironment\s*\(/.test(svc), 'service exposes setEnvironment(kind, level)');
+ok(/unlocked/.test(svcCode), 'service gates sound on user gesture (unlocked flag)');
+ok(((svc.match(/\.loop\s*=\s*true/g)) ?? []).length <= 2, 'at most two looping sources (wind/rain beds)');
+ok(/setTargetAtTime/.test(svc), 'ambience ramps with setTargetAtTime (no clicks)');
+ok(/WIND_MAX/.test(svc) && /RAIN_MAX/.test(svc), 'ambience has hard gain ceilings');
+ok(/ambient-wind\.wav/.test(render) && /ambient-rain\.wav/.test(render), 'renderer owns both weather beds');
+ok(/step-concrete-a\.wav/.test(render) && /step-grass-a\.wav/.test(render) && /step-gravel-a\.wav/.test(render), 'renderer owns all three footfall banks');
 
 if (failures > 0) {
   console.log(`CHECK FAILED: ${failures} violation(s)`);

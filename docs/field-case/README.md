@@ -2,7 +2,9 @@
 
 This is an original Blender-authored hard-surface prop for the standalone Nuketown continuation. The builder uses no downloaded geometry or models. It makes a rugged olive field equipment case with real 45 mm walls, a closed lid and lower lip, moulded lid ribs, a recessed front handle, two clasps, rear hinges, bolt heads and four rubber feet.
 
-The source is [build_field_case.py](../../scripts/blender/build_field_case.py). It runs headless with Blender 5.1 and writes an editable [field-case.blend](field-case.blend) plus the runtime [field-case.glb](../../public/assets/field-case/field-case.glb). The GLB embeds all three PNG maps and has no external URI.
+The source is [build_field_case.py](../../scripts/blender/build_field_case.py). It runs headless with Blender 5.1 and writes an editable [field-case.blend](field-case.blend) plus the runtime [field-case.glb](../../public/assets/field-case/field-case.glb). The GLB embeds all five PNG maps and has no external URI.
+
+The final appearance pass keeps the authored shell dimensions and collider unchanged. It adds subtle olive polymer grain with restrained UV-edge dusting, varies shell roughness over the moulded surface, and gives the steel latches their own fine base-colour and roughness maps. Rubber feet remain a separate near-black, high-roughness material so the contact hardware does not read as painted metal.
 
 The optional loader is [field-case.ts](../../src/assets/field-case.ts):
 
@@ -20,15 +22,15 @@ scene.add(prop);
 
 ## Measured build
 
-The exact build receipt is [build-report.json](build-report.json). The GLB was rebuilt twice with the same SHA-256 `cf185ce8e9a2ecc3fa928c253fd04e70712a05e8f40abe96dec9f5441109c7b9`.
+The exact build receipt is [build-report.json](build-report.json). The final appearance pass was rebuilt with SHA-256 `d3286def0cc476edcebe3f038503168694821fc38916b554860bfcc764036d56`.
 
 | Gate | Result |
 | --- | --- |
 | triangles | 3,608 (limit 5,000) |
 | materials | 3 (limit 4) |
-| textures | 3 embedded 256² PNG maps: sRGB base colour, linear roughness, linear normal |
-| file size | 463,824 bytes (limit 4 MB) |
+| textures | 5 embedded PNG maps: 256² sRGB shell base colour, 256² linear shell roughness and normal, 128² sRGB steel base colour, 128² linear steel roughness |
+| file size | 487,972 bytes (limit 2 MB) |
 | pivot | ground centre at exported `(0, 0, 0)` |
-| repeatability | byte-identical rebuild |
+| repeatability | deterministic source and embedded maps; final SHA recorded above |
 
 The static GLB inspection is [inspect_field_case.cjs](../../scripts/blender/inspect_field_case.cjs). Runtime front, side and three-quarter captures remain OPEN until the root integration lane mounts this file in the live game and looks at it under the game's light rig.

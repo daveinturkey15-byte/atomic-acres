@@ -1,0 +1,39 @@
+{
+  "schema": "nuketown-2025/reference-refinement-target/1",
+  "id": "field-case-material-pass",
+  "kind": "2d-reference-only",
+  "generatedAt": "2026-09-19",
+  "target": {
+    "repoPath": "docs/reference/refinement-targets/field-case.png",
+    "bytes": 2003027,
+    "sha256": "1b9bc99bf0ba146cf3c3579dade7591ce3e41bf516bbb9a671198706a24ec2cb",
+    "dimensions": [1376, 768],
+    "role": "photoreal material and lighting proposal; target imagery only"
+  },
+  "threadWork": {
+    "receiptPath": "C:/Users/david/Documents/Codex/2026-09-19/hi/work/target-case/receipt.json",
+    "receiptBytes": 416,
+    "receiptSha256": "1f916e1a3f81fbcf5f782752cbe66440378f15670031c53d486b5483a9966fe7",
+    "sourcePath": "C:/Users/david/Documents/Codex/2026-09-19/hi/work/target-case/source.png",
+    "sourceBytes": 1029321,
+    "sourceSha256": "01f45d64bc1ec0018f8ca89ca6b833a0dc10d3a049d17508599042087b367687",
+    "sourceDimensions": [1600, 900],
+    "targetPath": "C:/Users/david/Documents/Codex/2026-09-19/hi/work/target-case/target.png",
+    "targetBytes": 2003027,
+    "targetSha256": "1b9bc99bf0ba146cf3c3579dade7591ce3e41bf516bbb9a671198706a24ec2cb",
+    "targetDimensions": [1376, 768],
+    "runId": "delegated-agy-2a70d804-c3db-4f8f-bd1e-e005a409a58a",
+    "requestedModel": "gemini-3.8-flash-high",
+    "requestedEffort": "high",
+    "status": "review-required",
+    "imageModel": "not reported by tool"
+  },
+  "sourceFrame": {
+    "repoPath": "captures/color-round1-fieldCaseThreeQuarter.png",
+    "bytes": 1029321,
+    "sha256": "01f45d64bc1ec0018f8ca89ca6b833a0dc10d3a049d17508599042087b367687",
+    "role": "runtime capture used as the source image for the 2D proposal"
+  },
+  "runtimeUse": "reference only; no image-to-3D reconstruction or runtime visual acceptance claim",
+  "integrationState": "field-case GLB is present in the recovery tree; root owns runtime A/B review"
+}

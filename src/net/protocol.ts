@@ -17,6 +17,7 @@
  */
 
 import type { TeamId } from '../game/events';
+import { isPlayerStance, type PlayerStance } from './room-core';
 import {
   isGameMessage,
   isTeamId,
@@ -25,6 +26,7 @@ import {
   type MatchStateMsg,
   type OrdnanceMsg,
   type ShotMsg,
+  type ShotFiredMsg,
   type ShotRejectMsg,
   type SpawnMsg,
   type StreakIntentMsg,
@@ -87,6 +89,8 @@ export interface HelloMsg {
   name: string;
   /** Client nonce so a stale retry is not mistaken for a second player. */
   nonce: string;
+  /** The selected primary the host should use for this seat's first life. */
+  primaryId?: string;
   /** Present when the guest is coming back for a seat it already held. */
   resume?: ResumeClaim;
 }
@@ -128,6 +132,8 @@ export interface RosterMsg {
 export interface ReadyMsg {
   type: 'ready';
   ready: boolean;
+  /** Loadout declaration captured before the host permits Start. */
+  primaryId?: string;
 }
 
 /** Host -> all: match starts at the given host tick. */
@@ -179,6 +185,10 @@ export interface InputMsg {
    * the arena's standable band.
    */
   y?: number;
+  /** Stance intent. Omitted by pre-stance peers and interpreted as stand. */
+  stance?: PlayerStance;
+  /** Optional loadout declaration; the host accepts only authored primary ids. */
+  primaryId?: string;
 }
 
 /** One authoritative player sample inside a state broadcast. */
@@ -199,6 +209,8 @@ export interface PlayerSample {
   hp?: number;
   team?: TeamId;
   alive?: boolean;
+  /** Host-authoritative pose stance. Absent means standing for old snapshots. */
+  stance?: PlayerStance;
 }
 
 /** Host -> all: fixed-tick world snapshot. */
@@ -246,6 +258,7 @@ export type NetMessage =
   | ByeMsg
   | ShotMsg
   | ShotRejectMsg
+  | ShotFiredMsg
   | DamageMsg
   | KillMsg
   | SpawnMsg
@@ -289,6 +302,7 @@ export function isNetMessage(v: unknown): v is NetMessage {
     case 'hello':
       return (
         typeof m['code'] === 'string' && typeof m['name'] === 'string' && typeof m['nonce'] === 'string' &&
+        (m['primaryId'] === undefined || typeof m['primaryId'] === 'string') &&
         (m['resume'] === undefined || isResumeClaim(m['resume']))
       );
     case 'welcome':
@@ -304,7 +318,8 @@ export function isNetMessage(v: unknown): v is NetMessage {
     case 'roster':
       return Array.isArray(m['roster']) && (m['roster'] as unknown[]).every(isRosterEntry);
     case 'ready':
-      return typeof m['ready'] === 'boolean';
+      return typeof m['ready'] === 'boolean' &&
+        (m['primaryId'] === undefined || typeof m['primaryId'] === 'string');
     case 'start':
       return isFiniteNum(m['startTick']) && isFiniteNum(m['hostNow']);
     case 'input':
@@ -318,7 +333,9 @@ export function isNetMessage(v: unknown): v is NetMessage {
         typeof m['jump'] === 'boolean' &&
         (m['sprint'] === undefined || typeof m['sprint'] === 'boolean') &&
         (m['dt'] === undefined || isFiniteNum(m['dt'])) &&
-        (m['y'] === undefined || isFiniteNum(m['y']))
+        (m['y'] === undefined || isFiniteNum(m['y'])) &&
+        (m['stance'] === undefined || isPlayerStance(m['stance'])) &&
+        (m['primaryId'] === undefined || typeof m['primaryId'] === 'string')
       );
     case 'state':
       if (!Number.isSafeInteger(m['tick']) || !isFiniteNum(m['hostNow']) || !Array.isArray(m['players'])) {
@@ -337,7 +354,8 @@ export function isNetMessage(v: unknown): v is NetMessage {
           // Wave 0 optional game fields: absent is legal, malformed is not.
           (s['hp'] === undefined || isFiniteNum(s['hp'])) &&
           (s['team'] === undefined || isTeamId(s['team'])) &&
-          (s['alive'] === undefined || typeof s['alive'] === 'boolean')
+          (s['alive'] === undefined || typeof s['alive'] === 'boolean') &&
+          (s['stance'] === undefined || isPlayerStance(s['stance']))
         );
       });
     // Gameplay tags: shapes and validators live in ./protocol-game so this
@@ -345,6 +363,7 @@ export function isNetMessage(v: unknown): v is NetMessage {
     // tag it does not own, so this list cannot admit an unchecked message.
     case 'shot':
     case 'shot-reject':
+    case 'shot-fired':
     case 'damage':
     case 'kill':
     case 'spawn':

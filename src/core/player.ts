@@ -15,14 +15,12 @@
  */
 import * as THREE from 'three';
 import type { AABB } from './kit';
-import { EYE_HEIGHT, SPAWN_A } from './layout';
+import { EYE_HEIGHT, CROUCH_EYE, PRONE_EYE, SPAWN_A } from './layout';
 
 const HALF_W = 0.3;          // player half-width (0.6 m capsule)
 const BODY_H = 1.78;         // full standing height
 const CROUCH_H = 1.16;       // crouched capsule height, measured from the feet
 const PRONE_H = 0.52;         // face-down capsule height, helmet included
-const CROUCH_EYE = 1.08;      // eye height above the feet while crouched
-const PRONE_EYE = 0.50;       // eye height above the feet while prone
 const STEP_UP = 0.38;        // kerbs, stair treads, low ledges
 // Movement tuned to Black Ops 2 rather than picked by feel. BO2 is a Quake-lineage
 // engine where 1 unit = 1 inch, gravity is 800 units/s^2 = 20.32 m/s^2, and a jump

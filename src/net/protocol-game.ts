@@ -37,6 +37,7 @@ import {
   type MatchEndReason,
   type MatchPhaseName,
   type OrdnanceEvent,
+  type ShotFiredEvent,
   type ShotRejectedEvent,
   type SpawnEvent,
   type StreakActivatedEvent,
@@ -75,6 +76,9 @@ export interface ShotMsg {
 
 /** Host -> shooter: the claim was refused. Label is `SHOT_REJECT_LABELS[reason]`. */
 export interface ShotRejectMsg { type: 'shot-reject'; e: ShotRejectedEvent }
+
+/** Host -> all: one admitted firearm shot, including a miss. */
+export interface ShotFiredMsg { type: 'shot-fired'; e: ShotFiredEvent }
 
 /** Host -> all: one applied hit. */
 export interface DamageMsg { type: 'damage'; e: DamageEvent }
@@ -154,6 +158,7 @@ export interface OrdnanceMsg { type: 'ordnance'; e: OrdnanceEvent }
 export const GAME_MESSAGE_TYPES = [
   'shot',
   'shot-reject',
+  'shot-fired',
   'damage',
   'kill',
   'spawn',
@@ -167,6 +172,7 @@ export type GameMessageType = (typeof GAME_MESSAGE_TYPES)[number];
 export type GameNetMessage =
   | ShotMsg
   | ShotRejectMsg
+  | ShotFiredMsg
   | DamageMsg
   | KillMsg
   | SpawnMsg
@@ -322,6 +328,17 @@ export function isGameMessage(m: Record<string, unknown>): boolean {
         typeof e['shooterId'] === 'string' &&
         Number.isSafeInteger(e['seq']) &&
         inSet(e['reason'], SHOT_REJECT_REASONS)
+      );
+    }
+    case 'shot-fired': {
+      const e = m['e'];
+      return (
+        isEvent(e, 'shot-fired') &&
+        typeof e['actorId'] === 'string' &&
+        Number.isSafeInteger(e['life']) &&
+        Number.isSafeInteger(e['seq']) &&
+        typeof e['weaponId'] === 'string' &&
+        isNum(e['x']) && isNum(e['y']) && isNum(e['z'])
       );
     }
     case 'damage':

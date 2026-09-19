@@ -19,6 +19,7 @@ import { balanceTeams } from '../game/rules';
 import { isOrdnanceEventType, type GameEvent, type KillEvent, type WorldQuery } from '../game/events';
 import type { SoloDriver } from '../game/session-solo';
 import type { BotBody, MatchDriver } from '../game/session-types';
+import type { PlayerStance } from './room-core';
 import type { ShotClaim } from '../weapons/controller';
 import type { GameNetMessage, NetMessage } from './protocol';
 import type { HostRoom } from './room';
@@ -50,7 +51,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
     for (const e of roster) {
       if (e.isHost) continue;
       seen.add(e.id);
-      solo.addRemote(e.id, e.name, teams.get(e.id) ?? 1);
+       solo.addRemote(e.id, e.name, teams.get(e.id) ?? 1, room.primaryOf(e.id));
       seats.add(e.id);
     }
     for (const id of seats) {
@@ -85,6 +86,9 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
           break;
         case 'shot-rejected':
           if (seats.has(e.shooterId)) room.sendToPlayer(e.shooterId, { type: 'shot-reject', e });
+          break;
+        case 'shot-fired':
+          room.broadcast({ type: 'shot-fired', e });
           break;
         case 'match-phase':
           phaseEdge = true;
@@ -127,14 +131,14 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
       return `host · seats ${seats.size} · rtt ${rtt} ms · tick ${s.tickHz.toFixed(1)} Hz · in ${s.inputsAccepted}/${s.inputsRejected} ok/rej`;
     },
 
-    tick(now, x, y, z, yaw, pitch): void {
+    tick(now, x, y, z, yaw, pitch, stance: PlayerStance = 'stand'): void {
       if (disposed) return;
       syncRoster();
-      room.driveHostSeat(x, y, z, yaw);
+      room.driveHostSeat(x, y, z, yaw, stance);
       room.forEachGuestPose((id, p, connected) => {
-        if (connected) solo.remotePose(id, p.x, p.y, p.z, p.yaw);
+        if (connected) solo.remotePose(id, p.x, p.y, p.z, p.yaw, p.stance ?? 'stand');
       });
-      solo.tick(now, x, y, z, yaw, pitch);
+      solo.tick(now, x, y, z, yaw, pitch, stance);
       if (phaseEdge || now - lastMatchAt >= MATCH_STATE_MS) {
         const m = solo.matchState();
         if (m !== null) {

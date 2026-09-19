@@ -75,26 +75,53 @@ def material(name: str, base, metallic=0.0, roughness=0.5):
 
 
 def paint_material():
-    mat = material("FieldCasePaint", 0x68705C, metallic=0.08, roughness=0.76)
+    # A muted olive polymer with a slightly dusty, sun-faded edge tone.  The
+    # maps stay intentionally restrained so the case reads as moulded plastic
+    # in the game lighting instead of painted camouflage.
+    mat = material("FieldCasePaint", 0x59634A, metallic=0.05, roughness=0.66)
     nodes = mat.node_tree.nodes
     links = mat.node_tree.links
     bsdf = next(n for n in nodes if n.type == "BSDF_PRINCIPLED")
+
+    def clamp(value):
+        return max(0.0, min(1.0, value))
+
     base = image(
         "FieldCase_BaseColor", 256, "sRGB",
         lambda u, v, n, m: (
-            (0.29 + 0.13 * n + 0.05 * m) * (0.92 + 0.08 * math.sin(v * 31.0)),
-            (0.33 + 0.12 * n + 0.04 * m) * (0.94 + 0.06 * math.sin(v * 31.0)),
-            (0.25 + 0.10 * n + 0.03 * m) * (0.96 + 0.04 * math.sin(v * 31.0)),
+            # UV-border wear gives the moulded corners a dusty highlight while
+            # the two stable fields provide subtle polymer grain and stain.
+            clamp(0.255 + 0.045 * n + 0.018 * m
+                  + 0.012 * math.sin(u * 239.0 + v * 17.0)
+                  + 0.055 * max(0.0, 1.0 - min(u, 1.0 - u, v, 1.0 - v) / 0.075)
+                  * (0.35 + 0.65 * m)),
+            clamp(0.305 + 0.052 * n + 0.022 * m
+                  + 0.010 * math.sin(u * 239.0 + v * 17.0)
+                  + 0.047 * max(0.0, 1.0 - min(u, 1.0 - u, v, 1.0 - v) / 0.075)
+                  * (0.35 + 0.65 * m)),
+            clamp(0.205 + 0.036 * n + 0.015 * m
+                  + 0.008 * math.sin(u * 239.0 + v * 17.0)
+                  + 0.030 * max(0.0, 1.0 - min(u, 1.0 - u, v, 1.0 - v) / 0.075)
+                  * (0.35 + 0.65 * m)),
             1.0,
         ),
     )
     rough = image(
         "FieldCase_Roughness", 256, "Non-Color",
-        lambda u, v, n, m: (0.64 + 0.22 * n, 0.64 + 0.22 * n, 0.64 + 0.22 * n, 1.0),
+        lambda u, v, n, m: (
+            *([clamp(0.52 + 0.18 * n + 0.08 * m
+                     + 0.08 * max(0.0, 1.0 - min(u, 1.0 - u, v, 1.0 - v) / 0.075))] * 3),
+            1.0,
+        ),
     )
     normal = image(
         "FieldCase_Normal", 256, "Non-Color",
-        lambda u, v, n, m: (0.49 + (n - 0.5) * 0.06, 0.49 + (m - 0.5) * 0.06, 0.98, 1.0),
+        lambda u, v, n, m: (
+            0.5 + 0.045 * math.sin(u * 239.0 + v * 17.0) + 0.018 * (n - 0.5),
+            0.5 + 0.045 * math.sin(v * 223.0 - u * 13.0) + 0.018 * (m - 0.5),
+            1.0,
+            1.0,
+        ),
     )
     for name, img, color_input in (
         ("FieldCase_BaseColorTex", base, "Base Color"),
@@ -110,6 +137,44 @@ def paint_material():
     ntex.image.colorspace_settings.name = "Non-Color"
     links.new(ntex.outputs["Color"], bsdf.inputs["Normal"])
     return mat, (base, rough, normal)
+
+
+def metal_material():
+    # Darkened steel keeps the latch faces distinct from the olive shell while
+    # preserving a controlled reflection under both the game and reference rigs.
+    mat = material("FieldCaseSteel", 0x4A514D, metallic=0.88, roughness=0.30)
+    nodes = mat.node_tree.nodes
+    links = mat.node_tree.links
+    bsdf = next(n for n in nodes if n.type == "BSDF_PRINCIPLED")
+
+    def clamp(value):
+        return max(0.0, min(1.0, value))
+
+    base = image(
+        "FieldCase_MetalBase", 128, "sRGB",
+        lambda u, v, n, m: (
+            clamp(0.245 + 0.045 * n + 0.018 * math.sin(v * 170.0 + u * 9.0)),
+            clamp(0.265 + 0.050 * n + 0.020 * math.sin(v * 170.0 + u * 9.0)),
+            clamp(0.250 + 0.042 * n + 0.016 * math.sin(v * 170.0 + u * 9.0)),
+            1.0,
+        ),
+    )
+    rough = image(
+        "FieldCase_MetalRoughness", 128, "Non-Color",
+        lambda u, v, n, m: (
+            *([clamp(0.22 + 0.11 * n + 0.07 * m)] * 3),
+            1.0,
+        ),
+    )
+    for name, img, color_input in (
+        ("FieldCase_MetalBaseTex", base, "Base Color"),
+        ("FieldCase_MetalRoughnessTex", rough, "Roughness"),
+    ):
+        tex = nodes.new("ShaderNodeTexImage")
+        tex.name = name
+        tex.image = img
+        links.new(tex.outputs["Color"], bsdf.inputs[color_input])
+    return mat, (base, rough)
 
 
 def box(name, loc, dims, mat, bevel=0.0):
@@ -257,7 +322,7 @@ def bounds():
 def main():
     clear_scene()
     paint, images = paint_material()
-    metal = material("FieldCaseSteel", 0x30363A, metallic=0.82, roughness=0.28)
+    metal, metal_images = metal_material()
     rubber = material("FieldCaseRubber", 0x151718, metallic=0.02, roughness=0.88)
     meshes = add_case(paint, metal, rubber)
 
@@ -271,6 +336,9 @@ def main():
 
     # Save an editable source beside the report; no runtime dependency on it.
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    # Keep the retained source backup untouched; this appearance pass must not
+    # create another redundant .blend1 beside the editable deliverable.
+    bpy.context.preferences.filepaths.save_version = 0
     bpy.ops.wm.save_as_mainfile(filepath=str(BLEND))
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     bpy.ops.export_scene.gltf(
@@ -314,7 +382,7 @@ def main():
         "glb_sha256": hashlib.sha256(OUT_GLB.read_bytes()).hexdigest(),
         "build_seconds": round(time.perf_counter() - T0, 3),
         "budgets": {"triangles_max": 5000, "materials_max": 4, "texture_edge_max": 2048,
-                    "glb_bytes_max": 4_000_000},
+                    "glb_bytes_max": 2_000_000},
     }
     REPORT.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     print("FIELD_CASE_BUILD " + json.dumps({k: report[k] for k in (

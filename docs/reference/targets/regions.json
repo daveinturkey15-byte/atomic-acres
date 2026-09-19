@@ -1,0 +1,458 @@
+{
+ "_doc": "Pixel rectangles [x0,y0,x1,y1] at 1600x900 used by `photoreal-targets.py measure` on BOTH images of a pair. sunlit/shaded are the SAME material in and out of sun; contact is the strip directly under an object, contactRef the same surface a few metres away; shadowLine is a segment drawn ACROSS a shadow edge (10-90% transition width in px); sky is a sky-only rect (top fifth vs bottom fifth = gradient); facade is a flat wall area for micro-detail (mean Sobel).",
+ "turningHead": {
+  "sunlit": [
+   560,
+   720,
+   1040,
+   820
+  ],
+  "shaded": [
+   700,
+   560,
+   860,
+   600
+  ],
+  "contact": [
+   690,
+   555,
+   860,
+   585
+  ],
+  "contactRef": [
+   600,
+   640,
+   1000,
+   700
+  ],
+  "shadowLine": [
+   [
+    780,
+    560
+   ],
+   [
+    780,
+    660
+   ]
+  ],
+  "sky": [
+   400,
+   0,
+   1200,
+   250
+  ],
+  "facade": [
+   1380,
+   380,
+   1560,
+   480
+  ]
+ },
+ "spawnA": {
+  "sunlit": [
+   720,
+   350,
+   1000,
+   385
+  ],
+  "shaded": [
+   60,
+   350,
+   400,
+   385
+  ],
+  "contact": [
+   740,
+   660,
+   940,
+   672
+  ],
+  "contactRef": [
+   740,
+   690,
+   940,
+   702
+  ],
+  "shadowLine": [
+   [
+    400,
+    470
+   ],
+   [
+    600,
+    470
+   ]
+  ],
+  "sky": [
+   1050,
+   0,
+   1300,
+   180
+  ],
+  "facade": [
+   480,
+   60,
+   1000,
+   120
+  ]
+ },
+ "interiorOrange": {
+  "sunlit": [
+   240,
+   560,
+   560,
+   620
+  ],
+  "shaded": [
+   240,
+   780,
+   560,
+   840
+  ],
+  "contact": [
+   600,
+   860,
+   900,
+   880
+  ],
+  "contactRef": [
+   600,
+   800,
+   900,
+   820
+  ],
+  "facade": [
+   600,
+   100,
+   900,
+   700
+  ]
+ },
+ "aerial": {
+  "sunlit": [
+   100,
+   300,
+   250,
+   340
+  ],
+  "shaded": [
+   420,
+   375,
+   520,
+   405
+  ],
+  "contact": [
+   870,
+   470,
+   930,
+   485
+  ],
+  "contactRef": [
+   960,
+   470,
+   1010,
+   485
+  ],
+  "shadowLine": [
+   [
+    400,
+    320
+   ],
+   [
+    400,
+    440
+   ]
+  ],
+  "facade": [
+   830,
+   260,
+   970,
+   330
+  ]
+ },
+ "yardOrange": {
+  "sunlit": [
+   545,
+   500,
+   600,
+   560
+  ],
+  "shaded": [
+   720,
+   650,
+   900,
+   710
+  ],
+  "contact": [
+   720,
+   740,
+   1000,
+   760
+  ],
+  "contactRef": [
+   720,
+   800,
+   1000,
+   820
+  ],
+  "shadowLine": [
+   [
+    850,
+    700
+   ],
+   [
+    850,
+    820
+   ]
+  ],
+  "sky": [
+   600,
+   0,
+   1000,
+   60
+  ],
+  "facade": [
+   840,
+   350,
+   1120,
+   380
+  ]
+ },
+ "yardWhite": {
+  "sunlit": [
+   640,
+   350,
+   980,
+   380
+  ],
+  "shaded": [
+   720,
+   625,
+   900,
+   660
+  ],
+  "contact": [
+   700,
+   680,
+   900,
+   700
+  ],
+  "contactRef": [
+   900,
+   760,
+   1100,
+   780
+  ],
+  "shadowLine": [
+   [
+    350,
+    640
+   ],
+   [
+    560,
+    640
+   ]
+  ],
+  "sky": [
+   400,
+   0,
+   1200,
+   80
+  ],
+  "facade": [
+   600,
+   440,
+   1000,
+   520
+  ],
+  "_note": "sunlit = white roof band (lit), shaded = white ground-floor wall under the deck; nearest same-family pair the frame offers"
+ },
+ "streetElevation": {
+  "sky": [
+   0,
+   0,
+   600,
+   170
+  ],
+  "facade": [
+   1240,
+   380,
+   1500,
+   430
+  ],
+  "shadowLine": [
+   [
+    500,
+    300
+   ],
+   [
+    500,
+    420
+   ]
+  ],
+  "_note": "station is occluded by a parked saloon and the sign canopy; no same-material lit/shade pair in frame"
+ },
+ "plaza": {
+  "sunlit": [
+   300,
+   790,
+   1200,
+   880
+  ],
+  "shaded": [
+   300,
+   722,
+   1200,
+   745
+  ],
+  "contact": [
+   120,
+   700,
+   200,
+   740
+  ],
+  "contactRef": [
+   300,
+   790,
+   1200,
+   880
+  ],
+  "shadowLine": [
+   [
+    800,
+    700
+   ],
+   [
+    800,
+    780
+   ]
+  ],
+  "sky": [
+   0,
+   0,
+   1600,
+   150
+  ],
+  "facade": [
+   30,
+   250,
+   250,
+   440
+  ],
+  "_note": "sunlit/shaded = asphalt in front of the gate vs asphalt in the gate's cast shadow"
+ },
+ "spawnB": {
+  "sunlit": [
+   950,
+   700,
+   1300,
+   760
+  ],
+  "shaded": [
+   100,
+   700,
+   800,
+   760
+  ],
+  "contact": [
+   1030,
+   640,
+   1280,
+   660
+  ],
+  "contactRef": [
+   1000,
+   700,
+   1300,
+   720
+  ],
+  "shadowLine": [
+   [
+    820,
+    780
+   ],
+   [
+    1000,
+    780
+   ]
+  ],
+  "sky": [
+   1100,
+   0,
+   1600,
+   280
+  ],
+  "facade": [
+   660,
+   80,
+   1100,
+   180
+  ],
+  "_note": "sunlit/shaded = lawn in sun vs lawn in the house's cast shadow"
+ },
+ "midStreet": {
+  "sunlit": [
+   600,
+   590,
+   900,
+   640
+  ],
+  "shaded": [
+   1050,
+   590,
+   1450,
+   640
+  ],
+  "shadowLine": [
+   [
+    500,
+    620
+   ],
+   [
+    900,
+    620
+   ]
+  ],
+  "facade": [
+   0,
+   650,
+   1600,
+   700
+  ],
+  "_note": "coach flank fills the frame; sunlit/shaded = cream chevron in sun vs in cast shadow; the whole visible road is in the coach's shadow so no contact pair"
+ },
+ "circle": {
+  "sunlit": [
+   600,
+   700,
+   900,
+   800
+  ],
+  "shaded": [
+   700,
+   560,
+   860,
+   600
+  ],
+  "sky": [
+   400,
+   0,
+   1000,
+   250
+  ],
+  "facade": [
+   1000,
+   420,
+   1400,
+   520
+  ]
+ },
+ "orangeInside": {
+  "facade": [
+   600,
+   100,
+   900,
+   700
+  ]
+ }
+}

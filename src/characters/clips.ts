@@ -24,6 +24,14 @@ import { bakedClip } from './kimodo-clips';
  * in exactly one place per builder.
  */
 const HIPS_Y = REST_OFFSETS.Hips[1];
+// Prone is a real articulated floor pose: rotate the pelvis until the torso
+// lies on the ground plane, keep the trunk neutral so its carrier does not
+// sink through the lawn, fold the lower legs only enough to keep knees and
+// boots above the surface, and plant the forearms ahead of the chest.
+const PRONE_HIPS_RX = 1.52;
+const PRONE_TORSO_RX = 0;
+const PRONE_LEG_RX = 0.40;
+const PRONE_FOREARM_RX = 1.20;
 export type ClipName =
   | 'idle'
   | 'walk'
@@ -306,21 +314,21 @@ function proneCrawlClip(): ClipSpec {
     const l = Math.sin(a);
     const r = Math.sin(a + Math.PI);
     poses.push({
-      Hips: [[t, 1.28 + 0.018 * Math.sin(2 * a), 0, 0.018 * Math.sin(a)]],
-      Spine: [[t, 0.10, 0, 0]],
-      Chest: [[t, 0.15, 0.025 * Math.sin(a), 0]],
+      Hips: [[t, PRONE_HIPS_RX + 0.018 * Math.sin(2 * a), 0, 0.018 * Math.sin(a)]],
+      Spine: [[t, PRONE_TORSO_RX, 0, 0]],
+      Chest: [[t, PRONE_TORSO_RX, 0.025 * Math.sin(a), 0]],
       Neck: [[t, -0.72 + 0.035 * Math.sin(a), 0, 0]],
       Head: [[t, -0.10, 0.025 * Math.sin(a), 0]],
       LeftUpLeg: [[t, 0.05 + 0.09 * r, 0, -0.025]],
       RightUpLeg: [[t, 0.05 + 0.09 * l, 0, 0.025]],
-      LeftLeg: [[t, 0.75 + 0.22 * Math.max(0, -r), 0, 0]],
-      RightLeg: [[t, 0.75 + 0.22 * Math.max(0, -l), 0, 0]],
+      LeftLeg: [[t, PRONE_LEG_RX + 0.16 * Math.max(0, -r), 0, 0]],
+      RightLeg: [[t, PRONE_LEG_RX + 0.16 * Math.max(0, -l), 0, 0]],
       LeftFoot: [[t, -0.45 - 0.08 * Math.max(0, r), 0, 0]],
       RightFoot: [[t, -0.45 - 0.08 * Math.max(0, l), 0, 0]],
       LeftArm: [[t, 0.02 + 0.22 * l, 0.08, -0.18]],
       RightArm: [[t, 0.02 + 0.22 * r, -0.08, 0.18]],
-      LeftForeArm: [[t, -0.72 + 0.18 * l, -0.14, 0]],
-      RightForeArm: [[t, -0.72 + 0.18 * r, 0.14, 0]],
+      LeftForeArm: [[t, PRONE_FOREARM_RX + 0.12 * l, -0.14, 0]],
+      RightForeArm: [[t, PRONE_FOREARM_RX + 0.12 * r, 0.14, 0]],
       LeftHand: [[t, -0.08, 0, 0]],
       RightHand: [[t, -0.08, 0, 0]],
     });
@@ -413,21 +421,21 @@ export function buildClipLibrary(): Record<ClipName, ClipSpec> {
     bendT: 1.0, bendK: 1.75, speed: 0.85, stride: 0.77,
   });
   lib['prone-idle'] = poseClip('prone-idle', 2.4, {
-    Hips: [1.28, 0, 0],
-    Spine: [0.10, 0, 0],
-    Chest: [0.15, 0, 0],
+    Hips: [PRONE_HIPS_RX, 0, 0],
+    Spine: [PRONE_TORSO_RX, 0, 0],
+    Chest: [PRONE_TORSO_RX, 0, 0],
     Neck: [-0.72, 0, 0],
     Head: [-0.10, 0, 0],
     LeftUpLeg: [0.05, 0, -0.025],
     RightUpLeg: [0.05, 0, 0.025],
-    LeftLeg: [0.75, 0, 0],
-    RightLeg: [0.75, 0, 0],
+    LeftLeg: [PRONE_LEG_RX, 0, 0],
+    RightLeg: [PRONE_LEG_RX, 0, 0],
     LeftFoot: [-0.45, 0, 0],
     RightFoot: [-0.45, 0, 0],
     LeftArm: [0.02, 0.08, -0.18],
     RightArm: [0.02, -0.08, 0.18],
-    LeftForeArm: [-0.72, -0.14, 0],
-    RightForeArm: [-0.72, 0.14, 0],
+    LeftForeArm: [PRONE_FOREARM_RX, -0.14, 0],
+    RightForeArm: [PRONE_FOREARM_RX, 0.14, 0],
     LeftHand: [-0.08, 0, 0],
     RightHand: [-0.08, 0, 0],
   }, 0.018, -0.73, 0.012);

@@ -23,7 +23,7 @@ import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-export const BANK_VERSION = 2;
+export const BANK_VERSION = 3;
 export const SAMPLE_RATE = 44100;
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -268,6 +268,147 @@ function makeBlast(rand) {
   return out;
 }
 
+// ---- Foley: footfalls + weather beds (bank v3, authored, deterministic) ----
+
+/**
+ * Footfall: short layered transient, per-surface recipe. Concrete cracks
+ * (highpassed snap + falling heel thump); grass rustles (lowpassed scuff,
+ * soft snap only); gravel crunches (snap + deterministic grain train).
+ * Two variants per surface via seed only — same code path. Heel weight is a
+ * falling thump, never a rising sweep.
+ */
+function makeFootstep(rand, recipe) {
+  const sr = SAMPLE_RATE;
+  const n = Math.floor(sr * recipe.len);
+  const out = new Float32Array(n);
+  // Contact snap.
+  const sn = Math.floor(sr * recipe.snapDur);
+  const snap = burst(rand, sn, 1);
+  highpass(snap, recipe.snapHp, sr);
+  const senv = expDecay(sn, sr, recipe.snapDur * 0.4);
+  for (let i = 0; i < sn; i++) snap[i] *= senv[i];
+  mix(out, snap, 0, recipe.snapGain);
+  // Body scuff: band-limited noise wash.
+  const body = burst(rand, n, 1);
+  lowpass(body, recipe.bodyCut, sr, 2);
+  if (recipe.bodyHp > 0) highpass(body, recipe.bodyHp, sr);
+  const benv = expDecay(n, sr, recipe.len * 0.35);
+  for (let i = 0; i < n; i++) body[i] *= benv[i];
+  mix(out, body, 0, recipe.bodyGain);
+  // Heel weight: falling thump only.
+  if (recipe.thump) {
+    mix(out, thump(n, sr, recipe.thump[0], recipe.thump[1], recipe.len * 0.6, recipe.thump[2]));
+  }
+  // Gravel grain train: sparse deterministic crunches.
+  if (recipe.grains) {
+    for (const [atMs, g] of recipe.grains) {
+      const gn = Math.floor(sr * 0.007);
+      const gr = burst(rand, gn, 1);
+      highpass(gr, 2600, sr);
+      const genv = expDecay(gn, sr, 0.002);
+      for (let i = 0; i < gn; i++) gr[i] *= genv[i];
+      mix(out, gr, Math.floor((sr * atMs) / 1000), g);
+    }
+  }
+  normalize(out, recipe.peak);
+  return out;
+}
+
+const STEPS = {
+  concreteA: ['step-concrete-a.wav', 3101, {
+    len: 0.14, snapDur: 0.010, snapHp: 2800, snapGain: 0.9,
+    bodyCut: 1400, bodyHp: 300, bodyGain: 0.5,
+    thump: [115, 58, 0.5], peak: 0.55,
+  }],
+  concreteB: ['step-concrete-b.wav', 3102, {
+    len: 0.14, snapDur: 0.009, snapHp: 3200, snapGain: 0.8,
+    bodyCut: 1200, bodyHp: 300, bodyGain: 0.55,
+    thump: [105, 52, 0.55], peak: 0.55,
+  }],
+  grassA: ['step-grass-a.wav', 3103, {
+    len: 0.17, snapDur: 0.006, snapHp: 1800, snapGain: 0.25,
+    bodyCut: 750, bodyHp: 0, bodyGain: 0.9, peak: 0.5,
+  }],
+  grassB: ['step-grass-b.wav', 3104, {
+    len: 0.18, snapDur: 0.007, snapHp: 1500, snapGain: 0.22,
+    bodyCut: 650, bodyHp: 0, bodyGain: 0.95, peak: 0.5,
+  }],
+  gravelA: ['step-gravel-a.wav', 3105, {
+    len: 0.15, snapDur: 0.006, snapHp: 3000, snapGain: 0.7,
+    bodyCut: 2200, bodyHp: 500, bodyGain: 0.5,
+    grains: [[16, 0.5], [38, 0.65], [64, 0.45], [92, 0.3]], peak: 0.5,
+  }],
+  gravelB: ['step-gravel-b.wav', 3106, {
+    len: 0.16, snapDur: 0.005, snapHp: 3400, snapGain: 0.65,
+    bodyCut: 2400, bodyHp: 500, bodyGain: 0.5,
+    grains: [[12, 0.55], [34, 0.5], [58, 0.6], [86, 0.35]], peak: 0.5,
+  }],
+};
+
+/**
+ * Weather beds: quiet loopable noise. Wind is a lowpassed wash with two
+ * integer-cycle swells (1 + 2 full cycles over 4 s) so the loop point
+ * carries no phase step; rain is a highpassed wash with sparse
+ * deterministic droplet ticks kept clear of both edges. Both get an
+ * end-to-start crossfade for a seamless loop.
+ */
+function loopFade(x, sr, fadeS) {
+  const f = Math.floor(sr * fadeS);
+  for (let i = 0; i < f; i++) {
+    const k = i / f;
+    x[i] = x[i] * k + x[x.length - f + i] * (1 - k);
+  }
+  return x.slice(0, x.length - f);
+}
+
+function makeWind(rand) {
+  const sr = SAMPLE_RATE;
+  const dur = 4.0;
+  const n = Math.floor(sr * dur);
+  const out = new Float32Array(n);
+  // Airy top: very low level highpassed breath on the same swell clock.
+  const air = burst(rand, n, 1);
+  highpass(air, 1800, sr);
+  for (let i = 0; i < n; i++) {
+    const t = i / sr;
+    air[i] *= 0.5 + 0.5 * Math.sin(2 * Math.PI * 0.25 * t + 2.1);
+  }
+  mix(out, air, 0, 0.03);
+  normalize(out, 0.32);
+  return loopFade(out, sr, 0.5);
+}
+
+function makeRain(rand) {
+  const sr = SAMPLE_RATE;
+  const dur = 3.0;
+  const n = Math.floor(sr * dur);
+  const out = new Float32Array(n);
+  const wash = burst(rand, n, 1);
+  highpass(wash, 3800, sr);
+  const rumble = burst(rand, n, 1);
+  lowpass(rumble, 900, sr, 1);
+  mix(wash, rumble, 0, 0.15);
+  mix(out, wash, 0, 0.55);
+  // Droplet ticks: 26 deterministic pops kept 0.3 s clear of both edges
+  // so the end-to-start crossfade stays clean.
+  for (let k = 0; k < 26; k++) {
+    const at = Math.floor(sr * (0.3 + rand() * (dur - 0.6)));
+    const cn = Math.floor(sr * 0.004);
+    const c = burst(rand, cn, 1);
+    highpass(c, 5000, sr);
+    const cenv = expDecay(cn, sr, 0.001);
+    for (let i = 0; i < cn; i++) c[i] *= cenv[i];
+    mix(out, c, at, 0.10 + rand() * 0.10);
+  }
+  normalize(out, 0.32);
+  return loopFade(out, sr, 0.4);
+}
+
+const AMBIENT = {
+  wind: ['ambient-wind.wav', 3201, makeWind],
+  rain: ['ambient-rain.wav', 3202, makeRain],
+};
+
 function writeWav(path, x, sr) {
   const n = x.length;
   const buf = Buffer.alloc(44 + n * 2);
@@ -313,6 +454,12 @@ if (isMain) {
   }
   const blastX = makeBlast(mulberry32(2108));
   entries.push(runOne('blast', 'cue-blast.wav', 2108, blastX));
+  for (const [name, [file, seed, params]] of Object.entries(STEPS)) {
+    entries.push(runOne(name, file, seed, makeFootstep(mulberry32(seed), params)));
+  }
+  for (const [name, [file, seed, make]] of Object.entries(AMBIENT)) {
+    entries.push(runOne(name, file, seed, make(mulberry32(seed))));
+  }
   let totalBytes = 0;
   for (const e of entries) {
     const data = readFileSync(join(OUT, e.file));

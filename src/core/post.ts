@@ -69,6 +69,8 @@ export type PostBackend = 'webgpu' | 'webgl2' | 'off';
 export interface PostEffects { ao: boolean; ssr: boolean; bloom: boolean }
 
 export interface PostChain {
+  /** Exact scene MRT tuple for bounded QA captures; absent on the fallback. */
+  captureMrt: ReturnType<typeof mrt> | null;
   /** Render one frame. Allocation-free after build. */
   render: () => void;
   /** Forward CSS-pixel size to the renderer and the scene pass. */
@@ -133,6 +135,7 @@ export function buildPost(
   const effects: PostEffects = { ao: true, ssr: true, bloom: true };
   let fogOn = true;
   return {
+    captureMrt: null,
     render: () => {
       renderer.render(scene, camera);
     },
@@ -367,7 +370,8 @@ function buildChain(
     // Four RGBA16F attachments = 32 bytes per sample, which is exactly the WebGPU
     // default `maxColorAttachmentBytesPerSample`. A fifth channel needs that limit
     // raised in renderer.ts's requiredLimits; the adapter here reports 128.
-    scenePass.setMRT(mrt({ output, normal: normalView, metalness, roughness }));
+    const sceneMrt = mrt({ output, normal: normalView, metalness, roughness });
+    scenePass.setMRT(sceneMrt);
 
     const color = scenePass.getTextureNode('output');
     const normal = scenePass.getTextureNode('normal');
@@ -597,6 +601,7 @@ function buildChain(
     let chainBroken = false;
     const effects: PostEffects = { ao: true, ssr: true, bloom: true };
     return {
+      captureMrt: sceneMrt,
       render: () => {
         if (chainBroken) {
           renderer.render(scene, camera);

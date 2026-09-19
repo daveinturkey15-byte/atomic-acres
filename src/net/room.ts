@@ -48,8 +48,14 @@ import {
   type ByeMsg, type GameNetMessage, type HelloMsg, type HostKey, type InputMsg, type LobbyPhase,
   type NetMessage, type PlayerSample, type RosterEntry,
 } from './protocol';
-import { admissionRefusal, inputAccepted, newMember, resumeSeat, sweepSeats, INPUT_Y_MAX, type HostMember } from './room-admit';
-import { cleanName, integrateInput, roomClosed, roomOpened, type Pose, type TimerId } from './room-core';
+import {
+  admissionRefusal, inputAccepted, newMember, resumeSeat, sweepSeats, validPrimaryId,
+  INPUT_Y_MAX, type HostMember,
+} from './room-admit';
+import {
+  cleanName, integrateInput, normalizeStance, roomClosed, roomOpened,
+  stanceBodyHeight, type PlayerStance, type Pose, type TimerId,
+} from './room-core';
 import { TICK_DT } from './snapshot';
 import type { PeerId, Transport } from './transport';
 
@@ -74,6 +80,8 @@ export interface HostOptions {
   onChange?: () => void;
   /** Seats offered, `LOBBY_CAPACITIES`. Default `LOBBY_MAX_PLAYERS`. */
   capacity?: number;
+  /** Optional host-world occupancy query for any rising stance transition. */
+  canStand?: (pose: Readonly<Pose>, target: PlayerStance) => boolean;
 }
 
 export class HostRoom {
@@ -85,6 +93,7 @@ export class HostRoom {
   private readonly now: () => number;
   private readonly onChange: () => void;
   private readonly codeRand: () => number;
+  private readonly canStand: ((pose: Readonly<Pose>, target: PlayerStance) => boolean) | null;
   private readonly members = new Map<string, HostMember>();
   private readonly peerToId = new Map<PeerId, string>();
   private phase: LobbyPhase = 'lobby';
@@ -105,6 +114,7 @@ export class HostRoom {
     this.now = opts?.now ?? Date.now;
     this.onChange = opts?.onChange ?? (() => undefined);
     this.codeRand = opts?.codeRand ?? Math.random;
+    this.canStand = opts?.canStand ?? null;
     this.code = isJoinCode(opts?.code) ? opts.code : createJoinCode(this.codeRand);
     this.capacity = isLobbyCapacity(opts?.capacity) ? opts.capacity : LOBBY_MAX_PLAYERS;
     roomOpened();
@@ -126,24 +136,32 @@ export class HostRoom {
   }
 
   /** Every guest seat's live pose, allocation-free. The pose is the room's; read it, do not keep it. */
-  forEachGuestPose(fn: (id: string, pose: Readonly<Pose>, connected: boolean) => void): void {
-    for (const m of this.members.values()) if (m.peerId !== null) fn(m.entry.id, m.pose, m.entry.connected);
+  forEachGuestPose(
+    fn: (id: string, pose: Readonly<Pose>, connected: boolean) => void,
+  ): void {
+    for (const m of this.members.values()) {
+      if (m.peerId !== null) fn(m.entry.id, m.pose, m.entry.connected);
+    }
   }
 
+  /** The sanitized lobby declaration captured before Start. */
+  primaryOf(id: string): string | undefined { return this.members.get(id)?.primaryId; }
+
   /** The game host deployed this seat somewhere: the room's integration continues from there. */
-  placeSeat(id: string, x: number, z: number, yaw: number): void {
+  placeSeat(id: string, x: number, z: number, yaw: number, stance: PlayerStance = 'stand'): void {
     const m = this.members.get(id);
     if (!m || !Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(yaw)) return;
     m.pose.x = Math.max(BOUND_X_MIN, Math.min(BOUND_X_MAX, x));
     m.pose.z = Math.max(-BOUND_Z, Math.min(BOUND_Z, z));
     m.pose.y = 0;
     m.pose.yaw = yaw;
+    m.pose.stance = stance;
   }
 
   /** Drive the host's own seat from the local player. Host-only and safe. */
-  driveHostSeat(x: number, y: number, z: number, yaw: number): void {
+  driveHostSeat(x: number, y: number, z: number, yaw: number, stance: PlayerStance = 'stand'): void {
     void y;
-    this.placeSeat(this.hostId, x, z, yaw);
+    this.placeSeat(this.hostId, x, z, yaw, stance);
   }
 
   roster(): RosterEntry[] {
@@ -262,7 +280,10 @@ export class HostRoom {
     const players: PlayerSample[] = [];
     for (const m of this.members.values()) {
       if (!m.entry.connected) continue;
-      const s: PlayerSample = { id: m.entry.id, x: m.pose.x, y: m.pose.y, z: m.pose.z, yaw: m.pose.yaw, ack: m.lastSeq };
+      const s: PlayerSample = {
+        id: m.entry.id, x: m.pose.x, y: m.pose.y, z: m.pose.z, yaw: m.pose.yaw,
+        ack: m.lastSeq, stance: m.pose.stance ?? 'stand',
+      };
       players.push(this.stamp === null ? s : this.stamp(s));
     }
     this.extraSamples?.(players);
@@ -279,11 +300,14 @@ export class HostRoom {
       case 'hello':
         this.admit(from, msg);
         break;
-      case 'ready':
-        if (!m || m.entry.isHost) return;
+      case 'ready': {
+        if (!m || m.entry.isHost || this.phase !== 'lobby') return;
+        const declaredPrimary = validPrimaryId(msg.primaryId);
+        if (declaredPrimary !== undefined) m.primaryId = declaredPrimary;
         m.entry.ready = msg.ready;
         this.broadcastRoster();
         break;
+      }
       case 'input':
         if (m) this.applyInput(m, msg);
         break;
@@ -324,6 +348,10 @@ export class HostRoom {
         this.peerToId.set(from, back.entry.id);
       }
       back.entry.connected = true;
+      if (this.phase === 'lobby') {
+        const declaredPrimary = validPrimaryId(hello.primaryId);
+        if (declaredPrimary !== undefined) back.primaryId = declaredPrimary;
+      }
       back.lastHeardAt = this.now();
       this.transport.send(from, { type: 'welcome', playerId: back.entry.id, hostNow: this.now(), roster: this.roster(), token: back.token });
       this.broadcastRoster();
@@ -336,6 +364,7 @@ export class HostRoom {
     }
     const id = 'p' + this.nextId++;
     const m = newMember(id, cleanName(hello.name), false, from, this.members.size, this.now(), this.codeRand);
+    m.primaryId = validPrimaryId(hello.primaryId);
     this.members.set(id, m);
     this.peerToId.set(from, id);
     this.transport.send(from, { type: 'welcome', playerId: id, hostNow: this.now(), roster: this.roster(), token: m.token });
@@ -345,17 +374,36 @@ export class HostRoom {
   /** Validate a guest input and store it as the seat's wish. Never a pose. */
   private applyInput(m: HostMember, msg: InputMsg): void {
     const accepted = inputAccepted(m, msg, this.phase);
-    this.diag.recordInput(accepted);
-    if (!accepted) return;
+    if (!accepted) {
+      this.diag.recordInput(false);
+      return;
+    }
+    const stance = normalizeStance(msg.stance);
+    // inputAccepted already rejects malformed present enums. The null guard
+    // keeps this boundary fail-closed if a caller bypasses the wire parser.
+    if (stance === null) {
+      this.diag.recordInput(false);
+      return;
+    }
+    const previous = m.pose.stance ?? 'stand';
+    if (
+      stanceBodyHeight(stance) > stanceBodyHeight(previous) && this.canStand !== null &&
+      !this.canStand(m.pose, stance)
+    ) {
+      this.diag.recordInput(false);
+      return;
+    }
+    this.diag.recordInput(true);
     m.lastSeq = msg.seq;
     m.inputsThisTick += 1;
     // Sprint is intent, not speed: the host picks the speed. The explicit
     // flag wins; absent, the first wire's fire-and-forward reading applies.
     const sprint = msg.sprint ?? (msg.fire && msg.mz > 0.1);
-    m.lastInput.mx = msg.mx; m.lastInput.mz = msg.mz; m.lastInput.yaw = msg.yaw; m.lastInput.sprint = sprint;
+    m.lastInput.mx = msg.mx; m.lastInput.mz = msg.mz; m.lastInput.yaw = msg.yaw;
+    m.lastInput.sprint = sprint; m.lastInput.stance = stance;
     const dt = msg.dt === undefined ? TICK_DT : Math.max(0, Math.min(INPUT_DT_CAP, msg.dt));
     const y = msg.y === undefined ? m.pose.y : Math.max(0, Math.min(INPUT_Y_MAX, msg.y));
-    integrateInput(m.pose, msg.mx, msg.mz, msg.yaw, sprint, dt);
+    integrateInput(m.pose, msg.mx, msg.mz, msg.yaw, sprint, dt, stance);
     m.pose.y = y;
   }
 }

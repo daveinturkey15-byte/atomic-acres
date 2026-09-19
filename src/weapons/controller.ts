@@ -36,7 +36,7 @@ import {
 } from './viewmodel';
 import { WeaponEffects } from './effects';
 import { OrdnanceInput } from './ordnance-input';
-import { AudioService, type AudioStats, type ShotFamily } from '../audio/service';
+import { AudioService, type AudioStats, type ShotFamily, type StepSurface, type StepOptions, type EnvironmentKind } from '../audio/service';
 
 const DEG = Math.PI / 180;
 const BASE_FOV = 72;
@@ -65,6 +65,27 @@ interface WeaponState {
   cool: number;
   bloom: number;
   shotsFired: number;
+}
+
+type QaVec3 = [number, number, number];
+
+interface QaHandTransform {
+  position: QaVec3;
+  rotation: QaVec3;
+}
+
+interface QaHandsSnapshot {
+  rootVisible: boolean;
+  triggerHand: QaHandTransform;
+  supportHand: QaHandTransform;
+  supportForearm: QaHandTransform;
+}
+
+interface WeaponQaSnapshot extends WeaponSnapshot {
+  /** Normalized live reload phase; zero when the weapon is idle. */
+  reloadProgress: number;
+  /** Present only for the explicit QA state command; omitted from the frame HUD path. */
+  hands?: QaHandsSnapshot | null;
 }
 
 /**
@@ -333,8 +354,10 @@ export class WeaponsController {
     if (cur.reloading) {
       cur.reloadT -= dt;
       const progress = 1 - Math.max(0, cur.reloadT) / cur.reloadDur;
+      cur.rig.hands?.updateReload(progress);
       reloadDip = Math.sin(Math.min(1, Math.max(0, progress)) * Math.PI);
       if (cur.reloadT <= 0) {
+        cur.rig.hands?.resetReload();
         cur.reloading = false;
         const need = def.magSize - cur.mag;
         const take = Math.min(need, cur.reserve);
@@ -435,7 +458,12 @@ export class WeaponsController {
     }
     // G / Q / V / E: the off hand. A swing cancels a reload, as in BO2.
     if (this.visible && this.ord.keyDown(code, this.nowMs)) {
-      if (this.ord.busy) { const cur = this.weapons[this.active]; cur.reloading = false; cur.reloadT = 0; }
+      if (this.ord.busy) {
+        const cur = this.weapons[this.active];
+        cur.reloading = false;
+        cur.reloadT = 0;
+        cur.rig.hands?.resetReload();
+      }
       return true;
     }
     return false;
@@ -470,6 +498,7 @@ export class WeaponsController {
     w.reserve = total - w.mag;
     w.reloading = false;
     w.reloadT = 0;
+    w.rig.hands?.resetReload();
     this.switchTo(idx);
     this.syncHudState();
     this.pushHud(true);
@@ -487,8 +516,20 @@ export class WeaponsController {
   }
 
   /** A new life: whatever the hand was doing is over. */
-  onSelfSpawn(): void {
+  onSelfSpawn(primaryId?: string | null, rounds = 0): void {
     this.ord.cancel();
+    for (const w of this.weapons) {
+      w.reloading = false;
+      w.reloadT = 0;
+      w.rig.hands?.resetReload();
+    }
+    if (primaryId) {
+      this.adoptWeapon(primaryId, rounds);
+      const weapon = this.weapons[this.active];
+      weapon.cool = 0;
+      weapon.bloom = 0;
+      weapon.shotsFired = 0;
+    }
   }
 
   wheel(deltaY: number): void {
@@ -512,6 +553,7 @@ export class WeaponsController {
       for (const w of this.weapons) {
         w.reloading = false;
         w.reloadT = 0;
+        w.rig.hands?.resetReload();
         w.cool = 0;
         w.bloom = 0;
       }
@@ -524,9 +566,12 @@ export class WeaponsController {
     this.pushHud(true);
   }
 
-  snapshot(): WeaponSnapshot {
+  snapshot(includeHands = false): WeaponQaSnapshot {
     const cur = this.weapons[this.active];
-    return {
+    const reloadProgress = cur.reloading && cur.reloadDur > 0
+      ? Math.min(1, Math.max(0, 1 - cur.reloadT / cur.reloadDur))
+      : 0;
+    const out: WeaponQaSnapshot = {
       id: cur.def.id,
       name: cur.def.name,
       mag: cur.mag,
@@ -536,7 +581,27 @@ export class WeaponsController {
       visible: this.visible,
       shotsFired: cur.shotsFired,
       cool: +Math.max(0, cur.cool).toFixed(3),
+      reloadProgress: +reloadProgress.toFixed(4),
     };
+    if (includeHands) {
+      const hands = cur.rig.hands;
+      out.hands = hands === undefined ? null : {
+        rootVisible: hands.root.visible,
+        triggerHand: {
+          position: [hands.triggerHand.position.x, hands.triggerHand.position.y, hands.triggerHand.position.z],
+          rotation: [hands.triggerHand.rotation.x, hands.triggerHand.rotation.y, hands.triggerHand.rotation.z],
+        },
+        supportHand: {
+          position: [hands.supportHand.position.x, hands.supportHand.position.y, hands.supportHand.position.z],
+          rotation: [hands.supportHand.rotation.x, hands.supportHand.rotation.y, hands.supportHand.rotation.z],
+        },
+        supportForearm: {
+          position: [hands.supportForearm.position.x, hands.supportForearm.position.y, hands.supportForearm.position.z],
+          rotation: [hands.supportForearm.rotation.x, hands.supportForearm.rotation.y, hands.supportForearm.rotation.z],
+        },
+      };
+    }
+    return out;
   }
 
   command(cmd: string, arg?: string | number | boolean): unknown {
@@ -560,7 +625,7 @@ export class WeaponsController {
         return true;
       }
       case 'state':
-        return this.snapshot();
+        return this.snapshot(true);
       case 'hud':
         return this.hud;
       case 'visible':
@@ -651,6 +716,7 @@ export class WeaponsController {
         cur.reserve = cur.def.startReserve;
         cur.reloading = false;
         cur.reloadT = 0;
+        cur.rig.hands?.resetReload();
         this.syncHudState();
         this.pushHud(true);
         return true;
@@ -666,6 +732,7 @@ export class WeaponsController {
     const prev = this.weapons[this.active];
     prev.reloading = false;
     prev.reloadT = 0;
+    prev.rig.hands?.resetReload();
     prev.rig.group.visible = false;
     this.active = index;
     this.weapons[this.active].rig.group.visible = this.visible;
@@ -904,6 +971,18 @@ export class WeaponsController {
   /** Live voice/drop/context/buffer counts for HUD diagnostics and soak. */
   audioStats(): AudioStats {
     return this.audioSvc.audioStats();
+  }
+
+  footstep(surface: StepSurface, options: StepOptions): void {
+    this.audioSvc.step(surface, options);
+  }
+
+  setEnvironment(kind: EnvironmentKind, level = 1): void {
+    this.audioSvc.setEnvironment(kind, level);
+  }
+
+  spatialShot(family: ShotFamily, distanceM: number, pan: number, occluded = false): void {
+    this.audioSvc.spatialShot(family, distanceM, pan, occluded);
   }
 
   /** Release the context and every voice (lane teardown / page hide). */

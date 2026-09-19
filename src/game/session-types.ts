@@ -14,6 +14,7 @@
  */
 
 import type { MatchStateMsg } from '../net/protocol';
+import type { PlayerStance } from '../net/room-core';
 import type { ShotClaim } from '../weapons/controller';
 import type { GameClient } from './client';
 import type { ActorId, TeamId } from './events';
@@ -63,12 +64,14 @@ export interface BotBody {
   readonly yaw: number;
   readonly speed: number;
   readonly alive: boolean;
+  /** Host-authoritative pose stance; old snapshots and bots default to stand. */
+  readonly stance?: PlayerStance;
 }
 
 /** Everything the frame loop needs from whichever match is live. */
 export interface MatchDriver {
   /** One frame. `now` is `performance.now()`; drivers tick at `TICK_HZ`. */
-  tick(now: number, x: number, y: number, z: number, yaw: number, pitch: number): void;
+  tick(now: number, x: number, y: number, z: number, yaw: number, pitch: number, stance?: PlayerStance): void;
   /** A trigger pull from `weapons/controller.ts`, stamped and submitted or sent. */
   localShot(claim: ShotClaim): void;
   /** A streak key press from the human. */

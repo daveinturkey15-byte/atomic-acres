@@ -10,9 +10,10 @@
  * `HostRoom` owns the table and calls these; nothing here sends a message.
  */
 import { SPAWN_A, SPAWN_B } from '../core/layout';
+import { PRIMARY_IDS } from '../game/loadout';
 import { REJOIN_GRACE_MS } from '../game/rules';
 import { MAX_PLAYERS, createJoinCode, type HelloMsg, type InputMsg, type LobbyPhase, type RejectReason, type RosterEntry } from './protocol';
-import { cleanName, createPose, type Pose } from './room-core';
+import { cleanName, createPose, isPlayerStance, type PlayerStance, type Pose } from './room-core';
 import type { PeerId } from './transport';
 
 /** A guest that has sent nothing for this long is treated as gone (reservation). */
@@ -22,12 +23,21 @@ export const INPUTS_PER_TICK_CAP = 3;
 /** Standable band a guest may declare for its y. The balcony is 3.3 m. */
 export const INPUT_Y_MAX = 5;
 
+/** Host-side loadout admission. Unknown wire ids fall back to the authored default. */
+export function validPrimaryId(value: unknown): string | undefined {
+  return typeof value === 'string' && PRIMARY_IDS.includes(value) ? value : undefined;
+}
+
 export interface HostMember {
   entry: RosterEntry;
   peerId: PeerId | null; // null = the host's own seat
   token: string;
   pose: Pose;
-  lastInput: { mx: number; mz: number; yaw: number; sprint: boolean };
+  /** Sanitized lobby declaration; immutable once the match leaves the lobby. */
+  primaryId?: string;
+  lastInput: {
+    mx: number; mz: number; yaw: number; sprint: boolean; stance: PlayerStance;
+  };
   lastSeq: number;
   pingAt: number;
   lastHeardAt: number;
@@ -48,7 +58,7 @@ export function newMember(
     peerId,
     token: createJoinCode(rand) + createJoinCode(rand) + createJoinCode(rand),
     pose: createPose(slot.x, 0, slot.z, slot.yaw),
-    lastInput: { mx: 0, mz: 0, yaw: slot.yaw, sprint: false },
+    lastInput: { mx: 0, mz: 0, yaw: slot.yaw, sprint: false, stance: 'stand' },
     lastSeq: -1,
     pingAt: 0,
     lastHeardAt: now,
@@ -88,8 +98,11 @@ export function inputAccepted(m: HostMember, msg: InputMsg, phase: LobbyPhase): 
   const okSeq = Number.isSafeInteger(msg.seq) && msg.seq > m.lastSeq;
   const okVec = Number.isFinite(msg.mx) && Number.isFinite(msg.mz) && Math.abs(msg.mx) <= 1.5 && Math.abs(msg.mz) <= 1.5;
   const okLook = Number.isFinite(msg.yaw) && Number.isFinite(msg.pitch) && Math.abs(msg.pitch) <= Math.PI / 2 + 0.01;
+  // Missing is the old wire's standing intent. Any present invalid enum is
+  // refused here, before it can influence speed or the hit capsule.
+  const okStance = msg.stance === undefined || isPlayerStance(msg.stance);
   const okRate = m.inputsThisTick < INPUTS_PER_TICK_CAP;
-  return okSeq && okVec && okLook && okRate && m.entry.connected && phase === 'playing';
+  return okSeq && okVec && okLook && okStance && okRate && m.entry.connected && phase === 'playing';
 }
 
 /**

@@ -8,10 +8,9 @@
  * material work. Exhausted pools reuse the oldest slot (round-robin), so
  * sustained fire never throws.
  *
- * Materials are library singletons resolved once at construction, and the two
- * pools added after the skeleton (decals, dust) deliberately reuse cache keys
- * the viewmodels already warm — this file introduces zero new materials and
- * zero new shader programs.
+ * Materials are library singletons resolved once at construction. Decals share
+ * one 128px alpha-tested scar texture instead of opaque square paint fragments.
+ * The material library owns that texture and releases it at teardown.
  */
 import * as THREE from 'three';
 import { PAL } from '../core/palette';
@@ -119,7 +118,7 @@ export class WeaponEffects {
     this.shellMat = mat.painted(PAL.sand, 0.35, 0.8);
     this.sparkMat = mat.emissive(PAL.sunColor, 1.6);
     this.impactMat = mat.emissive(PAL.sunColor, 2.0);
-    this.decalMat = mat.painted(PAL.truckCab, 0.6, 0.35);
+    this.decalMat = mat.impactDecal;
     this.dustMat = mat.painted(PAL.sand, 0.35, 0.8);
 
     this.flashGeo = new THREE.PlaneGeometry(0.24, 0.24);
