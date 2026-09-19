@@ -48,6 +48,14 @@ import {
   type CarbineLoaderOptions,
   type CatalogCarbineRig,
 } from './catalog-carbine-loader';
+import {
+  getPresentRosterHeroSockets,
+  isRosterHeroesCanaryRequested,
+  loadRosterHeroRig,
+  ROSTER_HERO_WEAPON_IDS,
+  type RosterHeroLoaderOptions,
+  type RosterHeroRig,
+} from './roster-heroes-loader';
 
 const DEG = Math.PI / 180;
 
@@ -115,6 +123,8 @@ interface WeaponQaSnapshot extends WeaponSnapshot {
   hands?: QaHandsSnapshot | null;
   /** Read-only carbine canary status: proves GLB adoption, not just the Longhorn name. */
   carbine?: CarbineCanaryStatus;
+  /** Read-only roster-heroes canary status (?heroes=canary), same honesty contract. */
+  heroes?: RosterHeroCanaryStatus;
 }
 
 /** Minimal read-only canary adoption status for browser QA. */
@@ -124,6 +134,13 @@ export interface CarbineCanaryStatus {
   isGLTF: boolean;
   url: string | null;
   sockets: string[];
+}
+
+/** Read-only roster-heroes canary adoption status for browser QA. */
+export interface RosterHeroCanaryStatus {
+  requested: boolean;
+  /** GLB-adopted hero id -> url and present anchor sockets. */
+  adopted: Record<string, { url: string; sockets: string[] }>;
 }
 
 /**
@@ -172,6 +189,10 @@ interface ControllerOpts {
   carbineCanary?: boolean;
   /** Test seam for the pending canary load (defaults to the real GLB loader). */
   carbineLoader?: (opts: CarbineLoaderOptions) => Promise<CatalogCarbineRig>;
+  /** Optional explicit opt-in for the roster-heroes canary (?heroes=canary) */
+  heroesCanary?: boolean;
+  /** Test seam for pending hero loads (defaults to the real hero loader). */
+  heroesLoader?: (weaponId: string, opts: RosterHeroLoaderOptions) => Promise<RosterHeroRig>;
 }
 export class WeaponsController {
   readonly overlay: THREE.Scene;
@@ -186,6 +207,9 @@ export class WeaponsController {
   private active = 0;
   private carbineCanaryRig: CatalogCarbineRig | null = null;
   private carbineCanaryRequested = false;
+  /** One adopted GLB rig per hero id (bounded to ROSTER_HERO_WEAPON_IDS). */
+  private readonly heroRigs = new Map<string, RosterHeroRig>();
+  private heroesCanaryRequested = false;
   private disposed = false;
   /** The one rig per shipped builder, shared by every weapon of its family. */
   private readonly rigs = new Map<FallbackRig, ViewmodelRig>();
@@ -358,6 +382,52 @@ export class WeaponsController {
       }).catch((err) => {
         console.warn('[WeaponsController] Carbine canary load failed, keeping fallback:', err);
       });
+    }
+
+    const enableHeroesCanary = opts.heroesCanary ?? isRosterHeroesCanaryRequested();
+    this.heroesCanaryRequested = enableHeroesCanary;
+    if (enableHeroesCanary) {
+      const startHeroLoad = opts.heroesLoader ?? loadRosterHeroRig;
+      // Three bounded, per-weapon adoptions, each following the carbine
+      // canary pattern exactly: adopt, then re-assert overlay visibility
+      // from the live switch state. A family-shared procedural rig is never
+      // hidden out from under a sibling, an inactive hero can never linger
+      // visible, and the replaced rig stays owned by this.rigs for the one
+      // dispose in dispose().
+      for (const heroId of ROSTER_HERO_WEAPON_IDS) {
+        startHeroLoad(heroId, { mat: opts.mat }).then((heroRig) => {
+          if (this.disposed) {
+            heroRig.dispose();
+            return;
+          }
+          if (!heroRig.isGLTFAsset) {
+            // Fallback rig: the standing shared family rig already covers it.
+            heroRig.dispose();
+            return;
+          }
+          if (this.heroRigs.has(heroId)) {
+            // One hero rig per weapon; a late duplicate load loses and
+            // releases itself.
+            heroRig.dispose();
+            return;
+          }
+          const weapon = this.weapons.find((w) => w.def.id === heroId);
+          if (!weapon) {
+            heroRig.dispose();
+            return;
+          }
+          const oldRig = weapon.rig;
+          this.overlay.add(heroRig.group);
+          heroRig.group.position.copy(oldRig.group.position);
+          heroRig.group.quaternion.copy(oldRig.group.quaternion);
+          weapon.rig = heroRig;
+          for (const w of this.weapons) w.rig.group.visible = false;
+          this.weapons[this.active].rig.group.visible = this.visible;
+          this.heroRigs.set(heroId, heroRig);
+        }).catch((err) => {
+          console.warn(`[WeaponsController] Hero rig '${heroId}' failed, keeping fallback:`, err);
+        });
+      }
     }
   }
 
@@ -713,6 +783,14 @@ export class WeaponsController {
         url: null,
         sockets: [],
       };
+    const adopted: Record<string, { url: string; sockets: string[] }> = {};
+    for (const [heroId, heroRig] of this.heroRigs) {
+      adopted[heroId] = {
+        url: heroRig.assetUrl ?? '',
+        sockets: getPresentRosterHeroSockets(heroRig.group),
+      };
+    }
+    out.heroes = { requested: this.heroesCanaryRequested, adopted };
      return out;
    }
 
@@ -1115,6 +1193,11 @@ export class WeaponsController {
       this.carbineCanaryRig.dispose();
       this.carbineCanaryRig = null;
     }
+    // Hero rigs own their hands' geometries and a master-cache reference
+    // each; rig.dispose() releases exactly that — never shared materials,
+    // never the family-shared procedural rigs below.
+    for (const heroRig of this.heroRigs.values()) heroRig.dispose();
+    this.heroRigs.clear();
     for (const rig of this.rigs.values()) disposeOwnedGeometries(rig.group);
     this.rigs.clear();
     this.disposeAudio();
