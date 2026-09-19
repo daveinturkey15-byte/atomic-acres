@@ -452,3 +452,22 @@ close from the front, one owner decision per asset. Untracked and left so: the 1
 concept plates in docs/reference/photoreal (26 MB; reference frames are not tracked -
 9 of 1371 gameplay frames are), docs/report-light.md (an earlier light-lane report),
 scripts/_gv-*.mjs (a verifier's scratch).
+
+**05:15 (19 Sep).** Vehicles batching (`wf_be3e8e1b-7b4`): verifier held every count -
+objects 310 -> 120 (-61%), calls -17..-25% at sixteen stations, turningHead 1469 -> 1180
+and midStreet 1203 -> 982 BACK UNDER the 1200 budget, playcap circle 1348 -> 1110,
+colliders and cast shadows bit-identical, geometries 742 -> 553 - and refuted on ONE
+visible artefact: a pre-existing coplanar z-fight in makeTrailer's rear doorway that
+batching moved (better at plaza, plainly worse at the slalom gate the traverse routes
+walk through), plus four silent hazards in the new src/core/static-batch.ts (prunes any
+childless non-Mesh incl. lights; ignores visible=false; drops instanceColor; no winding
+flip on mirrored transforms). Round 2 running (`wf_07a0d8ef-016`): millimetres of
+separation at source + guards that leave such objects untouched and throw in dev.
+Uncommitted until it holds: src/build/vehicles.ts, src/core/static-batch.ts.
+CHARACTERS LANE WAS WEDGED 01:53-05:08 (an ffmpeg contact-sheet loop without -y
+prompted to overwrite and blocked the tool call; no timeout fired; nothing touched) -
+stopped and relaunched fresh as `wf_3f9f5abf-3fa` with shell hygiene in the brief.
+Detect a wedged lane by its agent-*.jsonl mtime, not its journal. Also found: two dead
+factories in vehicles.ts (makeDisplaySedan, makeDisplayPlinth - the teal show car on its
+plinth is written and never placed); the pixel-diff method needs Math.random seeded
+from the harness because materials.ts paints 43 random textures per load.
