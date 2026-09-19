@@ -594,3 +594,15 @@ after Leave); post.ts/world.ts - setEffects({ao,ssr,bloom}) as uniforms + world.
 (input shims work today); weapons - a master gain hook; host-life.ts - respawn delayMs
 pass-through from MatchRules; mouse-button rebinding. ATMOSPHERE lane launching now
 (post.ts, world.ts free). tsc clean on the whole tree at 08:52.
+
+**09:12 (19 Sep).** OWNER-FIXES landed (`39db6b1`): the saloon slid 6 m west out of the
+coach (0.49 m clearance, 0 vehicle intersections), the white garage has a genuinely open
+bay with the leaf rolled overhead and a shut sectional door with a collider, and the
+white upstairs is re-planned into a plum bedroom / green room / glazed hall round the
+void with the concrete-prism-under-slab z-fight deleted and the capsule shell's chord
+overlaps mitred. Verifier refuted two clauses: (a) my scan threshold - 180 same-material
+pairs remain at curved chord joints with NO visible dither (box chords cannot mitre a
+curve; accepted); (b) the bedroom's hall door is blocked by the bed collider (reachable
+via the green-room opening) - FOLLOW-UP. :4190 now serves HEAD `39db6b1` (AO depth fade
++ owner fixes + vehicles batching + characters). Waiting: ordnance verifier (then the
+staged lobby commits with it), z-fight sweep verifier, atmosphere builder.
