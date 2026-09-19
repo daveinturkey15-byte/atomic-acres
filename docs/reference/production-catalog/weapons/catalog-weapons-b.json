@@ -1,0 +1,128 @@
+{
+  "catalogId": "catalog-weapons-b",
+  "target": "2D weapon modelling reference only",
+  "generatedWith": "built-in image_gen",
+  "artworkPolicy": "newly authored original unbranded silhouettes; broad real-life references only; fictional props are inert visual concepts; no logos, serials, dimensions, labels, technical assembly instructions, ammunition details, or copied source files",
+  "assets": [
+    {
+      "id": "mp5",
+      "label": "Original compact 9mm SMG, MP5-inspired silhouette",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-33782e4f-127b-4d8e-99fc-ad3dc5a219a7.png",
+      "prompt": "Use case: product-mockup. Asset type: original game art reference sheet for first-person weapon modeling and animation. Primary request: an original unbranded MP5-like compact 9mm submachine gun reference sheet, realistic PBR studio product photography. Composition: wide landscape sheet with one large clean left profile, one large clean right profile, one rear three-quarter aiming silhouette, and a separate three-frame strip of a gloved hand performing a clear visual reload pose sequence; all views fully visible, evenly spaced, no cropping. Scene/backdrop: neutral pale grey studio background with soft contact shadows. Materials: believable blued metal and matte polymer, subtle fine wear, coherent geometry and details across every view, only modest iron sights and magazine. Constraints: no logos, trademarks, serials, dimensions, labels, captions, diagrams, cutaways, instructions, readable text; no excessive attachments; original design inspired by the silhouette only.",
+      "outputPath": "docs/reference/production-catalog/weapons/mp5.png",
+      "tool": "built-in image_gen",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "0A19EA14268C61258D08F2705C4513B7E4EC15F3647BA04C9ED1EFEE8E8DE649"
+    },
+    {
+      "id": "m4a1",
+      "label": "Original 5.56 carbine, M4A1-inspired silhouette",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-06cfe37a-a9a4-4b31-beb2-729fa3e6a5de.png",
+      "prompt": "Use case: product-mockup. Asset type: original game art reference sheet for first-person weapon modeling and animation. Primary request: an original unbranded M4A1-like 5.56 carbine reference sheet, realistic PBR studio product photography. Composition: wide landscape sheet with one large clean left profile, one large clean right profile, one rear three-quarter aiming silhouette, and a separate three-frame strip of a gloved hand performing a clear visual magazine reload pose sequence; all views fully visible, evenly spaced, no cropping. Scene/backdrop: neutral pale grey studio background with soft contact shadows. Materials: believable dark anodized metal, matte polymer furniture and restrained fine wear, coherent geometry and details across every view, simple stock, handguard and sight, no accessory clutter. Constraints: no logos, trademarks, serials, dimensions, labels, captions, diagrams, cutaways, instructions, readable text; no excessive attachments; original unbranded design inspired by the silhouette only.",
+      "outputPath": "docs/reference/production-catalog/weapons/m4a1.png",
+      "tool": "built-in image_gen",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "DFBFD4AA2A86EE34ACBA517353B261DB72ABBC12D0E2E38ED916B119B43D1F4B"
+    },
+    {
+      "id": "ak-47",
+      "label": "Original 7.62 rifle, AK-47-inspired silhouette",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-90ad229b-f618-4742-8ec0-719a0ba484f1.png",
+      "prompt": "Use case: product-mockup. Asset type: original game art reference sheet for first-person weapon modeling and animation. Primary request: an original unbranded AK-47-like 7.62 rifle reference sheet, realistic PBR studio product photography. Composition: wide landscape sheet with large clean left profile and right profile, a rear three-quarter aiming silhouette, and a distinct bottom three-frame gloved-hand magazine reload visual strip; all views fully visible, evenly spaced, no cropping. Scene/backdrop: neutral pale grey studio background, soft contact shadows. Materials: blued steel receiver, warm worn wood furniture, dark polymer grip, restrained iron sights, coherent same rifle across views. Constraints: no logos, trademarks, serials, dimensions, labels, captions, diagrams, cutaways, instructions, readable text, excessive attachments; original unbranded design inspired by the silhouette only.",
+      "outputPath": "docs/reference/production-catalog/weapons/ak-47.png",
+      "tool": "built-in image_gen",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "A6916D0FC000AE050A64E0DFA36EF6973523E4C6B4FDC58654E7A54C5C884A93"
+    },
+    {
+      "id": "minigun",
+      "label": "Original six-barrel rotary minigun, M134-inspired silhouette",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-0174e0da-39e2-4a33-aa52-facfb9669f51.png",
+      "prompt": "Use case: product-mockup. Asset type: original game art reference sheet for first-person weapon modeling and animation. Primary request: an original unbranded M134-style six-barrel rotary minigun reference sheet, realistic PBR studio product photography; visual only, no engineering detail. Composition: wide landscape sheet with a large clean left profile, large clean right profile, a rear three-quarter aiming silhouette showing the grip and shoulder sling, and a separate three-frame strip of gloved hands visually handling the carry/aiming controls; all views fully visible, evenly spaced, no cropping. Scene/backdrop: neutral pale grey studio background and soft shadows. Materials: dark blued metal, black polymer grips, restrained wear, coherent same weapon across views, simple feed box and cables only. Constraints: no logos, trademarks, serials, dimensions, labels, captions, diagrams, cutaways, instructions, readable text, or excessive attachments; no technical assembly information; original unbranded design.",
+      "outputPath": "docs/reference/production-catalog/weapons/minigun.png",
+      "tool": "built-in image_gen",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "0CD16C4AB1C060684AFDDBBC7150DDEC06F6542E42DD747F9F05EE8FED109D9C"
+    },
+    {
+      "id": "m14-ebr",
+      "label": "Original designated marksman rifle, M14 EBR-inspired silhouette",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-5aad7c22-dff9-4779-826c-a411eb5d5f5b.png",
+      "prompt": "Use case: product-mockup. Asset type: original game art reference sheet for first-person weapon modeling and animation. Primary request: an original unbranded M14 EBR-like designated marksman rifle reference sheet, realistic PBR studio product photography. Composition: wide landscape sheet with one large clean left profile, one large clean right profile, one rear three-quarter aiming silhouette, and a separate three-frame strip of a gloved hand visually performing a magazine reload pose sequence; all views fully visible, evenly spaced, no cropping. Scene/backdrop: neutral pale grey studio background with soft contact shadows. Materials: dark parkerized metal receiver, restrained black chassis and stock, subtle fine wear, coherent same rifle across views, simple optic rail with no scope clutter. Constraints: no logos, trademarks, serials, dimensions, labels, captions, diagrams, cutaways, instructions, readable text, or excessive attachments; original unbranded design inspired by the silhouette only.",
+      "outputPath": "docs/reference/production-catalog/weapons/m14-ebr.png",
+      "tool": "built-in image_gen",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "7CC4FDE13A3D164BCC5D913C9457777C85F9C6C5AD335D3A34D8CEFC8809E104"
+    },
+    {
+      "id": "slug-shotgun",
+      "label": "Original semi-automatic slug shotgun, Benelli M4-inspired silhouette",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-07416707-5727-43a3-a7e9-3c23d3675695.png",
+      "prompt": "Use case: product-mockup. Asset type: benign fictional game prop design reference sheet. Create an original unbranded nonfunctional industrial prop that has the silhouette of a modern semi-automatic slug shotgun; it is a visual modeling reference, not a working weapon. Wide landscape studio sheet: large clean left profile, large clean right profile, one rear three-quarter aiming silhouette, and a three-frame gloved-hand visual pose strip showing a safe staged prop charge motion, with no procedural text. Neutral pale grey background, soft shadows, fully visible, clear spacing, no cropping. Dark blued metal and matte polymer, subtle wear, coherent same prop across all views, simple sights and tubular magazine. No logos, trademarks, serials, dimensions, captions, diagrams, cutaways, ammunition, technical instructions, readable text, or excessive attachments. Original unbranded design only.",
+      "outputPath": "docs/reference/production-catalog/weapons/slug-shotgun.png",
+      "tool": "built-in image_gen",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "363925046EE442323EF16D80DBC68849FE8B5022E346009F9DA94EDBB4C1C1B7"
+    },
+    {
+      "id": "flashlight-pistol",
+      "label": "Original tactical pistol with small flashlight, HK USP .45-inspired silhouette",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-3edcaf0c-9a4c-40f0-af32-4e0e6322da56.png",
+      "prompt": "Use case: product-mockup. Asset type: benign fictional game prop design reference sheet. Create an original unbranded nonfunctional compact service-pistol prop with a small under-barrel flashlight, inspired by a .45 tactical pistol silhouette; visual modeling reference only, not a working weapon. Wide landscape studio sheet: large clean left profile, large clean right profile, one rear three-quarter aiming silhouette, and a distinct three-frame gloved-hand visual pose strip showing a safe staged magazine-change motion, no procedural text. Neutral pale grey background, soft contact shadows, fully visible, clear spacing, no cropping. Blued steel slide, matte polymer frame, restrained wear, coherent same prop across views, small simple flashlight with no branding. No logos, trademarks, serials, dimensions, captions, diagrams, cutaways, ammunition, technical instructions, readable text, or excessive attachments. Original unbranded design only.",
+      "outputPath": "docs/reference/production-catalog/weapons/flashlight-pistol.png",
+      "tool": "built-in image_gen",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "C3D87205F83508959053D056F4443DF9A9D72D0A4051552031250673069B3386"
+    },
+    {
+      "id": "explosive-crossbow",
+      "label": "Original fictional explosive-crossbow visual prop",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-113ba488-06eb-4db6-82e5-f0b642cd1362.png",
+      "prompt": "Use case: product-mockup. Asset type: benign fictional game prop design reference sheet. Create an original unbranded fictional nonfunctional explosive-crossbow prop; it must read as a stylized visual game device only, with no usable mechanism, no projectile detail, and no real-world assembly. Wide landscape studio sheet: large clean left profile, large clean right profile, rear three-quarter aiming silhouette, and a distinct three-frame gloved-hand visual pose strip showing safe staged loading/aiming poses, with no procedural text. Neutral pale grey background, soft shadows, fully visible, clear spacing, no cropping. Dark composite limbs, polymer body, restrained painted metal and fine wear, coherent same prop across views, no aggressive attachments. No logos, trademarks, serials, dimensions, captions, diagrams, cutaways, ammunition, technical instructions, readable text, or explosive construction cues.",
+      "outputPath": "docs/reference/production-catalog/weapons/explosive-crossbow.png",
+      "tool": "built-in image_gen",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "5BF5CD534EED533046586E54C0FEBD43E5ACC71EB516465F112430F2D0179B28"
+    },
+    {
+      "id": "flamethrower",
+      "label": "Original backpack-tank and wand visual prop, M2-inspired silhouette",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-17019e52-3aa1-422a-80de-bb51ede30443.png",
+      "prompt": "Use case: product-mockup. Asset type: benign fictional game prop design reference sheet. Create an original unbranded M2-style flamethrower visual prop: a backpack tank assembly connected to a handheld wand, shown as an inert nonfunctional display prop only. Wide landscape studio sheet: large clean left profile, large clean right profile, rear three-quarter aiming silhouette, and a distinct three-frame gloved-hand visual pose strip showing safe staged carry/charge poses, no fire and no procedural text. Neutral pale grey background, soft shadows, fully visible, clear spacing, no cropping. Brushed and painted metal tank, dark rubber hose, matte wand and harness, subtle wear, coherent same prop across views. No logos, trademarks, serials, dimensions, labels, captions, diagrams, cutaways, fuel details, instructions, readable text, or excessive attachments.",
+      "outputPath": "docs/reference/production-catalog/weapons/flamethrower.png",
+      "tool": "built-in image_gen",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "6241F54AF1DAAF221397383DE8728EFD6856346D3488D4AA6BCED1C6C07D5989"
+    },
+    {
+      "id": "flare-gun",
+      "label": "Original flare pistol visual prop, Orion-inspired silhouette",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-bb9e2e9f-ea6e-4c18-9f0c-0ca59d5a546f.png",
+      "prompt": "Use case: product-mockup. Asset type: benign fictional game prop design reference sheet. Create an original unbranded Orion-style flare-pistol visual prop, inert and nonfunctional, for a fictional game reference library only. Wide landscape studio sheet: large clean left profile, large clean right profile, rear three-quarter aiming silhouette, and a distinct three-frame gloved-hand visual pose strip showing safe staged opening/charging poses, no procedural text. Neutral pale grey background, soft shadows, fully visible, clear spacing, no cropping. Bright safety-orange polymer grip with dark metal break-action body, simple sights, subtle wear, coherent same prop across views. No logos, trademarks, serials, dimensions, labels, captions, diagrams, cutaways, ammunition, technical instructions, readable text, or excessive attachments.",
+      "outputPath": "docs/reference/production-catalog/weapons/flare-gun.png",
+      "tool": "built-in image_gen",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "FC7AE75801F04AB4C13D383F7EAEC259308D436A7AED0FAC13DDD933D6E12389"
+    }
+  ]
+}

@@ -1,0 +1,1127 @@
+{
+  "schemaVersion": 1,
+  "catalogId": "nuketown-production-catalog",
+  "generatedAt": "2026-09-19T16:19:55.858Z",
+  "description": "Mechanical inventory of original 2D reference-generated targets. These images are not converted 3D assets and do not prove runtime.",
+  "artworkPolicy": "All rows remain reference-generated/model null/runtime null until independently authored and verified.",
+  "requirementsBacklog": {
+    "fullProductionProof": [
+      "First-person, world and drop-LOD assets",
+      "Reload, ADS, recoil and inspect animation",
+      "Hand contacts and weapon/operator attachment points",
+      "360-degree yaw and bot-forward checks",
+      "Map-use positions",
+      "Killed and enemy non-gory hit-react behavior",
+      "UI, damage, FX and network proof"
+    ],
+    "status": "OPEN: reference images are evidence targets only; no row is runtime-complete."
+  },
+  "expectedQueuedIds": [
+    "animation-operator-sand-runtime"
+  ],
+  "items": [
+    {
+      "id": "weapon-carbine",
+      "kind": "weapon",
+      "displayName": "Original carbine, HK416-inspired silhouette",
+      "referenceSource": "catalog-weapons-a: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/carbine.png",
+          "sha256": "75e0d0cdd561b0e66844432b45f05bbda652d717c641fabae86001dff98bcd70",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-e5a92cca-93be-4a76-a61b-9127cf4a8291.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-a"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-e5a92cca-93be-4a76-a61b-9127cf4a8291.png",
+        "sourceCatalog": "catalog-weapons-a",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-smg",
+      "kind": "weapon",
+      "displayName": "Original compact SMG, FN P90-inspired silhouette",
+      "referenceSource": "catalog-weapons-a: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/smg.png",
+          "sha256": "8fc1c6003daef0bd244bbd80eaf0131dd952ca3cc163c016971a8280bb022d2d",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-8ba462ad-c581-47e4-a7dc-b10f3ce07d22.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-a"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-8ba462ad-c581-47e4-a7dc-b10f3ce07d22.png",
+        "sourceCatalog": "catalog-weapons-a",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-lmg",
+      "kind": "weapon",
+      "displayName": "Original light machine gun, M249 SAW-inspired silhouette",
+      "referenceSource": "catalog-weapons-a: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/lmg.png",
+          "sha256": "c0fa3d2cd4acd083af377fe0c08327e5b10a73b299a44e7f9f8fc684d3103fb5",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-c1aef4be-97a6-4e39-ab9e-e72803b131a8.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-a"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-c1aef4be-97a6-4e39-ab9e-e72803b131a8.png",
+        "sourceCatalog": "catalog-weapons-a",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-scattergun",
+      "kind": "weapon",
+      "displayName": "Original pump scattergun, Remington 870-inspired silhouette",
+      "referenceSource": "catalog-weapons-a: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/scattergun.png",
+          "sha256": "5e6d554bce83c738c23c36d0c6e51e362f904c83e157479a8475e9088d569b23",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-336cf05c-e016-46be-a064-723ef4777cbb.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-a"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-336cf05c-e016-46be-a064-723ef4777cbb.png",
+        "sourceCatalog": "catalog-weapons-a",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-sniper",
+      "kind": "weapon",
+      "displayName": "Original bolt precision rifle, M40A5-inspired silhouette",
+      "referenceSource": "catalog-weapons-a: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/sniper.png",
+          "sha256": "466f26374df0ee56fc5f576e8b3d0d48d3f364b9450af6f523cb6de7ea28f54e",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-cccdad48-d759-4f55-80d7-b0629d84fb1d.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-a"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-cccdad48-d759-4f55-80d7-b0629d84fb1d.png",
+        "sourceCatalog": "catalog-weapons-a",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-railgun",
+      "kind": "weapon",
+      "displayName": "Original fictional EMRG railgun",
+      "referenceSource": "catalog-weapons-a: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/railgun.png",
+          "sha256": "68899f9fa38db8b9d62d32cc12a126671954096918ee84f888956b13f8129850",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-fba01914-892f-436b-99f9-9d1f81a87c34.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-a"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-fba01914-892f-436b-99f9-9d1f81a87c34.png",
+        "sourceCatalog": "catalog-weapons-a",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-pistol",
+      "kind": "weapon",
+      "displayName": "Original service pistol, Glock 17-inspired silhouette",
+      "referenceSource": "catalog-weapons-a: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/pistol.png",
+          "sha256": "226caeab255ccc9cbf83c9e81f29a34fb3f162d7d333d1b625a7a112e7ce5372",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-ad8eb8d5-eb36-4a49-a78d-b90fd8df3b58.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-a"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-ad8eb8d5-eb36-4a49-a78d-b90fd8df3b58.png",
+        "sourceCatalog": "catalog-weapons-a",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-magnum",
+      "kind": "weapon",
+      "displayName": "Original large-frame magnum, Desert Eagle .50 AE-inspired silhouette",
+      "referenceSource": "catalog-weapons-a: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/magnum.png",
+          "sha256": "afe853c3ddb087071d577c6ec363069112df7029b31cc6673577ec920e69f9cf",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-3b20d5a2-2c56-450f-b545-8a575158d547.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-a"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-3b20d5a2-2c56-450f-b545-8a575158d547.png",
+        "sourceCatalog": "catalog-weapons-a",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-machine-pistol",
+      "kind": "weapon",
+      "displayName": "Original select-fire machine pistol, Glock 18-inspired silhouette",
+      "referenceSource": "catalog-weapons-a: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/machine-pistol.png",
+          "sha256": "6b1957be0e3a3b76167a2b73aa6003125689134cebbf35c36af1cc17b6ba3b61",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-06834213-929d-487b-8b38-141eacb63376.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-a"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-06834213-929d-487b-8b38-141eacb63376.png",
+        "sourceCatalog": "catalog-weapons-a",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-mini-uzi",
+      "kind": "weapon",
+      "displayName": "Original compact machine pistol, Mini Uzi-inspired silhouette",
+      "referenceSource": "catalog-weapons-a: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/mini-uzi.png",
+          "sha256": "29d8192052a4f54b5e878307d88b6feb78a04eed4a6643da37a1649146e145a6",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-e997ae94-6faa-46a0-a896-b83a10949b40.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-a"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-e997ae94-6faa-46a0-a896-b83a10949b40.png",
+        "sourceCatalog": "catalog-weapons-a",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-mp5",
+      "kind": "weapon",
+      "displayName": "Original compact 9mm SMG, MP5-inspired silhouette",
+      "referenceSource": "catalog-weapons-b: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/mp5.png",
+          "sha256": "0a19ea14268c61258d08f2705c4513b7e4ec15f3647ba04c9ed1efee8e8de649",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-33782e4f-127b-4d8e-99fc-ad3dc5a219a7.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-b"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-33782e4f-127b-4d8e-99fc-ad3dc5a219a7.png",
+        "sourceCatalog": "catalog-weapons-b",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-m4a1",
+      "kind": "weapon",
+      "displayName": "Original 5.56 carbine, M4A1-inspired silhouette",
+      "referenceSource": "catalog-weapons-b: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/m4a1.png",
+          "sha256": "dfbfd4aa2a86ee34acba517353b261db72abbc12d0e2e38ed916b119b43d1f4b",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-06cfe37a-a9a4-4b31-beb2-729fa3e6a5de.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-b"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-06cfe37a-a9a4-4b31-beb2-729fa3e6a5de.png",
+        "sourceCatalog": "catalog-weapons-b",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-ak-47",
+      "kind": "weapon",
+      "displayName": "Original 7.62 rifle, AK-47-inspired silhouette",
+      "referenceSource": "catalog-weapons-b: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/ak-47.png",
+          "sha256": "a6916d0fc000ae050a64e0dfa36ef6973523e4c6b4fdc58654e7a54c5c884a93",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-90ad229b-f618-4742-8ec0-719a0ba484f1.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-b"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-90ad229b-f618-4742-8ec0-719a0ba484f1.png",
+        "sourceCatalog": "catalog-weapons-b",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-minigun",
+      "kind": "weapon",
+      "displayName": "Original six-barrel rotary minigun, M134-inspired silhouette",
+      "referenceSource": "catalog-weapons-b: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/minigun.png",
+          "sha256": "0cd16c4ab1c060684afddbbc7150ddec06f6542e42dd747f9f05ee8fed109d9c",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-0174e0da-39e2-4a33-aa52-facfb9669f51.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-b"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-0174e0da-39e2-4a33-aa52-facfb9669f51.png",
+        "sourceCatalog": "catalog-weapons-b",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-m14-ebr",
+      "kind": "weapon",
+      "displayName": "Original designated marksman rifle, M14 EBR-inspired silhouette",
+      "referenceSource": "catalog-weapons-b: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/m14-ebr.png",
+          "sha256": "7cc4fde13a3d164bcc5d913c9457777c85f9c6c5ad335d3a34d8cefc8809e104",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-5aad7c22-dff9-4779-826c-a411eb5d5f5b.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-b"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-5aad7c22-dff9-4779-826c-a411eb5d5f5b.png",
+        "sourceCatalog": "catalog-weapons-b",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-slug-shotgun",
+      "kind": "weapon",
+      "displayName": "Original semi-automatic slug shotgun, Benelli M4-inspired silhouette",
+      "referenceSource": "catalog-weapons-b: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/slug-shotgun.png",
+          "sha256": "363925046ee442323ef16d80dbc68849fe8b5022e346009f9da94edbb4c1c1b7",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-07416707-5727-43a3-a7e9-3c23d3675695.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-b"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-07416707-5727-43a3-a7e9-3c23d3675695.png",
+        "sourceCatalog": "catalog-weapons-b",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-flashlight-pistol",
+      "kind": "weapon",
+      "displayName": "Original tactical pistol with small flashlight, HK USP .45-inspired silhouette",
+      "referenceSource": "catalog-weapons-b: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/flashlight-pistol.png",
+          "sha256": "c3d87205f83508959053d056f4443df9a9d72d0a4051552031250673069b3386",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-3edcaf0c-9a4c-40f0-af32-4e0e6322da56.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-b"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-3edcaf0c-9a4c-40f0-af32-4e0e6322da56.png",
+        "sourceCatalog": "catalog-weapons-b",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-explosive-crossbow",
+      "kind": "weapon",
+      "displayName": "Original fictional explosive-crossbow visual prop",
+      "referenceSource": "catalog-weapons-b: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/explosive-crossbow.png",
+          "sha256": "5bf5cd534eed533046586e54c0febd43e5acc71eb516465f112430f2d0179b28",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-113ba488-06eb-4db6-82e5-f0b642cd1362.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-b"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-113ba488-06eb-4db6-82e5-f0b642cd1362.png",
+        "sourceCatalog": "catalog-weapons-b",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-flamethrower",
+      "kind": "weapon",
+      "displayName": "Original backpack-tank and wand visual prop, M2-inspired silhouette",
+      "referenceSource": "catalog-weapons-b: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/flamethrower.png",
+          "sha256": "6241f54af1daaf221397383de8728efd6856346d3488d4aa6bced1c6c07d5989",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-17019e52-3aa1-422a-80de-bb51ede30443.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-b"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-17019e52-3aa1-422a-80de-bb51ede30443.png",
+        "sourceCatalog": "catalog-weapons-b",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "weapon-flare-gun",
+      "kind": "weapon",
+      "displayName": "Original flare pistol visual prop, Orion-inspired silhouette",
+      "referenceSource": "catalog-weapons-b: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/weapons/flare-gun.png",
+          "sha256": "fc7ae75801f04ab4c13d383f7eaec259308d436a7aed0fac13ddd933d6e12389",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-bb9e2e9f-ea6e-4c18-9f0c-0ca59d5a546f.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-weapons-b"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba47-cbdf-70f2-97dd-5320bf8eb551/exec-bb9e2e9f-ea6e-4c18-9f0c-0ca59d5a546f.png",
+        "sourceCatalog": "catalog-weapons-b",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "killstreak-scout-sweep",
+      "kind": "killstreak",
+      "displayName": "Scout Sweep",
+      "referenceSource": "catalog-killstreaks: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/killstreaks/scout-sweep.png",
+          "sha256": "64609c735742bf8fbff97f9f4c949b62e7f4706a20372a468bf0ec36cc563958",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-b8a46cc6-e745-4a8d-9bdc-7b406c07f6ee.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-killstreaks"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-b8a46cc6-e745-4a8d-9bdc-7b406c07f6ee.png",
+        "sourceCatalog": "catalog-killstreaks",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "killstreak-adrenaline",
+      "kind": "killstreak",
+      "displayName": "Adrenaline Boost",
+      "referenceSource": "catalog-killstreaks: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/killstreaks/adrenaline.png",
+          "sha256": "31731836afa37c482a4408568dbe3ade8f4b8a8cfe788b03086486b5a96449c2",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-9fb35d88-7c0a-4fc3-8c10-bc603d0e178a.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-killstreaks"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-9fb35d88-7c0a-4fc3-8c10-bc603d0e178a.png",
+        "sourceCatalog": "catalog-killstreaks",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "killstreak-care-package",
+      "kind": "killstreak",
+      "displayName": "Care Package",
+      "referenceSource": "catalog-killstreaks: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/killstreaks/care-package.png",
+          "sha256": "0e82b68073c34446478fcada2d0d5b698be244da65b7245495c63d22ecfe54d9",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-c98692c8-46bf-4f20-9065-68121326654f.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-killstreaks"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-c98692c8-46bf-4f20-9065-68121326654f.png",
+        "sourceCatalog": "catalog-killstreaks",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "killstreak-yardhawk",
+      "kind": "killstreak",
+      "displayName": "Yardhawk",
+      "referenceSource": "catalog-killstreaks: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/killstreaks/yardhawk.png",
+          "sha256": "1709322bfa965547df4a0252ad915f48448a20366dcfc12c9981af18e03f5d2d",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-8dcb2a62-7fc3-42e1-9c03-a3e11e49ba19.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-killstreaks"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-8dcb2a62-7fc3-42e1-9c03-a3e11e49ba19.png",
+        "sourceCatalog": "catalog-killstreaks",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "killstreak-piloted-drone",
+      "kind": "killstreak",
+      "displayName": "Piloted Drone",
+      "referenceSource": "catalog-killstreaks: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/killstreaks/piloted-drone.png",
+          "sha256": "33ccff1ecafcfd52e6e116533c7d426ad6f8208bd8451cdf9e1015c707f44ce3",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-f5821b96-3c75-4e4c-9d2b-11f433be3837.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-killstreaks"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-f5821b96-3c75-4e4c-9d2b-11f433be3837.png",
+        "sourceCatalog": "catalog-killstreaks",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "killstreak-tri-pass",
+      "kind": "killstreak",
+      "displayName": "Tri-Pass Strike",
+      "referenceSource": "catalog-killstreaks: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/killstreaks/tri-pass.png",
+          "sha256": "b71242088f5211113a27a123c0e3452153836028d311ef86ef3f5602fc1c4e74",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-76ec59ca-dfe7-47a1-be15-8dd3197df3fd.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-killstreaks"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-76ec59ca-dfe7-47a1-be15-8dd3197df3fd.png",
+        "sourceCatalog": "catalog-killstreaks",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "killstreak-carpet-bomber",
+      "kind": "killstreak",
+      "displayName": "Carpet Bomber",
+      "referenceSource": "catalog-killstreaks: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/killstreaks/carpet-bomber.png",
+          "sha256": "b4ca9dfdf4886a32c018c9da3558c41b2321b386c435b81631c95678957a9e68",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-f17e1bae-99bd-4c3a-a21b-68cba361f3ab.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-killstreaks"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-f17e1bae-99bd-4c3a-a21b-68cba361f3ab.png",
+        "sourceCatalog": "catalog-killstreaks",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "killstreak-hunter-swarm",
+      "kind": "killstreak",
+      "displayName": "Hunter Swarm",
+      "referenceSource": "catalog-killstreaks: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/killstreaks/hunter-swarm.png",
+          "sha256": "5406f44b69d95a2e62aae5056e0eb272de070d3fc24e2c047c1ee62d5f58495d",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-8d652024-655f-461f-b9d5-6a520b376a4e.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-killstreaks"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-8d652024-655f-461f-b9d5-6a520b376a4e.png",
+        "sourceCatalog": "catalog-killstreaks",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "killstreak-chopper",
+      "kind": "killstreak",
+      "displayName": "Chopper Gunner",
+      "referenceSource": "catalog-killstreaks: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/killstreaks/chopper.png",
+          "sha256": "c5d68567daa0a482ebd928d680044333bae128a84747f11863a84de5c9207f44",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-57a1c2af-f0b6-41b9-abf0-bf87cba59686.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-killstreaks"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-57a1c2af-f0b6-41b9-abf0-bf87cba59686.png",
+        "sourceCatalog": "catalog-killstreaks",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "killstreak-drone-swarm",
+      "kind": "killstreak",
+      "displayName": "Drone Swarm",
+      "referenceSource": "catalog-killstreaks: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/killstreaks/drone-swarm.png",
+          "sha256": "742c298edda87c9b4248f550a0831714e6c58a3674e53b0ac43fc16d49d070b7",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-83e2ad09-f49d-4efb-8b02-46f6da673fd3.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-killstreaks"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-83e2ad09-f49d-4efb-8b02-46f6da673fd3.png",
+        "sourceCatalog": "catalog-killstreaks",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "killstreak-nuke",
+      "kind": "killstreak",
+      "displayName": "Nuke",
+      "referenceSource": "catalog-killstreaks: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/killstreaks/nuke.png",
+          "sha256": "fae6315c94d253dc920b39a1ff5c20fbf843403ffd4cd06608c6a5284e724771",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-d28e86c0-5af1-4bb6-8acc-31949842482e.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-killstreaks"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-d28e86c0-5af1-4bb6-8acc-31949842482e.png",
+        "sourceCatalog": "catalog-killstreaks",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "grenade-frag",
+      "kind": "grenade",
+      "displayName": "Original fragmentation grenade game prop",
+      "referenceSource": "catalog-grenades: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/grenades/frag.png",
+          "sha256": "288b34f165f94ef39fe951a2ee3b977b26404c20a8d20803fe5bd6f7cdbbe354",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-911e9a3e-5105-47ec-8107-bbde448c157b.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-grenades"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-911e9a3e-5105-47ec-8107-bbde448c157b.png",
+        "sourceCatalog": "catalog-grenades",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "grenade-smoke",
+      "kind": "grenade",
+      "displayName": "Original smoke grenade game prop",
+      "referenceSource": "catalog-grenades: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/grenades/smoke.png",
+          "sha256": "f0f96fab26fede40c8b76ff3779f22dde905884ff8784115c3a3ba0dcb97f9c9",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-81bb51db-af11-4148-8abc-244963d52ae9.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-grenades"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-81bb51db-af11-4148-8abc-244963d52ae9.png",
+        "sourceCatalog": "catalog-grenades",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "grenade-flash",
+      "kind": "grenade",
+      "displayName": "Original flash grenade game prop",
+      "referenceSource": "catalog-grenades: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/grenades/flash.png",
+          "sha256": "873cbbb33533f9244133f8d32f9a7be2dc30cb0f17d07f4324c86c5beafbf2cf",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-ef2974a6-28a1-4f84-b309-9825820448ea.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-grenades"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-ef2974a6-28a1-4f84-b309-9825820448ea.png",
+        "sourceCatalog": "catalog-grenades",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "grenade-semtex",
+      "kind": "grenade",
+      "displayName": "Generic compact sticky charge game prop",
+      "referenceSource": "catalog-grenades: built-in image_gen; original unbranded 2D reference",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/grenades/semtex.png",
+          "sha256": "90e4e4827d898172b855ebab2fe0531f00be7390a8590155acf9cce2073d8b69",
+          "role": "reference-sheet",
+          "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-52b0439b-b3c8-4ac2-8067-f5c74d7989bc.png",
+          "tool": "built-in image_gen",
+          "sourceCatalog": "catalog-grenades"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-52b0439b-b3c8-4ac2-8067-f5c74d7989bc.png",
+        "sourceCatalog": "catalog-grenades",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "operator-slate",
+      "kind": "operator",
+      "displayName": "Slate operator",
+      "referenceSource": "production catalog operator turnaround and pose sheets",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/operators/operator-slate-turnaround.png",
+          "sha256": "0a906ff4a823c1acc2bb528b788493a2d09988e597d374156f5df78563c8a344",
+          "role": "turnaround",
+          "sourceImagePath": null,
+          "tool": "built-in image_gen",
+          "sourceCatalog": "production-catalog"
+        },
+        {
+          "path": "docs/reference/production-catalog/operators/operator-slate-poses.png",
+          "sha256": "152ffc7fa0b74eb76d30c76f9e36af71fe7afde7a2d754ecb336f39a3751a97d",
+          "role": "pose-reference",
+          "sourceImagePath": null,
+          "tool": "built-in image_gen",
+          "sourceCatalog": "production-catalog"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceCatalog": "production-catalog",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "operator-sand",
+      "kind": "operator",
+      "displayName": "Sand operator",
+      "referenceSource": "production catalog operator turnaround and pose sheets",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/operators/operator-sand-turnaround.png",
+          "sha256": "c3cce53ab74be377cc6a0d5bc9aade48029ffe2d59e44c76f7ee8a9781573c3e",
+          "role": "turnaround",
+          "sourceImagePath": null,
+          "tool": "built-in image_gen",
+          "sourceCatalog": "production-catalog"
+        },
+        {
+          "path": "docs/reference/production-catalog/operators/operator-sand-poses.png",
+          "sha256": "98986d6318f996e0cd188f704f9bf9e48127fbc3122e80dbccb951a74251191b",
+          "role": "pose-reference",
+          "sourceImagePath": null,
+          "tool": "built-in image_gen",
+          "sourceCatalog": "production-catalog"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Open FP/world/drop-LOD implementation; then prove reload, ADS, recoil, inspect, hand contacts, 360-degree yaw, bot-forward, map-use positions, non-gory hit-react, UI/damage/FX/net behavior.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "sourceCatalog": "catalog-operator-sand-poses",
+        "stage": "reference-generated"
+      }
+    },
+    {
+      "id": "animation-operator-sand-runtime",
+      "kind": "animation",
+      "displayName": "Sand operator runtime animation proof",
+      "referenceSource": "Expected runtime proof for catalog-operator-sand-poses",
+      "dependencies": [
+        "operator-sand"
+      ],
+      "images": [],
+      "stage": "queued",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Catalog",
+      "nextAction": "Bind the pose reference to runtime animation and capture hand-contact, 360-degree yaw, bot-forward, hit-react and network proof."
+    }
+  ]
+}

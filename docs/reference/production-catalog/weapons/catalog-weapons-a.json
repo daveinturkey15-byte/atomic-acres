@@ -1,0 +1,128 @@
+{
+  "catalogId": "catalog-weapons-a",
+  "target": "2D weapon modelling reference only",
+  "generatedWith": "built-in image_gen",
+  "artworkPolicy": "newly authored original nonbranded silhouettes; broad real-life references only; no logos, serials, dimensions, labels, technical assembly instructions, or copied source files",
+  "assets": [
+    {
+      "id": "carbine",
+      "label": "Original carbine, HK416-inspired silhouette",
+      "prompt": "Product-mockup 2D weapon modelling reference sheet: one coherent realistic PBR studio sheet for an original unbranded modern carbine with a broad HK416-inspired silhouette; pale-grey seamless studio; three large left/right/rear-three-quarter aiming views across the top and a separated three-frame gloved-hand reload strip below; blued metal and matte polymer, restrained practical attachments, no crop or overlap, no logos, serials, dimensions, labels, instructional text, diagrams, watermark, extra weapons, or excessive rails; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-e5a92cca-93be-4a76-a61b-9127cf4a8291.png",
+      "outputPath": "docs/reference/production-catalog/weapons/carbine.png",
+      "sha256": "75E0D0CDD561B0E66844432B45F05BBDA652D717C641FABAE86001DFF98BCD70",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "smg",
+      "label": "Original compact SMG, FN P90-inspired silhouette",
+      "prompt": "Product-mockup 2D weapon modelling reference sheet: one coherent realistic PBR studio sheet for an original unbranded compact bullpup SMG with a broad FN P90-inspired silhouette; pale-grey seamless studio; three large left/right/rear-three-quarter aiming views across the top and a separated three-frame gloved-hand reload/charge strip below; matte polymer and restrained blued metal, no crop or overlap, no logos, serials, dimensions, labels, instructional text, diagrams, watermark, extra weapons, or excessive rails; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-8ba462ad-c581-47e4-a7dc-b10f3ce07d22.png",
+      "outputPath": "docs/reference/production-catalog/weapons/smg.png",
+      "sha256": "8FC1C6003DAEF0BD244BBD80EAF0131DD952CA3CC163C016971A8280BB022D2D",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "lmg",
+      "label": "Original light machine gun, M249 SAW-inspired silhouette",
+      "prompt": "Product-mockup 2D weapon modelling reference sheet: one coherent realistic PBR studio sheet for an original unbranded belt-fed light machine gun with a broad M249 SAW-inspired silhouette; pale-grey seamless studio; three large left/right/rear-three-quarter aiming views across the top and a separated three-frame gloved-hand feed-cover/charge strip below; blued metal, matte polymer and simple bipod, no crop or overlap, no logos, serials, dimensions, labels, instructional text, diagrams, watermark, loose ammunition, extra weapons, or excessive rails; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-c1aef4be-97a6-4e39-ab9e-e72803b131a8.png",
+      "outputPath": "docs/reference/production-catalog/weapons/lmg.png",
+      "sha256": "C0FA3D2CD4ACD083AF377FE0C08327E5B10A73B299A44E7F9F8FC684D3103FB5",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "scattergun",
+      "label": "Original pump scattergun, Remington 870-inspired silhouette",
+      "prompt": "Product-mockup 2D weapon modelling reference sheet: one coherent realistic PBR studio sheet for an original unbranded pump-action scattergun with a broad Remington 870-inspired silhouette; pale-grey seamless studio; three large left/right/rear-three-quarter aiming views across the top and a separated three-frame gloved-hand pump/reload strip below; blued steel with matte polymer or dark wood, no crop or overlap, no logos, serials, dimensions, labels, instructional text, diagrams, watermark, loose shells, extra weapons, or excessive rails; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-336cf05c-e016-46be-a064-723ef4777cbb.png",
+      "outputPath": "docs/reference/production-catalog/weapons/scattergun.png",
+      "sha256": "5E6D554BCE83C738C23C36D0C6E51E362F904C83E157479A8475E9088D569B23",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "sniper",
+      "label": "Original bolt precision rifle, M40A5-inspired silhouette",
+      "prompt": "Product-mockup 2D weapon modelling reference sheet: one coherent realistic PBR studio sheet for an original unbranded bolt-action precision rifle with a broad M40A5-inspired silhouette; pale-grey seamless studio; three large left/right/rear-three-quarter aiming views across the top and a separated three-frame gloved-hand bolt-cycle strip below; blued metal, subdued polymer or dark wood stock, modest optic, no crop or overlap, no logos, serials, dimensions, labels, instructional text, diagrams, watermark, loose ammunition, extra weapons, or excessive rails; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-cccdad48-d759-4f55-80d7-b0629d84fb1d.png",
+      "outputPath": "docs/reference/production-catalog/weapons/sniper.png",
+      "sha256": "466F26374DF0EE56FC5F576E8B3D0D48D3F364B9450AF6F523CB6DE7EA28F54E",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "railgun",
+      "label": "Original fictional EMRG railgun",
+      "prompt": "Product-mockup 2D weapon modelling reference sheet: one coherent realistic PBR studio sheet for an original fictional unbranded EMRG electromagnetic railgun; pale-grey seamless studio; three large left/right/rear-three-quarter aiming views across the top and a separated three-frame gloved-hand charge/cell-swap strip below; elongated compact body with two enclosed forward rails, machined dark metal and matte polymer, no real firearm markings, logos, serials, dimensions, labels, instructional text, engineering diagrams, exploded assembly, watermark, sparks, extra weapons, or excessive attachments; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-fba01914-892f-436b-99f9-9d1f81a87c34.png",
+      "outputPath": "docs/reference/production-catalog/weapons/railgun.png",
+      "sha256": "68899F9FA38DB8B9D62D32CC12A126671954096918EE84F888956B13F8129850",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "pistol",
+      "label": "Original service pistol, Glock 17-inspired silhouette",
+      "prompt": "Product-mockup 2D weapon modelling reference sheet: one coherent realistic PBR studio sheet for an original unbranded compact service pistol with a broad Glock 17-inspired silhouette; pale-grey seamless studio; three large left/right/rear-three-quarter aiming views across the top and a separated three-frame gloved-hand magazine reload/slide-rack strip below; polymer frame and blued slide, restrained controls, no crop or overlap, no logos, serials, dimensions, labels, instructional text, diagrams, watermark, extra weapons, ammunition, or excessive rails; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-ad8eb8d5-eb36-4a49-a78d-b90fd8df3b58.png",
+      "outputPath": "docs/reference/production-catalog/weapons/pistol.png",
+      "sha256": "226CAEAB255CCC9CBF83C9E81F29A34FB3F162D7D333D1B625A7A112E7CE5372",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "magnum",
+      "label": "Original large-frame magnum, Desert Eagle .50 AE-inspired silhouette",
+      "prompt": "Product-mockup 2D weapon modelling reference sheet: one coherent realistic PBR studio sheet for an original unbranded large-frame magnum pistol with a broad Desert Eagle .50 AE-inspired silhouette; pale-grey seamless studio; three large left/right/rear-three-quarter aiming views across the top and a separated three-frame gloved-hand magazine reload/slide-rack strip below; brushed/blued metal and dark grip, restrained under-barrel detail, no crop or overlap, no logos, serials, dimensions, labels, instructional text, diagrams, watermark, extra weapons, ammunition, or excessive rails; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-3b20d5a2-2c56-450f-b545-8a575158d547.png",
+      "outputPath": "docs/reference/production-catalog/weapons/magnum.png",
+      "sha256": "AFE853C3DDB087071D577C6EC363069112DF7029B31CC6673577EC920E69F9CF",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "machine-pistol",
+      "label": "Original select-fire machine pistol, Glock 18-inspired silhouette",
+      "prompt": "Product-mockup 2D weapon modelling reference sheet: one coherent realistic PBR studio sheet for an original unbranded select-fire machine pistol with a broad Glock 18-inspired silhouette; pale-grey seamless studio; three large left/right/rear-three-quarter aiming views across the top and a separated three-frame gloved-hand magazine reload/slide-rack strip below; matte polymer frame, worn blued slide, extended magazine, restrained short rail, no crop or overlap, no logos, serials, dimensions, labels, instructional text, diagrams, watermark, extra weapons, ammunition, muzzle flash, or excessive rails; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-06834213-929d-487b-8b38-141eacb63376.png",
+      "outputPath": "docs/reference/production-catalog/weapons/machine-pistol.png",
+      "sha256": "6B1957BE0E3A3B76167A2B73AA6003125689134CEBBF35C36AF1CC17B6BA3B61",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "mini-uzi",
+      "label": "Original compact machine pistol, Mini Uzi-inspired silhouette",
+      "prompt": "Product-mockup 2D weapon modelling reference sheet: one coherent realistic PBR studio sheet for an original unbranded compact machine pistol with a broad Mini Uzi-inspired silhouette; pale-grey seamless studio; three large left/right/rear-three-quarter aiming views across the top and a separated three-frame gloved-hand magazine reload/charge strip below; dark parkerized/stamped metal and matte grip panels, restrained folding stock and front sight, no crop or overlap, no logos, serials, dimensions, labels, instructional text, diagrams, watermark, extra weapons, ammunition, muzzle flash, or excessive rails; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-e997ae94-6faa-46a0-a896-b83a10949b40.png",
+      "outputPath": "docs/reference/production-catalog/weapons/mini-uzi.png",
+      "sha256": "29D8192052A4F54B5E878307D88B6FEB78A04EED4A6643DA37A1649146E145A6",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    }
+  ]
+}

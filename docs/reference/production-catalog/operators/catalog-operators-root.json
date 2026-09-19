@@ -1,0 +1,43 @@
+{
+  "catalogId": "catalog-operators-root",
+  "target": "2D modelling and motion reference only",
+  "assets": [
+    {
+      "id": "operator-slate-turnaround",
+      "label": "operator slate turnaround",
+      "prompt": "Create a high-end realistic 3D game character modelling reference sheet for our standalone near-future desert-suburb arena shooter. ONE ORIGINAL adult operator design, practical slate grey combat shirt and trousers, olive low-profile plate carrier, sand gloves and boots, muted amber shoulder patch without text, no franchise insignia. Full body neutral A-pose front, side, back and large three-quarter portrait, all precisely the SAME kit and proportions, arranged spaciously on a light neutral studio background. Face unobstructed, short dark hair, natural adult proportions, anatomy and hands correct. Physically based materials: woven nylon, stitched canvas seams, leather creasing, dusty boot tread, restrained edge wear. Photoreal physically lit game asset target, flat soft neutral light revealing materials, no dramatic darkness, no scenery, no weapon, no text or logo. This is a production concept sheet for modelling and rigging, not an in-game screenshot. At least 2000px composition if possible; crisp full-body details.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0b8d8-dae9-7561-bd64-8fc8e9ac5d60\\exec-a4632d5a-fba9-4228-b507-53511359c405.png",
+      "outputPath": "docs/reference/production-catalog/operators/operator-slate-turnaround.png",
+      "sha256": "0a906ff4a823c1acc2bb528b788493a2d09988e597d374156f5df78563c8a344",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "operator-slate-poses",
+      "label": "operator slate poses",
+      "prompt": "Create a production animation key-pose reference sheet using exactly this original adult slate-clad operator and identical olive kit, gloves, proportions and face. Wide spacious 3x3 grid on pale neutral studio background, show nine clearly separated full-body side/threequarter poses with the ENTIRE person including feet and a generic carbine visible: upright relaxed armed idle, walking contact left foot, running contact right foot, sprinting, standing aiming, crouched aiming, deep crouch transitioning to prone, prone aiming with pelvis and knees anatomically supported, prone crawling. Each pose same scale and plausible center of mass. Both hands contact one coherent gun, elbow bends natural, all boots visible, no floor penetration, no floating limbs, no extra hands. Photorealistic 3D game target with readable cloth folds/materials, soft neutral lighting, faint ground line/contact shadows. This is a 2D animation planning sheet, no UI and no text; not an in-game render or a motion-capture file.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0b8d8-dae9-7561-bd64-8fc8e9ac5d60\\exec-cd999b38-aecf-44d8-9532-8e7db99f6f4d.png",
+      "outputPath": "docs/reference/production-catalog/operators/operator-slate-poses.png",
+      "sha256": "152ffc7fa0b74eb76d30c76f9e36af71fe7afde7a2d754ecb336f39a3751a97d",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "inputReference": "docs/reference/production-catalog/operators/operator-slate-turnaround.png"
+    },
+    {
+      "id": "operator-sand-turnaround",
+      "label": "operator sand turnaround",
+      "prompt": "Photorealistic PBR 3D game operator production reference sheet for an original adult enemy/bot character in a near-future desert-suburb arena shooter. Design B: sand-grey ripstop fatigues with slate reinforced panels, compact dark plate carrier with small cyan team tabs, simple ballistic helmet with goggles pushed up exposing face, practical knee pads, brown gloves, sand boots. Same adult realistic proportions in front, back, side full-body A-pose and large three-quarter portrait; clearly separated and entire boots/hands shown, no weapons or logos. Materials detailed stitched fabric, real buckles, woven straps, dusty creases, subtle edgewear. Pale neutral studio background, flat soft light, readable silhouette and riggable joint boundaries, no opaque black shadows. Original fictional character, no franchise branding, no text, no gore. This is concept art for mesh/skin/rig development, not proof of a live game asset.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0b8d8-dae9-7561-bd64-8fc8e9ac5d60\\exec-9bb5ebe6-c011-45c5-bb32-c39cdcf80a56.png",
+      "outputPath": "docs/reference/production-catalog/operators/operator-sand-turnaround.png",
+      "sha256": "c3cce53ab74be377cc6a0d5bc9aade48029ffe2d59e44c76f7ee8a9781573c3e",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    }
+  ]
+}

@@ -37,7 +37,80 @@ Root owns browser/GPU validation and promotion. External workers must use the
 recorded provider launcher and assigned file scope; a successful worker process
 is not acceptance of its output.
 
-## What this project is not
+## September 19 visual and gameplay priority correction
+
+Dave's review says visual progress and authoring parallelism are insufficient.
+Apply the existing frozen docs/night/VISUAL-BAR.md scorecard and subsystem order,
+paired with exact references from docs/reference/library/shot-matrix.md.
+Performance and network gates protect the build; they do not establish art quality.
+Do not weaken the bar or change rejected references to declare success.
+
+The authoring wave has distinct owners for trees, facade detail, ground PBR,
+hands/gloves, distant mountains, menu/HUD, and authoritative combat feedback.
+Cloud authoring can run in parallel; local GPU generation and actual-browser
+rendering remain serialized. Defer nonblocking network edge cases and the
+disabled reflection experiment during this wave. Root integrates and a separate
+critic compares actual game pixels, matching-camera targets and the previous
+accepted frame. Preserve all gameplay controls and accessibility in UI changes.
+
+The backlog explicitly includes modern menu/HUD composition, animation quality,
+weapon damage profiles, head/critical-hit feedback and bounded floating combat
+text. Old-project behavior is a reference: rebuild it here and preserve host
+authority rather than copying its modules. Damage UI must follow admitted events.
+
+Label generated 2D targets, downloaded meshes, image-to-3D output and accepted
+runtime assets separately. A generated concept is not a reconstructed model.
+The earlier Trellis crate trial remains rejected. Read actual provenance before
+claiming that a skill, generator or asset has been used.
+
+After a harness/app interruption, verify process identities and live HTTP build
+identity before calling a saved lane active. Preserve partial outputs, reconcile
+interrupted receipts, and resume owned lanes. Hidden background launchers should
+be independent of disposable app tool processes, with recorded IDs and bounds.
+
+## Production catalogue and reference-behaviour coverage
+
+The September 19 owner request covers the old reference's full 20-weapon roster,
+11 selectable killstreaks and four grenade types (frag, smoke, flash, semtex), plus
+operator/enemy models, first-person and third-person animation frames, and in-map
+activation/effect views. The current five weapon archetypes and ten streak IDs
+are not equivalent to that target. Preserve the exact comparison and missing work
+in docs/catalog/production-catalog.json and docs/handoff/CURRENT.json.
+
+Generate original references and rebuild independent assets/modules. Track image,
+authored-model, integrated and verified stages separately. Runtime completion needs
+actual build-bound evidence: inventory/loadout/UI coverage, FP/world/drop LODs,
+muzzle/grip sockets, reload/ADS/recoil, admitted damage/head/kill feedback, sound,
+network lifecycle and disposal. Grenades additionally need cook/fuse/throw/bounce/
+stick/radius/occlusion/prone/inventory checks. Bots need forward-axis/yaw, turning,
+weapon attachment and standing/crouched/prone floor/hand-contact checks.
+
+Trace relevant shared-skill techniques through the original example/X source links,
+with local capability and current-source verification separate from authors' claims.
+The technique matrix is evidence routing, not proof of visual quality. Keep the
+frozen visual bar and comparisons; do not relabel generated targets as runtime frames.
+
+If free RAM falls below 12 GiB or free VRAM below 3 GiB, stop or defer our own
+heavy children and preserve partial outputs. Never stop an owner's unrelated process.
+Require headroom for the proposed browser/model job before starting, not merely a
+point-in-time reading equal to the minimum reserve. Record the hold and resumption
+condition so a heartbeat cannot blindly restart a failed heavy lane.
+
+## Overnight owner direction — September 19–20
+
+Dave will inspect at 05:45 Europe/London on September 20. Read
+docs/handoff/OVERNIGHT-2026-09-19.md and CURRENT.json for current ownership.
+OpenAI is reserved for orchestration, review, focused acceptance and mechanical
+integration of externally authored patches. Implementation uses the authorized
+ZAI GLM5.3Flash max, Muse Spark1.3 Contributor xhigh and AGY Gemini routes.
+Switch among those routes on observed quota/auth failure, preserving partial
+work and single-writer ownership; never silently fall back to OpenAI authoring.
+The owner's H3 first/third-person videos are animation references, not extracted
+skeletons or authoritative ammunition/damage/cadence. Preserve the originals and
+exclude the source directory's browser profile. Use actual rig/contact and game
+playback evidence before accepting motion derived or authored from them.
+
+## Independent implementation
 
 It is a clean restart of a much larger effort. The old project is **reference only**:
 you may read it to recover a measurement or a lesson, and you may not copy an asset,

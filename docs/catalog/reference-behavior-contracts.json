@@ -1,0 +1,233 @@
+{
+  "schemaVersion": 1,
+  "title": "Nuketown source behavior contracts",
+  "generatedAt": "2026-09-19",
+  "claimPolicy": "VERIFIED means directly observed in source; OPEN means runtime/visual acceptance remains unproven. Old-root references are historical evidence only.",
+  "oldReferenceInventory": {
+    "weapons": "Old exact 20-weapon list remains tracked in the production catalog; omitted here to avoid duplicating the inventory.",
+    "killstreaks": "Old exact 11-killstreak list remains tracked in the production catalog; omitted here to avoid duplicating the inventory.",
+    "grenades": [
+      "frag",
+      "smoke",
+      "flash",
+      "semtex"
+    ],
+    "grenadeSource": "old root src/combat/grenade-catalog.ts:20-29"
+  },
+  "contracts": [
+    {
+      "priority": 1,
+      "id": "actor-forward-yaw-adapter",
+      "claimState": "OPEN",
+      "owner": "root/runtime",
+      "actual": "CharacterSystem.spawn stores root.rotation.y=yaw at src/characters/system.ts:82-92 and update moves with x += sin(yaw), z += cos(yaw) at :118-132. mesh.ts:281-287 says the carried receiver is along local +z. blend.ts:592-607 builds the aim direction from (0,sin(pitch),cos(pitch)) applied to root quaternion and treats +Z as the barrel.",
+      "risk": "core/layout.ts:102-112 documents camera forward as (-sin yaw,0,-cos yaw), and host-ordnance.ts:326-327 uses that negative convention for flash facing. Both conventions are explicit; an adapter/probe is still needed before treating player yaw, actor yaw and weapon yaw as interchangeable.",
+      "acceptance": {
+        "positive": "At yaw 0, actor locomotion/weapon probe and camera/player aim each report their documented axis; yaw pi reverses both; a 360-degree bot-forward sweep stays finite and aligned.",
+        "negative": "A sign-flipped yaw or +Z/-Z mismatch is rejected by a probe that compares root motion, barrel direction and camera look direction."
+      },
+      "evidence": [
+        "src/characters/system.ts:82-132",
+        "src/characters/mesh.ts:281-287",
+        "src/characters/blend.ts:592-607",
+        "src/game/host-ordnance.ts:314-328",
+        "src/core/layout.ts:102-112"
+      ]
+    },
+    {
+      "priority": 2,
+      "id": "skinned-bind-transform-chain",
+      "claimState": "VERIFIED-source-contract-OPEN-runtime-proof",
+      "owner": "root/runtime",
+      "actual": "mesh.ts composes REST_WORLD by parent Matrix4 multiplication at :103-120, inverts those matrices at :128-130, creates one SkinnedMesh and binds it with an identity bind matrix at :550-563. The character root is positioned, rotated and scaled after dress construction at system.ts:88-93.",
+      "risk": "The source contract is explicit, but no runtime frame is claimed here for silhouette, envelope or attached generated operator assets.",
+      "acceptance": {
+        "positive": "A spawned skinned operator follows root translation/yaw/scale while bone-local geometry remains attached and visible from front/rear/side.",
+        "negative": "A stale bind matrix, wrong parent chain or missing mesh produces a finite-but-detached hand/foot or a missing silhouette and must fail."
+      },
+      "evidence": [
+        "src/characters/mesh.ts:103-130",
+        "src/characters/mesh.ts:535-563",
+        "src/characters/system.ts:82-103"
+      ]
+    },
+    {
+      "priority": 3,
+      "id": "weapon-forestocks-and-hand-contact",
+      "claimState": "VERIFIED-source-contract-OPEN-runtime-proof",
+      "owner": "root/runtime",
+      "actual": "blend.ts:128-138 defines FORESTOCK_LOCAL=(0,-0.055,0.25) and BARREL_LOCAL=(0,0,1); applyCarry reads RightHand.matrixWorld at :614-620 and weaponProbe exposes the same forestock/barrel at :623-632. mesh.ts:284-295 places the baked receiver and attachments on the RightHand bone.",
+      "risk": "The solver is contractually tied to the procedural mesh offsets, but generated weapon/operator reference targets are 2D only and do not prove runtime contact.",
+      "acceptance": {
+        "positive": "Probe forestock lies on the support-hand contact envelope in hip, ADS, reload and prone; barrel direction matches the selected yaw/pitch.",
+        "negative": "Missing mesh, wrong offset, hand gap/intersection or barrel direction outside envelope is rejected; do not accept a nearby hand as contact."
+      },
+      "evidence": [
+        "src/characters/blend.ts:128-138",
+        "src/characters/blend.ts:614-632",
+        "src/characters/mesh.ts:281-295"
+      ]
+    },
+    {
+      "priority": 4,
+      "id": "prone-root-frame",
+      "claimState": "VERIFIED-source-contract-OPEN-runtime-proof",
+      "owner": "root/runtime",
+      "actual": "blend.ts declares PRONE_CARRY_HAND/PRONE_AIM_HAND and PRONE_BARREL at :145-155. applyCarry switches to root-forward in prone and interpolates the chest frame toward world-up at :595-605. player.ts:180-201 gates stance changes and keeps a blocked stand request prone.",
+      "risk": "The source explicitly avoids the floor-facing chest frame, but prone weapon clearance and visual pose are unproven until captured.",
+      "acceptance": {
+        "positive": "Prone muzzle follows actor-forward, clears the floor, and both hands remain attached while entering/exiting under low cover.",
+        "negative": "A chest-relative barrel pointing into the lawn, a hand detachment or an illegal stand under a low roof fails."
+      },
+      "evidence": [
+        "src/characters/blend.ts:145-155",
+        "src/characters/blend.ts:595-605",
+        "src/core/player.ts:180-201"
+      ]
+    },
+    {
+      "priority": 5,
+      "id": "grenade-roster-and-fourth-id",
+      "claimState": "OPEN",
+      "owner": "root/runtime",
+      "actual": "Current loadout.ts:39-44 declares only frag, flash and smoke and says tactical ordnance is not implemented. ordnance.ts:70-108 defines the same three runtime rows and enforces exact set parity against loadout.ts. Current production reference catalog has four grenade targets: frag, smoke, flash and semtex. Old root grenade-catalog.ts:20-29 records all four old shipped IDs and runtime kinds, including semtex sticky-explosive.",
+      "risk": "The reference catalog can show four 2D targets while current runtime authority accepts only three; semtex cannot be treated as implemented from the old catalog or image.",
+      "acceptance": {
+        "positive": "If semtex is promoted, it appears in loadout, authoritative defs, host dispatch, bot selection, presentation and negative/admission proofs as one ID.",
+        "negative": "A semtex claim, HUD selection or host dispatch while the current three-ID parity check remains unchanged is rejected as OPEN."
+      },
+      "evidence": [
+        "src/game/loadout.ts:39-44",
+        "src/game/ordnance.ts:70-108",
+        "old root src/combat/grenade-catalog.ts:20-29",
+        "docs/catalog/production-catalog.json (grenade rows)"
+      ]
+    },
+    {
+      "priority": 6,
+      "id": "grenade-arm-cook-release",
+      "claimState": "VERIFIED-source-contract-OPEN-runtime-proof",
+      "owner": "root/runtime",
+      "actual": "host-ordnance.ts:130-160 implements two claims: first arm, then release. The fuse starts at arm only when fuseFrom is arm; release uses now+fuseMs. host-ordnance.ts:207-215 detonates an armed fuse at the host clock and counts cookOffs. ordnance-input.ts:149-153 mirrors arm/release input sequencing.",
+      "risk": "This is host-authoritative in source, but a browser proof must cover held cook, release and death while armed.",
+      "acceptance": {
+        "positive": "Frag arm starts its 2,300 ms host fuse; release preserves remaining fuse; death/cook-off detonates once and inventory clears.",
+        "negative": "Duplicate arm, wrong grenade ID, dead actor, or release before host arm confirmation is refused and cannot create a second grenade."
+      },
+      "evidence": [
+        "src/game/host-ordnance.ts:130-160",
+        "src/game/host-ordnance.ts:201-216",
+        "src/weapons/ordnance-input.ts:149-153",
+        "src/game/ordnance.ts:70-108"
+      ]
+    },
+    {
+      "priority": 7,
+      "id": "grenade-ballistics-impact-bounce",
+      "claimState": "VERIFIED-source-contract-OPEN-runtime-proof",
+      "owner": "root/runtime",
+      "actual": "ordnance-physics.ts defines gravity 20.32, casing radius 0.08, restitution 0.38, tangential friction 0.6, roll decay 4.0, rest threshold 0.25 and impact contact threshold 1.5 at :21-47. stepBallistic performs in-bounds/wall/ground contact and bounce logic at :82-160. host-ordnance.ts:220-227 detonates impact-fused grenades on contact or timed fuse.",
+      "risk": "The host and presentation intentionally share stepBallistic, but collision corner cases and all grenade types remain runtime-open.",
+      "acceptance": {
+        "positive": "A thrown grenade remains inside bounds, bounces against a wall/ground, settles below rest speed, and impact flash detonates on first qualifying contact.",
+        "negative": "Tunnelling, escaping bounds, repeated impact detonation or a resting grenade that never resolves must fail."
+      },
+      "evidence": [
+        "src/game/ordnance-physics.ts:21-47",
+        "src/game/ordnance-physics.ts:82-160",
+        "src/game/host-ordnance.ts:218-227",
+        "src/weapons/grenades.ts:95-103"
+      ]
+    },
+    {
+      "priority": 8,
+      "id": "blast-radius-occlusion-and-prone",
+      "claimState": "VERIFIED-source-contract-OPEN-runtime-proof",
+      "owner": "root/runtime",
+      "actual": "ordnance.ts:128-156 defines the 16 m frag radius, quadratic fragDamageAt, BLAST_LIFT_M=0.25 and BLAST_TARGET_Y=0.95; host-ordnance.ts:280-299 applies radius, LOS and HostLife.hit. Current root has no explicit prone blast multiplier in this path. Old root pass65 contract had Semtex blast radius 4.25 m and prone multiplier 0.42 at old src/combat/pass65-ordnance-contract.ts:18-39.",
+      "risk": "Do not import the old Semtex/prone rule into the current runtime; it is evidence for a future contract, not implemented authority.",
+      "acceptance": {
+        "positive": "Frag damage follows the current quadratic curve and is blocked by a world line-of-sight obstruction; body target uses chest height.",
+        "negative": "Damage through a wall, radius edge beyond zero, or an unrecorded prone modifier is rejected/marked OPEN."
+      },
+      "evidence": [
+        "src/game/ordnance.ts:128-156",
+        "src/game/host-ordnance.ts:280-299",
+        "old root src/combat/pass65-ordnance-contract.ts:18-39"
+      ]
+    },
+    {
+      "priority": 9,
+      "id": "flash-facing-and-occlusion",
+      "claimState": "VERIFIED-source-contract-OPEN-runtime-proof",
+      "owner": "root/runtime",
+      "actual": "ordnance.ts:176-208 defines flash max 2,800 ms, near radius 4 m, edge fraction 0.25, full facing 30 degrees and behind 120 degrees. host-ordnance.ts:314-335 computes eye height, line-of-sight and forward=(-sin yaw,0,-cos yaw) before flashExposure.",
+      "risk": "The source makes facing and solid occlusion authoritative, but browser proof must test front/side/behind and wall cases.",
+      "acceptance": {
+        "positive": "A visible front-facing flash receives greater intensity and bounded duration; a wall-blocked or out-of-radius target receives none.",
+        "negative": "Behind-wall whiteout, infinite duration, or a yaw sign mismatch is rejected."
+      },
+      "evidence": [
+        "src/game/ordnance.ts:176-208",
+        "src/game/host-ordnance.ts:314-335"
+      ]
+    },
+    {
+      "priority": 10,
+      "id": "smoke-host-sight-field",
+      "claimState": "VERIFIED-source-contract-OPEN-runtime-proof",
+      "owner": "root/runtime",
+      "actual": "host-ordnance.ts:305-310 writes smoke-volume events and SightField state. world-query.ts:91-118 defines radius/density/fill/dissolve, :121-180 holds the host field, and :181-213 computes density-weighted LOS. The current visual lane labels smoke rendering as a placeholder in weapons/grenades.ts:2-21 and supports a volumetricSmoke flag at :95.",
+      "risk": "Host/bot semantic smoke and presentation smoke are separate consumers; visual volumetric parity remains open.",
+      "acceptance": {
+        "positive": "Smoke volume appears once, blocks bot/player acquisition through the dense center, dissolves at diesAt, and emits smoke-volume-end.",
+        "negative": "Expired smoke remains in sight, a thin tangent blocks, or the rendered cloud disagrees with event radius/lifetime."
+      },
+      "evidence": [
+        "src/game/host-ordnance.ts:201-205",
+        "src/game/host-ordnance.ts:305-310",
+        "src/game/world-query.ts:91-213",
+        "src/weapons/grenades.ts:2-21"
+      ]
+    },
+    {
+      "priority": 11,
+      "id": "spawn-yaw-handedness",
+      "claimState": "VERIFIED-source-contract-OPEN-runtime-proof",
+      "owner": "root/runtime",
+      "actual": "layout.ts:102-112 documents camera forward and anchors SPAWN_A at yaw pi / +z and SPAWN_B at yaw 0 / -z. spawn-points.ts:39-64 derives yawTowardCentre and rotates the orange template 180 degrees for team B. spawns.ts:199-245 applies in-bounds, enemy LOS, team side, recent-use, recent-death and separation rules.",
+      "risk": "The deterministic table is source-backed, but actual map frames must prove the camera sees the intended house/garage side and bots move forward toward the chosen target.",
+      "acceptance": {
+        "positive": "Both anchors face inward, garage remains on the documented right, safe-spawn selection rejects visible enemy LOS where a safe point exists, and repeated respawns rotate fresh points.",
+        "negative": "Mirror instead of 180-degree rotation, garage on the wrong hand, or a visible unsafe spawn where a safe candidate exists fails."
+      },
+      "evidence": [
+        "src/core/layout.ts:102-112",
+        "src/core/layout.ts:120-185",
+        "src/game/spawn-points.ts:39-110",
+        "src/game/spawns.ts:199-245"
+      ]
+    },
+    {
+      "priority": 12,
+      "id": "map-doors-stairs-use-positions",
+      "claimState": "OPEN",
+      "owner": "root/world",
+      "actual": "layout.ts:71-78, :123-150 centralizes garage/deck/door anchors and door clear-apron dimensions. INTERIORS-TOPOLOGY.md:278-291 requires the external back stair route yard\u2192deck\u2192upper floor; :332-367 records door, garage, internal-stair and external-stair positions, with some coordinates inferred or contradicted. spawn-points.ts:89-110 includes yard/house/garage/floor-1 categories, while world-query.ts:33-41 defines standable tops and :261-297 answers collision/ground/LOS from colliders.",
+      "risk": "The source table and reference brief identify map-use routes, but this audit does not claim that every door/stair route is currently open or visually matched in runtime.",
+      "acceptance": {
+        "positive": "Use-route probes can traverse front/back door, garage\u2192kitchen, internal stair and external stair/deck; floor-1 points resolve to DECK_Y and standable ground.",
+        "negative": "A sealed required door, missing external stair, spawn inside a collider, or stair/deck that cannot be used is rejected."
+      },
+      "evidence": [
+        "src/core/layout.ts:71-78",
+        "src/core/layout.ts:123-185",
+        "docs/INTERIORS-TOPOLOGY.md:278-291",
+        "docs/INTERIORS-TOPOLOGY.md:332-367",
+        "src/game/spawn-points.ts:89-110",
+        "src/game/world-query.ts:33-41",
+        "src/game/world-query.ts:261-297"
+      ]
+    }
+  ]
+}

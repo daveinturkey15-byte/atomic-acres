@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "reportType": "nuketown-production-catalog-gate",
+  "generatedAt": "2026-09-19T16:25:38.503Z",
+  "manifestPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\catalog\\production-catalog.json",
+  "rootDir": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
+  "requireRuntime": false,
+  "passed": true,
+  "valid": true,
+  "counts": {
+    "totalRows": 38,
+    "openBacklogCount": 38,
+    "verifiedCount": 0,
+    "rejectedCount": 0,
+    "byStage": {
+      "queued": 1,
+      "reference-generated": 37,
+      "authored": 0,
+      "integrated": 0,
+      "verified": 0,
+      "rejected": 0
+    },
+    "byKind": {
+      "weapon": 20,
+      "killstreak": 11,
+      "grenade": 4,
+      "operator": 2,
+      "animation": 1,
+      "scenario": 0
+    }
+  },
+  "stage": {
+    "queued": 1,
+    "reference-generated": 37,
+    "authored": 0,
+    "integrated": 0,
+    "verified": 0,
+    "rejected": 0
+  },
+  "errors": [],
+  "gateErrors": [],
+  "open": {
+    "count": 38,
+    "ids": [
+      "weapon-carbine",
+      "weapon-smg",
+      "weapon-lmg",
+      "weapon-scattergun",
+      "weapon-sniper",
+      "weapon-railgun",
+      "weapon-pistol",
+      "weapon-magnum",
+      "weapon-machine-pistol",
+      "weapon-mini-uzi",
+      "weapon-mp5",
+      "weapon-m4a1",
+      "weapon-ak-47",
+      "weapon-minigun",
+      "weapon-m14-ebr",
+      "weapon-slug-shotgun",
+      "weapon-flashlight-pistol",
+      "weapon-explosive-crossbow",
+      "weapon-flamethrower",
+      "weapon-flare-gun",
+      "killstreak-scout-sweep",
+      "killstreak-adrenaline",
+      "killstreak-care-package",
+      "killstreak-yardhawk",
+      "killstreak-piloted-drone",
+      "killstreak-tri-pass",
+      "killstreak-carpet-bomber",
+      "killstreak-hunter-swarm",
+      "killstreak-chopper",
+      "killstreak-drone-swarm",
+      "killstreak-nuke",
+      "grenade-frag",
+      "grenade-smoke",
+      "grenade-flash",
+      "grenade-semtex",
+      "operator-slate",
+      "operator-sand",
+      "animation-operator-sand-runtime"
+    ]
+  },
+  "runtimeVerified": {
+    "count": 0,
+    "required": false,
+    "passed": null
+  }
+}

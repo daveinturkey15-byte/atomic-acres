@@ -1,0 +1,14 @@
+{
+  "catalogId": "catalog-operator-sand-poses",
+  "target": "2D enemy operator pose reference only",
+  "generatedWith": "built-in image_gen",
+  "inputReference": "docs/reference/production-catalog/operators/operator-sand-turnaround.png",
+  "prompt": "Using the supplied operator-sand-turnaround image as the identity and wardrobe reference, preserve the exact same adult sand-colored operator, helmet, goggles, vest, pouches, gloves, pants, knee pads, boots, colors, materials, proportions and face across a clean nine-pose full-body grid: idle, walk, run, aim, crouch, prone, grenade throw follow-through, restrained non-gory hit-react, and turning 45 degrees. Keep all poses at the same scale with visible boots and generous margins on a pale-grey seamless studio background; no logos, serials, dimensions, labels, captions, instructional text, watermark, gore, extra characters, cropped limbs, or inconsistent wardrobe; 2D only.",
+  "tool": "built-in image_gen",
+  "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-06830a21-dc99-42ef-b25d-174b8f0bedaf.png",
+  "outputPath": "docs/reference/production-catalog/operators/operator-sand-poses.png",
+  "sha256": "98986D6318F996E0CD188F704F9BF9E48127FBC3122E80DBCCB951A74251191B",
+  "stage": "reference-generated",
+  "model": null,
+  "runtime": null
+}

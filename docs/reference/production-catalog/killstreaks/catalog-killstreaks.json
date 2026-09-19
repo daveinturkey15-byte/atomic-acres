@@ -1,0 +1,142 @@
+{
+  "catalogId": "catalog-killstreaks",
+  "target": "legacy killstreak visual storyboard reference only",
+  "generatedWith": "built-in image_gen",
+  "artworkPolicy": "newly authored original unbranded 2D concept sheets; legacy future-catalogue references only; no copied source images or meshes; no runtime or gameplay claim",
+  "sourceCatalog": "C:/Users/david/projects/atomic-acres-production-27e0858/src/killstreak-catalog.ts",
+  "currentRecoveryStatus": "These 11 legacy entries are future reference imagery; the current recovery catalog has a separate 10-entry catalog and these images do not confirm implementation.",
+  "assets": [
+    {
+      "id": "scout-sweep",
+      "label": "Scout Sweep",
+      "prompt": "Use case: stylized-concept. Asset type: internal game reference storyboard sheet, 2D only. Create a polished four-panel visual storyboard for the legacy killstreak Scout Sweep (catalog id scout-sweep), as a visual reference only; do not imply the current recovery project implements it. Shared compact desert retro-future suburban arena with twin white-and-orange houses, curved street, yellow school bus and perimeter wood fences. Photorealistic PBR game concept art, hard late-afternoon sun, soft contact shadows, restrained atmosphere, realistic smoke, readable line of sight and grounded scale. Panel 1: close study of an unarmed reconnaissance drone or survey aircraft. Panel 2: first-person gloved activation with a small abstract unbranded interface and no readable words. Panel 3: the sensor drone performs a restrained believable scan across the neighborhood. Panel 4: an enemy operator looks upward and reacts in a non-gory tactical pose. Generic unbranded design; no logos, readable UI text, watermark, source-game branding, copied legacy mesh or image, gore, casualties or technical instructions.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-b8a46cc6-e745-4a8d-9bdc-7b406c07f6ee.png",
+      "outputPath": "docs/reference/production-catalog/killstreaks/scout-sweep.png",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "64609C735742BF8FBFF97F9F4C949B62E7F4706A20372A468BF0EC36CC563958"
+    },
+    {
+      "id": "adrenaline",
+      "label": "Adrenaline Boost",
+      "prompt": "Use case: stylized-concept. Asset type: internal game reference storyboard sheet, 2D only. Create a polished four-panel visual storyboard for the legacy killstreak Adrenaline Boost (catalog id adrenaline), as a visual reference only; do not imply the current recovery project implements it. Shared compact desert retro-future suburban arena with twin white-and-orange houses, curved street, yellow school bus and perimeter wood fences. Photorealistic PBR game concept art, hard late-afternoon sun, soft contact shadows, restrained atmosphere, realistic smoke, readable line of sight and grounded scale. Panel 1: close study of a sealed medical stim injector. Panel 2: first-person gloved injection gesture with only an abstract unbranded interface. Panel 3: the player moves with controlled urgency through the street. Panel 4: an enemy operator turns sharply in surprise in a non-gory tactical pose. Generic unbranded design; no logos, readable UI text, watermark, source-game branding, copied legacy mesh or image, gore, casualties or technical instructions.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-9fb35d88-7c0a-4fc3-8c10-bc603d0e178a.png",
+      "outputPath": "docs/reference/production-catalog/killstreaks/adrenaline.png",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "31731836AFA37C482A4408568DBE3ADE8F4B8A8CFE788B03086486B5A96449C2"
+    },
+    {
+      "id": "care-package",
+      "label": "Care Package",
+      "prompt": "Use case: stylized-concept. Asset type: internal game reference storyboard sheet, 2D only. Create a polished four-panel visual storyboard for the legacy killstreak Care Package (catalog id care-package), as a visual reference only; do not imply the current recovery project implements it. Shared compact desert retro-future suburban arena with twin white-and-orange houses, curved street, yellow school bus and perimeter wood fences. Photorealistic PBR game concept art, hard late-afternoon sun, soft contact shadows, restrained atmosphere, realistic smoke, readable line of sight and grounded scale. Panel 1: close study of a rugged unbranded supply crate and parachute rig. Panel 2: first-person gloved activation call with abstract unbranded interface. Panel 3: the crate descends into the street near the houses. Panel 4: an enemy operator takes cover while looking toward the drop. Generic unbranded design; no logos, readable UI text, watermark, source-game branding, copied legacy mesh or image, gore, casualties or technical instructions.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-c98692c8-46bf-4f20-9065-68121326654f.png",
+      "outputPath": "docs/reference/production-catalog/killstreaks/care-package.png",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "0E82B68073C34446478FCADA2D0D5B698BE244DA65B7245495C63D22ECFE54D9"
+    },
+    {
+      "id": "yardhawk",
+      "label": "Yardhawk",
+      "prompt": "Use case: stylized-concept. Asset type: internal game reference storyboard sheet, 2D only. Create a polished four-panel visual storyboard for the legacy killstreak Yardhawk (catalog id yardhawk), as a visual reference only; do not imply the current recovery project implements it. Shared compact desert retro-future suburban arena with twin white-and-orange houses, curved street, yellow school bus and perimeter wood fences. Photorealistic PBR game concept art, hard late-afternoon sun, soft contact shadows, restrained atmosphere, realistic smoke, readable line of sight and grounded scale. Panel 1: close study of a compact autonomous hunter drone. Panel 2: first-person gloved activation controller with abstract unbranded interface. Panel 3: the drone patrols above fenced yards with a restrained search beam. Panel 4: an enemy operator scans upward in a non-gory tactical pose. Generic unbranded design; no logos, readable UI text, watermark, source-game branding, copied legacy mesh or image, gore, casualties or technical instructions.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-8dcb2a62-7fc3-42e1-9c03-a3e11e49ba19.png",
+      "outputPath": "docs/reference/production-catalog/killstreaks/yardhawk.png",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "1709322BFA965547DF4A0252AD915F48448A20366DCFC12C9981AF18E03F5D2D"
+    },
+    {
+      "id": "piloted-drone",
+      "label": "Piloted Drone",
+      "prompt": "Use case: stylized-concept. Asset type: internal game reference storyboard sheet, 2D only. Create a polished four-panel visual storyboard for the legacy killstreak Piloted Drone (catalog id piloted-drone), as a visual reference only; do not imply the current recovery project implements it. Shared compact desert retro-future suburban arena with twin white-and-orange houses, curved street, yellow school bus and perimeter wood fences. Photorealistic PBR game concept art, hard late-afternoon sun, soft contact shadows, restrained atmosphere, realistic smoke, readable line of sight and grounded scale. Panel 1: close study of a larger piloted support drone with sensor and gun pod. Panel 2: first-person gloved control grips and abstract targeting display. Panel 3: clear overhead support pass above the curved street. Panel 4: an enemy operator seeks cover in a non-gory tactical pose. Generic unbranded design; no logos, readable UI text, watermark, source-game branding, copied legacy mesh or image, gore, casualties or technical instructions.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-f5821b96-3c75-4e4c-9d2b-11f433be3837.png",
+      "outputPath": "docs/reference/production-catalog/killstreaks/piloted-drone.png",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "33CCFF1ECAFCFD52E6E116533C7D426AD6F8208BD8451CDF9E1015C707F44CE3"
+    },
+    {
+      "id": "tri-pass",
+      "label": "Tri-Pass Strike",
+      "prompt": "Use case: stylized-concept. Asset type: internal game reference storyboard sheet, 2D only. Create a polished four-panel visual storyboard for the legacy killstreak Tri-Pass Strike (catalog id tri-pass), as a visual reference only; do not imply the current recovery project implements it. Shared compact desert retro-future suburban arena with twin white-and-orange houses, curved street, yellow school bus and perimeter wood fences. Photorealistic PBR game concept art, hard late-afternoon sun, soft contact shadows, restrained atmosphere, realistic smoke, readable line of sight and grounded scale. Panel 1: close study of a compact unbranded strike aircraft. Panel 2: first-person gloved line designation with abstract interface and no readable words. Panel 3: three distinct aircraft passes along the same street corridor with restrained dust and smoke. Panel 4: an enemy operator reacts from cover in a non-gory tactical pose. Generic unbranded design; no logos, readable UI text, watermark, source-game branding, copied legacy mesh or image, gore, casualties or technical instructions.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-76ec59ca-dfe7-47a1-be15-8dd3197df3fd.png",
+      "outputPath": "docs/reference/production-catalog/killstreaks/tri-pass.png",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "B71242088F5211113A27A123C0E3452153836028D311EF86EF3F5602FC1C4E74"
+    },
+    {
+      "id": "carpet-bomber",
+      "label": "Carpet Bomber",
+      "prompt": "Use case: stylized-concept. Asset type: internal game reference storyboard sheet, 2D only. Create a polished four-panel visual storyboard for the legacy killstreak Carpet Bomber (catalog id carpet-bomber), as a visual reference only; do not imply the current recovery project implements it. Shared compact desert retro-future suburban arena with twin white-and-orange houses, curved street, yellow school bus and perimeter wood fences. Photorealistic PBR game concept art, hard late-afternoon sun, soft contact shadows, restrained atmosphere, realistic smoke, readable line of sight and grounded scale. Panel 1: close study of a generic unbranded bomber aircraft. Panel 2: first-person gloved point designation with abstract interface and no readable words. Panel 3: a broad readable line of dust and smoke across the selected street section. Panel 4: an enemy operator reacts from behind a wall in a non-gory tactical pose. Generic unbranded design; no logos, readable UI text, watermark, source-game branding, copied legacy mesh or image, gore, casualties or technical instructions.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-f17e1bae-99bd-4c3a-a21b-68cba361f3ab.png",
+      "outputPath": "docs/reference/production-catalog/killstreaks/carpet-bomber.png",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "B4CA9DFDF4886A32C018C9DA3558C41B2321B386C435B81631C95678957A9E68"
+    },
+    {
+      "id": "hunter-swarm",
+      "label": "Hunter Swarm",
+      "prompt": "Use case: stylized-concept. Asset type: internal game reference storyboard sheet, 2D only. Create a polished four-panel visual storyboard for the legacy killstreak Hunter Swarm (catalog id hunter-swarm), as a visual reference only; do not imply the current recovery project implements it. Shared compact desert retro-future suburban arena with twin white-and-orange houses, curved street, yellow school bus and perimeter wood fences. Photorealistic PBR game concept art, hard late-afternoon sun, soft contact shadows, restrained atmosphere, realistic smoke, readable line of sight and grounded scale. Panel 1: close study of one compact autonomous hunter drone. Panel 2: first-person gloved activation with an abstract swarm glyph and no readable words. Panel 3: multiple drones search above the fenced houses in a clear in-map composition. Panel 4: an enemy operator looks for cover in a non-gory tactical pose. Generic unbranded design; no logos, readable UI text, watermark, source-game branding, copied legacy mesh or image, gore, casualties or technical instructions.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-8d652024-655f-461f-b9d5-6a520b376a4e.png",
+      "outputPath": "docs/reference/production-catalog/killstreaks/hunter-swarm.png",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "5406F44B69D95A2E62AAE5056E0EB272DE070D3FC24E2C047C1EE62D5F58495D"
+    },
+    {
+      "id": "chopper",
+      "label": "Chopper Gunner",
+      "prompt": "Use case: stylized-concept. Asset type: internal game reference storyboard sheet, 2D only. Create a polished four-panel visual storyboard for the legacy killstreak Chopper Gunner (catalog id chopper), as a visual reference only; do not imply the current recovery project implements it. Shared compact desert retro-future suburban arena with twin white-and-orange houses, a curved street, a yellow school bus and perimeter wood fences. Photorealistic PBR game concept art, hard late-afternoon sun, soft contact shadows, restrained atmosphere, realistic smoke, readable line of sight and grounded scale. Panel 1: close study of an unbranded helicopter and side gun station. Panel 2: first-person cockpit or gunner activation with gloved hands and abstract interface, no readable words. Panel 3: helicopter makes a readable pass above the houses and street. Panel 4: enemy operator reacts from cover in a non-gory tactical pose. Generic unbranded design; no logos, readable UI text, watermark, source-game branding, copied legacy mesh or image, gore, casualties or technical instructions.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-57a1c2af-f0b6-41b9-abf0-bf87cba59686.png",
+      "outputPath": "docs/reference/production-catalog/killstreaks/chopper.png",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "C5D68567DAA0A482EBD928D680044333BAE128A84747F11863A84DE5C9207F44"
+    },
+    {
+      "id": "drone-swarm",
+      "label": "Drone Swarm",
+      "prompt": "Use case: stylized-concept. Asset type: internal game reference storyboard sheet, 2D only. Create a polished four-panel visual storyboard for the legacy killstreak Drone Swarm (catalog id drone-swarm), as a visual reference only; do not imply the current recovery project implements it. Shared compact desert retro-future suburban arena with twin white-and-orange houses, a curved street, a yellow school bus and perimeter wood fences. Photorealistic PBR game concept art, hard late-afternoon sun, soft contact shadows, restrained atmosphere, realistic smoke, readable line of sight, grounded scale and coherent visual family. Panel 1: close study of one small autonomous drone. Panel 2: first-person gloved swarm activation with abstract glyphs only. Panel 3: a large coordinated swarm fills the air above the neighborhood. Panel 4: an enemy operator looks upward and moves to cover in a non-gory tactical pose. Generic unbranded design; no logos, readable UI text, watermark, source-game branding, copied legacy mesh or image, gore, casualties or technical instructions.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-83e2ad09-f49d-4efb-8b02-46f6da673fd3.png",
+      "outputPath": "docs/reference/production-catalog/killstreaks/drone-swarm.png",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "742C298EDDA87C9B4248F550A0831714E6C58A3674E53B0AC43FC16D49D070B7"
+    },
+    {
+      "id": "nuke",
+      "label": "Nuke",
+      "prompt": "Use case: stylized-concept. Asset type: internal game reference storyboard sheet, 2D only. Create a polished four-panel visual storyboard for the legacy killstreak Nuke (catalog id nuke), as a visual reference only; do not imply the current recovery project implements it. Shared compact desert retro-future suburban arena with twin white-and-orange houses, a curved street, a yellow school bus and perimeter wood fences. Photorealistic PBR game concept art, hard late-afternoon sun, soft contact shadows, restrained dust and smoke, readable line of sight and grounded scale. Panel 1: close symbolic study of an unbranded streak-warning device or abstract award marker, not an engineering object. Panel 2: first-person gloved activation with a small abstract interface and no readable words. Panel 3: a distant cinematic mushroom cloud and bright flash beyond the neighborhood, with no visible casualties. Panel 4: an enemy operator takes cover and looks toward the horizon in a non-gory tactical pose. Fictional cinematic reference only; no casualties, bodies, gore, injury detail, blast engineering, weapon construction, technical instructions, logos, readable UI text, watermark, source-game branding, copied legacy mesh or image.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0ba4a-4176-7df1-8a8d-ab5f40daddaa/exec-d28e86c0-5af1-4bb6-8acc-31949842482e.png",
+      "outputPath": "docs/reference/production-catalog/killstreaks/nuke.png",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "sha256": "FAE6315C94D253DC920B39A1FF5C20FBF843403FFD4CD06608C6A5284E724771"
+    }
+  ]
+}

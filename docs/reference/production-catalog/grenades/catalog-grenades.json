@@ -1,0 +1,56 @@
+{
+  "catalogId": "catalog-grenades",
+  "target": "2D grenade, throw, and effect reference only",
+  "generatedWith": "built-in image_gen",
+  "artworkPolicy": "newly authored original nonbranded fictional game props; no engineering, cutaways, construction instructions, gore, or copied source files",
+  "assets": [
+    {
+      "id": "frag",
+      "label": "Original fragmentation grenade game prop",
+      "prompt": "Four-panel realistic PBR reference sheet for an original unbranded fragmentation grenade game prop: large external studio closeup, first-person gloved hold, adult desert-kit operator throw follow-through, and bounded in-map dust/blast effect in a desert retro-future twin-suburb arena. Pale-grey studio panels, tangible olive painted metal and dark safety parts, coherent prop and color family, no logos, serials, dimensions, labels, instructional text, diagrams, cutaways, construction instructions, watermark, gore, extra weapons, or excessive clutter; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-911e9a3e-5105-47ec-8107-bbde448c157b.png",
+      "outputPath": "docs/reference/production-catalog/grenades/frag.png",
+      "sha256": "288B34F165F94EF39FE951A2EE3B977B26404C20A8D20803FE5BD6F7CDBBE354",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "smoke",
+      "label": "Original smoke grenade game prop",
+      "prompt": "Four-panel realistic PBR reference sheet for an original unbranded smoke grenade game prop: large external studio closeup, first-person gloved hold, adult desert-kit operator throw follow-through, and bounded volumetric smoke effect in a desert retro-future twin-suburb arena. Pale-grey studio panels, tangible olive and dark metal canister, coherent prop and color family, readable ground contact and house silhouettes, no logos, serials, dimensions, labels, instructional text, diagrams, cutaways, construction instructions, watermark, gore, extra weapons, or excessive clutter; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-81bb51db-af11-4148-8abc-244963d52ae9.png",
+      "outputPath": "docs/reference/production-catalog/grenades/smoke.png",
+      "sha256": "F0F96FAB26FEDE40C8B76FF3779F22DDE905884FF8784115C3A3BA0DCB97F9C9",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "flash",
+      "label": "Original flash grenade game prop",
+      "prompt": "Four-panel realistic PBR reference sheet for an original unbranded flash grenade game prop: large external studio closeup, first-person gloved hold, adult desert-kit operator throw follow-through, and bounded localized flash bloom in a desert retro-future twin-suburb arena. Pale-grey studio panels, tangible dark perforated metal canister, coherent prop and color family, readable surrounding silhouettes, no logos, serials, dimensions, labels, instructional text, diagrams, cutaways, construction instructions, watermark, gore, extra weapons, or excessive clutter; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-ef2974a6-28a1-4f84-b309-9825820448ea.png",
+      "outputPath": "docs/reference/production-catalog/grenades/flash.png",
+      "sha256": "873CBBB33533F9244133F8D32F9A7BE2DC30CB0F17D07F4324C86C5BEAFBF2CF",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    },
+    {
+      "id": "semtex",
+      "label": "Generic compact sticky charge game prop",
+      "prompt": "Four-panel realistic PBR reference sheet for an original generic compact sticky charge game prop, semtex only as an internal gameplay category: large external studio closeup, first-person gloved hold, adult desert-kit operator throw follow-through, and bounded localized pulse/dust effect attached to a surface in a desert retro-future twin-suburb arena. Pale-grey studio panels, tangible dark polymer and blued metal, coherent prop and color family, no real-world branding, no logos, serials, dimensions, labels, instructional text, wires-as-construction-guide, diagrams, cutaways, construction instructions, watermark, gore, extra weapons, or excessive clutter; 2D only.",
+      "tool": "built-in image_gen",
+      "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-52b0439b-b3c8-4ac2-8067-f5c74d7989bc.png",
+      "outputPath": "docs/reference/production-catalog/grenades/semtex.png",
+      "sha256": "90E4E4827D898172B855EBAB2FE0531F00BE7390A8590155ACF9CCE2073D8B69",
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null
+    }
+  ]
+}

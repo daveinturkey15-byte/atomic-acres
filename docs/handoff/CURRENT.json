@@ -2,22 +2,42 @@
   "schema_version": 1,
   "project": "nuketown-2025-standalone",
   "checkpoint": "checkpoints/2026-09-19-codex-recovery",
-  "source_commit": "0138f85e151ea495f5bf2dfdba91c9aa134af1c3",
+  "source_commit": "2139d697434bf97bf38683eb0ed25e554096fd71",
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4191/",
-  "status": "checkpoint J live and smoke-verified; four bounded provider lanes active",
+  "status": "K remains accepted; four recorded external implementation lanes dispatched for overnight integration",
   "owner": "Codex",
-  "stop_state": "CONTINUE:4191 live frozenJ0138f85. Fresh rebuild all92runtimefiles match tested4192. Stock Chrome menu/solo/deploy active match zero errors, actual frames viewed. Source runtime clean. Four provider jobs listed in active_lanes; inspect summaries before dispatch, do not duplicate. Tree/scene visual quality remains OPEN. Integrate only after independent review, CPU proofs, candidate browser gates and source freeze. G fallback preserved.",
+  "stop_state": "OpenAI orchestration/review/acceptance only. Native implementation workers stopped at preserved checkpoints. External lane receipts and resource headroom must be reconciled each cycle.",
   "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z",
   "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
-  "inspection_time": "2026-09-19T15:00:00+01:00",
-  "lease_updated_at": "2026-09-19T15:15:05.641948+00:00",
-  "source_checkpoint": "0138f85e151ea495f5bf2dfdba91c9aa134af1c3",
+  "inspection_time": "2026-09-20T05:45:00+01:00",
+  "lease_updated_at": "2026-09-19T16:49:25.730150+00:00",
+  "source_checkpoint": "2139d697434bf97bf38683eb0ed25e554096fd71",
   "inspection_report": "docs/handoff/INSPECTION-2026-09-19.md",
-  "bundle_sha256": "b59626e64bf9d57d59dd4f40d0db18431dd97e6cf3cc19ca24f6d6258d8ec0d1",
-  "artifact_checkpoint": "J",
-  "active_lanes": [
+  "bundle_sha256": "e8cb3f4fa86437ef164deded998e3613d5220d2115e52335096545af1ab13a91",
+  "artifact_checkpoint": "K",
+  "heartbeat": {
+    "id": "standalone-game-refinement",
+    "interval_minutes": 15,
+    "status": "ACTIVE"
+  },
+  "resource_sample": {
+    "free_ram_gib": 29,
+    "gpu_used_mib": 4339,
+    "gpu_total_mib": 16303,
+    "sampled_at": "2026-09-19T17:46:00+01:00",
+    "prior_resource_hold": "cleared; guarded carbine resumed"
+  },
+  "next_actions": [
+    "Finish external combat feedback integration and test actual admitted local/remote shots",
+    "Compare external ground-PBR/mountain candidate at matching cameras, accepting visible improvements only",
+    "Verify image-guided carbine artifact, then integrate FP/world sockets and ADS/reload in game",
+    "Use owner H3 clips for rig-specific authored motion; accept hands/gait/animation in real browser",
+    "Continue catalogue weapons/streaks/grenades and retained behavior contracts with external models",
+    "Begin morning consolidation at04:45 local; freeze tested inspection artifact/report by05:30 for05:45 visit"
+  ],
+  "interrupted_lanes": [
     {
       "runId": "delegated-omp-glm-reflection-lifetime-7a287e5c28c84928aaa8533975c9841e",
       "lane": "glm-reflection-lifetime",
@@ -25,7 +45,7 @@
       "requestedEffort": "max",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-reflection-lifetime-20260919",
       "promptFile": "C:\\Users\\david\\Documents\\Codex\\2026-09-19\\hi\\work\\glm-reflection-lifetime.md",
-      "startedAt": "2026-09-19T15:08:56+00:00",
+      "startedAt": "2026-09-19T16:08:56+01:00",
       "minutes": 25,
       "outcome": null
     },
@@ -36,7 +56,7 @@
       "requestedEffort": "max",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
       "promptFile": "C:\\Users\\david\\Documents\\Codex\\2026-09-19\\hi\\work\\glm-respawn-delay.md",
-      "startedAt": "2026-09-19T15:08:46+00:00",
+      "startedAt": "2026-09-19T16:08:46+01:00",
       "minutes": 20,
       "outcome": null
     },
@@ -47,7 +67,7 @@
       "requestedEffort": "max",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-agy-desert-tree-20260919",
       "promptFile": "C:\\Users\\david\\Documents\\Codex\\2026-09-19\\hi\\work\\glm-searsia-canary.md",
-      "startedAt": "2026-09-19T15:03:03+00:00",
+      "startedAt": "2026-09-19T16:03:03+01:00",
       "minutes": 25,
       "outcome": null
     },
@@ -58,27 +78,266 @@
       "requestedEffort": "xhigh",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
       "promptFile": "C:\\Users\\david\\Documents\\Codex\\2026-09-19\\hi\\work\\muse-hand-geometry.md",
-      "startedAt": "2026-09-19T15:10:46+00:00",
+      "startedAt": "2026-09-19T16:10:46+01:00",
       "minutes": 25,
       "outcome": null
     }
   ],
-  "heartbeat": {
-    "id": "standalone-game-refinement",
-    "interval_minutes": 15,
-    "status": "ACTIVE"
-  },
-  "resource_sample": {
-    "free_ram_gib": 34.37,
-    "gpu_used_mib": 5078,
-    "gpu_total_mib": 16303
-  },
-  "next_actions": [
-    "Reconcile four provider summaries and inspect actual diffs; accepted J stays live",
-    "Respawn delay: actual authority negative/positive proof then candidate real death/respawn",
-    "Searsia: verify provenance/budgets/CPU memory then serial in-game placement/render canary",
-    "Muse hands: mesh/envelope review then all-five-weapon idle/ADS/reload captures",
-    "Reflection lifetime: source ownership proof then GPU diagnostic; visual probe stays off",
-    "Continue backlog: trees/facades, viewmodel/operator fidelity, audible sound tuning, two-device multiplayer"
+  "provider_lanes": [
+    {
+      "runId": "delegated-omp-glm-catalog-carbine-7c5c084d2f4044efa29d71e096d8ce5b",
+      "lane": "glm-catalog-carbine",
+      "requestedModel": "zai/glm-5.3-flash",
+      "requestedEffort": "max",
+      "actualModel": "glm-5.3-flash",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "startedAt": "2026-09-19T17:12:01+01:00",
+      "endedAt": "2026-09-19T16:28:55+00:00",
+      "outcome": "failed",
+      "failureReasons": [
+        "provider process exited 1"
+      ]
+    },
+    {
+      "runId": "delegated-omp-glm-combat-feedback-45eff9001ba34c768ca37e813ba06b07",
+      "lane": "glm-combat-feedback",
+      "requestedModel": "zai/glm-5.3-flash",
+      "requestedEffort": "max",
+      "actualModel": "glm-5.3-flash",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-combat-feedback-20260919",
+      "startedAt": "2026-09-19T16:42:23+01:00",
+      "endedAt": "2026-09-19T16:06:50+00:00",
+      "outcome": "process-completed",
+      "failureReasons": []
+    },
+    {
+      "runId": "delegated-omp-glm-facade-detail-a33af0419a094218adf8a8cdbc4c16a7",
+      "lane": "glm-facade-detail",
+      "requestedModel": "zai/glm-5.3-flash",
+      "requestedEffort": "max",
+      "actualModel": "glm-5.3-flash",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-layout-20260919",
+      "startedAt": "2026-09-19T16:35:42+01:00",
+      "endedAt": "2026-09-19T15:59:29+00:00",
+      "outcome": "process-completed",
+      "failureReasons": []
+    },
+    {
+      "runId": "delegated-omp-glm-ground-pbr-9f682d3295c143669abeb05a5fa0bf5d",
+      "lane": "glm-ground-pbr",
+      "requestedModel": "zai/glm-5.3-flash",
+      "requestedEffort": "max",
+      "actualModel": "glm-5.3-flash",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-materials-20260919",
+      "startedAt": "2026-09-19T16:35:42+01:00",
+      "endedAt": "2026-09-19T15:57:19+00:00",
+      "outcome": "process-completed",
+      "failureReasons": []
+    },
+    {
+      "runId": "delegated-omp-glm-reference-contracts-63bdc7b13908469cb3267aa9a0d04c61",
+      "lane": "glm-reference-contracts",
+      "requestedModel": "zai/glm-5.3-flash",
+      "requestedEffort": "max",
+      "actualModel": "glm-5.3-flash",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "startedAt": "2026-09-19T17:06:50+01:00",
+      "endedAt": "2026-09-19T16:26:51+00:00",
+      "outcome": "failed",
+      "failureReasons": [
+        "provider process exited 1",
+        "launcher timeout killed its own subprocess tree",
+        "transcript reported a terminal error"
+      ]
+    },
+    {
+      "runId": "delegated-omp-glm-searsia-resume-3624372e699147cba594e0bb6c34b6cb",
+      "lane": "glm-searsia-resume",
+      "requestedModel": "zai/glm-5.3-flash",
+      "requestedEffort": "max",
+      "actualModel": "glm-5.3-flash",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-agy-desert-tree-20260919",
+      "startedAt": "2026-09-19T16:35:42+01:00",
+      "endedAt": "2026-09-19T16:00:43+00:00",
+      "outcome": "failed",
+      "failureReasons": [
+        "provider process exited 1",
+        "launcher timeout killed its own subprocess tree"
+      ]
+    },
+    {
+      "runId": "delegated-omp-muse-hands-resume-fde8a67754af4454b7b469e8fff73fae",
+      "lane": "muse-hands-resume",
+      "requestedModel": "meta-contributor/muse-spark-1.3-contributor",
+      "requestedEffort": "xhigh",
+      "actualModel": "muse-spark-1.3-contributor",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "startedAt": "2026-09-19T16:35:42+01:00",
+      "endedAt": "2026-09-19T15:39:34+00:00",
+      "outcome": "process-completed",
+      "failureReasons": []
+    },
+    {
+      "runId": "delegated-omp-muse-technique-provenance-1980cab1e3714a54aa6e7c8b695e52d1",
+      "lane": "muse-technique-provenance",
+      "requestedModel": "meta-contributor/muse-spark-1.3-contributor",
+      "requestedEffort": "xhigh",
+      "actualModel": "muse-spark-1.3-contributor",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "startedAt": "2026-09-19T17:06:50+01:00",
+      "endedAt": "2026-09-19T16:09:46+00:00",
+      "outcome": "process-completed",
+      "failureReasons": []
+    },
+    {
+      "runId": "delegated-agy-4df22212-2e30-4833-b175-9b0da7540785",
+      "lane": "agy-menu-hud",
+      "requestedModel": "gemini-3.8-flash-high",
+      "requestedEffort": "high",
+      "actualModel": null,
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-menu-hud-20260919",
+      "outcome": "review-required",
+      "startedAt": 1789832543.4063535,
+      "endedAt": 1789832779.4438684
+    },
+    {
+      "runId": "delegated-agy-4e291ff1-111c-4ffa-ad71-75a35e81a787",
+      "lane": "agy-distant-mountains",
+      "requestedModel": "gemini-3.8-flash-high",
+      "requestedEffort": "high",
+      "actualModel": null,
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "outcome": "review-required",
+      "startedAt": 1789832185.6177578,
+      "endedAt": 1789832523.688341
+    },
+    {
+      "runId": "delegated-agy-7e66113a-568e-47b6-99fb-a83501546611",
+      "lane": "agy-production-pipeline",
+      "requestedModel": "gemini-3.8-flash-high",
+      "requestedEffort": "high",
+      "actualModel": null,
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "outcome": "review-required",
+      "startedAt": 1789833310.0036566,
+      "endedAt": 1789833532.5711887
+    }
+  ],
+  "native_lanes": [
+    {
+      "owner": "Astra root",
+      "work": "Orchestration/review/focused acceptance and mechanical patch integration only"
+    },
+    {
+      "owner": "Prior Luna workers",
+      "work": "Stopped implementation; hands/gait, combat partials, catalogue gate/gallery, reference audit and resource guard preserved and handed off"
+    }
+  ],
+  "delivery_backlog": [
+    {
+      "id": "weapons-20",
+      "requirement": "20 distinct original weapon families referenced from old roster, FP/world/drop LODs, sockets, ADS/recoil/reload/inspect, audio and host damage profiles",
+      "state": "20 reference images generated and catalogued; guarded Blender carbine authoring active; runtime OPEN"
+    },
+    {
+      "id": "streaks-11",
+      "requirement": "Old 11 selectable streak behaviors compared with new 10 IDs; activation, in-map effect, enemy reaction, sound, counterplay and host/network lifecycle",
+      "state": "11 reference storyboards generated; old/new dispatch behavior integration OPEN"
+    },
+    {
+      "id": "grenades-4",
+      "requirement": "Frag, smoke, flash, semtex props/hold/throw/effects; authoritative cook/fuse/bounce/stick/radius/occlusion/prone/inventory; enemy visibility through smoke",
+      "state": "4 reference images generated; frag/flash/smoke source contracts recorded; semtex OPEN"
+    },
+    {
+      "id": "operator-animation",
+      "requirement": "Two operator skin/rig targets, yaw/forward-axis/weapon socket alignment, foot contact, crouch/prone/turn/hit/reload/throw, all facing angles",
+      "state": "4 operator/pose images complete; H3 first/third-person video references verified; Muse animation implementation active"
+    },
+    {
+      "id": "menus-hud-combat",
+      "requirement": "Modern menus/loadouts, HUD, admitted damage/head/kill numbers and profile consistency",
+      "state": "K menu/HUD accepted18/18Chrome checks; Muse combat-feedback integration active"
+    },
+    {
+      "id": "world-quality",
+      "requirement": "Trees, facades, ground PBR, lighting/shadows/reflections and effects improved against frozen matching-camera scorecard",
+      "state": "Multiple authored candidates, root visual review OPEN"
+    },
+    {
+      "id": "pipeline",
+      "requirement": "Exact reference -> authored asset -> integration -> actual browser/network evidence -> immutable build acceptance; generated concepts never count as shipped",
+      "state": "39 images validated,62 gate assertions passed; zero catalogue runtime assets accepted; runtime-required gate correctly fails"
+    },
+    {
+      "id": "source-techniques",
+      "requirement": "Trace shared skills to exact original X/examples; apply techniques independently, preserve license/source/runtime distinctions",
+      "state": "12-technique source matrix delivered; historical source claims distinguished from current runtime proof"
+    },
+    {
+      "id": "remaining",
+      "requirement": "Two-device network, audio audition, exact mid-reload rejoin, bedroom stress clearance, reflection lifetime",
+      "state": "OPEN; retained in backlog, nonblocking edge investigations deferred behind visuals"
+    }
+  ],
+  "overnight_report": "docs/handoff/OVERNIGHT-2026-09-19.md",
+  "overnight_lanes": [
+    {
+      "lane": "combat-feedback",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "run_id": "delegated-omp-muse-overnight-combat-ec12bc98cc5f490daed41e31f428e3ed",
+      "launcher_pid": 41728,
+      "worker_pid": 42440,
+      "state": "process-running; acceptance OPEN",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "attributed_records": 118
+    },
+    {
+      "lane": "catalog-carbine",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "run_id": "delegated-omp-glm-overnight-carbine-c97b62f5a87d46e696e5600b47dd8f16",
+      "launcher_pid": 29924,
+      "worker_pid": 36668,
+      "state": "process-running; acceptance OPEN",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "observed_providers": [
+        "zai"
+      ],
+      "attributed_records": 62
+    },
+    {
+      "lane": "video-animation",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "run_id": "delegated-omp-muse-overnight-animation-66bfd4914848406bb382b7844abe8a6a",
+      "launcher_pid": 39596,
+      "worker_pid": 2728,
+      "state": "process-running; acceptance OPEN",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "attributed_records": 102
+    },
+    {
+      "lane": "environment",
+      "route": "agy requested gemini-3.8-flash-high",
+      "effort": "high",
+      "run_id": "delegated-agy-044480d3-1107-46cb-bdec-3d1aa713318d",
+      "launcher_pid": 20656,
+      "worker_pid": 34612,
+      "state": "process-running; serving-model attribution unknown; acceptance OPEN"
+    }
   ]
 }

@@ -1,0 +1,348 @@
+{
+  "identity": {
+    "project": "nuketown-2025-standalone",
+    "checkpoint": "K",
+    "lane": "recovery/wave7-20260919",
+    "source_commit": "2139d697434bf97bf38683eb0ed25e554096fd71",
+    "bundle": "index-BUrZzgR1.js",
+    "bundle_sha256": "e8cb3f4fa86437ef164deded998e3613d5220d2115e52335096545af1ab13a91",
+    "promoted_at": "2026-09-19T16:20:44.563599+00:00",
+    "url": "http://127.0.0.1:4191/",
+    "status": "Root-verified responsive menu/HUD refinement; world/gameplay remains J",
+    "checks": {
+      "ui_browser": "18/18 actual installed Chrome checks; zero browser errors",
+      "source": "npm run check passed",
+      "build": "complete fresh build payload byte-matches tested candidate"
+    },
+    "limits": [
+      "World remains stylized; major visual fidelity work open",
+      "20 weapon / 11 streak / 4 grenade reference images are not deployed content",
+      "Network and ordnance sources unchanged; J bounded proofs retained, no new WAN claim"
+    ]
+  },
+  "files": 93,
+  "bytes": 25886033,
+  "ui_checks": [
+    {
+      "name": "Menu 1920 no horizontal overflow and preview loaded",
+      "pass": true,
+      "data": {
+        "scrollWidth": 1920,
+        "clientWidth": 1920,
+        "cards": [
+          {
+            "left": 825,
+            "right": 1095
+          }
+        ],
+        "images": [
+          true
+        ]
+      }
+    },
+    {
+      "name": "Menu 1280 no horizontal overflow and preview loaded",
+      "pass": true,
+      "data": {
+        "scrollWidth": 1280,
+        "clientWidth": 1280,
+        "cards": [
+          {
+            "left": 530,
+            "right": 750
+          }
+        ],
+        "images": [
+          true
+        ]
+      }
+    },
+    {
+      "name": "Menu 2560 no horizontal overflow and preview loaded",
+      "pass": true,
+      "data": {
+        "scrollWidth": 2560,
+        "clientWidth": 2560,
+        "cards": [
+          {
+            "left": 1145,
+            "right": 1415
+          }
+        ],
+        "images": [
+          true
+        ]
+      }
+    },
+    {
+      "name": "Menu 390 no horizontal overflow and preview loaded",
+      "pass": true,
+      "data": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "cards": [
+          {
+            "left": 60,
+            "right": 330
+          }
+        ],
+        "images": [
+          true
+        ]
+      }
+    },
+    {
+      "name": "Keyboard focus remains visible",
+      "pass": true
+    },
+    {
+      "name": "HUD 1600 equipment/weapon/ammo separated",
+      "pass": true,
+      "data": {
+        "weapon": {
+          "x": 1480.890625,
+          "y": 783,
+          "w": 95.109375,
+          "h": 21,
+          "right": 1576,
+          "bottom": 804
+        },
+        "ammo": {
+          "x": 1438.6875,
+          "y": 815,
+          "w": 137.3125,
+          "h": 61,
+          "right": 1576,
+          "bottom": 876
+        },
+        "equipment": {
+          "x": 1382.578125,
+          "y": 738,
+          "w": 193.421875,
+          "h": 26,
+          "right": 1576,
+          "bottom": 764
+        },
+        "health": {
+          "x": 24,
+          "y": 832,
+          "w": 266,
+          "h": 44,
+          "right": 290,
+          "bottom": 876
+        },
+        "streak": {
+          "x": 677.484375,
+          "y": 845.5,
+          "w": 245.03125,
+          "h": 34.5,
+          "right": 922.515625,
+          "bottom": 880
+        },
+        "minimap": {
+          "x": 22,
+          "y": 20,
+          "w": 152,
+          "h": 172.5,
+          "right": 174,
+          "bottom": 192.5
+        },
+        "match": {
+          "x": 619.515625,
+          "y": 14,
+          "w": 360.96875,
+          "h": 37,
+          "right": 980.484375,
+          "bottom": 51
+        }
+      }
+    },
+    {
+      "name": "HUD 1600 minimap and score separated",
+      "pass": true
+    },
+    {
+      "name": "HUD 1600 streak and corner readouts separated",
+      "pass": true
+    },
+    {
+      "name": "HUD 1280 equipment/weapon/ammo separated",
+      "pass": true,
+      "data": {
+        "weapon": {
+          "x": 1160.890625,
+          "y": 603,
+          "w": 95.109375,
+          "h": 21,
+          "right": 1256,
+          "bottom": 624
+        },
+        "ammo": {
+          "x": 1118.6875,
+          "y": 635,
+          "w": 137.3125,
+          "h": 61,
+          "right": 1256,
+          "bottom": 696
+        },
+        "equipment": {
+          "x": 1062.578125,
+          "y": 558,
+          "w": 193.421875,
+          "h": 26,
+          "right": 1256,
+          "bottom": 584
+        },
+        "health": {
+          "x": 24,
+          "y": 652,
+          "w": 266,
+          "h": 44,
+          "right": 290,
+          "bottom": 696
+        },
+        "streak": {
+          "x": 517.484375,
+          "y": 665.5,
+          "w": 245.03125,
+          "h": 34.5,
+          "right": 762.515625,
+          "bottom": 700
+        },
+        "minimap": {
+          "x": 22,
+          "y": 20,
+          "w": 152,
+          "h": 172.5,
+          "right": 174,
+          "bottom": 192.5
+        },
+        "match": {
+          "x": 459.515625,
+          "y": 14,
+          "w": 360.96875,
+          "h": 37,
+          "right": 820.484375,
+          "bottom": 51
+        }
+      }
+    },
+    {
+      "name": "HUD 1280 minimap and score separated",
+      "pass": true
+    },
+    {
+      "name": "HUD 1280 streak and corner readouts separated",
+      "pass": true
+    },
+    {
+      "name": "HUD 390 equipment/weapon/ammo separated",
+      "pass": true,
+      "data": {
+        "weapon": {
+          "x": 270.890625,
+          "y": 727,
+          "w": 95.109375,
+          "h": 21,
+          "right": 366,
+          "bottom": 748
+        },
+        "ammo": {
+          "x": 239.875,
+          "y": 771,
+          "w": 126.125,
+          "h": 49,
+          "right": 366,
+          "bottom": 820
+        },
+        "equipment": {
+          "x": 172.578125,
+          "y": 682,
+          "w": 193.421875,
+          "h": 26,
+          "right": 366,
+          "bottom": 708
+        },
+        "health": {
+          "x": 24,
+          "y": 776,
+          "w": 211,
+          "h": 44,
+          "right": 235,
+          "bottom": 820
+        },
+        "streak": {
+          "x": 72.484375,
+          "y": 619.5,
+          "w": 245.03125,
+          "h": 34.5,
+          "right": 317.515625,
+          "bottom": 654
+        },
+        "minimap": {
+          "x": 22,
+          "y": 78,
+          "w": 98.79999542236328,
+          "h": 112.125,
+          "right": 120.79999542236328,
+          "bottom": 190.125
+        },
+        "match": {
+          "x": 53.1328125,
+          "y": 14,
+          "w": 283.734375,
+          "h": 43,
+          "right": 336.8671875,
+          "bottom": 57
+        }
+      }
+    },
+    {
+      "name": "HUD 390 minimap and score separated",
+      "pass": true
+    },
+    {
+      "name": "HUD 390 streak and corner readouts separated",
+      "pass": true
+    },
+    {
+      "name": "Score/banner stress 1600 contained and separated",
+      "pass": true,
+      "data": {
+        "score": {
+          "left": 560,
+          "right": 1040,
+          "bottom": 383
+        },
+        "banner": {
+          "top": 679.5
+        }
+      }
+    },
+    {
+      "name": "Score/banner stress 390 contained and separated",
+      "pass": true,
+      "data": {
+        "score": {
+          "left": 16,
+          "right": 374,
+          "bottom": 360
+        },
+        "banner": {
+          "top": 379.5
+        }
+      }
+    },
+    {
+      "name": "Image error restores visible map schematic",
+      "pass": true
+    },
+    {
+      "name": "No browser errors",
+      "pass": true,
+      "data": []
+    }
+  ],
+  "errors": [],
+  "fallback": "checkpoint-j-dist"
+}
