@@ -440,3 +440,15 @@ Trellis.2 nodes present, geometry_estimation empty so Pixal3D route unavailable)
 After these: street / exteriors / sky gauntlets (post.ts and materials.ts free), then an
 interior-lighting lane for the aperture/wall ratio (0.82 vs 1.33-1.67, not an AO
 problem), then the lobby/menu/killstreak UI polish from IMPORT-PLAN.
+
+**04:45 (19 Sep).** Hero-prop canary landed (`4b8f13a`, verifier HOLDS): the Trellis.2
+route works end to end through the owner's ComfyUI - peak VRAM 15,759/16,303 MiB (the
+whole card), 346 s a prop, Pixal3D/MoGe unavailable here (geometry_estimation empty) -
+and the honest verdict on a set-dressing crate is KEEP PROCEDURAL (shards baked into the
+base colour, invented back, hollow underside, +2 draws +64 MiB vs 36 instanced tris).
+Capability + recipe + dated record in scripts/art-gen and docs/reference/library; the
+measured datum is in AKP register row 45. Use the route for a genuine hero prop seen
+close from the front, one owner decision per asset. Untracked and left so: the 14
+concept plates in docs/reference/photoreal (26 MB; reference frames are not tracked -
+9 of 1371 gameplay frames are), docs/report-light.md (an earlier light-lane report),
+scripts/_gv-*.mjs (a verifier's scratch).
