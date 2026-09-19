@@ -500,3 +500,12 @@ leak-watch/protected-ports.txt, refreshed after each landing). Running: characte
 (`wf_3f9f5abf-3fa`), AO round 4 far-term fades (`wf_8eee1ee3-f74`). Open from this
 round: side-doorway panel/rub-rail coplanar strip; the unplaced show car; capture.mjs's
 '2 calls' stats-reset race.
+
+**06:40 (19 Sep).** Characters lane HOLDS and is committed: one SkinnedMesh per figure
+(54 -> 2 draws each, verified two ways), two factions of operators in earth tones, no
+mannequin confusion, heap 0.04 MB/min. The remaining gap is CLIP DATA: idle and aim hunch
+~40 degrees (surface top 1.565 m vs ~1.86 m), rifle one-handed, __NTANIM.external()
+frozen for all clips, spawn() has no faction argument. Animation round 2 lane next
+(src/characters/{clips,blend,kimodo-clips,system,anim-qa}.ts + scripts/animation):
+re-roll idle/aim/sprint seeds for an upright stance, a two-handed carry layer, fix
+playExternal, faction per spawn. Frozen HEAD build refreshed on :4190 after each landing.
