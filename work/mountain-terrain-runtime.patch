@@ -1,0 +1,198 @@
+diff --git a/src/build/mountain-terrain.ts b/src/build/mountain-terrain.ts
+new file mode 100644
+index 0000000..aef7577
+--- /dev/null
++++ b/src/build/mountain-terrain.ts
+@@ -0,0 +1,91 @@
++/**
++ * MOUNTAIN TERRAIN — opt-in connected panorama over the canary path.
++ *
++ * Outer-loop replacement for the box-scaled authored massifs (root rejected
++ * on sight: isolated towers with empty horizon between them). This module
++ * mounts the connected-terrain GLB
++ * (public/assets/mountain-terrain/mountain-terrain.glb, built by
++ * scripts/blender/build_mountain_terrain.py) when it is resident AND the
++ * lane is opted in via ?mountains=terrain. Otherwise it falls back to the
++ * procedural canary synchronously — the fallback is retained, never removed.
++ *
++ * Contract mirrors createAuthoredMountains / createDistantMountainsCanary:
++ * 3 draws, 9568 tris (<= 30000), backdrop only, zero colliders, shared
++ * ctx.mat singletons never touched or disposed. Disposal detaches the owned
++ * CLONE only; master buffers stay live in the assets cache (disposeAssets
++ * owns them). Clones share master geometry, so disposing clone buffers
++ * would corrupt the cache — never do that here.
++ */
++import * as THREE from 'three';
++import { group, type BuildContext, type Builder } from '../core/kit';
++import { getAsset } from '../core/assets';
++import { createDistantMountainsCanary } from './distant-mountains-canary';
++
++export const MOUNTAIN_TERRAIN_OBJECT = 'mountain_terrain';
++
++/** Opt-in only: ?mountains=terrain. authored/canary/baseline values return false. */
++export function isMountainTerrainOptIn(): boolean {
++  const g = globalThis as { __NT_OVERRIDE_MOUNTAIN_TERRAIN__?: boolean };
++  if (typeof g.__NT_OVERRIDE_MOUNTAIN_TERRAIN__ === 'boolean') {
++    return g.__NT_OVERRIDE_MOUNTAIN_TERRAIN__;
++  }
++  if (typeof window !== 'undefined' && window.location?.search) {
++    const q = new URLSearchParams(window.location.search);
++    const v = (q.get('mountains') ?? '').toLowerCase();
++    if (v === 'terrain' || v === 'mountain-terrain') return true;
++  }
++  return false;
++}
++
++export interface MountainTerrainResult {
++  group: THREE.Group;
++  drawCalls: number;
++  terrain: boolean;
++  dispose: () => void;
++}
++
++/**
++ * Mount the preloaded terrain GLB clone, or fall back to the procedural
++ * canary when the asset has not finished loading (or the build is absent).
++ * Sync by builder contract: never awaits, never throws, never retries.
++ */
++export function createMountainTerrain(ctx: BuildContext): MountainTerrainResult {
++  const owned = getAsset('mountain-terrain');
++  if (owned) {
++    const g = group(MOUNTAIN_TERRAIN_OBJECT);
++    g.add(owned);
++    let draws = 0;
++    owned.traverse((o) => {
++      const mesh = o as THREE.Mesh;
++      if (mesh.isMesh) {
++        draws++;
++        mesh.castShadow = false;
++        mesh.receiveShadow = false;
++      }
++      o.updateMatrix();
++      o.matrixAutoUpdate = false;
++    });
++    let released = false;
++    const dispose = () => {
++      if (released) return;
++      released = true;
++      g.removeFromParent();
++      g.clear(); // detach clone nodes only; master buffers belong to the cache
++    };
++    g.userData.dispose = dispose;
++    return { group: g, drawCalls: draws, terrain: true, dispose };
++  }
++  const canary = createDistantMountainsCanary(ctx);
++  return {
++    group: canary.group,
++    drawCalls: canary.drawCalls,
++    terrain: false,
++    dispose: canary.dispose,
++  };
++}
++
++/** Builder contract export: backdrop scenery, no colliders. */
++export const buildMountainTerrain: Builder = (ctx) => {
++  const result = createMountainTerrain(ctx);
++  return { group: result.group, colliders: [] };
++};
+diff --git a/src/build/skyline.ts b/src/build/skyline.ts
+index 3cf0721..66ef684 100644
+--- a/src/build/skyline.ts
++++ b/src/build/skyline.ts
+@@ -27,6 +27,7 @@ import { buildRidgeGeometry } from './terrain-ridges';
+ import { isDistantMountainsEnabled } from '../core/environment-flags';
+ import { createDistantMountainsCanary } from './distant-mountains-canary';
+ import { createAuthoredMountains, isAuthoredMountainsOptIn } from './authored-mountains';
++import { createMountainTerrain, isMountainTerrainOptIn } from './mountain-terrain';
+ 
+ /** half the playable footprint - used only for things that belong TO the map */
+ const MAP_R = (BOUND_X_MAX - BOUND_X_MIN) / 2;   // 22.25
+@@ -573,7 +574,14 @@ export const buildSkyline: Builder = (ctx) => {
+   // Counts are up from 9-10 to 14-18 per ring: at MAP_R*5.3 = 118 m nine massifs closed
+   // the circle, at 300 m they leave 100 m gaps between them and the range reads as
+   // separate lumps rather than as a range. Two silhouettes per layer, as before.
+-  if (isAuthoredMountainsOptIn()) {
++  if (isMountainTerrainOptIn()) {
++    // Connected mountain-terrain panorama (?mountains=terrain). Mounts the
++    // GLB clone when resident, else falls back to the procedural canary
++    // synchronously — the authored and canary paths below are untouched.
++    const terrain = createMountainTerrain(ctx);
++    g.add(terrain.group);
++    g.userData.dispose = terrain.dispose;
++  } else if (isAuthoredMountainsOptIn()) {
+     // Authored Blender-native backdrop (?mountains=authored). Mounts the GLB
+     // clone when resident, else falls back to the procedural canary
+     // synchronously — the canary path below is untouched.
+diff --git a/src/core/assets.ts b/src/core/assets.ts
+index 47246d5..44ba2e0 100644
+--- a/src/core/assets.ts
++++ b/src/core/assets.ts
+@@ -31,12 +31,13 @@ declare global {
+ }
+ 
+ /** Asset names produced by the Blender pipeline lane. */
+-export type AssetName = 'coach' | 'authored-mountains';
++export type AssetName = 'coach' | 'authored-mountains' | 'mountain-terrain';
+ 
+ /** Vite `base` is relative, so this stays correct under Pages subpaths. */
+ export const ASSET_URLS: Record<AssetName, string> = {
+   coach: `${baseUrl()}assets/coach.glb`,
+   'authored-mountains': `${baseUrl()}assets/authored-mountains/authored-mountains.glb`,
++  'mountain-terrain': `${baseUrl()}assets/mountain-terrain/mountain-terrain.glb`,
+ };
+ 
+ function baseUrl(): string {
+diff --git a/src/main.ts b/src/main.ts
+index a4fc0fe..83f4cfa 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -27,6 +27,7 @@ import { createCombatFeedbackAdapter } from './ui/combat-feedback-adapter';
+ import './ui/combat-feedback.css';
+ import { getEnvironmentFlags } from './core/environment-flags';
+ import { isAuthoredMountainsOptIn } from './build/authored-mountains';
++import { isMountainTerrainOptIn } from './build/mountain-terrain';
+ import { preloadAssets, releaseAsset } from './core/assets';
+ 
+ import { buildGround } from './build/ground';
+@@ -92,6 +93,12 @@ await Promise.all([
+   ...(isAuthoredMountainsOptIn()
+     ? [preloadAssets(['authored-mountains']).catch((error: unknown) => console.warn('[authored-mountains] unavailable, canary fallback', error))]
+     : []),
++  // Connected mountain terrain GLB: opt-in only (?mountains=terrain).
++  // Same fetch guard as authored: baseline, authored and canary runs must
++  // not fetch the file at all. A miss warns once, canary fallback holds.
++  ...(isMountainTerrainOptIn()
++    ? [preloadAssets(['mountain-terrain']).catch((error: unknown) => console.warn('[mountain-terrain] unavailable, canary fallback', error))]
++    : []),
+   preloadIndustrialBarrel().catch((error: unknown) => console.warn('[industrial-barrel] unavailable', error)),
+   preloadQuiverTree().catch((error: unknown) => console.warn('[quiver-tree] unavailable', error)),
+ ]);
+@@ -292,6 +299,17 @@ function releaseEnvironmentCanary(): void {
+         }
+       }
+     }
++    const terrain = target.getObjectByName('mountain_terrain');
++    if (terrain?.userData && typeof terrain.userData === 'object' && 'dispose' in terrain.userData) {
++      const release = (terrain.userData as { dispose?: unknown }).dispose;
++      if (typeof release === 'function') {
++        try {
++          release();
++        } catch {
++          /* idempotent release */
++        }
++      }
++    }
+     const authored = target.getObjectByName('authored_mountains');
+     if (authored?.userData && typeof authored.userData === 'object' && 'dispose' in authored.userData) {
+       const release = (authored.userData as { dispose?: unknown }).dispose;
+@@ -308,6 +326,10 @@ function releaseEnvironmentCanary(): void {
+   // the page lifetime. Exactly-once, pending-load safe, coach untouched; a
+   // no-op (and a fetch guard) when the authored lane never loaded.
+   releaseAsset('authored-mountains');
++  // Same retirement for the terrain master; a no-op when ?mountains=terrain
++  // never loaded. The shared releaseAsset path disposes exactly once and
++  // never touches coach or scene objects.
++  releaseAsset('mountain-terrain');
+ }
+ addEventListener('pagehide', () => {
+   releaseEnvironmentCanary();

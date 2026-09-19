@@ -31,12 +31,13 @@ declare global {
 }
 
 /** Asset names produced by the Blender pipeline lane. */
-export type AssetName = 'coach' | 'authored-mountains';
+export type AssetName = 'coach' | 'authored-mountains' | 'mountain-terrain';
 
 /** Vite `base` is relative, so this stays correct under Pages subpaths. */
 export const ASSET_URLS: Record<AssetName, string> = {
   coach: `${baseUrl()}assets/coach.glb`,
   'authored-mountains': `${baseUrl()}assets/authored-mountains/authored-mountains.glb`,
+  'mountain-terrain': `${baseUrl()}assets/mountain-terrain/mountain-terrain.glb`,
 };
 
 function baseUrl(): string {
