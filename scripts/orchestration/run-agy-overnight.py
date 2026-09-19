@@ -1,5 +1,6 @@
 """One bounded, recorded AGY authoring run; root alone accepts its output."""
 import json
+import argparse
 import pathlib
 import subprocess
 import sys
@@ -15,6 +16,19 @@ FLAGS = subprocess.CREATE_NO_WINDOW
 
 
 def main():
+    global PROMPT, RUNTIME, LANE
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--prompt', type=pathlib.Path)
+    parser.add_argument('--attempt', default='agy-overnight-environment')
+    parser.add_argument('--worktree', type=pathlib.Path)
+    args = parser.parse_args()
+    if not args.attempt.replace('-', '').isalnum():
+        raise SystemExit('Attempt must be a simple alphanumeric/hyphen identifier.')
+    if args.prompt:
+        PROMPT = args.prompt.resolve(strict=True)
+    if args.worktree:
+        LANE = args.worktree.resolve(strict=True)
+    RUNTIME = ROOT / '.recovery-runtime' / args.attempt
     RUNTIME.mkdir(parents=True, exist_ok=True)
     receipt = RUNTIME / 'summary.json'
     log = RUNTIME / 'output.txt'
@@ -24,8 +38,8 @@ def main():
         sys.executable, str(LEDGER), 'start', '--harness', 'agy', '--provider',
         'google-antigravity', '--model', 'gemini-3.8-flash-high', '--reasoning', 'high',
         '--worktree', str(LANE), '--prompt-file', str(PROMPT), '--log', str(log),
-        '--lane', 'overnight-environment-integration', '--summary',
-        'Integrate ground PBR and mountains as separately reviewable candidates',
+        '--lane', args.attempt, '--summary',
+        'Bounded external authoring: ' + PROMPT.stem,
     ], creationflags=FLAGS, text=True).strip().splitlines()[-1]
     state = dict(run_id=rid, start=time.time(), requested_model='gemini-3.8-flash-high',
                  requested_effort='high', status='running', worktree=str(LANE),
@@ -55,16 +69,21 @@ def main():
     except Exception as exc:
         state['launcher_error_type'] = type(exc).__name__
     finally:
-        artifact = (LANE / 'docs/environment-integration-handoff.md').is_file()
+        artifact = (LANE / 'docs/environment-integration-handoff.md').is_file() or (LANE / 'docs/catalog-carbine-handoff.md').is_file()
+        # These legacy filenames are hints only: unrelated lanes have different
+        # deliverables, and an old file cannot establish current completion.
         state.update(exit_code=code, end=time.time(), artifact_exists=artifact,
-                     status='review-required' if code == 0 and artifact else 'failed')
+                     artifact_check='legacy-filename-hint-only',
+                     status='review-required' if code == 0 else 'failed')
         save()
-        subprocess.run([
+        ledger_finish = subprocess.run([
             sys.executable, str(LEDGER), 'finish', '--run-id', rid, '--exit-code', str(code),
-            '--status', 'completed' if code == 0 and artifact else 'failed',
-            '--task-type', 'implementation', '--notes',
+            '--status', 'completed' if code == 0 else 'failed',
+            '--task-type', 'implement', '--notes',
             'Candidate requires independent root acceptance; serving model unknown.', '--keep-state',
         ], creationflags=FLAGS, capture_output=True)
+        state['ledger_finish_exit'] = ledger_finish.returncode
+        save()
     return code
 
 

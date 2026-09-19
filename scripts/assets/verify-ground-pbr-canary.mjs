@@ -119,7 +119,25 @@ for (const [name, mat] of [['asphalt', set.asphalt], ['concrete', set.concrete]]
   check(!!mat.map && !!mat.normalMap, `${name} maps assigned`);
 }
 check(set.asphalt.normalScale.x === 0.6 && set.concrete.normalScale.x === 0.4, 'normalScale family values (0.6 / 0.4)');
-
+// --- 2b. art-round1 albedo tint contract (additive; existing defaults untouched) ---
+check(canary.GROUND_CANARY_ALBEDO_TINT.asphalt === 0x8f8f93 && canary.GROUND_CANARY_ALBEDO_TINT.concrete === 0xffffff, 'calibrated tint constants present (asphalt 0x8f8f93, concrete white)');
+check(set.asphalt.color.getHex() === 0xffffff && set.concrete.color.getHex() === 0xffffff, 'no-tint specs leave material.color white (existing callers unchanged)');
+{
+  const t = { map: mk(), normalMap: mk(), roughnessMap: mk() };
+  const tinted = canary.buildGroundPbrCanaryMaterials(
+    { maps: t, uvMetresPerUnit: canary.GROUND_CANARY_UV_M.asphalt, tilePhysicalMetres: canary.GROUND_CANARY_TILE_M.asphalt, normalScale: 0.6, albedoTint: canary.GROUND_CANARY_ALBEDO_TINT.asphalt },
+    { maps: { map: mk(), normalMap: mk(), roughnessMap: mk() }, uvMetresPerUnit: canary.GROUND_CANARY_UV_M.paving, tilePhysicalMetres: canary.GROUND_CANARY_TILE_M.concrete, normalScale: 0.4 },
+  );
+  check(tinted.asphalt.color.getHex() === 0x8f8f93, 'buildSurface applies albedoTint to material.color');
+  check(tinted.concrete.color.getHex() === 0xffffff, 'absent tint leaves concrete white');
+  const target = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0 });
+  const beforeHex = target.color.getHex();
+  canary.applyGroundPbrCanaryMaps(target, { maps: t, uvMetresPerUnit: canary.GROUND_CANARY_UV_M.asphalt, tilePhysicalMetres: canary.GROUND_CANARY_TILE_M.asphalt, normalScale: 0.6 });
+  check(target.color.getHex() === beforeHex, 'apply() without tint preserves existing singleton color');
+  canary.applyGroundPbrCanaryMaps(target, { maps: t, uvMetresPerUnit: canary.GROUND_CANARY_UV_M.asphalt, tilePhysicalMetres: canary.GROUND_CANARY_TILE_M.asphalt, normalScale: 0.6, albedoTint: 0x8f8f93 });
+  check(target.color.getHex() === 0x8f8f93, 'apply() with tint sets singleton color (live asphalt path)');
+  tinted.dispose();
+}
 // geometry untouched by apply(): position + uv buffers byte-identical
 const geo = new THREE.PlaneGeometry(40, 20);
 const posBefore = Buffer.from(geo.getAttribute('position').array.slice(0));

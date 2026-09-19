@@ -171,8 +171,10 @@ function evaluateMountainPoint(
   if (crossRatio <= crossCrest) {
     // Front-facing slope (facing the player/map)
     slopeFraction = crossRatio / crossCrest;
-    // Convex-concave erosional slope: steep upper face, flared alluvial apron
-    const profileCurve = Math.pow(slopeFraction, 1.45) * 0.65 + Math.pow(slopeFraction, 0.75) * 0.35;
+    // Convex-concave erosional slope: steep upper scarp, flared alluvial apron.
+    // Round 1 art fix: steeper top (1.45 -> 1.7) so sunlit-vs-shade normals vary
+    // across the face instead of reading as one flat band at grazing angles.
+    const profileCurve = Math.pow(slopeFraction, 1.7) * 0.72 + Math.pow(slopeFraction, 0.7) * 0.28;
     yRel = profileCurve * peakHeight;
   } else {
     // Back-facing slope (descending outward away from town)
@@ -199,9 +201,11 @@ function evaluateMountainPoint(
     const gullyWave1 = Math.pow(Math.abs(Math.sin(gullyPhase)), 2.6);
     const gullyWave2 = Math.pow(Math.abs(Math.cos(gullyPhase * 1.83 + 0.4)), 3.0);
     const gullyCut = (gullyWave1 * 0.7 + gullyWave2 * 0.3) * cfg.gullyDepth;
-    // Chutes deepen down the mid-face and dissipate at alluvial base
+    // Chutes deepen down the mid-face and dissipate at alluvial base.
+    // Round 1 art fix: 0.35 -> 0.45 (same tris) so couloirs cast readable
+    // sunlit-vs-occluded relief once the winding below faces the map again.
     const gullyEnvelope = Math.pow(slopeFraction, 0.8) * (1.0 - Math.pow(slopeFraction, 4.0));
-    yRel = Math.max(0, yRel - gullyCut * gullyEnvelope * peakHeight * 0.35);
+    yRel = Math.max(0, yRel - gullyCut * gullyEnvelope * peakHeight * 0.45);
   }
 
   // 5. Radial Meander & Frontal Spur Buttresses
@@ -269,15 +273,19 @@ export function buildMountainRidgeGeometry(cfg: RidgeLayerConfig): THREE.BufferG
       const c = (j + 1) * rowStride + (i + 1);
       const d = j * rowStride + (i + 1);
 
-      // Inward-facing scarp faces inward towards the map center; winding keeps
-      // visible faces pointing up and towards the player
+      // Front scarp faces the map center (inward) with topsides up. Measured
+      // 2026-09-19: the old (a,b,d)/(d,b,c) order put mid-face normals at
+      // y~-0.64 / outward +0.76 at theta=0, i.e. pointing DOWN and AWAY, so the
+      // FrontSide scarp was backface-culled/inverted from every map camera and
+      // read as flat uniform ribbons. Flipped to (a,d,b)/(d,c,b): y~+0.64,
+      // inward, sunlit-vs-occluded gully relief visible again. Same tris.
       indices[idx++] = a;
-      indices[idx++] = b;
       indices[idx++] = d;
+      indices[idx++] = b;
 
       indices[idx++] = d;
-      indices[idx++] = b;
       indices[idx++] = c;
+      indices[idx++] = b;
     }
   }
 

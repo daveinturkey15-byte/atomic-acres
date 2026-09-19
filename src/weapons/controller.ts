@@ -37,6 +37,11 @@ import {
 import { WeaponEffects } from './effects';
 import { OrdnanceInput } from './ordnance-input';
 import { AudioService, type AudioStats, type ShotFamily, type StepSurface, type StepOptions, type EnvironmentKind } from '../audio/service';
+import {
+  loadCatalogCarbineRig,
+  isCarbineCanaryRequested,
+  type CatalogCarbineRig,
+} from './catalog-carbine-loader';
 
 const DEG = Math.PI / 180;
 const BASE_FOV = 72;
@@ -131,6 +136,8 @@ interface ControllerOpts {
   onHud: (line: string) => void;
   /** Optional: absent means nobody is listening, and the gun is a toy again. */
   onShot?: (claim: ShotClaim) => void;
+  /** Optional explicit opt-in for catalog carbine canary (?carbine=canary) */
+  carbineCanary?: boolean;
 }
 /** Audio lane: weapon id to shot family. Unknown ids ride the rifle voice. */
 function familyOf(id: string): ShotFamily {
@@ -150,6 +157,8 @@ export class WeaponsController {
   private effects: WeaponEffects;
   private weapons: WeaponState[];
   private active = 0;
+  private carbineCanaryRig: CatalogCarbineRig | null = null;
+  private disposed = false;
 
   private visible = true;
   private triggerHeld = false;
@@ -279,6 +288,39 @@ export class WeaponsController {
     this.camera.fov = BASE_FOV;
     this.camera.updateProjectionMatrix();
     this.pushHud(true);
+
+    const enableCarbineCanary = opts.carbineCanary ?? isCarbineCanaryRequested();
+    if (enableCarbineCanary) {
+      loadCatalogCarbineRig({ mat: opts.mat }).then((canaryRig) => {
+        if (this.disposed) {
+          canaryRig.dispose();
+          return;
+        }
+        if (!canaryRig.isGLTFAsset) {
+          canaryRig.dispose();
+          return;
+        }
+        const rifle = this.weapons.find((w) => w.def.id === 'longhorn');
+        if (!rifle) {
+          canaryRig.dispose();
+          return;
+        }
+        const oldRig = rifle.rig;
+        this.overlay.add(canaryRig.group);
+        canaryRig.group.position.copy(oldRig.group.position);
+        canaryRig.group.quaternion.copy(oldRig.group.quaternion);
+        canaryRig.group.visible = oldRig.group.visible;
+
+        // Never overlap both guns: hide and remove old fallback rig immediately
+        oldRig.group.visible = false;
+        this.overlay.remove(oldRig.group);
+
+        rifle.rig = canaryRig;
+        this.carbineCanaryRig = canaryRig;
+      }).catch((err) => {
+        console.warn('[WeaponsController] Carbine canary load failed, keeping fallback:', err);
+      });
+    }
   }
 
   private rand(): number {
@@ -983,6 +1025,20 @@ export class WeaponsController {
 
   spatialShot(family: ShotFamily, distanceM: number, pan: number, occluded = false): void {
     this.audioSvc.spatialShot(family, distanceM, pan, occluded);
+  }
+
+  get activeCarbineRig(): CatalogCarbineRig | null {
+    return this.carbineCanaryRig;
+  }
+
+  /** Release the context, every voice, and any dynamically loaded canary rigs. */
+  dispose(): void {
+    this.disposed = true;
+    if (this.carbineCanaryRig) {
+      this.carbineCanaryRig.dispose();
+      this.carbineCanaryRig = null;
+    }
+    this.disposeAudio();
   }
 
   /** Release the context and every voice (lane teardown / page hide). */

@@ -5,6 +5,11 @@ import { PAL } from '../core/palette';
 import { createFirstPersonHands } from './first-person-hands';
 import type { ViewmodelRig } from './types';
 export type { ViewmodelRig } from './types';
+export {
+  loadCatalogCarbineRig,
+  type CatalogCarbineRig,
+  isCarbineCanaryRequested,
+} from './catalog-carbine-loader';
 
 function box(
   w: number,

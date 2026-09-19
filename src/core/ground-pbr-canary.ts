@@ -68,6 +68,15 @@ export interface GroundPbrCanarySurfaceSpec {
   /** Tangent-space normal strength (root family: asphalt 0.6, concrete 0.4). */
   normalScale?: number;
   anisotropy?: number;
+  /**
+   * Optional sRGB hex multiplied onto material.color (material.color * photo).
+   * Calibrates the photo's absolute level without touching the authored maps:
+   * Asphalt030's mean is a light mid-grey, so a white multiplier renders
+   * near-white/blue concrete under hard sun (ground-canary-turningHead.png),
+   * losing the believable dark-asphalt vs pale-paving contrast of the baseline.
+   * Undefined = leave material.color untouched (existing callers/guards intact).
+   */
+  albedoTint?: number;
 }
 
 export interface GroundPbrCanarySet {
@@ -120,7 +129,7 @@ function buildSurface(spec: GroundPbrCanarySurfaceSpec, anisotropy: number): THR
   configureOnce(spec.maps.map, repeat, true, anisotropy);
   configureOnce(spec.maps.normalMap, repeat, false, anisotropy);
   configureOnce(spec.maps.roughnessMap, repeat, false, anisotropy);
-  return new THREE.MeshStandardMaterial({
+  const mat = new THREE.MeshStandardMaterial({
     map: spec.maps.map,
     normalMap: spec.maps.normalMap,
     normalScale: new THREE.Vector2(spec.normalScale ?? 0.5, spec.normalScale ?? 0.5),
@@ -128,6 +137,8 @@ function buildSurface(spec: GroundPbrCanarySurfaceSpec, anisotropy: number): THR
     roughnessMap: spec.maps.roughnessMap,
     metalness: 0,
   });
+  if (spec.albedoTint !== undefined) mat.color.setHex(spec.albedoTint);
+  return mat;
 }
 
 /**
@@ -179,8 +190,26 @@ export function applyGroundPbrCanaryMaps(
   material.roughness = spec.roughness ?? 1;
   material.metalness = 0;
   material.normalScale.set(spec.normalScale ?? 0.5, spec.normalScale ?? 0.5);
+  if (spec.albedoTint !== undefined) material.color.setHex(spec.albedoTint);
   material.needsUpdate = true;
 }
+
+/**
+ * First-round art calibration (2026-09-19, paired WebGPU views rejected the
+ * white-multiplier asphalt as near-white/blue concrete).
+ * Asphalt030 is a light mid-grey photo; multiplying by ~0.56 sRGB restores the
+ * dark-asphalt vs pale-paving contrast of the procedural baseline while keeping
+ * every authored map, repeat (40/2.2 = 18.18) and normalScale (0.6) intact.
+ * This is a gain, not the palette target: PAL.asphalt (0x4a4a4d) * photo would
+ * double-darken toward black. Concrete046 is already pale; white preserves it
+ * (the root caller additionally tints concrete with PAL.concrete — kept as-is).
+ * Roughness stays 1 x map; no exposure/lighting/UV change. Paired views decide
+ * the final ±10%.
+ */
+export const GROUND_CANARY_ALBEDO_TINT = {
+  asphalt: 0x8f8f93,
+  concrete: 0xffffff,
+} as const;
 
 /** Root ground.ts UV scales, mirrored here as the canary's only tiling inputs. */
 export const GROUND_CANARY_UV_M = {

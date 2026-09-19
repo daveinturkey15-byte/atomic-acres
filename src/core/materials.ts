@@ -47,6 +47,7 @@ import { createViewmodelMaterials, type ViewmodelMaterialSet } from '../weapons/
 import { isGroundPbrEnabled } from './environment-flags';
 import {
   applyGroundPbrCanaryMaps,
+  GROUND_CANARY_ALBEDO_TINT,
   GROUND_CANARY_UV_M,
   GROUND_CANARY_TILE_M,
   loadCanarySurfaceSet,
@@ -1047,6 +1048,7 @@ export function buildMaterials(): MaterialLibrary {
           tilePhysicalMetres: GROUND_CANARY_TILE_M.asphalt,
           normalScale: 0.6,
           roughness: 1.0,
+          albedoTint: GROUND_CANARY_ALBEDO_TINT.asphalt,
         });
         wetRefresh.get(lib.asphalt)?.();
         lib.asphalt.needsUpdate = true;

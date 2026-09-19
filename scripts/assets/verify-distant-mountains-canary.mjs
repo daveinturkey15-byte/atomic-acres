@@ -309,6 +309,33 @@ check(
   `meanGradientVariation=${meanGradientVariation.toFixed(2)}m per cross-step (strata benches verified)`,
 );
 
+// Check 6b (art-round1, additive): front-scarp faces the map, topsides up.
+// Regression for the inverted-winding reject: old order put mid-face normals at
+// y~-0.64/outward, reading as flat ribbons from every map camera.
+{
+  let sumY = 0, sumIn = 0, n = 0, minY = Infinity;
+  for (let l = 0; l < result.geometries.length; l++) {
+    const g = result.geometries[l];
+    const p = g.attributes.position, v = g.attributes.normal;
+    const cfg = DEFAULT_CANARY_LAYERS[l];
+    const rs = cfg.segmentsAngle + 1;
+    const nF = Math.max(2, Math.round(cfg.segmentsCross * cfg.frontBias));
+    for (let jj = 0; jj <= nF; jj++) {
+      for (let ii = 0; ii <= cfg.segmentsAngle; ii += 4) {
+        const vi = jj * rs + ii;
+        const ny = v.getY(vi);
+        sumY += ny; n++; if (ny < minY) minY = ny;
+        const px = p.getX(vi), pz = p.getZ(vi);
+        const il = Math.hypot(px, pz) || 1;
+        sumIn += (v.getX(vi) * -px + v.getZ(vi) * -pz) / il;
+      }
+    }
+  }
+  const meanY = sumY / n, meanIn = sumIn / n;
+  check('Front-Scarp Normals Point Up', meanY > 0.3, `meanNy=${meanY.toFixed(3)} (must be > 0.3)`);
+  check('Front-Scarp Normals Face Map Center', meanIn > 0.3, `meanInward=${meanIn.toFixed(3)} (must be > 0.3)`);
+  check('No Downward Front-Scarp Normals', minY > -0.15, `minNy=${minY.toFixed(3)} (inverted winding gave -0.64)`);
+}
 // Check 7: Determinism & Reproducibility
 const result2 = createDistantMountainsCanary(ctx);
 let byteIdentical = true;
