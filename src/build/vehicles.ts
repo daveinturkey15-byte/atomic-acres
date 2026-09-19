@@ -6,7 +6,7 @@
  * solid collider beat panel detail.
  *
  * References: NT07 (cream/maroon intercity coach, chrome belt, riveted panels,
- * "Nuketown" in script along the flank, plus a second black/cream/navy civic
+ * the project name in script along the flank, plus a second black/cream/navy civic
  * bus on the same shell), NT02 aerial (coach, box truck and a saloon standing
  * ON the turning head), footage chicane (rigid two-tone box truck + towed
  * cream/blue trailer + buses staggered down the stem leaving ~3 m slots),
@@ -22,6 +22,7 @@
 import * as THREE from 'three';
 import type { AABB, BuildContext, Builder } from '../core/kit';
 import { aabbSlab, box, extrude, group, slab } from '../core/kit';
+import { batchStatic } from '../core/static-batch';
 import { PAL } from '../core/palette';
 import {
   FRONT_LAWN_OUTER, GARAGE_LEN, HEAD_CENTER_X, HEAD_RADIUS,
@@ -920,8 +921,33 @@ function makeTrailer(ctx: BuildContext): Vehicle {
   // rear doorway + deployed ramp (sloped steel slab, sill to ground)
   const rearW = 1.5, rearH = 1.7;
   const rearY = floorY + rearH / 2 + 0.05;
-  g.add(box(0.5, rearH - 0.06, rearW - 0.06, dark, -L / 2 + 0.2, rearY, 0));
-  g.add(box(0.08, rearH, rearW, ctx.mat.windowDark, -L / 2 - 0.01, rearY, 0));
+  /**
+   * ONE SURFACE, NOT TWO. This used to be a matte `dark` interior mass 0.5 m deep
+   * centred on -L/2 + 0.2, with a glossy `windowDark` opening panel 0.08 deep
+   * centred on -L/2 - 0.01 in front of it. Both of those put a forward-facing face
+   * on EXACTLY the plane x = -L/2 - 0.05, with nothing to arbitrate between them
+   * but the draw order. Unbatched the order hid most of the mass (diagonal moire at
+   * plaza); core/static-batch.ts changed the order and the doorway broke into a
+   * dense dither - 22.2% of the panel and 55.0% of its bottom-right quadrant
+   * speckled at the slalom station, against 0.0000% on a same-build control.
+   *
+   * Two fixes were built and photographed at both stations (both reach 0.0000%
+   * speckle, so the tie-break is the READ, not the metric):
+   *   A  recess the mass 100 mm behind the panel. The panel then wins everywhere -
+   *      and windowDark is roughness 0.12 / envMapIntensity 2, so it reflects the
+   *      sky: the doorway went from luma 41.7 to 105.8 and read as a closed glazed
+   *      shutter with a ramp propped against it.
+   *   B  taken. The panel is the REDUNDANT one: it cannot give the read this
+   *      doorway needs, and the matte mass can. So the panel is dropped and the
+   *      mass is widened from (rearW - 0.06, rearH - 0.06) to the full opening,
+   *      staying on the plane the panel's front face occupied. The doorway keeps
+   *      its outline, its 0.05 m proudness and its dark read (luma 31.7), the
+   *      module loses 12 triangles, and there is no second surface left for any
+   *      draw order to fight over.
+   * The +z side doorway above is NOT this shape: its mass already sits behind its
+   * panel with 80 mm of separation, so it never tied and is left alone.
+   */
+  g.add(box(0.5, rearH, rearW, dark, -L / 2 + 0.2, rearY, 0));
   for (const s of [-1, 1]) {
     g.add(box(0.09, rearH + 0.12, 0.09, trim, -L / 2 - 0.02, rearY, s * (rearW / 2 + 0.04)));
   }
@@ -1182,6 +1208,9 @@ export const buildVehicles: Builder = (ctx) => {
   const out = group('vehicles');
   const colliders: AABB[] = [];
 
+  /** distinguishes the batched meshes of the two identically-named saloons */
+  let parked = 0;
+
   /** nobody parks square */
   const skew = (): number => (ctx.rand() - 0.5) * 0.08;
   const nudge = (): number => (ctx.rand() - 0.5) * 0.35;
@@ -1197,6 +1226,14 @@ export const buildVehicles: Builder = (ctx) => {
     v.obj.position.set(x, surfaceY, z);
     v.obj.rotation.y = yaw;
     out.add(v.obj);
+    // Every vehicle is authored as ~45 loose meshes and finished the moment it is
+    // parked: nothing here moves, deforms or is hidden again. Collapse each one into
+    // one mesh per (material instance, shadow flags, attribute set) - see
+    // core/static-batch.ts. Deliberately PER VEHICLE and not over the whole fleet:
+    // a merged mesh is frustum-culled as a unit, and merging the head pair with the
+    // stem pair would submit the far half of the street's triangles at every station
+    // that can only see the near half.
+    batchStatic(v.obj, v.obj.name + parked++);
     // Step the collision along the vehicle's OWN length axis instead of fitting
     // one box to its bounding rectangle, so a rotated vehicle blocks its diagonal
     // and not the whole rectangle around it. The slabs tile the body exactly and
