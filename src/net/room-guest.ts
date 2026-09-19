@@ -277,6 +277,9 @@ export class GuestClient {
         this.clearJoinTimer();
         this.playerId = msg.playerId;
         this.token = msg.token ?? null;
+        // Seed immediately so events arriving before the first scheduled pong
+        // use the right epoch; the first NTP sample replaces this estimate.
+        this.clockOffset = msg.hostNow - nowMs;
         this.rosterCache = msg.roster;
         this.state = 'lobby';
         this.onChange();
@@ -294,6 +297,7 @@ export class GuestClient {
         break;
       case 'start':
         this.startTick = msg.startTick;
+        if (this.clockSamples === 0) this.clockOffset = msg.hostNow - nowMs;
         this.state = 'starting';
         this.onChange();
         break;

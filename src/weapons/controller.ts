@@ -36,6 +36,7 @@ import {
 } from './viewmodel';
 import { WeaponEffects } from './effects';
 import { OrdnanceInput } from './ordnance-input';
+import { AudioService, type AudioStats, type ShotFamily } from '../audio/service';
 
 const DEG = Math.PI / 180;
 const BASE_FOV = 72;
@@ -110,6 +111,11 @@ interface ControllerOpts {
   /** Optional: absent means nobody is listening, and the gun is a toy again. */
   onShot?: (claim: ShotClaim) => void;
 }
+/** Audio lane: weapon id to shot family. Unknown ids ride the rifle voice. */
+function familyOf(id: string): ShotFamily {
+  if (id === 'rattler' || id === 'coachman' || id === 'deadeye' || id === 'duster') return id;
+  return 'longhorn';
+}
 
 
 export class WeaponsController {
@@ -176,8 +182,9 @@ export class WeaponsController {
   private tmpEuler = new THREE.Euler(0, 0, 0, 'YXZ');
   private tmpQuat = new THREE.Quaternion();
 
-  private audio: AudioContext | null = null;
-  private noiseBuf: AudioBuffer | null = null;
+  // Audio lane: bounded service (one context, capped voices, lazy bank).
+  // Constructed here, silent until the first user gesture resumes it.
+  private audioSvc = new AudioService();
 
   constructor(opts: ControllerOpts) {
     this.camera = opts.camera;
@@ -333,7 +340,7 @@ export class WeaponsController {
         const take = Math.min(need, cur.reserve);
         cur.mag += take;
         cur.reserve -= take;
-        this.click(660, 0.05, 0.12);
+        this.audioSvc.reloadEnd();
         this.pushHud();
       }
     }
@@ -374,6 +381,8 @@ export class WeaponsController {
   }
 
   pointerDown(button: number): void {
+    // Audio lane: every click is a user gesture — unlock WebAudio here.
+    this.audioSvc.resume();
     if (!this.visible) return;
     if (button === 0) {
       this.triggerHeld = true;
@@ -398,6 +407,8 @@ export class WeaponsController {
   }
 
   keyDown(code: string): boolean {
+    // Audio lane: key presses are user gestures too.
+    this.audioSvc.resume();
     if (code === 'KeyR') {
       this.startReload();
       return true;
@@ -446,6 +457,7 @@ export class WeaponsController {
   blastAt(x: number, y: number, z: number): void {
     this.tmpEnd.set(x, y, z);
     this.effects.blast(this.tmpEnd, this.camera.quaternion);
+    this.audioSvc.blast();
   }
 
   /** The host swapped our primary for a drop's: hold that gun, with the rounds it had. */
@@ -667,6 +679,7 @@ export class WeaponsController {
     }
     this.syncHudState();
     this.pushHud(true);
+    this.audioSvc.switchWeapon();
     return true;
   }
 
@@ -679,7 +692,7 @@ export class WeaponsController {
     // round's head start.
     cur.reloadDur = cur.mag === 0 ? cur.def.emptyReloadTime : cur.def.reloadTime;
     cur.reloadT = cur.reloadDur;
-    this.click(440, 0.05, 0.12);
+    this.audioSvc.reloadStart();
     this.pushHud(true);
     return true;
   }
@@ -712,7 +725,7 @@ export class WeaponsController {
       cur.cool = def.interval;
     }
     if (cur.mag <= 0) {
-      this.click(1200, 0.03, 0.1);
+      this.audioSvc.dryFire();
       this.pushHud();
       return false;
     }
@@ -738,6 +751,8 @@ export class WeaponsController {
     let anyHit = false;
     let pullDamage = 0;
     let pullDist = 0;
+    // Audio lane: surface of the nearest hit this pull (one impact cue max).
+    let pullDusty = false;
     for (let p = 0; p < def.pellets; p++) {
       // Uniform-disc sample in the camera frame, then to world. No allocation.
       const u = this.rand();
@@ -763,8 +778,10 @@ export class WeaponsController {
         if (hit.face) {
           // Face normal lives in object space; the pool slot is world space.
           this.tmpNormal.copy(hit.face.normal).transformDirection(hit.object.matrixWorld);
-          this.effects.impact(hit.point, this.tmpNormal, this.tmpNormal.y > 0.5);
+          pullDusty = this.tmpNormal.y > 0.5;
+          this.effects.impact(hit.point, this.tmpNormal, pullDusty);
         } else {
+          pullDusty = false;
           this.effects.impact(hit.point, this.tmpDir, false);
         }
         const slot = this.impactPts[this.impactHead];
@@ -781,6 +798,9 @@ export class WeaponsController {
       this.hitSeq++;
       this.lastDamage = pullDamage;
       this.lastDistance = pullDist;
+      // Surface impact is local presentation. A wall hit is not an
+      // authoritative player hit, so it must never play a hit-confirm cue.
+      this.audioSvc.impact(pullDist, pullDusty);
     } else {
       this.lastDamage = 0;
       this.lastDistance = 0;
@@ -855,90 +875,45 @@ export class WeaponsController {
     }
   }
 
-  private ensureAudio(): AudioContext | null {
-    try {
-      if (this.audio) {
-        if (this.audio.state === 'suspended') void this.audio.resume().catch(() => undefined);
-        return this.audio;
-      }
-      if (typeof window === 'undefined') return null;
-      const AC = window.AudioContext
-        ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!AC) return null;
-      const ctx = new AC();
-      this.audio = ctx;
-      const len = Math.floor(ctx.sampleRate * 0.25);
-      this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
-      const data = this.noiseBuf.getChannelData(0);
-      for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-      return ctx;
-    } catch {
-      return null;
-    }
+  // ---- Audio lane: public setter interface (safe for UI/root wiring) ----
+
+  /** Master output 0..1. Stored pre-init; applied to the master gain. */
+  setMasterVolume(v: number): void {
+    this.audioSvc.setMasterVolume(v);
+  }
+
+  /** Effects bus 0..1 (shots, impacts, reloads). */
+  setEffectsVolume(v: number): void {
+    this.audioSvc.setEffectsVolume(v);
+  }
+
+  setMuted(m: boolean): void {
+    this.audioSvc.setMuted(m);
+  }
+
+  /** User-gesture entry root can call from menu buttons (pointerdown). */
+  resumeAudio(): void {
+    this.audioSvc.resume();
+  }
+
+  /** Start fetching the authored bank early (e.g. from the menu). */
+  preloadAudio(): void {
+    this.audioSvc.preload();
+  }
+
+  /** Live voice/drop/context/buffer counts for HUD diagnostics and soak. */
+  audioStats(): AudioStats {
+    return this.audioSvc.audioStats();
+  }
+
+  /** Release the context and every voice (lane teardown / page hide). */
+  disposeAudio(): void {
+    this.audioSvc.dispose();
   }
 
   private playShot(id: string): void {
-    // Free synth only: per-family filter/decay over the shared noise buffer.
-    // Sniper booms low and long, SMG barks high and short.
-    let freq = 1700;
-    let vol = 0.3;
-    let decay = 0.14;
-    if (id === 'deadeye') {
-      freq = 900;
-      vol = 0.34;
-      decay = 0.24;
-    } else if (id === 'coachman') {
-      freq = 1200;
-      vol = 0.34;
-      decay = 0.2;
-    } else if (id === 'rattler') {
-      freq = 2200;
-      vol = 0.24;
-      decay = 0.1;
-    } else if (id === 'duster') {
-      freq = 2600;
-      vol = 0.22;
-      decay = 0.09;
-    }
-    try {
-      const ctx = this.ensureAudio();
-      if (!ctx || !this.noiseBuf) return;
-      const src = ctx.createBufferSource();
-      src.buffer = this.noiseBuf;
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = freq;
-      const gain = ctx.createGain();
-      const t = ctx.currentTime;
-      gain.gain.setValueAtTime(vol, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + decay);
-      src.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      src.start(t, this.rand() * 0.1);
-      src.stop(t + 0.2);
-    } catch {
-      // Audio is garnish; a headless harness has no AudioContext.
-    }
-  }
-
-  private click(freq: number, dur: number, vol: number): void {
-    try {
-      const ctx = this.ensureAudio();
-      if (!ctx) return;
-      const osc = ctx.createOscillator();
-      osc.type = 'square';
-      osc.frequency.value = freq;
-      const gain = ctx.createGain();
-      const t = ctx.currentTime;
-      gain.gain.setValueAtTime(vol, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + dur + 0.01);
-    } catch {
-      // Audio is garnish; a headless harness has no AudioContext.
-    }
+    // Layered authored bank per weapon family (transient + mechanical +
+    // body + tail); procedural fallback only when buffers are not loaded.
+    this.audioSvc.shot(familyOf(id));
   }
 }

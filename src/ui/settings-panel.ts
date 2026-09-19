@@ -11,11 +11,14 @@
  * saves and applies it, so there is one place that writes storage. Beside each
  * control is the HONEST status of that option (`settings-apply.ts:OPTION_STATUS`):
  * `applies now`, `applies now (input shim ...)`, or `saved; no consumer in this
- * build yet`. A menu that shows an AO toggle the renderer cannot yet read says so
- * on the row rather than pretending.
+ * build yet`. Post toggles report the chain's own state through `probeApplied`:
+ * on the WebGL2/off fallback they are remembered, not rendered, and a proof of
+ * ACTIVE effects must check `postEnabled`, never the slider.
  *
  * `quality` is DERIVED (`settings.ts:qualityOf`), never stored: picking a preset
- * writes the four knobs, and moving a knob makes the select read `Custom`.
+ * writes the four knobs, and moving a knob makes the select read `Custom`. Fog,
+ * time-of-day and weather are independent of the preset and default to the
+ * capture baseline (haze on, noon/clear).
  */
 
 import { OPTION_STATUS, STATUS_NOTE } from './settings-apply';
@@ -24,6 +27,7 @@ import {
   FOV_MAX, FOV_MIN, QUALITY_NAMES, RESOLUTION_MIN, SHADOW_MAP_SIZES, presetPatch, qualityOf,
   type QualityName, type Settings,
 } from './settings';
+import { TOD_NAMES, WEATHER_NAMES, type TodName, type WeatherName } from '../core/atmosphere';
 
 export interface SettingsPanelDeps {
   read(): Settings;
@@ -189,8 +193,21 @@ export function buildSettingsPanel(deps: SettingsPanelDeps): SettingsPanel {
   toggle(g, 'ao', 'Ambient occlusion', (s) => s.ao, (v) => ({ ao: v }));
   toggle(g, 'ssr', 'Screen-space reflections', (s) => s.ssr, (v) => ({ ssr: v }));
   toggle(g, 'bloom', 'Bloom', (s) => s.bloom, (v) => ({ bloom: v }));
+  toggle(g, 'fog', 'Fog (analytic haze)', (s) => s.fog, (v) => ({ fog: v }));
   slider(g, 'resolutionScale', 'Resolution scale', RESOLUTION_MIN, 1, 0.05, (s) => s.resolutionScale, (v) => ({ resolutionScale: v }), pct);
   slider(g, 'fov', 'Field of view', FOV_MIN, FOV_MAX, 1, (s) => s.fov, (v) => ({ fov: v }), (v) => v.toFixed(0) + '°');
+  const envH = document.createElement('h3');
+  envH.className = 'aa-h3';
+  envH.textContent = 'Environment';
+  g.append(envH);
+  const envHint = document.createElement('div');
+  envHint.className = 'aa-hint';
+  envHint.textContent = 'Choose the lighting and weather for your view. Your choices are saved for the next visit.';
+  g.append(envHint);
+  select(g, 'tod', 'Time of day', TOD_NAMES.map((n) => ({ value: n, text: cap(n) })),
+    (s) => s.tod, (v) => ({ tod: v as TodName }));
+  select(g, 'weather', 'Weather', WEATHER_NAMES.map((n) => ({ value: n, text: cap(n) })),
+    (s) => s.weather, (v) => ({ weather: v as WeatherName }));
   const mb = document.createElement('div');
   mb.className = 'aa-setting aa-setting-row aa-muted';
   mb.append(Object.assign(document.createElement('span'), { textContent: 'Motion blur' }), Object.assign(document.createElement('span'), { textContent: 'n/a - the post chain has no motion-blur pass' }));
@@ -215,7 +232,7 @@ export function buildSettingsPanel(deps: SettingsPanelDeps): SettingsPanel {
   slider(a, 'effectsVolume', 'Effects volume', 0, 1, 0.05, (s) => s.effectsVolume, (v) => ({ effectsVolume: v }), pct);
   const an = document.createElement('div');
   an.className = 'aa-hint';
-  an.textContent = 'This build has no audio bus: the only sounds are inside the weapon controller, with no volume hook. Both sliders persist and take effect the moment one lands.';
+  an.textContent = 'Adjust overall sound and game effects. Changes apply immediately and are saved.';
   a.append(an);
 
   // ---- accessibility: the trio gameplay reads (IMPORT-PLAN §1.5) ----------

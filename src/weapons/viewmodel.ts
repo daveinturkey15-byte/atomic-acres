@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import type { MaterialLibrary } from '../core/materials';
 import { PAL } from '../core/palette';
 import type { ViewmodelRig } from './types';
@@ -20,6 +21,102 @@ function box(
   mesh.castShadow = false;
   mesh.receiveShadow = false;
   return mesh;
+}
+
+function roundedBox(
+  w: number,
+  h: number,
+  d: number,
+  material: THREE.Material,
+  x: number,
+  y: number,
+  z: number,
+  radius = 0.01,
+  rx = 0,
+): THREE.Mesh {
+  const r = Math.min(radius, w * 0.45, h * 0.45, d * 0.45);
+  const mesh = new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 2, r), material);
+  mesh.position.set(x, y, z);
+  if (rx !== 0) mesh.rotation.x = rx;
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+  return mesh;
+}
+
+type ArmPoint = readonly [number, number, number];
+
+/** Static limb fitted between actual joint centres; no disconnected offsets. */
+function armSegment(
+  wristRadius: number, elbowRadius: number, material: THREE.Material,
+  elbow: ArmPoint, wrist: ArmPoint,
+): THREE.Mesh {
+  const start = new THREE.Vector3(...elbow);
+  const end = new THREE.Vector3(...wrist);
+  const direction = end.clone().sub(start);
+  const mesh = new THREE.Mesh(
+    new THREE.CylinderGeometry(wristRadius, elbowRadius, direction.length(), 10, 1), material,
+  );
+  mesh.position.copy(start).add(end).multiplyScalar(0.5);
+  mesh.quaternion.setFromUnitVectors(THREE.Object3D.DEFAULT_UP, direction.normalize());
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+  return mesh;
+}
+
+function palm(
+  material: THREE.Material,
+  x: number,
+  y: number,
+  z: number,
+  rz = 0,
+  sx = 0.034,
+  sy = 0.047,
+  sz = 0.054,
+): THREE.Mesh {
+  const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), material);
+  mesh.position.set(x, y, z);
+  mesh.scale.set(sx, sy, sz);
+  mesh.rotation.z = rz;
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+  return mesh;
+}
+
+/**
+ * Shared first-person arms. The controller mounts each weapon at the same
+ * camera-local grip frame, so one low-poly sleeve/glove rig can support every
+ * catalog identity without a second skeletal system or per-frame allocations.
+ * The palms overlap the grip/handguard deliberately; the weapon remains the
+ * depth authority while the cuff and sleeve establish believable anatomy.
+ * Each hand uses one palm and one smaller thumb/finger mass so articulation
+ * remains legible without adding geometry to the overlay.
+ */
+function addFirstPersonHands(
+  group: THREE.Group,
+  mat: MaterialLibrary,
+  supportZ: number,
+  supportY = -0.055,
+): void {
+  const sleeve = mat.painted(PAL.opFatigueOlive, 0.94, 0);
+  const cuff = mat.painted(PAL.opWebbingDark, 0.99, 0);
+  const glove = mat.painted(PAL.opBoot, 0.78, 0.01);
+
+  // Trigger hand: forearm enters from the lower-right and settles over the
+  // pistol grip. The two palm volumes give the silhouette a thumb-side break.
+  group.add(armSegment(0.031, 0.047, sleeve, [0.19, -0.39, 0.28], [0.025, -0.15, 0.045]));
+  group.add(armSegment(0.033, 0.034, cuff, [0.039, -0.17, 0.066], [0.015, -0.135, 0.025]));
+  group.add(palm(glove, 0.010, -0.112, 0.012, -0.16, 0.034, 0.046, 0.054));
+  // Smaller near-side volume reads as thumb/index articulation rather than a
+  // second mitten-shaped palm.
+  group.add(palm(glove, 0.039, -0.092, -0.014, -0.22, 0.017, 0.027, 0.039));
+
+  // Support hand: a shorter sleeve reaches forward under the handguard. It is
+  // intentionally offset per weapon through supportZ so the fingers sit on
+  // the actual fore-end rather than floating at a universal screen point.
+  group.add(armSegment(0.030, 0.045, sleeve, [-0.16, -0.39, supportZ + 0.20], [-0.024, supportY - 0.047, supportZ + 0.025]));
+  group.add(armSegment(0.031, 0.033, cuff, [-0.034, supportY - 0.073, supportZ + 0.040], [-0.017, supportY - 0.030, supportZ + 0.013]));
+  group.add(palm(glove, -0.010, supportY, supportZ, 0.15, 0.034, 0.046, 0.054));
+  group.add(palm(glove, -0.036, supportY + 0.012, supportZ - 0.018, 0.22, 0.016, 0.026, 0.038));
 }
 
 function tube(
@@ -51,31 +148,37 @@ export function buildRifleViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const gripMat = mat.painted(PAL.timberDark, 0.85, 0.0);
 
   // Receiver: core of the rig, centred just forward of the origin.
-  group.add(box(0.06, 0.09, 0.34, body, 0, 0.02, -0.12));
+  group.add(roundedBox(0.06, 0.09, 0.34, body, 0, 0.02, -0.12, 0.012));
   // Top rail strip the sights sit on.
-  group.add(box(0.03, 0.012, 0.3, darkMetal, 0, 0.071, -0.12));
+  group.add(roundedBox(0.03, 0.012, 0.3, darkMetal, 0, 0.071, -0.12, 0.004));
 
   // Barrel + muzzle device, axis along -z.
   group.add(tube(0.011, 0.3, darkMetal, 0, 0.035, -0.44));
   group.add(tube(0.016, 0.05, brightMetal, 0, 0.035, -0.585));
 
   // Handguard surrounding the barrel base.
-  group.add(box(0.07, 0.07, 0.26, furniture, 0, 0.03, -0.36));
+  group.add(roundedBox(0.07, 0.07, 0.26, furniture, 0, 0.03, -0.36, 0.014));
   // Handguard ribs (viewmodel-local detail).
   group.add(box(0.074, 0.012, 0.02, gripMat, 0, 0.03, -0.3));
   group.add(box(0.074, 0.012, 0.02, gripMat, 0, 0.03, -0.36));
   group.add(box(0.074, 0.012, 0.02, gripMat, 0, 0.03, -0.42));
+  // Machined side rails and barrel collars break the single brown block into
+  // functional surfaces at the close camera distance.
+  group.add(roundedBox(0.008, 0.035, 0.19, darkMetal, -0.041, 0.035, -0.36, 0.003));
+  group.add(roundedBox(0.008, 0.035, 0.19, darkMetal, 0.041, 0.035, -0.36, 0.003));
+  group.add(tube(0.020, 0.024, darkMetal, 0, 0.035, -0.265));
+  group.add(tube(0.018, 0.018, brightMetal, 0, 0.035, -0.465));
 
   // Stock + buttpad behind the origin.
-  group.add(box(0.055, 0.11, 0.22, furniture, 0, 0.01, 0.16));
-  group.add(box(0.06, 0.13, 0.03, gripMat, 0, 0.01, 0.28));
+  group.add(roundedBox(0.055, 0.11, 0.22, furniture, 0, 0.01, 0.16, 0.014));
+  group.add(roundedBox(0.06, 0.13, 0.03, gripMat, 0, 0.01, 0.28, 0.009));
 
   // Pistol grip angled back from the trigger area.
-  group.add(box(0.045, 0.13, 0.055, gripMat, 0, -0.09, 0.0, 0.35));
+  group.add(roundedBox(0.045, 0.13, 0.055, gripMat, 0, -0.09, 0.0, 0.009, 0.35));
 
   // Angled magazine ahead of the trigger.
-  group.add(box(0.045, 0.16, 0.07, darkMetal, 0, -0.12, -0.13, -0.3));
-  group.add(box(0.048, 0.02, 0.073, body, 0, -0.195, -0.105, -0.3));
+  group.add(roundedBox(0.045, 0.16, 0.07, darkMetal, 0, -0.12, -0.13, 0.008, -0.3));
+  group.add(roundedBox(0.048, 0.02, 0.073, body, 0, -0.195, -0.105, 0.005, -0.3));
 
   // Trigger + guard from thin boxes.
   group.add(box(0.008, 0.03, 0.01, brightMetal, 0, -0.035, -0.045));
@@ -106,6 +209,8 @@ export function buildRifleViewmodel(mat: MaterialLibrary): ViewmodelRig {
   eject.position.set(0.035, 0.03, -0.1);
   group.add(eject);
 
+  addFirstPersonHands(group, mat, -0.36);
+
   return { group, muzzle, eject };
 }
 
@@ -121,8 +226,8 @@ export function buildPistolViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const gripMat = mat.timber;
 
   // Slide + frame.
-  group.add(box(0.04, 0.045, 0.19, body, 0, 0.02, -0.085));
-  group.add(box(0.036, 0.03, 0.17, darkMetal, 0, -0.01, -0.075));
+  group.add(roundedBox(0.04, 0.045, 0.19, body, 0, 0.02, -0.085, 0.008));
+  group.add(roundedBox(0.036, 0.03, 0.17, darkMetal, 0, -0.01, -0.075, 0.006));
   // Muzzle ring at the slide tip.
   group.add(tube(0.012, 0.012, brightMetal, 0, 0.02, -0.182));
 
@@ -150,6 +255,7 @@ export function buildPistolViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const eject = new THREE.Object3D();
   eject.position.set(0.022, 0.025, -0.05);
   group.add(eject);
+  addFirstPersonHands(group, mat, -0.08, -0.055);
 
   return { group, muzzle, eject };
 }
@@ -168,8 +274,8 @@ export function buildSmgViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const gripMat = mat.painted(PAL.timberDark, 0.85, 0.0);
 
   // Short receiver + top rail.
-  group.add(box(0.055, 0.075, 0.24, body, 0, 0.02, -0.06));
-  group.add(box(0.028, 0.01, 0.2, darkMetal, 0, 0.062, -0.07));
+  group.add(roundedBox(0.055, 0.075, 0.24, body, 0, 0.02, -0.06, 0.011));
+  group.add(roundedBox(0.028, 0.01, 0.2, darkMetal, 0, 0.062, -0.07, 0.003));
   // Stub barrel + vented shroud (rings read as vents at arm's length).
   group.add(tube(0.01, 0.16, darkMetal, 0, 0.03, -0.26));
   group.add(tube(0.02, 0.1, body, 0, 0.03, -0.24));
@@ -203,6 +309,7 @@ export function buildSmgViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const eject = new THREE.Object3D();
   eject.position.set(0.031, 0.025, -0.06);
   group.add(eject);
+  addFirstPersonHands(group, mat, -0.22, -0.05);
 
   return { group, muzzle, eject };
 }
@@ -221,7 +328,7 @@ export function buildShotgunViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const gripMat = mat.painted(PAL.timberDark, 0.85, 0.0);
 
   // Receiver + long barrel over the magazine tube.
-  group.add(box(0.06, 0.08, 0.22, body, 0, 0.02, -0.02));
+  group.add(roundedBox(0.06, 0.08, 0.22, body, 0, 0.02, -0.02, 0.012));
   group.add(tube(0.013, 0.46, darkMetal, 0, 0.045, -0.32));
   group.add(tube(0.011, 0.4, brightMetal, 0, 0.005, -0.3));
   // Barrel band + end cap where the tubes meet the muzzle.
@@ -249,6 +356,7 @@ export function buildShotgunViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const eject = new THREE.Object3D();
   eject.position.set(0.033, 0.03, -0.02);
   group.add(eject);
+  addFirstPersonHands(group, mat, -0.30, -0.045);
 
   return { group, muzzle, eject };
 }
@@ -269,7 +377,7 @@ export function buildSniperViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const lens = mat.glass;
 
   // Receiver + long free-floated barrel.
-  group.add(box(0.058, 0.08, 0.3, body, 0, 0.02, -0.08));
+  group.add(roundedBox(0.058, 0.08, 0.3, body, 0, 0.02, -0.08, 0.012));
   group.add(tube(0.01, 0.5, darkMetal, 0, 0.04, -0.48));
   group.add(tube(0.015, 0.04, brightMetal, 0, 0.04, -0.72));
   // Forend + folded bipod legs underneath.
@@ -306,6 +414,7 @@ export function buildSniperViewmodel(mat: MaterialLibrary): ViewmodelRig {
   const eject = new THREE.Object3D();
   eject.position.set(0.033, 0.03, -0.05);
   group.add(eject);
+  addFirstPersonHands(group, mat, -0.32, -0.045);
 
   return { group, muzzle, eject };
 }

@@ -45,6 +45,8 @@ export interface OrdnanceSceneOptions {
   readonly colliders: readonly AABB[];
   readonly hud: HudApi;
   readonly weapons: WeaponsController;
+  /** True only while the atmosphere post pass can render gameplay smoke. */
+  readonly volumetricSmoke?: () => boolean;
 }
 
 const WEAPON_NAME: ReadonlyMap<string, string> = new Map(WEAPONS.map((w) => [w.id, w.name.toUpperCase()]));
@@ -60,6 +62,7 @@ export class OrdnanceScene {
   private lastPickupSeq = 0;
   private lastSpawnSeq = 0;
   private readonly onBlast: (x: number, y: number, z: number) => void;
+  private readonly volumetricSmoke: () => boolean;
 
   constructor(opts: OrdnanceSceneOptions) {
     this.world = createWorldQuery(opts.colliders);
@@ -69,6 +72,7 @@ export class OrdnanceScene {
     opts.scene.add(this.drops.group);
     this.hud = opts.hud;
     this.weapons = opts.weapons;
+    this.volumetricSmoke = opts.volumetricSmoke ?? (() => false);
     this.onBlast = (x, y, z) => this.weapons.blastAt(x, y, z);
   }
 
@@ -80,6 +84,9 @@ export class OrdnanceScene {
 
   /** A new match's client (or null at teardown). Called through the session's `MatchUi`. */
   bind(client: GameClient | null): void {
+    this.grenades.reset();
+    this.grenades.group.visible = client !== null;
+    this.drops.group.visible = client !== null;
     this.client = client;
     this.tacticalId = OrdnanceScene.tacticalFor();
     this.lastPickupSeq = client === null ? 0 : client.ordnance.self.pickupSeq;
@@ -96,7 +103,7 @@ export class OrdnanceScene {
     if (c === null) return;
     const v: OrdnanceView = c.ordnance;
     v.expire(nowMs);
-    this.grenades.update(dt, nowMs, v, this.onBlast);
+    this.grenades.update(dt, nowMs, v, this.onBlast, this.volumetricSmoke());
     this.drops.update(nowMs, v);
 
     const self = v.self;
@@ -140,7 +147,10 @@ export class OrdnanceScene {
       self: { ...v.self },
       live: this.grenades.counts(v),
       drops: v.drops.map((d) => ({ id: d.id, weaponId: d.weaponId, rounds: d.rounds, grenades: d.grenades, x: d.x, y: d.y, z: d.z })),
-      smokes: v.smokes.map((s) => ({ id: s.id, kind: s.kind, radius: s.radius })),
+      smokes: v.smokes.map((s) => ({
+        id: s.id, kind: s.kind, radius: s.radius, x: s.x, y: s.y, z: s.z,
+        bornAt: s.bornAt, diesAt: s.diesAt,
+      })),
       hand: this.weapons.command('ordnance'),
     };
   }

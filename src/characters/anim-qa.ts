@@ -51,7 +51,7 @@ export interface AnimQA {
   place(i: number, x: number, z: number, yaw?: number): boolean;
   pin(i: number, x: number, z: number, yaw?: number): boolean;
   unpin(): void;
-  drive(i: number, speed: number, crouch?: boolean): boolean;
+  drive(i: number, speed: number, crouch?: boolean, prone?: boolean): boolean;
   aim(i: number, weight: number, pitch?: number): boolean;
   solo(i: number): number;
   showAll(): number;
@@ -136,11 +136,12 @@ export function installAnimQA(s: AnimSystem): void {
       return true;
     },
     unpin() { pinned.clear(); },
-    drive(i, speed, crouch = false) {
+    drive(i, speed, crouch = false, prone = false) {
       const c = pick(i);
       if (!c) return false;
       c.input.speed = speed;
       c.input.crouch = crouch;
+      c.input.prone = prone;
       return true;
     },
     aim(i, weight, pitch = 0) {

@@ -19,6 +19,10 @@ import { EYE_HEIGHT, SPAWN_A } from './layout';
 
 const HALF_W = 0.3;          // player half-width (0.6 m capsule)
 const BODY_H = 1.78;         // full standing height
+const CROUCH_H = 1.16;       // crouched capsule height, measured from the feet
+const PRONE_H = 0.52;         // face-down capsule height, helmet included
+const CROUCH_EYE = 1.08;      // eye height above the feet while crouched
+const PRONE_EYE = 0.50;       // eye height above the feet while prone
 const STEP_UP = 0.38;        // kerbs, stair treads, low ledges
 // Movement tuned to Black Ops 2 rather than picked by feel. BO2 is a Quake-lineage
 // engine where 1 unit = 1 inch, gravity is 800 units/s^2 = 20.32 m/s^2, and a jump
@@ -29,9 +33,13 @@ const GRAVITY = 20.32;
 const JUMP_V = 4.94;         // ~0.60 m apex
 const WALK = 4.8;            // ~190 units/s, CoD base
 const SPRINT = 6.6;          // ~1.37x base, BO2 sprint multiplier
+const CROUCH_SPEED = 2.75;
+const PRONE_SPEED = 1.25;
 const ACCEL = 62.0;
 const FRICTION = 11.5;
 const MAX_DT = 1 / 20;       // clamp: never integrate more than a 50 ms step
+
+export type PlayerStance = 'stand' | 'crouch' | 'prone';
 
 /** WALK: gravity + collision. FLY: 6-axis, no gravity, still collides. NOCLIP: through everything. */
 export type MoveMode = 'walk' | 'fly' | 'noclip';
@@ -46,6 +54,8 @@ export interface PlayerState {
   yaw: number;
   pitch: number;
   grounded: boolean;
+  /** Effective gameplay stance; camera/body transitions are smoothed locally. */
+  stance: PlayerStance;
 }
 
 export class Player {
@@ -57,6 +67,8 @@ export class Player {
   private probeWish: { x: number; z: number } | null = null;
   private mode: MoveMode = 'walk';
   private flySpeed = FLY_DEFAULT;
+  private bodyHeight = BODY_H;
+  private eyeHeight = EYE_HEIGHT;
 
   constructor(private camera: THREE.PerspectiveCamera, private dom: HTMLElement) {
     this.state = {
@@ -65,6 +77,7 @@ export class Player {
       yaw: SPAWN_A.yaw,
       pitch: 0,
       grounded: true,
+      stance: 'stand',
     };
     this.bind();
   }
@@ -87,6 +100,9 @@ export class Player {
     this.state.vel.set(0, 0, 0);
     this.state.yaw = yaw;
     this.state.pitch = pitch;
+    this.state.stance = 'stand';
+    this.bodyHeight = BODY_H;
+    this.eyeHeight = EYE_HEIGHT;
     this.syncCamera();
   }
 
@@ -98,6 +114,7 @@ export class Player {
       if (e.repeat) return;
       if (e.code === 'KeyF') this.toggleFly();
       else if (e.code === 'KeyC') this.toggleNoclip();
+      else if (e.code === 'KeyZ') this.toggleProne();
       else if (e.code === 'BracketLeft') this.adjustFlySpeed(1 / 1.25);
       else if (e.code === 'BracketRight') this.adjustFlySpeed(1.25);
     });
@@ -132,6 +149,9 @@ export class Player {
   // ---------------------------------------------------------- inspection modes
   getMode(): MoveMode { return this.mode; }
   getFlySpeed(): number { return this.flySpeed; }
+  getStance(): PlayerStance { return this.state.stance; }
+  getEyeHeight(): number { return this.eyeHeight; }
+  getBodyHeight(): number { return this.bodyHeight; }
   setFlySpeed(v: number): void {
     this.flySpeed = Math.max(FLY_MIN, Math.min(FLY_MAX, v));
   }
@@ -155,6 +175,32 @@ export class Player {
     // axis refuses and gravity cannot help. Rise to the first free spot instead.
     if (m !== 'noclip') this.depenetrate();
   }
+
+  /**
+   * Request a stance change. Standing is admitted only when the full standing
+   * body fits at the current feet position; this is the headroom guard used by
+   * Ctrl release, Z release, and jumping out of a low stance. Lowering never
+   * needs a clearance test, so a player can crouch or go prone below a roof.
+   */
+  setStance(stance: PlayerStance): boolean {
+    const requestedHeight = stance === 'prone' ? PRONE_H : stance === 'crouch' ? CROUCH_H : BODY_H;
+    if (requestedHeight > this.bodyHeight && this.mode !== 'noclip' && !this.canOccupy(this.state.pos, requestedHeight)) {
+      return false;
+    }
+    this.state.stance = stance;
+    return true;
+  }
+
+  /** Hold/release control for the normal crouch stance. */
+  setCrouch(active: boolean): boolean {
+    if (this.state.stance === 'prone' && active) return false;
+    return this.setStance(active ? 'crouch' : 'stand');
+  }
+
+  /** Z toggles prone. A blocked stand request leaves the player prone. */
+  toggleProne(): boolean {
+    return this.setStance(this.state.stance === 'prone' ? 'stand' : 'prone');
+  }
   /** If the player box overlaps anything, rise in 0.5 m steps to free air. */
   private depenetrate(): void {
     const p = this.state.pos;
@@ -167,10 +213,10 @@ export class Player {
   }
 
   /** Does the player box at this feet-position overlap anything? */
-  private hits(p: THREE.Vector3, feetLift = 0): AABB | null {
+  private hits(p: THREE.Vector3, feetLift = 0, height = this.bodyHeight): AABB | null {
     const minX = p.x - HALF_W, maxX = p.x + HALF_W;
     const minZ = p.z - HALF_W, maxZ = p.z + HALF_W;
-    const minY = p.y + feetLift, maxY = p.y + BODY_H;
+    const minY = p.y + feetLift, maxY = p.y + height;
     for (const c of this.colliders) {
       if (maxX <= c.min.x || minX >= c.max.x) continue;
       if (maxZ <= c.min.z || minZ >= c.max.z) continue;
@@ -178,6 +224,41 @@ export class Player {
       return c;
     }
     return null;
+  }
+
+  private canOccupy(p: THREE.Vector3, height: number): boolean {
+    return this.hits(p, 0.02, height) === null;
+  }
+
+  private targetBodyHeight(): number {
+    if (this.state.stance === 'prone') return PRONE_H;
+    if (this.state.stance === 'crouch') return CROUCH_H;
+    return BODY_H;
+  }
+
+  private targetEyeHeight(): number {
+    if (this.state.stance === 'prone') return PRONE_EYE;
+    if (this.state.stance === 'crouch') return CROUCH_EYE;
+    return EYE_HEIGHT;
+  }
+
+  /** Ease the physical capsule and camera to the admitted stance target. */
+  private updateStance(dt: number): void {
+    // Movement can carry a partially raised body under a new obstruction.
+    // Recheck clearance throughout the transition, not only on the key edge.
+    if (this.targetBodyHeight() > this.bodyHeight && !this.canOccupy(this.state.pos, this.targetBodyHeight())) {
+      this.state.stance = this.canOccupy(this.state.pos, CROUCH_H) ? 'crouch' : 'prone';
+    }
+    const k = 1 - Math.exp(-14 * dt);
+    this.bodyHeight += (this.targetBodyHeight() - this.bodyHeight) * k;
+    this.eyeHeight += (this.targetEyeHeight() - this.eyeHeight) * k;
+  }
+
+  /** Ctrl is held; Z is a separate toggle and therefore takes precedence. */
+  private updateHeldStance(): void {
+    if (this.state.stance === 'prone') return;
+    const crouch = this.keys.has('ControlLeft') || this.keys.has('ControlRight');
+    this.setCrouch(crouch);
   }
 
   /** Highest collider top under the player box, at or below `y`. */
@@ -272,6 +353,9 @@ export class Player {
   private updateWalk(dt: number): void {
     const st = this.state;
 
+    this.updateHeldStance();
+    this.updateStance(dt);
+
     // ---- wish direction in the yaw frame
     const f = this.keys.has('KeyW') ? 1 : 0;
     const b = this.keys.has('KeyS') ? 1 : 0;
@@ -299,7 +383,13 @@ export class Player {
       moving = true;
     }
 
-    const speed = this.keys.has('ShiftLeft') || this.keys.has('ShiftRight') ? SPRINT : WALK;
+    const sprintHeld = this.keys.has('ShiftLeft') || this.keys.has('ShiftRight');
+    // Low stances are deliberately speed-gated: Shift never turns a prone or
+    // crouched player into a sprint, which keeps the stance animation and root
+    // movement in the same speed family.
+    const speed = st.stance === 'prone' ? PRONE_SPEED
+      : st.stance === 'crouch' ? CROUCH_SPEED
+        : sprintHeld ? SPRINT : WALK;
 
     // ---- horizontal accelerate / friction
     if (moving) {
@@ -315,8 +405,13 @@ export class Player {
 
     // ---- jump
     if (st.grounded && this.keys.has('Space')) {
-      st.vel.y = JUMP_V;
-      st.grounded = false;
+      // A jump leaves crouch/prone only after the full standing capsule fits.
+      // Under a low ceiling the request is refused and the player remains in
+      // the low stance instead of clipping their head through the ceiling.
+      if (st.stance === 'stand' || this.setStance('stand')) {
+        st.vel.y = JUMP_V;
+        st.grounded = false;
+      }
     }
 
     st.vel.y -= GRAVITY * dt;
@@ -357,7 +452,7 @@ export class Player {
 
   private syncCamera(): void {
     const st = this.state;
-    this.camera.position.set(st.pos.x, st.pos.y + EYE_HEIGHT, st.pos.z);
+    this.camera.position.set(st.pos.x, st.pos.y + this.eyeHeight, st.pos.z);
     this.camera.rotation.set(0, 0, 0, 'YXZ');
     this.camera.rotation.y = st.yaw;
     this.camera.rotation.x = st.pitch;

@@ -1,6 +1,8 @@
 /**
- * Procedural material library. Every texture is drawn in code on a canvas -
- * nothing is downloaded, nothing is imported from another project.
+ * Material library. Every material has a procedural fallback drawn in code on a
+ * canvas. A small, hash-pinned CC0 Poly Haven set may upgrade the asphalt,
+ * concrete, lawn and deck channels asynchronously after the synchronous scene
+ * build; a failed download leaves the authored fallback in place.
  * Materials are shared singletons: build them ONCE and reuse, so the renderer
  * compiles a small, fixed set of programs.
  */
@@ -31,9 +33,22 @@ import {
   vec4,
 } from 'three/tsl';
 import { PAL } from './palette';
+import { createPaintedSurfaceMaps, loadExternalSurfaceSet } from './material-surfaces';
+import type { SurfaceTextureSet } from './material-surfaces';
 
 type Ctx2D = CanvasRenderingContext2D;
 type N = ShaderNodeObject<Node>;
+
+// Material generation is part of the authored scene, so it must be reproducible.
+// The old maps used Math.random(), which made a fresh build subtly different on
+// every launch and made visual regression captures difficult to compare.
+let proceduralSeed = 0x4d41544c;
+function materialRandom(): number {
+  proceduralSeed = (Math.imul(proceduralSeed ^ (proceduralSeed >>> 15), 1 | proceduralSeed) + 0x6d2b79f5) | 0;
+  let t = Math.imul(proceduralSeed ^ (proceduralSeed >>> 15), 1 | proceduralSeed);
+  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
 
 // ---------------------------------------------------------------------------
 // WEATHER SURFACES (atmosphere lane, additive). One global uniform, read by the
@@ -85,10 +100,10 @@ function hex(n: number): string {
 /** speckle splatter used to break up flat fills */
 function speckle(c: Ctx2D, s: number, n: number, alpha: number, dark = true): void {
   for (let i = 0; i < n; i++) {
-    const x = Math.random() * s;
-    const y = Math.random() * s;
-    const r = Math.random() * (s / 180) + s / 400;
-    const a = (alpha * Math.random()).toFixed(3);
+    const x = materialRandom() * s;
+    const y = materialRandom() * s;
+    const r = materialRandom() * (s / 180) + s / 400;
+    const a = (alpha * materialRandom()).toFixed(3);
     c.fillStyle = dark ? 'rgba(0,0,0,' + a + ')' : 'rgba(255,255,255,' + a + ')';
     c.beginPath();
     c.arc(x, y, r, 0, Math.PI * 2);
@@ -132,12 +147,12 @@ function blotches(
   yMin = 0, yMax = 1,
 ): void {
   for (let i = 0; i < n; i++) {
-    const r = Math.min(s * 0.24, rMin + Math.random() * (rMax - rMin));
-    const x = r + Math.random() * Math.max(1, s - 2 * r);
+    const r = Math.min(s * 0.24, rMin + materialRandom() * (rMax - rMin));
+    const x = r + materialRandom() * Math.max(1, s - 2 * r);
     const top = yMin * s + r;
     const bot = yMax * s - r;
-    const y = top + Math.random() * Math.max(1, bot - top);
-    const a = (aMax * (0.4 + Math.random() * 0.6)).toFixed(3);
+    const y = top + materialRandom() * Math.max(1, bot - top);
+    const a = (aMax * (0.4 + materialRandom() * 0.6)).toFixed(3);
     const g = c.createRadialGradient(x, y, 0, x, y, r);
     g.addColorStop(0, tone(a));
     g.addColorStop(1, 'rgba(0,0,0,0)');
@@ -257,16 +272,21 @@ export interface MaterialLibrary {
 }
 
 export function buildMaterials(): MaterialLibrary {
+  // Restart the stream for every library so a reload is byte-for-byte stable.
+  proceduralSeed = 0x4d41544c;
   const cache = new Map<string, THREE.Material>();
-  const owned: { dispose: () => void }[] = [];
+  const owned = new Set<{ dispose: () => void }>();
+  const own = (resource: { dispose: () => void }): void => { owned.add(resource); };
+  let disposed = false;
+  const wetRefresh = new Map<THREE.Material, () => void>();
 
   const std = (p: THREE.MeshStandardMaterialParameters): THREE.MeshStandardMaterial => {
     const m = new THREE.MeshStandardMaterial(p);
-    owned.push(m);
-    if (p.map) owned.push(p.map);
-    if (p.roughnessMap) owned.push(p.roughnessMap);
-    if (p.normalMap) owned.push(p.normalMap);
-    if (p.emissiveMap && p.emissiveMap !== p.map) owned.push(p.emissiveMap);
+    own(m);
+    if (p.map) own(p.map);
+    if (p.roughnessMap) own(p.roughnessMap);
+    if (p.normalMap) own(p.normalMap);
+    if (p.emissiveMap && p.emissiveMap !== p.map) own(p.emissiveMap);
     return m;
   };
   /**
@@ -278,15 +298,31 @@ export function buildMaterials(): MaterialLibrary {
    */
   const wetStd = (p: THREE.MeshStandardMaterialParameters, k: number): THREE.Material => {
     const m = new MeshStandardNodeMaterial(p);
-    owned.push(m);
-    if (p.map) owned.push(p.map);
-    if (p.roughnessMap) owned.push(p.roughnessMap);
-    if (p.normalMap) owned.push(p.normalMap);
+    own(m);
+    if (p.map) own(p.map);
+    if (p.roughnessMap) own(p.roughnessMap);
+    if (p.normalMap) own(p.normalMap);
     const wet = WETNESS.mul(k);
-    m.roughnessNode = materialRoughness.mul(oneMinus(wet.mul(WET_ROUGHNESS_DROP)));
-    m.colorNode = materialColor.mul(vec4(vec3(oneMinus(wet.mul(WET_ALBEDO_DROP))), 1));
+    const refresh = (): void => {
+      // materialColor/materialRoughness resolve map fields during the Three.js
+      // node build. Reinstalling these small graphs before needsUpdate makes
+      // the async PBR swap explicit for WebGPU and keeps wetness in the graph.
+      m.roughnessNode = materialRoughness.mul(oneMinus(wet.mul(WET_ROUGHNESS_DROP)));
+      m.colorNode = materialColor.mul(vec4(vec3(oneMinus(wet.mul(WET_ALBEDO_DROP))), 1));
+    };
+    refresh();
+    wetRefresh.set(m, refresh);
     return m;
   };
+
+  // A single restrained detail set gives the many small painted props a shared
+  // believable surface response. Keeping this outside painted() avoids one
+  // albedo/roughness/normal trio per colour while still giving each material its
+  // own base coat through `color`.
+  const paintedSurface = createPaintedSurfaceMaps(materialRandom);
+  own(paintedSurface.map);
+  own(paintedSurface.roughnessMap);
+  own(paintedSurface.normalMap);
 
   // ---- big paving slabs, the dominant surround surface
   const pavingTex = tex(512, 14, (c, s) => {
@@ -296,7 +332,7 @@ export function buildMaterials(): MaterialLibrary {
     const cell = s / n;
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
-        const v = (0.04 + Math.random() * 0.1).toFixed(3);
+        const v = (0.04 + materialRandom() * 0.1).toFixed(3);
         c.fillStyle = 'rgba(255,255,255,' + v + ')';
         c.fillRect(i * cell + 1.5, j * cell + 1.5, cell - 3, cell - 3);
       }
@@ -311,18 +347,24 @@ export function buildMaterials(): MaterialLibrary {
     blotches(c, s, 8, s * 0.05, s * 0.16, (a) => 'rgba(216,210,198,' + a + ')', 0.1);
   });
 
-  // ---- mown lawn with alternating stripes (very visible in the aerial)
+  // ---- mown lawn: broad value drift and quiet mow bands. The former 8-cell
+  // checker read as green triangles at gameplay range; keep the procedural
+  // fallback deterministic, but let the real CC0 grass set carry close detail
+  // when its complete diffuse/roughness/normal trio arrives.
   const lawnTex = tex(512, 10, (c, s) => {
     c.fillStyle = hex(PAL.lawn);
     c.fillRect(0, 0, s, s);
-    const band = s / 8;
+    const band = s / 12;
+    c.globalAlpha = 0.075;
     c.fillStyle = hex(PAL.lawnLight);
-    for (let i = 0; i < 8; i += 2) c.fillRect(i * band, 0, band, s);
-    c.globalAlpha = 0.55;
-    for (let i = 0; i < 8; i += 2) c.fillRect(0, i * band, s, band);
+    for (let i = 0; i < 12; i += 2) c.fillRect(i * band, 0, band, s);
+    c.globalAlpha = 0.045;
+    for (let i = 0; i < 12; i += 2) c.fillRect(0, i * band, s, band);
     c.globalAlpha = 1;
-    speckle(c, s, 600, 0.05);
-    speckle(c, s, 400, 0.035, false);
+    blotches(c, s, 24, s * 0.025, s * 0.11, (a) => 'rgba(24,54,24,' + a + ')', 0.07);
+    blotches(c, s, 18, s * 0.02, s * 0.09, (a) => 'rgba(126,153,72,' + a + ')', 0.055);
+    speckle(c, s, 1800, 0.035);
+    speckle(c, s, 900, 0.028, false);
   });
 
   const asphaltTex = tex(512, 22, (c, s) => {
@@ -376,7 +418,7 @@ export function buildMaterials(): MaterialLibrary {
     c.fillRect(0, 0, s, s);
     const w = s / n;
     for (let i = 0; i < n; i++) {
-      const v = (Math.random() * 0.18).toFixed(3);
+      const v = (materialRandom() * 0.18).toFixed(3);
       c.fillStyle = 'rgba(0,0,0,' + v + ')';
       c.fillRect(i * w, 0, w, s);
       c.strokeStyle = hex(dark);
@@ -385,8 +427,8 @@ export function buildMaterials(): MaterialLibrary {
       c.strokeStyle = 'rgba(0,0,0,0.10)';
       c.lineWidth = 1;
       for (let g = 0; g < 5; g++) {
-        const gx = i * w + Math.random() * w;
-        c.beginPath(); c.moveTo(gx, 0); c.lineTo(gx + (Math.random() - 0.5) * 6, s); c.stroke();
+        const gx = i * w + materialRandom() * w;
+        c.beginPath(); c.moveTo(gx, 0); c.lineTo(gx + (materialRandom() - 0.5) * 6, s); c.stroke();
       }
     }
   });
@@ -395,13 +437,13 @@ export function buildMaterials(): MaterialLibrary {
     c.fillStyle = hex(PAL.hedge);
     c.fillRect(0, 0, s, s);
     for (let i = 0; i < 4500; i++) {
-      const x = Math.random() * s;
-      const y = Math.random() * s;
-      const a = (Math.random() * 0.3).toFixed(3);
-      c.fillStyle = Math.random() > 0.5
+      const x = materialRandom() * s;
+      const y = materialRandom() * s;
+      const a = (materialRandom() * 0.3).toFixed(3);
+      c.fillStyle = materialRandom() > 0.5
         ? 'rgba(120,170,90,' + a + ')'
         : 'rgba(0,0,0,' + a + ')';
-      c.fillRect(x, y, 2 + Math.random() * 3, 2 + Math.random() * 3);
+      c.fillRect(x, y, 2 + materialRandom() * 3, 2 + materialRandom() * 3);
     }
   });
 
@@ -418,7 +460,7 @@ export function buildMaterials(): MaterialLibrary {
     }
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
-        const a = (0.02 + Math.random() * 0.05).toFixed(3);
+        const a = (0.02 + materialRandom() * 0.05).toFixed(3);
         c.fillStyle = 'rgba(255,255,255,' + a + ')';
         c.fillRect(i * cell + 2, j * cell + 2, cell - 4, cell - 4);
       }
@@ -433,7 +475,7 @@ export function buildMaterials(): MaterialLibrary {
     const cell = s / n;
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
-        c.fillStyle = R(0.6 + Math.random() * 0.1);
+        c.fillStyle = R(0.6 + materialRandom() * 0.1);
         c.fillRect(i * cell + 1, j * cell + 1, cell - 2, cell - 2);
       }
     }
@@ -466,9 +508,9 @@ export function buildMaterials(): MaterialLibrary {
     c.fillStyle = R(0.65);
     c.fillRect(0, 0, s, s);
     for (let i = 0; i < 7; i++) {
-      const r = s * (0.06 + Math.random() * 0.1);
-      const x = r + Math.random() * Math.max(1, s - 2 * r);
-      const y = r + Math.random() * Math.max(1, s - 2 * r);
+      const r = s * (0.06 + materialRandom() * 0.1);
+      const x = r + materialRandom() * Math.max(1, s - 2 * r);
+      const y = r + materialRandom() * Math.max(1, s - 2 * r);
       c.save();
       c.translate(x, y);
       c.rotate(Math.PI / 5);
@@ -515,17 +557,17 @@ export function buildMaterials(): MaterialLibrary {
     c.fillStyle = R(0.96);
     c.fillRect(0, 0, s, s);
     for (let i = 0; i < 2200; i++) {
-      c.fillStyle = R(0.9 + Math.random() * 0.1);
-      c.fillRect(Math.random() * s, Math.random() * s, 2 + Math.random() * 3, 2 + Math.random() * 3);
+      c.fillStyle = R(0.9 + materialRandom() * 0.1);
+      c.fillRect(materialRandom() * s, materialRandom() * s, 2 + materialRandom() * 3, 2 + materialRandom() * 3);
     }
   });
   const hedgeNormal = normalTex(256, 5, (c, s) => {
     c.fillStyle = gray(110);
     c.fillRect(0, 0, s, s);
     for (let i = 0; i < 1200; i++) {
-      c.fillStyle = gray(110 + Math.random() * 90);
+      c.fillStyle = gray(110 + materialRandom() * 90);
       c.beginPath();
-      c.arc(Math.random() * s, Math.random() * s, 2 + Math.random() * 5, 0, Math.PI * 2);
+      c.arc(materialRandom() * s, materialRandom() * s, 2 + materialRandom() * 5, 0, Math.PI * 2);
       c.fill();
     }
   }, 2);
@@ -584,15 +626,15 @@ export function buildMaterials(): MaterialLibrary {
       c.fillRect(0, 0, s, s);
       const w = s / n;
       for (let i = 0; i < n; i++) {
-        c.fillStyle = R(base - 0.06 + Math.random() * 0.12);
+        c.fillStyle = R(base - 0.06 + materialRandom() * 0.12);
         c.fillRect(i * w + 1, 0, w - 2, s);
         for (let g = 0; g < 6; g++) {
-          const gx = i * w + 1 + Math.random() * Math.max(1, w - 2);
-          c.strokeStyle = 'rgba(235,235,235,' + (0.05 + Math.random() * 0.08).toFixed(3) + ')';
-          c.lineWidth = 1 + Math.random() * 1.5;
+          const gx = i * w + 1 + materialRandom() * Math.max(1, w - 2);
+          c.strokeStyle = 'rgba(235,235,235,' + (0.05 + materialRandom() * 0.08).toFixed(3) + ')';
+          c.lineWidth = 1 + materialRandom() * 1.5;
           c.beginPath();
           c.moveTo(gx, 0);
-          c.lineTo(gx + (Math.random() - 0.5) * 8, s);
+          c.lineTo(gx + (materialRandom() - 0.5) * 8, s);
           c.stroke();
         }
       }
@@ -607,12 +649,12 @@ export function buildMaterials(): MaterialLibrary {
       for (let i = 0; i <= n; i++) c.fillRect(i * w - 1.5, 0, 3, s);
       for (let i = 0; i < n; i++) {
         for (let g = 0; g < 8; g++) {
-          const gx = i * w + Math.random() * w;
-          c.strokeStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.22)';
+          const gx = i * w + materialRandom() * w;
+          c.strokeStyle = materialRandom() > 0.5 ? 'rgba(0,0,0,0.25)' : 'rgba(255,255,255,0.22)';
           c.lineWidth = 1;
           c.beginPath();
           c.moveTo(gx, 0);
-          c.lineTo(gx + (Math.random() - 0.5) * 6, s);
+          c.lineTo(gx + (materialRandom() - 0.5) * 6, s);
           c.stroke();
         }
       }
@@ -631,8 +673,8 @@ export function buildMaterials(): MaterialLibrary {
     const cell = s / n;
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
-        const v = (0.03 + Math.random() * 0.08).toFixed(3);
-        c.fillStyle = Math.random() > 0.5
+        const v = (0.03 + materialRandom() * 0.08).toFixed(3);
+        c.fillStyle = materialRandom() > 0.5
           ? 'rgba(255,255,255,' + v + ')'
           : 'rgba(0,0,0,' + v + ')';
         c.fillRect(i * cell + 1, j * cell + 1, cell - 2, cell - 2);
@@ -663,14 +705,14 @@ export function buildMaterials(): MaterialLibrary {
     c.fillStyle = hex(PAL.treeTrunk);
     c.fillRect(0, 0, s, s);
     for (let g = 0; g < 40; g++) {
-      const x = Math.random() * s;
-      c.strokeStyle = Math.random() > 0.4
-        ? 'rgba(0,0,0,' + (0.08 + Math.random() * 0.12).toFixed(3) + ')'
-        : 'rgba(255,255,255,' + (0.04 + Math.random() * 0.06).toFixed(3) + ')';
-      c.lineWidth = 1 + Math.random() * 3;
+      const x = materialRandom() * s;
+      c.strokeStyle = materialRandom() > 0.4
+        ? 'rgba(0,0,0,' + (0.08 + materialRandom() * 0.12).toFixed(3) + ')'
+        : 'rgba(255,255,255,' + (0.04 + materialRandom() * 0.06).toFixed(3) + ')';
+      c.lineWidth = 1 + materialRandom() * 3;
       c.beginPath();
       c.moveTo(x, 0);
-      c.lineTo(x + (Math.random() - 0.5) * 10, s);
+      c.lineTo(x + (materialRandom() - 0.5) * 10, s);
       c.stroke();
     }
     speckle(c, s, 600, 0.08);
@@ -709,7 +751,7 @@ export function buildMaterials(): MaterialLibrary {
     c.fillStyle = R(0.42);
     c.fillRect(0, 0, s, s);
     for (let y = 0; y < s; y += 2) {
-      c.fillStyle = R(0.35 + Math.random() * 0.15);
+      c.fillStyle = R(0.35 + materialRandom() * 0.15);
       c.fillRect(0, y, s, 1);
     }
     speckle(c, s, 500, 0.05);
@@ -765,7 +807,15 @@ export function buildMaterials(): MaterialLibrary {
       const key = 'p' + color + '_' + rough + '_' + metal;
       let m = cache.get(key);
       if (!m) {
-        m = std({ color, roughness: rough, metalness: metal });
+        m = std({
+          color,
+          map: paintedSurface.map,
+          roughness: 1,
+          roughnessMap: paintedSurface.roughnessMap,
+          normalMap: paintedSurface.normalMap,
+          normalScale: new THREE.Vector2(0.16, 0.16),
+          metalness: metal,
+        });
         cache.set(key, m);
       }
       return m;
@@ -849,12 +899,91 @@ export function buildMaterials(): MaterialLibrary {
       return m;
     },
     dispose() {
+      disposed = true;
+      wetRefresh.clear();
       for (const o of owned) o.dispose();
-      for (const m of cache.values()) m.dispose();
       cache.clear();
-      owned.length = 0;
+      owned.clear();
     },
   };
+
+  /**
+   * Upgrade the synchronous procedural fallback atomically when a complete local
+   * PBR set arrives. Ground UV scales are established in build/ground.ts: asphalt
+   * is 40 world metres per UV and the paving family is 67.2, so these repeats map
+   * the source dimensions to their declared real-world widths instead of guessing
+   * from image pixels. Grass uses its 2 m source at repeat 48; wood stays at one
+   * repeat because its callers use ordinary box UVs rather than the ground
+   * metre-scaled helper.
+   */
+  type ExternalUpgrade = {
+    maps?: SurfaceTextureSet;
+    waiters: Array<(maps: SurfaceTextureSet) => void>;
+  };
+  const externalCache = new Map<string, ExternalUpgrade>();
+  const externalKey = (urls: Parameters<typeof loadExternalSurfaceSet>[0], repeat: number): string =>
+    `${urls.diffuse}|${urls.roughness}|${urls.normal}|${repeat}`;
+  const upgrade = (material: THREE.Material, urls: Parameters<typeof loadExternalSurfaceSet>[0], repeat: number): void => {
+    const key = externalKey(urls, repeat);
+    const apply = (maps: SurfaceTextureSet): void => {
+      if (disposed) {
+        maps.map.dispose(); maps.roughnessMap.dispose(); maps.normalMap.dispose();
+        return;
+      }
+      const target = material as THREE.Material & {
+        map?: THREE.Texture | null;
+        roughnessMap?: THREE.Texture | null;
+        normalMap?: THREE.Texture | null;
+      };
+      target.map = maps.map;
+      target.roughnessMap = maps.roughnessMap;
+      target.normalMap = maps.normalMap;
+      wetRefresh.get(material)?.();
+      material.needsUpdate = true;
+    };
+    const hit = externalCache.get(key);
+    if (hit) {
+      if (hit.maps) apply(hit.maps);
+      else hit.waiters.push(apply);
+      return;
+    }
+    const entry: ExternalUpgrade = { waiters: [apply] };
+    externalCache.set(key, entry);
+    loadExternalSurfaceSet(urls, repeat, (maps) => {
+      if (disposed) {
+        maps.map.dispose(); maps.roughnessMap.dispose(); maps.normalMap.dispose();
+        externalCache.delete(key);
+        return;
+      }
+      entry.maps = maps;
+      own(maps.map); own(maps.roughnessMap); own(maps.normalMap);
+      for (const waiter of entry.waiters) waiter(maps);
+      entry.waiters.length = 0;
+    }, () => disposed);
+  };
+  upgrade(lib.asphalt, {
+    diffuse: 'textures/polyhaven/asphalt-07/diffuse.jpg',
+    roughness: 'textures/polyhaven/asphalt-07/rough.jpg',
+    normal: 'textures/polyhaven/asphalt-07/normal.jpg',
+  }, 16);
+  upgrade(lib.paving, {
+    diffuse: 'textures/polyhaven/concrete-pavement-03/diffuse.jpg',
+    roughness: 'textures/polyhaven/concrete-pavement-03/rough.jpg',
+    normal: 'textures/polyhaven/concrete-pavement-03/normal.jpg',
+  }, 32);
+  upgrade(lib.concrete, {
+    diffuse: 'textures/polyhaven/concrete-pavement-03/diffuse.jpg',
+    roughness: 'textures/polyhaven/concrete-pavement-03/rough.jpg',
+    normal: 'textures/polyhaven/concrete-pavement-03/normal.jpg',
+  }, 32);
+  upgrade(lib.deckBoards, {
+    diffuse: 'textures/polyhaven/distressed-painted-planks/diffuse.jpg',
+    roughness: 'textures/polyhaven/distressed-painted-planks/rough.jpg',
+    normal: 'textures/polyhaven/distressed-painted-planks/normal.jpg',
+  }, 1);
+  // Sparse Grass remains in the reviewed asset library; the first runtime
+  // comparison read as bare soil here, so this lawn retains its soft turf fallback.
+
   return lib;
 }
 

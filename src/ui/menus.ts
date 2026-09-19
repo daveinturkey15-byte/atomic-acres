@@ -29,7 +29,7 @@ import { buildCredits, buildDeploying, buildEnd, buildError, buildMain, buildPau
 import { buildLobbyPanel } from './lobby';
 import { buildSettingsPanel } from './settings-panel';
 import {
-  applySettings, installInputShims, probeApplied, type AppliedProbe, type ApplyTargets, type MenuPlayer, type MenuWorld,
+  applySettings, installInputShims, probeApplied, type AppliedProbe, type ApplyTargets, type MenuPlayer, type MenuWorld, type MenuAudio,
 } from './settings-apply';
 import { buildSoloSetupPanel } from './solo-setup';
 import { loadSettings, resetSettings, saveSettings, type Settings } from './settings';
@@ -44,6 +44,7 @@ export interface MenuDeps {
   hud: HudApi;
   player: MenuPlayer;
   world: MenuWorld;
+  audio?: MenuAudio;
   match(): LocalMatch | null;
   names(): ReadonlyMap<string, string>;
 }
@@ -69,7 +70,7 @@ export function initMenus(deps: MenuDeps): MenuHandle {
   const found = document.getElementById('start');
   const overlay: HTMLElement = found ?? document.createElement('div');
   const canvas = deps.world.renderer?.domElement;
-  const targets: ApplyTargets = { player: deps.player, world: deps.world, hud: deps.hud };
+  const targets: ApplyTargets = { player: deps.player, world: deps.world, hud: deps.hud, audio: deps.audio };
 
   let settings: Settings = loadSettings();
   applySettings(settings, targets);

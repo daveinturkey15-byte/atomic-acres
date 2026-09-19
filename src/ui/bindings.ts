@@ -44,7 +44,7 @@ export const ACTION_DEFS: readonly ActionDef[] = Object.freeze([
   { id: 'weapon1', label: 'Primary weapon', code: 'Digit1', rebindable: true, consumer: 'main.ts keydown' },
   { id: 'weapon2', label: 'Secondary weapon', code: 'Digit2', rebindable: true, consumer: 'main.ts keydown' },
   { id: 'grenade', label: 'Grenade', code: 'KeyG', rebindable: true, consumer: 'ordnance lane' },
-  { id: 'knife', label: 'Knife', code: 'KeyF', rebindable: true, consumer: 'ordnance lane (F also toggles fly in core/player.ts)' },
+  { id: 'knife', label: 'Knife', code: 'KeyV', rebindable: true, consumer: 'main.ts keydown (walk only) -> weapons.controller' },
   { id: 'use', label: 'Use / pick up', code: 'KeyE', rebindable: true, consumer: 'ordnance lane (E is also fly-up in core/player.ts)' },
   { id: 'scoreboard', label: 'Scoreboard (hold)', code: 'Tab', rebindable: true, consumer: 'ui/hud.ts' },
 ]);
@@ -71,7 +71,11 @@ export function isBindableCode(code: unknown): code is string {
  */
 export function sanitizeBindings(raw: unknown): Bindings {
   const out: Record<Action, string> = { ...DEFAULT_BINDINGS };
-  const r = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  const incoming = raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
+  // 2026-09-19 repair: the table used to say KeyF while the runtime reads KeyV
+  // (KeyF is core/player.ts's fly toggle). A stored KeyF knife never knifed — it
+  // toggled fly — so it reads as the old default and migrates to KeyV, not kept.
+  const r = incoming['knife'] === 'KeyF' ? { ...incoming, knife: 'KeyV' } : incoming;
   const used = new Set<string>();
   for (const d of ACTION_DEFS) {
     let code = d.rebindable && isBindableCode(r[d.id]) ? (r[d.id] as string) : d.code;

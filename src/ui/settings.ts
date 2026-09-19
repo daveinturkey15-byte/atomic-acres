@@ -12,22 +12,35 @@
  * preset name beside stored knobs is the stale mirror IMPORT-PLAN §5.5 warns
  * about — the first time a knob moves the name lies.
  *
- * WHO CONSUMES WHAT (honest, as of the lobby lane, 2026-09-19):
+ * WHO CONSUMES WHAT (honest, as of the ui lane, 2026-09-19):
  *   fov, resolutionScale, shadowMapSize  — `settings-apply.ts`, live.
  *   sensitivity, invertY, bindings        — `settings-apply.ts` shims, live,
  *                                           until `core/player.ts` grows setters.
- *   ao, ssr, bloom                        — NOBODY. `core/post.ts` builds a fixed
- *                                           node graph with no toggle; the setter
- *                                           is requested in the lane report.
- *   masterVolume, effectsVolume           — NOBODY. The only audio is inside
- *                                           `weapons/controller.ts` with no volume
- *                                           hook; requested likewise.
+ *   ao, ssr, bloom                        — `settings-apply.ts` → `world.post.setEffects`, live.
+ *                                           On the WebGL2/off fallback the chain is
+ *                                           absent: the toggle is remembered by the
+ *                                           fallback and reported, not rendered.
+ *   fog                                   — `settings-apply.ts` → `world.post.setFog`, live
+ *                                           (same fallback caveat as ao/ssr/bloom).
+ *   tod, weather                          — `settings-apply.ts` → `world.atmosphere.set` /
+ *                                           `setWeather` (else `post.setAtmosphere`), live.
+ *                                           Uniform/env writes only; the light SET never changes.
+ *   masterVolume, effectsVolume           — NOBODY in this build. The only audio is inside
+ *                                           `weapons/controller.ts` with no volume hook.
+ *                                           `settings-apply.ts:ApplyTargets.audio.setVolumes`
+ *                                           is the offered signature for the audio lane.
  *   reducedMotion, damageFlashScale       — `ui/hud.ts`.
  *   weaponMotionScale                     — NOBODY YET (weapons lane's one-line read).
  *   netOverlay, callsign, linkTier, signalUrl — the menu and the lobby.
+ *
+ * QUERY PRECEDENCE. An explicit `?tod=` / `?weather=` in the page URL overrides the
+ * persisted value on the FIRST `loadSettings()` of the page load only, so camera
+ * captures pin a state. A later user adjustment writes storage and sticks; the
+ * override is one-shot and never re-applied.
  */
 
 import { DEFAULT_BINDINGS, sanitizeBindings, type Bindings } from './bindings';
+import { TOD_NAMES, WEATHER_NAMES, type TodName, type WeatherName } from '../core/atmosphere';
 
 // ---------------------------------------------------------------------------
 // Graphics tables
@@ -104,6 +117,12 @@ export interface Settings extends Accessibility, GraphicsKnobs {
   ssr: boolean;
   bloom: boolean;
   resolutionScale: number;
+  /** Analytic haze on/off. Default true — the baseline frame has haze. */
+  fog: boolean;
+  /** Time-of-day preset name. Default 'noon' — every capture baseline. */
+  tod: TodName;
+  /** Weather preset name. Default 'clear' — every capture baseline. */
+  weather: WeatherName;
   masterVolume: number;
   effectsVolume: number;
   /** Netcode diagnostics overlay (F3 toggles it too). */
@@ -126,6 +145,9 @@ export const DEFAULT_SETTINGS: Settings = Object.freeze({
   bindings: DEFAULT_BINDINGS,
   fov: 72,
   ...QUALITY_PRESETS.high,
+  fog: true,
+  tod: 'noon',
+  weather: 'clear',
   masterVolume: 1,
   effectsVolume: 1,
   netOverlay: false,
@@ -181,6 +203,9 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
     ssr: bool(r['ssr'], d.ssr),
     bloom: bool(r['bloom'], d.bloom),
     resolutionScale: num(r['resolutionScale'], RESOLUTION_MIN, 1, d.resolutionScale),
+    fog: bool(r['fog'], d.fog),
+    tod: (TOD_NAMES as readonly string[]).includes(r['tod'] as string) ? (r['tod'] as TodName) : d.tod,
+    weather: (WEATHER_NAMES as readonly string[]).includes(r['weather'] as string) ? (r['weather'] as WeatherName) : d.weather,
     masterVolume: num(r['masterVolume'], 0, 1, d.masterVolume),
     effectsVolume: num(r['effectsVolume'], 0, 1, d.effectsVolume),
     netOverlay: bool(r['netOverlay'], d.netOverlay),
@@ -209,13 +234,38 @@ export function presetPatch(name: QualityName): Partial<Settings> {
   return { ...QUALITY_PRESETS[name] };
 }
 
+/**
+ * One-shot capture override. The world is built from `?tod=` / `?weather=` before
+ * the menu ever loads, so the FIRST settings read of the page honours an explicit
+ * query value over storage; afterwards the player's own adjustment rules. Never
+ * throws, never touches storage. Unknown values fall through to the persisted one.
+ */
+let queryOverrideConsumed = false;
+function queryEnvironment(): Partial<Settings> {
+  if (queryOverrideConsumed) return {};
+  queryOverrideConsumed = true;
+  try {
+    if (typeof location === 'undefined' || !location.search) return {};
+    const q = new URLSearchParams(location.search);
+    const patch: Partial<Settings> = {};
+    const t = q.get('tod');
+    if (t && (TOD_NAMES as readonly string[]).includes(t)) patch.tod = t as TodName;
+    const w = q.get('weather');
+    if (w && (WEATHER_NAMES as readonly string[]).includes(w)) patch.weather = w as WeatherName;
+    return patch;
+  } catch {
+    return {};
+  }
+}
+
 export function loadSettings(): Settings {
+  const overlay = queryEnvironment();
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return sanitizeSettings({});
-    return sanitizeSettings(JSON.parse(raw) as Partial<Settings>);
+    if (!raw) return sanitizeSettings({ ...overlay });
+    return sanitizeSettings({ ...(JSON.parse(raw) as Partial<Settings>), ...overlay });
   } catch {
-    return sanitizeSettings({});
+    return sanitizeSettings({ ...overlay });
   }
 }
 

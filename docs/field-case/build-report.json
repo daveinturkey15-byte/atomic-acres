@@ -1,0 +1,96 @@
+{
+  "asset": "field-case",
+  "route": "original Blender-authored hard-surface canary",
+  "source": "scripts/blender/build_field_case.py",
+  "license": "original authored geometry and hand-authored maps; no external inputs",
+  "license_read": "2026-09-19",
+  "dimensions_m": {
+    "declared_body": [
+      0.9,
+      0.5,
+      0.5
+    ],
+    "measured_exterior": [
+      0.919,
+      0.515,
+      0.564
+    ],
+    "axis": "x,y,z in exported glTF space; fittings included"
+  },
+  "pivot": "ground-centre (0,0,0); +x is the case long axis",
+  "wall_thickness_m": 0.045,
+  "triangles": 3608,
+  "meshes": [
+    "FieldCasePaintMesh",
+    "FieldCaseMetalMesh",
+    "FieldCaseRubberMesh"
+  ],
+  "materials": [
+    "FieldCasePaint",
+    "FieldCaseRubber",
+    "FieldCaseSteel"
+  ],
+  "textures": [
+    {
+      "name": "FieldCase_BaseColor",
+      "width": 256,
+      "height": 256,
+      "colorspace": "sRGB"
+    },
+    {
+      "name": "FieldCase_Normal",
+      "width": 256,
+      "height": 256,
+      "colorspace": "Non-Color"
+    },
+    {
+      "name": "FieldCase_Roughness",
+      "width": 256,
+      "height": 256,
+      "colorspace": "Non-Color"
+    }
+  ],
+  "bounds_blender_z_up": {
+    "min": [
+      -0.4595,
+      -0.295,
+      0.0
+    ],
+    "max": [
+      0.4595,
+      0.269,
+      0.515
+    ],
+    "size": [
+      0.919,
+      0.564,
+      0.515
+    ]
+  },
+  "bounds_gltf_y_up": {
+    "min": [
+      -0.4595,
+      0.0,
+      -0.269
+    ],
+    "max": [
+      0.4595,
+      0.515,
+      0.295
+    ],
+    "size": [
+      0.919,
+      0.515,
+      0.564
+    ]
+  },
+  "glb_bytes": 463824,
+  "glb_sha256": "cf185ce8e9a2ecc3fa928c253fd04e70712a05e8f40abe96dec9f5441109c7b9",
+  "build_seconds": 0.469,
+  "budgets": {
+    "triangles_max": 5000,
+    "materials_max": 4,
+    "texture_edge_max": 2048,
+    "glb_bytes_max": 4000000
+  }
+}

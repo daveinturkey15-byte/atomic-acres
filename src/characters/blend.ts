@@ -23,6 +23,8 @@ export interface RigInput {
   /** Yaw rate in rad/s (+ = turning left). Drives a procedural lean. */
   turnRate: number;
   crouch: boolean;
+  /** Optional face-down stance; optional keeps existing callers compatible. */
+  prone?: boolean;
   /** -1..1, + looks up. Added to the chest and arms under aim. */
   aimPitch: number;
   /** 0 = arms swing with the gait, 1 = full rifle carry. */
@@ -216,11 +218,18 @@ function solveTwoBone(
   aimBone(fore, _cU.normalize(), w);
 }
 
-function pickLocomotion(speed: number, crouch: boolean): LocomotionName {
+function pickLocomotion(speed: number, crouch: boolean, prone: boolean, library: ClipLibrary): LocomotionName {
+  if (prone) return speed < 0.25 ? 'prone-idle' : 'prone-crawl';
   if (crouch) return speed < 0.25 ? 'crouch-idle' : 'crouch-walk';
   if (speed < 0.25) return 'idle';
-  if (speed < 2.3) return 'walk';
-  if (speed < 4.1) return 'run';
+  // Use the measured speeds of the loaded clips. The baked sprint is 2.84 m/s
+  // while the procedural fallback is 5.5 m/s; a fixed 4.1 threshold makes the
+  // baked clip run at an avoidable 1.44x timeScale before sprint is selected.
+  const walk = Math.max(0.01, library.walk.speed);
+  const run = Math.max(walk + 0.01, library.run.speed);
+  const sprint = Math.max(run + 0.01, library.sprint.speed);
+  if (speed < (walk + run) * 0.5) return 'walk';
+  if (speed < (run + sprint) * 0.5) return 'run';
   return 'sprint';
 }
 
@@ -405,7 +414,7 @@ export class CharacterRig {
         this.actions.get(this.locomotion)?.reset().play();
       }
     } else {
-      const want = pickLocomotion(input.speed, input.crouch);
+      const want = pickLocomotion(input.speed, input.crouch, input.prone === true, this.library);
       if (want !== this.locomotion) {
         const prev = this.actions.get(this.locomotion);
         const next = this.actions.get(want);
@@ -484,7 +493,14 @@ export class CharacterRig {
     // chest and both hands end up on it.
     const wantCarry = this.upper?.clip === 'hit-react'
       ? 0
-      : THREE.MathUtils.clamp(input.carryWeight ?? 1, 0, 1);
+      : input.prone
+        ? 0
+      // Reload is a hand action. Leave just enough carry to keep the rifle
+      // stable while allowing the authored right-arm/forearm excursion to
+      // read instead of being overwritten by the IK solve.
+      : this.upper?.clip === 'reload'
+        ? 0.28
+        : THREE.MathUtils.clamp(input.carryWeight ?? 1, 0, 1);
     this.carry += THREE.MathUtils.clamp(wantCarry - this.carry, -dt * 4, dt * 4);
     if (this.carry > 0.001) this.applyCarry(input, this.carry);
   }

@@ -27,6 +27,7 @@ import './menus.css';
 import './lobby.css';
 import { initHud, type HudApi, type ScoreRowView, type ScoreView, type StreakHudView } from './hud';
 import { initMenus, type MenuHandle, type MenuPlayer, type MenuWorld } from './menus';
+import type { MenuAudio } from './settings-apply';
 import { initGlyphScheme } from './glyphs';
 import { initNetOverlay } from './net-overlay';
 import type { ClientEdge, ClientView, GameClient } from '../game/client';
@@ -51,6 +52,7 @@ export interface UiPlayer extends MenuPlayer {
 export interface UiDeps {
   player: UiPlayer;
   world: MenuWorld;
+  audio?: MenuAudio;
 }
 
 export interface UiHandle {
@@ -167,7 +169,7 @@ export function initUI(deps: UiDeps): UiHandle {
   const names = new Map<string, string>();
   const matchOf = (): LocalMatch | null => bound ?? readWindowMatch();
 
-  const menu = initMenus({ hud, player: deps.player, world: deps.world, match: matchOf, names: () => names });
+  const menu = initMenus({ hud, player: deps.player, world: deps.world, audio: deps.audio, match: matchOf, names: () => names });
   initGlyphScheme();
   const net = initNetOverlay({
     hud: document.getElementById('hud'),

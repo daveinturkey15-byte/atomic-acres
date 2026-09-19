@@ -102,14 +102,12 @@ export const WEATHER_NAMES = ['clear', 'overcast', 'rain'] as const;
 export type WeatherName = (typeof WEATHER_NAMES)[number];
 
 /**
- * Colours are stored LINEAR, converted once here, by the same route each role took
- * before this module existed: light and fog colours are `new Color(hex)` (one sRGB ->
- * linear step), the dome / env colours are `new Color(hex).convertSRGBToLinear()` - a
- * SECOND step the original sky was tuned through. Both routes are kept per role so the
- * noon preset reproduces today's frame; the other presets are authored through them.
+ * Colours are stored LINEAR. Three 0.180 Color(hex) already converts sRGB input;
+ * converting again darkened the environment and crushed rough-metal reflections.
+ * Both light/fog and dome/environment therefore use exactly one conversion.
  */
 const lightCol = (hex: number): THREE.Color => new THREE.Color(hex);
-const skyCol = (hex: number): THREE.Color => new THREE.Color(hex).convertSRGBToLinear();
+const skyCol = (hex: number): THREE.Color => new THREE.Color(hex);
 
 export interface TodPreset {
   readonly name: TodName;
@@ -390,7 +388,7 @@ export function bakeEnvironmentInto(data: Uint8Array, e: EffectiveState): void {
 export function createEnvironmentTexture(): THREE.DataTexture {
   const tex = new THREE.DataTexture(new Uint8Array(ENV_W * ENV_H * 4), ENV_W, ENV_H, THREE.RGBAFormat);
   tex.mapping = THREE.EquirectangularReflectionMapping;
-  tex.colorSpace = THREE.NoColorSpace;
+  tex.colorSpace = THREE.LinearSRGBColorSpace;
   tex.magFilter = THREE.LinearFilter;
   tex.minFilter = THREE.LinearMipmapLinearFilter;
   tex.wrapS = THREE.RepeatWrapping;
@@ -509,14 +507,21 @@ export class SmokeAdapter {
   end(id: number): void {
     for (let i = 0; i < this.vols.length; i++) if (this.vols[i].id === id) { this.vols.splice(i, 1); return; }
   }
-  clear(): void { this.vols.length = 0; }
+  clear(): void {
+    this.vols.length = 0;
+    if (!this.source) this.u.smokeCount.value = 0;
+  }
   /** Push route: subscribe to a GameBus (or anything with `on`). */
   attach(bus: SmokeBusLike): () => void {
     bus.on(this.listener);
     return () => bus.off?.(this.listener);
   }
   /** Pull route: read a live list every frame (e.g. `() => client.ordnance.smokes`). */
-  bind(source: (() => readonly SmokeVolumeLike[]) | null): void { this.source = source; }
+  bind(source: (() => readonly SmokeVolumeLike[]) | null): void {
+    this.source = source;
+    this.vols.length = 0;
+    this.u.smokeCount.value = 0;
+  }
   /** QA: a volume born now, from the contract's numbers (grenade 5 m / 25 s; blast 2.3 m / 5 s). */
   test(kind: 'grenade' | 'blast', x: number, y: number, z: number, radius?: number, lifeMs?: number, now = performance.now()): number {
     const id = this.nextTestId++;
@@ -525,14 +530,20 @@ export class SmokeAdapter {
     this.push({ id, x, y, z, radius: r, bornAt: now, diesAt: now + life, kind });
     return id;
   }
-  count(): number { return this.vols.length; }
+  /** Volumes submitted to the shader on its last update, including live gameplay. */
+  count(): number { return this.u.smokeCount.value; }
 
   /** Per frame: envelope -> the two uniform arrays. No allocation. */
   update(now: number): void {
-    const list: readonly SmokeVolumeLike[] = this.source ? this.source() : this.vols;
+    const live = this.source?.();
     let n = 0;
-    for (let i = 0; i < list.length && n < MAX_SMOKE; i++) {
-      const v = list[i];
+    // Gameplay gets priority; QA volumes can still be injected for a visual
+    // falsifier during a match. Both lists stay bounded by the shader capacity.
+    const liveLength = live?.length ?? 0;
+    for (let i = 0; i < liveLength + this.vols.length && n < MAX_SMOKE; i++) {
+      const list = i < liveLength ? live! : this.vols;
+      const index = i < liveLength ? i : i - liveLength;
+      const v = list[index];
       if (now >= v.diesAt) continue;
       const fill = Math.min(1, Math.max(0, (now - v.bornAt) / SMOKE_FILL_MS));
       const fade = Math.min(1, Math.max(0, (v.diesAt - now) / SMOKE_DISSOLVE_MS));
@@ -549,7 +560,7 @@ export class SmokeAdapter {
       n++;
     }
     // retire our own expired records (the pull route owns its own list)
-    if (!this.source) for (let i = this.vols.length - 1; i >= 0; i--) if (now >= this.vols[i].diesAt) this.vols.splice(i, 1);
+    for (let i = this.vols.length - 1; i >= 0; i--) if (now >= this.vols[i].diesAt) this.vols.splice(i, 1);
     this.u.smokeCount.value = n;
   }
 }

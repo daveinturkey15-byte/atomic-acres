@@ -626,8 +626,8 @@ function buildChain(
         scenePass.dispose();
         fx.dispose();
       },
-      enabled: true,
-      backend: 'webgpu',
+      get enabled() { return !chainBroken; },
+      get backend(): PostBackend { return chainBroken ? 'off' : 'webgpu'; },
       setEffects: (e) => {
         effects.ao = e.ao; effects.ssr = e.ssr; effects.bloom = e.bloom;
         aoOn.value = e.ao ? 1 : 0;

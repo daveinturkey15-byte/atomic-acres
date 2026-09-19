@@ -14,6 +14,7 @@
  * flatters every aggregate measured from it.
  */
 import { SPAWN_A, SPAWN_B, EYE_HEIGHT, BACK_FENCE } from './layout';
+import { FIELD_CASE_PLACEMENT as CASE } from '../build/field-cases';
 
 export interface Station {
   pos: [number, number, number];
@@ -124,6 +125,18 @@ export const STATIONS: Record<string, Station> = {
     ref: null,
     note: 'Inside the orange house ground floor looking toward the street. Checks the '
       + 'interior is actually open and lit, not a sealed box.',
+  },
+  fieldCaseFront: {
+    pos: [CASE.x, CASE.y + 0.72, CASE.z + 1.6], yaw: 0, pitch: -0.24, fov: 55,
+    ref: null, note: 'Original Blender case canary: front latches, handle, bevel and contact.',
+  },
+  fieldCaseSide: {
+    pos: [CASE.x + 1.6, CASE.y + 0.72, CASE.z], yaw: Math.PI / 2, pitch: -0.24, fov: 55,
+    ref: null, note: 'Original Blender case canary: side ribs and wall thickness.',
+  },
+  fieldCaseThreeQuarter: {
+    pos: [CASE.x + 1.35, CASE.y + 0.94, CASE.z + 1.35], yaw: Math.PI / 4, pitch: -0.33, fov: 55,
+    ref: null, note: 'Original Blender case canary: three-quarter material and lid review.',
   },
 };
 

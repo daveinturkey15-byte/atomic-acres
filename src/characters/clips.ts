@@ -31,6 +31,8 @@ export type ClipName =
   | 'sprint'
   | 'crouch-idle'
   | 'crouch-walk'
+  | 'prone-idle'
+  | 'prone-crawl'
   | 'jump'
   | 'land'
   | 'turn-left'
@@ -47,7 +49,9 @@ export type LocomotionName =
   | 'run'
   | 'sprint'
   | 'crouch-idle'
-  | 'crouch-walk';
+  | 'crouch-walk'
+  | 'prone-idle'
+  | 'prone-crawl';
 
 /** One shared library per scene; every character references the same clips. */
 export type ClipLibrary = Record<ClipName, ClipSpec>;
@@ -257,6 +261,7 @@ function poseClip(
   rest: Partial<Record<StandardBoneName, [number, number, number]>>,
   breathe: number,
   hipsDrop: number,
+  sway = 0,
 ): ClipSpec {
   const N = 4;
   const bones: Record<string, EulerKey[]> = {};
@@ -264,14 +269,86 @@ function poseClip(
     const keys: EulerKey[] = [];
     for (let i = 0; i <= N; i++) {
       const t = (i / N) * duration;
-      // Breathing rides on the chest; everything else is dead still.
-      const br = bone === 'Chest' ? breathe * Math.sin((i / N) * Math.PI * 2) : 0;
-      keys.push([t, r[0] + br, r[1], r[2]]);
+      const phase = (i / N) * Math.PI * 2;
+      // Breathing rides on the chest. A tiny weight shift keeps an idle from
+      // reading as a frozen mannequin while remaining small enough that the
+      // weapon-carry solve does not fight it.
+      const br = bone === 'Chest' ? breathe * Math.sin(phase) : 0;
+      const roll = bone === 'Hips' ? sway * Math.sin(phase) : 0;
+      const yaw = bone === 'Chest' ? sway * 0.55 * Math.sin(phase + 0.35)
+        : bone === 'Head' ? -sway * 0.35 * Math.sin(phase + 0.35) : 0;
+      const armRoll = bone === 'LeftArm' ? -sway * 0.4 * Math.sin(phase)
+        : bone === 'RightArm' ? sway * 0.4 * Math.sin(phase) : 0;
+      keys.push([t, r[0] + br, r[1] + yaw, r[2] + roll + armRoll]);
     }
     bones[bone] = keys;
   }
   const hipsDY = Array.from({ length: N + 1 }, (_, i) => hipsDrop + 0.008 * Math.sin((i / N) * Math.PI * 2));
   return { clip: onceClip(name, duration, bones, hipsDY), speed: 0, stride: 0, loop: true };
+}
+
+/**
+ * Low, face-down recovery stance. This is intentionally authored in the
+ * standard rig rather than guessed from a presentation video: the hips and
+ * torso form the prone plane, the neck lifts the helmet clear of the ground,
+ * and the hands stay in front of the shoulders so a later weapon constraint
+ * has an honest target. The crawl is a short alternating pull cycle; root
+ * travel still belongs to CharacterSystem, exactly like the upright gaits.
+ */
+function proneCrawlClip(): ClipSpec {
+  const period = 1.35;
+  const N = 18;
+  const poses: Pose[] = [];
+  const hipsY: number[] = [];
+  for (let i = 0; i < N; i++) {
+    const t = (i / N) * period;
+    const a = (i / N) * Math.PI * 2;
+    const l = Math.sin(a);
+    const r = Math.sin(a + Math.PI);
+    poses.push({
+      Hips: [[t, 1.28 + 0.018 * Math.sin(2 * a), 0, 0.018 * Math.sin(a)]],
+      Spine: [[t, 0.10, 0, 0]],
+      Chest: [[t, 0.15, 0.025 * Math.sin(a), 0]],
+      Neck: [[t, -0.72 + 0.035 * Math.sin(a), 0, 0]],
+      Head: [[t, -0.10, 0.025 * Math.sin(a), 0]],
+      LeftUpLeg: [[t, 0.05 + 0.09 * r, 0, -0.025]],
+      RightUpLeg: [[t, 0.05 + 0.09 * l, 0, 0.025]],
+      LeftLeg: [[t, 0.75 + 0.22 * Math.max(0, -r), 0, 0]],
+      RightLeg: [[t, 0.75 + 0.22 * Math.max(0, -l), 0, 0]],
+      LeftFoot: [[t, -0.45 - 0.08 * Math.max(0, r), 0, 0]],
+      RightFoot: [[t, -0.45 - 0.08 * Math.max(0, l), 0, 0]],
+      LeftArm: [[t, 0.02 + 0.22 * l, 0.08, -0.18]],
+      RightArm: [[t, 0.02 + 0.22 * r, -0.08, 0.18]],
+      LeftForeArm: [[t, -0.72 + 0.18 * l, -0.14, 0]],
+      RightForeArm: [[t, -0.72 + 0.18 * r, 0.14, 0]],
+      LeftHand: [[t, -0.08, 0, 0]],
+      RightHand: [[t, -0.08, 0, 0]],
+    });
+    hipsY.push(-0.73 + 0.012 * Math.sin(2 * a));
+  }
+  const tracks: THREE.KeyframeTrack[] = [];
+  const names = new Set<string>();
+  for (const pose of poses) for (const name of Object.keys(pose)) names.add(name);
+  for (const name of names) {
+    const keys: EulerKey[] = [];
+    for (const pose of poses) keys.push(...((pose[name as StandardBoneName] ?? []) as EulerKey[]));
+    tracks.push(eulerTrack(name, closeLoop(period, keys)));
+  }
+  const times = new Float32Array(N + 1);
+  const values = new Float32Array((N + 1) * 3);
+  for (let i = 0; i < N; i++) {
+    times[i] = (i / N) * period;
+    values[i * 3 + 1] = HIPS_Y + hipsY[i];
+  }
+  times[N] = period;
+  values[N * 3 + 1] = HIPS_Y + hipsY[0];
+  tracks.push(new THREE.VectorKeyframeTrack('Hips.position', times, values));
+  return {
+    clip: new THREE.AnimationClip('prone-crawl', period, tracks),
+    speed: 0.42,
+    stride: 0.567,
+    loop: true,
+  };
 }
 
 function buildAimPose(pitch: number): Record<string, EulerKey[]> {
@@ -299,7 +376,7 @@ export function buildClipLibrary(): Record<ClipName, ClipSpec> {
     Chest: [0.02, 0, 0],
     Neck: [0, 0, 0],
     Head: [0, 0.15, 0],
-  }, 0.02, 0);
+  }, 0.02, 0, 0.018);
 
   lib['walk'] = gaitClip('walk', {
     period: 1.1, swing: 0.45, knee: 1.0, armSwing: 0.35,
@@ -335,6 +412,26 @@ export function buildClipLibrary(): Record<ClipName, ClipSpec> {
     bob: -0.02, drop: -0.42, lean: 0.35, armGuard: 0.55, sigma: 0.65,
     bendT: 1.0, bendK: 1.75, speed: 0.85, stride: 0.77,
   });
+  lib['prone-idle'] = poseClip('prone-idle', 2.4, {
+    Hips: [1.28, 0, 0],
+    Spine: [0.10, 0, 0],
+    Chest: [0.15, 0, 0],
+    Neck: [-0.72, 0, 0],
+    Head: [-0.10, 0, 0],
+    LeftUpLeg: [0.05, 0, -0.025],
+    RightUpLeg: [0.05, 0, 0.025],
+    LeftLeg: [0.75, 0, 0],
+    RightLeg: [0.75, 0, 0],
+    LeftFoot: [-0.45, 0, 0],
+    RightFoot: [-0.45, 0, 0],
+    LeftArm: [0.02, 0.08, -0.18],
+    RightArm: [0.02, -0.08, 0.18],
+    LeftForeArm: [-0.72, -0.14, 0],
+    RightForeArm: [-0.72, 0.14, 0],
+    LeftHand: [-0.08, 0, 0],
+    RightHand: [-0.08, 0, 0],
+  }, 0.018, -0.73, 0.012);
+  lib['prone-crawl'] = proneCrawlClip();
 
   // Jump: anticipate, launch, tuck, pre-land. Hips rise 0.45 m mid-flight.
   lib['jump'] = {

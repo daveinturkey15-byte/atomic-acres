@@ -6,8 +6,11 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4191/",
-  "status": "verified playable recovery; partial feature acceptance OPEN",
+  "status": "active refinement campaign; candidate 4192 under verification",
   "owner": "Codex",
-  "stop_state": "handoff; no active builder",
-  "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z"
+  "stop_state": "active root integration; native lanes animation, materials, netclock; no duplicate dispatch",
+  "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z",
+  "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
+  "inspection_time": "2026-09-19T15:00:00+01:00",
+  "lease_updated_at": "2026-09-19T09:44:13.7299466Z"
 }

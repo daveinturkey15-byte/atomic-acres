@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "retrieved": "2026-09-19",
+  "provider": "Poly Haven",
+  "license": "CC0 1.0",
+  "licenseEvidence": "https://polyhaven.com/af/our-api",
+  "apiEvidence": "https://api.polyhaven.com/files/{asset}",
+  "resolution": "1k JPEG",
+  "totalBytes": 8448182,
+  "assets": [
+    {
+      "id": "sparse_grass",
+      "displayName": "Sparse Grass",
+      "sourcePage": "https://polyhaven.com/a/sparse_grass",
+      "physicalSizeMeters": [2.0, 2.0],
+      "author": "Amal Kumar",
+      "role": "lawn albedo, roughness and normal response",
+      "files": [
+        {
+          "kind": "diffuse",
+          "path": "sparse-grass/diffuse.jpg",
+          "bytes": 955945,
+          "md5": "5d0aba796e1b5882555161c16b10ee9d",
+          "sha256": "ae94f2b34597b9108eefd88217f55eccaec6d6b382e858a478ee92df90e66617",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_diff_1k.jpg"
+        },
+        {
+          "kind": "roughness",
+          "path": "sparse-grass/rough.jpg",
+          "bytes": 463340,
+          "md5": "acf2fd7e352e7635f67f24ecda01e485",
+          "sha256": "9ebe6d03a9551c17d1802835c92c1442acb8f5d38d4874ee8c37770f11c4bed1",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_rough_1k.jpg"
+        },
+        {
+          "kind": "normalGL",
+          "path": "sparse-grass/normal.jpg",
+          "bytes": 1440314,
+          "md5": "3307e6ce47413c6b4e85885d4b8ae932",
+          "sha256": "1c840a24807346ddaaf94a5057aee4078fcec3a4cd84bfe45da7d3b480ef460b",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/sparse_grass/sparse_grass_nor_gl_1k.jpg"
+        }
+      ]
+    },
+    {
+      "id": "asphalt_07",
+      "displayName": "Asphalt 07",
+      "sourcePage": "https://polyhaven.com/a/asphalt_07",
+      "physicalSizeMeters": [2.5, 2.5],
+      "author": "Charlotte Baglioni",
+      "role": "street asphalt",
+      "filesHash": "536cd04f7600bc912ccc4ed244fdff50bcd6fb2f",
+      "files": [
+        {
+          "kind": "diffuse",
+          "path": "asphalt-07/diffuse.jpg",
+          "bytes": 912821,
+          "md5": "b9b53264d0cbb34746baead9aa626028",
+          "sha256": "ac1dd04834e969f76c63773fd3ce7fba75727e36abd4bddb2fbeb06098e0f810",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_07/asphalt_07_diff_1k.jpg"
+        },
+        {
+          "kind": "roughness",
+          "path": "asphalt-07/rough.jpg",
+          "bytes": 310740,
+          "md5": "248dbcce6a0ded702e7dc9195dcc2a9f",
+          "sha256": "6030181a0b84cd405e88b1ae6d9e69b3fbc88c608633d79f5dd2000b9c55b6cc",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_07/asphalt_07_rough_1k.jpg"
+        },
+        {
+          "kind": "normalGL",
+          "path": "asphalt-07/normal.jpg",
+          "bytes": 1161422,
+          "md5": "b0492541bca15767018ed1cc23d102b4",
+          "sha256": "63543f5c0cee136adfb748622227a11ce53d4de0bf65eb23098a0711de353893",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_07/asphalt_07_nor_gl_1k.jpg"
+        }
+      ]
+    },
+    {
+      "id": "concrete_pavement_03",
+      "displayName": "Concrete Pavement 03",
+      "sourcePage": "https://polyhaven.com/a/concrete_pavement_03",
+      "physicalSizeMeters": [2.1, 2.1],
+      "author": "Charlotte Baglioni",
+      "role": "paving and concrete apron",
+      "filesHash": "42f98717ea51090ed7d0a0dcd72e27108fff63e7",
+      "files": [
+        {
+          "kind": "diffuse",
+          "path": "concrete-pavement-03/diffuse.jpg",
+          "bytes": 830452,
+          "md5": "e2d4ca4fabe39cd510f78bda929bba53",
+          "sha256": "0c23759579103fc334bb9211c71fd026322b44fceb9cdeba8f2d7e0b17fefc8e",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_03/concrete_pavement_03_diff_1k.jpg"
+        },
+        {
+          "kind": "roughness",
+          "path": "concrete-pavement-03/rough.jpg",
+          "bytes": 227809,
+          "md5": "5717742054eb658673277f5999a09a37",
+          "sha256": "89876ea83fe2e8e14a0349607f3fd9174c14a7e9a01b56d91e49adb0b7484c09",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_03/concrete_pavement_03_rough_1k.jpg"
+        },
+        {
+          "kind": "normalGL",
+          "path": "concrete-pavement-03/normal.jpg",
+          "bytes": 1017387,
+          "md5": "87a68a3d2bf1131749ce6fe87670e580",
+          "sha256": "b3d20510e5f6625c264a6491c343d025cfff8ab525d08363a42f21afb0e1d5e0",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_03/concrete_pavement_03_nor_gl_1k.jpg"
+        }
+      ]
+    },
+    {
+      "id": "distressed_painted_planks",
+      "displayName": "Distressed Painted Planks",
+      "sourcePage": "https://polyhaven.com/a/distressed_painted_planks",
+      "physicalSizeMeters": [1.6, 1.6],
+      "author": "Rob Tuytel",
+      "role": "deck boards",
+      "filesHash": "51f3f472504af5725bcca0b140ecfe9b574786e0",
+      "files": [
+        {
+          "kind": "diffuse",
+          "path": "distressed-painted-planks/diffuse.jpg",
+          "bytes": 366553,
+          "md5": "5c877bc4140e757955f37de588494115",
+          "sha256": "ec8d54700e32d583ec3cd64089de73810de1e177874266fe29e931d33ab5ca1e",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/distressed_painted_planks/distressed_painted_planks_diff_1k.jpg"
+        },
+        {
+          "kind": "roughness",
+          "path": "distressed-painted-planks/rough.jpg",
+          "bytes": 337009,
+          "md5": "e82c876630887770a95126aeac5c2274",
+          "sha256": "e264068652b135ed477ea123a751c83bb33d6693e16f4c4458dc57bca6ae675c",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/distressed_painted_planks/distressed_painted_planks_rough_1k.jpg"
+        },
+        {
+          "kind": "normalGL",
+          "path": "distressed-painted-planks/normal.jpg",
+          "bytes": 424390,
+          "md5": "b17446b5de44cb2148c13639c3356fbe",
+          "sha256": "65372398238b1a4d723e414b195e94900e076fa63d9409c5acc9b55d795abe88",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/distressed_painted_planks/distressed_painted_planks_nor_gl_1k.jpg"
+        }
+      ]
+    }
+  ]
+}

@@ -7,15 +7,16 @@
  *
  *   live      applied the moment the control moves, through a public handle
  *             (`world.camera`, `world.sun.shadow.mapSize`, `renderer.setPixelRatio`
- *             + `world.resize`) or through one of the two SHIMS below.
+ *             + `world.resize`, `world.post.setEffects` / `setFog`,
+ *             `world.atmosphere.set` / `setWeather`) or through one of the two SHIMS below.
  *   shim      applied live by intercepting input before its consumer sees it,
  *             because the consumer (`core/player.ts`, `weapons/controller.ts`)
  *             is another lane's file and has no setter yet. Each shim probes
  *             for the real setter first and steps aside when it exists.
- *   persist   saved and shown, consumed by nobody: the post chain has no
- *             AO/SSR/bloom toggle and the audio has no volume hook. The exact
- *             setters are listed in the lane report; the plumbing here reads
- *             them off the settings object the moment they land.
+ *   persist   saved and shown, consumed by nobody in this build: weapon motion
+ *             has no reader yet. Audio gains use `ApplyTargets.audio.setVolumes`.
+ *             The plumbing here reads them off the settings object the moment
+ *             they land.
  *
  * FOV, and why it is a shim. `weapons/controller.ts` writes
  * `camera.fov = BASE_FOV + (adsFov - BASE_FOV) * adsT` on every frame it
@@ -25,11 +26,19 @@
  * `fov * (setting / BASE_FOV)` and restore the field, so the controller keeps
  * its own bookkeeping, hip and ADS scale together (the way most shooters
  * treat an FOV option), and a default of 72 is bit-identical to today.
+ *
+ * EFFECTS HONESTY. `world.post.setEffects` / `setFog` are uniform(1) writes into
+ * the existing graph: no node, material or light changes, so a toggle costs
+ * nothing and cannot invalidate a program. Where the chain never built
+ * (WebGL2 / `off` fallback) the same calls only update remembered values —
+ * nothing is rendered from them. `probeApplied` therefore reports the chain's
+ * own `getEffects()` / `getFog()` plus `post.enabled`: a proof that claims an
+ * effect is ACTIVE must check `enabled`, never the slider.
  */
-
 import type { HudApi } from './hud';
 import { remapTable } from './bindings';
 import { accessibilityOf, type Settings } from './settings';
+import type { TodName, WeatherName } from '../core/atmosphere';
 
 /** `weapons/controller.ts:BASE_FOV`. A mirror, flagged: the setter request retires it. */
 const CONTROLLER_BASE_FOV = 72;
@@ -42,8 +51,8 @@ export const OPTION_STATUS: Readonly<Record<string, OptionStatus>> = Object.free
   quality: 'live', fov: 'shim', sensitivity: 'shim', invertY: 'shim', bindings: 'shim',
   shadowMapSize: 'live', resolutionScale: 'live', netOverlay: 'live',
   reducedMotion: 'live', damageFlashScale: 'live',
-  ao: 'persist', ssr: 'persist', bloom: 'persist',
-  masterVolume: 'persist', effectsVolume: 'persist', weaponMotionScale: 'persist',
+  ao: 'live', ssr: 'live', bloom: 'live', fog: 'live', tod: 'live', weather: 'live',
+  masterVolume: 'live', effectsVolume: 'live', weaponMotionScale: 'persist',
 });
 export const STATUS_NOTE: Readonly<Record<OptionStatus, string>> = Object.freeze({
   live: 'applies now',
@@ -58,6 +67,36 @@ export interface MenuPlayer {
   setBindings?: (b: Readonly<Record<string, string>>) => void;
 }
 
+/** Structural post handle: `world.post` (`core/post.ts:PostChain`). Uniform writes only. */
+export interface MenuPost {
+  readonly enabled: boolean;
+  readonly backend: 'webgpu' | 'webgl2' | 'off';
+  setEffects: (e: { ao: boolean; ssr: boolean; bloom: boolean }) => void;
+  getEffects: () => { ao: boolean; ssr: boolean; bloom: boolean };
+  setFog: (enabled: boolean) => void;
+  getFog: () => boolean;
+  setAtmosphere?: (preset: TodName, weather: WeatherName) => boolean;
+}
+
+/** Structural atmosphere handle (`core/atmosphere.ts:Atmosphere`). Preset switches only. */
+export interface MenuAtmosphere {
+  tod: () => TodName;
+  weather: () => WeatherName;
+  set: (tod: TodName) => boolean;
+  setWeather: (weather: WeatherName) => boolean;
+}
+
+/**
+ * Offered audio hook for the audio lane. Optional: absent in this build, so the
+ * volume sliders persist and `applySettings` simply has somewhere to send them
+ * the moment this hook lands. Desired integration: the audio owner reads
+ * `settings.masterVolume` / `settings.effectsVolume` (0..1) at startup and on
+ * every change through exactly `audio.setVolumes(master, effects)`.
+ */
+export interface MenuAudio {
+  setVolumes?: (master: number, effects: number) => void;
+}
+
 export interface MenuWorld {
   camera?: {
     fov: number;
@@ -70,6 +109,9 @@ export interface MenuWorld {
     getPixelRatio?: () => number;
   };
   sun?: { shadow: { mapSize: { set: (w: number, h: number) => unknown; width: number }; map?: { width: number } | null } };
+  /** Present at runtime: `main.ts` passes the whole `World`, which owns both. */
+  post?: MenuPost;
+  atmosphere?: MenuAtmosphere;
   resize?: () => void;
 }
 
@@ -77,6 +119,7 @@ export interface ApplyTargets {
   player: MenuPlayer;
   world: MenuWorld;
   hud: HudApi;
+  audio?: MenuAudio;
 }
 
 /** What the proof reads back: the measurable effect of each live option. */
@@ -93,6 +136,21 @@ export interface AppliedProbe {
   sensitivity: number;
   invertY: boolean;
   remaps: number;
+  /** The chain's own readback (`getEffects`), or null with no post handle. */
+  ao: boolean | null;
+  ssr: boolean | null;
+  bloom: boolean | null;
+  /** The chain's own haze readback (`getFog`), or null with no post handle. */
+  fog: boolean | null;
+  /**
+   * False on the WebGL2/`off` fallback: the toggles above are remembered there,
+   * not rendered. A proof of ACTIVE effects must require this true.
+   */
+  postEnabled: boolean | null;
+  postBackend: 'webgpu' | 'webgl2' | 'off' | null;
+  /** `atmosphere.tod()` / `weather()`, or null with no atmosphere handle. */
+  tod: TodName | null;
+  weather: WeatherName | null;
 }
 
 let fovScale = 1;
@@ -146,6 +204,40 @@ export function applySettings(s: Settings, t: ApplyTargets): void {
     if (sun && sun.shadow.mapSize.width !== s.shadowMapSize) sun.shadow.mapSize.set(s.shadowMapSize, s.shadowMapSize);
   } catch {
     /* no sun handle */
+  }
+  // Post effects: uniform(1) writes into the existing graph (core/post.ts), one
+  // small object per CHANGE (never per frame). No node, material or light moves.
+  try {
+    t.world.post?.setEffects({ ao: s.ao, ssr: s.ssr, bloom: s.bloom });
+  } catch {
+    /* no post handle */
+  }
+  try {
+    t.world.post?.setFog(s.fog);
+  } catch {
+    /* no post handle */
+  }
+  // Environment: preset switches only. The atmosphere resolves numbers into the
+  // SAME three lights, dome uniforms, env bytes and rain mesh — the set never
+  // changes, so lightCount() is invariant (atmosphere PASS 82). Called as two
+  // separate switches on purpose: the post fallback's setAtmosphere chains them
+  // with &&, which would drop the weather write whenever tod is unknown.
+  try {
+    if (t.world.atmosphere) {
+      t.world.atmosphere.set(s.tod);
+      t.world.atmosphere.setWeather(s.weather);
+    } else {
+      t.world.post?.setAtmosphere?.(s.tod, s.weather);
+    }
+  } catch {
+    /* no atmosphere handle */
+  }
+  // Audio: nobody in this build. The hook is optional so today's call is a no-op
+  // and the sliders keep persisting until the audio lane lands it.
+  try {
+    t.audio?.setVolumes?.(s.masterVolume, s.effectsVolume);
+  } catch {
+    /* no audio bus */
   }
   // Controls: the real setter when it exists, the shim otherwise.
   liveSensitivity = s.sensitivity;
@@ -222,6 +314,39 @@ export function probeApplied(t: ApplyTargets, s: Settings): AppliedProbe {
   const cam = t.world.camera;
   const r = t.world.renderer;
   const el = r?.domElement;
+  // The chain's own readback, never the slider. On the fallback the remembered
+  // values come back here with postEnabled false: ACTIVE means enabled AND on.
+  let ao: boolean | null = null;
+  let ssr: boolean | null = null;
+  let bloom: boolean | null = null;
+  let fog: boolean | null = null;
+  let postEnabled: boolean | null = null;
+  let postBackend: AppliedProbe['postBackend'] = null;
+  try {
+    const p = t.world.post;
+    if (p) {
+      const e = p.getEffects();
+      ao = e.ao;
+      ssr = e.ssr;
+      bloom = e.bloom;
+      fog = p.getFog();
+      postEnabled = p.enabled;
+      postBackend = p.backend;
+    }
+  } catch {
+    /* post not ready */
+  }
+  let tod: TodName | null = null;
+  let weather: WeatherName | null = null;
+  try {
+    const a = t.world.atmosphere;
+    if (a) {
+      tod = a.tod();
+      weather = a.weather();
+    }
+  } catch {
+    /* atmosphere not ready */
+  }
   return {
     fov: s.fov,
     projY: cam?.projectionMatrix ? cam.projectionMatrix.elements[5] : null,
@@ -233,5 +358,13 @@ export function probeApplied(t: ApplyTargets, s: Settings): AppliedProbe {
     sensitivity: liveSensitivity,
     invertY: liveInvert,
     remaps: remap.size,
+    ao,
+    ssr,
+    bloom,
+    fog,
+    postEnabled,
+    postBackend,
+    tod,
+    weather,
   };
 }

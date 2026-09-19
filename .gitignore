@@ -1,6 +1,7 @@
 node_modules
 .recovery-runtime/
 dist
+dist-next
 captures/*.png
 captures/*.json
 docs/reference/img

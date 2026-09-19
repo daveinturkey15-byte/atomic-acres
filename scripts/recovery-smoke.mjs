@@ -7,7 +7,7 @@ import { join } from 'node:path';
 import net from 'node:net';
 
 const url = process.env.RECOVERY_URL || 'http://127.0.0.1:4191/';
-const out = join(process.cwd(), 'captures', 'recovery-stock');
+const out = process.env.RECOVERY_OUT || join(process.cwd(), 'captures', 'recovery-stock');
 mkdirSync(out, { recursive: true });
 const port = await new Promise((resolve) => {
   const server = net.createServer();

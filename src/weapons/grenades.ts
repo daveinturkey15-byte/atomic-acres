@@ -92,7 +92,7 @@ export class GrenadeFx {
    * smoke ramps read against the volume's own `bornAt`/`diesAt`. `onBlast`
    * fires once per new detonation for the effects pool.
    */
-  update(dt: number, nowMs: number, view: OrdnanceView, onBlast: (x: number, y: number, z: number, grenadeId: string) => void): void {
+  update(dt: number, nowMs: number, view: OrdnanceView, onBlast: (x: number, y: number, z: number, grenadeId: string) => void, volumetricSmoke = false): void {
     // ---- flights: replay, sub-stepped, then tumble the casing --------------
     this.acc += Math.min(dt, 0.1);
     let steps = 0;
@@ -138,7 +138,11 @@ export class GrenadeFx {
     }
     this.flashes.instanceMatrix.needsUpdate = true;
 
-    // ---- smoke: the placeholder puffballs ------------------------------------
+    // WebGPU renders the authoritative volume in the atmosphere pass. Keep the
+    // inexpensive puffs for WebGL/degraded rendering, never both at once.
+    this.puffs.visible = !volumetricSmoke;
+    if (volumetricSmoke) return;
+    // ---- smoke: fallback puffballs -------------------------------------------
     let k = 0;
     for (let si = 0; si < SMOKE_POOL; si++) {
       const v = si < view.smokes.length ? view.smokes[si] : null;
@@ -167,6 +171,17 @@ export class GrenadeFx {
       }
     }
     this.puffs.instanceMatrix.needsUpdate = true;
+  }
+
+  /** Live counts for the QA surface. */
+  reset(): void {
+    this.lastBlastSeq = 0;
+    this.acc = 0;
+    this.blastAt.fill(-Infinity);
+    for (const im of [this.casings, this.flashes, this.puffs]) {
+      for (let i = 0; i < im.count; i++) im.setMatrixAt(i, this.m.compose(ZERO, this.q.identity(), ZERO));
+      im.instanceMatrix.needsUpdate = true;
+    }
   }
 
   /** Live counts for the QA surface. */

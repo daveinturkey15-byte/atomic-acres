@@ -95,7 +95,7 @@ export class CharacterSystem {
       rig,
       mesh,
       root: std.root,
-      input: { speed: 0, turnRate: 0, crouch: false, aimPitch: 0, aimWeight: 0 },
+      input: { speed: 0, turnRate: 0, crouch: false, prone: false, aimPitch: 0, aimWeight: 0 },
       yaw,
       scale,
       faction: faction ?? null,

@@ -34,6 +34,7 @@ import type { GameNetMessage, MatchStateMsg, PlayerSample } from './protocol';
 import type { GuestClient } from './room';
 import { createPose, intentFromVelocity, type Pose } from './room-core';
 import { INTERP_DELAY_MS, TICK_HZ } from './snapshot';
+import { localizeGameMessage } from './event-clock';
 
 const TICK_MS = 1000 / TICK_HZ;
 /** Divergence between the body and the host's acked seat that earns a teleport. */
@@ -91,7 +92,11 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     opts.instrument.record(e);
   };
 
-  const onGame = (msg: GameNetMessage): void => {
+  const onGame = (raw: GameNetMessage): void => {
+    // The room gives us host-authored absolute timestamps. Cross the clock
+    // boundary once, before any projection or presentation code can observe
+    // the message. Relative spans (flash duration, etc.) stay unchanged.
+    const msg = localizeGameMessage(raw, guest.hostClockOffset());
     switch (msg.type) {
       case 'damage':
         record(msg.e);

@@ -30,6 +30,8 @@ import { buildSkyline } from './build/skyline';
 import { buildPlaza } from './build/plaza';
 import { buildMannequins } from './build/mannequins';
 import { buildSurround } from './build/surround';
+import { buildFieldCases } from './build/field-cases';
+import { loadFieldCase } from './assets/field-case';
 
 const BUILDERS: [string, Builder][] = [
   ['ground', buildGround],
@@ -42,6 +44,7 @@ const BUILDERS: [string, Builder][] = [
   ['plaza', buildPlaza],
   ['mannequins', buildMannequins],
   ['surround', buildSurround],
+  ['field-cases', buildFieldCases],
 ];
 
 // The one invariant, asserted rather than commented. From either back yard, facing
@@ -63,6 +66,10 @@ const colliders: AABB[] = [];
 const colliderOwner: string[] = [];
 const moduleStats: Record<string, { objects: number; colliders: number; ms: number }> = {};
 const worldTargets: THREE.Object3D[] = [];
+
+// Load the reviewed asset once before scene assembly. A failed optional prop
+// remains absent instead of blocking the playable map or retrying each frame.
+await loadFieldCase().catch((error: unknown) => console.warn('[field-case] unavailable', error));
 
 for (const [name, build] of BUILDERS) {
   const t0 = performance.now();
@@ -161,23 +168,37 @@ hudHelp.textContent =
   'WASD move · SHIFT sprint/boost · SPACE jump/up · E up · Q/X down · ' +
   'F fly · C noclip · wheel/[ ] speed · H help · Esc free mouse · ' +
   'LMB fire · RMB aim · R reload · 1/2 or wheel weapons · ' +
-  'G frag (hold to cook) · Q tactical · V knife · hold E pick up';
+  'G frag (hold to cook) · Q tactical · V knife · hold E pick up · CTRL crouch · Z prone';
 hud.append(hudStats, hudMode, hudHelp, ammoDiv);
 // ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
 // initUI owns everything inside #hud and #start, so the capture harness still
-const ui = initUI({ player, world });
+const ui = initUI({ player, world, audio: {
+  setVolumes(master, effects) {
+    weapons.setMasterVolume(master);
+    weapons.setEffectsVolume(effects);
+  },
+} });
 const gameHud = ui.hud;
 // ---- Multiplayer lobby + host tech (netcode lane). Owns #hud .nt-* nodes and
 // window.__NTNET only; the world, player and QA surface are untouched.
 const netcode = wireNetcode({ player });
 void netcode;
-// ---- Ordnance (grenades, smoke placeholder, drops, flash white-out, pickup
+// ---- Ordnance (grenades, volumetric smoke, drops, flash white-out, pickup
 // prompt). It reads the live GameClient, so the session's `bindClient` call is
 // forwarded through it before it reaches the UI - the one seam the session
 // offers, and it fires again on every rematch.
-const ordnance = new OrdnanceScene({ scene: world.scene, mat, colliders, hud: gameHud, weapons });
+const ordnance = new OrdnanceScene({
+  scene: world.scene, mat, colliders, hud: gameHud, weapons,
+  volumetricSmoke: () => world.post.enabled,
+});
 const matchUi: MatchUi = {
-  bindClient: (c) => { ordnance.bind(c); ui.bindClient(c); },
+  bindClient: (c) => {
+    // Client projection is the common solo/host/guest boundary. Rebinding also
+    // releases the previous match's smoke list; no bus subscription can leak.
+    world.atmosphere.smoke.bind(c ? () => c.ordnance.smokes : null);
+    ordnance.bind(c);
+    ui.bindClient(c);
+  },
   setNames: (n) => ui.setNames(n),
 };
 // ---- The match. Host + local player + bots, started by the same click that
@@ -188,6 +209,10 @@ match = createLocalMatch({
 const botBodies = new Map<string, CharacterHandle>();
 
 const startOverlay = document.getElementById('start')!;
+// Decode the small authored bank on the first menu gesture, before the first
+// shot, while retaining browser autoplay rules and persisted volume values.
+startOverlay.addEventListener('pointerdown', () => weapons.resumeAudio(), { once: true });
+addEventListener('pagehide', () => weapons.disposeAudio());
 // The first click lands on the overlay (it covers the canvas), so dismiss and lock
 // here; later clicks hit the canvas and re-lock via Player. Esc releases (browser
 // default) and Player drops held keys so nothing spins or keeps walking.
@@ -386,6 +411,7 @@ interface QA {
   weaponCmd: (cmd: string, arg?: string | number | boolean) => unknown;
   /** Ordnance lane: the client projection's log, counts and pools. Read-only. */
   ordnance: () => Record<string, unknown>;
+  audio: () => ReturnType<WeaponsController['audioStats']>;
 }
 
 const qa: QA = {
@@ -436,6 +462,9 @@ const qa: QA = {
   ordnance() {
     return ordnance.qa();
   },
+  audio() {
+    return weapons.audioStats();
+  },
   stats() {
     const i = world.renderer.info;
     return {
@@ -451,7 +480,9 @@ const qa: QA = {
       textures: i.memory.textures,
       programs: i.programs?.length ?? 0,
       colliders: colliders.length,
-      eyeHeight: EYE_HEIGHT,
+      eyeHeight: player.getEyeHeight(),
+      bodyHeight: player.getBodyHeight(),
+      stance: player.getStance(),
       handedness,
       mode: player.getMode(),
       flySpeed: +player.getFlySpeed().toFixed(1),

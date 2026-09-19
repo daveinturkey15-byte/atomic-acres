@@ -1,0 +1,141 @@
+{
+  "bankVersion": 2,
+  "sampleRate": 44100,
+  "channels": 1,
+  "bitDepth": 16,
+  "provenance": "authored offline by src/audio/render-bank.mjs (deterministic synthesis, no external samples)",
+  "license": "original work in this repository, same terms as the project",
+  "files": [
+    {
+      "key": "longhorn",
+      "file": "shot-longhorn.wav",
+      "seed": 1101,
+      "peak": 0.89,
+      "rms": 0.1116,
+      "bytes": 48554,
+      "sha256": "d599a5aae58f7916dffdd547caab792f344b57cef17f8f48399cb390781a79b8",
+      "durationS": 0.55
+    },
+    {
+      "key": "rattler",
+      "file": "shot-rattler.wav",
+      "seed": 1102,
+      "peak": 0.89,
+      "rms": 0.076,
+      "bytes": 35324,
+      "sha256": "c1e278273a807e61cdffd821e8433c6459556e6064e41502d5e23bdf460d740e",
+      "durationS": 0.4
+    },
+    {
+      "key": "coachman",
+      "file": "shot-coachman.wav",
+      "seed": 1103,
+      "peak": 0.89,
+      "rms": 0.1004,
+      "bytes": 70604,
+      "sha256": "26453c695de2ccb4683e4df0e34fbad4f16ea7fcd08d5466235a59c064059c42",
+      "durationS": 0.8
+    },
+    {
+      "key": "deadeye",
+      "file": "shot-deadeye.wav",
+      "seed": 1104,
+      "peak": 0.89,
+      "rms": 0.1255,
+      "bytes": 97064,
+      "sha256": "f17febd290d4080b49aac36e2d26c3bedb0cdbcb866ebecd28fbc659d1f29714",
+      "durationS": 1.1
+    },
+    {
+      "key": "duster",
+      "file": "shot-duster.wav",
+      "seed": 1105,
+      "peak": 0.89,
+      "rms": 0.0881,
+      "bytes": 30912,
+      "sha256": "1a951e56dc7f7ed2c6b6a80e0639dc426e55d7b5036586deff0587a184c66941",
+      "durationS": 0.35
+    },
+    {
+      "key": "reloadStart",
+      "file": "cue-reload-start.wav",
+      "seed": 2101,
+      "peak": 0.55,
+      "rms": 0.0371,
+      "bytes": 30912,
+      "sha256": "515dc20d90daa7f1e58df481d88cb411ce77fe9363948b690c4491256b02fe46",
+      "durationS": 0.35
+    },
+    {
+      "key": "reloadEnd",
+      "file": "cue-reload-end.wav",
+      "seed": 2102,
+      "peak": 0.65,
+      "rms": 0.0623,
+      "bytes": 35324,
+      "sha256": "1840b9bcbba66a7d99bf9a3aa8d0886ac85926cb326999a212bd4efad219834c",
+      "durationS": 0.4
+    },
+    {
+      "key": "dryFire",
+      "file": "cue-dryfire.wav",
+      "seed": 2103,
+      "peak": 0.5,
+      "rms": 0.0257,
+      "bytes": 13274,
+      "sha256": "dbdbcfe77ebf109f7908712e3bccd338786d9fbbc305e3ef0bd788c8c75156b7",
+      "durationS": 0.15
+    },
+    {
+      "key": "switch",
+      "file": "cue-switch.wav",
+      "seed": 2104,
+      "peak": 0.45,
+      "rms": 0.028,
+      "bytes": 22094,
+      "sha256": "39a7f74a6c76b74f440de53f9d42300cb3f66e1839cd1f4ae7d3cad16f6d6c0e",
+      "durationS": 0.25
+    },
+    {
+      "key": "impactDirt",
+      "file": "cue-impact-dirt.wav",
+      "seed": 2105,
+      "peak": 0.6,
+      "rms": 0.1056,
+      "bytes": 26504,
+      "sha256": "4c060f9c9b67d5aadd0980182810786149cf7c7400682ca786d2bdbc20e5fbdc",
+      "durationS": 0.3
+    },
+    {
+      "key": "impactHard",
+      "file": "cue-impact-hard.wav",
+      "seed": 2106,
+      "peak": 0.6,
+      "rms": 0.064,
+      "bytes": 22094,
+      "sha256": "c1284fb8516802534c5c84f2cdaf4305469a47e62b1e2106cbfb2f9ad7206fd7",
+      "durationS": 0.25
+    },
+    {
+      "key": "hitmark",
+      "file": "cue-hitmark.wav",
+      "seed": 2107,
+      "peak": 0.4,
+      "rms": 0.0244,
+      "bytes": 7100,
+      "sha256": "e1f50bf18a08925d739e9018ff57e87e1fc0e35ca89f8327117e760de0dff729",
+      "durationS": 0.08
+    },
+    {
+      "key": "blast",
+      "file": "cue-blast.wav",
+      "seed": 2108,
+      "peak": 0.89,
+      "rms": 0.1616,
+      "bytes": 141164,
+      "sha256": "ddc6d49c656fd6f2f6cc3aba06ade52a42af9afcc36f16a272fec31cd3718c8c",
+      "durationS": 1.6
+    }
+  ],
+  "totalBytes": 580924
+}
