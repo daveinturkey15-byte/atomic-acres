@@ -95,6 +95,35 @@ export interface HelloMsg {
   resume?: ResumeClaim;
 }
 
+/**
+ * Authoritative resume state, carried on `welcome` when a seat rejoins a room
+ * that has left the lobby. Everything a refreshed page cannot re-derive: the
+ * phase it must land in, the input seq the host has already integrated (the
+ * guest continues ABOVE it — the host's `lastSeq` never regresses, so old
+ * packets stay replays), and the game host's current life epoch plus its
+ * highest admitted shot seq this life (the guest's shots continue above it
+ * rather than restarting at 0 and reading as duplicates). Absent on a plain
+ * lobby welcome; old peers ignore it and old hosts never send it.
+ */
+export interface ResumeState {
+  phase: Exclude<LobbyPhase, 'lobby'>;
+  /** The tick the countdown ends at; only meaningful while phase is `starting`. */
+  startTick: number;
+  /** Highest input seq the host integrated for this seat. */
+  lastSeq: number;
+  /** The seat's current life epoch (game host's count of its own spawns). */
+  life: number;
+  /** Highest shot seq the host admitted this life; -1 before the first. */
+  shotSeq: number;
+  /** Current host-owned primary and total rounds, for a refresh without a spawn edge. */
+  primaryId?: string;
+  rounds?: number;
+  /** Current host-owned grenade counts and selected tactical item. */
+  lethal?: number;
+  tactical?: number;
+  armed?: string | null;
+}
+
 /** Host -> guest: admission granted. Carries the guest's authoritative id. */
 export interface WelcomeMsg {
   type: 'welcome';
@@ -103,6 +132,8 @@ export interface WelcomeMsg {
   roster: RosterEntry[];
   /** Resume credential for this seat. Optional so pre-grace peers still validate. */
   token?: string;
+  /** Present only when admission resumed a seat inside a live match. */
+  resume?: ResumeState;
 }
 
 /** Every reason a host can refuse a hello, frozen; the labels beside it are the UI's. */
@@ -277,6 +308,23 @@ function isResumeClaim(v: unknown): v is ResumeClaim {
   return typeof r['playerId'] === 'string' && typeof r['token'] === 'string' && r['token'].length >= 12;
 }
 
+function isResumeState(v: unknown): v is ResumeState {
+  if (!v || typeof v !== 'object') return false;
+  const r = v as Record<string, unknown>;
+  return (
+    (r['phase'] === 'starting' || r['phase'] === 'playing') &&
+    Number.isSafeInteger(r['startTick']) &&
+    Number.isSafeInteger(r['lastSeq']) &&
+    Number.isSafeInteger(r['life']) && (r['life'] as number) >= 1 &&
+    Number.isSafeInteger(r['shotSeq']) && (r['shotSeq'] as number) >= -1 &&
+    (r['primaryId'] === undefined || typeof r['primaryId'] === 'string') &&
+    (r['rounds'] === undefined || (Number.isSafeInteger(r['rounds']) && (r['rounds'] as number) >= 0)) &&
+    (r['lethal'] === undefined || (Number.isSafeInteger(r['lethal']) && (r['lethal'] as number) >= 0)) &&
+    (r['tactical'] === undefined || (Number.isSafeInteger(r['tactical']) && (r['tactical'] as number) >= 0)) &&
+    (r['armed'] === undefined || r['armed'] === null || typeof r['armed'] === 'string')
+  );
+}
+
 function isRosterEntry(v: unknown): v is RosterEntry {
   if (!v || typeof v !== 'object') return false;
   const r = v as Record<string, unknown>;
@@ -311,7 +359,8 @@ export function isNetMessage(v: unknown): v is NetMessage {
         isFiniteNum(m['hostNow']) &&
         Array.isArray(m['roster']) &&
         (m['roster'] as unknown[]).every(isRosterEntry) &&
-        (m['token'] === undefined || typeof m['token'] === 'string')
+        (m['token'] === undefined || typeof m['token'] === 'string') &&
+        (m['resume'] === undefined || isResumeState(m['resume']))
       );
     case 'reject':
       return typeof m['reason'] === 'string' && (REJECT_REASONS as readonly string[]).includes(m['reason']);

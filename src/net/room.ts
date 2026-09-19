@@ -108,6 +108,17 @@ export class HostRoom {
   private gameHandler: ((playerId: string, msg: GameNetMessage) => void) | null = null;
   private stamp: ((s: PlayerSample) => PlayerSample) | null = null;
   private extraSamples: ((into: PlayerSample[]) => void) | null = null;
+  /**
+   * The game host's per-seat resume facts (life epoch, highest admitted shot
+   * seq). The room knows nothing about damage — it asks this hook, registered
+   * by `net/match-host.ts`, only when building a resume `welcome`. Null until
+   * a game host is attached: a room resuming before one exists falls back to
+   * the life the game would have given a first spawn.
+   */
+  private resumeFacts: ((playerId: string) => {
+    life: number; shotSeq: number; primaryId?: string; rounds?: number;
+    lethal?: number; tactical?: number; armed?: string | null;
+  }) | null = null;
 
   constructor(transport: Transport, opts?: HostOptions) {
     this.transport = transport;
@@ -200,6 +211,13 @@ export class HostRoom {
   setStamp(fn: ((s: PlayerSample) => PlayerSample) | null): void { this.stamp = fn; }
   /** Extra samples (bots) appended to every state broadcast. */
   setExtraSamples(fn: ((into: PlayerSample[]) => void) | null): void { this.extraSamples = fn; }
+  /** The game host's per-seat resume source for live welcomes. */
+  setResumeFacts(fn: ((playerId: string) => {
+    life: number; shotSeq: number; primaryId?: string; rounds?: number;
+    lethal?: number; tactical?: number; armed?: string | null;
+  }) | null): void {
+    this.resumeFacts = fn;
+  }
 
   /** Send to one seat. False when the seat is unknown or is the host's own. */
   sendToPlayer(id: string, msg: NetMessage): boolean {
@@ -353,7 +371,21 @@ export class HostRoom {
         if (declaredPrimary !== undefined) back.primaryId = declaredPrimary;
       }
       back.lastHeardAt = this.now();
-      this.transport.send(from, { type: 'welcome', playerId: back.entry.id, hostNow: this.now(), roster: this.roster(), token: back.token });
+      // A seat resuming a live match must land in that match, with the
+      // numbering the host already believes: phase and countdown to leave the
+      // lobby state machine, the input seq to continue above (the host's
+      // `lastSeq` never regresses, so pre-refresh packets stay replays), and
+      // the life epoch and shot high-water the guest's shots continue above
+      // (the shot window survives the rejoin on purpose — resetting it would
+      // readmit replayed claims). A lobby resume sends no resume block: the
+      // cold-join state machine is exactly right there.
+      const resume = this.phase === 'lobby' ? undefined : {
+        phase: this.phase,
+        startTick: this.startTick,
+        lastSeq: back.lastSeq,
+        ...(this.resumeFacts === null ? { life: 1, shotSeq: -1 } : this.resumeFacts(back.entry.id)),
+      };
+      this.transport.send(from, { type: 'welcome', playerId: back.entry.id, hostNow: this.now(), roster: this.roster(), token: back.token, resume });
       this.broadcastRoster();
       return;
     }

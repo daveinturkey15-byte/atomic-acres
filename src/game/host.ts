@@ -366,4 +366,27 @@ export class GameHost {
   lifeOf(id: ActorId): number | null {
     return this.life.actors.get(id)?.health.life ?? null;
   }
+
+  /** The highest shot sequence admitted in this actor's current life. */
+  shotSeqOf(id: ActorId): number | null {
+    return this.life.actors.get(id)?.window.seqHigh ?? null;
+  }
+
+  /**
+   * Current host-owned kit for a live resume; no spawn or ammo reset. `rounds`
+   * is the existing total-rounds readout and does not claim magazine/reserve
+   * decomposition; the grenade counts are exact host kit values.
+   */
+  loadoutOf(id: ActorId): {
+    primaryId: string; rounds: number; lethal: number; tactical: number; armed: string | null;
+  } | null {
+    const actor = this.life.actors.get(id);
+    if (actor === undefined) return null;
+    const kit = this.ordnance.kitOf(actor);
+    return {
+      primaryId: kit.primaryId, rounds: kit.rounds,
+      lethal: kit.lethal, tactical: kit.tactical,
+      armed: kit.armed,
+    };
+  }
 }

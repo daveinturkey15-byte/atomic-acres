@@ -28,6 +28,7 @@ import {
   type PlayerSample,
   type RejectReason,
   type ResumeClaim,
+  type ResumeState,
   type RosterEntry,
   type ShotMsg,
   type StreakIntentMsg,
@@ -71,6 +72,8 @@ const GAME_TAGS: ReadonlySet<string> = new Set([
 const HOST_MESSAGE_TYPES: ReadonlySet<string> = new Set([
   'welcome', 'reject', 'roster', 'start', 'state', 'ping', 'pong', 'bye', ...GAME_TAGS,
 ]);
+/** Game tags can arrive during the short frame between welcome and driver bind. */
+const PENDING_GAME_CAP = 128;
 
 export class GuestClient {
   readonly diag = new NetDiagnostics();
@@ -107,6 +110,8 @@ export class GuestClient {
   private joinAttempts = 0;
   private joinTimeoutMs = 5000;
   private readonly resume: ResumeClaim | null;
+  /** Authoritative live-match resume block from welcome; null on a cold join. */
+  private resumeEpoch: ResumeState | null = null;
   private readonly localPrimaryId: string | (() => string | undefined) | undefined;
   private disposed = false;
   /** Guest-local time of the last VALID host message while admitted; -1 until welcome. */
@@ -121,6 +126,10 @@ export class GuestClient {
   private clockSamples = 0;
   private players: readonly PlayerSample[] = [];
   private gameHandler: ((msg: GameNetMessage) => void) | null = null;
+  /** Bounded handoff queue for game tags received before createGuestDriver binds. */
+  private readonly pendingGame: Array<GameNetMessage | undefined> = new Array(PENDING_GAME_CAP);
+  private pendingGameHead = 0;
+  private pendingGameCount = 0;
   private stateHandler: ((players: readonly PlayerSample[], hostNow: number) => void) | null = null;
   // Remote poses, interpolated for render. Bounded: one ring per seat.
   private readonly remotes = new Map<string, SnapshotRing>();
@@ -182,13 +191,30 @@ export class GuestClient {
   lastAckError(): number { return this.ackError; }
   /** The host's newest sample of THIS seat. Same object every call. */
   selfAck(): Readonly<SelfAck> { return this.ack; }
+  /** Authoritative live-match state carried by a resumed welcome, or null on a cold join. */
+  resumeState(): ResumeState | null { return this.resumeEpoch; }
   /** `hostNow - localNow`, NTP-estimated from pongs. 0 until the first sample. */
   hostClockOffset(): number { return this.clockOffset; }
   /** The players array of the newest state message; not copied. */
   latestPlayers(): readonly PlayerSample[] { return this.players; }
 
   /** One listener for game-tag messages; a second call replaces the first. */
-  onGame(handler: ((msg: GameNetMessage) => void) | null): void { this.gameHandler = handler; }
+  onGame(handler: ((msg: GameNetMessage) => void) | null): void {
+    this.gameHandler = handler;
+    if (handler === null) {
+      this.clearPendingGame();
+      return;
+    }
+    while (this.pendingGameCount > 0) {
+      const index = this.pendingGameHead;
+      const msg = this.pendingGame[index];
+      this.pendingGame[index] = undefined;
+      this.pendingGameHead = (index + 1) % PENDING_GAME_CAP;
+      this.pendingGameCount--;
+      if (msg !== undefined) handler(msg);
+    }
+    this.pendingGameHead = 0;
+  }
   /** One listener for state broadcasts, after the rings have been fed. */
   onState(handler: ((players: readonly PlayerSample[], hostNow: number) => void) | null): void {
     this.stateHandler = handler;
@@ -325,6 +351,7 @@ export class GuestClient {
       clearInterval(this.pingTimer);
       this.pingTimer = null;
     }
+    this.clearPendingGame();
     if (sendBye) {
       try {
         this.transport.send(this.hostPeer, { type: 'bye' });
@@ -357,7 +384,13 @@ export class GuestClient {
     if (GAME_TAGS.has(msg.type)) {
       if (this.state === 'joining') return;
       this.lastHostMsgAt = nowMs;
-      this.gameHandler?.(msg as GameNetMessage);
+      const game = msg as GameNetMessage;
+      if (this.gameHandler !== null) this.gameHandler(game);
+      else if (this.pendingGameCount < PENDING_GAME_CAP) {
+        const index = (this.pendingGameHead + this.pendingGameCount) % PENDING_GAME_CAP;
+        this.pendingGame[index] = game;
+        this.pendingGameCount++;
+      }
       return;
     }
     switch (msg.type) {
@@ -380,7 +413,16 @@ export class GuestClient {
         // use the right epoch; the first NTP sample replaces this estimate.
         this.clockOffset = msg.hostNow - nowMs;
         this.rosterCache = msg.roster;
-        this.state = 'lobby';
+        // A live-match resume carries the host's phase and high-water marks so
+        // the new driver does not restart input or shot numbering from zero.
+        if (msg.resume !== undefined) {
+          this.startTick = msg.resume.startTick;
+          this.seq = msg.resume.lastSeq + 1;
+          this.resumeEpoch = msg.resume;
+          this.state = msg.resume.phase;
+        } else {
+          this.state = 'lobby';
+        }
         this.onChange();
         break;
       case 'reject':
@@ -432,6 +474,12 @@ export class GuestClient {
       default:
         break;
     }
+  }
+
+  private clearPendingGame(): void {
+    for (let i = 0; i < PENDING_GAME_CAP; i++) this.pendingGame[i] = undefined;
+    this.pendingGameHead = 0;
+    this.pendingGameCount = 0;
   }
 
   /** Newest-first with an early break: seqs rise monotonically. */

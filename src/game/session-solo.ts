@@ -93,6 +93,11 @@ export interface SoloDriver extends MatchDriver {
   remotePose(id: ActorId, x: number, y: number, z: number, yaw: number, stance?: PlayerStance, primaryId?: string): void;
   remoteShot(id: ActorId, claim: ShotMsg, receivedAt: number): ShotAdmission | null;
   remoteStreak(id: ActorId, slot: number, toggle: boolean): void;
+  /** Live host-owned resume facts for a seat; null means no current actor. */
+  resumeFacts(id: ActorId): {
+    life: number; shotSeq: number; primaryId?: string; rounds?: number;
+    lethal?: number; tactical?: number; armed?: string | null;
+  } | null;
   /** Every event the host produced, after the local client has seen it. One sink. */
   setEventSink(sink: EventSink | null): void;
   matchState(): MatchStateMsg | null;
@@ -397,6 +402,17 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     remoteShot(id, claim, receivedAt): ShotAdmission | null {
       if (host === null || !seats.has(id)) return null;
       return host.submitShot(id, claim, receivedAt);
+    },
+
+    resumeFacts(id): {
+      life: number; shotSeq: number; primaryId?: string; rounds?: number;
+      lethal?: number; tactical?: number; armed?: string | null;
+    } | null {
+      if (host === null) return null;
+      const life = host.lifeOf(id);
+      const shotSeq = host.shotSeqOf(id);
+      const loadout = host.loadoutOf(id);
+      return life === null || shotSeq === null || loadout === null ? null : { life, shotSeq, ...loadout };
     },
 
     remoteStreak(id, slot, toggle): void {

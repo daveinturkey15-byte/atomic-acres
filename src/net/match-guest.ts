@@ -18,9 +18,9 @@
  * exact-displacement wire makes them rare.
  *
  * SHOTS. `firedAt` is converted into the host's clock with the NTP offset the
- * room learned from pongs; `life` is the count of this seat's spawns, which is
- * exactly how the host's `health.ts` numbers lives (initial = 1, +1 per revive)
- * and travels on the reliable channel, so the two cannot drift.
+ * room learned from pongs; `life` follows the host's explicit spawn reason
+ * (initial = 1, +1 per revive). Each spawn also begins a fresh host
+ * ShotWindow, so the guest resets its local shot base at the same edge.
  */
 import { GameClient } from '../game/client';
 import type { ActorId, GameEvent } from '../game/events';
@@ -58,6 +58,18 @@ export interface GuestDriverOptions {
 export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions): MatchDriver {
   const selfId = guest.getPlayerId() ?? 'guest';
   const client = new GameClient(selfId);
+  const resumed = guest.resumeState();
+  // A reload has no spawn edge to carry the host's current kit into the new
+  // GameClient. Seed the read-only projection before UI binding; OrdnanceScene
+  // adopts this inventory directly without resetting life, ammo history, or the
+  // host's shot window.
+  if (resumed !== null) {
+    if (resumed.primaryId !== undefined) client.ordnance.self.primaryId = resumed.primaryId;
+    if (resumed.rounds !== undefined) client.ordnance.self.rounds = resumed.rounds;
+    if (resumed.lethal !== undefined) client.ordnance.self.lethal = resumed.lethal;
+    if (resumed.tactical !== undefined) client.ordnance.self.tactical = resumed.tactical;
+    if (resumed.armed !== undefined) client.ordnance.self.armed = resumed.armed;
+  }
   client.setStreakNames(STREAK_CATALOG.definitions.map((d) => [d.id, d.displayName] as const));
   opts.ui.bindClient(client);
 
@@ -69,7 +81,13 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   const lastPose = { x: 0, z: 0, at: 0, valid: false };
   let acc = 0;
   let last = 0;
-  let lives = 0;
+  // A resumed page inherits the host's epoch: the life it is currently in and
+  // the shot high-water its claims must continue above (a fresh page counting
+  // from 0 would read as duplicates against the window that deliberately
+  // survived the rejoin). A cold join starts pre-life as before: no `spawn`
+  // seen, no shots until the first one arrives.
+  let lives = resumed?.life ?? 0;
+  let shotSeqBase = resumed === null || resumed.shotSeq < 0 ? 0 : resumed.shotSeq + 1;
   let matches = 0;
   let snaps = 0;
   let lastMatch: MatchStateMsg | null = null;
@@ -115,7 +133,12 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
       case 'spawn':
         record(msg.e);
         if (msg.e.actorId === selfId) {
-          lives += 1;
+          // An initial deployment is also the rematch boundary. Counting every
+          // spawn would carry life 2 into a fresh GameHost whose life is 1.
+          // Respawn is the only edge that increments; both edges reset the
+          // host's per-life ShotWindow.
+          lives = msg.e.reason === 'initial' ? 1 : Math.max(1, lives + 1);
+          shotSeqBase = 0;
           opts.placeLocal?.(msg.e.x, msg.e.y, msg.e.z, msg.e.yaw);
           // The body just teleported: forget its history and skip one velocity
           // sample, or the jump would be sent as a sprint in some direction.
@@ -223,7 +246,11 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     localShot(claim: ShotClaim): void {
       if (lives === 0) return;
       guest.sendGame({
-        type: 'shot', seq: claim.seq, life: lives, weaponId: claim.weaponId,
+        // On a resumed page the controller's seq restarted at 0; the base
+        // lifts the claim back above the host's retained window (first shot
+        // lands one past `shotSeq`, inside `MAX_SEQ_GAP`). A spawn resets the
+        // host window, so its base is 0 again for that life.
+        type: 'shot', seq: claim.seq + shotSeqBase, life: lives, weaponId: claim.weaponId,
         firedAt: claim.time + guest.hostClockOffset(),
         ox: claim.origin.x, oy: claim.origin.y, oz: claim.origin.z,
         dx: claim.direction.x, dy: claim.direction.y, dz: claim.direction.z,

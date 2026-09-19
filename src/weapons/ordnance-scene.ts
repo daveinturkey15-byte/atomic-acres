@@ -91,6 +91,11 @@ export class OrdnanceScene {
     this.tacticalId = OrdnanceScene.tacticalFor();
     this.lastPickupSeq = client === null ? 0 : client.ordnance.self.pickupSeq;
     this.lastSpawnSeq = client === null ? 0 : client.ordnance.self.spawnSeq;
+    if (client !== null && client.ordnance.self.primaryId !== null) {
+      // Resume inventory is a level, not a synthetic spawn edge. Preserve the
+      // host's current rounds/life/window while restoring the refreshed HUD gun.
+      this.weapons.adoptWeapon(client.ordnance.self.primaryId, client.ordnance.self.rounds);
+    }
     if (client === null) {
       this.hud.setPrompt(null);
       this.hud.setFlash(0);

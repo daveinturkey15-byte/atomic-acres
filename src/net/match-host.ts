@@ -38,7 +38,6 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
   let lastStreakAt = -Infinity;
   let phaseEdge = false;
   let disposed = false;
-
   const syncRoster = (): void => {
     const r = room.rosterRevision();
     if (r === rev) return;
@@ -113,6 +112,10 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
   room.onGame(onGame);
   room.setStamp((s) => solo.stampSample(s));
   room.setExtraSamples((into) => solo.botSamples(into));
+  // Resume data is read from the current GameHost through SoloDriver. This
+  // matters at both respawn and rematch: the host owns the live life epoch and
+  // the live ShotWindow, while the room owns only the seat/token boundary.
+  room.setResumeFacts((id) => solo.resumeFacts(id) ?? { life: 1, shotSeq: -1 });
   syncRoster();
 
   return {
