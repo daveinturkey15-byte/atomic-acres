@@ -103,11 +103,12 @@ photoreal or final player-traversal acceptance.
 
 ## 6. Integration notes for root
 
-- `scripts/capture-industrial-barrels.mjs` (root-owned) hardcodes the four OLD
-  coordinates on line 18; it needs the new table above.
-- The root-owned `docs/industrial-barrel-runtime.md` still contains the historical
-  `industrialBarrelReady` API line and should drop it before this record is treated
-  as fully reconciled. The source module itself no longer exports that symbol.
+- The root-owned capture has been reconciled to the new coordinates; the table
+  above is the current source-of-truth record, not a pending edit.
+- The historical `industrialBarrelReady` export was removed from the source and
+  has no runtime consumer. This lane's readiness note is therefore resolved;
+  the remaining acceptance work is the root-owned visual/player traversal and
+  promotion review.
 - The root map traversal receipt `captures/checkpoint-e-traverse.txt` passes 5/5
   routes and 4/4 house faces, but it is not a barrel-specific traversal trace.
   Barrel-specific player traversal and final promotion remain open; pixels and

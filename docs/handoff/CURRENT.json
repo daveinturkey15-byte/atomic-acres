@@ -2,15 +2,18 @@
   "schema_version": 1,
   "project": "nuketown-2025-standalone",
   "checkpoint": "checkpoints/2026-09-19-codex-recovery",
-  "source_commit": "b5c5403a5eefe104b50ebe66707938909c618ca2",
+  "source_commit": "f7d2c57b8e13eb583e532955774b745489c91c11",
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4191/",
-  "status": "active refinement campaign; candidate 4192 under verification",
+  "status": "checkpoint G promoted; continued refinement active",
   "owner": "Codex",
-  "stop_state": "ACTIVE root integration; remote shot WebRTC PASS, 45 weather switches PASS; root static reflection canary QA, Luna prone weapon and barrel integration, Luna asset ledger reconciliation; no duplicate workers",
+  "stop_state": "ACTIVE: 4191 frozen f7d2c57 G verified after promotion. Root next candidate combines authoritative resume with watchdog; native integrates guest file. GLM max fence-finalize isolated. Muse lighting draft unaccepted. Continue after15.",
   "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z",
   "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
   "inspection_time": "2026-09-19T15:00:00+01:00",
-  "lease_updated_at": "2026-09-19T11:49:01.2418016Z"
+  "lease_updated_at": "2026-09-19T13:53:25.851367+00:00",
+  "source_checkpoint": "f7d2c57b8e13eb583e532955774b745489c91c11",
+  "inspection_report": "docs/handoff/INSPECTION-2026-09-19.md",
+  "bundle_sha256": "a0c339ffe968153c1bc82afa765cc81db3f98b148e12f57fdb10d52614fd2494"
 }
