@@ -407,7 +407,7 @@ function makeCoach(ctx: BuildContext): Vehicle {
   // would hang off the sides of the hull.
   g.add(box(0.09, 0.24, 1.30, trim, 5.315, 2.80, 0));
   g.add(box(0.08, 0.17, 1.15, ctx.mat.signText({
-    text: 'NUKETOWN', color: PAL.windowBand, background: PAL.truckCab, aspect: 6.8,
+    text: 'ATOMIC ACRES', color: PAL.windowBand, background: PAL.truckCab, aspect: 6.8,
   }), 5.340, 2.80, 0));
 
   // Chrome grille, ordered front to back: bars, dark throat, then a surround
