@@ -89,6 +89,12 @@ export interface HudApi {
   setDebugVisible(v: boolean): void;
   /** Accessibility trio from `ui/settings.ts`; the HUD reads two of the three. */
   setAccessibility(a: Accessibility): void;
+  /** Ordnance lane: grenade charges held, which tactical, and whether one is armed (pin out). Level. */
+  setGrenades(lethal: number, tactical: number, tacticalId: string, armed: string | null): void;
+  /** Ordnance lane: flashbang white-out opacity 0..1. Level, every frame; opacity only. */
+  setFlash(opacity: number): void;
+  /** Ordnance lane: the pickup prompt ("HOLD E TO SWAP · LONGHORN"); `null` hides. Level. */
+  setPrompt(text: string | null): void;
 }
 
 /**
@@ -128,6 +134,9 @@ function noopApi(): HudApi {
     setPlayer: noop,
     setDebugVisible: noop,
     setAccessibility: noop,
+    setGrenades: noop,
+    setFlash: noop,
+    setPrompt: noop,
   };
 }
 
@@ -177,6 +186,9 @@ export function initHud(): HudApi {
   let hitTimer = 0;
   let flashScale = 1;
   let reducedMotion = false;
+  let cGrenades = '';
+  let cFlash = -1;
+  let cPrompt: string | null = '';
 
   const applyGap = (): void => {
     if (!n.crosshair) return;
@@ -341,6 +353,37 @@ export function initHud(): HudApi {
       reducedMotion = a.reducedMotion;
       root.style.setProperty('--aa-flash', String(flashScale));
       root.classList.toggle('hud-reduced-motion', reducedMotion);
+    },
+
+    setGrenades(lethal: number, tactical: number, tacticalId: string, armed: string | null): void {
+      const sig = lethal + '|' + tactical + '|' + tacticalId + '|' + String(armed);
+      if (sig === cGrenades) return;
+      cGrenades = sig;
+      n.grenadeLethal.textContent = '\u25CF FRAG ' + lethal + (armed === 'frag' ? ' \u2022 ARMED' : '');
+      n.grenadeTactical.textContent = '\u25C6 ' + tacticalId.toUpperCase() + ' ' + tactical
+        + (armed !== null && armed !== 'frag' ? ' \u2022 ARMED' : '');
+      n.grenadeLethal.classList.toggle('hud-low', lethal <= 0);
+      n.grenadeTactical.classList.toggle('hud-low', tactical <= 0);
+    },
+
+    setFlash(opacity: number): void {
+      // The accessibility flash scale applies here too: a player who turned
+      // the damage flash down did not ask to be blinded by a grenade instead.
+      const v = Math.round(Math.max(0, Math.min(1, opacity)) * flashScale * 100) / 100;
+      if (v === cFlash) return;
+      cFlash = v;
+      n.flash.style.opacity = String(v);
+    },
+
+    setPrompt(text: string | null): void {
+      if (text === cPrompt) return;
+      cPrompt = text;
+      if (text === null) {
+        n.prompt.classList.add('hud-hidden');
+        return;
+      }
+      n.prompt.textContent = text;
+      n.prompt.classList.remove('hud-hidden');
     },
   };
 }

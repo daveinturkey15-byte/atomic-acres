@@ -35,6 +35,7 @@ import {
   type ViewmodelRig,
 } from './viewmodel';
 import { WeaponEffects } from './effects';
+import { OrdnanceInput } from './ordnance-input';
 
 const DEG = Math.PI / 180;
 const BASE_FOV = 72;
@@ -156,6 +157,9 @@ export class WeaponsController {
   /** Monotonic claim sequence, and the clock the claim is stamped with. */
   private shotSeq = 0;
   private nowMs = 0;
+  /** Grenades, knife, pickup: the off hand (ordnance lane). Its claims go out through `claim()`. */
+  private readonly ord: OrdnanceInput;
+  private handLower = 0;
 
   private shotsHit = 0;
   private hitSeq = 0;
@@ -217,6 +221,9 @@ export class WeaponsController {
     this.weapons[0].rig.group.visible = true;
     this.overlay.add(hemi);
     this.overlay.add(key);
+    // The knife and the held grenade mount beside the gun, in the same overlay,
+    // at construction - no scene add/remove afterwards, and no light of their own.
+    this.ord = new OrdnanceInput(opts.mat, this.overlay);
 
     this.effects = new WeaponEffects(opts.scene, opts.mat);
     opts.scene.add(this.effects.group);
@@ -336,19 +343,25 @@ export class WeaponsController {
     // (~12 deg pitch + drop), reload dip.
     const swayAmp = 0.004 + (0.001 - 0.004) * this.adsT;
     const adsDamp = 1 - this.adsT * 0.75;
+    const bobX = Math.cos(this.bobPhase) * 0.005 * this.bobScale * adsDamp;
+    const bobY = Math.sin(this.bobPhase * 2) * 0.008 * this.bobScale * adsDamp;
+    // The off hand first: it bobs with the gun and tells the gun how far to
+    // drop while it is throwing, stabbing or reaching. Its claim moments are
+    // drained here so a grenade leaves the hand on the frame the pose says.
+    this.handLower = this.ord.update(dt, this.camera.position, this.camera.quaternion, time, bobX, bobY);
+    for (let id = this.ord.takeClaim(); id !== null; id = this.ord.takeClaim()) this.claim(id);
     this.tmpOffset.lerpVectors(HIP_OFFSET, ADS_OFFSET, this.adsT);
-    this.tmpOffset.x += Math.sin(time * 1.1) * swayAmp * adsDamp
-      + Math.cos(this.bobPhase) * 0.005 * this.bobScale * adsDamp;
-    this.tmpOffset.y += Math.cos(time * 1.7) * swayAmp * 0.7 * adsDamp
-      + Math.sin(this.bobPhase * 2) * 0.008 * this.bobScale * adsDamp
+    this.tmpOffset.x += Math.sin(time * 1.1) * swayAmp * adsDamp + bobX + 0.04 * this.handLower;
+    this.tmpOffset.y += Math.cos(time * 1.7) * swayAmp * 0.7 * adsDamp + bobY
       - 0.05 * this.sprintBlend
-      - 0.06 * reloadDip;
+      - 0.06 * reloadDip
+      - 0.09 * this.handLower;
     this.tmpOffset.applyQuaternion(this.camera.quaternion).add(this.camera.position);
     cur.rig.group.position.copy(this.tmpOffset);
     this.tmpEuler.set(
-      0.21 * this.sprintBlend - 0.35 * reloadDip,
+      0.21 * this.sprintBlend - 0.35 * reloadDip + 0.3 * this.handLower,
       0,
-      0,
+      -0.12 * this.handLower,
     );
     this.tmpQuat.setFromEuler(this.tmpEuler);
     cur.rig.group.quaternion.copy(this.camera.quaternion).multiply(this.tmpQuat);
@@ -409,7 +422,61 @@ export class WeaponsController {
       this.switchTo(4);
       return true;
     }
+    // G / Q / V / E: the off hand. A swing cancels a reload, as in BO2.
+    if (this.visible && this.ord.keyDown(code, this.nowMs)) {
+      if (this.ord.busy) { const cur = this.weapons[this.active]; cur.reloading = false; cur.reloadT = 0; }
+      return true;
+    }
     return false;
+  }
+
+  /** Key releases: a held grenade is thrown when G/Q comes up; E stops the use-hold. */
+  keyUp(code: string): boolean {
+    return this.visible && this.ord.keyUp(code);
+  }
+
+  // ---- Ordnance lane: the host's level and its verdicts, pushed by `ordnance-scene.ts` ----
+
+  /** What the host says we hold. Level, every frame; gates the raise and un-arms a refused one. */
+  setOrdnance(lethal: number, tactical: number, tacticalId: string, armed: string | null): void {
+    this.ord.setLevel(lethal, tactical, tacticalId, armed);
+  }
+
+  /** A grenade went off here: flash star, dust and sparks from the pools. Never a light. */
+  blastAt(x: number, y: number, z: number): void {
+    this.tmpEnd.set(x, y, z);
+    this.effects.blast(this.tmpEnd, this.camera.quaternion);
+  }
+
+  /** The host swapped our primary for a drop's: hold that gun, with the rounds it had. */
+  adoptWeapon(weaponId: string, rounds: number): boolean {
+    const idx = this.weapons.findIndex((w) => w.def.id === weaponId);
+    if (idx < 0) return false;
+    const w = this.weapons[idx];
+    const total = Math.max(0, Math.floor(rounds));
+    w.mag = Math.min(w.def.magSize, total);
+    w.reserve = total - w.mag;
+    w.reloading = false;
+    w.reloadT = 0;
+    this.switchTo(idx);
+    this.syncHudState();
+    this.pushHud(true);
+    return true;
+  }
+
+  /** Scavenged ammo for a gun we carry. */
+  grantRounds(weaponId: string, rounds: number): boolean {
+    const w = this.weapons.find((v) => v.def.id === weaponId);
+    if (w === undefined || !(rounds > 0)) return false;
+    w.reserve += Math.floor(rounds);
+    this.syncHudState();
+    this.pushHud(true);
+    return true;
+  }
+
+  /** A new life: whatever the hand was doing is over. */
+  onSelfSpawn(): void {
+    this.ord.cancel();
   }
 
   wheel(deltaY: number): void {
@@ -420,6 +487,7 @@ export class WeaponsController {
   setVisible(v: boolean): void {
     this.visible = v;
     this.overlay.visible = v;
+    this.ord.setVisible(v);
     if (!v) {
       this.adsOn = false;
       this.adsT = 0;
@@ -576,7 +644,8 @@ export class WeaponsController {
         return true;
       }
       default:
-        return undefined;
+        // 'grenade' / 'knife' / 'use' / 'ordnance': the off hand's own commands.
+        return this.visible ? this.ord.command(cmd, arg, this.nowMs) : undefined;
     }
   }
 
@@ -615,10 +684,29 @@ export class WeaponsController {
     return true;
   }
 
+  /**
+   * One claim on the wire: a bullet, a grenade (arm or release), the knife or
+   * a pickup reach are all "an action at the eye along the aim at a time",
+   * and the host tells them apart by `weaponId`. One author, one sequence.
+   */
+  private claim(weaponId: string): void {
+    if (this.onShot === null) return;
+    this.tmpDir.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
+    const c = this.camera.position;
+    this.onShot({
+      origin: { x: c.x, y: c.y, z: c.z },
+      direction: { x: this.tmpDir.x, y: this.tmpDir.y, z: this.tmpDir.z },
+      seq: ++this.shotSeq,
+      weaponId,
+      time: this.nowMs,
+    });
+  }
+
   private tryFire(fromAuto: boolean): boolean {
     const cur = this.weapons[this.active];
     const def = cur.def;
-    if (!this.visible || cur.reloading) return false;
+    // The trigger waits for the off hand: no bullet mid-throw, mid-stab or mid-reach.
+    if (!this.visible || cur.reloading || this.ord.busy) return false;
     if (!fromAuto || !def.auto) {
       if (cur.cool > 0) return false;
       cur.cool = def.interval;
@@ -635,17 +723,7 @@ export class WeaponsController {
     // throw anywhere in the effects path cannot swallow the shot the host is
     // meant to resolve. Camera forward carries the recoil already applied this
     // frame, which is what the player was actually pointing at.
-    if (this.onShot !== null) {
-      this.tmpDir.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
-      const c = this.camera.position;
-      this.onShot({
-        origin: { x: c.x, y: c.y, z: c.z },
-        direction: { x: this.tmpDir.x, y: this.tmpDir.y, z: this.tmpDir.z },
-        seq: ++this.shotSeq,
-        weaponId: def.id,
-        time: this.nowMs,
-      });
-    }
+    this.claim(def.id);
 
     // Spread cone: base (hip<->ADS) + movement + accumulated bloom, crouch bonus.
     cur.bloom = Math.min(def.spread.bloomMax, cur.bloom + def.spread.bloom);

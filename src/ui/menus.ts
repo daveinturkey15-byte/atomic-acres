@@ -1,118 +1,90 @@
 /**
- * Atomic Acres — menus, map select, pause, and the lifecycle that drives them.
+ * Atomic Acres — the menu shell: which view shows, and the lifecycle that
+ * decides it.
  *
- * Everything here lives inside the existing #start overlay (the capture harness
+ * Everything lives inside the existing #start overlay (the capture harness
  * removes #start before every shot, so a node anywhere else would leak into
- * captures). No nodes are created outside #start; `main.ts` owns the overlay's
- * own click-to-dismiss listener, so clicks on empty overlay area still bubble
- * to it while interactive children stop propagation — adjusting a slider must
- * not drop the player into the match.
+ * captures). `menu-lifecycle.ts` is the reducer; this file applies it. The
+ * views are built once by `menu-views.ts`, `solo-setup.ts`, `lobby.ts` and
+ * `settings-panel.ts`, and `render()` is the ONE place that decides visibility,
+ * so the overlay cannot disagree with itself.
  *
- * TWO CHANGES FROM THE FIRST VERSION:
+ * THE ONE-CLICK CONTRACT. `playcap.mjs` and every harness call
+ * `#start.click()` and expect a default solo match. That synthetic click lands
+ * on the overlay itself; `main.ts` owns the listener that begins the match and
+ * hides the overlay, and the reducer mirrors it here. Real clicks land on menu
+ * controls inside `.aa-root`, which stops propagation, so a slider cannot
+ * start a match and a button always does exactly what it says.
  *
- *  1. **The second projection is gone.** `drawNuketownThumb` re-projected
- *     `core/layout.ts` top-down with its own colours, a duplicate of
- *     `ui/hud.ts:drawMap()` in a project one day old (IMPORT-PLAN §5.12). Both
- *     now call `game/minimap.ts` through `ui/hud-map.ts`. The thumbnail is
- *     portrait because the arena IS portrait — 44.5 m by 84 m — and the old
- *     landscape card only fitted by scaling the two axes differently, which
- *     made the map-select picture a shape the map is not.
- *  2. **Visibility is a reducer, not a pile of booleans.** `menu-lifecycle.ts`
- *     owns which surface shows and what pointer lock is doing, including the
- *     denied and focus-suspended phases. This file applies the result.
+ * `match()` is read lazily: `main.ts` builds the UI before the match object
+ * exists, and binds it a few lines later (`UiHandle.bindMatch`).
  */
 import type { HudApi } from './hud';
-import { glyphFor, glyphScheme } from './glyphs';
-import { buildMapSelect } from './map-select';
+import type { LocalMatch } from '../game/session';
+import type { SessionSnapshot } from '../game/session-types';
+import {
+  INITIAL_MENU_STATE, menuVisible, reduceMenuLifecycle, type MenuLifecycleEvent, type MenuLifecycleState,
+} from './menu-lifecycle';
+import { buildCredits, buildDeploying, buildEnd, buildError, buildMain, buildPause, button } from './menu-views';
+import { buildLobbyPanel } from './lobby';
 import { buildSettingsPanel } from './settings-panel';
 import {
-  INITIAL_MENU_STATE,
-  menuVisible,
-  reduceMenuLifecycle,
-  type MenuLifecycleEvent,
-  type MenuLifecycleState,
-} from './menu-lifecycle';
-import { loadSettings, saveSettings, resetSettings, accessibilityOf, type Settings } from './settings';
+  applySettings, installInputShims, probeApplied, type AppliedProbe, type ApplyTargets, type MenuPlayer, type MenuWorld,
+} from './settings-apply';
+import { buildSoloSetupPanel } from './solo-setup';
+import { loadSettings, resetSettings, saveSettings, type Settings } from './settings';
 
-/** Minimal surface menus actually use — probed, never assumed. */
-export interface MenuPlayer {
-  setSensitivity?: (v: number) => void;
-}
-
-export interface MenuWorld {
-  camera?: { fov: number; updateProjectionMatrix: () => void };
-  renderer?: { domElement?: { requestPointerLock: () => unknown } };
-}
-
-/** Map select lives in `map-select.ts`; re-exported so `menus.ts` stays the
- *  one import target IMPORT-PLAN §0 lists for `initMenus` and `MAPS`. */
+export type { MenuPlayer, MenuWorld } from './settings-apply';
 export { MAPS, THUMB_H, THUMB_W, type MapEntry } from './map-select';
 
-// ---------------------------------------------------------------------------
-// Settings application.
-//
-// Applied today: FOV — world.camera is a public THREE.PerspectiveCamera, so
-// setting fov + updateProjectionMatrix() is an existing public API. The
-// accessibility trio reaches the HUD through `hud.setAccessibility`.
-// NOT applied (no public hook exists; values persist and take effect once the
-// owning module grows one): sensitivity (player.ts has no setter; probed here
-// so a future hook is picked up), quality, weaponMotionScale.
-// ---------------------------------------------------------------------------
+export const MENU_PANELS = ['main', 'solo', 'multiplayer', 'options', 'credits'] as const;
+export type MenuPanel = (typeof MENU_PANELS)[number];
 
-function applySettings(s: Settings, player: MenuPlayer, world: MenuWorld, hud: HudApi): void {
-  try {
-    if (world.camera) {
-      world.camera.fov = s.fov;
-      world.camera.updateProjectionMatrix();
-    }
-  } catch {
-    // Camera not ready — persisted value applies on the next change.
-  }
-  try {
-    player.setSensitivity?.(s.sensitivity);
-  } catch {
-    // No sensitivity hook — persisted only.
-  }
-  hud.setAccessibility(accessibilityOf(s));
+export interface MenuDeps {
+  hud: HudApi;
+  player: MenuPlayer;
+  world: MenuWorld;
+  match(): LocalMatch | null;
+  names(): ReadonlyMap<string, string>;
 }
 
-function button(label: string, cls = ''): HTMLButtonElement {
-  const b = document.createElement('button');
-  b.type = 'button';
-  b.textContent = label;
-  b.className = ('aa-btn ' + cls).trim();
-  b.addEventListener('click', (e) => e.stopPropagation());
-  return b;
+export interface MenuHandle {
+  /** Once per frame from the UI loop: follows the match into and out of the menus. */
+  tick(now: number): void;
+  /** Navigate the pre-match menu (the harness and a future gamepad path use this). */
+  open(panel: MenuPanel): void;
+  /** A pause request from something other than Escape (gamepad Start, a harness). */
+  pause(): void;
+  state(): MenuLifecycleState;
+  panel(): MenuPanel;
+  settings(): Settings;
+  write(patch: Partial<Settings>): Settings;
+  probe(): AppliedProbe;
 }
 
-/** A `<kbd data-glyph>` prompt cap; the glyph scheme owns its text. */
-function kbd(action: string): HTMLElement {
-  const k = document.createElement('kbd');
-  k.setAttribute('data-glyph', action);
-  k.textContent = glyphFor(action, glyphScheme());
-  return k;
-}
+/** End-screen refresh cadence. The countdown reads fine at 4 Hz. */
+const END_REFRESH_MS = 250;
 
-function view(label: string, hidden: boolean): HTMLElement {
-  const v = document.createElement('div');
-  v.className = 'aa-view' + (hidden ? ' aa-hidden' : '');
-  v.setAttribute('aria-label', label);
-  return v;
-}
-
-export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWorld }): void {
-  const { hud, player, world } = deps;
+export function initMenus(deps: MenuDeps): MenuHandle {
   const found = document.getElementById('start');
-  if (!found) return;
-  // Bound once so the closures below keep the narrowed type; #start is never
-  // replaced during a session (the capture harness removes it before load).
-  const overlay: HTMLElement = found;
-  const canvas = world.renderer?.domElement;
+  const overlay: HTMLElement = found ?? document.createElement('div');
+  const canvas = deps.world.renderer?.domElement;
+  const targets: ApplyTargets = { player: deps.player, world: deps.world, hud: deps.hud };
 
   let settings: Settings = loadSettings();
-  applySettings(settings, player, world, hud);
+  applySettings(settings, targets);
   let life: MenuLifecycleState = INITIAL_MENU_STATE;
-  let panel: 'none' | 'settings' = 'none';
+  let panel: MenuPanel = 'main';
+  let optionsReturn: MenuPanel = 'main';
+  let lastEndRefresh = 0;
+  let lobbyBound: LocalMatch | null = null;
+
+  const write = (patch: Partial<Settings>): Settings => {
+    saveSettings({ ...settings, ...patch });
+    settings = loadSettings();
+    applySettings(settings, targets);
+    return settings;
+  };
 
   overlay.innerHTML = '';
   const root = document.createElement('div');
@@ -120,217 +92,134 @@ export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWo
   root.setAttribute('role', 'dialog');
   root.setAttribute('aria-modal', 'true');
   root.setAttribute('aria-label', 'Atomic Acres menu');
+  // Real clicks stop here: only the synthetic `#start.click()` reaches main.ts.
+  root.addEventListener('click', (e) => e.stopPropagation());
 
-  // ---- main menu ----
-  const main = view('Main menu', false);
-  const eyebrow = document.createElement('div');
-  eyebrow.className = 'aa-eyebrow';
-  eyebrow.textContent = 'A fan project inspired by Black Ops 2';
-  const title = document.createElement('h1');
-  title.className = 'aa-title';
-  title.textContent = 'ATOMIC ACRES';
-  const sub = document.createElement('div');
-  sub.className = 'aa-sub';
-  sub.textContent = 'Nuketown 2025';
-  const btnRow = document.createElement('div');
-  btnRow.className = 'aa-row';
-  const playBtn = button('Play', 'aa-primary');
-  const settingsBtn = button('Settings');
-  btnRow.append(playBtn, settingsBtn);
-
-  const mapHead = document.createElement('div');
-  mapHead.className = 'aa-maphead';
-  mapHead.textContent = 'Map select';
-  const mapSelect = buildMapSelect();
-
-  const fan = document.createElement('div');
-  fan.className = 'aa-fan';
-  fan.textContent = 'Unofficial fan project — not affiliated with Activision or Treyarch.';
-  // Attribution the animation supply chain requires (docs/LICENCES-ANIMATION.md,
-  // obligation 3): the text encoder behind the baked clips is Llama-3-derived, and the
-  // motion model is NVIDIA's. Both lines are licence text, not decoration - keep them.
-  const credits = document.createElement('div');
-  credits.className = 'aa-fan aa-credits';
-  credits.textContent = 'Built with Meta Llama 3 · Motion: NVIDIA Kimodo SOMA-RP v1.1 (NVIDIA Open Model License)';
-  main.append(eyebrow, title, sub, btnRow, mapHead, mapSelect.root, fan, credits);
-
-  // ---- settings ----
-  const settingsPanel = buildSettingsPanel({
-    read: () => settings,
-    write: (patch) => {
-      settings = { ...settings, ...patch };
-      saveSettings(settings);
-      settings = loadSettings();
-      applySettings(settings, player, world, hud);
-    },
+  const main = buildMain();
+  const pause = buildPause();
+  const credits = buildCredits();
+  const end = buildEnd();
+  const deploying = buildDeploying();
+  const errorView = buildError();
+  const solo = buildSoloSetupPanel({
+    onChange: (s) => { deps.match()?.configure(s); },
+    onDeploy: () => startSolo(),
+    onBack: () => { panel = optionsReturn === 'multiplayer' ? 'multiplayer' : 'main'; solo.setMode('solo'); render(); },
   });
-  const sBtnRow = document.createElement('div');
-  sBtnRow.className = 'aa-row';
-  const backBtn = button('Back');
-  const resetBtn = button('Reset defaults');
-  sBtnRow.append(backBtn, resetBtn);
-  settingsPanel.root.append(sBtnRow);
+  const lobby = buildLobbyPanel({
+    session: () => deps.match()?.lobby ?? null,
+    settings: () => settings,
+    write,
+    rules: () => solo.setup(),
+    onEditRules: () => { optionsReturn = 'multiplayer'; solo.setMode('rules'); panel = 'solo'; render(); },
+    onBack: () => { panel = 'main'; render(); },
+  });
+  const options = buildSettingsPanel({ read: () => settings, write });
+  const oRow = document.createElement('div');
+  oRow.className = 'aa-row';
+  const oBack = button('Back');
+  const oReset = button('Reset defaults');
+  oRow.append(oBack, oReset);
+  options.root.append(oRow);
 
-  // ---- deploying / pause / error ----
-  const deploying = view('Deploying', true);
-  const dTitle = document.createElement('h2');
-  dTitle.className = 'aa-h2';
-  dTitle.textContent = 'DEPLOYING';
-  deploying.append(dTitle);
-
-  const pause = view('Paused', true);
-  const pTitle = document.createElement('h2');
-  pTitle.className = 'aa-h2';
-  pTitle.textContent = 'Paused';
-  const pRow = document.createElement('div');
-  pRow.className = 'aa-row';
-  const resumeBtn = button('Resume', 'aa-primary');
-  const pauseSettingsBtn = button('Settings');
-  pRow.append(resumeBtn, pauseSettingsBtn);
-  const hint = document.createElement('div');
-  hint.className = 'aa-hint';
-  hint.append(
-    kbd('move'), document.createTextNode(' move · '),
-    kbd('fire'), document.createTextNode(' fire · '),
-    kbd('ads'), document.createTextNode(' aim · '),
-    kbd('reload'), document.createTextNode(' reload · '),
-    kbd('switch'), document.createTextNode(' weapons'),
-  );
-  pause.append(pTitle, pRow, hint);
-
-  const errorView = view('Error', true);
-  const eTitle = document.createElement('h2');
-  eTitle.className = 'aa-h2';
-  eTitle.textContent = 'Something broke';
-  const eBody = document.createElement('div');
-  eBody.className = 'aa-hint';
-  eBody.textContent = 'The match stopped. Reload the page to try again.';
-  errorView.append(eTitle, eBody);
-
-  root.append(main, settingsPanel.root, deploying, pause, errorView);
+  root.append(main.root, solo.root, lobby.root, options.root, credits.root, pause.root, end.root, deploying, errorView);
   overlay.append(root);
 
   // -------------------------------------------------------------------------
-  // Render the reducer's decision. One function, called after every event, so
-  // there is exactly one place that can make the overlay disagree with itself.
+  // Render the reducer's decision. One function, called after every event.
   // -------------------------------------------------------------------------
-  function render(): void {
-    const showSettings = panel === 'settings' && menuVisible(life);
-    main.classList.toggle('aa-hidden', showSettings || life.surface !== 'pre-match');
-    settingsPanel.root.classList.toggle('aa-hidden', !showSettings);
-    deploying.classList.toggle('aa-hidden', showSettings || life.surface !== 'deploying');
-    pause.classList.toggle('aa-hidden', showSettings || life.surface !== 'paused-match');
-    errorView.classList.toggle('aa-hidden', showSettings || life.surface !== 'error');
-    overlay.style.display = menuVisible(life) ? 'flex' : 'none';
-    if (!menuVisible(life)) return;
-    try {
-      const v = showSettings ? settingsPanel.root : visibleView();
-      (v.querySelector('button, input, select') as HTMLElement | null)?.focus();
-    } catch {
-      // Headless — focus is a no-op.
-    }
+  function visibleView(): HTMLElement {
+    const s = life.surface;
+    if (s === 'deploying') return deploying;
+    if (s === 'error') return errorView;
+    if (s === 'match-over') return end.root;
+    if (s === 'paused-match') return panel === 'options' ? options.root : pause.root;
+    if (panel === 'solo') return solo.root;
+    if (panel === 'multiplayer') return lobby.root;
+    if (panel === 'options') return options.root;
+    if (panel === 'credits') return credits.root;
+    return main.root;
   }
 
-  function visibleView(): HTMLElement {
-    if (life.surface === 'paused-match') return pause;
-    if (life.surface === 'deploying') return deploying;
-    if (life.surface === 'error') return errorView;
-    return main;
+  function render(): void {
+    const show = visibleView();
+    for (const v of [main.root, solo.root, lobby.root, options.root, credits.root, pause.root, end.root, deploying, errorView]) {
+      v.classList.toggle('aa-hidden', v !== show);
+    }
+    const translucent = life.surface === 'paused-match' || life.surface === 'match-over';
+    overlay.classList.toggle('aa-translucent', translucent);
+    overlay.style.display = menuVisible(life) ? 'flex' : 'none';
+    if (!menuVisible(life)) return;
+    if (show === lobby.root) lobby.refresh();
+    if (show === options.root) options.refresh();
+    try {
+      (show.querySelector('button:not([disabled]), input, select') as HTMLElement | null)?.focus();
+    } catch {
+      /* headless: focus is a no-op */
+    }
   }
 
   function send(e: MenuLifecycleEvent): void {
     const before = life;
     life = reduceMenuLifecycle(life, e);
-    if (life.surface !== before.surface) panel = 'none';
+    if (life.surface !== before.surface && life.surface !== 'pre-match') panel = 'main';
     render();
   }
 
-  function lockPointer(): void {
-    send({ type: 'pointer-request', source: 'match-start' });
+  function lockPointer(source: 'match-start' | 'resume' = 'match-start'): void {
+    send({ type: 'pointer-request', source });
     try {
       const p = canvas?.requestPointerLock() as unknown as Promise<void> | undefined;
-      // A rejected request is a REAL state, not an exception to swallow: the
-      // browser refuses within a second of an Escape. `denied` keeps the game
-      // running with a free mouse instead of opening a pause nobody asked for.
-      p?.then?.(
-        () => send({ type: 'pointer-acquired' }),
-        () => send({ type: 'pointer-rejected' }),
-      );
-      // No optimistic 'acquired' when the call returns nothing. `pointerlockchange`
-      // is the only authority on whether the lock exists, and assuming success
-      // here is what would let a headless browser — which never locks — reach the
-      // `locked` phase and then open a pause menu over the capture.
+      // A rejected request is a REAL state (`denied`): the game runs with a
+      // free mouse and the next canvas click re-locks. Never assume success:
+      // `pointerlockchange` is the only authority, which is what keeps a
+      // headless browser from reaching `locked` and pausing over a capture.
+      p?.then?.(() => send({ type: 'pointer-acquired' }), () => send({ type: 'pointer-rejected' }));
     } catch {
       send({ type: 'pointer-rejected' });
     }
   }
 
-  // ---- keyboard: arrows move between controls, Escape steps back ----------
-  overlay.addEventListener('keydown', (e) => {
-    if (!menuVisible(life)) return;
-    const target = e.target as HTMLElement | null;
-    const inField = !!target && (target.tagName === 'INPUT' || target.tagName === 'SELECT');
-    if (e.key === 'Escape') {
-      e.stopPropagation();
-      if (panel === 'settings') {
-        panel = 'none';
-        render();
-      } else if (life.surface === 'paused-match') {
-        send({ type: 'resume' });
-        lockPointer();
-      }
-      return;
-    }
-    if (inField) return;
-    const order = ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End'];
-    if (!order.includes(e.key)) return;
-    const host = panel === 'settings' ? settingsPanel.root : visibleView();
-    const ctrls = Array.from(host.querySelectorAll('button, input, select')) as HTMLElement[];
-    if (ctrls.length === 0) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const active = document.activeElement as HTMLElement | null;
-    let i = ctrls.indexOf(active ?? ctrls[0]);
-    if (e.key === 'Home') i = 0;
-    else if (e.key === 'End') i = ctrls.length - 1;
-    else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') i = i < 0 ? 0 : (i + 1) % ctrls.length;
-    else i = i < 0 ? ctrls.length - 1 : (i - 1 + ctrls.length) % ctrls.length;
-    try {
-      ctrls[i].focus();
-    } catch {
-      // Headless — nothing to focus.
-    }
-  });
-
-  const openSettings = (): void => {
-    panel = 'settings';
-    settings = loadSettings();
-    applySettings(settings, player, world, hud);
-    settingsPanel.refresh();
-    render();
-  };
-
-  playBtn.addEventListener('click', () => {
+  function startSolo(): void {
+    const m = deps.match();
+    if (m === null) return;
+    if (m.lobby.active()) m.leave();
+    m.configure(solo.setup());
+    m.begin();
     send({ type: 'match-start' });
     send({ type: 'match-ready' });
     lockPointer();
-  });
-  settingsBtn.addEventListener('click', openSettings);
-  pauseSettingsBtn.addEventListener('click', openSettings);
-  backBtn.addEventListener('click', () => {
-    panel = 'none';
+  }
+
+  function leaveMatch(): void {
+    const m = deps.match();
+    const wasRoom = m !== null && m.mode() !== 'solo';
+    m?.leave();
+    try { document.exitPointerLock(); } catch { /* no lock */ }
+    panel = wasRoom ? 'multiplayer' : 'main';
+    send({ type: 'return-pre-match' });
+  }
+
+  function openOptions(from: MenuPanel): void {
+    optionsReturn = from;
+    panel = 'options';
+    options.refresh();
     render();
-  });
-  resetBtn.addEventListener('click', () => {
-    settings = resetSettings();
-    saveSettings(settings);
-    applySettings(settings, player, world, hud);
-    settingsPanel.refresh();
-  });
-  resumeBtn.addEventListener('click', () => {
-    send({ type: 'resume' });
-    lockPointer();
-  });
+  }
+
+  // ---- wiring -------------------------------------------------------------
+  main.solo.addEventListener('click', () => { optionsReturn = 'main'; solo.setMode('solo'); panel = 'solo'; render(); });
+  main.multiplayer.addEventListener('click', () => { panel = 'multiplayer'; render(); });
+  main.options.addEventListener('click', () => openOptions('main'));
+  main.credits.addEventListener('click', () => { panel = 'credits'; render(); });
+  credits.back.addEventListener('click', () => { panel = 'main'; render(); });
+  oBack.addEventListener('click', () => { panel = life.surface === 'paused-match' ? 'main' : optionsReturn; render(); });
+  oReset.addEventListener('click', () => { settings = resetSettings(); saveSettings(settings); applySettings(settings, targets); options.refresh(); });
+  pause.resume.addEventListener('click', () => { send({ type: 'resume' }); lockPointer('resume'); });
+  pause.options.addEventListener('click', () => openOptions('main'));
+  pause.leave.addEventListener('click', leaveMatch);
+  end.rematch.addEventListener('click', () => { deps.match()?.rematch(); });
+  end.leave.addEventListener('click', leaveMatch);
 
   // Pointer lock and focus are the two truths the reducer cannot see.
   document.addEventListener('pointerlockchange', () => {
@@ -343,8 +232,8 @@ export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWo
   addEventListener('blur', () => send({ type: 'focus-lost' }));
   addEventListener('focus', () => send({ type: 'focus-gained' }));
 
-  // main.ts owns #start's own click-to-dismiss. Mirror it into the reducer so
-  // the two never disagree about whether the menu is up.
+  // The synthetic `#start.click()` (playcap, every harness): main.ts begins the
+  // default match and hides the overlay; mirror it so the reducer agrees.
   overlay.addEventListener('click', (e) => {
     if (e.target !== overlay) return;
     if (life.surface === 'pre-match') {
@@ -355,5 +244,126 @@ export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWo
     }
   });
 
+  // ---- keyboard: Escape steps back, arrows and Tab move focus ---------------
+  addEventListener('keydown', (e) => {
+    if (!menuVisible(life)) {
+      // No lock to release (denied / never granted): Escape must still pause.
+      if (e.key === 'Escape' && life.pointerLock !== 'locked' && (life.surface === 'hidden')) send({ type: 'pause-requested' });
+      return;
+    }
+    if (panel === 'options' && options.capturing()) return;
+    const target = e.target as HTMLElement | null;
+    const inField = !!target && (target.tagName === 'INPUT' || target.tagName === 'SELECT');
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      if (life.surface === 'paused-match') {
+        if (panel === 'options') { panel = 'main'; render(); } else { send({ type: 'resume' }); lockPointer('resume'); }
+      } else if (life.surface === 'pre-match' && panel !== 'main') {
+        panel = panel === 'solo' && optionsReturn === 'multiplayer' ? 'multiplayer' : panel === 'options' ? optionsReturn : 'main';
+        solo.setMode('solo');
+        render();
+      }
+      return;
+    }
+    if (inField && e.key !== 'Tab') return;
+    // Tab shows the HUD scoreboard through the translucent pause / end overlay;
+    // in the pre-match menus it is focus movement and never reaches the HUD.
+    const moves = ['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'Home', 'End'];
+    const tabbing = e.key === 'Tab' && life.surface === 'pre-match';
+    if (!moves.includes(e.key) && !tabbing) return;
+    const ctrls = Array.from(visibleView().querySelectorAll('button:not([disabled]), input, select')) as HTMLElement[];
+    if (ctrls.length === 0) return;
+    e.preventDefault();
+    e.stopPropagation();
+    let i = ctrls.indexOf(document.activeElement as HTMLElement);
+    const fwd = e.key === 'ArrowDown' || e.key === 'ArrowRight' || (tabbing && !e.shiftKey);
+    if (e.key === 'Home') i = 0;
+    else if (e.key === 'End') i = ctrls.length - 1;
+    else if (fwd) i = i < 0 ? 0 : (i + 1) % ctrls.length;
+    else i = i < 0 ? ctrls.length - 1 : (i - 1 + ctrls.length) % ctrls.length;
+    try { ctrls[i].focus(); } catch { /* headless */ }
+  }, true);
+
+  installInputShims(targets, () => menuVisible(life));
+
+  // ---- follow the match -----------------------------------------------------
+  function endSnapshot(m: LocalMatch): SessionSnapshot | null {
+    try { return m.snapshot(); } catch { return null; }
+  }
+
+  function tick(now: number): void {
+    const m = deps.match();
+    if (m === null) return;
+    if (lobbyBound !== m) {
+      lobbyBound = m;
+      m.configure(solo.setup());
+      m.lobby.onChange(() => { if (menuVisible(life) && panel === 'multiplayer') lobby.refresh(); });
+    }
+    const mode = m.mode();
+    const s = life.surface;
+    if (s === 'pre-match' || s === 'deploying') {
+      // A room that started (host pressed Start, or we are its guest) takes over.
+      if (mode !== 'idle' && s === 'pre-match') {
+        send({ type: 'match-start' });
+        send({ type: 'match-ready' });
+        lockPointer();
+      } else if (s === 'deploying' && mode !== 'idle') {
+        send({ type: 'match-ready' });
+      }
+      return;
+    }
+    if (mode === 'idle') {
+      // The room closed under us (host left, link dropped): back to the lobby
+      // panel, where the session's error label says why.
+      if (s === 'hidden' || s === 'paused-match' || s === 'match-over') {
+        try { document.exitPointerLock(); } catch { /* no lock */ }
+        panel = m.lobby.view().error !== null ? 'multiplayer' : 'main';
+        send({ type: 'return-pre-match' });
+      }
+      return;
+    }
+    const ended = m.ended();
+    if (s === 'hidden' || s === 'paused-match') {
+      if (ended) {
+        try { document.exitPointerLock(); } catch { /* no lock */ }
+        end.update(endSnapshot(m), m.localId, deps.names(), m.rematchInMs(now), mode !== 'guest');
+        lastEndRefresh = now;
+        send({ type: 'match-ended' });
+      }
+      return;
+    }
+    if (s === 'match-over') {
+      if (!ended) {
+        send({ type: 'rematch' });
+        send({ type: 'match-ready' });
+        lockPointer();
+      } else if (now - lastEndRefresh >= END_REFRESH_MS) {
+        lastEndRefresh = now;
+        end.update(endSnapshot(m), m.localId, deps.names(), m.rematchInMs(now), mode !== 'guest');
+      }
+    }
+  }
+
   render();
+
+  return {
+    tick,
+    open(p): void {
+      if (life.surface === 'paused-match' && p === 'options') { openOptions('main'); return; }
+      if (life.surface !== 'pre-match') return;
+      if (p === 'options') { openOptions('main'); return; }
+      if (p === 'solo') solo.setMode('solo');
+      panel = p;
+      render();
+    },
+    pause(): void {
+      try { document.exitPointerLock(); } catch { /* no lock */ }
+      send({ type: 'pause-requested' });
+    },
+    state: () => life,
+    panel: () => panel,
+    settings: () => settings,
+    write,
+    probe: () => probeApplied(targets, settings),
+  };
 }

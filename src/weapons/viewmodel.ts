@@ -309,3 +309,58 @@ export function buildSniperViewmodel(mat: MaterialLibrary): ViewmodelRig {
 
   return { group, muzzle, eject };
 }
+
+/**
+ * Combat knife (ordnance lane): a single-edged blade on a short guard and a
+ * wrapped grip. Origin at the grip, blade down -z so the same camera mount
+ * the guns use points it forward; `muzzle` is the tip, for the strike frame.
+ * Six boxes and one tube from library singletons - no new material.
+ */
+export function buildKnifeViewmodel(mat: MaterialLibrary): ViewmodelRig {
+  const group = new THREE.Group();
+  const blade = mat.chrome;
+  const guard = mat.steel;
+  const grip = mat.painted(PAL.timberDark, 0.85, 0.0);
+  const wrap = mat.painted(PAL.truckCab, 0.9, 0.0);
+
+  // Blade: a thin slab with a bevelled tip (a second, narrower slab).
+  group.add(box(0.006, 0.03, 0.17, blade, 0, 0.0, -0.145));
+  group.add(box(0.005, 0.016, 0.05, blade, 0, -0.005, -0.25));
+  // Spine line and fuller, thin dark strips so the flat reads.
+  group.add(box(0.008, 0.004, 0.16, guard, 0, 0.014, -0.14));
+  // Guard.
+  group.add(box(0.014, 0.06, 0.012, guard, 0, 0.0, -0.055));
+  // Grip: wrapped, with two bands, and a pommel.
+  group.add(tube(0.013, 0.1, grip, 0, 0, 0.005));
+  group.add(box(0.03, 0.03, 0.01, wrap, 0, 0, -0.02));
+  group.add(box(0.03, 0.03, 0.01, wrap, 0, 0, 0.02));
+  group.add(box(0.02, 0.026, 0.014, guard, 0, 0, 0.062));
+
+  const muzzle = new THREE.Object3D();
+  muzzle.position.set(0, 0, -0.275);
+  group.add(muzzle);
+  const eject = new THREE.Object3D();
+  group.add(eject);
+  return { group, muzzle, eject };
+}
+
+/**
+ * A hand grenade for the viewmodel (ordnance lane): the body, a fuse cap,
+ * the spoon and a pin ring. Olive is `PAL.hedge`; the world's frag mesh in
+ * `weapons/grenades.ts` uses the same material so the thrown one matches the
+ * held one. Origin at the body centre.
+ */
+export function buildGrenadeViewmodel(mat: MaterialLibrary): THREE.Group {
+  const group = new THREE.Group();
+  const olive = mat.painted(PAL.hedge, 0.75, 0.25);
+  const steel = mat.steel;
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.038, 12, 10), olive);
+  body.scale.set(0.92, 1.12, 0.92);
+  body.castShadow = false;
+  body.receiveShadow = false;
+  group.add(body);
+  group.add(tube(0.012, 0.018, steel, 0, 0.05, 0));
+  group.add(box(0.01, 0.055, 0.008, steel, 0.02, 0.055, 0));
+  group.add(box(0.03, 0.004, 0.004, steel, 0.04, 0.062, 0));
+  return group;
+}

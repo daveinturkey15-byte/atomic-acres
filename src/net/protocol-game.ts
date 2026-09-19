@@ -36,6 +36,7 @@ import {
   type KillEvent,
   type MatchEndReason,
   type MatchPhaseName,
+  type OrdnanceEvent,
   type ShotRejectedEvent,
   type SpawnEvent,
   type StreakActivatedEvent,
@@ -44,6 +45,7 @@ import {
   type StreakEndedEvent,
   type TeamId,
 } from '../game/events';
+import { isOrdnanceEventType } from '../game/events-ordnance';
 import { isMatchMode, type MatchMode } from '../game/rules';
 
 // ---------------------------------------------------------------------------
@@ -131,6 +133,23 @@ export interface MatchStateMsg {
   endReason: MatchEndReason | null;
 }
 
+/**
+ * Host -> all: one ordnance event (ORDNANCE LANE, additive). Grenades armed,
+ * thrown and detonated, flash hits, smoke volumes born and ended, knife
+ * swings, drops and pickups, inventory levels and refusals — every one
+ * travels as the event object itself, for the same no-mirror reason the
+ * kill and damage messages do. The guest side of a throw needs no new
+ * message: a throw, a swing and a pickup reach are `ShotMsg` claims whose
+ * `weaponId` is an ordnance id (`game/ordnance.ts:ORDNANCE_IDS`), admitted by
+ * the same eight rules as a bullet.
+ *
+ * ROUTING: `protocol.ts:isNetMessage` and its `NetMessage` union are the
+ * lobby lane's; until that file adds `| OrdnanceMsg` and `case 'ordnance':`
+ * this message validates here and is not yet routed there. Named in the
+ * ordnance lane's report.
+ */
+export interface OrdnanceMsg { type: 'ordnance'; e: OrdnanceEvent }
+
 /** Every gameplay discriminant. `protocol.ts` routes these tags to `isGameMessage`. */
 export const GAME_MESSAGE_TYPES = [
   'shot',
@@ -141,6 +160,7 @@ export const GAME_MESSAGE_TYPES = [
   'streak-intent',
   'streak-state',
   'match-state',
+  'ordnance',
 ] as const;
 export type GameMessageType = (typeof GAME_MESSAGE_TYPES)[number];
 
@@ -152,7 +172,8 @@ export type GameNetMessage =
   | SpawnMsg
   | StreakIntentMsg
   | StreakStateMsg
-  | MatchStateMsg;
+  | MatchStateMsg
+  | OrdnanceMsg;
 
 // ---------------------------------------------------------------------------
 // Validators
@@ -260,12 +281,31 @@ function isScoreRow(v: unknown): boolean {
 }
 
 /**
+ * Host-authored ordnance event: a known discriminant, a numeric `at`, and
+ * every field a scalar with no NaN in it. The per-type field lists live in
+ * `game/events-ordnance.ts`; this boundary's job is the one thing a type
+ * cannot do — keep a NaN or an object out of a number the HUD will render.
+ */
+function isOrdnanceEvent(v: unknown): boolean {
+  if (!isObj(v) || !isOrdnanceEventType(v['type']) || !isNum(v['at'])) return false;
+  for (const key in v) {
+    const f = v[key];
+    if (f === null || typeof f === 'string' || typeof f === 'boolean') continue;
+    if (typeof f === 'number' && Number.isFinite(f)) continue;
+    return false;
+  }
+  return true;
+}
+
+/**
  * Structural check for every gameplay message. Called by `isNetMessage` after
  * it has matched the tag; returns false for any tag it does not own, so a typo
  * in the caller's case list fails closed rather than admitting garbage.
  */
 export function isGameMessage(m: Record<string, unknown>): boolean {
   switch (m['type']) {
+    case 'ordnance':
+      return isOrdnanceEvent(m['e']);
     case 'shot':
       return (
         Number.isSafeInteger(m['seq']) &&

@@ -60,6 +60,8 @@ import { leaderboard, teamTotals, withActor, withoutActor } from './scoring';
 import { regenStep } from './health';
 import { clearRespawns, dueRespawns } from './respawn';
 import { acceptShot, admitShot, pickTarget, type TargetCandidate } from './host-shot';
+import { HostOrdnance } from './host-ordnance';
+import { isOrdnanceId } from './ordnance';
 
 /** id → definition, DERIVED from the authored list (§5.5). */
 const WEAPON_BY_ID: ReadonlyMap<string, WeaponDef> = new Map(WEAPONS.map((w) => [w.id, w]));
@@ -83,6 +85,8 @@ export class GameHost {
   private readonly deps: HostDeps;
   /** Damage, death, redeployment — and the state those three write. */
   private readonly life: HostLife;
+  /** Grenades, smoke, flash, the knife, drops. Composed like `life`; never published. */
+  private readonly ordnance: HostOrdnance;
   private match: MatchState;
   private clock: number;
   private lastTick: number;
@@ -102,12 +106,15 @@ export class GameHost {
       world: this.world, deps: this.deps, rules: this.rules, bus: opts.bus ?? null,
     });
     this.life.phase = this.match.phase;
+    this.ordnance = new HostOrdnance(this.life, this.world, this.clock);
   }
 
   // ---- Roster ----------------------------------------
 
-  /** Admit an actor and deploy it. Re-adding a live id only moves its team. */
-  addActor(id: ActorId, team: TeamId, opts: { bot?: boolean } = {}): void {
+  /** Admit an actor and deploy it. Re-adding a live id only moves its team.
+   *  `primaryId` is the weapon it carries, so a corpse that never fired still
+   *  drops the right gun; absent, the host assumes the default kit's. */
+  addActor(id: ActorId, team: TeamId, opts: { bot?: boolean; primaryId?: string } = {}): void {
     this.life.ledger = withActor(this.life.ledger, id, team);
     const existing = this.life.actors.get(id);
     if (existing) {
@@ -115,6 +122,7 @@ export class GameHost {
       return;
     }
     const a = this.life.newActor(id, team, opts.bot === true, this.clock);
+    a.primaryHint = opts.primaryId ?? null;
     this.life.actors.set(id, a);
     this.deps.streaks?.registerActor(id, team);
     this.life.deploy(a, this.clock, 'initial');
@@ -125,6 +133,7 @@ export class GameHost {
     if (!this.life.actors.delete(id)) return;
     this.life.ledger = withoutActor(this.life.ledger, id);
     this.life.respawns = { queue: this.life.respawns.queue.filter((e) => e.actorId !== id) };
+    this.ordnance.forget(id);
     this.life.push(this.deps.streaks?.recordDisconnect(id, this.clock));
   }
 
@@ -184,11 +193,19 @@ export class GameHost {
 
   // ---- Shots ----------------------------------------
 
+  /**
+   * A claim. A bullet, or — when `weaponId` names ordnance (a grenade id,
+   * `knife`, `pickup`) — a throw, a swing or a pickup reach. Every kind passes
+   * the same eight rules and the same exactly-once window first; only the
+   * resolution differs, and the ordnance kinds are routed to `HostOrdnance`
+   * instead of the hit test. One claim shape on the wire, one admission.
+   */
   submitShot(shooterId: ActorId, claim: ShotMsg, receivedAt: number = this.clock): ShotAdmission {
     const a = this.life.actors.get(shooterId) ?? null;
+    const ordnance = isOrdnanceId(claim.weaponId);
     const reason = admitShot(claim, a === null ? null : {
       matchActive: this.match.phase === 'active', life: a.health.life, alive: a.health.alive,
-      diedAt: a.health.diedAt, knownWeapon: WEAPON_BY_ID.has(claim.weaponId),
+      diedAt: a.health.diedAt, knownWeapon: ordnance || WEAPON_BY_ID.has(claim.weaponId),
       window: a.window, pose: a.poses.at(claim.firedAt), receivedAt,
     });
     if (reason !== null) {
@@ -198,7 +215,9 @@ export class GameHost {
     }
     const shooter = a as HostActor;
     acceptShot(shooter.window, claim.seq);
+    if (ordnance) return this.ordnance.claim(shooter, claim, receivedAt);
     this.life.stats = { ...this.life.stats, shotsAdmitted: this.life.stats.shotsAdmitted + 1 };
+    this.ordnance.noteShot(shooter, claim.weaponId);
 
     const candidates: TargetCandidate[] = [];
     for (const v of this.life.actors.values()) {
@@ -246,6 +265,7 @@ export class GameHost {
       if (this.match.phase === 'ended') {
         this.life.respawns = clearRespawns(this.life.respawns);
         this.life.push(this.deps.streaks?.endMatch(now));
+        this.ordnance.endMatch(now);
       }
     }
 
@@ -262,6 +282,9 @@ export class GameHost {
     if (this.deps.streaks) {
       this.life.absorb(this.deps.streaks.advance(now, this.world, this.life.streakTargets(now)));
     }
+    // Last, and before the drain: it reads this tick's deaths off `pending`
+    // (a corpse drops its gun) and its own detonations land on the same queue.
+    this.ordnance.advance(now);
 
     const out = this.life.pending.slice();
     this.life.pending.length = 0;
@@ -280,15 +303,18 @@ export class GameHost {
     const actors: ActorSnapshot[] = [];
     for (const a of this.life.actors.values()) {
       const e = this.life.ledger.get(a.id);
+      const kit = this.ordnance.kitOf(a);
       actors.push({
         id: a.id, team: a.team, bot: a.bot, hp: a.health.hp, alive: a.health.alive,
         life: a.health.life, spawnIndex: a.spawnIndex, protectedUntil: a.health.invulnerableUntil,
         respawnAt: this.life.respawns.queue.find((r) => r.actorId === a.id)?.dueAt ?? null,
         kills: e?.kills ?? 0, deaths: e?.deaths ?? 0, score: e?.score ?? 0, streak: e?.streak ?? 0,
         slots: this.deps.streaks?.snapshotFor(a.id) ?? [],
+        lethal: kit.lethal, tactical: kit.tactical, primaryId: kit.primaryId, rounds: kit.rounds,
+        armed: kit.armed, blindUntil: kit.blindUntil,
       });
     }
-    return { at: this.clock, match, actors, stats: this.life.stats };
+    return { at: this.clock, match, actors, stats: this.life.stats, ordnance: this.ordnance.snapshot() };
   }
 
   /** The three optional `PlayerSample` fields, added to a sample `room.ts` authored. */

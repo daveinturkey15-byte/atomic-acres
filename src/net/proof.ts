@@ -100,7 +100,8 @@ export function runLoopbackProof(opts?: ProofOptions): ProofReport {
   host.setReady(true);
   step(150);
   if (!host.canStart()) throw new Error('[net-proof] host cannot start with all seats ready');
-  if (!host.start()) throw new Error('[net-proof] host.start() refused a ready room');
+  const refusal = host.start();
+  if (refusal !== null) throw new Error('[net-proof] host.start() refused a ready room: ' + refusal);
   pumpTo(now + 300);
   // The start tick is 20 host ticks out: advance the host until both sides
   // observe playing. The guest sends nothing until then, like a real client

@@ -66,6 +66,12 @@ export interface HudNodes {
   readonly mapCanvas: HTMLCanvasElement;
   readonly scoreboard: HTMLElement;
   readonly scoreRows: readonly ScoreRowNodes[];
+  /** Ordnance lane: grenade counts (above the ammo), the flash white-out, the pickup prompt. */
+  readonly grenades: HTMLElement;
+  readonly grenadeLethal: HTMLElement;
+  readonly grenadeTactical: HTMLElement;
+  readonly flash: HTMLElement;
+  readonly prompt: HTMLElement;
 }
 
 function el(tag: string, cls: string, text?: string): HTMLElement {
@@ -200,7 +206,27 @@ export function buildHud(root: HTMLElement, crosshair: HTMLElement | null): HudN
     scoreRows.push({ root: row, name, kills, deaths, score });
   }
 
-  root.append(weapon, ammo, health, vignette, dmgdir, hit, bar, banner, respawn, streak, mapWrap, scoreboard);
+  // --- ordnance (ordnance lane): grenade counts, flash white-out, pickup prompt --
+  // Positioned inline because `hud.css` belongs to another lane; these are
+  // one-time writes at build, the same contract as the palette custom
+  // properties. Animation is opacity only (the flash) - never layout.
+  const grenades = el('div', 'hud-own hud-grenades');
+  grenades.style.cssText = 'position:fixed;right:22px;bottom:84px;font-size:15px;letter-spacing:0.14em;'
+    + 'display:flex;gap:18px;justify-content:flex-end;';
+  const grenadeLethal = span('hud-grenade-lethal', '\u25CF FRAG 1');
+  const grenadeTactical = span('hud-grenade-tactical', '\u25C6 FLASH 1');
+  grenades.append(grenadeLethal, grenadeTactical);
+  const flash = el('div', 'hud-own hud-flashout');
+  flash.style.cssText = 'position:fixed;inset:0;pointer-events:none;background:#fff;opacity:0;will-change:opacity;';
+  flash.setAttribute('aria-hidden', 'true');
+  const prompt = el('div', 'hud-own hud-prompt hud-hidden');
+  prompt.style.cssText = 'position:fixed;left:50%;top:64%;transform:translateX(-50%);font-size:15px;'
+    + 'letter-spacing:0.18em;padding:6px 14px;border:1px solid rgba(240,236,226,0.55);border-radius:3px;'
+    + 'background:rgba(0,0,0,0.35);';
+  prompt.setAttribute('role', 'status');
+
+  root.append(weapon, ammo, health, vignette, dmgdir, hit, bar, banner, respawn, streak, mapWrap, scoreboard,
+    grenades, flash, prompt);
   root.classList.add('hud-debug-hidden');
 
   return {
@@ -234,5 +260,10 @@ export function buildHud(root: HTMLElement, crosshair: HTMLElement | null): HudN
     mapCanvas,
     scoreboard,
     scoreRows,
+    grenades,
+    grenadeLethal,
+    grenadeTactical,
+    flash,
+    prompt,
   };
 }

@@ -27,7 +27,7 @@
 
 import type { AABB } from '../core/kit';
 import { BOUND_X_MAX, BOUND_X_MIN, BOUND_Z } from '../core/layout';
-import type { Vec3, WorldQuery } from './events';
+import type { ActorId, SmokeKind, Vec3, WorldQuery } from './events';
 
 /**
  * A collider top at or below this counts as standable ground.
@@ -84,13 +84,184 @@ function segmentHitsBox(
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// What obscures sight: smoke volumes and flash blindness
+// ---------------------------------------------------------------------------
+
+/**
+ * One live smoke volume, as announced on the bus by `smoke-volume`. The field
+ * holds the same numbers the event carries and nothing more; the atmosphere
+ * lane renders from the event, bots read from here, and both see one sphere.
+ */
+export interface SmokeVolume {
+  readonly id: number;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly radius: number;
+  readonly bornAt: number;
+  readonly diesAt: number;
+  readonly kind: SmokeKind;
+}
+
+/**
+ * Chord length through smoke, density-weighted, above which a line of sight
+ * is blocked. 1.5 m: a bot sees a target standing at the very skin of a
+ * cloud, and nothing through the middle of one.
+ */
+export const SMOKE_LOS_THRESHOLD_M = 1.5;
+/** Density per kind. A blast puff is thin; a smoke grenade is the real thing. */
+export const SMOKE_DENSITY: Readonly<Record<SmokeKind, number>> = Object.freeze({ grenade: 1, blast: 0.6 });
+/** Over the last this-many ms a volume thins to nothing, and sight returns with it. */
+export const SMOKE_DISSOLVE_MS = 5_000;
+/** The first this-many ms a volume is still filling, and sight leaves with it. */
+export const SMOKE_FILL_MS = 1_500;
+
+/**
+ * THE FIELD. Level state the host writes (`host-ordnance.ts`) and bots read
+ * (`bot-sense.ts`), carried on the same object as the three-method port so a
+ * `BotDirector` handed `world` sees the smoke the host put in it with no
+ * fourth callback and no second wiring. It is data — a list of spheres and a
+ * map of blind-until times — not a door back into the host (§5.3).
+ *
+ * `now` is the host clock at the last `prune`. The host prunes every tick, so
+ * the fill and dissolve ramps below read the clock without a caller passing
+ * one. A volume added and read before any prune reads as still filling,
+ * i.e. thin: a harness that adds a volume by hand must `prune(now)` first,
+ * exactly as the host does.
+ */
+export class SightField {
+  private readonly volumes: SmokeVolume[] = [];
+  private readonly blind = new Map<ActorId, number>();
+  private now = 0;
+
+  add(v: SmokeVolume): void {
+    this.remove(v.id);
+    this.volumes.push(v);
+  }
+
+  remove(id: number): boolean {
+    for (let i = 0; i < this.volumes.length; i++) {
+      if (this.volumes[i].id === id) {
+        this.volumes.splice(i, 1);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** Advance the clock; drop expired volumes and blindness. Ended volume ids go into `ended`. */
+  prune(now: number, ended?: number[]): void {
+    this.now = now;
+    for (let i = this.volumes.length - 1; i >= 0; i--) {
+      if (now >= this.volumes[i].diesAt) {
+        if (ended !== undefined) ended.push(this.volumes[i].id);
+        this.volumes.splice(i, 1);
+      }
+    }
+    for (const [id, until] of this.blind) if (now >= until) this.blind.delete(id);
+  }
+
+  clear(): void {
+    this.volumes.length = 0;
+    this.blind.clear();
+  }
+
+  activeSmokeVolumes(): readonly SmokeVolume[] {
+    return this.volumes;
+  }
+
+  /** 0..1 how thick a volume is right now: filling in, full, dissolving out. */
+  densityOf(v: SmokeVolume): number {
+    const fill = Math.min(1, Math.max(0, (this.now - v.bornAt) / SMOKE_FILL_MS));
+    const fade = Math.min(1, Math.max(0, (v.diesAt - this.now) / SMOKE_DISSOLVE_MS));
+    return SMOKE_DENSITY[v.kind] * Math.min(fill, fade);
+  }
+
+  /**
+   * Ray against the sphere list: the density-weighted length of the segment
+   * inside smoke, tested against `SMOKE_LOS_THRESHOLD_M`. A tangent grazes
+   * zero chord and is not blocked; through the centre is the full diameter.
+   */
+  losBlockedBySmoke(a: Vec3, b: Vec3): boolean {
+    if (this.volumes.length === 0) return false;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const dz = b.z - a.z;
+    const len2 = dx * dx + dy * dy + dz * dz;
+    let weighted = 0;
+    for (let i = 0; i < this.volumes.length; i++) {
+      const v = this.volumes[i];
+      const density = this.densityOf(v);
+      if (density <= 0) continue;
+      // Nearest point on the segment to the centre, clamped to the segment.
+      const t = len2 <= 1e-9 ? 0 : Math.min(1, Math.max(0, ((v.x - a.x) * dx + (v.y - a.y) * dy + (v.z - a.z) * dz) / len2));
+      const px = a.x + dx * t - v.x;
+      const py = a.y + dy * t - v.y;
+      const pz = a.z + dz * t - v.z;
+      const off2 = px * px + py * py + pz * pz;
+      const r2 = v.radius * v.radius;
+      if (off2 >= r2) continue;
+      // Half-chord at the nearest point, bounded by how much segment lies each side of it.
+      const half = Math.sqrt(r2 - off2);
+      const len = Math.sqrt(len2);
+      const chord = Math.min(half, t * len) + Math.min(half, (1 - t) * len);
+      weighted += chord * density;
+      if (weighted > SMOKE_LOS_THRESHOLD_M) return true;
+    }
+    return false;
+  }
+
+  setBlind(id: ActorId, until: number): void {
+    const cur = this.blind.get(id) ?? 0;
+    if (until > cur) this.blind.set(id, until);
+  }
+
+  clearBlind(id: ActorId): void {
+    this.blind.delete(id);
+  }
+
+  blindUntil(id: ActorId): number {
+    return this.blind.get(id) ?? 0;
+  }
+
+  /** Level: pruned by the host every tick, so no clock is needed to read it. */
+  isBlinded(id: ActorId): boolean {
+    return this.blind.has(id);
+  }
+}
+
+/** The port plus the field it carries. Structurally still a `WorldQuery`. */
+export interface WorldQueryWithSight extends WorldQuery {
+  readonly sight: SightField;
+}
+
+/** The field on a world, or null for a port built elsewhere without one. */
+export function sightOf(world: WorldQuery): SightField | null {
+  const s = (world as Partial<WorldQueryWithSight>).sight;
+  return s instanceof SightField ? s : null;
+}
+
+/** THE SMOKE CONTRACT's two queries, as free functions over any world. */
+export function activeSmokeVolumes(world: WorldQuery): readonly SmokeVolume[] {
+  return sightOf(world)?.activeSmokeVolumes() ?? [];
+}
+
+export function losBlockedBySmoke(world: WorldQuery, a: Vec3, b: Vec3): boolean {
+  return sightOf(world)?.losBlockedBySmoke(a, b) ?? false;
+}
+
 /**
  * The port. Three methods, and only three — a fourth would be the callback bag
  * IMPORT-PLAN §5.3 forbids, and every extra answer the host is allowed to ask
- * for is a piece of the world it then depends on.
+ * for is a piece of the world it then depends on. The `sight` field beside
+ * them is not a method and not a callback: it is the smoke the host put in the
+ * world, carried where every reader of the world already looks.
  */
-export function createWorldQuery(colliders: readonly AABB[]): WorldQuery {
+export function createWorldQuery(colliders: readonly AABB[]): WorldQueryWithSight {
   return {
+    sight: new SightField(),
+
     /**
      * Clear line between two world points. Colliders only: this is the same
      * set the player collides with, so "I can see you" and "I can walk there"

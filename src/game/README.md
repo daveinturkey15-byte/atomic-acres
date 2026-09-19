@@ -89,3 +89,82 @@ here because `ShotRejectedEvent` otherwise has no wire: a guest's refused shot
 would reach the host bus and stop, which is exactly the dead-key failure
 IMPORT-PLAN §5.4 is written about. If the integrator disagrees, it is one
 interface and one `case` to remove.
+
+## The smoke contract (ordnance lane, 2026-09-19)
+
+Gameplay never draws smoke. It ANNOUNCES it, and whatever renders smoke — the
+placeholder puffs in `src/weapons/grenades.ts` today, the atmosphere lane's
+volumetric fog tomorrow — reads exactly these two events and nothing else, so
+the renderer can be swapped without touching a gameplay file.
+
+| event | shape |
+|---|---|
+| `smoke-volume` | `{ type: 'smoke-volume', at, id, x, y, z, radius, bornAt, diesAt, kind: 'grenade' \| 'blast' }` |
+| `smoke-volume-end` | `{ type: 'smoke-volume-end', at, id }` |
+
+- The volume is a SPHERE of `radius` metres centred at `(x, y, z)`. It fills
+  from nothing to `radius` over the first 1.5 s after `bornAt`
+  (`world-query.ts:SMOKE_FILL_MS`) and dissolves over the last 5 s before
+  `diesAt` (`SMOKE_DISSOLVE_MS`). A renderer that honours those two ramps
+  agrees with what the bots can see.
+- `kind: 'grenade'` is a smoke grenade (`ordnance.ts:SMOKE_RADIUS_M` = 5 m,
+  `SMOKE_LIFETIME_MS` = 25 s). `kind: 'blast'` is the puff every detonation
+  leaves — one tenth of a grenade's volume, a fifth of its life — and is
+  drawn thinner (`SMOKE_DENSITY.blast` = 0.6).
+- `id` is host-assigned and unique for the match; `smoke-volume-end` always
+  follows for the same id, at expiry or match end. A renderer may also
+  retire a volume itself at `diesAt`.
+- Gameplay reads the same spheres through `src/game/world-query.ts`:
+  `activeSmokeVolumes(world)` lists them and `losBlockedBySmoke(world, a, b)`
+  answers a ray against the sphere list — the density-weighted chord length
+  above `SMOKE_LOS_THRESHOLD_M` (1.5 m) blocks. A tangent is not blocked;
+  through the centre is. `bot-sense.ts` uses it, so a bot does not see
+  through the same smoke the renderer draws.
+
+## Ordnance claims (ordnance lane)
+
+A grenade throw, a knife swing and a pickup reach travel as `ShotMsg` claims
+whose `weaponId` is one of `game/ordnance.ts:ORDNANCE_IDS` (`frag`, `flash`,
+`smoke`, `knife`, `pickup`). `GameHost.submitShot` runs the same eight
+admission rules and the same exactly-once window on them as on a bullet, then
+routes them to `host-ordnance.ts`. A grenade is two claims: the first arms it
+(a frag's fuse starts here — the cook), the second, with the same id, releases
+it along the claim's direction. Refusals a bullet cannot have are
+`ORDNANCE_REJECT_REASONS` on an `ordnance-rejected` event, each with a label.
+
+The human's keys (`main.ts` → `weapons/controller.ts` → `weapons/ordnance-input.ts`):
+**G** arms the frag and throws on release (hold to cook — the fuse runs on the
+host from the arm claim), **Q** the same for the tactical, **V** the knife,
+**E held 0.3 s** the pickup reach. F is `core/player.ts`'s fly toggle and Q/E
+are its fly-mode vertical keys, so `main.ts` forwards these four on foot only.
+`ui/bindings.ts` (lobby lane) lists `knife` as `KeyF`; the consumer reads
+`KeyV`, and the table should say so.
+
+## What a bot needs from `bots.ts` (ordnance lane → lobby lane handover)
+
+Everything a bot decides is already in `bot-sense.ts` / `bot-ordnance.ts`
+(this lane's files): `botIntent` answers `grenade` / `knife` / `scavengeX,Z`
+when it is given the host's `BotSupply` (the four `ActorSnapshot` fields
+`lethal`, `tactical`, `rounds`, `armed`) and the `HostSnapshot.ordnance.drops`
+list, and `bot-ordnance.ts` builds the claims (`throwDirection`,
+`knifeDirection`, `botOrdnanceClaim`). Scavenging needs no claim at all — the
+host's walk-over takes ammo from any live actor inside 1.05 m, so steering the
+bot onto the drop is the whole action. `bots.ts` (lobby lane) has to add:
+
+1. `addActor(id, team, { bot: true, primaryId: weapon.id })` in `add()`, so a
+   bot's corpse drops the gun the director gave it.
+2. Pass `supply` and `drops` into `botIntent`, and take `intent.fire` into the
+   preset trigger (`fire = intent.fire && ...`), so a tick that throws or
+   stabs does not also shoot.
+3. On `intent.grenade !== null`: two `submitShot` calls with
+   `botOrdnanceClaim(b.life, intent.grenade, b.x, b.y + BOT_AIM_ORIGIN_Y, b.z,
+   dir, ++b.shotSeq, now)` where `throwDirection(origin, sense.target, dir)`
+   filled `dir`; then `b.grenadeAt = now`.
+4. On `intent.knife`: one `submitShot` with `'knife'` along
+   `knifeDirection(origin, sense.target, dir)`; set `b.cooldown` to at least
+   `KNIFE_RECOVERY_MS / 1000`.
+5. `tick(...)` takes `snap.ordnance.drops` (from `session-solo.ts`'s
+   `h.snapshot()`) as its `drops` argument.
+
+The exact lines are in the ordnance lane's report; `scripts/_verify-ordnance.mjs`
+(`bots` scenario) proves both halves against the real host.

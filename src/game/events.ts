@@ -31,7 +31,9 @@
  */
 
 export * from './vocab';
+export * from './events-ordnance';
 
+import { ORDNANCE_EVENT_TYPES, type OrdnanceEvent } from './events-ordnance';
 import type {
   ActorId,
   DamageCause,
@@ -226,7 +228,11 @@ export type GameEvent =
   | StreakDeniedEvent
   | StreakEndedEvent
   | MatchPhaseEvent
-  | FeedLineEvent;
+  | FeedLineEvent
+  // The ordnance lane's shapes (grenades, smoke, flash, knife, drops). Declared
+  // in `./events-ordnance` for the 400-line cap and folded in here, so the
+  // union is still one union and the bus still carries one vocabulary.
+  | OrdnanceEvent;
 
 /** Every discriminant, frozen. This IS the list; nothing derives it. */
 export const GAME_EVENT_TYPES = [
@@ -241,6 +247,7 @@ export const GAME_EVENT_TYPES = [
   'streak-ended',
   'match-phase',
   'feed',
+  ...ORDNANCE_EVENT_TYPES,
 ] as const;
 export type GameEventType = (typeof GAME_EVENT_TYPES)[number];
 

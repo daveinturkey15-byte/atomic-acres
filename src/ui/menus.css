@@ -19,7 +19,7 @@
   gap: 12px;
 }
 
-#start .aa-hidden { display: none; }
+#start .aa-hidden { display: none !important; }
 
 #start .aa-eyebrow {
   font-size: 12px;
@@ -220,4 +220,125 @@
 #start .aa-setting input[type="checkbox"]:focus-visible {
   outline: 2px solid #d8b23a;
   outline-offset: 2px;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Lobby lane, 2026-09-19: the shell that holds solo / multiplayer / options / */
+/* credits / pause / end views. The root fills the overlay so every click is  */
+/* a menu click; the empty backdrop is only ever reached by #start.click().   */
+/* ------------------------------------------------------------------------- */
+
+#start .aa-root {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  justify-content: flex-start;
+  cursor: default;
+}
+/* A view taller than the overlay scrolls from its top; a short one centres.
+ * (justify-content:center on an overflowing flex container clips the top.) */
+#start .aa-root > .aa-view { margin-top: auto; margin-bottom: auto; flex-shrink: 0; }
+/* Pause and end-of-match sit over the live world: dim it, do not hide it. */
+#start.aa-translucent {
+  background: rgba(7, 10, 13, 0.74);
+  backdrop-filter: blur(2px);
+}
+#start .aa-menu-row { flex-wrap: wrap; justify-content: center; }
+#start .aa-foot { margin-top: 10px; text-align: center; }
+#start .aa-credits { color: rgba(232, 238, 247, 0.45); font-size: 11px; }
+
+/* --- option status notes: the honest word beside every control --- */
+#start .aa-note {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(232, 238, 247, 0.5);
+}
+#start .aa-note-live { color: #8fd694; }
+#start .aa-note-shim { color: #d8b23a; }
+#start .aa-note-persist { color: rgba(232, 238, 247, 0.5); }
+#start .aa-setting-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 14px;
+  row-gap: 0;
+  align-items: center;
+}
+#start .aa-setting-row > :first-child { grid-column: 1; grid-row: 1; }
+#start .aa-setting-row > .aa-note { grid-column: 1; grid-row: 2; text-align: left; }
+#start .aa-setting-row > input,
+#start .aa-setting-row > select,
+#start .aa-setting-row > button,
+#start .aa-setting-row > .aa-seg,
+#start .aa-setting-row > span:nth-child(2):not(.aa-note) { grid-column: 2; grid-row: 1 / span 2; justify-self: end; }
+#start .aa-muted { color: rgba(232, 238, 247, 0.5); }
+#start .aa-options { width: min(560px, 100%); }
+#start .aa-options .aa-setting { width: min(460px, 100%); }
+#start .aa-solo .aa-setting { width: min(420px, 100%); }
+
+/* --- tabs --- */
+#start .aa-tabs { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+#start .aa-tab {
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #9fb4c8;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+#start .aa-tab[aria-selected="true"] { color: #ffd9a8; border-bottom-color: #ff8a5c; }
+#start .aa-tab:focus-visible { outline: 2px solid #d8b23a; outline-offset: 2px; }
+#start .aa-tabpage { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+
+/* --- segmented buttons (difficulty) --- */
+#start .aa-seg { display: flex; gap: 4px; }
+#start .aa-seg-btn { padding: 6px 12px; font-size: 12px; }
+#start .aa-seg-btn.aa-selected { border-color: #ff8a5c; color: #ffd9a8; background: rgba(255, 138, 92, 0.18); }
+#start .aa-diffnote { margin-top: -6px; }
+
+/* --- key bindings --- */
+#start .aa-bindings { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+#start .aa-bind-row { width: min(420px, 100%); }
+#start .aa-bind-cap { min-width: 96px; padding: 5px 10px; font: 600 12px/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: 1px; }
+#start .aa-bind-cap:disabled { opacity: 0.5; cursor: default; }
+#start .aa-bind-cap.aa-capturing { border-color: #d8b23a; color: #d8b23a; animation: aa-pulse 0.9s ease-in-out infinite; }
+#start .aa-bind-cap.aa-conflict { border-color: #b8322e; color: #e08a8a; }
+@keyframes aa-pulse { 50% { background: rgba(216, 178, 58, 0.22); } }
+
+/* --- end of match --- */
+#start .aa-outcome { font-size: 44px; letter-spacing: 10px; }
+#start .aa-why { color: #9fb4c8; letter-spacing: 2px; }
+#start .aa-table {
+  min-width: 380px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #e8eef7;
+}
+#start .aa-trow { display: grid; grid-template-columns: 1fr 44px 44px 60px; gap: 8px; padding: 3px 0; }
+#start .aa-thead { opacity: 0.55; font-size: 11px; letter-spacing: 1px; border-bottom: 1px solid rgba(255, 255, 255, 0.18); }
+#start .aa-tn { text-align: right; font-variant-numeric: tabular-nums; }
+#start .aa-tteam-b .aa-tname { color: #4ec9c0; }
+#start .aa-tteam-a .aa-tname { color: #ffd9a8; }
+#start .aa-tself { background: rgba(255, 255, 255, 0.08); }
+
+/* --- credits --- */
+#start .aa-creditlines { display: flex; flex-direction: column; gap: 6px; max-width: 520px; text-align: center; }
+#start .aa-creditline { font-size: 14px; color: #e8eef7; }
+
+/* --- 1280x720: tighter title, the map card stays whole --- */
+@media (max-height: 760px) {
+  #start .aa-root { gap: 8px; padding: 12px 16px; }
+  #start .aa-title { font-size: 40px; letter-spacing: 6px; }
+  #start .aa-view { gap: 8px; }
+  #start .aa-thumb { width: 99px; height: 150px; }
+  #start .aa-map { width: 115px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #start .aa-bind-cap.aa-capturing { animation: none; }
 }

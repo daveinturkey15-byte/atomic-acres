@@ -1,155 +1,101 @@
-/* Nuketown 2025 — multiplayer lobby panel.
- *
- * Lives inside #hud so the capture harness hides it with everything else
- * (capture.mjs sets #hud display:none before every shot). #hud itself is
- * pointer-events:none; this panel re-enables events on its own nodes only.
- * Class prefix nt- throughout; nothing here touches HUD-lane selectors.
- */
+/* Atomic Acres — multiplayer lobby view, inside #start with the other menus.
+ * Class prefix aa-; everything scoped under #start so nothing reaches the HUD.
+ * The netcode diagnostics line lives in #hud (hidden by captures with it). */
 
-#hud .nt-lobby-btn {
-  pointer-events: auto;
-  position: fixed;
-  right: 12px;
-  bottom: 12px;
-  z-index: 6;
-  font: 12px ui-monospace, Menlo, Consolas, monospace;
-  color: #cfe3ff;
-  background: rgba(10, 16, 24, 0.82);
-  border: 1px solid #3a4a5f;
-  border-radius: 6px;
-  padding: 6px 10px;
-  cursor: pointer;
-}
+#start .aa-lobby { width: min(560px, 100%); }
+#start .aa-lobby .aa-setting { width: min(420px, 100%); }
 
-#hud .nt-lobby-btn:hover {
-  border-color: #ffb37a;
-  color: #ffd9a8;
-}
-
-#hud .nt-lobby {
-  pointer-events: auto;
-  position: fixed;
-  right: 12px;
-  bottom: 48px;
-  width: 264px;
-  z-index: 6;
-  font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace;
-  color: #cfe3ff;
-  background: rgba(8, 13, 20, 0.92);
-  border: 1px solid #3a4a5f;
-  border-radius: 8px;
-  padding: 10px 12px;
-}
-
-#hud .nt-lobby-hidden {
-  display: none;
-}
-
-#hud .nt-lobby h2 {
-  margin: 0 0 6px;
-  font-size: 12px;
-  letter-spacing: 1px;
-  color: #ffb37a;
-}
-
-#hud .nt-lobby .nt-row {
-  display: flex;
-  gap: 6px;
-  margin: 6px 0;
-}
-
-#hud .nt-lobby input[type="text"] {
-  flex: 1;
-  min-width: 0;
+#start .aa-input {
   font: inherit;
+  font-size: 14px;
   color: #eaf4ff;
   background: #101823;
-  border: 1px solid #3a4a5f;
-  border-radius: 4px;
-  padding: 4px 6px;
-  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 6px 10px;
+  min-width: 0;
 }
-
-#hud .nt-lobby input[type="text"].nt-name {
-  text-transform: none;
-}
-
-#hud .nt-lobby button {
-  font: inherit;
-  color: #eaf4ff;
-  background: #1b2940;
-  border: 1px solid #3a4a5f;
-  border-radius: 4px;
-  padding: 4px 8px;
-  cursor: pointer;
-}
-
-#hud .nt-lobby button:hover:not(:disabled) {
-  border-color: #ffb37a;
-}
-
-#hud .nt-lobby button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-#hud .nt-lobby .nt-code {
-  font-size: 20px;
+#start .aa-input:focus-visible { outline: 2px solid #d8b23a; outline-offset: 2px; }
+#start .aa-callsign { width: 180px; }
+#start .aa-signal { width: 220px; }
+#start .aa-code-input {
+  width: 120px;
+  text-align: center;
   letter-spacing: 4px;
+  text-transform: uppercase;
+  font-size: 18px;
+}
+#start .aa-join-row { align-items: center; }
+
+#start .aa-code {
+  font-size: 44px;
+  font-weight: 200;
+  letter-spacing: 12px;
   color: #ffd9a8;
   text-align: center;
-  margin: 4px 0;
+  padding-left: 12px; /* optically centre the letter-spaced code */
 }
 
-#hud .nt-lobby ul {
+#start .aa-roster {
   list-style: none;
-  margin: 6px 0;
+  margin: 8px 0 0;
   padding: 0;
-  max-height: 120px;
-  overflow-y: auto;
+  width: min(420px, 100%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+#start .aa-seat {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 6px 10px;
+  font-size: 14px;
+  color: #e8eef7;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+#start .aa-seat:last-child { border-bottom: 0; }
+#start .aa-seat-mark { color: #7a8a9d; }
+#start .aa-seat.aa-ready .aa-seat-mark { color: #8fd694; }
+#start .aa-seat.aa-away { color: #9fb4c8; font-style: italic; }
+#start .aa-seat.aa-me { background: rgba(255, 255, 255, 0.06); }
+#start .aa-seat-state { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #9fb4c8; }
+#start .aa-seat.aa-ready .aa-seat-state { color: #8fd694; }
+#start .aa-seat.aa-empty { color: rgba(232, 238, 247, 0.35); grid-template-columns: 1fr; text-align: center; }
+
+#start .aa-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #e8eef7;
+  cursor: pointer;
+}
+#start .aa-check input { width: 18px; height: 18px; accent-color: #d8b23a; }
+#start .aa-rules-line { max-width: 460px; text-align: center; }
+#start .aa-lobby-status { min-height: 16px; }
+
+#start .aa-error {
+  min-height: 18px;
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: #e08a8a;
+  text-align: center;
 }
 
-#hud .nt-lobby li {
-  padding: 2px 0;
+/* The diagnostics line: monospace, bottom-centre, above the HUD's own rows. */
+#hud .aa-netline {
+  position: fixed;
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+  max-width: 96vw;
+  padding: 3px 8px;
+  font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace;
+  color: #cfe3ff;
+  background: rgba(8, 13, 20, 0.7);
+  border: 1px solid #3a4a5f;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  pointer-events: none;
 }
-
-#hud .nt-lobby li.nt-me {
-  color: #ffd9a8;
-}
-
-#hud .nt-lobby .nt-ready {
-  color: #8fd694;
-}
-
-#hud .nt-lobby .nt-notready {
-  color: #7a8a9d;
-}
-
-#hud .nt-lobby .nt-status {
-  min-height: 18px;
-  color: #9fb6cf;
-  word-break: break-word;
-}
-
-#hud .nt-lobby .nt-status.nt-error {
-  color: #e08a8a;
-}
-
-#hud .nt-lobby .nt-net {
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid #243144;
-  color: #7a8a9d;
-  font-size: 11px;
-  white-space: pre-wrap;
-}
-
-#hud .nt-lobby label.nt-check {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-}
+#hud .aa-netline.aa-hidden { display: none; }

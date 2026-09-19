@@ -86,6 +86,8 @@ export interface HostActor {
   window: ShotWindow; poses: PoseTrack;
   /** Per-actor monotonic streak-press counter. Mints the exactly-once claim id. */
   streakSeq: number;
+  /** The primary the seat said it carries (`addActor`), for the ordnance kit. null = assume the default kit's. */
+  primaryHint: string | null;
 }
 
 /** Read-only context. Four values, none of them a function into the caller. */
@@ -114,7 +116,7 @@ export class HostLife {
   newActor(id: ActorId, team: TeamId, bot: boolean, now: number): HostActor {
     return {
       id, team, bot, health: createHealth(now), spawnIndex: -1, yaw: 0, ack: -1,
-      window: createShotWindow(), poses: new PoseTrack(), streakSeq: 0,
+      window: createShotWindow(), poses: new PoseTrack(), streakSeq: 0, primaryHint: null,
     };
   }
 
@@ -188,7 +190,13 @@ export class HostLife {
   ): void {
     const def = WEAPON_BY_ID.get(weaponId);
     if (def === undefined && preResolved === undefined) return;
-    const hostile = attacker !== null && this.areHostile(attacker, victim);
+    // Your own grenade hurts you. `areHostile` answers false for a === b so a
+    // bullet can never self-hit, but a blast has no such geometry, and a frag
+    // cooked too long or dropped at your feet is the one self-inflicted wound
+    // the owner asked for by name ("self-damage"). Explosion only: a sentry
+    // still cannot shoot its owner and a knife cannot be turned inward.
+    const selfHarm = attacker === victim && cause === 'explosion';
+    const hostile = attacker !== null && (selfHarm || this.areHostile(attacker, victim));
     // `friendlyFire` here is the host's hostility verdict, not the rule: in FFA
     // two mutual enemies share a `TeamId` (it is `0 | 1`), so this is how the
     // host tells `damage.ts` to skip its own team comparison rather than

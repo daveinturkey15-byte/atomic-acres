@@ -1,320 +1,236 @@
 /**
- * Nuketown 2025 — multiplayer lobby panel.
+ * Atomic Acres — the multiplayer lobby view, inside the #start overlay.
  *
- * Owns the whole room lifecycle for the local seat: host a room (join code +
- * roster + ready + start) or join one by code, over the same-machine
- * BroadcastChannel transport — host in one tab, guest in another, no server.
- * Headless guests/hosts for the proof harness live in src/net/proof.ts; this
- * file is the human half and touches only DOM.
+ * Everything decided here is decided by `net/lobby-session.ts` (DOM-free):
+ * which link carries the room, what a refusal means, when a seat is gone.
+ * This file draws `session.view()` and calls the verbs, and every refusal it
+ * shows is a label the session or `game/rules.ts` authored (IMPORT-PLAN §5.4).
  *
- * Mounts inside #hud so captures hide it automatically. All names render via
- * textContent, never innerHTML. The diagnostics interval and any rAF loop are
- * owned here and torn down in dispose() and on leave.
+ * Two links, both real:
+ *   tabs  BroadcastChannel — two tabs of one browser profile, no server.
+ *   lan   WebRTC data channels signalled through `scripts/net-signal.mjs`
+ *         (spawned by a harness, or by hand on the machine that hosts).
+ *
+ * Callsign, link and signal address persist in `ui/settings.ts`. All names
+ * render via textContent, never innerHTML.
  */
-import './lobby.css';
-import { createJoinCode, isJoinCode } from '../net/protocol';
-import { GuestClient, HostRoom } from '../net/room';
-import { createLocalTransport, type Transport } from '../net/transport';
+import type { LinkTier, LobbySession, LobbyView } from '../net/lobby-session';
+import { LINK_LABELS, LINK_TIERS } from '../net/lobby-session';
+import { LOBBY_CAPACITIES, SOLO_MAX_BOTS, type SoloSetup } from '../game/rules';
+import { formatClock } from '../game/match';
+import type { Settings } from './settings';
 
-export interface LocalPose {
-  x: number;
-  y: number;
-  z: number;
-  yaw: number;
+export interface LobbyPanelDeps {
+  session(): LobbySession | null;
+  settings(): Settings;
+  write(patch: Partial<Settings>): void;
+  /** The rules the host's match will use; shown as one line with an edit button. */
+  rules(): SoloSetup;
+  onEditRules(): void;
+  onBack(): void;
 }
 
-export interface LobbyOptions {
-  /** Sampled every frame while hosting to drive the host's own seat. */
-  sampleLocalPose?: () => LocalPose | null;
+export interface LobbyPanel {
+  readonly root: HTMLElement;
+  refresh(): void;
 }
 
-function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  cls: string,
-  text?: string,
-): HTMLElementTagNameMap[K] {
+function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string): HTMLElementTagNameMap[K] {
   const n = document.createElement(tag);
   if (cls) n.className = cls;
   if (text !== undefined) n.textContent = text;
   return n;
 }
 
-export function initLobby(opts?: LobbyOptions): { dispose(): void } {
-  const hud = document.getElementById('hud');
-  if (!hud) return { dispose: () => undefined };
+function stop(e: Event): void {
+  e.stopPropagation();
+}
 
-  const samplePose = opts?.sampleLocalPose ?? null;
-  let host: HostRoom | null = null;
-  let guest: GuestClient | null = null;
-  let transport: Transport | null = null;
-  let diagTimer: number | null = null;
-  let driveRaf = 0;
-  let disposed = false;
+function button(label: string, cls: string, onClick: () => void): HTMLButtonElement {
+  const b = el('button', ('aa-btn ' + cls).trim(), label);
+  b.type = 'button';
+  b.addEventListener('click', (e) => { stop(e); onClick(); });
+  return b;
+}
 
-  // -- static chrome ---------------------------------------------------------
-  const btn = el('button', 'nt-lobby-btn', 'MP lobby');
-  const panel = el('div', 'nt-lobby nt-lobby-hidden');
-  const title = el('h2', '', 'MULTIPLAYER');
-  const status = el('div', 'nt-status', 'Host a room or join by code. Same machine, two tabs, no server.');
-  const netline = el('div', 'nt-net', '');
-  panel.append(title);
-  const body = el('div', '');
-  panel.append(body, status, netline);
-  hud.append(btn, panel);
+function textInput(cls: string, placeholder: string, label: string, max: number): HTMLInputElement {
+  const i = el('input', cls);
+  i.type = 'text';
+  i.maxLength = max;
+  i.placeholder = placeholder;
+  i.setAttribute('aria-label', label);
+  i.autocomplete = 'off';
+  i.addEventListener('click', stop);
+  return i;
+}
 
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    panel.classList.toggle('nt-lobby-hidden');
-  });
+export function buildLobbyPanel(deps: LobbyPanelDeps): LobbyPanel {
+  const root = el('div', 'aa-view aa-hidden aa-lobby');
+  root.setAttribute('aria-label', 'Multiplayer');
+  root.append(el('h2', 'aa-h2', 'Multiplayer'));
+  const idle = el('div', 'aa-lobby-idle');
+  const room = el('div', 'aa-lobby-room aa-hidden');
+  const error = el('div', 'aa-error', '');
+  error.setAttribute('role', 'status');
+  root.append(idle, room, error);
 
-  function setStatus(text: string, isError: boolean): void {
-    status.textContent = text;
-    status.classList.toggle('nt-error', isError);
+  // ---- idle: identity, link, host / join ----------------------------------
+  const name = textInput('aa-input aa-callsign', 'callsign', 'Callsign', 16);
+  name.addEventListener('change', () => deps.write({ callsign: name.value }));
+  const tier = el('select', 'aa-select');
+  tier.setAttribute('aria-label', 'Link');
+  for (const t of LINK_TIERS) {
+    const o = el('option', '', LINK_LABELS[t]);
+    o.value = t;
+    tier.append(o);
+  }
+  tier.addEventListener('click', stop);
+  tier.addEventListener('change', (e) => { stop(e); deps.write({ linkTier: tier.value as LinkTier }); refresh(); });
+  const signal = textInput('aa-input aa-signal', 'http://host:4310', 'Signal server', 64);
+  signal.addEventListener('change', () => deps.write({ signalUrl: signal.value }));
+  const signalRow = el('label', 'aa-setting aa-setting-row');
+  signalRow.append(el('span', '', 'Signal server'), signal);
+  const cap = el('select', 'aa-select');
+  cap.setAttribute('aria-label', 'Room size');
+  for (const c of LOBBY_CAPACITIES) {
+    const o = el('option', '', c + ' players');
+    o.value = String(c);
+    cap.append(o);
+  }
+  cap.value = String(LOBBY_CAPACITIES[LOBBY_CAPACITIES.length - 1]);
+  cap.addEventListener('click', stop);
+  const bots = el('input', 'aa-range');
+  bots.type = 'range';
+  bots.min = '0';
+  bots.max = String(SOLO_MAX_BOTS);
+  bots.step = '1';
+  bots.value = '0';
+  bots.setAttribute('aria-label', 'Bots in the room');
+  bots.addEventListener('click', stop);
+  const botsVal = el('span', 'aa-val', '0 bots');
+  bots.addEventListener('input', () => { botsVal.textContent = bots.value + (bots.value === '1' ? ' bot' : ' bots'); });
+  const botsRow = el('label', 'aa-setting');
+  const botsHead = el('div', 'aa-setting-head');
+  botsHead.append(el('span', '', 'Bots on the host'), botsVal);
+  botsRow.append(botsHead, bots);
+  const code = textInput('aa-input aa-code-input', 'CODE', 'Join code', 6);
+  code.addEventListener('input', () => { code.value = code.value.toUpperCase(); });
+  code.addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
+
+  const idRow = el('label', 'aa-setting aa-setting-row');
+  idRow.append(el('span', '', 'Callsign'), name);
+  const linkRow = el('label', 'aa-setting aa-setting-row');
+  linkRow.append(el('span', '', 'Link'), tier);
+  const capRow = el('label', 'aa-setting aa-setting-row');
+  capRow.append(el('span', '', 'Room size'), cap);
+  const hostRow = el('div', 'aa-row');
+  hostRow.append(button('Host a room', 'aa-primary', host));
+  const joinRow = el('div', 'aa-row aa-join-row');
+  joinRow.append(code, button('Join by code', '', join));
+  const rejoinRow = el('div', 'aa-row aa-hidden');
+  const rejoinBtn = button('Rejoin', '', rejoin);
+  rejoinRow.append(rejoinBtn);
+  const backRow = el('div', 'aa-row');
+  backRow.append(button('Back', '', deps.onBack));
+  idle.append(idRow, linkRow, signalRow, capRow, botsRow, hostRow, joinRow, rejoinRow, backRow);
+
+  // ---- in a room: code, roster, ready, start, leave ------------------------
+  const codeBig = el('div', 'aa-code');
+  const codeHint = el('div', 'aa-hint', '');
+  const roster = el('ul', 'aa-roster');
+  roster.setAttribute('aria-label', 'Roster');
+  const rulesLine = el('div', 'aa-hint aa-rules-line');
+  const rulesRow = el('div', 'aa-row');
+  const editRules = button('Match rules', '', deps.onEditRules);
+  rulesRow.append(editRules);
+  const readyLabel = el('label', 'aa-check');
+  const ready = el('input', '');
+  ready.type = 'checkbox';
+  ready.setAttribute('aria-label', 'Ready');
+  ready.addEventListener('click', stop);
+  ready.addEventListener('change', () => deps.session()?.setReady(ready.checked));
+  readyLabel.append(ready, document.createTextNode(' Ready'));
+  const startBtn = button('Start match', 'aa-primary', () => { deps.session()?.start(); refresh(); });
+  const startWhy = el('span', 'aa-note aa-note-persist', '');
+  const leaveBtn = button('Leave', '', () => { deps.session()?.leave(); refresh(); });
+  const actRow = el('div', 'aa-row');
+  actRow.append(readyLabel, startBtn, leaveBtn);
+  const status = el('div', 'aa-hint aa-lobby-status', '');
+  room.append(codeBig, codeHint, roster, rulesLine, rulesRow, actRow, startWhy, status);
+
+  function host(): void {
+    const s = deps.session();
+    if (s === null) return;
+    const st = deps.settings();
+    s.host({ name: st.callsign, tier: st.linkTier, signalUrl: st.signalUrl, capacity: Number(cap.value), bots: Number(bots.value) });
+    refresh();
+  }
+  function join(): void {
+    const s = deps.session();
+    if (s === null) return;
+    const st = deps.settings();
+    s.join(code.value, { name: st.callsign, tier: st.linkTier, signalUrl: st.signalUrl });
+    refresh();
+  }
+  function rejoin(): void {
+    const s = deps.session();
+    const c = s?.rejoinCandidate() ?? null;
+    if (s === null || c === null) return;
+    s.join(c.code, { name: c.name, tier: c.tier, signalUrl: c.signalUrl });
+    refresh();
   }
 
-  function stopLoops(): void {
-    if (diagTimer !== null) {
-      clearInterval(diagTimer);
-      diagTimer = null;
+  function drawRoster(v: LobbyView): void {
+    roster.replaceChildren();
+    for (const r of v.roster) {
+      const li = el('li', 'aa-seat' + (r.id === v.selfId ? ' aa-me' : '') + (r.ready ? ' aa-ready' : '') + (r.connected ? '' : ' aa-away'));
+      const mark = el('span', 'aa-seat-mark', r.connected ? (r.ready ? '●' : '○') : '…');
+      const label = el('span', 'aa-seat-name', r.name + (r.isHost ? ' (host)' : '') + (r.id === v.selfId ? ' - you' : ''));
+      const state = el('span', 'aa-seat-state', !r.connected ? 'rejoining' : r.ready ? 'ready' : 'not ready');
+      li.append(mark, label, state);
+      roster.append(li);
     }
-    if (driveRaf !== 0) {
-      cancelAnimationFrame(driveRaf);
-      driveRaf = 0;
-    }
+    for (let i = v.roster.length; i < v.capacity; i++) roster.append(el('li', 'aa-seat aa-empty', '— open seat —'));
   }
 
-  function leaveRoom(quiet: boolean): void {
-    stopLoops();
-    if (guest) {
-      guest.dispose();
-      guest = null;
-    }
-    if (host) {
-      host.dispose();
-      host = null;
-    }
-    if (transport) {
-      transport.close();
-      transport = null;
-    }
-    netline.textContent = '';
-    if (!quiet) {
-      setStatus('Left the room.', false);
-      renderIdle();
-    }
+  function rulesText(): string {
+    const r = deps.rules();
+    return `${r.mode.toUpperCase()} · ${r.scoreLimit === null ? 'no kill limit' : r.scoreLimit + ' kills'} · ${formatClock(r.durationMs)} · ${r.difficulty} bots · respawn ${(r.respawnMs / 1000).toFixed(1)} s`;
   }
 
-  function startDiag(): void {
-    stopLoops();
-    const update = (): void => {
-      if (host) netline.textContent = host.diag.line(Date.now());
-      else if (guest) netline.textContent = guest.diag.line(Date.now());
-    };
-    update();
-    diagTimer = setInterval(update, 250);
+  function refresh(): void {
+    const s = deps.session();
+    const st = deps.settings();
+    if (document.activeElement !== name) name.value = st.callsign;
+    tier.value = st.linkTier;
+    if (document.activeElement !== signal) signal.value = st.signalUrl;
+    signalRow.classList.toggle('aa-hidden', st.linkTier !== 'lan');
+    const v = s?.view() ?? null;
+    const inRoom = v !== null && v.role !== 'idle';
+    idle.classList.toggle('aa-hidden', inRoom);
+    room.classList.toggle('aa-hidden', !inRoom);
+    error.textContent = v?.error ?? '';
+    const cand = s?.rejoinCandidate() ?? null;
+    rejoinRow.classList.toggle('aa-hidden', inRoom || cand === null);
+    if (cand !== null) rejoinBtn.textContent = 'Rejoin room ' + cand.code;
+    if (v === null || !inRoom) return;
+    codeBig.textContent = v.code ?? '—';
+    codeHint.textContent = v.role === 'host'
+      ? (v.tier === 'lan' ? 'Give this code to the other player. They join over the signal server.' : 'Give this code to the other tab of this browser.')
+      : v.phase === 'joining' ? 'Joining…' : 'In the room. Mark ready; the host starts.';
+    drawRoster(v);
+    const me = v.roster.find((r) => r.id === v.selfId);
+    ready.checked = me?.ready ?? false;
+    ready.disabled = v.phase !== 'lobby';
+    const isHost = v.role === 'host';
+    startBtn.classList.toggle('aa-hidden', !isHost);
+    rulesRow.classList.toggle('aa-hidden', !isHost);
+    rulesLine.textContent = isHost ? rulesText() + (v.hostBots > 0 ? ` · ${v.hostBots} bots` : '') : '';
+    startBtn.disabled = v.startRefusal !== null;
+    startWhy.textContent = isHost && v.startLabel !== null ? v.startLabel : '';
+    status.textContent = v.phase === 'starting' ? 'Starting…' : v.phase === 'playing' ? 'Match live.' : v.linkOk ? '' : 'LINK DOWN - is the signal server running?';
   }
 
-  function startDrive(): void {
-    if (!samplePose) return;
-    const frame = (): void => {
-      if (disposed || !host) return;
-      try {
-        const p = samplePose();
-        if (p) host.driveHostSeat(p.x, p.y, p.z, p.yaw);
-      } catch {
-        /* sampler reads live player state; never let it break the loop. */
-      }
-      driveRaf = requestAnimationFrame(frame);
-    };
-    driveRaf = requestAnimationFrame(frame);
-  }
-
-  function rosterList(into: HTMLElement, entries: { id: string; name: string; ready: boolean; isHost: boolean }[], me: string | null): void {
-    const ul = el('ul', '');
-    for (const r of entries) {
-      const mark = r.ready ? '●' : '○';
-      const li = el('li', r.id === me ? 'nt-me' : '', `${mark} ${r.name}${r.isHost ? ' (host)' : ''}`);
-      li.classList.add(r.ready ? 'nt-ready' : 'nt-notready');
-      ul.append(li);
-    }
-    into.append(ul);
-  }
-
-  // -- views -----------------------------------------------------------------
-  function clearBody(): void {
-    body.replaceChildren();
-  }
-
-  function nameRow(defaultName: string): HTMLInputElement {
-    const row = el('div', 'nt-row');
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.maxLength = 16;
-    input.value = defaultName;
-    input.className = 'nt-name';
-    input.placeholder = 'callsign';
-    input.setAttribute('aria-label', 'callsign');
-    row.append(input);
-    body.append(row);
-    return input;
-  }
-
-  function renderIdle(): void {
-    clearBody();
-    const nameInput = nameRow('player');
-    const row = el('div', 'nt-row');
-    const hostBtn = el('button', '', 'Host room');
-    const codeInput = document.createElement('input');
-    codeInput.type = 'text';
-    codeInput.maxLength = 6;
-    codeInput.placeholder = 'CODE';
-    codeInput.setAttribute('aria-label', 'join code');
-    const joinBtn = el('button', '', 'Join');
-    row.append(hostBtn, codeInput, joinBtn);
-    body.append(row);
-
-    hostBtn.addEventListener('click', () => {
-      doHost(nameInput.value.trim() || 'player');
-    });
-    joinBtn.addEventListener('click', () => {
-      const code = codeInput.value.trim().toUpperCase();
-      if (!isJoinCode(code)) {
-        setStatus('Codes are 6 letters/digits — check with the host.', true);
-        return;
-      }
-      doJoin(code, nameInput.value.trim() || 'player');
-    });
-  }
-
-  function doHost(name: string): void {
-    leaveRoom(true);
-    // The channel name embeds the code so a second tab can find this room.
-    // The code is minted first and handed to the room, never read back.
-    const code = createJoinCode();
-    try {
-      transport = createLocalTransport('host', 'nuketown-lobby-' + code);
-    } catch {
-      setStatus('Hosting needs BroadcastChannel (two tabs, same browser).', true);
-      return;
-    }
-    host = new HostRoom(transport, { hostName: name, code, onChange: renderHost });
-    host.startAuto();
-    startDiag();
-    startDrive();
-    setStatus('Room open in this tab. Guests: open tab 2, enter the code.', false);
-    renderHost();
-  }
-
-  function doJoin(code: string, name: string): void {
-    leaveRoom(true);
-    const gid = 'g-' + Math.random().toString(36).slice(2, 8);
-    try {
-      transport = createLocalTransport(gid, 'nuketown-lobby-' + code);
-    } catch {
-      setStatus('Joining needs BroadcastChannel (same browser).', true);
-      return;
-    }
-    setStatus('Joining ' + code + '…', false);
-    const t = transport;
-    guest = new GuestClient(t, 'host', code, name, {
-      onChange: () => {
-        const g = guest;
-        if (!g) return;
-        if (g.getState() === 'rejected') {
-          setStatus('Host refused: ' + (g.getRejectReason() ?? 'unknown') + '.', true);
-          const dead = g;
-          guest = null;
-          dead.dispose();
-          t.close();
-          transport = null;
-          renderIdle();
-          return;
-        }
-        if (g.getState() === 'closed' && g.getRejectReason() === 'timeout') {
-          setStatus('No host answered — is the host tab open with this code?', true);
-          guest = null;
-          g.dispose();
-          t.close();
-          transport = null;
-          renderIdle();
-          return;
-        }
-        renderGuest();
-      },
-    });
-    guest.startAutoPing();
-    startDiag();
-    renderGuest();
-  }
-
-  function renderHost(): void {
-    if (!host) {
-      renderIdle();
-      return;
-    }
-    clearBody();
-    const code = el('div', 'nt-code', host.code);
-    body.append(code);
-    rosterList(body, host.roster(), host.hostId);
-
-    const row = el('div', 'nt-row');
-    const label = document.createElement('label');
-    label.className = 'nt-check';
-    const check = document.createElement('input');
-    check.type = 'checkbox';
-    check.checked = host.roster().find((r) => r.id === host!.hostId)?.ready ?? false;
-    check.addEventListener('change', () => host!.setReady(check.checked));
-    label.append(check, document.createTextNode('ready'));
-    const start = el('button', '', host.getPhase() === 'lobby' ? 'Start match' : 'Playing…');
-    start.disabled = !host.canStart();
-    start.addEventListener('click', () => {
-      if (!host!.start()) setStatus('Need 2+ seats, all ready.', true);
-      else setStatus('Match started.', false);
-      renderHost();
-    });
-    const leave = el('button', '', 'Leave');
-    leave.addEventListener('click', () => leaveRoom(false));
-    row.append(label, start, leave);
-    body.append(row);
-    if (host.getPhase() !== 'lobby') setStatus('Match live — scoreboard and kill rules arrive with the gameplay lane.', false);
-  }
-
-  function renderGuest(): void {
-    if (!guest) {
-      renderIdle();
-      return;
-    }
-    clearBody();
-    const g = guest;
-    rosterList(body, g.roster(), g.getPlayerId());
-    const row = el('div', 'nt-row');
-    const label = document.createElement('label');
-    label.className = 'nt-check';
-    const check = document.createElement('input');
-    check.type = 'checkbox';
-    check.checked = g.roster().find((r) => r.id === g.getPlayerId())?.ready ?? false;
-    check.disabled = g.getState() !== 'lobby';
-    check.addEventListener('change', () => g.setReady(check.checked));
-    label.append(check, document.createTextNode('ready'));
-    const leave = el('button', '', 'Leave');
-    leave.addEventListener('click', () => leaveRoom(false));
-    row.append(label, leave);
-    body.append(row);
-    const st = g.getState();
-    if (st === 'joining') setStatus('Joining…', false);
-    else if (st === 'lobby') setStatus('In lobby. Mark ready; the host starts.', false);
-    else if (st === 'starting' || st === 'playing') setStatus('Match live — guest locomotion lands with the gameplay lane.', false);
-    else if (st === 'closed') setStatus('Host left.', true);
-  }
-
-  renderIdle();
-
-  return {
-    dispose(): void {
-      disposed = true;
-      leaveRoom(true);
-      btn.remove();
-      panel.remove();
-    },
-  };
+  refresh();
+  return { root, refresh };
 }

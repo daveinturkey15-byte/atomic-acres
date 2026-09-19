@@ -22,12 +22,13 @@
  * difference between a module and "`legacy-main` with the body moved".
  */
 
-import type { ActorId, GameBus, ShotRejectReason, TeamId, WorldQuery } from './events';
+import type { ActorId, GameBus, OrdnanceRejectReason, ShotRejectReason, TeamId, WorldQuery } from './events';
 import type { MatchStateMsg, StreakSlotState } from '../net/protocol';
 import type { MatchRules } from './rules';
 import type { DamageInput, DamageResult } from './damage';
 import type { SpawnContext, SpawnSelection } from './spawns';
 import type { StreakRuntimePort } from './host-streaks';
+import type { OrdnanceSnapshot } from './host-ordnance';
 
 /**
  * `StreakRuntimePort` MOVED to `./host-streaks` by the integration lane, and
@@ -63,8 +64,12 @@ export interface HostOptions {
 
 export interface ShotAdmission {
   readonly accepted: boolean;
-  readonly reason: ShotRejectReason | null;
-  /** `SHOT_REJECT_LABELS[reason]`, resolved here so no caller has to (§5.4). */
+  /**
+   * A shared-admission refusal (`host-shot.ts`) or, for a claim whose
+   * `weaponId` names ordnance, one of the ordnance lane's own reasons.
+   */
+  readonly reason: ShotRejectReason | OrdnanceRejectReason | null;
+  /** The reason's label, resolved here so no caller has to (§5.4). */
   readonly label: string | null;
 }
 
@@ -85,6 +90,16 @@ export interface ActorSnapshot {
   readonly score: number;
   readonly streak: number;
   readonly slots: readonly StreakSlotState[];
+  /** Ordnance lane: grenade charges held this life. Authoritative. */
+  readonly lethal: number;
+  readonly tactical: number;
+  /** The host's ESTIMATE of the primary and its rounds (`host-kit.ts` says why). */
+  readonly primaryId: string;
+  readonly rounds: number;
+  /** Grenade in hand with the pin out, or null. */
+  readonly armed: string | null;
+  /** Host time the flash blindness ends; 0 when not blinded. */
+  readonly blindUntil: number;
 }
 
 /** Counters, for a harness that needs a number rather than an adjective. */
@@ -100,4 +115,6 @@ export interface HostSnapshot {
   readonly match: MatchStateMsg;
   readonly actors: readonly ActorSnapshot[];
   readonly stats: HostStats;
+  /** Live grenades, smoke volumes, drops on the ground, and the lane's counters. */
+  readonly ordnance: OrdnanceSnapshot;
 }

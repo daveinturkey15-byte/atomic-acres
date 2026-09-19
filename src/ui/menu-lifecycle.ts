@@ -1,7 +1,7 @@
 /**
  * Atomic Acres — menu lifecycle as a pure reducer.
  *
- * Five surfaces and five pointer-lock phases, no DOM. `menus.ts` renders the
+ * Six surfaces and five pointer-lock phases, no DOM. `menus.ts` renders the
  * result; this file decides it. IMPORT-PLAN §1.5: "pointer-lock denial and
  * focus-suspension are the two states every browser FPS gets wrong, and a pure
  * reducer is the only way to test them."
@@ -24,7 +24,7 @@
  * decision stays here instead of being spread across three DOM listeners.
  */
 
-export const MENU_SURFACES = ['pre-match', 'deploying', 'hidden', 'paused-match', 'error'] as const;
+export const MENU_SURFACES = ['pre-match', 'deploying', 'hidden', 'paused-match', 'match-over', 'error'] as const;
 export type MenuSurface = (typeof MENU_SURFACES)[number];
 
 export const POINTER_LOCK_PHASES = ['unlocked', 'requesting', 'locked', 'denied', 'focus-suspended'] as const;
@@ -60,6 +60,10 @@ export type MenuLifecycleEvent =
   | { readonly type: 'focus-gained' }
   | { readonly type: 'pause-requested' }
   | { readonly type: 'resume' }
+  /** The host says the match ended: the end screen shows, the world keeps drawing. */
+  | { readonly type: 'match-ended' }
+  /** From the end screen: back into the same room or solo setup. */
+  | { readonly type: 'rematch' }
   | { readonly type: 'return-pre-match' }
   | { readonly type: 'fatal-error' };
 
@@ -115,9 +119,10 @@ export function reduceMenuLifecycle(cur: MenuLifecycleState, e: MenuLifecycleEve
 
     case 'pointer-acquired':
       if (notPlaying(cur.surface)) return ignore(cur, e.type);
-      // Lock acquired while paused: the pause menu wins, and the caller is
+      // Lock acquired while a menu is up: the menu wins, and the caller is
       // expected to exit lock. Reporting `locked` here would hide the menu.
       if (cur.surface === 'paused-match') return next(cur, 'paused-match', 'unlocked', 'pointer-while-paused');
+      if (cur.surface === 'match-over') return next(cur, 'match-over', 'unlocked', 'pointer-while-over');
       return next(cur, 'hidden', 'locked', 'pointer-acquired');
 
     case 'pointer-rejected':
@@ -126,6 +131,8 @@ export function reduceMenuLifecycle(cur: MenuLifecycleState, e: MenuLifecycleEve
 
     case 'pointer-lost': {
       if (notPlaying(cur.surface)) return ignore(cur, e.type);
+      // The end screen releases the lock itself; that release is not a pause.
+      if (cur.surface === 'match-over') return next(cur, 'match-over', 'unlocked', 'pointer-lost-while-over');
       const paused = cur.surface === 'paused-match';
       if (e.focusTransition) return next(cur, paused ? 'paused-match' : 'hidden', 'focus-suspended', 'focus-loss');
       // A transient null while a request is still in flight is not a pause.
@@ -144,11 +151,20 @@ export function reduceMenuLifecycle(cur: MenuLifecycleState, e: MenuLifecycleEve
       return next(cur, cur.surface, 'unlocked', 'focus-return');
 
     case 'pause-requested':
-      if (notPlaying(cur.surface)) return ignore(cur, e.type);
+      if (notPlaying(cur.surface) || cur.surface === 'match-over') return ignore(cur, e.type);
       return next(cur, 'paused-match', 'unlocked', 'pause-requested');
 
     case 'resume':
       return cur.surface === 'paused-match' ? next(cur, 'hidden', 'unlocked', 'resume') : ignore(cur, e.type);
+
+    case 'match-ended':
+      // Only a live match can end. A stray end cannot pull the pre-match
+      // menu into an end screen with no scoreboard behind it.
+      if (notPlaying(cur.surface) || cur.surface === 'match-over') return ignore(cur, e.type);
+      return next(cur, 'match-over', 'unlocked', 'match-ended');
+
+    case 'rematch':
+      return cur.surface === 'match-over' ? next(cur, 'deploying', 'unlocked', 'rematch') : ignore(cur, e.type);
 
     case 'return-pre-match':
       return next(cur, 'pre-match', 'unlocked', 'return-pre-match');

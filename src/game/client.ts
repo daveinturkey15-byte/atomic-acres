@@ -38,6 +38,7 @@ import type { MatchStateMsg, PlayerSample, ScoreRow, StreakSlotState, StreakStat
 import { SHOT_REJECT_LABELS } from './events';
 import { BannerArbiter, feedLineForDamage, feedLineForDeath, feedLineForKill, feedLineForStreakActivated, feedLineForStreakDenied, feedLineForStreakEarned, type FeedContext } from './feed';
 import { shouldRevealEnemy, type MapBlip } from './minimap';
+import { OrdnanceView, decorateKillLine, isOrdnanceEvent } from './ordnance-view';
 
 // ---------------------------------------------------------------------------
 // The view
@@ -126,6 +127,8 @@ export class GameClient {
   private readonly samples = new Map<ActorId, PlayerSample>();
   private readonly edges: ClientEdge[] = [];
   private readonly banners = new BannerArbiter();
+  /** The ordnance lane's projection: flights, smoke, drops, what we hold. Read by presentation. */
+  readonly ordnance: OrdnanceView;
 
   private team: TeamId | null = null;
   private health: number | null = null;
@@ -137,7 +140,9 @@ export class GameClient {
   private blips: readonly MapBlip[] = [];
   private banner: { text: string; sub: string } | null = null;
 
-  constructor(readonly selfId: ActorId) {}
+  constructor(readonly selfId: ActorId) {
+    this.ordnance = new OrdnanceView(selfId);
+  }
 
   /** Display names arrive from the roster, which `net/room.ts` owns. */
   setNames(names: Iterable<readonly [ActorId, string]>): void {
@@ -181,19 +186,28 @@ export class GameClient {
 
   applyEvent(e: GameEvent): void {
     if (e.at > this.now) this.now = e.at;
+    if (isOrdnanceEvent(e)) {
+      const l = this.ordnance.apply(e);
+      if (l !== null) this.pushLine({ text: l.text, dest: 'events', tone: l.tone });
+      return;
+    }
     switch (e.type) {
       case 'damage':
         return this.onDamage(e);
-      case 'kill':
+      case 'kill': {
         this.lastShotAt.set(e.killerId, e.at);
         if (e.killerId === this.selfId) this.push({ kind: 'hit', marker: 'kill' });
-        this.pushLine(feedLineForKill(e, this.ctx()));
+        // The line is `feed.ts`'s; the knife glyph and the grenade tag are the ordnance lane's.
+        const l = feedLineForKill(e, this.ctx());
+        this.pushLine({ text: decorateKillLine(l.text, e), dest: l.dest, tone: l.tone });
         return;
+      }
       case 'death':
         if (e.victimId === this.selfId) {
           this.alive = false;
           this.health = 0;
           this.respawnAt = e.respawnAt;
+          this.ordnance.note(e.at, 'death you by=' + String(e.killerId) + ' ' + e.cause);
         }
         this.pushLine(feedLineForDeath(e, this.ctx()));
         return;
@@ -202,11 +216,14 @@ export class GameClient {
           this.alive = true;
           this.team = e.team;
           this.respawnAt = null;
+          this.ordnance.onSelfSpawn();
+          this.ordnance.note(e.at, 'spawn you at=' + e.x.toFixed(1) + ',' + e.y.toFixed(1) + ',' + e.z.toFixed(1));
         }
         return;
       case 'shot-rejected':
         if (e.shooterId === this.selfId) {
           this.pushLine({ text: SHOT_REJECT_LABELS[e.reason], dest: 'events', tone: 'own' });
+          this.ordnance.note(e.at, 'shot-rejected you seq=' + e.seq + ' ' + e.reason);
         }
         return;
       case 'streak-earned':

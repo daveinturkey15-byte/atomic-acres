@@ -14,33 +14,47 @@
  *
  * The pure half — constants, the arsenal projection, the aim frame, `senseBot`
  * and `botIntent` — is `./bot-sense`, split out for the 400-line cap and
- * re-exported here so `./bots` stays the one import target.
+ * re-exported here so `./bots` stays the one import target. Navigation is
+ * `./bot-nav`, the aim line and its error cone `./bot-aim`.
  *
- * ## What the navigation actually is, stated plainly
+ * ## Difficulty (lobby lane, 2026-09-19)
  *
- * There is no path graph. A bot walks straight at its goal and, when the chest
- * segment to the next step is blocked, tries the two axis-aligned slides
- * before giving up for that tick. On a map 44 m across with wide flanks this
- * reads as competent; in a corridor maze it would not. `scripts/paths.mjs`
- * already floods the collision world and emits line-of-sight-simplified
- * waypoints — that is the upgrade path when this stops being enough, and it is
- * deliberately not taken yet.
+ * `BotDifficultyPreset` from `rules.ts` moves three numbers: the reaction
+ * delay, the fire range and an aim-error cone. `regular` is the play-tested
+ * pair `bot-sense.ts` has always used with the perfect aim it has always had,
+ * so a match with no preset chosen is the match every harness already knows.
+ * The preset is applied HERE, over `botIntent`'s answer, because
+ * `bot-sense.ts` is another lane's file: the reducer keeps reading its own
+ * constants for the movement decision, and the trigger decision is re-taken
+ * against the preset's numbers before anything is submitted.
+ *
+ * ## Ordnance (wired against the ordnance lane's README contract)
+ *
+ * `botIntent` already forms the three intents when it is told what the bot
+ * carries (`BotSupply`, off the host's own `ActorSnapshot`) and what lies on
+ * the ground (`HostSnapshot.ordnance.drops`). A knife or a grenade is
+ * submitted exactly where a bullet is, as a `ShotMsg` whose `weaponId` is the
+ * ordnance id; a grenade is TWO claims (arm, then release along the lob) per
+ * `src/game/README.md`. Scavenging needs no claim at all: the host applies the
+ * walk-over itself, so a bot out of rounds simply walks to the drop.
  */
 
 import type { ActorId, StreakDenialReason, TeamId, Vec3, WorldQuery } from './events';
 import type { ActorSnapshot } from './host-ports';
-import { SPAWN_POINTS } from './spawns';
-import { TEAM_A, TEAM_B } from './rules';
+import { BOT_DIFFICULTY_PRESETS, TEAM_A, TEAM_B, type BotDifficultyPreset } from './rules';
 import {
-  BOT_AIM_ORIGIN_Y, BOT_ARSENAL, BOT_CHEST_Y, BOT_GOAL_REACHED_M, BOT_GOAL_TIMEOUT_MS,
-  BOT_REINFORCE_EVERY_DEATHS, BOT_SIDE_HYSTERESIS_MS, BOT_SPEED_MS, BOT_STEP_UP_M,
-  BOT_FIRE_RANGE_M, BOT_STREAK_RETRY_MS, BOT_STREAK_TERMINAL_DENIALS, BOT_STRAFE_SWAP_MS,
-  BOT_TARGET_MEMORY_MS, BOT_FALLBACK_HP, botIntent, senseBot,
-  type BotActorView, type BotIntent, type BotRuntime,
+  BOT_AIM_ORIGIN_Y, BOT_ARSENAL, BOT_GOAL_REACHED_M, BOT_GOAL_TIMEOUT_MS,
+  BOT_REINFORCE_EVERY_DEATHS, BOT_STREAK_RETRY_MS, BOT_STREAK_TERMINAL_DENIALS, BOT_STRAFE_SWAP_MS,
+  BOT_TARGET_MEMORY_MS, botIntent, senseBot, throwDirection,
+  type BotActorView, type BotDropSpot, type BotRuntime, type BotSupply,
 } from './bot-sense';
+import { aimVector, scatter, type Dir } from './bot-aim';
+import { pickGoal, stepBot, updateSide } from './bot-nav';
+import { KNIFE_ID, KNIFE_RECOVERY_MS } from './ordnance';
 
 export * from './bot-sense';
-
+export * from './bot-nav';
+export * from './bot-aim';
 
 /** What the director submits to. Exactly the host's own public methods — no
  *  wrapper, no adapter, so there is nothing here that can drift from it. */
@@ -60,15 +74,23 @@ export interface BotDirectorOptions {
   readonly rand: () => number;
   /** Hard ceiling on live bots; `net/protocol.ts:MAX_PLAYERS` minus the human. */
   readonly maxBots: number;
+  /** Reaction / range / aim cone. Absent = `regular`, the pre-preset numbers. */
+  readonly difficulty?: BotDifficultyPreset;
 }
+
+const NO_DROPS: readonly BotDropSpot[] = Object.freeze([]);
 
 export class BotDirector {
   private readonly opts: BotDirectorOptions;
+  private readonly difficulty: BotDifficultyPreset;
   private readonly bots: BotRuntime[] = [];
   private botDeaths = 0;
   private reinforcements = 0;
   private refusedReinforcements = 0;
   private serial = 0;
+  /** Scratch for the aim line and the kit view; never escape `tick`. */
+  private readonly dir: Dir = { x: 0, y: 0, z: 0 };
+  private readonly supply: { lethal: number; tactical: number; rounds: number; armed: string | null } = { lethal: 0, tactical: 0, rounds: 0, armed: null };
   /**
    * Instruments, not decoration. "The bots do not shoot enough" is an
    * adjective; `sight/engage/fire` per live bot-tick is a number, and it is
@@ -77,7 +99,7 @@ export class BotDirector {
    */
   private readonly m = {
     botTicks: 0, sightTicks: 0, engageTicks: 0, fireTicks: 0,
-    shots: 0, streakPresses: 0, blockedSteps: 0,
+    shots: 0, knives: 0, grenades: 0, streakPresses: 0, blockedSteps: 0,
     // `streakPresses` cannot tell four charges spent from four refused.
     // THIS DIRECTOR ONLY, and a rematch builds a new one: quote
     // `LocalMatch.counters()`, which banks each retiring director's numbers in
@@ -89,6 +111,12 @@ export class BotDirector {
 
   constructor(opts: BotDirectorOptions) {
     this.opts = opts;
+    this.difficulty = opts.difficulty ?? BOT_DIFFICULTY_PRESETS.regular;
+  }
+
+  /** The preset in force. A proof reads it back rather than trusting the brief. */
+  get preset(): BotDifficultyPreset {
+    return this.difficulty;
   }
 
   get roster(): readonly BotRuntime[] {
@@ -170,11 +198,11 @@ export class BotDirector {
    * unified so neither caller has to convert at the call site.
    *
    * `others` is every non-bot actor the bots may perceive (the human), `snap`
-   * is the host's own actor table — alive, hp, life and streak slots all come
-   * from there, because the host owns them and a second copy here would be
-   * the §5.6 defect.
+   * is the host's own actor table — alive, hp, life, streak slots and the
+   * carried kit all come from there, because the host owns them and a second
+   * copy here would be the §5.6 defect. `drops` is the host's ground list.
    */
-  tick(now: number, dt: number, others: readonly BotActorView[], snap: readonly ActorSnapshot[]): void {
+  tick(now: number, dt: number, others: readonly BotActorView[], snap: readonly ActorSnapshot[], drops: readonly BotDropSpot[] = NO_DROPS): void {
     const byId = new Map(snap.map((a) => [a.id, a]));
     const views: BotActorView[] = others.slice();
     for (const b of this.bots) {
@@ -195,7 +223,7 @@ export class BotDirector {
       this.m.botTicks++;
       const sense = senseBot(b, views, this.opts.world);
       if (sense.visible) this.m.sightTicks++;
-      if (sense.visible && sense.distance <= BOT_FIRE_RANGE_M) this.m.engageTicks++;
+      if (sense.visible && sense.distance <= this.difficulty.fireRangeM) this.m.engageTicks++;
       // `targetSince` starts the reaction clock. It restarts when the target
       // CHANGES, and when sight has been gone longer than the target memory —
       // not on every frame the segment happens to be blocked, which is the
@@ -215,25 +243,39 @@ export class BotDirector {
         b.strafeAt = now;
         b.strafe = this.opts.rand() < 0.5 ? -1 : 1;
       }
-      this.updateSide(b, now, s.hp);
+      updateSide(b, now, s.hp);
       if (b.goalAt === 0 || now - b.goalAt > BOT_GOAL_TIMEOUT_MS ||
           Math.hypot(b.goalX - b.x, b.goalZ - b.z) < BOT_GOAL_REACHED_M) {
-        this.pickGoal(b, now);
+        pickGoal(b, now, this.opts.rand);
       }
 
       const ready = this.readySlot(b, s, now);
-      const intent = botIntent(b, sense, now, s.hp, ready);
+      const k = this.supply;
+      k.lethal = s.lethal; k.tactical = s.tactical; k.rounds = s.rounds; k.armed = s.armed;
+      const intent = botIntent(b, sense, now, s.hp, ready, k as BotSupply, drops);
       b.yaw = intent.yaw;
       b.pitch = intent.pitch;
-      this.step(b, intent, dt);
+      if (stepBot(b, intent, dt, this.opts.world)) this.m.blockedSteps++;
+
+      // The trigger, re-taken against the preset: the reducer's own rule
+      // (visible, in range, reacted, cooled) with the preset's range and
+      // reaction. `regular` reproduces the reducer's answer exactly. A knife
+      // or a grenade this tick replaces the bullet, as the reducer decided.
+      const d = this.difficulty;
+      const fire = !intent.knife && intent.grenade === null && sense.visible && sense.distance <= d.fireRangeM &&
+        now - b.targetSince >= d.reactionMs && b.cooldown <= 0;
 
       this.opts.host.updatePose(b.id, b.x, b.y, b.z, now);
       this.opts.host.submitInput(b.id, {
         type: 'input', seq: ++b.inputSeq, mx: intent.moveX, mz: intent.moveZ,
-        yaw: b.yaw, pitch: b.pitch, fire: intent.fire, jump: false,
+        yaw: b.yaw, pitch: b.pitch, fire, jump: false,
       });
-      if (intent.fire) this.m.fireTicks++;
-      if (intent.fire && sense.target !== null) this.shoot(b, sense.target, now);
+      if (fire) this.m.fireTicks++;
+      if (sense.target !== null) {
+        if (fire) this.shoot(b, sense.target, now);
+        else if (intent.knife && b.cooldown <= 0) this.knife(b, sense.target, now);
+        else if (intent.grenade !== null) this.throwGrenade(b, intent.grenade, sense.target, now);
+      }
       if (intent.streakSlot !== null) {
         this.m.streakPresses++;
         const refused = this.opts.host.submitStreakIntent(
@@ -285,103 +327,42 @@ export class BotDirector {
     }
   }
 
-  /**
-   * Which half of the map this bot wants, with the 1.2 s sustain. Without the
-   * hysteresis a bot sitting on the health threshold, or flickering in and out
-   * of contact, oscillates between advance and fall-back every tick and walks
-   * on the spot — which is exactly what the old project's sustain window was
-   * added to stop.
-   */
-  private updateSide(b: BotRuntime, now: number, hp: number): void {
-    const want: 1 | -1 = hp <= BOT_FALLBACK_HP
-      ? (b.team === 0 ? -1 : 1)     // hurt: back toward its own spawn end
-      : (b.team === 0 ? 1 : -1);    // healthy: push toward the enemy end
-    if (want !== b.sideWant) {
-      b.sideWant = want;
-      b.sideSince = now;
-      return;
-    }
-    if (want !== b.side && now - b.sideSince >= BOT_SIDE_HYSTERESIS_MS) {
-      b.side = want;
-      b.goalAt = 0;
-    }
-  }
-
-  /**
-   * A patrol goal, taken from `game/spawns.ts:SPAWN_POINTS` on the favoured
-   * side. Derived, not authored: the spawn table is already a projection of
-   * `core/layout.ts`, so bots walk to places the map says are places.
-   *
-   * BIASED TOWARD THE MIDDLE, and here is why. Sorted by |z| the enemy-side
-   * pool runs from the street (z = 0) out to that team's back fence (z = 34),
-   * and picking uniformly sends bots to the far end of an 84 m map: measured
-   * over a 60 s match, 4,465 live bot-ticks produced 131 with an enemy in
-   * sight — 2.9%. `r * r` is the square-biased pick, so the contested middle
-   * is drawn several times more often than the enemy back yard while every
-   * point stays reachable. This is a heuristic about ONE map's shape; it is
-   * not a substitute for the real waypoint graph `scripts/paths.mjs` can emit.
-   */
-  private pickGoal(b: BotRuntime, now: number): void {
-    const wanted = SPAWN_POINTS.filter((p) => Math.sign(p.z) === b.side || p.z === 0);
-    const pool = (wanted.length > 0 ? wanted : SPAWN_POINTS)
-      .slice().sort((p, q) => Math.abs(p.z) - Math.abs(q.z));
-    const r = this.opts.rand();
-    const p = pool[Math.min(pool.length - 1, Math.floor(r * r * pool.length))];
-    b.goalX = p.x;
-    b.goalZ = p.z;
-    b.goalAt = now;
-  }
-
-  /**
-   * Movement. Straight at the wish, then the two axis slides. The blocking
-   * test is the chest segment through the `WorldQuery` port — the same
-   * colliders the player hits, so a bot cannot walk through something the
-   * human cannot.
-   */
-  private step(b: BotRuntime, intent: BotIntent, dt: number): void {
-    const dist = BOT_SPEED_MS * dt;
-    if (dist <= 0 || (intent.moveX === 0 && intent.moveZ === 0)) { b.speed = 0; return; }
-    const tries: [number, number][] = [
-      [intent.moveX, intent.moveZ],
-      [intent.moveX, 0],
-      [0, intent.moveZ],
-    ];
-    for (const [mx, mz] of tries) {
-      if (mx === 0 && mz === 0) continue;
-      const len = Math.hypot(mx, mz);
-      const nx = b.x + (mx / len) * dist;
-      const nz = b.z + (mz / len) * dist;
-      if (!this.opts.world.inBounds(nx, nz)) continue;
-      const ny = this.opts.world.groundY(nx, nz);
-      if (ny - b.y > BOT_STEP_UP_M) continue;
-      const from: Vec3 = { x: b.x, y: b.y + BOT_CHEST_Y, z: b.z };
-      const to: Vec3 = { x: nx, y: ny + BOT_CHEST_Y, z: nz };
-      if (!this.opts.world.lineOfSight(from, to)) continue;
-      if (mx !== intent.moveX || mz !== intent.moveZ) this.m.blockedSteps++;
-      b.x = nx; b.y = ny; b.z = nz;
-      b.speed = BOT_SPEED_MS * (len > 1 ? 1 : len);
-      return;
-    }
-    b.speed = 0;
-  }
-
   /** One claim, exactly as a human's controller authors one. */
+  private claim(b: BotRuntime, weaponId: string, now: number): void {
+    const o = this.dir;
+    this.opts.host.submitShot(b.id, {
+      type: 'shot', seq: ++b.shotSeq, life: b.life, weaponId,
+      firedAt: now, ox: b.x, oy: b.y + BOT_AIM_ORIGIN_Y, oz: b.z, dx: o.x, dy: o.y, dz: o.z,
+    }, now);
+  }
+
+  private eye(b: BotRuntime): Vec3 {
+    return { x: b.x, y: b.y + BOT_AIM_ORIGIN_Y, z: b.z };
+  }
+
   private shoot(b: BotRuntime, target: Vec3, now: number): void {
-    const ox = b.x;
-    const oy = b.y + BOT_AIM_ORIGIN_Y;
-    const oz = b.z;
-    let dx = target.x - ox;
-    let dy = target.y - oy;
-    let dz = target.z - oz;
-    const len = Math.hypot(dx, dy, dz);
-    if (len < 1e-4) return;
-    dx /= len; dy /= len; dz /= len;
+    if (!aimVector(this.eye(b), target, this.dir)) return;
+    scatter(this.dir, this.difficulty.aimErrorRad, this.opts.rand);
     b.cooldown = b.weapon.interval;
     this.m.shots++;
-    this.opts.host.submitShot(b.id, {
-      type: 'shot', seq: ++b.shotSeq, life: b.life, weaponId: b.weapon.id,
-      firedAt: now, ox, oy, oz, dx, dy, dz,
-    }, now);
+    this.claim(b, b.weapon.id, now);
+  }
+
+  /** The knife: one swing along the aim line; the host measures the reach. */
+  private knife(b: BotRuntime, target: Vec3, now: number): void {
+    if (!aimVector(this.eye(b), target, this.dir)) return;
+    b.cooldown = KNIFE_RECOVERY_MS / 1000;
+    this.m.knives++;
+    this.claim(b, KNIFE_ID, now);
+  }
+
+  /** Arm, then release along the ballistic lob that lands at the target. */
+  private throwGrenade(b: BotRuntime, grenadeId: string, target: Vec3, now: number): void {
+    throwDirection(this.eye(b), target, this.dir);
+    b.grenadeAt = now;
+    this.m.grenades++;
+    this.claim(b, grenadeId, now);
+    this.claim(b, grenadeId, now);
   }
 }
 

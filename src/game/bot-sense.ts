@@ -15,6 +15,14 @@
 
 import { WEAPONS, type WeaponDef } from '../weapons/catalog';
 import type { ActorId, StreakDenialReason, TeamId, Vec3, WorldQuery } from './events';
+import type { GrenadeId } from './ordnance';
+import {
+  BOT_GRENADE_COOLDOWN_MS, BOT_GRENADE_MAX_M, BOT_GRENADE_MIN_M, BOT_KNIFE_M, botTacticalFor,
+  nearestScavengeDrop, type BotDropSpot, type BotSupply,
+} from './bot-ordnance';
+import { sightOf } from './world-query';
+
+export * from './bot-ordnance';
 
 // ---------------------------------------------------------------------------
 // Tuned numbers. Each names the value it replaced and the sentence that moved
@@ -198,6 +206,13 @@ export interface BotIntent {
   readonly fire: boolean;
   /** 1-based slot to press this tick, or null. */
   readonly streakSlot: number | null;
+  /** Grenade to arm and release this tick (`game/ordnance.ts` id), or null. */
+  readonly grenade: GrenadeId | null;
+  /** Swing the knife this tick. */
+  readonly knife: boolean;
+  /** Walking to a drop for ammo: its position, or null. Overrides the patrol goal. */
+  readonly scavengeX: number | null;
+  readonly scavengeZ: number | null;
 }
 
 /** One bot's mutable record. The director owns every one of these. */
@@ -236,18 +251,39 @@ export interface BotRuntime {
   streakHoldUntil: number;
   /** A refusal this life cannot clear. Reset by `BotDirector.onSpawn`. */
   streakBlocked: boolean;
+  /**
+   * Ordnance lane, OPTIONAL so `bots.ts`'s record literal still type-checks
+   * without it: host time of the last throw (the 12 s cooldown counts from
+   * here), and the tactical this bot carries. Absent reads as never thrown /
+   * `botTacticalFor(0)`.
+   */
+  grenadeAt?: number;
+  tacticalId?: GrenadeId;
 }
 
 // ---------------------------------------------------------------------------
 // The reducer
 // ---------------------------------------------------------------------------
 
-/** Nearest hostile with a clear chest segment; falls back to nearest hostile. */
+const NO_TARGET: BotSense = Object.freeze({ targetId: null, target: null, distance: Infinity, visible: false });
+
+/**
+ * Nearest hostile with a clear chest segment; falls back to nearest hostile.
+ *
+ * Two things obscure sight besides walls, both read off the `SightField` the
+ * host keeps on the world (`world-query.ts`): a flash this bot took blinds it
+ * outright for the flash's duration — no target at all, not even the unseen
+ * fallback, because a blinded bot that keeps advancing on a remembered
+ * position is a bot that was not flashed — and a smoke volume between the two
+ * chests blocks the segment exactly as a wall does.
+ */
 export function senseBot(
   bot: BotRuntime,
   actors: readonly BotActorView[],
   world: WorldQuery,
 ): BotSense {
+  const sight = sightOf(world);
+  if (sight !== null && sight.isBlinded(bot.id)) return NO_TARGET;
   const eye: Vec3 = { x: bot.x, y: bot.y + BOT_AIM_ORIGIN_Y, z: bot.z };
   let best: BotActorView | null = null;
   let bestDist = Number.POSITIVE_INFINITY;
@@ -257,7 +293,7 @@ export function senseBot(
     const d = Math.hypot(a.x - bot.x, a.z - bot.z);
     if (d > BOT_SIGHT_M) continue;
     const at: Vec3 = { x: a.x, y: a.y + BOT_AIM_ORIGIN_Y, z: a.z };
-    const vis = world.lineOfSight(eye, at);
+    const vis = world.lineOfSight(eye, at) && !(sight !== null && sight.losBlockedBySmoke(eye, at));
     // A visible target always beats an unseen one, however close the unseen is.
     if (bestVisible && !vis) continue;
     if (vis && !bestVisible) {
@@ -265,7 +301,7 @@ export function senseBot(
     }
     if (d < bestDist) { best = a; bestDist = d; bestVisible = vis; }
   }
-  if (best === null) return { targetId: null, target: null, distance: Infinity, visible: false };
+  if (best === null) return NO_TARGET;
   return {
     targetId: best.id,
     target: { x: best.x, y: best.y + BOT_AIM_ORIGIN_Y, z: best.z },
@@ -288,12 +324,18 @@ export function botIntent(
   now: number,
   hp: number,
   readySlot: number | null,
+  supply: BotSupply | null = null,
+  drops: readonly BotDropSpot[] | null = null,
 ): BotIntent {
   let yaw = bot.yaw;
   let pitch = 0;
   let moveX = 0;
   let moveZ = 0;
   let fire = false;
+  let grenade: GrenadeId | null = null;
+  let knife = false;
+  let scavengeX: number | null = null;
+  let scavengeZ: number | null = null;
 
   if (sense.target !== null && sense.targetId !== null) {
     const eye: Vec3 = { x: bot.x, y: bot.y + BOT_AIM_ORIGIN_Y, z: bot.z };
@@ -304,6 +346,19 @@ export function botIntent(
   const engaged = sense.visible && sense.distance <= BOT_FIRE_RANGE_M;
   if (engaged) {
     fire = now - bot.targetSince >= BOT_REACTION_MS && bot.cooldown <= 0;
+    // Ordnance, only when the host has told us what we carry. The knife is
+    // a reflex inside 2 m; the grenade waits for the reaction delay like the
+    // trigger does, and then only in the 7-18 m window, once per 12 s.
+    if (supply !== null && supply.armed === null) {
+      if (sense.distance <= BOT_KNIFE_M) {
+        knife = true;
+        fire = false;
+      } else if (fire && sense.distance >= BOT_GRENADE_MIN_M && sense.distance <= BOT_GRENADE_MAX_M
+          && now - (bot.grenadeAt ?? -Infinity) >= BOT_GRENADE_COOLDOWN_MS) {
+        grenade = supply.lethal > 0 ? 'frag' : supply.tactical > 0 ? botTacticalFor(bot) : null;
+        if (grenade !== null) fire = false;
+      }
+    }
     // Closer than the engage radius it backs off; otherwise it closes. Either
     // way it strafes, because a bot that walks a straight line at you is a
     // target and not an opponent.
@@ -313,15 +368,20 @@ export function botIntent(
     moveX = fx * forward + Math.cos(yaw) * bot.strafe * 0.85;
     moveZ = fz * forward - Math.sin(yaw) * bot.strafe * 0.85;
   } else {
-    const gx = bot.goalX - bot.x;
-    const gz = bot.goalZ - bot.z;
+    // Out of rounds and nothing to shoot: the nearest drop is the goal.
+    const spot = supply !== null && supply.rounds <= 0 && drops !== null ? nearestScavengeDrop(bot, drops) : null;
+    const goalX = spot === null ? bot.goalX : spot.x;
+    const goalZ = spot === null ? bot.goalZ : spot.z;
+    if (spot !== null) { scavengeX = spot.x; scavengeZ = spot.z; }
+    const gx = goalX - bot.x;
+    const gz = goalZ - bot.z;
     const gd = Math.hypot(gx, gz);
     if (gd > 1e-3) {
       moveX = gx / gd;
       moveZ = gz / gd;
       // Nothing to shoot: face where it is going, so the body reads as walking
       // rather than moonwalking. The rig has no independent upper body yet.
-      if (sense.target === null) yaw = operatorYawToward(bot.x, bot.z, bot.goalX, bot.goalZ);
+      if (sense.target === null) yaw = operatorYawToward(bot.x, bot.z, goalX, goalZ);
     }
   }
 
@@ -332,6 +392,5 @@ export function botIntent(
   // a real player hoards, a bot spending it immediately is what proves the
   // whole earn → bank → spend → effect path every match instead of rarely.
   const streakSlot = readySlot !== null && hp > BOT_FALLBACK_HP ? readySlot : null;
-  return { yaw, pitch, moveX, moveZ, fire, streakSlot };
+  return { yaw, pitch, moveX, moveZ, fire, streakSlot, grenade, knife, scavengeX, scavengeZ };
 }
-

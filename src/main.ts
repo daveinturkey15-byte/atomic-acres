@@ -12,11 +12,12 @@ import { Player, type MoveMode } from './core/player';
 import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core/layout';
 import { STATIONS, type Station } from './core/stations';
 import { WeaponsController } from './weapons/controller';
+import { OrdnanceScene } from './weapons/ordnance-scene';
 import { initUI } from './ui/index';
 import { wireNetcode } from './net/wire';
 import { createCharacterSystem, type CharacterHandle } from './characters';
 import { loadBakedClips } from './characters/kimodo-clips';
-import { createLocalMatch, type LocalMatch } from './game/session';
+import { createLocalMatch, type LocalMatch, type MatchUi } from './game/session';
 import { PAL } from './core/palette';
 
 import { buildGround } from './build/ground';
@@ -159,7 +160,8 @@ const hudHelp = document.createElement('div');
 hudHelp.textContent =
   'WASD move · SHIFT sprint/boost · SPACE jump/up · E up · Q/X down · ' +
   'F fly · C noclip · wheel/[ ] speed · H help · Esc free mouse · ' +
-  'LMB fire · RMB aim · R reload · 1/2 or wheel weapons';
+  'LMB fire · RMB aim · R reload · 1/2 or wheel weapons · ' +
+  'G frag (hold to cook) · Q tactical · V knife · hold E pick up';
 hud.append(hudStats, hudMode, hudHelp, ammoDiv);
 // ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
 // initUI owns everything inside #hud and #start, so the capture harness still
@@ -169,10 +171,19 @@ const gameHud = ui.hud;
 // window.__NTNET only; the world, player and QA surface are untouched.
 const netcode = wireNetcode({ player });
 void netcode;
+// ---- Ordnance (grenades, smoke placeholder, drops, flash white-out, pickup
+// prompt). It reads the live GameClient, so the session's `bindClient` call is
+// forwarded through it before it reaches the UI - the one seam the session
+// offers, and it fires again on every rematch.
+const ordnance = new OrdnanceScene({ scene: world.scene, mat, colliders, hud: gameHud, weapons });
+const matchUi: MatchUi = {
+  bindClient: (c) => { ordnance.bind(c); ui.bindClient(c); },
+  setNames: (n) => ui.setNames(n),
+};
 // ---- The match. Host + local player + bots, started by the same click that
 // dismisses the lobby overlay, so nothing runs before a player asks for it.
 match = createLocalMatch({
-  colliders, ui, placeLocal: (x, y, z, yaw) => player.teleport(x, y, z, yaw),
+  colliders, ui: matchUi, placeLocal: (x, y, z, yaw) => player.teleport(x, y, z, yaw),
 });
 const botBodies = new Map<string, CharacterHandle>();
 
@@ -217,10 +228,18 @@ addEventListener('keydown', (e) => {
   if (e.code === 'KeyR' || e.code === 'Digit1' || e.code === 'Digit2') {
     try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
   }
+  // G/Q grenades, V knife, E use - on foot only: E and Q are fly-mode
+  // up/down in core/player.ts, and a knife thrown from noclip is not a game.
+  if ((e.code === 'KeyG' || e.code === 'KeyQ' || e.code === 'KeyV' || e.code === 'KeyE') && player.getMode() === 'walk') {
+    try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
+  }
   // 3-6 are the four killstreak slots. A press always answers, even when it
   // is refused - a dead key is the defect IMPORT-PLAN s5.4 is written about.
   const slot = ['Digit3', 'Digit4', 'Digit5', 'Digit6'].indexOf(e.code);
   if (slot >= 0) match?.pressStreak(slot + 1);
+});
+addEventListener('keyup', (e) => {
+  try { weapons.keyUp(e.code); } catch { /* headless-safe */ }
 });
 canvas.addEventListener('wheel', (e) => {
   if (player.getMode() !== 'walk') return;
@@ -303,6 +322,7 @@ function frame(): void {
     characters.update(dt, world.camera.position);
     const st = player.state;
     match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch);
+    ordnance.update(dt, now, st.pos.x, st.pos.y, st.pos.z);
     for (const b of match.bots()) {
       let h = botBodies.get(b.id);
       if (!h) { h = characters.spawn(b.x, b.z, b.yaw); botBodies.set(b.id, h); }
@@ -364,6 +384,8 @@ interface QA {
   teleport: (x: number, y: number, z: number, yaw?: number, pitch?: number) => void;
   setFlySpeed: (v: number) => void;
   weaponCmd: (cmd: string, arg?: string | number | boolean) => unknown;
+  /** Ordnance lane: the client projection's log, counts and pools. Read-only. */
+  ordnance: () => Record<string, unknown>;
 }
 
 const qa: QA = {
@@ -410,6 +432,9 @@ const qa: QA = {
   },
   weaponCmd(cmd, arg) {
     return weapons.command(cmd, arg);
+  },
+  ordnance() {
+    return ordnance.qa();
   },
   stats() {
     const i = world.renderer.info;

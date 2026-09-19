@@ -13,18 +13,25 @@
  * in `src/game/` knows this file exists, and nothing here decides anything —
  * if a value is wrong, it is wrong in the host.
  *
+ * `bindMatch(match)` hands the menus the session facade (`game/session.ts`),
+ * which is built AFTER the UI in `main.ts`. Until it is bound the menus read
+ * `window.__NTGAME`, the same handle `main.ts` publishes for the harnesses, so
+ * the page works either way; the explicit bind is the honest wiring.
+ *
  * STYLESHEETS ARE IMPORTED HERE, not by `hud.ts` and `menus.ts`. Those two are
  * exercised headlessly by the lane proof, and a `.css` specifier is not
- * importable outside a bundler. `lobby.ts` keeps its own `import './lobby.css'`
- * because `net/wire.ts` pulls it in without passing through this entry.
+ * importable outside a bundler.
  */
 import './hud.css';
 import './menus.css';
+import './lobby.css';
 import { initHud, type HudApi, type ScoreRowView, type ScoreView, type StreakHudView } from './hud';
-import { initMenus, type MenuPlayer, type MenuWorld } from './menus';
+import { initMenus, type MenuHandle, type MenuPlayer, type MenuWorld } from './menus';
 import { initGlyphScheme } from './glyphs';
+import { initNetOverlay } from './net-overlay';
 import type { ClientEdge, ClientView, GameClient } from '../game/client';
 import type { MatchMode } from '../game/rules';
+import type { LocalMatch } from '../game/session';
 import { formatClock } from '../game/match';
 
 /** Speed above which the crosshair counts the player as moving. */
@@ -48,8 +55,11 @@ export interface UiDeps {
 
 export interface UiHandle {
   hud: HudApi;
+  menu: MenuHandle;
   /** Attach the local projection. Pass null to detach (match over, teardown). */
   bindClient(client: GameClient | null): void;
+  /** Hand the menus the session facade. `main.ts` calls this once it exists. */
+  bindMatch(match: LocalMatch | null): void;
   /** Roster display names, id → name. The HUD never invents one. */
   setNames(names: Iterable<readonly [string, string]>): void;
 }
@@ -77,6 +87,16 @@ function readWeaponName(): { name: string; reloading: boolean } | null {
     const s: unknown = (cmd as (c: string) => unknown)('state');
     if (!isWeaponState(s)) return null;
     return { name: s.name, reloading: s.reloading === true };
+  } catch {
+    return null;
+  }
+}
+
+/** `main.ts` publishes the match as `__NTGAME`; read it only until `bindMatch`. */
+function readWindowMatch(): LocalMatch | null {
+  try {
+    const g = (window as unknown as Record<string, unknown>).__NTGAME;
+    return g && typeof g === 'object' && typeof (g as LocalMatch).begin === 'function' ? (g as LocalMatch) : null;
   } catch {
     return null;
   }
@@ -142,14 +162,21 @@ export function pushEdges(hud: HudApi, edges: readonly ClientEdge[], px: number,
 
 export function initUI(deps: UiDeps): UiHandle {
   const hud = initHud();
-  initMenus({ hud, player: deps.player, world: deps.world });
-  initGlyphScheme();
-
   let client: GameClient | null = null;
+  let bound: LocalMatch | null = null;
   const names = new Map<string, string>();
+  const matchOf = (): LocalMatch | null => bound ?? readWindowMatch();
+
+  const menu = initMenus({ hud, player: deps.player, world: deps.world, match: matchOf, names: () => names });
+  initGlyphScheme();
+  const net = initNetOverlay({
+    hud: document.getElementById('hud'),
+    onToggle: (v) => { menu.write({ netOverlay: v }); },
+  });
 
   const handle: UiHandle = {
     hud,
+    menu,
     bindClient(c) {
       client = c;
       if (c === null) {
@@ -158,6 +185,9 @@ export function initUI(deps: UiDeps): UiHandle {
         hud.setBanner(null);
         hud.setRespawn(null);
       }
+    },
+    bindMatch(m) {
+      bound = m;
     },
     setNames(entries) {
       for (const [id, name] of entries) names.set(id, name);
@@ -197,6 +227,18 @@ export function initUI(deps: UiDeps): UiHandle {
       lastWeaponPoll = now;
       const ws = readWeaponName();
       if (ws) hud.setWeapon(ws.name, ws.reloading);
+    }
+    try {
+      menu.tick(now);
+      const want = menu.settings().netOverlay;
+      if (want !== net.visible()) net.setVisible(want);
+      if (want) {
+        const m = matchOf();
+        net.tick(now, m === null ? null : (m.netLine(now) ?? m.lobby.netLine(now)));
+      }
+    } catch (err) {
+      // A menu fault must never stop the HUD loop; say so once per frame at most.
+      console.error('[ui] menu tick', err);
     }
     requestAnimationFrame(pushState);
   };

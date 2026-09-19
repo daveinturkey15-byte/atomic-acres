@@ -23,6 +23,7 @@ import {
   type DamageMsg,
   type KillMsg,
   type MatchStateMsg,
+  type OrdnanceMsg,
   type ShotMsg,
   type ShotRejectMsg,
   type SpawnMsg,
@@ -67,6 +68,18 @@ export interface RosterEntry {
   connected: boolean;
 }
 
+/**
+ * A seat's resume credential (old `room-rejoin-identity.ts`, the idea not the
+ * module): the host mints a token per seat and hands it back in `welcome`; a
+ * guest that reconnects inside `REJOIN_GRACE_MS` presents it in `hello` and
+ * gets the SAME seat — id, team, score — instead of a new one. A wrong or
+ * expired token is not an error: the hello is treated as a fresh join.
+ */
+export interface ResumeClaim {
+  playerId: string;
+  token: string;
+}
+
 /** Guest -> host: request admission. */
 export interface HelloMsg {
   type: 'hello';
@@ -74,6 +87,8 @@ export interface HelloMsg {
   name: string;
   /** Client nonce so a stale retry is not mistaken for a second player. */
   nonce: string;
+  /** Present when the guest is coming back for a seat it already held. */
+  resume?: ResumeClaim;
 }
 
 /** Host -> guest: admission granted. Carries the guest's authoritative id. */
@@ -82,12 +97,25 @@ export interface WelcomeMsg {
   playerId: string;
   hostNow: number;
   roster: RosterEntry[];
+  /** Resume credential for this seat. Optional so pre-grace peers still validate. */
+  token?: string;
 }
+
+/** Every reason a host can refuse a hello, frozen; the labels beside it are the UI's. */
+export const REJECT_REASONS = ['bad-code', 'room-full', 'already-started', 'duplicate-name'] as const;
+export type RejectReason = (typeof REJECT_REASONS)[number];
+
+export const REJECT_LABELS: Readonly<Record<RejectReason, string>> = Object.freeze({
+  'bad-code': 'NO ROOM WITH THAT CODE',
+  'room-full': 'ROOM IS FULL',
+  'already-started': 'MATCH ALREADY STARTED',
+  'duplicate-name': 'THAT NAME IS TAKEN',
+});
 
 /** Host -> guest: admission refused. Terminal for this join attempt. */
 export interface RejectMsg {
   type: 'reject';
-  reason: 'bad-code' | 'room-full' | 'already-started' | 'duplicate-name';
+  reason: RejectReason;
 }
 
 /** Host -> all: current roster. The ONLY roster source guests may render. */
@@ -125,6 +153,32 @@ export interface InputMsg {
   pitch: number;
   fire: boolean;
   jump: boolean;
+  /**
+   * Sprint INTENT. Optional: the first wire bound sprint to `fire && mz > 0.1`
+   * (there was no sprint key on the proof's scripted guest) and that reading
+   * is kept when this is absent, so the loopback proof is unchanged. A real
+   * guest sends it explicitly, because a guest that fires while walking is
+   * not sprinting.
+   */
+  sprint?: boolean;
+  /**
+   * Seconds this sample covers, so the host integrates each accepted input by
+   * the interval the guest actually moved for instead of one fixed tick per
+   * input. Without it two 20 Hz clocks that drift 0.4 % apart put one extra
+   * or one missing tick of travel (0.24 m) into the host's belief every
+   * twelve seconds of walking, and the guest rubber-bands on a schedule.
+   * Optional (absent = `TICK_DT`, the first wire's reading); the host clamps
+   * it to two ticks and admits at most a few inputs per tick, so a peer
+   * cannot buy speed with a bigger number or with more messages.
+   */
+  dt?: number;
+  /**
+   * The guest's standing height, metres. Position stays host-integrated in x
+   * and z; y is the one axis the wire's flat kinematics cannot know (stairs,
+   * the balcony) and the one axis that buys no speed. Clamped by the host to
+   * the arena's standable band.
+   */
+  y?: number;
 }
 
 /** One authoritative player sample inside a state broadcast. */
@@ -161,10 +215,16 @@ export interface PingMsg {
   t: number;
 }
 
-/** Either side: liveness reply. Echoes the ping's t. */
+/**
+ * Either side: liveness reply. Echoes the ping's t. `now` is the REPLIER's
+ * clock at reply time, so the pinger can estimate the offset between the two
+ * clocks NTP-style: `offset = now - (t + received) / 2`. Optional because a
+ * pong without it still measures RTT, which is all the first wire needed.
+ */
 export interface PongMsg {
   type: 'pong';
   t: number;
+  now?: number;
 }
 
 /** Either side -> other: graceful leave. Lets the roster update at once. */
@@ -191,10 +251,17 @@ export type NetMessage =
   | SpawnMsg
   | StreakIntentMsg
   | StreakStateMsg
-  | MatchStateMsg;
+  | MatchStateMsg
+  | OrdnanceMsg;
 
 function isFiniteNum(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v);
+}
+
+function isResumeClaim(v: unknown): v is ResumeClaim {
+  if (!v || typeof v !== 'object') return false;
+  const r = v as Record<string, unknown>;
+  return typeof r['playerId'] === 'string' && typeof r['token'] === 'string' && r['token'].length >= 12;
 }
 
 function isRosterEntry(v: unknown): v is RosterEntry {
@@ -220,21 +287,20 @@ export function isNetMessage(v: unknown): v is NetMessage {
   const m = v as Record<string, unknown>;
   switch (m['type']) {
     case 'hello':
-      return typeof m['code'] === 'string' && typeof m['name'] === 'string' && typeof m['nonce'] === 'string';
+      return (
+        typeof m['code'] === 'string' && typeof m['name'] === 'string' && typeof m['nonce'] === 'string' &&
+        (m['resume'] === undefined || isResumeClaim(m['resume']))
+      );
     case 'welcome':
       return (
         typeof m['playerId'] === 'string' &&
         isFiniteNum(m['hostNow']) &&
         Array.isArray(m['roster']) &&
-        (m['roster'] as unknown[]).every(isRosterEntry)
+        (m['roster'] as unknown[]).every(isRosterEntry) &&
+        (m['token'] === undefined || typeof m['token'] === 'string')
       );
     case 'reject':
-      return (
-        m['reason'] === 'bad-code' ||
-        m['reason'] === 'room-full' ||
-        m['reason'] === 'already-started' ||
-        m['reason'] === 'duplicate-name'
-      );
+      return typeof m['reason'] === 'string' && (REJECT_REASONS as readonly string[]).includes(m['reason']);
     case 'roster':
       return Array.isArray(m['roster']) && (m['roster'] as unknown[]).every(isRosterEntry);
     case 'ready':
@@ -249,7 +315,10 @@ export function isNetMessage(v: unknown): v is NetMessage {
         isFiniteNum(m['yaw']) &&
         isFiniteNum(m['pitch']) &&
         typeof m['fire'] === 'boolean' &&
-        typeof m['jump'] === 'boolean'
+        typeof m['jump'] === 'boolean' &&
+        (m['sprint'] === undefined || typeof m['sprint'] === 'boolean') &&
+        (m['dt'] === undefined || isFiniteNum(m['dt'])) &&
+        (m['y'] === undefined || isFiniteNum(m['y']))
       );
     case 'state':
       if (!Number.isSafeInteger(m['tick']) || !isFiniteNum(m['hostNow']) || !Array.isArray(m['players'])) {
@@ -282,10 +351,12 @@ export function isNetMessage(v: unknown): v is NetMessage {
     case 'streak-intent':
     case 'streak-state':
     case 'match-state':
+    case 'ordnance':
       return isGameMessage(m);
     case 'ping':
-    case 'pong':
       return isFiniteNum(m['t']);
+    case 'pong':
+      return isFiniteNum(m['t']) && (m['now'] === undefined || isFiniteNum(m['now']));
     case 'bye':
       return true;
     default:

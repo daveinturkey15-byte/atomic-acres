@@ -63,6 +63,9 @@ export class WeaponEffects {
   private readonly flashB: THREE.Mesh;
   private flashLife = 0;
   private flashTick = 0;
+  /** The pop the flash is running on: a muzzle pop is 1 / FLASH_LIFE; a blast is bigger and longer. */
+  private flashScale = 1;
+  private flashSpan = FLASH_LIFE;
 
   // Tracer pool.
   private readonly tracerMeshes: THREE.Mesh[] = [];
@@ -196,7 +199,7 @@ export class WeaponEffects {
    * (a muzzle-aligned plane is edge-on from behind the gun and vanishes), with
    * a deterministic golden-angle roll per pop — no per-shot randomness.
    */
-  flashAt(pos: THREE.Vector3, camQuat: THREE.Quaternion): void {
+  flashAt(pos: THREE.Vector3, camQuat: THREE.Quaternion, scale = 1, life = FLASH_LIFE): void {
     this.flashTick++;
     const roll = this.flashTick * ROLL_STEP;
     for (let k = 0; k < 2; k++) {
@@ -204,11 +207,26 @@ export class WeaponEffects {
       m.position.copy(pos);
       m.quaternion.copy(camQuat);
       m.rotateZ(k === 0 ? roll : roll + Math.PI / 2);
-      if (k === 0) m.scale.set(0.55, 1.6, 1);
-      else m.scale.set(1.6, 0.55, 1);
+      if (k === 0) m.scale.set(0.55 * scale, 1.6 * scale, 1);
+      else m.scale.set(1.6 * scale, 0.55 * scale, 1);
       m.visible = true;
     }
-    this.flashLife = FLASH_LIFE;
+    this.flashScale = scale;
+    this.flashSpan = life;
+    this.flashLife = life;
+  }
+
+  /**
+   * A grenade going off (ordnance lane): the flash star at eight times a
+   * muzzle pop for a quarter second, a dust puff off the ground and a spark
+   * burst off it - all from the pools this class already owns, so a blast
+   * adds no material, no light and no allocation. The lingering smoke is NOT
+   * here: that is a `smoke-volume` on the bus, drawn by `grenades.ts`.
+   */
+  blast(point: THREE.Vector3, camQuat: THREE.Quaternion): void {
+    this._b.set(0, 1, 0);
+    this.flashAt(point, camQuat, 8, 0.25);
+    for (let k = 0; k < 3; k++) this.impact(point, this._b, true);
   }
 
   /** Stretch a tracer slug from `from` along `dir` for `len` metres. */
@@ -338,7 +356,7 @@ export class WeaponEffects {
         this.flashA.visible = false;
         this.flashB.visible = false;
       } else {
-        const s = 0.55 + 0.45 * (this.flashLife / FLASH_LIFE);
+        const s = (0.55 + 0.45 * (this.flashLife / this.flashSpan)) * this.flashScale;
         this.flashA.scale.set(0.55 * s, 1.6 * s, 1);
         this.flashB.scale.set(1.6 * s, 0.55 * s, 1);
       }
