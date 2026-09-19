@@ -1,3 +1,9 @@
+# Current recovery handoff — 19 September 2026
+
+Start with `CURRENT.json` and its checkpoint report. The standalone recovery source is on `recovery/wave7-20260919`; the verified local URL is http://127.0.0.1:4191/. The original Claude checkout is retained. Everything below is the original September 17 handoff and is historical where the dated recovery ledger supersedes it.
+
+---
+
 # Nuketown 2025 — handoff
 
 **Project:** from-scratch, code-only Three.js recreation of Black Ops 2 `Nuketown 2025`.

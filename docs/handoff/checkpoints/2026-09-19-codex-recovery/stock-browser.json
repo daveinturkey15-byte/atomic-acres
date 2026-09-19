@@ -1,0 +1,422 @@
+{
+  "url": "http://127.0.0.1:4191/",
+  "stockFlags": true,
+  "errors": [],
+  "failedResponses": [],
+  "failedRequests": [],
+  "soloButtons": [
+    "Deploy",
+    "Back"
+  ],
+  "before": {
+    "fps": 123,
+    "calls": 924,
+    "renderCallsTotal": 19628,
+    "triangles": 342021,
+    "geometries": 534,
+    "textures": 105,
+    "programs": 0,
+    "colliders": 645,
+    "eyeHeight": 1.68,
+    "handedness": [
+      true,
+      true
+    ],
+    "mode": "walk",
+    "flySpeed": 12
+  },
+  "after": {
+    "stats": {
+      "fps": 84,
+      "calls": 878,
+      "renderCallsTotal": 23408,
+      "triangles": 335289,
+      "geometries": 534,
+      "textures": 105,
+      "programs": 0,
+      "colliders": 645,
+      "eyeHeight": 1.68,
+      "handedness": [
+        true,
+        true
+      ],
+      "mode": "walk",
+      "flySpeed": 12
+    },
+    "snapshot": {
+      "at": 23242.09999999404,
+      "match": {
+        "type": "match-state",
+        "at": 23242.09999999404,
+        "mode": "tdm",
+        "phase": "active",
+        "endsAt": 318692.09999999404,
+        "scoreLimit": 10,
+        "teamScores": [
+          0,
+          1
+        ],
+        "scores": [
+          {
+            "id": "bot-01",
+            "team": 1,
+            "kills": 1,
+            "deaths": 0,
+            "score": 100
+          },
+          {
+            "id": "bot-02",
+            "team": 1,
+            "kills": 0,
+            "deaths": 0,
+            "score": 0
+          },
+          {
+            "id": "bot-04",
+            "team": 1,
+            "kills": 0,
+            "deaths": 0,
+            "score": 0
+          },
+          {
+            "id": "bot-05",
+            "team": 0,
+            "kills": 0,
+            "deaths": 0,
+            "score": 0
+          },
+          {
+            "id": "you",
+            "team": 0,
+            "kills": 0,
+            "deaths": 0,
+            "score": 0
+          },
+          {
+            "id": "bot-03",
+            "team": 0,
+            "kills": 0,
+            "deaths": 1,
+            "score": 0
+          }
+        ],
+        "winner": null,
+        "winnerId": null,
+        "endReason": null
+      },
+      "actors": [
+        {
+          "id": "you",
+          "team": 0,
+          "bot": false,
+          "hp": 100,
+          "alive": true,
+          "life": 1,
+          "spawnIndex": 16,
+          "protectedUntil": 17042.09999999404,
+          "respawnAt": null,
+          "kills": 0,
+          "deaths": 0,
+          "score": 0,
+          "streak": 0,
+          "slots": [
+            {
+              "streakId": "recon-sweep",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "sentry-post",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "blast-mortar",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "longhorn",
+          "rounds": 150,
+          "armed": null,
+          "blindUntil": 0
+        },
+        {
+          "id": "bot-01",
+          "team": 1,
+          "bot": true,
+          "hp": 96,
+          "alive": true,
+          "life": 1,
+          "spawnIndex": 9,
+          "protectedUntil": 17042.09999999404,
+          "respawnAt": null,
+          "kills": 1,
+          "deaths": 0,
+          "score": 100,
+          "streak": 1,
+          "slots": [
+            {
+              "streakId": "recon-sweep",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "sentry-post",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "blast-mortar",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "longhorn",
+          "rounds": 146,
+          "armed": null,
+          "blindUntil": 0
+        },
+        {
+          "id": "bot-02",
+          "team": 1,
+          "bot": true,
+          "hp": 100,
+          "alive": true,
+          "life": 1,
+          "spawnIndex": 17,
+          "protectedUntil": 17042.09999999404,
+          "respawnAt": null,
+          "kills": 0,
+          "deaths": 0,
+          "score": 0,
+          "streak": 0,
+          "slots": [
+            {
+              "streakId": "recon-sweep",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "sentry-post",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "blast-mortar",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "longhorn",
+          "rounds": 150,
+          "armed": null,
+          "blindUntil": 0
+        },
+        {
+          "id": "bot-03",
+          "team": 0,
+          "bot": true,
+          "hp": 100,
+          "alive": true,
+          "life": 2,
+          "spawnIndex": 14,
+          "protectedUntil": 23992.09999999404,
+          "respawnAt": null,
+          "kills": 0,
+          "deaths": 1,
+          "score": 0,
+          "streak": 0,
+          "slots": [
+            {
+              "streakId": "recon-sweep",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "sentry-post",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "blast-mortar",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "coachman",
+          "rounds": 30,
+          "armed": null,
+          "blindUntil": 0
+        },
+        {
+          "id": "bot-04",
+          "team": 1,
+          "bot": true,
+          "hp": 100,
+          "alive": true,
+          "life": 1,
+          "spawnIndex": 15,
+          "protectedUntil": 17042.09999999404,
+          "respawnAt": null,
+          "kills": 0,
+          "deaths": 0,
+          "score": 0,
+          "streak": 0,
+          "slots": [
+            {
+              "streakId": "recon-sweep",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "sentry-post",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "blast-mortar",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "longhorn",
+          "rounds": 150,
+          "armed": null,
+          "blindUntil": 0
+        },
+        {
+          "id": "bot-05",
+          "team": 0,
+          "bot": true,
+          "hp": 100,
+          "alive": true,
+          "life": 1,
+          "spawnIndex": 12,
+          "protectedUntil": 17042.09999999404,
+          "respawnAt": null,
+          "kills": 0,
+          "deaths": 0,
+          "score": 0,
+          "streak": 0,
+          "slots": [
+            {
+              "streakId": "recon-sweep",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "sentry-post",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "blast-mortar",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "longhorn",
+          "rounds": 150,
+          "armed": null,
+          "blindUntil": 0
+        }
+      ],
+      "stats": {
+        "shotsAdmitted": 5,
+        "shotsRejected": 5,
+        "hitsLanded": 5,
+        "hitsBlocked": 0
+      },
+      "ordnance": {
+        "grenades": 0,
+        "smokes": 0,
+        "drops": [
+          {
+            "id": 1,
+            "weaponId": "coachman",
+            "rounds": 29,
+            "grenades": 1,
+            "x": 3.863280177414504,
+            "y": 0.154,
+            "z": -16.48528135148315,
+            "diesAt": 50442.09999999404
+          }
+        ],
+        "counts": {
+          "armed": 0,
+          "thrown": 0,
+          "detonated": 0,
+          "cookOffs": 0,
+          "blastHits": 0,
+          "flashed": 0,
+          "smokes": 0,
+          "melees": 0,
+          "meleeHits": 0,
+          "refused": 0,
+          "spawned": 1,
+          "expired": 0,
+          "culled": 0,
+          "scavenges": 0,
+          "swaps": 0
+        }
+      }
+    },
+    "atmo": {
+      "tod": "noon",
+      "weather": "clear",
+      "lights": 3,
+      "bakeMs": 14.3,
+      "smokes": 0,
+      "shadow": {
+        "half": 49,
+        "fitted": 48.9,
+        "near": 1,
+        "far": 320
+      }
+    }
+  },
+  "completed": true
+}

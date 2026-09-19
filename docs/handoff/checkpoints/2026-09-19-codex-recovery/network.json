@@ -1,0 +1,758 @@
+{
+  "url": "http://localhost:4191/",
+  "signalUrl": "http://127.0.0.1:4310",
+  "seconds": 120,
+  "steps": [
+    {
+      "name": "A hosts a room, code on screen",
+      "ok": true,
+      "detail": "62CKJF"
+    },
+    {
+      "name": "B joins by code over WebRTC; both rosters show two players",
+      "ok": true,
+      "detail": "join took 1214 ms; A sees [\"alpha (host) - you\",\"bravo\"]; B sees [\"alpha (host)\",\"bravo - you\"]"
+    },
+    {
+      "name": "both ready, Start enabled on the host",
+      "ok": true,
+      "detail": "[{\"id\":\"host\",\"name\":\"alpha\",\"connected\":true,\"ready\":true},{\"id\":\"p1\",\"name\":\"bravo\",\"connected\":true,\"ready\":true}]"
+    },
+    {
+      "name": "host starts; both pages leave the menu (A host, B guest)",
+      "ok": true,
+      "detail": "A=host B=guest after 307 ms"
+    },
+    {
+      "name": "B walked and the host tracked it",
+      "ok": true,
+      "detail": "B moved 11.29 m in 3 s"
+    },
+    {
+      "name": "host belief of B within 200 ms (mid-walk gap / walk speed)",
+      "ok": true,
+      "detail": "median mid-walk gap 0.06 m = 13 ms"
+    },
+    {
+      "name": "host pose settles on B's stop position",
+      "ok": true,
+      "detail": "settled 295 ms after keyup, 0.06 m from B's own position"
+    },
+    {
+      "name": "a clear firing position beside B exists",
+      "ok": true,
+      "detail": "A at (6.2, 8.1)"
+    },
+    {
+      "name": "A fired the real weapon at B",
+      "ok": true,
+      "detail": "3 trigger pulls, B HUD health 100 -> 0 (changed on 3 polls)"
+    },
+    {
+      "name": "B's HUD showed the damage",
+      "ok": true,
+      "detail": "hp label 100 -> 0; damage-taken feed [\"34  alpha\",\"34  alpha\",\"32  alpha\"]"
+    },
+    {
+      "name": "the feed shows the kill",
+      "ok": true,
+      "detail": "host kills 0 -> 1; B feed [\"alpha » YOU\"]; A feed [\"alpha » bravo\"]"
+    },
+    {
+      "name": "RTT and snapshot rate read from the diagnostics",
+      "ok": true,
+      "detail": "guest p1 · rtt 12 ms · snap 19.2 Hz · age p50/p95 10/16 ms · snaps 0 · offset 5 ms"
+    },
+    {
+      "name": "120 s from Start without a disconnect",
+      "ok": true,
+      "detail": "11 samples, 0 bad"
+    }
+  ],
+  "samples": [
+    {
+      "t": 20,
+      "a": "host · seats 1 · rtt 12 ms · tick 20.1 Hz · in 376/15 ok/rej",
+      "b": "guest p1 · rtt 11 ms · snap 19.8 Hz · age p50/p95 8/13 ms · snaps 0 · offset 3 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 30,
+      "a": "host · seats 1 · rtt 12 ms · tick 19.9 Hz · in 577/15 ok/rej",
+      "b": "guest p1 · rtt 13 ms · snap 19.8 Hz · age p50/p95 9/14 ms · snaps 0 · offset 2 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 40,
+      "a": "host · seats 1 · rtt 11 ms · tick 20.1 Hz · in 778/15 ok/rej",
+      "b": "guest p1 · rtt 12 ms · snap 20.4 Hz · age p50/p95 6/12 ms · snaps 0 · offset 1 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 50,
+      "a": "host · seats 1 · rtt 11 ms · tick 20.0 Hz · in 979/15 ok/rej",
+      "b": "guest p1 · rtt 12 ms · snap 19.9 Hz · age p50/p95 6/12 ms · snaps 0 · offset -1 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 60,
+      "a": "host · seats 1 · rtt 14 ms · tick 19.9 Hz · in 1180/15 ok/rej",
+      "b": "guest p1 · rtt 12 ms · snap 20.0 Hz · age p50/p95 7/12 ms · snaps 0 · offset 1 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 70,
+      "a": "host · seats 1 · rtt 12 ms · tick 20.1 Hz · in 1381/15 ok/rej",
+      "b": "guest p1 · rtt 11 ms · snap 19.9 Hz · age p50/p95 7/13 ms · snaps 0 · offset 1 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 80,
+      "a": "host · seats 1 · rtt 11 ms · tick 20.1 Hz · in 1582/15 ok/rej",
+      "b": "guest p1 · rtt 13 ms · snap 20.0 Hz · age p50/p95 5/11 ms · snaps 0 · offset -0 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 90,
+      "a": "host · seats 1 · rtt 12 ms · tick 20.1 Hz · in 1783/15 ok/rej",
+      "b": "guest p1 · rtt 14 ms · snap 20.1 Hz · age p50/p95 7/11 ms · snaps 0 · offset 1 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 100,
+      "a": "host · seats 1 · rtt 14 ms · tick 20.0 Hz · in 1984/15 ok/rej",
+      "b": "guest p1 · rtt 13 ms · snap 20.0 Hz · age p50/p95 5/11 ms · snaps 0 · offset -0 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 110,
+      "a": "host · seats 1 · rtt 15 ms · tick 20.0 Hz · in 2185/15 ok/rej",
+      "b": "guest p1 · rtt 12 ms · snap 19.9 Hz · age p50/p95 6/12 ms · snaps 0 · offset -0 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 120,
+      "a": "host · seats 1 · rtt 14 ms · tick 19.8 Hz · in 2386/15 ok/rej",
+      "b": "guest p1 · rtt 12 ms · snap 19.8 Hz · age p50/p95 5/11 ms · snaps 0 · offset 0 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    }
+  ],
+  "errors": {
+    "A": [],
+    "B": []
+  },
+  "walk": [
+    {
+      "t": 22,
+      "own": [
+        -3.5824323418367836,
+        18.391951754965625
+      ],
+      "seen": [
+        -3.5840000000000005,
+        18.4
+      ]
+    },
+    {
+      "t": 155,
+      "own": [
+        -3.4850993324848782,
+        17.892251037310754
+      ],
+      "seen": [
+        -3.4850993324848782,
+        17.892251037310754
+      ]
+    },
+    {
+      "t": 278,
+      "own": [
+        -3.3702021009720733,
+        17.30237685766912
+      ],
+      "seen": [
+        -3.3941543193701578,
+        17.425345836052145
+      ]
+    },
+    {
+      "t": 406,
+      "own": [
+        -3.2464948581029445,
+        16.667272709010636
+      ],
+      "seen": [
+        -3.2595263332450033,
+        16.734175371570313
+      ]
+    },
+    {
+      "t": 545,
+      "own": [
+        -3.1311387718317127,
+        16.075042801814583
+      ],
+      "seen": [
+        -3.1698661134456723,
+        16.27386620742196
+      ]
+    },
+    {
+      "t": 674,
+      "own": [
+        -2.9125131204137134,
+        16.017094220440256
+      ],
+      "seen": [
+        -2.973662273630875,
+        16.01709422044027
+      ]
+    },
+    {
+      "t": 786,
+      "own": [
+        -2.550061681703004,
+        15.900656045217708
+      ],
+      "seen": [
+        -2.6809311848763255,
+        15.950212543520333
+      ]
+    },
+    {
+      "t": 917,
+      "own": [
+        -2.0662031172410265,
+        15.843624245919596
+      ],
+      "seen": [
+        -2.1352898524237673,
+        15.84362424591961
+      ]
+    },
+    {
+      "t": 1051,
+      "own": [
+        -1.4367330324899126,
+        15.799312610994033
+      ],
+      "seen": [
+        -1.4367330324899157,
+        15.799312610994047
+      ]
+    },
+    {
+      "t": 1175,
+      "own": [
+        -1.0384647290829632,
+        15.329041462345735
+      ],
+      "seen": [
+        -1.1121830189447754,
+        15.476710118884373
+      ]
+    },
+    {
+      "t": 1295,
+      "own": [
+        -0.8766067905603498,
+        14.829531075465507
+      ],
+      "seen": [
+        -0.9306371307399345,
+        15.02573525160551
+      ]
+    },
+    {
+      "t": 1423,
+      "own": [
+        -0.7373717040011354,
+        14.212950854458114
+      ],
+      "seen": [
+        -0.751893128534066,
+        14.282490841713678
+      ]
+    },
+    {
+      "t": 1544,
+      "own": [
+        -0.6176470094977499,
+        13.618652753746439
+      ],
+      "seen": [
+        -0.617647009497753,
+        13.618652753746453
+      ]
+    },
+    {
+      "t": 1666,
+      "own": [
+        -0.5018990607206946,
+        13.028945027236933
+      ],
+      "seen": [
+        -0.5288909024465179,
+        13.166970568360247
+      ]
+    },
+    {
+      "t": 1799,
+      "own": [
+        -0.3903910838939899,
+        12.457482532718645
+      ],
+      "seen": [
+        -0.390391083893993,
+        12.45748253271866
+      ]
+    },
+    {
+      "t": 1920,
+      "own": [
+        -0.2693904028834179,
+        11.836521821936486
+      ],
+      "seen": [
+        -0.29215382203251866,
+        11.953365085949192
+      ]
+    },
+    {
+      "t": 2047,
+      "own": [
+        -0.1600819446693464,
+        11.275389321186843
+      ],
+      "seen": [
+        -0.1600819446693495,
+        11.275389321186857
+      ]
+    },
+    {
+      "t": 2176,
+      "own": [
+        -0.04206218431972179,
+        10.669496645434219
+      ],
+      "seen": [
+        -0.06537223145494814,
+        10.78916756132247
+      ]
+    },
+    {
+      "t": 2308,
+      "own": [
+        0.08210442300956611,
+        10.032036868502606
+      ],
+      "seen": [
+        0.07191782935928429,
+        10.084334016673008
+      ]
+    },
+    {
+      "t": 2427,
+      "own": [
+        0.20664996150442597,
+        9.78609892314697
+      ],
+      "seen": [
+        0.17154686584007334,
+        9.786098923146984
+      ]
+    },
+    {
+      "t": 2555,
+      "own": [
+        0.5216517084778456,
+        9.77951670625536
+      ],
+      "seen": [
+        0.48795231312705134,
+        9.779516706255373
+      ]
+    },
+    {
+      "t": 2674,
+      "own": [
+        0.9032987127973947,
+        9.77951670625536
+      ],
+      "seen": [
+        0.8475661048372819,
+        9.779516706255373
+      ]
+    },
+    {
+      "t": 2804,
+      "own": [
+        0.9462952199698605,
+        9.599222020522063
+      ],
+      "seen": [
+        0.9462952199698573,
+        9.65685049777244
+      ]
+    },
+    {
+      "t": 2918,
+      "own": [
+        1.0004039388044494,
+        9.04113856031444
+      ],
+      "seen": [
+        0.9810501115184552,
+        9.178015593024016
+      ]
+    }
+  ],
+  "log": [
+    "[net2] signal relay up at http://127.0.0.1:4310",
+    "[net2] OK   A hosts a room, code on screen  62CKJF",
+    "[net2] OK   B joins by code over WebRTC; both rosters show two players  join took 1214 ms; A sees [\"alpha (host) - you\",\"bravo\"]; B sees [\"alpha (host)\",\"bravo - you\"]",
+    "[net2] OK   both ready, Start enabled on the host  [{\"id\":\"host\",\"name\":\"alpha\",\"connected\":true,\"ready\":true},{\"id\":\"p1\",\"name\":\"bravo\",\"connected\":true,\"ready\":true}]",
+    "[net2] OK   host starts; both pages leave the menu (A host, B guest)  A=host B=guest after 307 ms",
+    "[net2] OK   B walked and the host tracked it  B moved 11.29 m in 3 s",
+    "[net2] OK   host belief of B within 200 ms (mid-walk gap / walk speed)  median mid-walk gap 0.06 m = 13 ms",
+    "[net2] OK   host pose settles on B's stop position  settled 295 ms after keyup, 0.06 m from B's own position",
+    "[net2] OK   a clear firing position beside B exists  A at (6.2, 8.1)",
+    "[net2] OK   A fired the real weapon at B  3 trigger pulls, B HUD health 100 -> 0 (changed on 3 polls)",
+    "[net2] OK   B's HUD showed the damage  hp label 100 -> 0; damage-taken feed [\"34  alpha\",\"34  alpha\",\"32  alpha\"]",
+    "[net2] OK   the feed shows the kill  host kills 0 -> 1; B feed [\"alpha » YOU\"]; A feed [\"alpha » bravo\"]",
+    "[net2] diag A: host · seats 1 · rtt 11 ms · tick 19.9 Hz · in 175/15 ok/rej",
+    "[net2] diag B: guest p1 · rtt 12 ms · snap 19.2 Hz · age p50/p95 10/16 ms · snaps 0 · offset 5 ms",
+    "[net2] OK   RTT and snapshot rate read from the diagnostics  guest p1 · rtt 12 ms · snap 19.2 Hz · age p50/p95 10/16 ms · snaps 0 · offset 5 ms",
+    "[net2] t= 20s connected | A host · seats 1 · rtt 12 ms · tick 20.1 Hz · in 376/15 ok/rej | B guest p1 · rtt 11 ms · snap 19.8 Hz · age p50/p95 8/13 ms · snaps 0 · offset 3 ms",
+    "[net2] t= 30s connected | A host · seats 1 · rtt 12 ms · tick 19.9 Hz · in 577/15 ok/rej | B guest p1 · rtt 13 ms · snap 19.8 Hz · age p50/p95 9/14 ms · snaps 0 · offset 2 ms",
+    "[net2] t= 40s connected | A host · seats 1 · rtt 11 ms · tick 20.1 Hz · in 778/15 ok/rej | B guest p1 · rtt 12 ms · snap 20.4 Hz · age p50/p95 6/12 ms · snaps 0 · offset 1 ms",
+    "[net2] t= 50s connected | A host · seats 1 · rtt 11 ms · tick 20.0 Hz · in 979/15 ok/rej | B guest p1 · rtt 12 ms · snap 19.9 Hz · age p50/p95 6/12 ms · snaps 0 · offset -1 ms",
+    "[net2] t= 60s connected | A host · seats 1 · rtt 14 ms · tick 19.9 Hz · in 1180/15 ok/rej | B guest p1 · rtt 12 ms · snap 20.0 Hz · age p50/p95 7/12 ms · snaps 0 · offset 1 ms",
+    "[net2] t= 70s connected | A host · seats 1 · rtt 12 ms · tick 20.1 Hz · in 1381/15 ok/rej | B guest p1 · rtt 11 ms · snap 19.9 Hz · age p50/p95 7/13 ms · snaps 0 · offset 1 ms",
+    "[net2] t= 80s connected | A host · seats 1 · rtt 11 ms · tick 20.1 Hz · in 1582/15 ok/rej | B guest p1 · rtt 13 ms · snap 20.0 Hz · age p50/p95 5/11 ms · snaps 0 · offset -0 ms",
+    "[net2] t= 90s connected | A host · seats 1 · rtt 12 ms · tick 20.1 Hz · in 1783/15 ok/rej | B guest p1 · rtt 14 ms · snap 20.1 Hz · age p50/p95 7/11 ms · snaps 0 · offset 1 ms",
+    "[net2] t=100s connected | A host · seats 1 · rtt 14 ms · tick 20.0 Hz · in 1984/15 ok/rej | B guest p1 · rtt 13 ms · snap 20.0 Hz · age p50/p95 5/11 ms · snaps 0 · offset -0 ms",
+    "[net2] t=110s connected | A host · seats 1 · rtt 15 ms · tick 20.0 Hz · in 2185/15 ok/rej | B guest p1 · rtt 12 ms · snap 19.9 Hz · age p50/p95 6/12 ms · snaps 0 · offset -0 ms",
+    "[net2] t=120s connected | A host · seats 1 · rtt 14 ms · tick 19.8 Hz · in 2386/15 ok/rej | B guest p1 · rtt 12 ms · snap 19.8 Hz · age p50/p95 5/11 ms · snaps 0 · offset 0 ms",
+    "[net2] OK   120 s from Start without a disconnect  11 samples, 0 bad"
+  ]
+}

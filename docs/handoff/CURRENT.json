@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "project": "nuketown-2025-standalone",
+  "checkpoint": "checkpoints/2026-09-19-codex-recovery",
+  "source_commit": "b5c5403a5eefe104b50ebe66707938909c618ca2",
+  "branch": "recovery/wave7-20260919",
+  "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
+  "url": "http://127.0.0.1:4191/",
+  "status": "verified playable recovery; partial feature acceptance OPEN",
+  "owner": "Codex",
+  "stop_state": "handoff; no active builder",
+  "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z"
+}

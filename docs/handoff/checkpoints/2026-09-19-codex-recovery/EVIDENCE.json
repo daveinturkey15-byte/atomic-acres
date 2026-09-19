@@ -1,0 +1,30 @@
+{
+  "identity": {
+    "project": "nuketown-2025-standalone",
+    "lane": "recovery/wave7-20260919",
+    "source_commit": "b5c5403a5eefe104b50ebe66707938909c618ca2",
+    "bundle": "index-DKATjAJS.js",
+    "bundle_sha256": "609fbe2206184dd518882ed69663a64fa5a1ac2fd853d52ba97b95e3903a4ead",
+    "built_at": "2026-09-19T09:07:45.367571+00:00",
+    "url": "http://127.0.0.1:4191/",
+    "status": "verified playable recovery; partial features remain open"
+  },
+  "snapshot": {
+    "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z",
+    "snapshot": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z\\snapshot",
+    "head": "b1a310005f2f2133364f7b20c3e842ff161a2eff",
+    "files": 5511,
+    "bytes": 2831500640
+  },
+  "original_files_checked": 282,
+  "original_mismatches": [],
+  "stock_errors": [],
+  "network_errors": {
+    "A": [],
+    "B": []
+  },
+  "network_samples": 11,
+  "capture_measurement_exception": "aerial only 2 post draws; performance count OPEN",
+  "soak": "PASS 210.7s, 0.314MB/min JS slope; renderer net +7.07MB",
+  "next_owner": "Codex recovery lane, no active agents after handoff"
+}

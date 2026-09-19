@@ -1,0 +1,20 @@
+[traverse] routes:
+  PASS  spawnA -> spawnB  (12/12 legs)
+  PASS  spawnA -> the enemy back door  (12/12 legs)
+  PASS  spawnA -> the west road stem  (10/10 legs)
+  PASS  spawnA -> the east flank, round the orange house  (3/3 legs)
+  PASS  spawnA -> the west squeeze past the carport  (14/14 legs)
+
+[traverse] door scan - x spans where the player got through the wall:
+  orangeStreet  1.4..1.8
+  orangeYard    -2.2..-1.8
+  whiteStreet   -6.2,  -1.4..-0.6,  4.6..5.4
+  whiteYard     1.4..2.2
+
+[traverse] invariant - garage on the RIGHT from both back yards: PASS
+
+[traverse] verge scan - x spans where lawn -> street is passable:
+  orangeVerge   -12..-10.5,  -7.5..-7,  1..6.5,  13..13   (9.5 m open)
+  whiteVerge    -13..-13,  -3.5..-2.5,  4.5..8,  11.5..13   (8.0 m open)
+
+[traverse] 5/5 routes passed;  4/4 house faces enterable
