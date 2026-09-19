@@ -43,13 +43,13 @@ import { WEAPONS, type WeaponDef } from '../weapons/catalog';
 export const SIDEARM_IDS: readonly string[] = Object.freeze(['duster']);
 
 /**
- * The tactical slot. DECLARED, NOT IMPLEMENTED: nothing in this project throws
- * a grenade yet, and `weapons/catalog.ts` has no ordnance. The ids exist so a
- * kit row has somewhere to point and so `damage.ts:BLAST_*` has a consumer when
- * the throw lands; a kit with an empty third slot would have to be invented
- * twice. Treat a value here as a label until a lane implements it.
+ * The tactical slot. The ids exist so a kit row has somewhere to point and so
+ * the authored table in `game/ordnance.ts` has one list to cover — that table
+ * fails at load when the two disagree. `semtex` is the fourth: it rides the
+ * same tactical choice, Q input and HUD slot as `flash` and `smoke`, and
+ * sticks to the first surface it touches instead of bouncing.
  */
-export const GRENADE_IDS = ['frag', 'flash', 'smoke'] as const;
+export const GRENADE_IDS = ['frag', 'flash', 'smoke', 'semtex'] as const;
 export type GrenadeId = (typeof GRENADE_IDS)[number];
 
 /** Every weapon that is not a sidearm. DERIVED — a new catalog entry joins by existing. */

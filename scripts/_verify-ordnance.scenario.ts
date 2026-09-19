@@ -21,7 +21,8 @@ import {
   type BotActorView, type BotRuntime, type BotSupply,
 } from '../src/game/bot-sense';
 import { WEAPONS } from '../src/weapons/catalog';
-import { FLASH_MAX_MS, KNIFE_RECOVERY_MS, SMOKE_RADIUS_M, TACTICAL_IDS } from '../src/game/ordnance';
+import { FLASH_MAX_MS, GRENADE_BY_ID, isGrenadeId, KNIFE_RECOVERY_MS, ORDNANCE_IDS, SEMTEX_MAX_FLIGHT_MS, SMOKE_RADIUS_M, TACTICAL_IDS } from '../src/game/ordnance';
+import { GRENADE_IDS } from '../src/game/loadout';
 import { DROP_LIFETIME_MS, DROP_MAX_LIVE, fullRounds } from '../src/game/pickups';
 import { EYE_HEIGHT } from '../src/core/layout';
 import type { DamageEvent, GameEvent, TeamId } from '../src/game/events';
@@ -240,6 +241,108 @@ export function smokeScenario(): Check[] {
   const clear = senseBot(bot, human, r.world);
   check(out, 'smoke: volume ends on the bus and sight returns', ended.length >= 1 && clear.visible && activeSmokeVolumes(r.world).length === 0,
     'ends=' + ended.length + ' visible=' + clear.visible);
+  return out;
+}
+
+export function semtexScenario(): Check[] {
+  const out: Check[] = [];
+  // Catalog: the fourth grenade is admitted everywhere a grenade is.
+  const def = GRENADE_BY_ID.get('semtex');
+  check(out, 'semtex: catalog defines the fourth grenade — tactical, sticky, fuse-from-stick, frag envelope',
+    def !== undefined && def.slot === 'tactical' && def.sticks && def.fuseFrom === 'stick'
+    && !def.impact && def.fuseMs === 1_100 && def.blastRadius === 16 && def.blastMaxDamage === 230,
+    JSON.stringify(def ?? null));
+  check(out, 'semtex: the id lists admit it (grenade, tactical, ordnance)',
+    GRENADE_IDS.length === 4 && (GRENADE_IDS as readonly string[]).includes('semtex') && isGrenadeId('semtex')
+    && (TACTICAL_IDS as readonly string[]).includes('semtex') && ORDNANCE_IDS.has('semtex'),
+    JSON.stringify({ grenades: GRENADE_IDS.length, tactical: TACTICAL_IDS }));
+
+  // Timing and envelope: same wall layout as the frag proof, thrown at the feet.
+  const r = new Rig([box(-4, 0, 2.8, 4, 3, 3.2)]);
+  r.add('you', TEAM_A, 0, 0);
+  r.add('b2', TEAM_B, 2, 0, 0, { bot: true });
+  r.add('b14', TEAM_B, 14, 0, 0, { bot: true });
+  r.add('bwall', TEAM_B, 0, 6, 0, { bot: true });
+  r.add('ally', TEAM_A, -3, 0);
+  r.run(WARMUP_MS + 200);
+  const arm = r.claim('you', 'semtex');
+  r.tick(1);
+  const armedEv = r.of('grenade-armed').find((e) => e.actorId === 'you' && e.grenadeId === 'semtex');
+  check(out, 'semtex: arm admitted with no fuse yet (detonatesAt null — it cannot cook)',
+    arm.accepted && armedEv !== undefined && armedEv.detonatesAt === null,
+    JSON.stringify([arm.reason, armedEv === undefined ? 'missing' : armedEv.detonatesAt]));
+  r.run(3000);
+  check(out, 'semtex: held 3 s past any cook — no detonation in the hand',
+    r.of('grenade-detonated').length === 0, 'detonations=' + r.of('grenade-detonated').length);
+  const rel = r.claim('you', 'semtex');
+  r.tick(1);
+  const thrown = r.of('grenade-thrown').find((e) => e.actorId === 'you' && e.grenadeId === 'semtex');
+  check(out, 'semtex: release admitted, arming only the flight ceiling (fuse + 5 s)',
+    rel.accepted && thrown !== undefined && thrown.detonatesAt === thrown.at + 1_100 + SEMTEX_MAX_FLIGHT_MS,
+    JSON.stringify([rel.reason, thrown?.detonatesAt ?? 'missing', thrown?.at ?? 'missing']));
+  // Still falling and freshly stuck: the 1.1 s fuse from the stick has not run out.
+  r.run(800);
+  check(out, 'semtex: 800 ms after release — no detonation (no impact fuse, no in-air fuse)',
+    r.of('grenade-detonated').length === 0, 'detonations=' + r.of('grenade-detonated').length);
+  r.run(1000);
+  const det = r.of('grenade-detonated');
+  check(out, 'semtex: detonated exactly once', det.length === 1 && det[0].grenadeId === 'semtex',
+    'detonations=' + det.length);
+  const flightMs = det.length === 1 && thrown !== undefined ? det[0].at - thrown.at : -1;
+  check(out, 'semtex: the fuse ran from the stick, not the release (lands past fuseMs)',
+    flightMs > 1_100 && flightMs <= 1_100 + 1000, 'flightMs=' + flightMs);
+  check(out, 'semtex: stuck where it landed — no bounce, no roll',
+    det.length === 1 && Math.hypot(det[0].x, det[0].z) < 1.0,
+    det.length === 1 ? 'at=' + det[0].x.toFixed(2) + ',' + det[0].z.toFixed(2) : 'no detonation');
+  const d2 = r.damageTo('b2', 'explosion');
+  check(out, 'semtex: 2 m takes frag-envelope lethal damage', d2.length === 1 && d2[0].amount >= 100 && r.died('b2'),
+    'amount=' + (d2[0]?.amount ?? 'none') + ' died=' + r.died('b2'));
+  const d14 = r.damageTo('b14', 'explosion');
+  check(out, 'semtex: 14 m takes minimal damage', d14.length === 1 && d14[0].amount >= 1 && d14[0].amount <= 10,
+    'amount=' + (d14[0]?.amount ?? 'none'));
+  check(out, 'semtex: behind a wall none', r.damageTo('bwall').length === 0,
+    'events=' + r.damageTo('bwall').length);
+  check(out, 'semtex: team-mate none (friendlyFire off)', r.damageTo('ally').length === 0,
+    'events=' + r.damageTo('ally').length);
+  const self = r.damageTo('you', 'explosion');
+  check(out, 'semtex: self-damage applies (own grenade at own feet)',
+    self.length === 1 && self[0].amount > 0 && self[0].attackerId === 'you',
+    'amount=' + (self[0]?.amount ?? 'none') + ' attacker=' + String(self[0]?.attackerId));
+  // Teardown: the pool slot is free again, and a frag afterwards is still a frag.
+  check(out, 'semtex: no live grenade left on the host after the detonation',
+    r.host.snapshot().ordnance.grenades === 0, 'live=' + r.host.snapshot().ordnance.grenades);
+  const fragArm = r.claim('ally', 'frag');
+  r.run(100);
+  const fragRel = r.claim('ally', 'frag');
+  r.run(3200);
+  const allDet = r.of('grenade-detonated');
+  check(out, 'semtex: a frag thrown after the semtex still flies on its arm fuse (slot reuse, frag unchanged)',
+    fragArm.accepted && fragRel.accepted && allDet.length === 2 && allDet[1].grenadeId === 'frag',
+    JSON.stringify([fragArm.reason, fragRel.reason, allDet.map((d) => d.grenadeId)]));
+
+  // Wall stick: a flat throw at the wall ends ON the wall, above the ground.
+  const w = new Rig([box(-4, 0, 2.8, 4, 3, 3.2)]);
+  w.add('you', TEAM_A, 0, 0);
+  w.add('bwall', TEAM_B, 0, 6, 0, { bot: true });
+  w.run(WARMUP_MS + 200);
+  w.claim('you', 'semtex');
+  w.run(60);
+  const wrel = w.claim('you', 'semtex', { x: 0, y: 0, z: 1 });
+  w.run(300);
+  const wthrown = w.of('grenade-thrown').find((e) => e.actorId === 'you' && e.grenadeId === 'semtex');
+  check(out, 'semtex: against the wall — release admitted, nothing pops on contact',
+    wrel.accepted && w.of('grenade-detonated').length === 0,
+    JSON.stringify([wrel.reason, w.of('grenade-detonated').length]));
+  w.run(1200);
+  const wdet = w.of('grenade-detonated');
+  check(out, 'semtex: stuck to the wall face (past 2 m, above half a metre — not the ground)',
+    wdet.length === 1 && wdet[0].z > 2.0 && wdet[0].z < 3.2 && wdet[0].y > 0.5,
+    wdet.length === 1 ? 'at=' + wdet[0].x.toFixed(2) + ',' + wdet[0].y.toFixed(2) + ',' + wdet[0].z.toFixed(2) : 'none');
+  const wflight = wdet.length === 1 && wthrown !== undefined ? wdet[0].at - wthrown.at : -1;
+  check(out, 'semtex: wall stick starts the fuse too (lands past fuseMs)',
+    wflight > 1_100 && wflight <= 1_100 + 1000, 'flightMs=' + wflight);
+  check(out, 'semtex: the wall still shields the far side', w.damageTo('bwall').length === 0,
+    'events=' + w.damageTo('bwall').length);
   return out;
 }
 
@@ -596,5 +699,4 @@ export function handScenario(): Check[] {
   return out;
 }
 
-/** Scenario names; the runner calls `<name>Scenario` for each, guarded. */
-export const SCENARIOS = ['frag', 'flash', 'smoke', 'knife', 'drops', 'bots', 'hand'] as const;
+export const SCENARIOS = ['frag', 'flash', 'smoke', 'semtex', 'knife', 'drops', 'bots', 'hand'] as const;

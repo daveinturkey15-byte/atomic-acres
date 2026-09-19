@@ -1,5 +1,5 @@
 /**
- * Nuketown 2025 — the authored ordnance table: three grenades, one knife, the
+ * Nuketown 2025 — the authored ordnance table: four grenades, one knife, the
  * throw, and the death-drop rules. Numbers only, plus the pure functions that
  * turn them into damage and blindness. Nothing here mutates, emits or knows a
  * host.
@@ -42,10 +42,17 @@ export interface GrenadeDef {
   readonly slot: GrenadeSlot;
   /** Fuse length. */
   readonly fuseMs: number;
-  /** `arm`: the fuse runs from the pin pull (cookable). `release`: from the throw. */
-  readonly fuseFrom: 'arm' | 'release';
+  /**
+   * Where the fuse runs from. `arm`: the pin pull (cookable). `release`: the
+   * throw. `stick`: the first surface contact — the fuse a release arms is
+   * only a ceiling (`SEMTEX_MAX_FLIGHT_MS`) until the host rewrites it at the
+   * stick, so a sticky cannot be cooked and never goes off in the air.
+   */
+  readonly fuseFrom: 'arm' | 'release' | 'stick';
   /** Goes off on its first world contact, whatever the fuse says. */
   readonly impact: boolean;
+  /** Sticks to the first world surface it touches instead of bouncing. */
+  readonly sticks: boolean;
   /** Blast envelope: `fragDamageAt` is the curve; every grenade does a little. */
   readonly blastRadius: number;
   readonly blastMaxDamage: number;
@@ -73,11 +80,21 @@ export const SMOKE_LIFETIME_MS = 25_000;
 export const BLAST_SMOKE_RADIUS_M = +(SMOKE_RADIUS_M * 0.464).toFixed(2);
 export const BLAST_SMOKE_LIFETIME_MS = SMOKE_LIFETIME_MS / 5;
 
+/**
+ * The fuse a sticky's release arms is only a ceiling: old pass65 contract
+ * `maximumNoImpactLifetimeMs: 5_000`. On its first surface contact the host
+ * rewrites it to stick time + `fuseMs`, so this bounds how long a semtex that
+ * somehow never touches anything (it cannot on this map — the playable
+ * rectangle is a wall) holds a pool slot, and it is what the `grenade-thrown`
+ * event carries until the stick.
+ */
+export const SEMTEX_MAX_FLIGHT_MS = 5_000;
+
 export const GRENADES: readonly GrenadeDef[] = Object.freeze([
   {
     id: 'frag', name: 'Frag', slot: 'lethal',
     // Old legacy-main.ts `fuseMs = 2_300`; the cook runs from the pin pull.
-    fuseMs: 2_300, fuseFrom: 'arm', impact: false,
+    fuseMs: 2_300, fuseFrom: 'arm', impact: false, sticks: false,
     // Old `GRENADE_RADIUS = 16` / `GRENADE_MAX_DAMAGE = 230`, quadratic falloff.
     blastRadius: 16, blastMaxDamage: 230,
     smokeRadius: BLAST_SMOKE_RADIUS_M, smokeMs: BLAST_SMOKE_LIFETIME_MS,
@@ -87,7 +104,7 @@ export const GRENADES: readonly GrenadeDef[] = Object.freeze([
     id: 'flash', name: 'Flashbang', slot: 'tactical',
     // Old runtime kind `impact-flash`: pops on first contact; 1.5 s is the
     // ceiling if it never touches anything.
-    fuseMs: 1_500, fuseFrom: 'release', impact: true,
+    fuseMs: 1_500, fuseFrom: 'release', impact: true, sticks: false,
     // "Any grenade that goes off should do a little bit of damage": 15 at the
     // centre, gone at 2 m.
     blastRadius: 2, blastMaxDamage: 15,
@@ -97,9 +114,24 @@ export const GRENADES: readonly GrenadeDef[] = Object.freeze([
   },
   {
     id: 'smoke', name: 'Smoke', slot: 'tactical',
-    fuseMs: 1_500, fuseFrom: 'release', impact: false,
+    fuseMs: 1_500, fuseFrom: 'release', impact: false, sticks: false,
     blastRadius: 2, blastMaxDamage: 15,
     smokeRadius: SMOKE_RADIUS_M, smokeMs: SMOKE_LIFETIME_MS,
+    flashRadius: null,
+  },
+  {
+    id: 'semtex', name: 'Semtex', slot: 'tactical',
+    // Old pass65 contract: `fuseOrigin: 'first-authoritative-impact'`,
+    // `fuseMs: 1_100`. The fuse is not running while it flies — it cannot be
+    // cooked, and it cannot bounce away (`sticks`).
+    fuseMs: 1_100, fuseFrom: 'stick', impact: false, sticks: true,
+    // The old contract's damage (4.25 m linear, prone ×0.42, stuck-on-a-body
+    // ×2) is OLD-GAME balance and stays there — REFERENCE-BEHAVIOR-CONTRACTS
+    // §8 warns against importing it. A BO2 semtex is a frag that trades the
+    // cook and the bounce for the stick, so the envelope is this table's own
+    // frag quadratic: same `fragDamageAt` curve, same radius, same maximum.
+    blastRadius: 16, blastMaxDamage: 230,
+    smokeRadius: BLAST_SMOKE_RADIUS_M, smokeMs: BLAST_SMOKE_LIFETIME_MS,
     flashRadius: null,
   },
 ] as const);

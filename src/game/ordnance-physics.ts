@@ -54,15 +54,28 @@ export interface Ballistic {
   vx: number; vy: number; vz: number;
   /** On the ground and slower than `GRENADE_REST_SPEED`. Nothing moves it again. */
   resting: boolean;
+  /**
+   * Sticky (the semtex): the FIRST touch of anything — wall, corner, boundary,
+   * ground, a landing too slow to count as a contact — zeroes it where it is
+   * and `stepBallistic` reports `stuck` exactly once. The host starts its fuse
+   * off that edge; presentation replays the same arithmetic against the same
+   * world, so the casing the player watches stop is the one the host
+   * detonates. Set per launch: pool slots are reused, so a record carries the
+   * last throw's value unless the launcher writes it.
+   */
+  sticky?: boolean;
 }
 
 export interface StepResult {
   /** A contact this step fast enough to count (`GRENADE_CONTACT_SPEED`). */
   readonly contact: boolean;
+  /** A sticky record became stationary on its first touch this step. */
+  readonly stuck: boolean;
 }
 
-const STEP_CONTACT: StepResult = Object.freeze({ contact: true });
-const STEP_QUIET: StepResult = Object.freeze({ contact: false });
+const STEP_CONTACT: StepResult = Object.freeze({ contact: true, stuck: false });
+const STEP_STUCK: StepResult = Object.freeze({ contact: true, stuck: true });
+const STEP_QUIET: StepResult = Object.freeze({ contact: false, stuck: false });
 
 // Scratch for the segment tests. Two records, reused; never escape this module.
 const FROM: { x: number; y: number; z: number } = { x: 0, y: 0, z: 0 };
@@ -92,16 +105,20 @@ export function stepBallistic(b: Ballistic, dt: number, world: WorldQuery): Step
   let nz = b.z + b.vz * dt;
   let contact = false;
   let grounded = false;
+  /** Touched anything at all this step — at any speed. A sticky sticks on it. */
+  let touched = false;
 
   // The playable rectangle is a wall too: a grenade never leaves the arena.
   if (!world.inBounds(nx, nz)) {
     if (!world.inBounds(nx, b.z)) { b.vx = -b.vx * GRENADE_RESTITUTION; nx = b.x; }
     if (!world.inBounds(b.x, nz)) { b.vz = -b.vz * GRENADE_RESTITUTION; nz = b.z; }
     contact = true;
+    touched = true;
   }
 
   // Walls, roofs, furniture: the segment test, then the axis split for the normal.
   if (!clear(world, b.x, b.y, b.z, nx, ny, nz)) {
+    touched = true;
     const speed = Math.hypot(b.vx, b.vy, b.vz);
     const xBlocked = nx !== b.x && !clear(world, b.x, b.y, b.z, nx, b.y, b.z);
     const yBlocked = ny !== b.y && !clear(world, b.x, b.y, b.z, b.x, ny, b.z);
@@ -129,6 +146,7 @@ export function stepBallistic(b: Ballistic, dt: number, world: WorldQuery): Step
   // The ground: highest standable surface under the column, plus the casing.
   const floor = world.groundY(nx, nz) + GRENADE_RADIUS_M;
   if (ny <= floor) {
+    touched = true;
     if (b.vy < 0) {
       if (-b.vy > GRENADE_CONTACT_SPEED) contact = true;
       b.vy = -b.vy < GRENADE_LAND_SPEED ? 0 : -b.vy * GRENADE_RESTITUTION;
@@ -147,6 +165,19 @@ export function stepBallistic(b: Ballistic, dt: number, world: WorldQuery): Step
       b.vx = 0; b.vz = 0; b.vy = 0;
       b.resting = true;
     }
+  }
+
+  // A sticky sticks on its first touch of anything, BEFORE the bounce
+  // arithmetic above can fling it off: the position is wherever that
+  // arithmetic left the record (snapped back to the face, the column floor,
+  // or the pre-step point for a wall hit mid-step), the velocity is zero and
+  // every later step short-circuits on `resting`. Contact at any speed
+  // counts — `GRENADE_CONTACT_SPEED` is the impact-fuse's gate, not this one.
+  if (b.sticky && touched) {
+    b.x = nx; b.y = ny; b.z = nz;
+    b.vx = 0; b.vy = 0; b.vz = 0;
+    b.resting = true;
+    return STEP_STUCK;
   }
 
   b.x = nx; b.y = ny; b.z = nz;

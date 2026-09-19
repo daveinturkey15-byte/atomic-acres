@@ -24,6 +24,7 @@
 import type { ActorId, FeedTone, GameEvent, KillEvent, OrdnanceEvent, SmokeKind } from './events';
 import { ORDNANCE_REJECT_LABELS } from './events';
 import { KILL_SEPARATOR } from './feed';
+import { GRENADE_BY_ID } from './ordnance';
 import type { Ballistic } from './ordnance-physics';
 
 export const FLIGHT_POOL = 16;
@@ -135,7 +136,7 @@ export class OrdnanceView {
     for (let i = 0; i < FLIGHT_POOL; i++) {
       this.flights.push({
         live: false, id: 0, grenadeId: 'frag', ownerId: '', bornAt: 0, detonatesAt: 0,
-        x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, resting: true,
+        sticky: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, resting: true,
       });
     }
   }
@@ -197,6 +198,9 @@ export class OrdnanceView {
         slot.x = e.x; slot.y = e.y; slot.z = e.z;
         slot.vx = e.vx; slot.vy = e.vy; slot.vz = e.vz;
         slot.resting = false;
+        // Same arithmetic, same stick: the replay stops where the host's
+        // casing stopped, and `grenade-detonated` snaps any step-size residue.
+        slot.sticky = GRENADE_BY_ID.get(e.grenadeId)?.sticks === true;
         this.log(at + ' grenade-thrown ' + e.actorId + ' ' + e.grenadeId + ' id=' + e.id
           + ' at=' + e.x.toFixed(1) + ',' + e.y.toFixed(1) + ',' + e.z.toFixed(1));
         return null;

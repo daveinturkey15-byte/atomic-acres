@@ -87,7 +87,7 @@ export interface GrenadeArmedEvent {
   readonly actorId: ActorId;
   readonly team: TeamId;
   readonly grenadeId: string;
-  /** null when the fuse only starts at release (flash, smoke). */
+  /** null when the fuse only starts at release, or at the stick (flash, smoke, semtex). */
   readonly detonatesAt: number | null;
 }
 

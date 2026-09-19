@@ -125,11 +125,13 @@ the renderer can be swapped without touching a gameplay file.
 
 A grenade throw, a knife swing and a pickup reach travel as `ShotMsg` claims
 whose `weaponId` is one of `game/ordnance.ts:ORDNANCE_IDS` (`frag`, `flash`,
-`smoke`, `knife`, `pickup`). `GameHost.submitShot` runs the same eight
+`smoke`, `semtex`, `knife`, `pickup`). `GameHost.submitShot` runs the same eight
 admission rules and the same exactly-once window on them as on a bullet, then
 routes them to `host-ordnance.ts`. A grenade is two claims: the first arms it
 (a frag's fuse starts here — the cook), the second, with the same id, releases
-it along the claim's direction. Refusals a bullet cannot have are
+it along the claim's direction. A semtex's fuse starts only when the casing
+sticks (`ordnance-physics.ts` `StepResult.stuck`); the release arms a ceiling.
+Refusals a bullet cannot have are
 `ORDNANCE_REJECT_REASONS` on an `ordnance-rejected` event, each with a label.
 
 The human's keys (`main.ts` → `weapons/controller.ts` → `weapons/ordnance-input.ts`):

@@ -1,7 +1,7 @@
 /**
  * _verify-ordnance — the ordnance lane's deterministic, headless, browser-free
  * proof. Bundles `_verify-ordnance.scenario.ts` with esbuild (a vite
- * dependency; no install) against the REAL `src/game/` modules and runs five
+ * dependency; no install) against the REAL `src/game/` modules and runs six
  * scenarios on a synthetic clock in node, the way `_verify-streak-reject.mjs`
  * does.
  *
@@ -13,6 +13,11 @@
  *   smoke   one 5 m volume · losBlockedBySmoke true through the centre, false
  *           along the tangent · a bot has no visible target through it ·
  *           smoke-volume-end on the bus and sight returns
+ *   semtex  fourth id in the catalog · arm carries no fuse (no cook) · release
+ *           arms only the flight ceiling (fuse + 5 s) · no impact/in-air fuse ·
+ *           fuse runs from the stick (ground and wall) · sticks where it lands ·
+ *           frag envelope, wall occlusion, teams, self-damage · slot freed ·
+ *           frag afterwards unchanged
  *   knife   1.5 m one-hit kill · 1.8 m miss · replayed claim refused
  *           `duplicate` · second swing inside 0.8 s refused `melee-cooldown`
  *   drops   every corpse drops its primary with its rounds · cap 12, oldest
@@ -20,7 +25,7 @@
  *           `too-far` · scavenge 1.1 m nothing / 1.0 m the rounds fired ·
  *           grenades replenished from a pouch · 30 s expiry with a reason
  *
- *   node scripts/_verify-ordnance.mjs            # all five
+ *   node scripts/_verify-ordnance.mjs            # all six
  *   node scripts/_verify-ordnance.mjs --json     # plus the raw checks
  */
 import { build } from 'esbuild';

@@ -24,6 +24,11 @@
  * it in the hand. Nothing in a claim says how long it was cooked; the host's
  * own clock does.
  *
+ * A semtex rides the same two claims. Its fuse is NOT running while it flies:
+ * the release arms only the `SEMTEX_MAX_FLIGHT_MS` ceiling, and the real fuse
+ * (`fuseMs` from the stick) starts when the casing's first surface contact
+ * sticks it — `ordnance-physics.ts` reports that as `StepResult.stuck`.
+ *
  * ## What the world sees
  *
  * Every state change is an event: armed, thrown, detonated, flash-hit,
@@ -44,7 +49,7 @@ import type { HostActor, HostLife } from './host-life';
 import type { ShotAdmission } from './host-ports';
 import {
   BLAST_LIFT_M, BLAST_TARGET_Y, FLASH_EYE_Y, GRENADE_BY_ID, KNIFE_DAMAGE, KNIFE_FACING_DOT, KNIFE_ID,
-  KNIFE_REACH_M, KNIFE_RECOVERY_MS, PICKUP_ID, THROW_FORWARD_M, THROW_LIFT_MS, THROW_SPEED_MS,
+  KNIFE_REACH_M, KNIFE_RECOVERY_MS, PICKUP_ID, SEMTEX_MAX_FLIGHT_MS, THROW_FORWARD_M, THROW_LIFT_MS, THROW_SPEED_MS,
   flashExposure, fragDamageAt, isGrenadeId, type GrenadeDef,
 } from './ordnance';
 import { launch, stepBallistic, type Ballistic } from './ordnance-physics';
@@ -101,7 +106,7 @@ export class HostOrdnance {
     for (let i = 0; i < GRENADE_POOL; i++) {
       this.pool.push({
         live: false, id: 0, grenadeId: 'frag', ownerId: '', ownerTeam: 0, ownerBot: false, detonatesAt: 0,
-        x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, resting: true,
+        sticky: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, resting: true,
       });
     }
   }
@@ -145,7 +150,11 @@ export class HostOrdnance {
     if (g !== null) {
       g.id = this.nextGrenadeId++;
       g.grenadeId = def.id; g.ownerId = a.id; g.ownerTeam = a.team; g.ownerBot = a.bot;
-      g.detonatesAt = kit.armed.fuseAt ?? now + def.fuseMs;
+      // The fuse a RELEASE arms when the pin pull armed none. For a sticky
+      // this is only the ceiling (`SEMTEX_MAX_FLIGHT_MS` past the throw):
+      // `advance` rewrites it to stick time + `fuseMs` the tick it sticks.
+      g.detonatesAt = kit.armed.fuseAt ?? (def.sticks ? now + def.fuseMs + SEMTEX_MAX_FLIGHT_MS : now + def.fuseMs);
+      g.sticky = def.sticks;
       launch(g,
         msg.ox + msg.dx * THROW_FORWARD_M, msg.oy + msg.dy * THROW_FORWARD_M, msg.oz + msg.dz * THROW_FORWARD_M,
         msg.dx * THROW_SPEED_MS, msg.dy * THROW_SPEED_MS + THROW_LIFT_MS, msg.dz * THROW_SPEED_MS);
@@ -221,6 +230,10 @@ export class HostOrdnance {
       if (!g.live) continue;
       const def = GRENADE_BY_ID.get(g.grenadeId) as GrenadeDef;
       const step = stepBallistic(g, dt, this.world);
+      // A sticky's fuse starts when it sticks — never in flight. Until that
+      // touch, `detonatesAt` is only the release ceiling; `stuck` fires once
+      // because the record rests from then on.
+      if (step.stuck) g.detonatesAt = now + def.fuseMs;
       if ((def.impact && step.contact) || now >= g.detonatesAt) {
         g.live = false;
         this.detonate(def, g.id, g.ownerId, g.ownerTeam, g.ownerBot, g.x, g.y, g.z, now);
@@ -258,7 +271,8 @@ export class HostOrdnance {
     if (g !== null && p !== null) {
       g.id = this.nextGrenadeId++;
       g.grenadeId = def.id; g.ownerId = victim.id; g.ownerTeam = victim.team; g.ownerBot = victim.bot;
-      g.detonatesAt = kit.armed.fuseAt ?? now + def.fuseMs;
+      g.detonatesAt = kit.armed.fuseAt ?? (def.sticks ? now + def.fuseMs + SEMTEX_MAX_FLIGHT_MS : now + def.fuseMs);
+      g.sticky = def.sticks;
       launch(g, p.x, p.y + BLAST_TARGET_Y, p.z, 0, 0, 0);
       this.life.emit({
         type: 'grenade-thrown', at: now, actorId: victim.id, team: victim.team, grenadeId: def.id, id: g.id,

@@ -72,9 +72,10 @@ export interface BotCarrier {
 // ---------------------------------------------------------------------------
 
 /**
- * The tactical a bot carries. DERIVED from the roster serial so half the
- * bots flash and half smoke, with no second roster of who has what: the id
- * `bot-07` parses to 7. Explicit `tacticalId` on the record wins.
+ * The tactical a bot carries. DERIVED from the roster serial, rotating over
+ * `ordnance.ts:TACTICAL_IDS` (flash, smoke, semtex) with no second roster of
+ * who has what: the id `bot-07` parses to 7. Explicit `tacticalId` on the
+ * record wins.
  */
 export function botTacticalFor(bot: BotCarrier): GrenadeId {
   if (bot.tacticalId !== undefined) return bot.tacticalId;
