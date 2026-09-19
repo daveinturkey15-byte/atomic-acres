@@ -1,0 +1,782 @@
+{
+  "archivedAt": "2026-09-19T22:22:36+01:00",
+  "source": "CURRENT before2220 reconciliation",
+  "lanes": [
+    {
+      "lane": "combat-feedback",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "run_id": "delegated-omp-muse-overnight-combat-ec12bc98cc5f490daed41e31f428e3ed",
+      "launcher_pid": 41728,
+      "worker_pid": 42440,
+      "state": "source integrated in root candidate; root source/typecheck and20 focused CPU groups PASS; actual-browser gate OPEN",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "attributed_records": 118
+    },
+    {
+      "lane": "catalog-carbine",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "run_id": "delegated-omp-glm-overnight-carbine-c97b62f5a87d46e696e5600b47dd8f16",
+      "launcher_pid": 29924,
+      "worker_pid": 36668,
+      "state": "FAILED timeout; GLB output preserved but actual render rejected as exploded/white assembly; Muse bounded repair now owns lane",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "observed_providers": [
+        "zai"
+      ],
+      "attributed_records": 62
+    },
+    {
+      "lane": "video-animation",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "run_id": "delegated-omp-muse-overnight-animation-66bfd4914848406bb382b7844abe8a6a",
+      "launcher_pid": 39596,
+      "worker_pid": 2728,
+      "state": "Authored motion retained; event timing/stance/weapon-contact integration OPEN; GLM now owns implementation",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "attributed_records": 102
+    },
+    {
+      "lane": "environment",
+      "route": "agy requested gemini-3.8-flash-high",
+      "effort": "high",
+      "run_id": "delegated-agy-044480d3-1107-46cb-bdec-3d1aa713318d",
+      "launcher_pid": 20656,
+      "worker_pid": 34612,
+      "state": "Authoring completed; root identified stale materials baseline would regress accepted features; AGY root-baseline repair dispatched"
+    },
+    {
+      "lane": "muse-foundation-review",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "run_id": "delegated-omp-muse-foundation-review-c249db6554a54a6996fee443d0649890",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "launcher_pid": 36428,
+      "state": "Correction completed and root-reviewed with pinned July24 scope; copied report/lessons, no broad restructure",
+      "task": "Foundation lessons from old/new source"
+    },
+    {
+      "lane": "muse-combat-browser-proof",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "run_id": "delegated-omp-muse-combat-browser-proof-762502cd03214487b32e48bc29f4ad42",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-combat-feedback-20260919",
+      "launcher_pid": 11708,
+      "state": "Authoring completed; root review found target/phase/dist identity defects; Muse repair1 owns verifier",
+      "task": "Actual-game combat feedback browser verifier authoring"
+    },
+    {
+      "lane": "muse-combat-browser-repair",
+      "run_id": "delegated-omp-muse-combat-browser-repair-b2eeb328110542d3b9aadcac611e513d",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-combat-feedback-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "started_at": "2026-09-19T17:24:31+00:00",
+      "state": "FAILED root browser acceptance: wrong canvas selector, zero admitted solo hits, invisible multiplayer menu. Actual backend WebGPU; repair2 dispatched without reducing gates.",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-combat-browser-repair-b2eeb328110542d3b9aadcac611e513d\\summary.json",
+      "accepted": false,
+      "launcher_pid": 48900,
+      "worker_pid": 37236,
+      "terminal_receipt": {
+        "outcome": "process-completed",
+        "ended_at": "2026-09-19T17:31:08+00:00",
+        "actual_model": "muse-spark-1.3-contributor",
+        "failure_reasons": []
+      }
+    },
+    {
+      "lane": "muse-carbine-repair",
+      "run_id": "delegated-omp-muse-carbine-repair-21270a632b3b4c4aa208777f2cbcb8bb",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "started_at": "2026-09-19T17:24:31+00:00",
+      "state": "Authoring complete but root actual render REJECTED: giant stray geometry and wrong colors. Two repairs exhausted; AGY explicit-geometry approach now owns lane.",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-carbine-repair-21270a632b3b4c4aa208777f2cbcb8bb\\summary.json",
+      "accepted": false,
+      "launcher_pid": 7136,
+      "worker_pid": 42840,
+      "terminal_receipt": {
+        "outcome": "process-completed",
+        "ended_at": "2026-09-19T17:31:31+00:00",
+        "actual_model": "muse-spark-1.3-contributor",
+        "failure_reasons": []
+      }
+    },
+    {
+      "lane": "glm-animation-integration",
+      "run_id": "delegated-omp-glm-animation-integration-24b30a62f39d4619a99a3d84a0151995",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "started_at": "2026-09-19T17:24:31+00:00",
+      "state": "FAILED timeout, preservedpartialssuccessfullycontinuedbyMuse; observedGLM5.3Flash.",
+      "observed_models": [],
+      "observed_providers": [],
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-animation-integration-24b30a62f39d4619a99a3d84a0151995\\summary.json",
+      "accepted": false,
+      "launcher_pid": 39624,
+      "worker_pid": 9144,
+      "terminal_receipt": {
+        "outcome": "failed",
+        "ended_at": "2026-09-19T17:49:32+00:00",
+        "actual_model": "glm-5.3-flash",
+        "failure_reasons": [
+          "provider process exited 1",
+          "launcher timeout killed its own subprocess tree"
+        ]
+      }
+    },
+    {
+      "lane": "agy-environment-rootbase",
+      "run_id": "delegated-agy-e022d639-89a2-4b62-b0ec-023d9b019010",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "route": "agy requested gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "Authoring complete, actual model unknown. Root found removed paving upgrade and disconnected/unsafe disposal; Muse scoped repair2 dispatched.",
+      "actual_model": null,
+      "worker_pid": 22264,
+      "receipt": ".recovery-runtime/agy-environment-rootbase/summary.json",
+      "accepted": false,
+      "terminal_receipt": {
+        "outcome": "review-required",
+        "ended_at": 1789839261.823829,
+        "actual_model": null,
+        "failure_reasons": []
+      }
+    },
+    {
+      "lane": "muse-combat-browser-repair2",
+      "run_id": "delegated-omp-muse-combat-browser-repair2-651f92b9f48b4f09a77b766ce142e055",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-combat-feedback-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "launcher_pid": 23688,
+      "state": "FAILED root actualbrowser gate; realWebGPUand2humanWebRTCjoin and actualhostheadkill observed; solo0damage dueLOS lost; ReferenceError b abort. Changedproofapproach toGLM.",
+      "started_at": "2026-09-19T17:48:19+00:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-combat-browser-repair2-651f92b9f48b4f09a77b766ce142e055\\summary.json",
+      "accepted": false,
+      "terminal_receipt": {
+        "outcome": "process-completed",
+        "ended_at": "2026-09-19T17:58:09+00:00",
+        "actual_model": "muse-spark-1.3-contributor",
+        "failure_reasons": []
+      }
+    },
+    {
+      "lane": "muse-environment-repair2",
+      "run_id": "delegated-omp-muse-environment-repair2-ad186dbedd6a4f6e97f93435faa440cd",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "launcher_pid": 32808,
+      "state": "FAILED terminalprovidererror; partialspreserved. Failurecause unknown due boundedreceipt. AGYfinishedscope; rootintegration/mechanicalPASS, artrejected.",
+      "started_at": "2026-09-19T17:48:19+00:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-environment-repair2-ad186dbedd6a4f6e97f93435faa440cd\\summary.json",
+      "accepted": false,
+      "terminal_receipt": {
+        "outcome": "failed",
+        "ended_at": "2026-09-19T18:00:31+00:00",
+        "actual_model": "muse-spark-1.3-contributor",
+        "failure_reasons": [
+          "transcript reported a terminal error"
+        ]
+      }
+    },
+    {
+      "lane": "muse-animation-contact-repair",
+      "run_id": "delegated-omp-muse-animation-contact-repair-4ace907cbb284852b408f8700f79bd2d",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "launcher_pid": 7676,
+      "state": "VERIFIED integratedroot; typecheck/clip/presentation/gait/handsCPU PASS. 11pairedhandframes; actualmotionstillOPEN.",
+      "started_at": "2026-09-19T17:50:26+00:00",
+      "observed_models": [],
+      "observed_providers": [],
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-animation-contact-repair-4ace907cbb284852b408f8700f79bd2d\\summary.json",
+      "accepted": false,
+      "terminal_receipt": {
+        "outcome": "process-completed",
+        "ended_at": "2026-09-19T17:59:34+00:00",
+        "actual_model": "muse-spark-1.3-contributor",
+        "failure_reasons": []
+      }
+    },
+    {
+      "lane": "agy-carbine-explicit",
+      "run_id": "delegated-agy-0b719abd-a148-4cff-b7e9-c0c7ab505282",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "route": "agy requested gemini-3.8-flash-high",
+      "effort": "high",
+      "launcher_pid": 47924,
+      "worker_pid": 42084,
+      "state": "VERIFIED coherentblackcarbine actualGLBrender, strayplanesfixed; contactdefectsneedednextcorrection. ActualAGYmodelunknown.",
+      "receipt": ".recovery-runtime/agy-carbine-explicit/summary.json",
+      "accepted": false,
+      "terminal_receipt": {
+        "outcome": "review-required",
+        "ended_at": 1789840724.0612364,
+        "actual_model": null,
+        "failure_reasons": []
+      }
+    },
+    {
+      "lane": "glm-combat-observable-proof",
+      "run_id": "delegated-omp-glm-combat-observable-proof-4f0a345e322a4cb1a0cd900a1b636fde",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-combat-feedback-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-combat-observable-proof-4f0a345e322a4cb1a0cd900a1b636fde\\summary.json",
+      "launcher_pid": 24052,
+      "worker_pid": null,
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "FAILED timeout at19:37; observedGLM; exact partial preserved. node--checkPASS but root rejected exception-path browser leak before runtime. AGY continuation now owns proof.",
+      "accepted": false,
+      "outcome": "failed",
+      "ended_at": "2026-09-19T18:37:05+00:00",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "observed_providers": [
+        "zai"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 105
+    },
+    {
+      "lane": "agy-environment-finish",
+      "run_id": "delegated-agy-a3e7fd77-e816-4517-835c-bd3e5aec47a1",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-environment-finish\\summary.json",
+      "launcher_pid": 15308,
+      "worker_pid": 18052,
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "Completedcorrectedpatch work/environment-rootbase-repair2.patch; rootCPUand24browserframesPASS; artREJECTED. Oldrootbasepatchandhandoffstale; do notapply.",
+      "accepted": false,
+      "outcome": "review-required",
+      "ended_at": 1789841892.0750592,
+      "actual_model": null
+    },
+    {
+      "lane": "agy-carbine-contact",
+      "run_id": "delegated-agy-f55eb363-4a98-4c9e-8ee6-bc6caafc88d1",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-carbine-contact\\summary.json",
+      "launcher_pid": 32664,
+      "worker_pid": 36544,
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "Rootguardedgeometry/bake/renderPASS20.5s peakprivate0.665GiB; GLB12132tri/3mat/2maps/1084500B. Actualrender improvedcontact; runtimeOPEN.",
+      "accepted": false,
+      "outcome": "review-required",
+      "ended_at": 1789842198.167704,
+      "actual_model": null
+    },
+    {
+      "lane": "muse-animation-live-capture",
+      "run_id": "delegated-omp-muse-animation-live-capture-e9d0e98348f746e1a812f455efee3e20",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-animation-live-capture-e9d0e98348f746e1a812f455efee3e20\\summary.json",
+      "launcher_pid": 10280,
+      "worker_pid": null,
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "Rootintegratedlifecycleprune PASS40sequential/10overlap/death/despawn/rebind; motionharnessclaimedPASSbutactualfront/timingREJECTED. All5hands17framesPASS.",
+      "accepted": false,
+      "outcome": "process-completed",
+      "ended_at": "2026-09-19T18:26:53+00:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 328
+    },
+    {
+      "lane": "agy-carbine-runtime",
+      "run_id": "delegated-agy-f0ed5241-aff1-4a29-b01c-b62035bb9b03",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-carbine-runtime\\summary.json",
+      "launcher_pid": 20632,
+      "worker_pid": 29560,
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "v1 integrated opt-in;11CPU tests and17real hand frames pass; actual art reviewed; lifecycle/adoption gaps assigned Muse",
+      "accepted": false,
+      "outcome": "completed-review-required",
+      "ended_at": 1789843193.4742186,
+      "actual_model": null
+    },
+    {
+      "lane": "glm-semtex-implementation",
+      "run_id": "delegated-omp-glm-semtex-implementation-1d0d3c9d82e74811beb0241dd743d397",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-semtex-implementation-1d0d3c9d82e74811beb0241dd743d397\\summary.json",
+      "launcher_pid": 42344,
+      "worker_pid": null,
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "Timed out19:54; seven source partials preserved; Muse continuation owns same scope",
+      "accepted": false,
+      "outcome": "failed-timeout",
+      "ended_at": "2026-09-19T19:54:31+01:00",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "observed_providers": [],
+      "terminal_errors": [],
+      "attributed_records": 0
+    },
+    {
+      "lane": "muse-environment-art-round1",
+      "run_id": "delegated-omp-muse-environment-art-round1-a8e96ea8889c41d08dcc082a4ee97f7b",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-environment-art-round1-a8e96ea8889c41d08dcc082a4ee97f7b\\summary.json",
+      "launcher_pid": 41120,
+      "worker_pid": null,
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "Root79ground/31mountain CPU checks,24comparison frames and4real-loop views PASS; asphalt improves; mountains still REJECTED visually",
+      "accepted": false,
+      "outcome": "completed-partial-acceptance",
+      "ended_at": "2026-09-19T18:37:55+00:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 151,
+      "actual_model": "muse-spark-1.3-contributor"
+    },
+    {
+      "lane": "agy-combat-observable-finish",
+      "run_id": "delegated-agy-0541529f-ab9d-48ca-a51b-6ff50c6819a9",
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "actual_model": null,
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-combat-feedback-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-combat-observable-finish\\summary.json",
+      "launcher_pid": 41068,
+      "worker_pid": 46816,
+      "state": "Source and focused mocks reviewed; root solo and host-to-guest damage/crit/lethal passed; guest-position failure remains OPEN",
+      "accepted": false,
+      "outcome": "completed-partial-acceptance"
+    },
+    {
+      "lane": "agy-motion-capture-repair",
+      "run_id": "delegated-agy-83f1003b-2aaa-46e8-8ac2-276777bdd3ae",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-motion-capture-repair\\summary.json",
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "actual_model": null,
+      "launcher_pid": 36856,
+      "worker_pid": 33940,
+      "state": "HTTP429 quota failure; ended; GLM continuation owns scope",
+      "accepted": false,
+      "outcome": "failed-quota",
+      "ended_at": 1789844884.4623284
+    },
+    {
+      "lane": "glm-combat-guest-position",
+      "run_id": "delegated-omp-glm-combat-guest-position-e72f4bcc842e49e9b83e68b1267e2a78",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-combat-feedback-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-combat-guest-position-e72f4bcc842e49e9b83e68b1267e2a78\\summary.json",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "Timeout partial syntax+4mock groups pass. Actual duel83s failed guest: walked7.53m withhostagreedpose, noLOSspot/noadmittedshot. Two-repair budget exhausted; new stationary-guest approach owns next proof.",
+      "accepted": false,
+      "outcome": "failed",
+      "ended_at": "2026-09-19T19:34:09+00:00",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "observed_providers": [
+        "zai"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 142
+    },
+    {
+      "lane": "glm-motion-capture-repair",
+      "run_id": "delegated-omp-glm-motion-capture-repair-ff9608f161994532a80162d1e0105c4c",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-motion-capture-repair-ff9608f161994532a80162d1e0105c4c\\summary.json",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "Completed observedGLM. Root found scrub callback captures wrong actor index; new Muse staged correction owns closure/lifecycle. Not integrated yet.",
+      "accepted": false,
+      "outcome": "process-completed",
+      "ended_at": "2026-09-19T19:32:21+00:00",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "observed_providers": [
+        "zai"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 106
+    },
+    {
+      "lane": "muse-carbine-lifecycle-repair",
+      "run_id": "delegated-omp-muse-carbine-lifecycle-repair-90e49ee73e8f49c7b2d1b5ccec659c49",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-carbine-lifecycle-repair-90e49ee73e8f49c7b2d1b5ccec659c49\\summary.json",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "Root integrated lifecycle+tiny pagehide delta;17CPU proofs PASS. Excluded unrelated viewmodelOf import and unsafe headed/profile-less capture script. Muse closes proof gaps.",
+      "accepted": false,
+      "outcome": "process-completed",
+      "ended_at": "2026-09-19T19:28:38+00:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 507
+    },
+    {
+      "lane": "muse-semtex-finish",
+      "run_id": "delegated-omp-muse-semtex-finish-158b40e5feeb41bbb4b3315586c1539a",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-semtex-finish-158b40e5feeb41bbb4b3315586c1539a\\summary.json",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "Root applied scoped delta, TypeScript and73ordnance checks PASS. Precise contact flaw: wall2.8 but detonation2.15; follow-up owns repair and browser proof.",
+      "accepted": false,
+      "outcome": "process-completed",
+      "ended_at": "2026-09-19T20:17:46+01:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 352
+    },
+    {
+      "lane": "agy-carbine-lifecycle-repair",
+      "run_id": "delegated-agy-b42c4b3c-43a0-4227-a83e-47a4e8858825",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-carbine-lifecycle-repair\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "state": "VERIFIED quota exhausted HTTP429; owned process ended and scope transferred",
+      "accepted": false,
+      "outcome": "failed-quota",
+      "ended_at": 1789844907.1507783,
+      "actual_model": null
+    },
+    {
+      "lane": "agy-combat-guest-position",
+      "run_id": "delegated-agy-a4f2f035-5766-46e6-87ec-17e567b9efe8",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-combat-guest-position\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-combat-feedback-20260919",
+      "state": "VERIFIED quota exhausted HTTP429; owned process ended and scope transferred",
+      "accepted": false,
+      "outcome": "failed-quota",
+      "ended_at": 1789845096.1486092,
+      "actual_model": null
+    },
+    {
+      "lane": "muse-semtex-contact-proof",
+      "run_id": "delegated-omp-muse-semtex-contact-proof-19402c37b1d8468e9a8e49f8ca2e9dfb",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-semtex-contact-proof-19402c37b1d8468e9a8e49f8ca2e9dfb\\summary.json",
+      "launcher_pid": 22248,
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "Root applied only3 baseline-matched source/test files;83/83CPU PASS. Browser extension rejected before execution: undefined fails and count-only stationary claim; no live acceptance.",
+      "accepted": false,
+      "outcome": "process-completed",
+      "actual_model": null,
+      "ended_at": "2026-09-19T19:32:42+00:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 303
+    },
+    {
+      "lane": "glm-menu-hud-refinement",
+      "run_id": "delegated-omp-glm-menu-hud-refinement-204a691c9269431f808336e1a9f87b93",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-menu-hud-refinement-204a691c9269431f808336e1a9f87b93\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-menu-hud-20260919",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "accepted": false,
+      "outcome": "process-completed",
+      "ended_at": "2026-09-19T20:04:10+00:00",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "observed_providers": [
+        "zai"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 215,
+      "state": "Root reviewed then held slot-overwrite defect; later GLM preservation fix integrated at29efde5."
+    },
+    {
+      "lane": "glm-weapon-roster20",
+      "run_id": "delegated-omp-glm-weapon-roster20-1700da5ec94343be8bcfa6cdd6dbcb8b",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-weapon-roster20-1700da5ec94343be8bcfa6cdd6dbcb8b\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-resume-20260919",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "accepted": false,
+      "outcome": "process-completed",
+      "ended_at": "2026-09-19T20:05:44+00:00",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "observed_providers": [
+        "zai"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 159,
+      "state": "Completed20 definitions/families pending integration; standard roles reviewed but exotics have unsupported semantics, eager20rig cost and sidearm policy gaps. Production repair owns scope."
+    },
+    {
+      "lane": "muse-capture-harness-close",
+      "run_id": "delegated-omp-muse-capture-harness-close-5a62971f6cc84cca85d1199cc4e52e65",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-capture-harness-close-5a62971f6cc84cca85d1199cc4e52e65\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "accepted": false,
+      "outcome": "process-completed",
+      "ended_at": "2026-09-19T19:52:45+00:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 265,
+      "state": "Root integrated safe private headless carbine capture plus staged motion QA. Carbine actualGLB/4sockets/3poses pass; shot was during countdown, not admitted damage proof. Motion scrub15CPU pass but later browser framing fails."
+    },
+    {
+      "lane": "muse-guest-stationary-proof",
+      "run_id": "delegated-omp-muse-guest-stationary-proof-475454706ac04d0a9aaa6999393b7f02",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-guest-stationary-proof-475454706ac04d0a9aaa6999393b7f02\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-combat-feedback-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "accepted": false,
+      "outcome": "failed",
+      "ended_at": "2026-09-19T19:59:24+00:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "terminal_errors": [
+        {
+          "line": 96,
+          "kind": "assistant-errorMessage"
+        },
+        {
+          "line": 98,
+          "kind": "assistant-errorMessage"
+        }
+      ],
+      "attributed_records": 125,
+      "state": "Provider terminal error retained; reviewed artifacts7CPU groups pass. Actual guest body/fatal WebRTC PASS, crit FAIL. Root found hostY discarded in room.driveHostSeat; dedicated product contract repair owns next action."
+    },
+    {
+      "lane": "muse-mountains-art-round2",
+      "run_id": "delegated-omp-muse-mountains-art-round2-2c4caaa481414c809b58a767288537d9",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-mountains-art-round2-2c4caaa481414c809b58a767288537d9\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "accepted": false,
+      "outcome": "process-completed",
+      "ended_at": "2026-09-19T19:52:29+00:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 126,
+      "state": "34CPU and24browser cells PASS, root actualpixels REJECTED again: smooth ribbon mountains. Two repairs exhausted; new authored Blender mesh approach dispatched."
+    },
+    {
+      "lane": "muse-authored-mountain-mesh",
+      "run_id": "delegated-omp-muse-authored-mountain-mesh-31a6f304ddfe43498145a5e1fa6243a9",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-authored-mountain-mesh-31a6f304ddfe43498145a5e1fa6243a9\\summary.json",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "outcome": "running",
+      "ended_at": null,
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "terminal_errors": [
+        {
+          "line": 48,
+          "kind": "assistant-errorMessage"
+        }
+      ],
+      "attributed_records": 50,
+      "accepted": false,
+      "state": "Exclusive source-only external authoring; root acceptance pending; canonical assistant error observed, wrapper still nonterminal; preserve and inspect terminal receipt before failover"
+    },
+    {
+      "lane": "muse-host-height-contract",
+      "run_id": "delegated-omp-muse-host-height-contract-d60f143cdf604b7ca68fbce2323e7222",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-combat-feedback-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-host-height-contract-d60f143cdf604b7ca68fbce2323e7222\\summary.json",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "outcome": "running",
+      "ended_at": null,
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 101,
+      "accepted": false,
+      "state": "Exclusive source-only external authoring; root acceptance pending"
+    },
+    {
+      "lane": "glm-loadout-preservation-fix",
+      "run_id": "delegated-omp-glm-loadout-preservation-fix-78c75f1f23414fa6bfc4430fad89317a",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-menu-hud-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-loadout-preservation-fix-78c75f1f23414fa6bfc4430fad89317a\\summary.json",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "outcome": "process-completed",
+      "ended_at": "2026-09-19T20:29:42+00:00",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "observed_providers": [
+        "zai"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 95,
+      "accepted": false,
+      "state": "Integrated29efde5;10CPU groups and18browser layout checks pass; real mobile Semtex selection/Deploy/HUD passed.2px internal horizontal scroll remains OPEN."
+    },
+    {
+      "lane": "glm-roster20-production-repair",
+      "run_id": "delegated-omp-glm-roster20-production-repair-0ffcda1a71774f93bab368acc9a1a250",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-resume-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-roster20-production-repair-0ffcda1a71774f93bab368acc9a1a250\\summary.json",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "outcome": "running",
+      "ended_at": null,
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "observed_providers": [
+        "zai"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 63,
+      "accepted": false,
+      "state": "Exclusive source-only external authoring; root acceptance pending"
+    },
+    {
+      "lane": "glm-semtex-live-proof",
+      "run_id": "delegated-omp-glm-semtex-live-proof-2ece0348d1054d609f3f92f9bbf17b7a",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-semtex-live-proof-2ece0348d1054d609f3f92f9bbf17b7a\\summary.json",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "outcome": "running",
+      "ended_at": null,
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "observed_providers": [
+        "zai"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 66,
+      "accepted": false,
+      "state": "Exclusive source-only external authoring; root acceptance pending"
+    },
+    {
+      "lane": "muse-streak11-slice",
+      "run_id": "delegated-omp-muse-streak11-slice-88f9c92cbc034dfaa29222bf5a82486b",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-streak11-slice-88f9c92cbc034dfaa29222bf5a82486b\\summary.json",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "outcome": "process-completed",
+      "ended_at": "2026-09-19T20:31:00+00:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "observed_providers": [
+        "meta-contributor"
+      ],
+      "terminal_errors": [],
+      "attributed_records": 363,
+      "accepted": false,
+      "state": "Completed source-only mortar as fourth wired effect; NOT11 roster closure. No art/audio or UI target effect. Root has not integrated invisible damaging effect; review and visual integration needed."
+    }
+  ]
+}
