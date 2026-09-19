@@ -6,6 +6,10 @@
 Written 2026-09-18 by the handedness lane. Documentation only — no file under `src/**`
 was touched, and `layout.ts` was read but not edited. `npx tsc --noEmit` is clean.
 
+> **Re-tested independently on 2026-09-19 by a second pass, which reached the same
+> verdict by the same cue and added the map's absolute compass orientation and a
+> measured end for the orange garage. See §8. Nothing in §1–§7 is retracted.**
+
 This supersedes `INTERIORS-TOPOLOGY.md` §7, which recorded the invariant as
 **CONTRADICTED**. §7's contradiction was a **misreading of one frame**
 (`g-1icNQzMgLUM-102`) at 1600 px. Read at 2.85× the same frame agrees with every other
@@ -277,3 +281,190 @@ a = 'docs/reference/img/nt2025-aerial-boii.png'
 Image.open(a).crop((1340, 460, 1560, 740))   # white rear deck + external stair
 Image.open(a).crop(( 460, 520,  860, 740))   # orange garage bays + crazy-paving driveway
 ```
+
+---
+
+# 8. Second, independent pass — 2026-09-19 — CONFIRMS the verdict, and makes it absolute
+
+Run by the wave-2 `handedness` lane. It re-read the frames from scratch and reached the
+same answer by the same cue, plus three things §1–§7 above did not have: the map's
+**absolute compass orientation**, a **measured** end for the orange garage, and a second
+instance of the both-houses artefact. Documentation only; no file under `src/**` was
+touched; `npx tsc --noEmit -p tsconfig.json` exits 0 with no output.
+
+**Result: unchanged. 180° ROTATIONAL PAIR. `layout.ts` needs no sign change.**
+
+## 8.1 The descent cue, re-read on six frames
+
+The carrier of the verdict above is: *from your own back yard, which way does the rear
+external stair descend?* Rotational ⇒ the same apparent direction from both yards;
+mirror ⇒ opposite. Re-read independently, at 1500–1600 px and on zoomed crops:
+
+| frame | house, and the cue that identified it | stair |
+|---|---|---|
+| `g-tB35IKluv0g-148` *(new)* | ORANGE — **yellow kitchen** visible through the undercroft opening; terracotta glazing behind a white finned roof canopy; glass X-braced deck rail | head upper-LEFT, foot lower-RIGHT |
+| `g-tB35IKluv0g-110` *(new)* | WHITE — rounded capsule end at the left, teal-lit undercroft doorway, slim square posts | head upper-LEFT, foot lower-RIGHT |
+| `f-aICKIbuo8zQ-179` | ORANGE — yellow back room, round wall clock, seated mannequin through the back door | head upper-LEFT, foot lower-RIGHT |
+| `g-1icNQzMgLUM-102` | ORANGE — terracotta panels, orange-painted stair, the tan patio with round stepping pads that the aerial shows in the orange yard | head upper-LEFT, foot lower-RIGHT |
+| `g-1icNQzMgLUM-246` | WHITE — white render, curved cantilevered roof, grey stair, green-lit back door | head upper-LEFT, foot lower-RIGHT |
+| `f-FKQOEO-1ceE-060` | ORANGE — terracotta panels, white roof louvres (low weight: death cam, camera not player-controlled) | head upper-LEFT, foot lower-RIGHT |
+
+Six for six, three clips, **both** houses — including one frame whose house identity is
+beyond argument in each direction (`-148`, yellow kitchen = orange; `-110`, rounded
+capsule = white). Unanimous. If the pair were a mirror, at least one of these would have
+to run the other way.
+
+## 8.2 NEW — the map's absolute orientation
+
+Every frame carries a HUD compass ribbon under the minimap. In five of the six clips the
+YouTube encode destroys it. In **`g-tB35IKluv0g`** it survives and can be read after a
+percentile contrast stretch at 5–6×.
+
+- The HUD minimap panel spans **x 20–271** in the 1600-px frame (measured from the
+  column-mean edge step, identical in `-011` and `-148`), so the player's heading is the
+  bearing at **x ≈ 145.5**. Letters run left→right in increasing bearing; N→E measures
+  ≈ 77 px, i.e. ≈ 0.86 px per degree.
+- **`g-tB35IKluv0g-011`** — standing **inside the orange garage, looking out through the
+  open vehicle bay** across the crazy-paving driveway (the coach and the pale curved
+  other house are visible through the opening; the left wall is concrete with a
+  rubble-stone dado and a "TARGET B" board, so this is not the white pool garage).
+  W at x ≈ 39, N at 116, E at 193 ⇒ **heading ≈ 034°** (± ~10°, the uncertainty is in
+  reading the glyph centres, not in the sign).
+- **`g-tB35IKluv0g-148`** — orange back-yard spawn ⇒ **heading ≈ 023°**.
+
+⇒ **The orange garage bays, and the orange house's street face, look NORTH.**
+⇒ **ORANGE is the SOUTH house; WHITE is the NORTH house.**
+⇒ From the orange back yard facing the orange house, **your right hand points EAST**.
+  From the white back yard facing the white house, **your right hand points WEST**.
+
+Two consequences worth recording for any future measurement on the two plan images:
+
+- **The official minimap is NORTH-UP.** Min-area rectangle of the playable polygon
+  (threshold > 60) is **179.8 × 427.0 px at 0.0°**, bbox x 168–349, y 44–471 — axis
+  aligned, long axis vertical. And the HUD minimap at heading ≈ 034° (i.e. ≈ north-up)
+  reproduces the official minimap's outline in the **same orientation and the same
+  handedness**: west road-stem wedge on the left at mid-height, east apron bump on the
+  right. A 180° turn or a mirror of the official image would swap those.
+  ⇒ **minimap LOWER house = ORANGE, UPPER = WHITE.**
+- **The official aerial is the north-up plan rotated 90° clockwise**: aerial-right =
+  NORTH, aerial-left = SOUTH, **aerial-down = EAST, aerial-up = WEST**. (Orange on the
+  left of the aerial, and orange = south.) §4.1's caution about perspective still
+  applies, but at least the axes are now named.
+
+## 8.3 NEW — the orange garage's end is measured, not inferred
+
+§2 part (b) above marks the garage hand INFERRED. For the **orange** house it no longer
+is. Three independent sources put its garage at the **EAST** end:
+
+| source | observation |
+|---|---|
+| minimap | the crazy-paving **hatch** patch on the south house's street (north) side sits at minimap x ≈ 247–283, against that house's footprint x 206–293 (centre ≈ 249) |
+| aerial | the garage wing — two bays, one open and one closed with a pale-green ribbed sectional door, a car nosed in, a large flagstone apron — is at the aerial-**bottom** end of the orange house (bays ≈ x 613–657 y 620–677; apron ≈ x 657–780 y 600–717), and aerial-down = east |
+| `g-tB35IKluv0g-146` / `-182` / `-183` | the fixed end-of-round camera (§8.4). Orange (south) is on the left and white (north) on the right, so the camera is beyond the **east** end looking west; the orange garage is the large **near** element at the bottom-left ⇒ near = east |
+
+Filled-footprint numbers for whoever re-measures the minimap: threshold > 155, dilate 2,
+fill holes, take the component containing each house — **south/orange** x 206–293,
+y 298–382, area 3995 px; **north/white** x 208–295, y 137–212, area 4399 px.
+
+So the invariant, stated absolutely and no longer only relatively:
+
+> **The ORANGE (south) house's garage is at the EAST end and its rear deck and stair at
+> the WEST end. By the rotational verdict the WHITE (north) house is the point
+> reflection of that: garage WEST, deck and stair EAST. From either back yard, facing
+> your own house, the garage is on your RIGHT.**
+
+That is consistent with everything above, and with the aerial: the only flagstone patch
+on the white house's street side (≈ x 1068–1135, y 512–613, about 4.6 × 6.8 m) lies
+**west** of the white house's mid-length, on the paved path straight from the circle.
+
+## 8.4 NEW — falsifier #1 also exists as gameplay frames
+
+`INTERIORS-TOPOLOGY.md` §7 asked first for "any single frame containing BOTH back
+yards". §4.1 above notes the aerial technically satisfies it. There is a second kind on
+disk: the **fixed end-of-round overview camera**, which contains both houses in one
+frame —
+
+- `g-tB35IKluv0g-146` ("SWITCHING SIDES"), `-182` and `-183` ("VICTORY").
+
+In them the orange garage is plainly legible (pale-green ribbed sectional door,
+flagstone apron, red car) and the geometry gives the camera's end of the street (§8.3).
+What they do **not** give is the white house's garage: the Nuketown trailer and the
+articulated truck are parked across the white house's street frontage at exactly the
+point where its garage would be. I first read that trailer *as* a white garage wing at
+2×; at 5× it resolves into the trailer and the truck cab, and that reading is withdrawn.
+
+I also re-fetched a 95-second section (t = 540–635 s) of `tB35IKluv0g` with yt-dlp and
+extracted 95 frames at 1 fps, to see whether that camera pans. **It does not** — it is a
+fixed shot, and the denser frames add nothing over `-146`. Nothing was written to
+`docs/reference/`; the video and frames stayed in the session scratchpad and the video
+was deleted. No `docs/reference/gameplay-handedness/` was created. The Steam copy was
+not launched. All processing was Python/PIL plus one yt-dlp/ffmpeg pair; no browser, no
+vite server, no console window.
+
+## 8.5 The cue that fails, and how it nearly cost this pass the answer
+
+**Read the stair's descent direction, never "which end of the house it sits on."**
+
+This pass initially tried to place each stair *along its house* — "is the stair at the
+east or the west end?" — from oblique back-yard frames. That produced: east in `-148`
+and `-179`, west in `-102`, all three of them the orange house. On that basis this pass
+very nearly filed a verdict of **unresolved**, and nearly filed a claim that the orange
+house must have stairs at both ends. It does not. The error is that judging *which end*
+requires knowing where the house ends, and in a foreshortened oblique view standing near
+one end of the yard, that is a guess. The **descent direction** needs no such judgement,
+which is exactly why §1 and §5 above are built on it. The same error, in the opposite
+direction, is what §5 diagnoses in `INTERIORS-TOPOLOGY.md` §7.
+
+One real observation survives from that dead end, and someone should explain it: the
+stair in `-102` has **orange-painted** steel stringers and handrail, while `-148` and
+`-179` — also the orange house — show pale grey/timber treads with a **glass X-braced**
+balustrade. Either the orange house has two different flights, or one of those frames is
+a structure this pass has mis-assigned. It does not touch the verdict (all three descend
+the same way), but it is loose.
+
+A second, procedural near-miss, recorded because it is the more dangerous one: this pass
+wrote its report **before checking whether `docs/HANDEDNESS.md` already existed**. It
+did, committed in `ea91fe8`, with the correct verdict — and was briefly overwritten with
+the wrong one. Check `git log -- <path>` before writing a document that another lane may
+already own.
+
+## 8.6 The `handedness PASS` line in the gate output is vacuous
+
+`garageIsOnTheRight()` compares `sign(h.garageX)` with a right-hand vector derived from
+`h.side`. `ORANGE.garageX` and `WHITE.garageX` are hard-coded with opposite signs, so the
+function returns `true` for both houses **by construction**. `main.ts` maps it over
+`HOUSES` and exposes it as `stats().handedness`; `traverse.mjs` and `probe-autos.mjs`
+print `handedness PASS`.
+
+It is a self-consistency check on `layout.ts`'s own constants. It cannot fail unless
+someone edits those constants, and it carries **no** information about the real BO2 map.
+Nobody should read `handedness PASS` in a gate log as evidence about the invariant — the
+evidence is this document. Keeping the check is still right: it is the tripwire that
+catches a builder hardcoding a sign somewhere else.
+
+## 8.7 One reading that dissents, recorded rather than buried
+
+Working from **filled** footprints of the minimap (rather than §4.2's hand trace of the
+outline), the north/white house's street-ward lobe looked to this pass as though it sits
+at the **EAST** end — which would be the mirror signature, and disagrees with §4.2's
+trace of the wings on opposite image sides. §4.2's is a 9× hand trace of the bright
+outline; this one is an 8× impression of a dilated, hole-filled blob, which smears a
+porch canopy and a garage wing into the same mass. It is recorded as a soft dissent, not
+a contradiction, and it is not weighed against six unanimous frames. If anyone reopens
+this question, that measurement is the one to redo properly.
+
+## 8.8 Gates run by this pass
+
+```
+npx tsc --noEmit -p tsconfig.json     → exit 0, no output
+```
+
+`npm run build`, `paths.mjs`, `traverse.mjs`, `playcap.mjs`, `plan.mjs` and
+`npm run capture` were deliberately **not** run. `git status` at the time showed
+`src/build/orange-house.ts`, `white-house.ts`, `yards.ts`, `mannequins.ts`,
+`vehicles.ts`, `plaza.ts`, `core/materials.ts`, `main.ts` and nine UI/net files modified
+by the sibling lanes mid-edit. Building would have written `dist/` out from under their
+captures; traverse/playcap/capture would have taken the one shared preview server and
+the one headless browser while they were using them, and would have photographed their
+half-finished work. That is a boundary to report rather than cross. This lane cannot
+move a pixel or a collider, so none of those gates could have said anything about it.

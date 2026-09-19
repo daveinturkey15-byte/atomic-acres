@@ -337,3 +337,26 @@ branch, __NTGAME out of src/game, un-export HostLife). Next: street / exteriors 
 vehicles gauntlets once the AO retune releases post.ts and dressing lands.
 Draw calls now 1348-2112/frame with five bot rigs (~300-380 each) - S9 remains open.
 
+
+**01:50 (19 Sep).** Geometry verifier (wf_5f9c4647-341) REFUTED the wave on ownership,
+not on any numbered gate (paths 15/15, --y 3.3 22/22, traverse 5/5 + 4/4 + handedness,
+playcap 4/4 all green): (1) yards props built INTO the external stairs - planter in the
+white stair's bottom four treads, patio table in the orange stair's foot - because the
+yards keep-out is derived from the DECK and both stairs run past it; (2) the white upper
+floor has NO -z face (see-through, shoot-through; the "hole at (-3,19)" is a whole face);
+(3) 14 mannequins with zero colliders (pre-existing). Repair running as
+wf_8cdb6581-97c: re-aim the orange flight along x per HANDEDNESS.md evidence, each house
+EXPORTS its stair footprint and yards consumes + asserts it, close the white face with
+wall + glass + chord colliders, mannequin colliders; fresh verifier; max two rounds.
+Dressing lane's four files (mannequins 40 -> 14, yards cover rebuilt, vehicles, plaza)
+stay uncommitted until that verdict holds. Leak hunt FOUND IT: three r180
+Sampler.set texture removes a brand-new onDispose closure so the unsubscribe never
+matches, and BloomNode re-points its samplers twice per frame - 132,780 dead listeners
+in 2 min; fixed in post.ts (repairSamplerUnsubscribe), floor 4.44 -> 0.02 MB/min;
+verifier soak running. Gameplay fixes: 4/4 done (livelock was bots re-pressing a banked
+streak at 20 Hz through the 9 s rematch hold), verifier running. AO retune critic1
+running. Two 7.5 h orphan vite previews (59359/51235) reaped; :4173 and :4188 intact.
+Other open items from the verifier, not this round: capture.mjs draw-call gate prints 0
+(blind); plan.mjs writes .ppm only; two sub-metre sealed pockets behind the orange
+kitchen counters; draw calls 1348-2112/frame (S9); white house round-ring vs L-block
+(OWNER QUESTION).
