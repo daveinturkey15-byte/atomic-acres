@@ -176,7 +176,7 @@ export function buildHud(root: HTMLElement, crosshair: HTMLElement | null): HudN
 
   // --- minimap (top-left) ----------------------------------------------------
   const mapWrap = el('div', 'hud-own hud-minimap');
-  mapWrap.append(el('div', 'hud-map-title', 'NUKETOWN'));
+  mapWrap.append(el('div', 'hud-map-title', 'ATOMIC ACRES'));
   const mapCanvas = document.createElement('canvas');
   mapCanvas.width = MAP_PX;
   mapCanvas.height = MAP_PX;
