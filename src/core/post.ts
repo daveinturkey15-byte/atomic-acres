@@ -41,7 +41,9 @@ import * as THREE from 'three';
 import { NodeMaterial, QuadMesh } from 'three/webgpu';
 import {
   float,
+  getViewPosition,
   length,
+  mix,
   metalness,
   mrt,
   normalView,
@@ -49,6 +51,7 @@ import {
   pass,
   roughness,
   smoothstep,
+  uniform,
   uv,
   vec3,
   vec4,
@@ -438,7 +441,26 @@ function buildChain(
     // field intact while letting the near term cut a full-strength crease. Both
     // multipliers live in [1 - AO_STRENGTH, 1], so their min does too and `?post=ao`'s
     // rescale below stays valid unchanged.
-    const occlusion = mFar.min(mNear);
+    // NEAR term fades out with view depth. Measured 2026-09-19 (ao-farfade FINAL.md, probe
+    // P1): at aerial / yardWhite the FARTHEST geometry was the darkest in frame - skyline
+    // slab interiors 42-47% solid full-strength field, a ridge 62% - and the binding term
+    // was mNear, not mFar (the far-only archive reads 228 at those rects). A 0.9 m kernel
+    // at 60+ m collapses onto one plane and calls the whole plane occluded. Depth is the
+    // clean separator: every must-hold surface (crate base, junction crease, interior
+    // walls) sits inside 10 m where dFade = 1 and mNear2 == mNear to the bit; every
+    // failing rect sits past 70 m where dFade = 0. Probe result: all three fields 0.00%,
+    // ?post=ao back to the far-only values exactly, sky bit-identical, holds unchanged.
+    // uniform(camera.projectionMatrixInverse), NOT the built-in cameraProjectionMatrixInverse
+    // node: this chain renders a QuadMesh, so the built-in resolves to the quad's camera
+    // (GTAONode carries its own uniform for the same reason). A grazing-angle (|n.v|)
+    // fade on the FAR term was built and measured a no-op: the failing rects sit at
+    // |n.v| 0.51-0.84, the holds reach 0.34 - no edge separates them.
+    const projInv = uniform(camera.projectionMatrixInverse);
+    const viewPos = getViewPosition(uv(), depth.sample(uv()).r, projInv);
+    const viewZ = viewPos.z.negate();
+    const dFade = float(1).sub(smoothstep(float(30), float(70), viewZ));
+    const mNear2 = mix(float(1), mNear, dFade);
+    const occlusion = mFar.min(mNear2);
     // Work on rgb only. `color.mul(occlusion)` also multiplies ALPHA, and this canvas
     // is not opaque - a frame at alpha 0.6 composites against the page background.
     const lit = color.rgb.mul(occlusion);

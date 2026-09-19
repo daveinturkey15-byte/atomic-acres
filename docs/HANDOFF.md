@@ -538,3 +538,18 @@ animation round 2 (src/characters). Queued behind post.ts: atmosphere lane (volu
 fog from the smoke contract, time of day, weather), image-gen target loop, street /
 exteriors / sky gauntlets. File ownership per lane is in each script under the session
 scratchpad (wave7-*.js).
+
+**07:05 (19 Sep).** AO round 4 (`wf_8eee1ee3-f74`): the briefed mechanism was WRONG and
+the gauntlet proved it - the distant false fields were bound by the NEAR term, not the
+far one, and the failing rects sit at |n.v| 0.51-0.84 (not grazing), so a grazing fade
+on the far term moved nothing at five of five guards. The integration critic built and
+measured the right lever - a DEPTH fade on the near term at the combine, mNear2 =
+mix(1, mNear, 1 - smoothstep(30, 70, viewZ)) - and reverted it (its mandate); the
+orchestrator applied it verbatim and re-measured with the inherited scripts: aerial /
+yardWhite / yardOrange fields 0.00% (yardWhite ridge right ao 172.5 -> 222.38, the
+far-only value exactly), interiorOrange wall gradient 23.1, whitePoolRoom 28.1, crate
+base 64.0, sky 229 bit-identical, mountains 226.6, playcap 4/4 at 1162/774/1159/974.
+Committed. STILL OPEN: the midStreet coach-flank wash (far term, 2 m away, |n.v| ~0.8
+- neither fade reaches it; a per-pixel thickness scaled by depth, or a normal-aware
+horizon clamp, is the next idea - one coach panel, low priority). Atmosphere lane
+launched now that post.ts is free (`wf_...` below).
