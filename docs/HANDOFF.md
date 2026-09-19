@@ -327,3 +327,13 @@ name; keep or rename? (b) white upper floor may have a hole at (-3, 19). Also: t
 house is a single-skin capsule shell, so interior/exterior materials cannot differ there
 without splitting its geometry - a geometry task, not a material one.
 
+**01:05 (19 Sep).** Wave 3 committed (`3e9e651`): a TDM match runs end to end with bots,
+streaks, scoreboard - verifier ran its own headless match (kills 2 -> 12 / 195 s). Clips
+WIRED and credits line landed (`7e8f587`); playcap 4/4. Running now: dressing verifier
+(`wf_5f9c4647-341`), AO room-scale retune (`wf_6e400e5c-43f`, post.ts only), leak hunt
+(`wf_b2a8e68c-585`: heap floor +4.2 MB/min with zero figures), gameplay fixes
+(`wf_15ddb204-3ce`: streak-denial livelock backoff, friendly-fire in the pre-resolved
+branch, __NTGAME out of src/game, un-export HostLife). Next: street / exteriors / sky /
+vehicles gauntlets once the AO retune releases post.ts and dressing lands.
+Draw calls now 1348-2112/frame with five bot rigs (~300-380 each) - S9 remains open.
+
