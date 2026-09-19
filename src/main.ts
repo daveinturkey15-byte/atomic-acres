@@ -46,6 +46,21 @@ import { buildIndustrialBarrels } from './build/industrial-barrels';
 import { preloadIndustrialBarrel } from './props/industrial-barrel';
 import { buildDesertTrees } from './build/desert-trees';
 import { preloadQuiverTree } from './props/quiver-tree';
+import { buildFacadeDetailCanary } from './build/facade-detail-canary';
+
+/** Facade detail canary opt-in: ?facade=canary only. Any absent or other value
+ * keeps the baseline registry untouched. The __NT_OVERRIDE global exists so CPU
+ * and browser QA can force the lane without a query string. Same shape as
+ * isMountainTerrainOptIn() in ./build/mountain-terrain. */
+function isFacadeDetailCanaryOptIn(): boolean {
+  const g = globalThis as { __NT_OVERRIDE_FACADE_DETAIL__?: boolean };
+  if (typeof g.__NT_OVERRIDE_FACADE_DETAIL__ === 'boolean') return g.__NT_OVERRIDE_FACADE_DETAIL__;
+  if (typeof window !== 'undefined' && window.location?.search) {
+    const v = new URLSearchParams(window.location.search).get('facade')?.toLowerCase();
+    return v === 'canary';
+  }
+  return false;
+}
 
 const BUILDERS: [string, Builder][] = [
   ['ground', buildGround],
@@ -62,6 +77,13 @@ const BUILDERS: [string, Builder][] = [
   ['industrial-barrels', buildIndustrialBarrels],
   ['desert-trees', buildDesertTrees],
 ];
+
+// Facade detail canary: opt-in dressing only (?facade=canary). Without the flag
+// the registry above is untouched: zero extra draws, zero colliders, no light,
+// material or collider changes. Remove the entry to revert.
+if (isFacadeDetailCanaryOptIn()) {
+  BUILDERS.splice(3, 0, ['facade-detail-canary', buildFacadeDetailCanary]);
+}
 
 // The one invariant, asserted rather than commented. From either back yard, facing
 // your own house, the garage is on your RIGHT - and because the houses are a 180
