@@ -622,3 +622,19 @@ browsers on one machine proved, LAN needs --host 0.0.0.0). Smoke is a placeholde
 until the atmosphere lane's volumetric pass lands. Running: z-fight sweep verifier,
 atmosphere builder, bedroom-door fix. Deferred: animation r2, photoreal targets, street /
 exteriors / sky gauntlets, a polish lane for the carried items.
+
+**12:45 (19 Sep).** The usage window closed a second time at ~09:30 (reset 12:40): the
+z-fight VERIFIER, the atmosphere builder (second run) and the bedroom-door builder died
+mid-flight; ordnance + front of house had already landed (`3183693`) and :4190 serves
+that. Tree at 12:42: tsc 0, builds; partials in place from z-fight (five src/build files
++ scripts/coplanar.mjs - builder finished: 1,411 -> 922 coplanar pairs, 30+ fixes,
+colliders unchanged per its own dump), atmosphere (src/core/atmosphere.ts + world /
+post / materials / palette), animation (blend / anim-qa / system / scripts/animation;
+public/anim/idle.glb DELETED - every harness logs one 404 until the animation lane
+restores or replaces it), targets (scripts/art-gen/photoreal-targets.* + docs/reference/
+targets/). RELAUNCHED, four lanes: z-fight verifier (resume of `wf_8c6e175e-299`, builder
+cached), bedroom door (`wf_4b8fef71-022`), atmosphere resume (`wf_132279e4-f6d`),
+animation r2 resume (`wf_8fbe1e7c-385`). Photoreal targets deferred (GPU + the fourth
+slot). Still to apply once the tree settles: ui.bindMatch(match) + stale-body hide in
+main.ts, session-solo primaryId, bots.ts primaryId, knife team check, world-owned blast
+FF rule, grenade-counter HUD overlap, mat.smoke() - one polish lane.
