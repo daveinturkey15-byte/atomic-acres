@@ -509,3 +509,32 @@ frozen for all clips, spawn() has no faction argument. Animation round 2 lane ne
 (src/characters/{clips,blend,kimodo-clips,system,anim-qa}.ts + scripts/animation):
 re-roll idle/aim/sprint seeds for an upright stance, a two-handed carry layer, fix
 playExternal, faction per spawn. Frozen HEAD build refreshed on :4190 after each landing.
+
+**06:50 (19 Sep, clock-true - the 06:20/06:40 stamps above ran ~10 min fast).** THE OWNER
+IS AWAKE. He walked the frozen build (:4190) and liked the layout and the feel. His
+brief, verbatim where it matters: (1) "the car in between the two buses is going into
+one of the buses"; (2) "not the house I've been spawning in but the one across the
+street - the garage door is still opaque"; (3) "once you get upstairs there's z fighting
+... there is z fighting throughout the map ... the layout of upstairs in that other
+house isn't very good"; (4) bring in from the old project: killstreaks, grenades (frags,
+flashbangs, smokes - "any grenade should do a little damage and leave a little smoke,
+the smoke grenade 5-10x that with volumetric fog"), knife, arm animations, HUD, menu
+with all the graphical options, solo vs bots with bot rules, multiplayer lobby host or
+guest on the stable netcode, ammo pickup from kills - "rebuilt to be smoother and more
+cleanly implemented"; (5) keep refining graphics: lighting, shading, shadows, colour
+correction, volumetric fog, dynamic weather, times of day; (6) the image-gen loop:
+capture our world, ask Claude/Gemini via the Antigravity CLI bridge to make it
+photoreal (effects, particles, lighting), use those as targets, refine with Blender /
+WebGPU / img2threejs / Trellis in a loop; (7) mainly FABLE sub-agents at xhigh or max,
+some Opus fine; loop to 09:30 with a committed built version, then keep going; other
+harnesses may join later; everything stays on this one map. LAUNCHED (all Fable xhigh
+builders + Fable max verifiers): owner-fixes (`wf_2c1da24d-b5f`: car, white garage,
+white upstairs z-fight + layout), zfight-sweep (`wf_ead9fbbc-608`: scripts/coplanar.mjs
+instrument + fixes across src/build), ordnance (`wf_ef17ac2d-971`: grenades with a
+smoke-volume bus contract, knife, death drops, bot blindness/smoke LOS), lobby
+(`wf_4c123b6c-df6`: menu, options that move the renderer, bot rules, host/join by room
+code with a two-browser proof). Still running from before: AO round 4 (post.ts),
+animation round 2 (src/characters). Queued behind post.ts: atmosphere lane (volumetric
+fog from the smoke contract, time of day, weather), image-gen target loop, street /
+exteriors / sky gauntlets. File ownership per lane is in each script under the session
+scratchpad (wave7-*.js).
