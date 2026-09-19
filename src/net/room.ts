@@ -169,10 +169,25 @@ export class HostRoom {
     m.pose.stance = stance;
   }
 
-  /** Drive the host's own seat from the local player. Host-only and safe. */
+  /**
+   * Drive the host's own seat from the local player. Host-only and safe.
+   *
+   * Trusted elevation: `y` is the local physics feet (street slab ~0.15,
+   * deck/upstairs ~3.15), not wire input, so it is clamped into the same
+   * standable band guests are held to (0..INPUT_Y_MAX) and published in the
+   * next state broadcast. `placeSeat` keeps its deploy/reset semantics (y=0)
+   * for spawns; this path never resets. A non-finite `y` retains the previous
+   * feet rather than poisoning the seat; x/z/yaw keep `placeSeat`'s
+   * fail-closed bounds.
+   */
   driveHostSeat(x: number, y: number, z: number, yaw: number, stance: PlayerStance = 'stand'): void {
-    void y;
-    this.placeSeat(this.hostId, x, z, yaw, stance);
+    const m = this.members.get(this.hostId);
+    if (!m || !Number.isFinite(x) || !Number.isFinite(z) || !Number.isFinite(yaw)) return;
+    m.pose.x = Math.max(BOUND_X_MIN, Math.min(BOUND_X_MAX, x));
+    m.pose.z = Math.max(-BOUND_Z, Math.min(BOUND_Z, z));
+    if (Number.isFinite(y)) m.pose.y = Math.max(0, Math.min(INPUT_Y_MAX, y));
+    m.pose.yaw = yaw;
+    m.pose.stance = stance;
   }
 
   roster(): RosterEntry[] {
