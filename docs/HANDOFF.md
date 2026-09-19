@@ -606,3 +606,19 @@ curve; accepted); (b) the bedroom's hall door is blocked by the bed collider (re
 via the green-room opening) - FOLLOW-UP. :4190 now serves HEAD `39db6b1` (AO depth fade
 + owner fixes + vehicles batching + characters). Waiting: ordnance verifier (then the
 staged lobby commits with it), z-fight sweep verifier, atmosphere builder.
+
+**09:27 (19 Sep) - THE 09:30 BUILD.** http://127.0.0.1:4190/ serves HEAD `3183693`, built
+standalone from the commit (tsc 0) and photographed through its own real loop (playcap
+against :4190, lines in the session log). Beyond the 06:30 build the owner walked: the
+car out of the coach, the white garage's open bay, the white upstairs re-planned with
+its z-fight deleted (`39db6b1`); the AO depth fade (`3067718`); ORDNANCE - frag /
+flash / smoke grenades (G / Q, cook by holding G), knife (V; F is fly), death drops with
+scavenge and hold-E swap, bots that throw, knife, go blind and lose sight in smoke;
+FRONT OF HOUSE - main menu, solo setup with bot rules, options (FOV / resolution /
+shadows live; AO-SSR-bloom saved but not yet wired; controls + bindings), pause /
+scoreboard / end-of-match / rematch, MULTIPLAYER host / join by room code over WebRTC
+with the local signal relay (`node scripts/net-signal.mjs`; 'Network' tier; two
+browsers on one machine proved, LAN needs --host 0.0.0.0). Smoke is a placeholder puff
+until the atmosphere lane's volumetric pass lands. Running: z-fight sweep verifier,
+atmosphere builder, bedroom-door fix. Deferred: animation r2, photoreal targets, street /
+exteriors / sky gauntlets, a polish lane for the carried items.
