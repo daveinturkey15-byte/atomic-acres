@@ -427,3 +427,16 @@ Committed as the improved state. Round 3 launched: TWO-SCALE AO - keep the far t
 drew the creases and the crate base), one bounded correction. aperture/wall 0.82 vs the
 references' 1.33-1.67 is NOT an occlusion problem: interiors need enclosure-aware
 ambient (lighting lane, after the street gauntlet).
+
+**04:20 (19 Sep).** B5 fully closed: every in-world and HUD string now reads Atomic Acres
+(skyline pylon + strapline `c6491a3`, coach flank `e474937`, coach destination board
+`a917326`, HUD minimap title `8d6863a`); reversible string constants. Running: AO round 3
+two-scale (`wf_05b69780-de8`), characters (`wf_e07c393b-832`, still in its builder after
+2.5 h), vehicles budget (`wf_be3e8e1b-7b4`: 310 static objects -> batch per material,
+pixel-identical, colliders byte-identical), Trellis.2 hero-prop canary (`wf_879d90a4-d08`:
+one crate through the owner's ComfyUI, recipe + evaluation record only, nothing enters
+public/ or src/; ComfyUI preflight 04:10 - 0.34.0, 15 GB VRAM free, queue empty, all
+Trellis.2 nodes present, geometry_estimation empty so Pixal3D route unavailable).
+After these: street / exteriors / sky gauntlets (post.ts and materials.ts free), then an
+interior-lighting lane for the aperture/wall ratio (0.82 vs 1.33-1.67, not an AO
+problem), then the lobby/menu/killstreak UI polish from IMPORT-PLAN.
