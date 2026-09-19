@@ -178,6 +178,19 @@ export interface MaterialLibrary {
   chrome: THREE.Material;
   steel: THREE.Material;
   painted: (color: number, rough?: number, metal?: number) => THREE.Material;
+  /**
+   * ONE material for a whole character (src/characters/mesh.ts).
+   *
+   * A figure is skin, fatigues, webbing, a helmet and boots - five values that
+   * used to be five materials on 27 bone-parented meshes, which cost 27 draws
+   * per pass and 54 per frame with the shadow pass. Here the dress rides in the
+   * geometry's per-vertex `color` attribute instead, so the whole figure is ONE
+   * draw. `color` stays white because vertex colours multiply it.
+   *
+   * Cached like painted(): every figure and every faction shares this one
+   * material and therefore one program.
+   */
+  operator: (rough?: number, metal?: number) => THREE.Material;
   emissive: (color: number, strength?: number) => THREE.Material;
   /**
    * Lettering drawn on a canvas - still procedural, nothing downloaded.
@@ -686,6 +699,17 @@ export function buildMaterials(): MaterialLibrary {
       let m = cache.get(key);
       if (!m) {
         m = std({ color, roughness: rough, metalness: metal });
+        cache.set(key, m);
+      }
+      return m;
+    },
+    operator(rough = 0.80, metal = 0.02) {
+      const key = 'op' + rough + '_' + metal;
+      let m = cache.get(key);
+      if (!m) {
+        // No maps: the two-scale breakup a character needs at 5-30 m is baked
+        // into the vertex colours, where it costs no texture and no fetch.
+        m = std({ color: 0xffffff, roughness: rough, metalness: metal, vertexColors: true });
         cache.set(key, m);
       }
       return m;

@@ -92,6 +92,22 @@ export const PAL = {
   windowDark:    0x66808e,   // shaded glazing that still reflects sky, not black
   deckBoard:     0xc08a50,   // warm mid-timber deck boards
   timberGap:     0x4d3116,   // dark board gaps / shadowed timber
+
+  // --- OPERATORS (src/characters). Families read off the gameplay frames
+  // f-aICKIbuo8zQ-162 (running operator, side on), f-FKQOEO-1ceE-055 (operator
+  // at ~12 m, sunlit) and f-aICKIbuo8zQ-030 (two at mid distance): one side in
+  // sand/khaki, one in olive-drab, near-black webbing on both, warm exposed
+  // skin. VISUAL-BAR S7 - nothing neon. Deliberately NOT PAL.signTeal and NOT
+  // PAL.mannequin: those are the set-dressing dummies, and a bot wearing them
+  // is indistinguishable from a shop window at 20 m.
+  opSkin:         0xb07a52,  // warm mid skin - face and rolled-sleeve forearms
+  opFatigueTan:   0xa8966b,  // faction A fatigues, sand/khaki
+  opHelmetTan:    0x8e7f5a,  // faction A ballistic helmet shell
+  opFatigueOlive: 0x5c6248,  // faction B fatigues, olive drab / grey-green
+  opHelmetOlive:  0x3f4539,  // faction B patrol cap
+  opWebbing:      0x4a4236,  // faction A carrier and pouches, dark earth
+  opWebbingDark:  0x2c2923,  // faction B carrier and pouches, near black
+  opBoot:         0x26241f,  // boots, gloves, kneepads, belt - the value break
 } as const;
 
 export type PaletteKey = keyof typeof PAL;

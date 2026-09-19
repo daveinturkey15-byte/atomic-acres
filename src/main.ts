@@ -98,9 +98,36 @@ player.setColliders(colliders);
 // is fine here - tsconfig and vite both target es2022.
 await loadBakedClips();
 const characters = createCharacterSystem(world.scene, {
-  skin: mat.painted(PAL.mannequin, 0.72, 0),
-  cloth: mat.painted(PAL.signTeal, 0.62, 0.04),
-  dark: mat.painted(PAL.truckCab, 0.8, 0),
+  // `material` is the shipped path: ONE ctx.mat singleton for the whole figure,
+  // with the dress carried per-vertex by the baked skinned mesh, so a figure is
+  // one draw per pass instead of twenty-seven. skin/cloth/dark stay for the
+  // headless demo page, which has no vertex-colour material of its own.
+  material: mat.operator(),
+  skin: mat.painted(PAL.opSkin, 0.78, 0),
+  cloth: mat.painted(PAL.opFatigueTan, 0.84, 0),
+  dark: mat.painted(PAL.opBoot, 0.86, 0),
+  // Two sides, separated at 20 m by BOTH headgear silhouette and cloth value:
+  // sand fatigues under a ballistic helmet, olive fatigues under a patrol cap.
+  // Assigned round-robin in spawn order - CharacterSystem.spawn() takes no
+  // faction argument and src/characters/system.ts is not this lane's file.
+  factions: [
+    {
+      head: 'helmet',
+      skin: PAL.opSkin,
+      fatigue: PAL.opFatigueTan,
+      helmet: PAL.opHelmetTan,
+      webbing: PAL.opWebbing,
+      boot: PAL.opBoot,
+    },
+    {
+      head: 'cap',
+      skin: PAL.opSkin,
+      fatigue: PAL.opFatigueOlive,
+      helmet: PAL.opHelmetOlive,
+      webbing: PAL.opWebbingDark,
+      boot: PAL.opBoot,
+    },
+  ],
 });
 for (const [cx, cz, cyaw] of [
   [-6.5, -9.0, 0.6], [6.0, -6.0, -1.2], [-8.0, 6.5, 2.4],
