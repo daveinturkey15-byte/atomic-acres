@@ -360,3 +360,22 @@ Other open items from the verifier, not this round: capture.mjs draw-call gate p
 (blind); plan.mjs writes .ppm only; two sub-metre sealed pockets behind the orange
 kitchen counters; draw calls 1348-2112/frame (S9); white house round-ring vs L-block
 (OWNER QUESTION).
+
+**02:20 (19 Sep).** Gameplay round 2 committed (`8ba75f7`, verifier HOLDS: one refusal
+per match end instead of 179; open: streakRefused resets per rematch, no-placement
+sentry rejects bypass the backoff and emit no event, main.ts 480 lines). AO retune
+round 1 (`wf_6e400e5c-43f`): radius 0.9 -> 3.0 bought real contact everywhere at zero
+draw-call cost, exteriors within 1%, average 1.8 -> 1.9 - but the interior wall FIELD is
+still raw 1.0 because GTAONode gates samples on thickness (0.6 m discards every
+room-scale occluder; three GTAONode.js:357/371). Round 2 running (`wf_d60fcfb8-ef9`):
+thickness 0.6 -> 3.0 + AO_DEEP re-derived on CLEAN goto() frames - the 0.672 came from a
+teleport frame where the weapon overlay is 6% of the pixels, p5 was the gun; the true
+p5 at radius 3.0 was 0.167. post.ts is uncommitted (AO round 1 + the bloom-sampler
+leak fix) until the leak verifier reports. B5 DECIDED (reversible, one-line each): the
+billboard, strapline and coach livery now carry the project's own name and an original
+line - skyline.ts 'Atomic Acres' / 'Tomorrow Lives Here', vehicles.ts 'Atomic Acres' -
+consistent with the 2026-09-17 rename; five critic rounds had failed on it. If the owner
+wants the source text back it is two string constants. Characters lane launched
+(`wf_e07c393b-832`): one SkinnedMesh per figure (34 meshes -> <=3 draws/pass) and an
+operator dress instead of mannequin teal; verifier measures draws/figure, heap, four
+views. Geometry repair (`wf_8cdb6581-97c`) still in round 1.

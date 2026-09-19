@@ -341,25 +341,26 @@ export const buildSkyline: Builder = (ctx) => {
       [halfAt(15.9) - 0.55, 15.9], [-halfAt(15.9) + 0.55, 15.9],
     ], 0.34, m.painted(PAL.houseCream, 0.82, 0.04), SX + 0.5, 0, SZ);
 
-    // "Nuketown" in neon script with the NT05 strapline under it, both glyph planes
+    // The project's OWN name in neon script with an original strapline under it (never the
+    // source map's name or its welcome-sign copy - VISUAL-BAR B5), both glyph planes
     // standing just clear of the face so the cream panel still backs them. The plane,
     // not the font, sets the cap height: signText pins the word to 90% of the plane
     // width, so at 72 m every centimetre of panel is worth taking. Headless Chromium
     // has no Brush Script MT - the stack lands on Segoe Script - and no Futura, so
     // the strapline is Century Gothic. Both are period-correct enough.
     const NAME_W = (halfAt(12.2) - 0.55) * 2 / 0.9;      // 90% of it IS the word
-    const NAME_A = 3.5;
+    const NAME_A = 5.0;   // 'Atomic Acres' is 12 glyphs; 3.5 fitted the 8-glyph source name
     letters(g, m.signText({
-      text: 'Nuketown', color: PAL.signMaroon, aspect: NAME_A, script: true, glow: true,
+      text: 'Atomic Acres', color: PAL.signMaroon, aspect: NAME_A, script: true, glow: true,
     }), NAME_W, NAME_W / NAME_A, SX + 0.86, 12.2, SZ);
 
-    const LINE_W = (halfAt(9.3) - 0.55) * 2, LINE_A = 9.0;
+    const LINE_W = (halfAt(9.3) - 0.55) * 2, LINE_A = 6.0;
     const lineH = LINE_W / LINE_A;
     // the plate is sized BY the strapline now, not the other way round; it used to be
     // a 0.42 m bar, which is why the line had nowhere to go and it read as blank
     g.add(box(0.2, lineH, LINE_W, m.emissive(PAL.windowBand, 0.5), SX + 0.72, 9.3, SZ));
     letters(g, m.signText({
-      text: 'Discover the City of the Future', color: PAL.signTeal, aspect: LINE_A,
+      text: 'Tomorrow Lives Here', color: PAL.signTeal, aspect: LINE_A,
     }), LINE_W, lineH, SX + 0.86, 9.3, SZ);
     // teal oval badge on a cream surround
     plate(g, ellipse(3.15, 1.8), 0.22, m.painted(PAL.coachCream, 0.7, 0.05),
