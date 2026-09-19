@@ -22,6 +22,8 @@
  */
 
 import { WEAPONS, type WeaponDef } from '../weapons/catalog';
+import { weaponFamily } from '../weapons/families';
+import { isPlayableWeapon } from '../weapons/roster';
 
 // ---------------------------------------------------------------------------
 // Content families: the two authored lists
@@ -33,14 +35,17 @@ import { WEAPONS, type WeaponDef } from '../weapons/catalog';
  * AUTHORED, and it is one line rather than a field on `WeaponDef` because
  * `weapons/catalog.ts` belongs to another lane and has no slot taxonomy. The
  * old project had two sidearms and a rule — "the marksman kit carries the
- * machine pistol, everyone else the service pistol"; we ship one, so the rule
- * collapses to "the sidearm". `sidearmForPrimary()` keeps the shape of the old
- * rule so restoring the second sidearm is an entry here, not a rewrite.
+ * machine pistol, everyone else the service pistol" — and roster20 restores
+ * that shape: the slot is exactly the pistol family from `weapons/families.ts`
+ * (Duster service pistol, Magnum hand cannon, Flashlight Pistol), and
+ * `sidearmForPrimary()` is again the old rule, not a collapsed special case.
  *
- * Checked against the catalog at module load: a rename in `catalog.ts` throws
- * here instead of silently producing a kit with no pistol.
+ * Checked against the catalog AND the family table at module load: a rename in
+ * `catalog.ts`, or a pistol-family weapon missing from this list, throws here
+ * instead of silently producing a kit with no pistol — or a magnum masquerading
+ * as a primary.
  */
-export const SIDEARM_IDS: readonly string[] = Object.freeze(['duster']);
+export const SIDEARM_IDS: readonly string[] = Object.freeze(['duster', 'magnum', 'flashlight-pistol']);
 
 /**
  * The tactical slot. The ids exist so a kit row has somewhere to point and so
@@ -52,9 +57,16 @@ export const SIDEARM_IDS: readonly string[] = Object.freeze(['duster']);
 export const GRENADE_IDS = ['frag', 'flash', 'smoke', 'semtex'] as const;
 export type GrenadeId = (typeof GRENADE_IDS)[number];
 
-/** Every weapon that is not a sidearm. DERIVED — a new catalog entry joins by existing. */
+/**
+ * Every PLAYABLE weapon that is not a sidearm. DERIVED — a new catalog entry
+ * joins by existing, and a gated prototype (`weapons/roster.ts`) stays out by
+ * the same token. This list is the admission input one lane down:
+ * `net/room-admit.ts:validPrimaryId` and the host's kit/hint tracking consume
+ * it verbatim, so a prototype cannot enter a loadout, a join request, a kit
+ * record or a drop without editing the gate first.
+ */
 export const PRIMARY_IDS: readonly string[] = Object.freeze(
-  WEAPONS.filter((w) => !SIDEARM_IDS.includes(w.id)).map((w) => w.id),
+  WEAPONS.filter((w) => isPlayableWeapon(w.id) && !SIDEARM_IDS.includes(w.id)).map((w) => w.id),
 );
 
 function weaponById(id: string): WeaponDef | undefined {
@@ -64,6 +76,17 @@ function weaponById(id: string): WeaponDef | undefined {
 // Fail loud at load rather than shipping a kit whose pistol does not exist.
 for (const id of SIDEARM_IDS) {
   if (!weaponById(id)) throw new Error(`loadout: SIDEARM_IDS names '${id}', which weapons/catalog.ts does not define`);
+}
+// The sidearm slot and the pistol family must not drift: a pistol-class weapon
+// outside the slot shows up as a primary; a non-pistol inside it would be
+// somebody's backup gun with a rifle's behaviour.
+for (const id of SIDEARM_IDS) {
+  if (weaponFamily(id) !== 'pistol') throw new Error(`loadout: SIDEARM_IDS names '${id}', which is not pistol-family per weapons/families.ts`);
+}
+for (const w of WEAPONS) {
+  if (weaponFamily(w.id) === 'pistol' && !SIDEARM_IDS.includes(w.id)) {
+    throw new Error(`loadout: pistol-family weapon '${w.id}' is missing from SIDEARM_IDS`);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -128,10 +151,10 @@ for (const kit of FIELD_KITS) {
 }
 
 /**
- * The sidearm a primary is issued with. Old `sidearmForPrimary`: the first
- * sidearm that is not the primary itself, so a player running the pistol as a
- * primary does not end up holding two of it. With one sidearm defined this is
- * always the Duster.
+ * The sidearm a primary is issued with. Old `sidearmForPrimary`, verbatim: the
+ * first sidearm that is not the primary itself. With the trio restored this is
+ * live policy again — every loadout carries the Duster, except a Duster-primary
+ * custom slot, which carries the Magnum instead of a second Duster.
  */
 export function sidearmForPrimary(primaryId: string): string {
   return SIDEARM_IDS.find((id) => id !== primaryId) ?? SIDEARM_IDS[0] ?? primaryId;
@@ -173,11 +196,14 @@ function rankToBar(sorted: readonly WeaponDef[], def: WeaponDef): number {
   return MIN_BAR + Math.round((MAX_BAR - MIN_BAR) * (i / (sorted.length - 1)));
 }
 
-/** Trait bars for any catalog weapon, ranked against every other weapon. */
+/** Trait bars for any catalog weapon, ranked against the playable pool. */
 export function weaponTraits(def: WeaponDef): KitTraits {
-  const byRange = [...WEAPONS].sort((a, b) => a.damage.farRange - b.damage.farRange);
-  const byControl = [...WEAPONS].sort((a, b) => b.recoil.pitch - a.recoil.pitch);
-  const byMobility = [...WEAPONS].sort((a, b) => a.adsMoveScale / a.adsTime - b.adsMoveScale / b.adsTime);
+  // A gated prototype must not skew the bar of a gun a player can actually
+  // take into a match; a prototype id itself ranks last (bar 1) honestly.
+  const pool = WEAPONS.filter((w) => isPlayableWeapon(w.id));
+  const byRange = [...pool].sort((a, b) => a.damage.farRange - b.damage.farRange);
+  const byControl = [...pool].sort((a, b) => b.recoil.pitch - a.recoil.pitch);
+  const byMobility = [...pool].sort((a, b) => a.adsMoveScale / a.adsTime - b.adsMoveScale / b.adsTime);
   return {
     range: rankToBar(byRange, def),
     control: rankToBar(byControl, def),
@@ -234,14 +260,15 @@ export function defaultLoadoutStore(): LoadoutStore {
 
 /**
  * Resolve the stored selection into the three weapons a life carries. A custom
- * slot that is empty, or names a weapon the catalog no longer defines, falls
- * back to the default kit rather than issuing nothing — an unarmed spawn is a
- * worse failure than a wrong gun.
+ * slot that is empty, names a weapon the catalog no longer defines, or names a
+ * gated roster prototype (`weapons/roster.ts`), falls back to the default kit
+ * rather than issuing nothing — an unarmed spawn is a worse failure than a
+ * wrong gun, and a persisted prototype slot must degrade, not fire.
  */
 export function resolveLoadout(store: LoadoutStore): Loadout {
   if (store.selected.kind === 'custom') {
     const slot = store.custom[store.selected.slot];
-    if (slot && weaponById(slot.primary)) {
+    if (slot && isPlayableWeapon(slot.primary)) {
       return { primary: slot.primary, sidearm: sidearmForPrimary(slot.primary), grenade: slot.grenade };
     }
   } else {
@@ -289,7 +316,10 @@ function ambientStorage(): LoadoutStorage | null {
 function sanitizeCustom(value: unknown): CustomLoadout | null {
   if (typeof value !== 'object' || value === null) return null;
   const v = value as Record<string, unknown>;
-  if (typeof v.primary !== 'string' || !weaponById(v.primary)) return null;
+  // A slot naming a gated prototype is dropped at load, exactly like a renamed
+  // id — the store can never hand a prototype to resolveLoadout in the first
+  // place (resolveLoadout re-checks anyway; two layers beat one).
+  if (typeof v.primary !== 'string' || !isPlayableWeapon(v.primary)) return null;
   const grenade = (GRENADE_IDS as readonly string[]).includes(v.grenade as string)
     ? (v.grenade as GrenadeId)
     : GRENADE_IDS[0];

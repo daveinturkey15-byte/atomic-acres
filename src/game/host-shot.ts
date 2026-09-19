@@ -224,7 +224,7 @@ export interface ShotAdmissionCtx {
   readonly alive: boolean;
   /** Host time of death while down; null while alive. */
   readonly diedAt: number | null;
-  /** False when `claim.weaponId` is not in `weapons/catalog.ts:WEAPONS`. */
+  /** False when `claim.weaponId` is not a playable roster weapon (`weapons/roster.ts:isPlayableWeapon`) — unknown ids and gated prototypes alike. */
   readonly knownWeapon: boolean;
   readonly window: ShotWindow;
   /** The shooter's pose at `claim.firedAt`, already rewound by the caller. */
@@ -246,8 +246,8 @@ export function admitShot(c: ShotMsg, ctx: ShotAdmissionCtx | null): ShotRejectR
   ) return 'malformed';
 
   if (ctx === null) return 'unknown-shooter';
-  // A weapon nobody ships is a forged claim, not a content gap: every legal
-  // id is a row in the authored catalog and the client picked it from there.
+  // A weapon nobody ships — or one the roster gates — is a forged claim, not
+  // a content gap: every legal id is playable and the client picked it from there.
   if (!ctx.knownWeapon) return 'malformed';
   if (!ctx.matchActive) return 'match-inactive';
   if (c.life !== ctx.life) return 'life-epoch';

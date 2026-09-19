@@ -14,6 +14,8 @@
  */
 
 import { WEAPONS, type WeaponDef } from '../weapons/catalog';
+import { PROTOTYPE_WEAPON_IDS } from '../weapons/roster';
+import { SIDEARM_IDS } from './loadout';
 import type { ActorId, StreakDenialReason, TeamId, Vec3, WorldQuery } from './events';
 import type { GrenadeId } from './ordnance';
 import {
@@ -133,9 +135,12 @@ export const BOT_STREAK_TERMINAL_DENIALS: readonly StreakDenialReason[] = Object
  * flag added to someone else's table.
  */
 export const BOT_EXCLUDED_WEAPON_IDS: readonly string[] = Object.freeze([
-  // The pistol is every kit's sidearm (`game/loadout.ts:SIDEARM_IDS`); a bot
-  // that drew it as a primary would be carrying the backup gun and nothing else.
-  'duster',
+  // Sidearms (`game/loadout.ts:SIDEARM_IDS`): a bot that drew one as a primary
+  // would be carrying the backup gun and nothing else.
+  ...SIDEARM_IDS,
+  // Gated roster prototypes (`weapons/roster.ts`): players cannot select them,
+  // so bots cannot draw them either.
+  ...PROTOTYPE_WEAPON_IDS,
 ]);
 
 /** Guard against the exclusion list going stale, which is the §5.5 failure in

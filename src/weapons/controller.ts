@@ -2,10 +2,11 @@
  * Atomic Acres — first-person weapon lane controller (fan project inspired by
  * BO2-era arcade shooters, not a clone or port).
  *
- * Owns five viewmodel rigs (built by ./viewmodel from ./catalog), one transient
- * pool (./effects), and a private overlay scene rendered on top of the world.
- * After construction only visible flags, transforms, FOV, and preallocated
- * pool slots change: no new materials/geometries/lights, no scene add/remove.
+ * Owns one SHARED viewmodel rig per shipped builder — five total, keyed by
+ * behaviour family (`./families`) — one transient pool (./effects), and a
+ * private overlay scene rendered on top of the world. After construction only
+ * visible flags, transforms, FOV, and preallocated pool slots change: no new
+ * materials/geometries/lights, no scene add/remove.
  *
  * The BO2 feel, concretely:
  *  - hitscan, one ray per pellet from the camera, through a spread cone that
@@ -34,6 +35,8 @@ import {
   buildPistolViewmodel,
   type ViewmodelRig,
 } from './viewmodel';
+import { FAMILY_FALLBACK, FAMILY_VOICE, weaponFamily, type FallbackRig } from './families';
+import { isPlayableWeapon } from './roster';
 import { WeaponEffects } from './effects';
 import { OrdnanceInput } from './ordnance-input';
 import { AudioService, type AudioStats, type ShotFamily, type StepSurface, type StepOptions, type EnvironmentKind } from '../audio/service';
@@ -47,6 +50,22 @@ import {
 } from './catalog-carbine-loader';
 
 const DEG = Math.PI / 180;
+
+// Roster20: family-driven VIEWMODEL SHARING (`weapons/families.ts`). The five
+// shipped builders run ONCE each; every weapon whose family falls back to the
+// same rig renders that one group. 20 weapons ⇒ 5 rig graphs, not 20 — the
+// per-weapon eager rig was 15 duplicate graphs of build and disposal burden.
+// Mount transform, reload pose and visibility are per-ACTIVE-weapon state
+// driven every frame, so a shared group is indistinguishable from a private
+// one; `switchTo` resets the reload pose on the way out, and the canary swap
+// below never releases a rig another weapon still renders.
+const FALLBACK_RIG_BUILDERS: Record<FallbackRig, (mat: MaterialLibrary) => ViewmodelRig> = {
+  rifle: buildRifleViewmodel,
+  smg: buildSmgViewmodel,
+  shotgun: buildShotgunViewmodel,
+  sniper: buildSniperViewmodel,
+  pistol: buildPistolViewmodel,
+};
 const BASE_FOV = 72;
 const MISS_DISTANCE = 120;
 const MAX_DT = 0.05;
@@ -154,13 +173,6 @@ interface ControllerOpts {
   /** Test seam for the pending canary load (defaults to the real GLB loader). */
   carbineLoader?: (opts: CarbineLoaderOptions) => Promise<CatalogCarbineRig>;
 }
-/** Audio lane: weapon id to shot family. Unknown ids ride the rifle voice. */
-function familyOf(id: string): ShotFamily {
-  if (id === 'rattler' || id === 'coachman' || id === 'deadeye' || id === 'duster') return id;
-  return 'longhorn';
-}
-
-
 export class WeaponsController {
   readonly overlay: THREE.Scene;
   /** Plain readable state for the HUD lane: one live object, mutated in place. */
@@ -175,6 +187,8 @@ export class WeaponsController {
   private carbineCanaryRig: CatalogCarbineRig | null = null;
   private carbineCanaryRequested = false;
   private disposed = false;
+  /** The one rig per shipped builder, shared by every weapon of its family. */
+  private readonly rigs = new Map<FallbackRig, ViewmodelRig>();
 
   private visible = true;
   private triggerHeld = false;
@@ -238,13 +252,9 @@ export class WeaponsController {
     this.onHud = opts.onHud;
     this.onShot = opts.onShot ?? null;
 
-    this.weapons = WEAPONS.map((def) => {
-      let rig: ViewmodelRig;
-      if (def.id === 'rattler') rig = buildSmgViewmodel(opts.mat);
-      else if (def.id === 'coachman') rig = buildShotgunViewmodel(opts.mat);
-      else if (def.id === 'deadeye') rig = buildSniperViewmodel(opts.mat);
-      else if (def.id === 'duster') rig = buildPistolViewmodel(opts.mat);
-      else rig = buildRifleViewmodel(opts.mat);
+    this.overlay = new THREE.Scene();
+    this.weapons = WEAPONS.filter((def) => isPlayableWeapon(def.id)).map((def) => {
+      const rig = this.sharedRig(FAMILY_FALLBACK[weaponFamily(def.id)], opts.mat);
       return {
         def,
         rig,
@@ -260,17 +270,14 @@ export class WeaponsController {
     });
     for (let i = 0; i < IMPACT_RING; i++) this.impactPts.push(new THREE.Vector3());
 
-    this.overlay = new THREE.Scene();
     const hemi = new THREE.HemisphereLight(PAL.skyHorizon, PAL.bounce, 0.9);
     const key = new THREE.DirectionalLight(PAL.sunColor, 1.5);
     key.position.set(2, 3, 1);
     // Lights are siblings of the rigs and are never touched again: toggling a
     // rig's visibility cannot change the light set (the old project's program-
-    // invalidation bug came from hiding a root that owned lights).
-    for (const w of this.weapons) {
-      w.rig.group.visible = false;
-      this.overlay.add(w.rig.group);
-    }
+    // invalidation bug came from hiding a root that owned lights). Each shared
+    // rig group joined the overlay exactly once where it was built; the
+    // roster's first weapon starts visible.
     this.weapons[0].rig.group.visible = true;
     this.overlay.add(hemi);
     this.overlay.add(key);
@@ -318,6 +325,11 @@ export class WeaponsController {
           canaryRig.dispose();
           return;
         }
+        if (this.carbineCanaryRig) {
+          // One canary per controller; a late second load loses and releases itself.
+          canaryRig.dispose();
+          return;
+        }
         const rifle = this.weapons.find((w) => w.def.id === 'longhorn');
         if (!rifle) {
           canaryRig.dispose();
@@ -327,28 +339,42 @@ export class WeaponsController {
         this.overlay.add(canaryRig.group);
         canaryRig.group.position.copy(oldRig.group.position);
         canaryRig.group.quaternion.copy(oldRig.group.quaternion);
-        canaryRig.group.visible = oldRig.group.visible;
 
-        // Never overlap both guns: hide and remove old fallback rig immediately.
-        // The procedural rifle owns every geometry under its group (boxes,
-        // rounded boxes, tubes, plus its hands canary geometries); its materials
-        // are shared singletons. Dispose ONLY the owned geometries so sibling
-        // GPU resources stay valid. A prior GLB rig owns its release instead.
-        oldRig.group.visible = false;
-        this.overlay.remove(oldRig.group);
-        const oldAsCanary = oldRig as unknown as Partial<CatalogCarbineRig>;
-        if (typeof oldAsCanary.dispose === 'function' && oldAsCanary.isGLTFAsset === true) {
-          (oldAsCanary as CatalogCarbineRig).dispose();
-        } else {
-          disposeOwnedGeometries(oldRig.group);
-        }
-
+        // Family-shared rig: the procedural rifle group is still rendered by
+        // every other rifle-family weapon, so it is NEVER hidden or released
+        // here directly — a blind hide would blank the ACTIVE weapon when it
+        // shares the family (a mid-match canary adopt must not eat the gun on
+        // screen). Adopt first, then re-assert the overlay's visibility from
+        // the live switch state: exactly the active weapon's current rig
+        // shows, and an inactive canary can never linger visible. The old rig
+        // stays owned by this.rigs and is disposed exactly once, in dispose();
+        // no material is ever released (they are the shared library's
+        // singletons).
         rifle.rig = canaryRig;
+        for (const w of this.weapons) w.rig.group.visible = false;
+        this.weapons[this.active].rig.group.visible = this.visible;
+
         this.carbineCanaryRig = canaryRig;
       }).catch((err) => {
         console.warn('[WeaponsController] Carbine canary load failed, keeping fallback:', err);
       });
     }
+  }
+
+  /**
+   * The one rig per shipped builder: created on first reference, added to the
+   * overlay exactly once, shared by every weapon of its family. Exactly five
+   * of these exist for the full playable roster.
+   */
+  private sharedRig(key: FallbackRig, mat: MaterialLibrary): ViewmodelRig {
+    let rig = this.rigs.get(key);
+    if (rig === undefined) {
+      rig = FALLBACK_RIG_BUILDERS[key](mat);
+      rig.group.visible = false;
+      this.rigs.set(key, rig);
+      this.overlay.add(rig.group);
+    }
+    return rig;
   }
 
   private rand(): number {
@@ -1075,13 +1101,22 @@ export class WeaponsController {
     return this.carbineCanaryRig;
   }
 
-  /** Release the context, every voice, and any dynamically loaded canary rigs. */
+  /**
+   * Release the context, every voice, and every geometry this lane OWNS —
+   * exactly once. The GLB canary releases its own subtree; each shared family
+   * rig's geometries are disposed once via the map (never per weapon, never
+   * per visible flag). Materials belong to the shared `MaterialLibrary` and
+   * outlive this controller — only geometries are touched.
+   */
   dispose(): void {
+    if (this.disposed) return;
     this.disposed = true;
     if (this.carbineCanaryRig) {
       this.carbineCanaryRig.dispose();
       this.carbineCanaryRig = null;
     }
+    for (const rig of this.rigs.values()) disposeOwnedGeometries(rig.group);
+    this.rigs.clear();
     this.disposeAudio();
   }
 
@@ -1093,6 +1128,6 @@ export class WeaponsController {
   private playShot(id: string): void {
     // Layered authored bank per weapon family (transient + mechanical +
     // body + tail); procedural fallback only when buffers are not loaded.
-    this.audioSvc.shot(familyOf(id));
+    this.audioSvc.shot(FAMILY_VOICE[weaponFamily(id)]);
   }
 }

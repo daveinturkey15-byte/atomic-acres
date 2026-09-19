@@ -13,6 +13,7 @@
  */
 
 import { WEAPONS, type WeaponDef } from '../weapons/catalog';
+import { isPlayableWeapon } from '../weapons/roster';
 
 // ---------------------------------------------------------------------------
 // Tuned numbers (§5.9) — old `death-drops.ts`, unchanged
@@ -40,6 +41,9 @@ const WEAPON_BY_ID: ReadonlyMap<string, WeaponDef> = new Map(WEAPONS.map((w) => 
 
 /** A weapon's whole issue, magazine plus reserve. The ceiling any drop can hold. */
 export function fullRounds(weaponId: string): number {
+  // Drops are host-built from gated kits, so a prototype drop cannot arise;
+  // this is the clamp that keeps one dry if it ever does — 0, like unknown ids.
+  if (!isPlayableWeapon(weaponId)) return 0;
   const w = WEAPON_BY_ID.get(weaponId);
   return w === undefined ? 0 : w.magSize + w.startReserve;
 }

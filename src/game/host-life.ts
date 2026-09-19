@@ -26,6 +26,7 @@
 
 import { EYE_HEIGHT } from '../core/layout';
 import { WEAPONS, type WeaponDef } from '../weapons/catalog';
+import { isPlayableWeapon } from '../weapons/roster';
 import type {
   ActorId, DamageCause, DamageEvent, GameBus, GameEvent, HitZone, MatchPhaseName,
   SpawnReason, TeamId, Vec3, WorldQuery,
@@ -191,7 +192,9 @@ export class HostLife {
     weaponId: string, cause: DamageCause, now: number, sourceX: number, sourceZ: number,
     preResolved?: number,
   ): void {
-    const def = WEAPON_BY_ID.get(weaponId);
+    // Second layer behind admission (`host.ts:submitShot`): a gated prototype
+    // resolves no damage — exactly like an unknown id, never like a gun.
+    const def = isPlayableWeapon(weaponId) ? WEAPON_BY_ID.get(weaponId) : undefined;
     if (def === undefined && preResolved === undefined) return;
     // Your own grenade hurts you. `areHostile` answers false for a === b so a
     // bullet can never self-hit, but a blast has no such geometry, and a frag

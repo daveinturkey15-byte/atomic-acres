@@ -45,7 +45,7 @@
 export * from './host-ports';
 export * from './host-streaks';
 
-import { WEAPONS, type WeaponDef } from '../weapons/catalog';
+import { isPlayableWeapon } from '../weapons/roster';
 import {
   SHOT_REJECT_LABELS,
   type ActorId, type GameEvent, type StreakDenialReason, type TeamId, type WorldQuery,
@@ -64,9 +64,6 @@ import { HostOrdnance } from './host-ordnance';
 import { isOrdnanceId } from './ordnance';
 import { PRIMARY_IDS } from './loadout';
 import { normalizeStance, type PlayerStance } from '../net/room-core';
-
-/** id → definition, DERIVED from the authored list (§5.5). */
-const WEAPON_BY_ID: ReadonlyMap<string, WeaponDef> = new Map(WEAPONS.map((w) => [w.id, w]));
 
 /** The one shape of "yes". A refusal always carries its reason and label. */
 const ADMITTED: ShotAdmission = Object.freeze({ accepted: true, reason: null, label: null });
@@ -224,9 +221,12 @@ export class GameHost {
   submitShot(shooterId: ActorId, claim: ShotMsg, receivedAt: number = this.clock): ShotAdmission {
     const a = this.life.actors.get(shooterId) ?? null;
     const ordnance = isOrdnanceId(claim.weaponId);
+    // Fail closed: a gated roster prototype (`weapons/roster.ts`) is not a
+    // playable weapon, so a forged bullet claim naming one reads `malformed`
+    // exactly like an unknown id — hiding it in the menu gates nothing alone.
     const reason = admitShot(claim, a === null ? null : {
       matchActive: this.match.phase === 'active', life: a.health.life, alive: a.health.alive,
-      diedAt: a.health.diedAt, knownWeapon: ordnance || WEAPON_BY_ID.has(claim.weaponId),
+      diedAt: a.health.diedAt, knownWeapon: ordnance || isPlayableWeapon(claim.weaponId),
       window: a.window, pose: a.poses.at(claim.firedAt), receivedAt,
     });
     if (reason !== null) {
