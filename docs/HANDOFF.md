@@ -390,3 +390,21 @@ _heap*.mjs instruments, now tracked); Runtime.getHeapUsage is BLIND to typed-arr
 external memory (a 4.4 MB/min Uint8Array leak read flat) - a GPU or ArrayBuffer leak
 needs a different metric; the shim retires the oldest same-function registration, not
 the caller's own - harmless only while RenderTarget.dispose dispatches on the target.
+
+**03:55 (19 Sep).** Geometry repair HOLDS in one round and is committed (see its
+message): stair footprints exported and asserted, orange flight along the back wall,
+white upper front wall closed (0 gaps), 14 mannequin colliders; dressing lane's four
+files landed with it. OPEN: descent direction contradicts HANDEDNESS.md (outboard vs
+toward the garage - builder's case in the commit), turf roll + crate stack crowd the
+orange flight, white house round-ring vs L-block. Hardening lane: H2-H5 committed
+(`5856fcc`); H1's soak gate was refuted on one clause (its frame floor counted its OWN
+rAF tick, so a dead game loop read as flat) - fixed by the orchestrator: liveness now
+comes from __NT.stats().renderCallsTotal (the game's own render() total), the JS gate
+needs slope >= 0.5 WITH r2 >= 0.25 (or >= 1.0 at any fit; two clean runs read 0.27 and
+0.38 at r2 0.05), the process gate fires at >= 60% of steps up; proven three ways:
+clean 120 s PASS (0.182 MB/min, 182k render calls), --kill-loop 60 s FAILS with 0 game
+render calls while the page ticked 3720 frames, --inject-kb-per-s 200 FAILS at 12.4
+MB/min r2 0.965. `npm run soak` is the long gate (3.5 min), not in check/verify.
+Running: characters (`wf_e07c393b-832`), AO round 2 integration (`wf_d60fcfb8-ef9`).
+Next: street / exteriors / sky gauntlets once post.ts is free; a vehicles budget lane
+(310 objects, the other S9 lever).
