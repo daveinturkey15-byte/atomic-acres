@@ -154,9 +154,44 @@ export function buildPost(
  * enclosed station in the list is interiorOrange, whose p5 at r = 3.0 is 0.672. Left
  * at 0.35 the ramp's bottom third addressed values the term no longer produces, so
  * real contact only ever reached half of AO_STRENGTH.
+ *
+ * ----------------------------------------------------------------------------------
+ * PHOTOGRAPH THE TERM WITH `__NT.goto()`, NEVER WITH `__NT.teleport()`.
+ *
+ * The weapon overlay composites into the same frame-buffer AFTER the post chain, so on
+ * any frame reached by `teleport()` the viewmodel is painted on top of the `?post=ao`
+ * diagnostic in colour, and it is mostly near-black. Measured 2026-09-19 on this
+ * harness: a teleport frame is 5.8% non-grey, a `goto()` frame is 0.00% (goto calls
+ * `weapons.setVisible(false)`; teleport does not). p5 lives inside that 5.8%, so p5 of
+ * a teleport frame is THE GUN, not the term. Every percentile at or below p06 quoted
+ * from a teleport frame in an earlier record is partly the viewmodel - including the
+ * "measured p5 is 0.167, so AO_DEEP does not satisfy its own derivation" finding, which
+ * this round retracts: on a clean `goto()` frame at radius 3.0 / thickness 0.6 the
+ * interiorOrange p5 is 0.6689, i.e. the shipped 0.672 DID satisfy the rule. The rule is
+ * sound; the route it was re-measured on was not. If a station you need is not in
+ * `stations.ts` (whitePoolRoom, orangeKitchen) a teleport is the only route - then mask
+ * non-grey pixels (max-min > 6) before taking any percentile.
+ *
+ * RE-MEASURED AGAIN 2026-09-19 at radius 3.0 / thickness 3.0 (the ao-thickness round),
+ * `goto()` route, whole frame, viewmodel absent. Raising `thickness` moves the whole
+ * distribution down because room-scale occluders stop being discarded, so AO_DEEP has
+ * to move with it or the ramp's whole bottom half clamps to full AO_STRENGTH:
+ *
+ *   station           p1     p5     p25    p50     (thickness 0.6 -> 3.0)
+ *   interiorOrange    0.487  0.669  0.913  1.002    0.111  0.194  0.414  0.703
+ *   whitePoolRoom*    0.010  0.505  0.906  1.002    0.010  0.254  0.623  0.781
+ *   spawnA            0.298  0.781  1.002  1.002    0.298  0.596  0.906  1.002
+ *   turningHead       0.374  0.906  1.002  1.002    0.374  0.686  1.002  1.002
+ *   (* teleport route, viewmodel masked - not a station)
+ *
+ * interiorOrange is still the most enclosed station, so AO_DEEP = 0.194 by the same
+ * rule that produced 0.672. Left at 0.672 while the distribution moves down, 48.5% of
+ * that frame would sit at exactly 1 - AO_STRENGTH with no gradient inside it; at 0.194
+ * it is 5.4%, against 5.7% before this round - i.e. the deepest creases still reach
+ * full strength and everything above them keeps a ramp.
  */
 const AO_OPEN = 1.0;        // a fully unoccluded surface
-const AO_DEEP = 0.672;      // p5 of the most enclosed station; below this it saturates
+const AO_DEEP = 0.194;      // p5 of the most enclosed station; below this it saturates
 const AO_STRENGTH = 0.55;   // a fully occluded contact lands at 1 - this
 
 type Listener = (event: unknown) => void;
@@ -265,6 +300,20 @@ function buildChain(
     // the same frame's floor fell 122.4 -> 99.7 and its ceiling 45.0 -> 39.7. The
     // radius bought real floor/ceiling falloff and bought nothing at all on the walls.
     //
+    // So thickness matches the radius: 3.0. Measured single-variable on goto() frames
+    // 2026-09-19, raw denoised term (AO_DEEP temporarily 0 so nothing clamps): the
+    // interiorOrange wall FIELD goes from 1.002 - no occlusion at all, 100% of it above
+    // display 220 - to a mean of 0.845 that ramps 0.638 (p5) to 0.968 (p95), and the
+    // white house moves for the first time (whitePoolRoom wall field 1.001 -> 0.903,
+    // its lower half 1.000 -> 0.758). Exteriors barely notice, because an open view has
+    // no room-scale occluder to admit: sunlit asphalt 0.999 -> 0.994, sunlit lawn
+    // 0.990 -> 0.964, the sky and the sunlit white wall bit-identical at 1.002, and the
+    // distance moves the RIGHT way (mountains 0.976 -> 0.975 raw, and their remapped
+    // multiplier rises 0.957 -> 0.982 once AO_DEEP moves with it). The classic failure
+    // mode of a wide thickness - false occlusion across a depth discontinuity, a dark
+    // halo where a near silhouette meets a far background - was looked for at the coach
+    // rooflines and the lamp standards at turningHead and did not appear.
+    //
     // The normal texture is not optional in
     // practice: GTAONode reconstructs normals from depth when it is passed null, and
     // on this stack that path emitted exactly ZERO everywhere (measured through a raw
@@ -274,7 +323,7 @@ function buildChain(
     aoNode.radius.value = 3.0;
     aoNode.samples.value = 32;             // 16 and 24 both speckle at this radius
     aoNode.distanceExponent.value = 1.4;   // bias toward near contacts
-    aoNode.thickness.value = 0.6;
+    aoNode.thickness.value = 3.0;          // match the radius; see the block above
 
     // GTAO's own output does not use its range evenly: see the measured percentile
     // table above AO_OPEN. Multiplying colour by the raw term wastes it - the right

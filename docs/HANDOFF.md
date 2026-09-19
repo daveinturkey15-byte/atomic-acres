@@ -408,3 +408,22 @@ MB/min r2 0.965. `npm run soak` is the long gate (3.5 min), not in check/verify.
 Running: characters (`wf_e07c393b-832`), AO round 2 integration (`wf_d60fcfb8-ef9`).
 Next: street / exteriors / sky gauntlets once post.ts is free; a vehicles budget lane
 (310 objects, the other S9 lever).
+
+**04:05 (19 Sep).** AO round 2 (`wf_d60fcfb8-ef9`, thickness 0.6 -> 3.0, AO_DEEP re-derived
+0.672 -> 0.194 on a CLEAN goto() frame - and the 'AO_DEEP never satisfied its rule' finding
+is RETRACTED: on the clean route at thickness 0.6 the p5 was 0.669, the shipped 0.672
+was right; the 0.167 was itself a teleport-frame reading). Gain, measured: interior wall
+fields occlude for the first time (interiorOrange wall gradient p95-p5 12.3 -> 24.0
+against 24.1 on the reference frame; whitePoolRoom 11 -> 29 - the white house moved for
+the first time), light pool inverted the right way (0.65 -> 1.07), no halo, sky
+bit-identical, mountains +2.5%, draws unchanged. Cost: the two rects that used to CLAMP
+got lighter (crate base 65 -> 71, threshold floor +7%), the crisp junction creases of the
+r=0.9 kernel are gone, and a NEW false wash at midStreet - a flat coach panel reads 229 ->
+160 with nothing occluding it (grazing-angle self-occlusion at thickness 3). Integration:
+'improved', average 2.2 flat, NO single lever fixes both halves - every probe (AO_CURVE,
+distanceExponent, denoise radius) trades wall field against contact on one axis.
+Committed as the improved state. Round 3 launched: TWO-SCALE AO - keep the far term
+(r 3 / t 3, the wall field) and multiply in a near term (r 0.9 / t 0.6, the kernel that
+drew the creases and the crate base), one bounded correction. aperture/wall 0.82 vs the
+references' 1.33-1.67 is NOT an occlusion problem: interiors need enclosure-aware
+ambient (lighting lane, after the street gauntlet).
