@@ -2,18 +2,83 @@
   "schema_version": 1,
   "project": "nuketown-2025-standalone",
   "checkpoint": "checkpoints/2026-09-19-codex-recovery",
-  "source_commit": "f7d2c57b8e13eb583e532955774b745489c91c11",
+  "source_commit": "0138f85e151ea495f5bf2dfdba91c9aa134af1c3",
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4191/",
-  "status": "checkpoint G promoted; continued refinement active",
+  "status": "checkpoint J live and smoke-verified; four bounded provider lanes active",
   "owner": "Codex",
-  "stop_state": "ACTIVE: 4191 still frozen G. H3 real resume16/16 accepted for source checkpoint, not yet promoted. Root integrates fence canary; GLM max orange-house batching isolated, independent native review. Muse lighting critique remains rejected.",
+  "stop_state": "CONTINUE:4191 live frozenJ0138f85. Fresh rebuild all92runtimefiles match tested4192. Stock Chrome menu/solo/deploy active match zero errors, actual frames viewed. Source runtime clean. Four provider jobs listed in active_lanes; inspect summaries before dispatch, do not duplicate. Tree/scene visual quality remains OPEN. Integrate only after independent review, CPU proofs, candidate browser gates and source freeze. G fallback preserved.",
   "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z",
   "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
   "inspection_time": "2026-09-19T15:00:00+01:00",
-  "lease_updated_at": "2026-09-19T14:21:43.365920+00:00",
-  "source_checkpoint": "f7d2c57b8e13eb583e532955774b745489c91c11",
+  "lease_updated_at": "2026-09-19T15:15:05.641948+00:00",
+  "source_checkpoint": "0138f85e151ea495f5bf2dfdba91c9aa134af1c3",
   "inspection_report": "docs/handoff/INSPECTION-2026-09-19.md",
-  "bundle_sha256": "a0c339ffe968153c1bc82afa765cc81db3f98b148e12f57fdb10d52614fd2494"
+  "bundle_sha256": "b59626e64bf9d57d59dd4f40d0db18431dd97e6cf3cc19ca24f6d6258d8ec0d1",
+  "artifact_checkpoint": "J",
+  "active_lanes": [
+    {
+      "runId": "delegated-omp-glm-reflection-lifetime-7a287e5c28c84928aaa8533975c9841e",
+      "lane": "glm-reflection-lifetime",
+      "requestedModel": "zai/glm-5.3-flash",
+      "requestedEffort": "max",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-reflection-lifetime-20260919",
+      "promptFile": "C:\\Users\\david\\Documents\\Codex\\2026-09-19\\hi\\work\\glm-reflection-lifetime.md",
+      "startedAt": "2026-09-19T15:08:56+00:00",
+      "minutes": 25,
+      "outcome": null
+    },
+    {
+      "runId": "delegated-omp-glm-respawn-delay-22013b3bc2c64e63a9f4f28340530fd5",
+      "lane": "glm-respawn-delay",
+      "requestedModel": "zai/glm-5.3-flash",
+      "requestedEffort": "max",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "promptFile": "C:\\Users\\david\\Documents\\Codex\\2026-09-19\\hi\\work\\glm-respawn-delay.md",
+      "startedAt": "2026-09-19T15:08:46+00:00",
+      "minutes": 20,
+      "outcome": null
+    },
+    {
+      "runId": "delegated-omp-glm-searsia-canary-61732419f2e742dfaa6f3d697fac2f8b",
+      "lane": "glm-searsia-canary",
+      "requestedModel": "zai/glm-5.3-flash",
+      "requestedEffort": "max",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-agy-desert-tree-20260919",
+      "promptFile": "C:\\Users\\david\\Documents\\Codex\\2026-09-19\\hi\\work\\glm-searsia-canary.md",
+      "startedAt": "2026-09-19T15:03:03+00:00",
+      "minutes": 25,
+      "outcome": null
+    },
+    {
+      "runId": "delegated-omp-muse-hand-geometry-e6e76aca8b304c6cabd65d3f351da206",
+      "lane": "muse-hand-geometry",
+      "requestedModel": "meta-contributor/muse-spark-1.3-contributor",
+      "requestedEffort": "xhigh",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "promptFile": "C:\\Users\\david\\Documents\\Codex\\2026-09-19\\hi\\work\\muse-hand-geometry.md",
+      "startedAt": "2026-09-19T15:10:46+00:00",
+      "minutes": 25,
+      "outcome": null
+    }
+  ],
+  "heartbeat": {
+    "id": "standalone-game-refinement",
+    "interval_minutes": 15,
+    "status": "ACTIVE"
+  },
+  "resource_sample": {
+    "free_ram_gib": 34.37,
+    "gpu_used_mib": 5078,
+    "gpu_total_mib": 16303
+  },
+  "next_actions": [
+    "Reconcile four provider summaries and inspect actual diffs; accepted J stays live",
+    "Respawn delay: actual authority negative/positive proof then candidate real death/respawn",
+    "Searsia: verify provenance/budgets/CPU memory then serial in-game placement/render canary",
+    "Muse hands: mesh/envelope review then all-five-weapon idle/ADS/reload captures",
+    "Reflection lifetime: source ownership proof then GPU diagnostic; visual probe stays off",
+    "Continue backlog: trees/facades, viewmodel/operator fidelity, audible sound tuning, two-device multiplayer"
+  ]
 }

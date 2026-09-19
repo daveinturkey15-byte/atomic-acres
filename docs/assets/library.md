@@ -17,7 +17,7 @@ profiles, logs, source archives, and audition-only media are excluded from runti
 claims.
 
 `sourceCommit` and `sourceCommitAnchor` are both the current dirty-tree anchor
-`deb30fd`. The previous inventory baseline was
+`0138f85`. The previous inventory baseline was
 `232e13bc48b5e9ba5607a566540ac55054131312`; it is retained in `library.json` because
 older entries were measured against that baseline. `sourceDirty: true` means this is
 an anchor only, not an exact shipped-build record. Root owns final copy, integration,

@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-19",
   "project": "nuketown-2025-standalone",
   "sourceTree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
-  "sourceCommit": "deb30fd",
+  "sourceCommit": "0138f85e151ea495f5bf2dfdba91c9aa134af1c3",
   "stateDefinitions": {
     "verified-source": "File and provenance evidence are present; runtime integration is not claimed.",
     "integrated": "Repository code explicitly references or loads the path; visual acceptance is separate.",
@@ -1420,7 +1420,7 @@
       ],
       "runtimeRole": "candidate fence-board diffuse, normalGL and roughness response",
       "state": "integrated",
-      "decision": "I3 modest visual refinement accepted in three root-viewed checkpoint-j-fence frames; final artifact promotion remains separately gated",
+      "decision": "Root-viewed I3 fence refinement accepted and promoted in checkpoint J0138f85; prior I1/I2 rejected.",
       "visualReview": "I1 anisotropic oversized grain and I2 internal photo seams rejected. I3 uses complete JPEG seam scanning and 56px plank-interior strips with uniform U/V art scaling; root viewed all three frames.",
       "physicalSizeMeters": [
         2,
@@ -2304,8 +2304,8 @@
     }
   ],
   "worktreeState": "dirty recovery tree; sourceCommit/sourceCommitAnchor fc8c4c8 are current anchors only; previous inventory baseline 232e13bc48b5e9ba5607a566540ac55054131312 is retained for older entries; entries describe measured on-disk artifacts and root integration evidence, not an exact shipped build",
-  "sourceCommitAnchor": "deb30fd",
-  "sourceDirty": true,
+  "sourceCommitAnchor": "0138f85e151ea495f5bf2dfdba91c9aa134af1c3",
+  "sourceDirty": false,
   "sourceCommitStatus": "current dirty-tree anchor fc8c4c8; previous inventory baseline was 232e13bc48b5e9ba5607a566540ac55054131312; this inventory is not an exact shipped-build claim",
   "previousInventorySourceCommitAnchor": "232e13bc48b5e9ba5607a566540ac55054131312"
 }
