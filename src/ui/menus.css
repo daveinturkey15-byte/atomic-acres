@@ -259,6 +259,212 @@
   margin-top: 2px;
 }
 
+/* --- Loadout: kit cards, trait bars, tactical choice --- */
+/* All content is derived at render time (src/ui/loadout-panel.ts); these
+ * styles only compose the same quiet card language as the map selector. */
+#start .aa-loadout {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: stretch;
+  width: min(720px, 100%);
+}
+
+#start .aa-loadhead {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #8faec9;
+}
+
+#start .aa-loadsub {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+  color: #8faec9;
+  margin-top: 2px;
+}
+
+#start .aa-kits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 10px;
+}
+
+#start .aa-kit {
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #e8eef7;
+  background: rgba(12, 18, 26, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+#start .aa-kit:hover {
+  background: rgba(18, 28, 40, 0.96);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+#start .aa-kit.aa-selected {
+  border-color: #ff9c4a;
+  background: rgba(20, 30, 44, 0.96);
+  box-shadow: 0 0 0 1px #ff9c4a, 0 8px 24px rgba(0, 0, 0, 0.6);
+}
+
+#start .aa-kit-role {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: #8faec9;
+}
+
+#start .aa-kit-title {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #f2f6fb;
+}
+
+#start .aa-kit-summary {
+  font-size: 11px;
+  line-height: 1.45;
+  color: rgba(232, 238, 247, 0.62);
+  min-height: 2.9em;
+}
+
+#start .aa-kit-weapon {
+  display: flex;
+  flex-direction: column;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  color: #ffd9a8;
+}
+
+#start .aa-kit-wstats {
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(232, 238, 247, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+#start .aa-kit-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+#start .aa-kitbar {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #8faec9;
+}
+
+#start .aa-kitbar-cells {
+  display: flex;
+  gap: 2px;
+}
+
+#start .aa-kitbar-cells span {
+  width: 13px;
+  height: 4px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+#start .aa-kitbar-cells span.on {
+  background: #ff9c4a;
+}
+
+#start .aa-kit-grenade {
+  margin-top: auto;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #4ec9c0;
+}
+
+#start .aa-tacs {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+}
+
+#start .aa-tac {
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #e8eef7;
+  background: rgba(12, 18, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 2px;
+  padding: 7px 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+#start .aa-tac:hover {
+  background: rgba(18, 28, 40, 0.95);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+#start .aa-tac.aa-selected {
+  border-color: #4ec9c0;
+  background: rgba(16, 28, 36, 0.95);
+  box-shadow: 0 0 0 1px #4ec9c0;
+}
+
+#start .aa-tac-name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #f2f6fb;
+}
+
+#start .aa-tac-line {
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  color: rgba(232, 238, 247, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+#start .aa-loadlethal {
+  margin-top: -2px;
+}
+
+#start .aa-loadline {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  text-align: center;
+  color: #ffd9a8;
+}
+
+#start .aa-loadnote:empty {
+  display: none;
+}
+
 /* --- Settings, Forms and Input Controls --- */
 #start .aa-setting {
   display: flex;
@@ -435,6 +641,8 @@
 /* --- Keyboard Focus Accessibility --- */
 #start .aa-btn:focus-visible,
 #start .aa-map:focus-visible,
+#start .aa-kit:focus-visible,
+#start .aa-tac:focus-visible,
 #start .aa-tab:focus-visible,
 #start .aa-setting input[type="range"]:focus-visible,
 #start .aa-setting input[type="checkbox"]:focus-visible,
@@ -569,6 +777,10 @@
   #start .aa-map { width: 220px; }
   #start .aa-thumb-wrap { height: 120px; }
   #start .aa-thumb { width: 99px; height: 150px; }
+  #start .aa-loadout { gap: 8px; }
+  #start .aa-kits { gap: 8px; }
+  #start .aa-kit { padding: 8px 10px; }
+  #start .aa-kit-summary { min-height: 0; }
 }
 
 @media (max-width: 600px) {

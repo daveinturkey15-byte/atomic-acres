@@ -23,6 +23,7 @@ import {
   type BotTeamLayout, type MatchMode, type SoloSetup,
 } from '../game/rules';
 import { formatClock } from '../game/match';
+import { buildLoadoutSection } from './loadout-panel';
 import { loadSoloSetupRaw, saveSoloSetupRaw } from './settings';
 
 export interface SoloSetupPanelDeps {
@@ -85,6 +86,9 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
   title.className = 'aa-h2';
   title.textContent = 'Solo vs bots';
   root.append(title);
+  // The loadout section persists its own store (game/loadout.ts) and applies
+  // to both panel modes: a loadout is the local player's, in solo and lobby.
+  root.append(buildLoadoutSection().root);
 
   const refreshers: Array<() => void> = [];
   const change = (patch: Partial<SoloSetup>): void => {
