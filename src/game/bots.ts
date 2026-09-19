@@ -27,14 +27,15 @@
  * deliberately not taken yet.
  */
 
-import type { ActorId, TeamId, Vec3, WorldQuery } from './events';
+import type { ActorId, StreakDenialReason, TeamId, Vec3, WorldQuery } from './events';
 import type { ActorSnapshot } from './host-ports';
 import { SPAWN_POINTS } from './spawns';
 import { TEAM_A, TEAM_B } from './rules';
 import {
   BOT_AIM_ORIGIN_Y, BOT_ARSENAL, BOT_CHEST_Y, BOT_GOAL_REACHED_M, BOT_GOAL_TIMEOUT_MS,
   BOT_REINFORCE_EVERY_DEATHS, BOT_SIDE_HYSTERESIS_MS, BOT_SPEED_MS, BOT_STEP_UP_M,
-  BOT_FIRE_RANGE_M, BOT_STRAFE_SWAP_MS, BOT_TARGET_MEMORY_MS, BOT_FALLBACK_HP, botIntent, senseBot,
+  BOT_FIRE_RANGE_M, BOT_STREAK_RETRY_MS, BOT_STREAK_TERMINAL_DENIALS, BOT_STRAFE_SWAP_MS,
+  BOT_TARGET_MEMORY_MS, BOT_FALLBACK_HP, botIntent, senseBot,
   type BotActorView, type BotIntent, type BotRuntime,
 } from './bot-sense';
 
@@ -48,7 +49,8 @@ export interface BotHost {
   updatePose(id: ActorId, x: number, y: number, z: number, at?: number): void;
   submitInput(id: ActorId, msg: { type: 'input'; seq: number; mx: number; mz: number; yaw: number; pitch: number; fire: boolean; jump: boolean }): void;
   submitShot(id: ActorId, claim: { type: 'shot'; seq: number; life: number; weaponId: string; firedAt: number; ox: number; oy: number; oz: number; dx: number; dy: number; dz: number }, receivedAt?: number): unknown;
-  submitStreakIntent(id: ActorId, msg: { type: 'streak-intent'; slot: number; toggle: boolean }): void;
+  /** The refusal, or `null` when the press was admitted. See the backoff in `tick`. */
+  submitStreakIntent(id: ActorId, msg: { type: 'streak-intent'; slot: number; toggle: boolean }): StreakDenialReason | null;
 }
 
 export interface BotDirectorOptions {
@@ -76,6 +78,12 @@ export class BotDirector {
   private readonly m = {
     botTicks: 0, sightTicks: 0, engageTicks: 0, fireTicks: 0,
     shots: 0, streakPresses: 0, blockedSteps: 0,
+    // `streakPresses` cannot tell four charges spent from four refused.
+    // NOT named `streakDenied`: `session.ts:counters()` spreads these metrics
+    // OVER `session-log.ts`'s tally, which already owns that key — cumulative
+    // there, rebuilt with every director here. The clash would have replaced
+    // the number the proof reads with one that resets on every rematch.
+    streakRefused: 0, streakBlocks: 0,
   };
 
   constructor(opts: BotDirectorOptions) {
@@ -107,6 +115,7 @@ export class BotDirector {
       alive: true, life: 1, targetId: null, targetSince: 0, lastSeen: -Infinity,
       side, sideWant: side, sideSince: 0, goalX: 0, goalZ: 0, goalAt: 0,
       strafe: 1, strafeAt: 0, inputSeq: 0, shotSeq: 0, cooldown: 0,
+      streakHoldSlot: null, streakHoldUntil: 0, streakBlocked: false,
     };
     this.bots.push(bot);
     this.opts.host.addActor(id, team, { bot: true });
@@ -121,6 +130,11 @@ export class BotDirector {
     b.alive = true;
     b.targetId = null;
     b.goalAt = 0;
+    // A new life clears every streak refusal: `dead` is answered by this very
+    // event, and an unexpired slot hold describes a world that no longer is.
+    b.streakBlocked = false;
+    b.streakHoldSlot = null;
+    b.streakHoldUntil = 0;
   }
 
   /**
@@ -206,7 +220,7 @@ export class BotDirector {
         this.pickGoal(b, now);
       }
 
-      const ready = this.readySlot(s);
+      const ready = this.readySlot(b, s, now);
       const intent = botIntent(b, sense, now, s.hp, ready);
       b.yaw = intent.yaw;
       b.pitch = intent.pitch;
@@ -221,15 +235,53 @@ export class BotDirector {
       if (intent.fire && sense.target !== null) this.shoot(b, sense.target, now);
       if (intent.streakSlot !== null) {
         this.m.streakPresses++;
-        this.opts.host.submitStreakIntent(b.id, { type: 'streak-intent', slot: intent.streakSlot, toggle: false });
+        const refused = this.opts.host.submitStreakIntent(
+          b.id, { type: 'streak-intent', slot: intent.streakSlot, toggle: false },
+        );
+        this.noteStreakAnswer(b, intent.streakSlot, refused, now);
       }
     }
   }
 
-  /** First slot holding a charge, 1-based, or null. Derived from the host's row. */
-  private readySlot(s: ActorSnapshot): number | null {
-    for (const slot of s.slots) if (slot.charges > 0) return slot.slot;
+  /**
+   * First slot holding a charge that is not under a refusal, 1-based, or null.
+   * Derived from the host's row; the holds are this director's own memory of
+   * what the host already said no to.
+   */
+  private readySlot(b: BotRuntime, s: ActorSnapshot, now: number): number | null {
+    if (b.streakBlocked) return null;
+    for (const slot of s.slots) {
+      if (slot.charges <= 0) continue;
+      if (slot.slot === b.streakHoldSlot && now < b.streakHoldUntil) continue;
+      return slot.slot;
+    }
     return null;
+  }
+
+  /**
+   * What the host answered, remembered. A refused charge stays banked, so
+   * without this the same slot is re-pressed on the very next tick and refused
+   * again — 20 presses and 20 feed rows a second for as long as the refusal
+   * holds. The gate was never wrong; the retry cadence was.
+   *
+   * Two horizons: a refusal that can clear on its own gets
+   * `BOT_STREAK_RETRY_MS` on that slot, one that cannot clear this life
+   * (`BOT_STREAK_TERMINAL_DENIALS`) stops the bot until it respawns. An
+   * admitted press clears both, so the next charge starts clean.
+   */
+  private noteStreakAnswer(b: BotRuntime, slot: number, refused: StreakDenialReason | null, now: number): void {
+    if (refused === null) {
+      b.streakHoldSlot = null;
+      b.streakHoldUntil = 0;
+      return;
+    }
+    this.m.streakRefused++;
+    b.streakHoldSlot = slot;
+    b.streakHoldUntil = now + BOT_STREAK_RETRY_MS;
+    if (BOT_STREAK_TERMINAL_DENIALS.includes(refused)) {
+      b.streakBlocked = true;
+      this.m.streakBlocks++;
+    }
   }
 
   /**

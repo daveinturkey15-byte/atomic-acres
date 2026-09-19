@@ -358,16 +358,11 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
     },
   };
 
-  try {
-    // QA surface, additive and read-only: the integration proof drives the
-    // REAL built page and reads the host's own snapshot through it, because a
-    // proof that instantiates the modules itself is not evidence that the
-    // shipped bundle runs a match (HANDOFF s2, and IMPORT-PLAN s5.7).
-    (window as unknown as Record<string, unknown>).__NTGAME = match;
-  } catch {
-    // No window (a module-level import in a non-browser harness). The returned
-    // handle still works; only the console hook is missing.
-  }
-
+  // The QA surface is the RETURNED handle, and publishing it is `main.ts`'s
+  // job. This file used to write `window.__NTGAME` itself, which made it the
+  // one DOM token in a directory whose first hard boundary is "src/game/ is
+  // DOM-free and scene-free" (IMPORT-PLAN s2). The hook is the same object at
+  // the same name; only the assignment moved to the file that already owns
+  // every other window global, next to `__NT`.
   return match;
 }

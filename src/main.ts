@@ -469,5 +469,12 @@ const qa: QA = {
 };
 
 (window as unknown as { __NT: QA }).__NT = qa;
+// The match's QA surface, additive and read-only: the integration proof drives
+// the REAL built page and reads the host's own snapshot through it, because a
+// proof that instantiates the modules itself is not evidence that the shipped
+// bundle runs a match (HANDOFF s2, and IMPORT-PLAN s5.7). It is published HERE
+// rather than in `game/session.ts` because `src/game/` is DOM-free by contract
+// and this file is the one that already owns every window global.
+(window as unknown as { __NTGAME: LocalMatch | null }).__NTGAME = match;
 console.log('[nuketown] built', Object.keys(moduleStats).length, 'modules,',
   colliders.length, 'colliders');

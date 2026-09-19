@@ -31,15 +31,25 @@
  * geometry, with the eight admission rules in its header; `./host-life` holds
  * damage, death and redeployment — composed, not inherited, and owning the
  * state those three write; `./host-streaks` holds the streak boundary the
- * integration lane widened against lane C's real runtime. All four are
- * re-exported here. Import from THIS file. */
+ * integration lane widened against lane C's real runtime. The two that are
+ * PUBLIC SHAPE — ports and the streak boundary — are re-exported here; import
+ * them from THIS file.
+ *
+ * `HostLife` is deliberately NOT re-exported. It is the authoritative mutator:
+ * it writes health, the score ledger and the respawn queue directly, with none
+ * of the ordering `GameHost` puts around them. `GameHost` is its only
+ * constructor and `life` is private, so publishing it bought nothing and cost
+ * the one guarantee IMPORT-PLAN §2 asks for — that authoritative state has one
+ * writer. The split is a file-size split, not an API. */
 
 export * from './host-ports';
 export * from './host-streaks';
-export { HostLife, type HostActor, type LifeContext } from './host-life';
 
 import { WEAPONS, type WeaponDef } from '../weapons/catalog';
-import { SHOT_REJECT_LABELS, type ActorId, type GameEvent, type TeamId, type WorldQuery } from './events';
+import {
+  SHOT_REJECT_LABELS,
+  type ActorId, type GameEvent, type StreakDenialReason, type TeamId, type WorldQuery,
+} from './events';
 import type { InputMsg, MatchStateMsg, PlayerSample, ShotMsg, StreakIntentMsg } from '../net/protocol';
 import type { ActorSnapshot, HostDeps, HostOptions, HostSnapshot, ShotAdmission } from './host-ports';
 import { HostLife, type HostActor } from './host-life';
@@ -138,10 +148,18 @@ export class GameHost {
    * epoch, the monotonic sequence, the claim id, whether the presser is alive
    * and whether the match is running — because a claim that asserts its own
    * eligibility is the forgery lane C's admission exists to refuse.
+   *
+   * RETURNS THE REFUSAL, or null when the press was admitted. The events are
+   * still emitted; this is the answer the PRESSER gets, and an automated
+   * presser needs it. `game/bots.ts` backs off on a refusal instead of
+   * re-pressing the same slot at the tick rate — without a return value its
+   * only way to learn it had been refused was the event bus it does not read,
+   * so it re-pressed at 20 Hz and filled the feed (§5.4 in reverse: a refusal
+   * nobody can hear is as bad as one nobody is given).
    */
-  submitStreakIntent(id: ActorId, msg: StreakIntentMsg): void {
+  submitStreakIntent(id: ActorId, msg: StreakIntentMsg): StreakDenialReason | null {
     const a = this.life.actors.get(id);
-    if (!a) return;
+    if (!a) return null;
     const p = a.poses.at(this.clock);
     const press = {
       actorId: id, slot: msg.slot, toggle: msg.toggle === true,
@@ -154,9 +172,14 @@ export class GameHost {
     // §5.4: a player-initiated action never fails silently, not even when the
     // lane that would satisfy it is absent.
     const streaks = this.deps.streaks;
-    this.life.absorb(streaks === undefined
+    const events = streaks === undefined
       ? streakUnsupported(press, this.clock)
-      : streaks.activate(press, this.clock, this.world));
+      : streaks.activate(press, this.clock, this.world);
+    this.life.absorb(events);
+    for (const e of events) {
+      if (e.type === 'streak-denied' && e.actorId === id) return e.reason;
+    }
+    return null;
   }
 
   // ---- Shots ----------------------------------------

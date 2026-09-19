@@ -14,7 +14,7 @@
  */
 
 import { WEAPONS, type WeaponDef } from '../weapons/catalog';
-import type { ActorId, TeamId, Vec3, WorldQuery } from './events';
+import type { ActorId, StreakDenialReason, TeamId, Vec3, WorldQuery } from './events';
 
 // ---------------------------------------------------------------------------
 // Tuned numbers. Each names the value it replaced and the sentence that moved
@@ -69,6 +69,46 @@ export const BOT_SIGHT_M = 55;
  * clock every time a fence post goes past.
  */
 export const BOT_TARGET_MEMORY_MS = 400;
+
+/**
+ * How long a bot leaves a refused killstreak slot alone before trying again.
+ *
+ * ADDED by the defect lane, with the measurement that forced it. A bot pressed
+ * its ready slot on EVERY host tick and the gate refused it on every one, so a
+ * single banked charge held across the end of a match produced a `streak-denied`
+ * event at 20 Hz for the whole `session.ts:REMATCH_MS` hold: MEASURED at 179
+ * denials in one 9 s window (seed 7, 240 s, default limits), all of them with
+ * the match phase `ended`, i.e. `match-inactive`. Nothing was wrong with the
+ * gate — the refusal was correct every time. What was wrong was asking again
+ * 1/20 of a second later.
+ *
+ * 4 s. Long enough that a refusal which WILL clear on its own (a live streak
+ * retiring, a placement opening up) costs at most a handful of retries, and
+ * short enough that a bot does not sit on a charge it could spend. Before: no
+ * backoff at all, i.e. `TICK_MS` — 50 ms.
+ */
+export const BOT_STREAK_RETRY_MS = 4_000;
+
+/**
+ * Refusals that pressing again cannot clear, so the bot stops pressing at all
+ * until it is redeployed (`BotDirector.onSpawn`) or the match is rebuilt.
+ *
+ * Three, each terminal for a different cause:
+ * `dead` cannot change without a new life; `match-inactive` cannot
+ * change without a new match, and the session builds a whole new director for
+ * one; `not-earned` means the host's ledger disagrees with the slot snapshot
+ * the bot read, which retrying does not reconcile.
+ *
+ * DELIBERATELY NOT HERE: `arena-unsupported`. It is terminal too — a streak
+ * with no stepper in this build (`blast-mortar`) can never be activated — but
+ * `readySlot` returns the LOWEST slot holding a charge, so blocking the whole
+ * bot on it would also stop it spending a recon sweep it banks later in the
+ * same life. Under `BOT_STREAK_RETRY_MS` that case costs one denial every 4 s
+ * instead of eighty, which is a readable rate rather than a flood.
+ */
+export const BOT_STREAK_TERMINAL_DENIALS: readonly StreakDenialReason[] = Object.freeze([
+  'dead', 'match-inactive', 'not-earned',
+]);
 
 // ---------------------------------------------------------------------------
 // Arsenal — a PROJECTION of the weapon catalog, never a second roster (§5.5)
@@ -190,6 +230,12 @@ export interface BotRuntime {
   inputSeq: number;
   shotSeq: number;
   cooldown: number;
+  /** Slot the last streak refusal named, and the host time it may be re-pressed.
+   *  See `BOT_STREAK_RETRY_MS`; `null` means no slot is under a hold. */
+  streakHoldSlot: number | null;
+  streakHoldUntil: number;
+  /** A refusal this life cannot clear. Reset by `BotDirector.onSpawn`. */
+  streakBlocked: boolean;
 }
 
 // ---------------------------------------------------------------------------

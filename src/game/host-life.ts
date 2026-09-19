@@ -34,7 +34,7 @@ import type { HostDeps, HostStats } from './host-ports';
 import { splitStreakEvents, type StreakTargetView } from './host-streaks';
 import type { MatchRules } from './rules';
 import { applyDeath, applyKill, createLedger, streakOf, type Ledger } from './scoring';
-import { resolveDamage as resolveDamageDefault } from './damage';
+import { resolveDamage as resolveDamageDefault, type DamageResult } from './damage';
 import { applyDamage as applyHealthDamage, createHealth, revive, type ActorHealth } from './health';
 import { RECENT_USE_AVOIDANCE_MS, selectSpawn as selectSpawnDefault, type SpawnUse } from './spawns';
 import { createRespawnState, invulnerableUntil, scheduleRespawn, type RespawnState } from './respawn';
@@ -50,6 +50,33 @@ const WEAPON_BY_ID: ReadonlyMap<string, WeaponDef> = new Map(WEAPONS.map((w) => 
  *  recent-use avoidance. Both of its horizons are `RECENT_USE_AVOIDANCE_MS`. */
 const RECENT_DEATHS = 8;
 const RECENT_USES = 16;
+
+/**
+ * The pre-resolved (streak) path's own copy of the two refusals
+ * `damage.ts:resolveDamage` applies before it computes anything — in that
+ * file's documented precedence: spawn protection first, then hostility.
+ *
+ * WHY IT EXISTS. A streak arrives with its number already computed, so it does
+ * not pass through `resolveDamage` at all, and this branch used to check only
+ * spawn protection. The consequence was a sentry whose `DamageEvent` named a
+ * team-mate landing full damage in a mode with friendly fire off — while the
+ * identical rifle round one line below was refused `friendly`. Two ways into
+ * `hit()` are fine; two different answers to "is this person allowed to hurt
+ * that person" are not.
+ *
+ * `hostile` is the host's verdict (`areHostile`), which already folds in FFA
+ * and `rules.friendlyFire`, so there is no second reading of the rule here —
+ * the same boolean the resolved branch passes to `damage.ts` decides this one.
+ * A null attacker is world damage and is never friendly, exactly as
+ * `resolveDamage` treats `attackerTeam === null`.
+ */
+function admitPreResolved(
+  amount: number, invulnerableUntil: number, hasAttacker: boolean, hostile: boolean, now: number,
+): DamageResult {
+  if (invulnerableUntil > now) return { damage: 0, blocked: 'invulnerable' };
+  if (hasAttacker && !hostile) return { damage: 0, blocked: 'friendly' };
+  return { damage: amount };
+}
 
 export interface HostActor {
   id: ActorId; team: TeamId; bot: boolean;
@@ -104,7 +131,8 @@ export class HostLife {
   /**
    * Drain a STREAK lane's events, writing its damage down instead of only
    * forwarding it. A sentry's `DamageEvent` is a proposal computed against the
-   * health this host handed it; `hit` re-checks spawn protection, re-stamps
+   * health this host handed it; `hit` re-checks spawn protection and
+   * hostility (a sentry may not shoot its owner's team), re-stamps
    * `healthAfter` from the health record and runs the kill, so the host stays
    * the one owner of that number (§5.6). Forwarding it raw would fill the feed
    * with hits that never killed anybody, which is exactly how a subsystem
@@ -148,8 +176,10 @@ export class HostLife {
    *
    * `preResolved` is the streak path: `damage.ts:resolveDamage` requires a
    * `WeaponDef` and a sentry has none, so a streak arrives with its number
-   * already computed and this method still writes it down, still checks spawn
-   * protection and still runs the kill. One place health moves, two ways in.
+   * already computed and this method still writes it down, still applies both
+   * of that function's refusals (`admitPreResolved`: spawn protection, then
+   * hostility) and still runs the kill. One place health moves, two ways in —
+   * and the same answer to "is this allowed" down both of them.
    */
   hit(
     victim: HostActor, attacker: HostActor | null, zone: HitZone, distance: number,
@@ -164,9 +194,7 @@ export class HostLife {
     // host tells `damage.ts` to skip its own team comparison rather than
     // teaching that module the mode twice.
     const res = preResolved !== undefined
-      ? (victim.health.invulnerableUntil > now
-        ? { damage: 0, blocked: 'invulnerable' as const }
-        : { damage: preResolved, blocked: undefined })
+      ? admitPreResolved(preResolved, victim.health.invulnerableUntil, attacker !== null, hostile, now)
       : (this.ctx.deps.resolveDamage ?? resolveDamageDefault)({
         def: def as WeaponDef, distance, zone, cause,
         attackerTeam: attacker?.team ?? null, victimTeam: victim.team,
