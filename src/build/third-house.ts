@@ -80,6 +80,8 @@ class Batch {
 // been re-derived locally because THIRD_HOUSE_X was stale; the contract now carries
 // the right value, so take it from there and let layout.ts stay the single source.
 const HOUSE_X = THIRD_HOUSE_X;
+/** A face moved this far off a plane it shared with another part is out of the depth tie. */
+const TUCK = 0.005;
 
 /**
  * The map's east boundary fence, a LOCAL duplicate of yards.ts's BOUNDARY_X. It is not
@@ -259,12 +261,17 @@ export const buildThirdHouse: Builder = (ctx) => {
   // barge boards: Batch only yaws, so each sloped gable edge is stepped pale trim,
   // both slopes of both gables (only the -x one is ever seen from the street)
   const slopeN = 6, slopeSeg = Math.hypot(half, RIDGE) / slopeN;
+  // Segments overlap their neighbours by 0.12 and the two slopes meet at the ridge, so
+  // consecutive boards shared their gable faces and the two ridge boards their tops:
+  // each board is stepped TUCK / 2 off the last in x, and one slope TUCK up.
   for (const gx of [-1, 1]) {
     const bx = HOUSE_X + gx * (ridgeLen * 0.5 + 0.02);
     for (const s of [-1, 1]) {
       for (let i = 0; i < slopeN; i++) {
         const t = (i + 0.5) / slopeN;
-        bFrame.add(0.14, 0.24, slopeSeg + 0.12, bx, WALL_H + RIDGE * t - 0.10, s * half * (1 - t));
+        const step = TUCK * ((i % 2) + (s > 0 ? 0.5 : 0));
+        bFrame.add(0.14, 0.24, slopeSeg + 0.12, bx + gx * step,
+          WALL_H + RIDGE * t - 0.10 + (s > 0 ? TUCK : 0), s * half * (1 - t));
       }
     }
   }
@@ -292,9 +299,8 @@ export const buildThirdHouse: Builder = (ctx) => {
   bDoor.add(0.08, DOOR_H, DOOR_W, FACE_X - 0.03, doorMid, DOOR_Z);
   const dFd = FACE_X - (REVEAL - FRAME_T * 0.5);
   bFrame.add(FRAME_T, RAIL, DOOR_W + RAIL * 2, dFd, STEP_H + DOOR_H + RAIL * 0.5, DOOR_Z);
-  for (const s of [-1, 1]) {
-    bFrame.add(FRAME_T, DOOR_H + RAIL, RAIL,
-      dFd, doorMid + RAIL * 0.5, DOOR_Z + s * (DOOR_W + RAIL) * 0.5);
+  for (const s of [-1, 1]) {   // jambs stop under the head; they used to run through it
+    bFrame.add(FRAME_T, DOOR_H, RAIL, dFd, doorMid, DOOR_Z + s * (DOOR_W + RAIL) * 0.5);
   }
   // porch: the hood deepened to a slab roof on two white posts. The 0.8 m fence gap
   // caps protrusion at ~0.77, and the top must stay under the upper band's sill (~2.70)
@@ -339,7 +345,7 @@ export const buildThirdHouse: Builder = (ctx) => {
   for (const s of [-1, 1] as const) {
     const px = HOUSE_X + BODY_X * 0.5 - 0.15, pz = s * (BODY_Z * 0.5 + 0.10);
     bChrome.add(0.09, WALL_H - 0.2, 0.09, px, (WALL_H - 0.2) * 0.5, pz);
-    bChrome.add(0.09, 0.22, 0.30, px, 0.11, pz + s * 0.08);
+    bChrome.add(0.09 + 2 * TUCK, 0.22, 0.30, px, 0.11, pz + s * 0.08);   // shoe proud of the pipe
   }
 
   // --- red 1950s saloon on the drive -----------------------------------------
@@ -354,9 +360,11 @@ export const buildThirdHouse: Builder = (ctx) => {
     b: Batch, w: number, h: number, d: number, lx: number, y: number, lz: number,
   ): void => b.add(w, h, d, wx(lx, lz), DRIVE_TOP + y, wz(lx, lz), yaw);
 
-  part(bCar, 1.62, 0.60, CAR_W, 1.55, 0.60, 0);              // bonnet   0.30 - 0.90
-  part(bCar, 2.10, 0.72, CAR_W, -0.29, 0.66, 0);             // midbody  0.30 - 1.02
-  part(bCar, 1.04, 0.66, CAR_W, -1.84, 0.63, 0);             // boot     0.30 - 0.96
+  // bonnet and boot BUTT the midbody (they used to overlap it by 20 mm, tying the
+  // underside and both flanks on the seam)
+  part(bCar, 1.60, 0.60, CAR_W, 1.56, 0.60, 0);              // bonnet   0.30 - 0.90, x 0.76..2.36
+  part(bCar, 2.10, 0.72, CAR_W, -0.29, 0.66, 0);             // midbody  0.30 - 1.02, x -1.34..0.76
+  part(bCar, 1.02, 0.66, CAR_W, -1.85, 0.63, 0);             // boot     0.30 - 0.96, x -2.36..-1.34
   part(bCar, 2.00, 0.42, CAR_W * 0.80, -0.30, 1.23, 0);      // cabin    1.02 - 1.44
   part(bCar, 1.84, 0.07, CAR_W * 0.82, -0.32, 1.475, 0);     // roof     1.44 - 1.51
   part(bGlaze, 1.92, 0.32, CAR_W * 0.83, -0.30, 1.235, 0);   // glass band in the cabin
@@ -405,9 +413,12 @@ export const buildThirdHouse: Builder = (ctx) => {
   const plotX0 = DRIVE_X0, plotX1 = HOUSE_X + BODY_X * 0.5;
   const plotLen = plotX1 - plotX0, plotCX = (plotX0 + plotX1) * 0.5;
   const hedgeN = Math.max(1, Math.round(plotLen / 1.5));
+  // consecutive blocks overlap 0.06 along the run; alternate ones sit TUCK further out
+  // so the shared flank plane is broken at every joint
   for (let i = 0; i < hedgeN; i++) {
     const hh = 0.85 + (ctx.rand() - 0.5) * 0.12;
-    bHedge.add(plotLen / hedgeN + 0.06, hh, 0.6, plotX0 + plotLen * (i + 0.5) / hedgeN, hh * 0.5, -(BODY_Z * 0.5 + 1.0));
+    bHedge.add(plotLen / hedgeN + 0.06, hh, 0.6, plotX0 + plotLen * (i + 0.5) / hedgeN, hh * 0.5,
+      -(BODY_Z * 0.5 + 1.0 + (i % 2) * TUCK));
   }
   // the +z fence starts BEHIND the map's boundary fence - it used to start at the white
   // garage's east face (x 13.0), which is 1.8 m inside the playable east alley, and it
@@ -423,10 +434,12 @@ export const buildThirdHouse: Builder = (ctx) => {
   for (const ry of [0.5, 0.85]) bTimber.add(fenceLen, 0.10, 0.06, fenceCX, ry, fenceZ);
   const rearZ0 = -(BODY_Z * 0.5 + 1.0), rearZ1 = BODY_Z * 0.5 - 0.3;
   const rearN = Math.max(2, Math.round((rearZ1 - rearZ0) / 1.5));
+  // the rear hedge's outer face was the back wall's own plane (plotX1): TUCK proud of
+  // it, and alternate blocks a further TUCK so neighbours do not share a face either
   for (let i = 0; i < rearN; i++) {
     const hh = 0.85 + (ctx.rand() - 0.5) * 0.12;
     bHedge.add(0.6, hh, (rearZ1 - rearZ0) / rearN + 0.06,
-      plotX1 - 0.3, hh * 0.5, rearZ0 + (rearZ1 - rearZ0) * (i + 0.5) / rearN);
+      plotX1 - 0.3 + TUCK * (1 + (i % 2)), hh * 0.5, rearZ0 + (rearZ1 - rearZ0) * (i + 0.5) / rearN);
   }
   // planting: faceted shrubs flanking the door gap + down the -z flank, all on y = 0
   const shrub = (x: number, z: number, s: number): void => {

@@ -126,6 +126,8 @@ const POST_PITCH = 2.5;
 const POST_W = 0.15;
 /** Collider depth: plinth plus the boards bolted to the map face, so the box is honest. */
 const RUN_T = 0.66;
+/** A face moved this far off a plane it shared with another part is out of the depth tie. */
+const TUCK = 0.005;
 
 // ---------------------------------------------------------------- region guard
 /**
@@ -253,10 +255,17 @@ export const buildSurround: Builder = (ctx: BuildContext): BuildResult => {
    * AABB is exactly the mesh - segmenting it would only multiply boxes that describe the
    * same wall. It spans the plinth and the boards (RUN_T), so nothing sticks out of it.
    */
-  function securityRun(ax: number, az: number, bx: number, bz: number, facing: 1 | -1): void {
-    const L = Math.hypot(bx - ax, bz - az);
-    const ux = (bx - ax) / L, uz = (bz - az) / L;
+  function securityRun(ax: number, az: number, bx: number, bz: number, facing: 1 | -1, trimA = 0): void {
+    // The collider is the NOMINAL run A -> B. The meshes start `trimA` metres in from A:
+    // the two back runs begin on the west run's corner, and untrimmed their plinth,
+    // capping, rails and strands all reached into the corner square the west run
+    // already fills - the same six faces built twice there.
+    const LC = Math.hypot(bx - ax, bz - az);
+    const ux = (bx - ax) / LC, uz = (bz - az) / LC;
     const ry = Math.atan2(ux, uz);          // run direction -> local +z (yards.ts's convention)
+    const kx = (ax + bx) / 2, kz = (az + bz) / 2;
+    ax += ux * trimA; az += uz * trimA;
+    const L = LC - trimA;
     const cx = (ax + bx) / 2, cz = (az + bz) / 2;
     /** local +x is the run's normal; `facing` points it at the map */
     const nx = -uz * facing, nz = ux * facing;
@@ -305,9 +314,9 @@ export const buildSurround: Builder = (ctx: BuildContext): BuildResult => {
         cx + ux * t + nx * (PLINTH_W / 2 + 0.06), 1.62, cz + uz * t + nz * (PLINTH_W / 2 + 0.06), ry);
     }
 
-    colliders.push(aabbSlab(cx, 0, cz,
-      Math.abs(ux) * L + Math.abs(uz) * RUN_T, FENCE_TOP,
-      Math.abs(uz) * L + Math.abs(ux) * RUN_T));
+    colliders.push(aabbSlab(kx, 0, kz,
+      Math.abs(ux) * LC + Math.abs(uz) * RUN_T, FENCE_TOP,
+      Math.abs(uz) * LC + Math.abs(ux) * RUN_T));
   }
 
   // West face, both sides of the road mouth. Stops at the pavement edge, which is where
@@ -315,8 +324,8 @@ export const buildSurround: Builder = (ctx: BuildContext): BuildResult => {
   securityRun(WEST_X, -BACK_Z, WEST_X, -WEST_RUN_Z0, 1);
   securityRun(WEST_X, WEST_RUN_Z0, WEST_X, BACK_Z, 1);
   // Both back faces, running from the west line to the yards boundary fence.
-  securityRun(WEST_X, -BACK_Z, EAST_FENCE_X, -BACK_Z, 1);
-  securityRun(WEST_X, BACK_Z, EAST_FENCE_X, BACK_Z, -1);
+  securityRun(WEST_X, -BACK_Z, EAST_FENCE_X, -BACK_Z, 1, PLINTH_W / 2 + POST_W / 2);
+  securityRun(WEST_X, BACK_Z, EAST_FENCE_X, BACK_Z, -1, PLINTH_W / 2 + POST_W / 2);
 
   // ======================================================== 2. west road closure
   // The steel gate across the carriageway is ground.ts section 13 at x = -19.35. These
@@ -365,14 +374,15 @@ export const buildSurround: Builder = (ctx: BuildContext): BuildResult => {
   {
     for (const bz of [-3.3, -1.1, 1.1, 3.3]) {
       B.put(PALE, 0.26, 0.42, 1.65, APRON_STOP_X, 0.21, bz);
-      B.put(HAZ, 0.28, 0.13, 0.5, APRON_STOP_X + 0.01, 0.36, bz);
+      // the yellow band stands TUCK proud of the stop's map face (it was flush with it)
+      B.put(HAZ, 0.28, 0.13, 0.5, APRON_STOP_X + 0.01 - TUCK, 0.36, bz);
       colliders.push(aabbSlab(APRON_STOP_X, 0, bz, 0.28, 0.42, 1.65));
     }
     for (const s of [-1, 1]) {
       B.put(IRON, 0.13, 2.3, 0.13, APRON_STOP_X + 0.04, 1.15, s * 2.0);
       colliders.push(aabbSlab(APRON_STOP_X + 0.04, 0, s * 2.0, 0.16, 2.3, 0.16));
     }
-    B.put(HAZ, 0.09, 0.66, 4.5, APRON_STOP_X + 0.06, 2.06, 0);
+    B.put(HAZ, 0.09, 0.66, 4.5, APRON_STOP_X + 0.06 - TUCK, 2.06, 0);   // back face clear of the posts'
     B.put(SIGN_NOENTRY, 0.04, 0.56, 3.8, APRON_STOP_X + 0.01, 2.06, 0);
   }
 
@@ -400,8 +410,9 @@ export const buildSurround: Builder = (ctx: BuildContext): BuildResult => {
       F.put(PALE, 0.44, 0.06, 0.38, x - 1.2 + i * 0.8, 0.34 + H - 0.46, z);
     }
     // two guys, suggested by struts rather than wires - a wire is 1 px at this range
-    for (const s of [-1, 1]) {
-      F.put(IRON, 0.14, 0.14, H * 0.62, x, 0.34 + H * 0.3, z + s * H * 0.26);
+    for (const s of [-1, 1]) {   // the two overlap at the column; one sits TUCK up and over
+      const o = s > 0 ? TUCK : 0;
+      F.put(IRON, 0.14, 0.14, H * 0.62, x + o, 0.34 + H * 0.3 + o, z + s * H * 0.26);
     }
   }
 
@@ -426,13 +437,17 @@ export const buildSurround: Builder = (ctx: BuildContext): BuildResult => {
     }
   }
 
-  /** Drum cluster: oil drums, some on their side. */
+  /** Drum cluster: oil drums, some on their side. Overlapping drums - within a cluster
+   *  or between two neighbouring scatter clusters - never share a lid: each drum in
+   *  the module takes the next of 24 heights, a TUCK apart. */
+  let drumSeq = 0;
   function drums(x: number, z: number, n: number): void {
     for (let i = 0; i < n; i++) {
       const a = (i / n) * Math.PI * 2 + rand();
       const r = rr(0.3, 1.9);
-      FC.put(i % 3 === 0 ? RUST : IRON, 0.58, 0.88, 0.58,
-        x + Math.cos(a) * r, 0.44, z + Math.sin(a) * r);
+      const h = 0.88 + (drumSeq++ % 24) * TUCK;
+      FC.put(i % 3 === 0 ? RUST : IRON, 0.58, h, 0.58,
+        x + Math.cos(a) * r, h / 2, z + Math.sin(a) * r);
     }
   }
 

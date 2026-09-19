@@ -143,6 +143,16 @@ const OPEN_BAY = GARAGE_BAYS - 1;                     // the bay nearest the hou
 const UP = new THREE.Vector3(0, 1, 0);
 const NOROT = new THREE.Quaternion();
 
+/**
+ * Two faces built on ONE plane tie in the depth buffer and the rasteriser picks a
+ * winner per pixel: clean from one viewpoint, a dither patch from the next. Every
+ * dressed part below that used to share a plane with the structure it sits on now
+ * stands TUCK off it - proud when it is the surface that should be seen, tucked
+ * inside when the structure should. Meshes only; every collider keeps its nominal
+ * box (`scripts/coplanar.mjs` lists the pairs, `--colliders` proves the boxes).
+ */
+const TUCK = 0.005;
+
 /** The sweep: roof upper surface before the depth tilt, flat-ish then swooping. */
 function baseY(x: number): number {
   const u = Math.min(1, Math.max(0, (x - LO_X) / (HI_X - LO_X)));
@@ -262,15 +272,27 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const openings: Opening[] = [];
   const wallRun = (
     along: 'x' | 'z', fixed: number, a: number, b: number, out: number, holes: Hole[],
+    meshClip?: [number, number],
   ) => {
     const add = (p0: number, p1: number, y0: number, y1: number, solid: boolean) => {
       if (p1 - p0 < 0.02 || y1 - y0 < 0.02) return;
-      const c = (p0 + p1) / 2, cy = (y0 + y1) / 2, L = p1 - p0, hh = y1 - y0;
+      const cy = (y0 + y1) / 2, L = p1 - p0, hh = y1 - y0;
+      // `meshClip` bounds the MESH along the run (the collider keeps p0..p1): the end
+      // walls ran the full depth and the front/back walls the full length, so every
+      // corner square was two stucco boxes with all their faces tied.
+      const m0 = meshClip ? Math.max(p0, meshClip[0]) : p0;
+      const m1 = meshClip ? Math.min(p1, meshClip[1]) : p1;
+      const c = (p0 + p1) / 2, mc = (m0 + m1) / 2, mL = m1 - m0;
+      // A wall that reaches FLOOR_H would put its top face on the upper slab's top
+      // (and the deck's): the mesh stops TUCK short, inside the slab where the slab
+      // covers it and a shadow gap under the upper storey where it does not.
+      const y1m = Math.abs(y1 - FLOOR_H) < 1e-6 ? y1 - TUCK : y1;
+      const cym = (y0 + y1m) / 2, hhm = y1m - y0;
       if (along === 'x') {
-        g.add(box(L, hh, WALL_T, mat.stuccoCream, c, cy, fixed));
+        if (mL > 0.02) g.add(box(mL, hhm, WALL_T, mat.stuccoCream, mc, cym, fixed));
         if (solid) colliders.push(aabb(c, cy, fixed, L, hh, WALL_T));
       } else {
-        g.add(box(WALL_T, hh, L, mat.stuccoCream, fixed, cy, c));
+        if (mL > 0.02) g.add(box(WALL_T, hhm, mL, mat.stuccoCream, fixed, cym, mc));
         if (solid) colliders.push(aabb(fixed, cy, c, WALL_T, hh, L));
       }
     };
@@ -338,12 +360,13 @@ export const buildOrangeHouse: Builder = (ctx) => {
 
   wallRun('x', GND_FRONT + S * WALL_T / 2, GE * HHL, FE * HHL, OUT, holesAround(porchX));
   wallRun('x', backZ + OUT * WALL_T / 2, GE * HHL, FE * HHL, S, holesAround(backDoorX));
-  wallRun('z', FE * (HHL - WALL_T / 2), GND_FRONT, backZ, FE, [{ c: midZ, ...WIN }]);
+  const endClip = span(IN_FRONT, IN_BACK);   // the end walls butt the front/back walls
+  wallRun('z', FE * (HHL - WALL_T / 2), GND_FRONT, backZ, FE, [{ c: midZ, ...WIN }], endClip);
   // The garage-end wall carries the door from the GARAGE into the KITCHEN
   // (INTERIORS-TOPOLOGY s3.3, g-tB35IKluv0g-023: camera in the garage doorway looking
   // past the yellow units and the dining table into the living room).
   wallRun('z', GE * (HHL - WALL_T / 2), GND_FRONT, backZ, GE,
-    [{ c: Z_GAR_DOOR, w: DOOR_W_IN, sill: 0, head: DOOR_HEAD_IN }]);
+    [{ c: Z_GAR_DOOR, w: DOOR_W_IN, sill: 0, head: DOOR_HEAD_IN }], endClip);
 
   // -------------------------------------------------- ground-floor glazing
   // Every aperture was an empty cut: the street read straight through the house to
@@ -359,9 +382,12 @@ export const buildOrangeHouse: Builder = (ctx) => {
       rows.push(o.along === 'x' ? [w, t, d, u, y, n, rot] : [w, t, d, n, y, u, rot]);
     };
     const frameN = faceN + o.out * (FRAME_D / 2 - 0.025);
-    at(frameRows, o.c, o.head + FRAME_W / 2, frameN, o.w + 2 * FRAME_W, FRAME_W, FRAME_D);
+    // The frame is 25 mm INTO the wall, so its jambs' inner faces lay on the piers'
+    // reveals and its head's soffit on the lintel's: it overlaps the aperture by TUCK
+    // instead, the way a real frame covers the reveal edge.
+    at(frameRows, o.c, o.head + FRAME_W / 2 - TUCK, frameN, o.w + 2 * FRAME_W, FRAME_W, FRAME_D);
     for (const s of [-1, 1]) {
-      at(frameRows, o.c + s * (o.w + FRAME_W) / 2, cy, frameN, FRAME_W, hh, FRAME_D);
+      at(frameRows, o.c + s * ((o.w + FRAME_W) / 2 - TUCK), cy, frameN, FRAME_W, hh, FRAME_D);
     }
     if (o.sill < 0.05) continue;                         // a door: frame, no glass
     const paneN = faceN - o.out * (REVEAL + PANE_T / 2);
@@ -383,9 +409,10 @@ export const buildOrangeHouse: Builder = (ctx) => {
   // single thing INTERIORS-TOPOLOGY s4.3 says our build was missing.
   const ddY = DECK_Y + UP_DOOR_H / 2;
   const ddZ = backZ + S * (WALL_T / 2 + 0.03);
-  frameRows.push([UP_DOOR_W + 0.26, 0.14, 0.15, H.deckX, DECK_Y + UP_DOOR_H + 0.07, ddZ, 0]);
+  const DD_T = 0.15 + 2 * TUCK;   // 0.15 put its outer face on the clerestory rails' plane
+  frameRows.push([UP_DOOR_W + 0.26, 0.14, DD_T, H.deckX, DECK_Y + UP_DOOR_H + 0.07 - TUCK, ddZ, 0]);
   for (const s of [-1, 1]) {
-    frameRows.push([0.13, UP_DOOR_H, 0.15, H.deckX + s * (UP_DOOR_W + 0.13) / 2, ddY, ddZ, 0]);
+    frameRows.push([0.13, UP_DOOR_H, DD_T, H.deckX + s * (UP_DOOR_W + 0.13) / 2, ddY, ddZ, 0]);
   }
 
   emit(paneRows, mat.glass, false);
@@ -404,7 +431,9 @@ export const buildOrangeHouse: Builder = (ctx) => {
     g.add(box(c1 - c0, 0.4, 0.08, stoneM, (c0 + c1) / 2, 0.2, z));
     g.add(box(c1 - c0, 0.06, 0.1, mat.painted(PAL.rubbleMortar, 0.9, 0), (c0 + c1) / 2, 0.43, z));
   };
-  skirt(GND_FRONT + OUT * 0.05, GE * HHL, porchX - 0.85); skirt(GND_FRONT + OUT * 0.05, porchX + 0.85, FE * HHL);
+  // the street skirt ends TUCK short of the garage corner: at GE * HHL its end face
+  // was the garage return wall's inner face, seen from inside the garage
+  skirt(GND_FRONT + OUT * 0.05, GE * (HHL - TUCK), porchX - 0.85); skirt(GND_FRONT + OUT * 0.05, porchX + 0.85, FE * HHL);
   skirt(backZ + S * 0.05, GE * HHL, backDoorX - 0.85); skirt(backZ + S * 0.05, backDoorX + 0.85, FE * HHL);
   // ==================================================== ground floor, interior
   // Plan per INTERIORS-TOPOLOGY s2.1/s6.1. Street half: KITCHEN at the garage end and
@@ -421,15 +450,20 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const glowM = mat.emissive(PAL.sunColor);
 
   /** Partition along x at fixed z, with cut-outs; colliders only where the leaf is. */
+  // Partition MESHES stop TUCK under FLOOR_H so their tops sit inside the slab above
+  // instead of on its top face (same interiorWall map, different UVs: a dither strip
+  // across the upstairs floor over every wall). Colliders keep the full height.
+  const PART_TOP = FLOOR_H - TUCK;
   const partX = (z: number, a: number, b: number, cuts: [number, number][], head: number): void => {
     const [lo, hi] = span(a, b);
     for (const [p0, p1] of subtract(lo, hi, cuts)) {
       if (p1 - p0 < 0.06) continue;
-      put(p1 - p0, FLOOR_H, 0.14, partMat, (p0 + p1) / 2, FLOOR_H / 2, z, true);
+      g.add(box(p1 - p0, PART_TOP, 0.14, partMat, (p0 + p1) / 2, PART_TOP / 2, z));
+      colliders.push(aabb((p0 + p1) / 2, FLOOR_H / 2, z, p1 - p0, FLOOR_H, 0.14));
     }
     for (const [c0, c1] of cuts) {   // header over the opening - overhead, never solid
       if (head < FLOOR_H - 0.02) {
-        g.add(box(c1 - c0, FLOOR_H - head, 0.14, partMat, (c0 + c1) / 2, (head + FLOOR_H) / 2, z));
+        g.add(box(c1 - c0, PART_TOP - head, 0.14, partMat, (c0 + c1) / 2, (head + PART_TOP) / 2, z));
       }
     }
   };
@@ -438,11 +472,12 @@ export const buildOrangeHouse: Builder = (ctx) => {
     const [lo, hi] = span(a, b);
     for (const [p0, p1] of subtract(lo, hi, cuts)) {
       if (p1 - p0 < 0.06) continue;
-      put(0.14, FLOOR_H, p1 - p0, partMat, x, FLOOR_H / 2, (p0 + p1) / 2, true);
+      g.add(box(0.14, PART_TOP, p1 - p0, partMat, x, PART_TOP / 2, (p0 + p1) / 2));
+      colliders.push(aabb(x, FLOOR_H / 2, (p0 + p1) / 2, 0.14, FLOOR_H, p1 - p0));
     }
     for (const [c0, c1] of cuts) {
       if (head < FLOOR_H - 0.02) {
-        g.add(box(0.14, FLOOR_H - head, c1 - c0, partMat, x, (head + FLOOR_H) / 2, (c0 + c1) / 2));
+        g.add(box(0.14, PART_TOP - head, c1 - c0, partMat, x, (head + PART_TOP) / 2, (c0 + c1) / 2));
       }
     }
   };
@@ -460,12 +495,16 @@ export const buildOrangeHouse: Builder = (ctx) => {
     const zc = ST_Z0 + S * (i + 0.5) * GOING;
     stTread.push([ST_W, top, GOING, ST_X, top / 2, zc, 0]);
     colliders.push(aabbSlab(ST_X, 0, zc, ST_W, top, GOING));
-    stNose.push([ST_W, 0.05, 0.09, ST_X, top - 0.025, zc - S * (GOING / 2 - 0.045), 0]);
+    // the nosing stands TUCK proud of the tread top and of the riser face - both were
+    // on the tread's own planes (yellow on grey-green, every step)
+    stNose.push([ST_W, 0.05, 0.09, ST_X, top - 0.025 + TUCK, zc - S * (GOING / 2 - 0.045 + TUCK), 0]);
     // Balustrade: one bay per tread, so the collider is exactly the mesh run and the
     // barrier climbs with the flight instead of being one wrong AABB over a slope.
     stRail.push([0.1, RAIL_IN, GOING, railX, top + RAIL_IN / 2, zc, 0]);
     colliders.push(aabb(railX, top + RAIL_IN / 2, zc, 0.1, RAIL_IN, GOING));
-    if (i % 3 === 0) stPost.push([0.11, RAIL_IN + 0.1, 0.11, railX, top + (RAIL_IN + 0.1) / 2, zc, 0]);
+    // 0.12, not 0.11: the upper-floor rail below is 0.11 on the same line, so at the
+    // stair head the two shared both side faces
+    if (i % 3 === 0) stPost.push([0.12, RAIL_IN + 0.1 + TUCK, 0.12, railX, top + (RAIL_IN + 0.1 - TUCK) / 2, zc, 0]);
   }
   emit(stTread, carpetM, true);
   emit(stNose, yellowM, false);
@@ -497,26 +536,46 @@ export const buildOrangeHouse: Builder = (ctx) => {
     if (overlaps(z0, z1, voidZ0, voidZ1)) cuts.push(voidCut);
     if (overlaps(z0, z1, wellZ0, wellZ1)) cuts.push(wellCut);
     cuts.sort((p, q) => p[0] - q[0]);
+    // The last band ran to backZ, the back wall's OUTER face, so from the yard the
+    // slab's edge was a 0.22 m band on the stucco's plane. The MESH stops at the inner
+    // face; the collider keeps the nominal band (the wall is solid there anyway).
+    const [inA, inB] = span(frontZ, IN_BACK);
+    const mz0 = Math.max(z0, inA), mz1 = Math.min(z1, inB);
     for (const [a, c] of subtract(x0, x1, cuts)) {
       if (c - a < 0.06) continue;
-      slabRows.push([c - a, SLAB_T, z1 - z0, (a + c) / 2, FLOOR_H - SLAB_T / 2, (z0 + z1) / 2, 0]);
+      if (mz1 - mz0 > 0.01) {
+        slabRows.push([c - a, SLAB_T, mz1 - mz0, (a + c) / 2, FLOOR_H - SLAB_T / 2, (mz0 + mz1) / 2, 0]);
+      }
       colliders.push(aabb((a + c) / 2, FLOOR_H - SLAB_T / 2, (z0 + z1) / 2, c - a, SLAB_T, z1 - z0));
     }
   }
   emit(slabRows, mat.interiorWall, true);
 
-  /** A 1.0 m balustrade run on the upper floor. Mesh and collider are one box. */
-  const upRail = (x0: number, z0: number, x1: number, z1: number): void => {
+  /**
+   * A 1.0 m balustrade run on the upper floor. The collider is the nominal box; the
+   * MESH may be cut back by `trim0` / `trim1` at its two ends (a run that starts on
+   * the upper wall line had its foot on the wall's soffit plane; one that ends on the
+   * stair rail had its end face on the rail's). The dark cap is TUCK taller than 0.08
+   * so its top clears the stair rail's top, and a run along x rides TUCK higher so the
+   * two caps that meet at a corner share neither lid nor foot.
+   */
+  const upRail = (x0: number, z0: number, x1: number, z1: number, trim0 = 0, trim1 = 0): void => {
     const [a0, a1] = span(x0, x1), [b0, b1] = span(z0, z1);
-    const w = Math.max(0.11, a1 - a0), d = Math.max(0.11, b1 - b0);
+    const alongX = a1 - a0 > b1 - b0;
+    const [m0, m1] = alongX ? [a0 + trim0, a1 - trim1] : [b0 + trim0, b1 - trim1];
+    const w = alongX ? m1 - m0 : 0.11, d = alongX ? 0.11 : m1 - m0;
+    const mx = alongX ? (m0 + m1) / 2 : (a0 + a1) / 2, mz = alongX ? (b0 + b1) / 2 : (m0 + m1) / 2;
+    const lift = alongX ? TUCK : 0, capH = 0.08 + TUCK;
+    g.add(box(w, RAIL_IN - 0.08 + lift, d, mat.painted(PAL.timber, 0.88, 0), mx, FLOOR_H + (RAIL_IN - 0.08 + lift) / 2, mz));
+    g.add(box(w + 0.06, capH, d + 0.06, darkIn, mx, FLOOR_H + RAIL_IN - 0.08 + lift + capH / 2, mz));
     const cx = (a0 + a1) / 2, cz = (b0 + b1) / 2;
-    g.add(box(w, RAIL_IN - 0.08, d, mat.painted(PAL.timber, 0.88, 0), cx, FLOOR_H + (RAIL_IN - 0.08) / 2, cz));
-    g.add(box(w + 0.06, 0.08, d + 0.06, darkIn, cx, FLOOR_H + RAIL_IN - 0.04, cz));
-    colliders.push(aabb(cx, FLOOR_H + RAIL_IN / 2, cz, Math.max(w, 0.11), RAIL_IN, Math.max(d, 0.11)));
+    colliders.push(aabb(cx, FLOOR_H + RAIL_IN / 2, cz, Math.max(a1 - a0, 0.11), RAIL_IN, Math.max(b1 - b0, 0.11)));
   };
-  upRail(VOID_X, frontZ, VOID_X, VOID_Z);
+  // the void rail starts under the upper front wall's overhang: its first 0.14 m of
+  // foot lay on that wall's soffit plane
+  upRail(VOID_X, frontZ, VOID_X, VOID_Z, S < 0 ? 0 : 0.14, S < 0 ? 0.14 : 0);
   upRail(VOID_X, VOID_Z, FE * innerX(VOID_Z), VOID_Z);
-  upRail(railX, WELL_Z0, railX, ST_Z1);
+  upRail(railX, WELL_Z0, railX, ST_Z1, S < 0 ? TUCK : 0, S < 0 ? 0 : TUCK);
   upRail(railX, WELL_Z0, FE * innerX(WELL_Z0), WELL_Z0);
 
   // ---- ground-floor dressing. Every collider below is off both door lanes and off
@@ -555,7 +614,7 @@ export const buildOrangeHouse: Builder = (ctx) => {
   // clock (g-1icNQzMgLUM-106/-116).
   g.add(box(0.05, 2.1, Math.abs(Z_SPLIT - IN_FRONT) - 0.4, oliveM, IN_FE - FE * 0.04, 1.35, (IN_FRONT + Z_SPLIT) / 2));
   for (let p = 0; p < 4; p++) {
-    g.add(box(0.06, 2.1, 0.34, darkIn, IN_FE - FE * 0.05, 1.35, IN_FRONT + S * (0.9 + p * 1.15)));
+    g.add(box(0.06, 2.1 + 2 * TUCK, 0.34, darkIn, IN_FE - FE * 0.05, 1.35, IN_FRONT + S * (0.9 + p * 1.15)));
   }
   const sofaX = IN_FE - FE * 0.48, sofaZ = (IN_FRONT + Z_SPLIT) / 2;
   put(0.85, 0.42, 2.2, mat.painted(PAL.terracotta, 0.9, 0), sofaX, 0.21, sofaZ, true);
@@ -626,6 +685,12 @@ export const buildOrangeHouse: Builder = (ctx) => {
       const c0 = Math.max(0, Math.min(tA, tB)), c1 = Math.min(len, Math.max(tA, tB));
       if (c1 > c0) cuts.push([c0, c1]);
     }
+    // Each segment is WALL_T/2 longer than its chord so the mitres close, which puts a
+    // WALL_T x WALL_T square of two boxes at every vertex: bottoms at FLOOR_H, tops at
+    // BAND_SILL and bottoms at BAND_HEAD tied there (the porch soffit, the sill line).
+    // Odd segments step TUCK off each of those planes; the collider chunks below are
+    // built from the nominal spans and do not move.
+    const dip = (i % 2) * TUCK;
     const put3 = (t0: number, t1: number, y0: number, y1: number): void => {
       if (t1 - t0 < 0.02 || y1 - y0 < 0.03) return;
       const tm = (t0 + t1) / 2;
@@ -635,8 +700,8 @@ export const buildOrangeHouse: Builder = (ctx) => {
     const headYAt = (t: number): number => EAVE_Y + TILT_K * (z0 + uz * t - midZ);
     for (const [t0, t1] of subtract(0, len, cuts)) {
       const hy = headYAt((t0 + t1) / 2);
-      if (closing) put3(t0, t1, FLOOR_H, hy);
-      else { put3(t0, t1, FLOOR_H, BAND_SILL); put3(t0, t1, BAND_HEAD, hy); }
+      if (closing) put3(t0, t1, FLOOR_H - dip, hy);
+      else { put3(t0, t1, FLOOR_H - dip, BAND_SILL - dip); put3(t0, t1, BAND_HEAD + dip, hy); }
       // colliders: chunked so an arc chord is a tight AABB, not one huge diagonal box
       const n = Math.max(1, Math.ceil((t1 - t0) / COL_STEP));
       const st = (t1 - t0) / n;
@@ -648,7 +713,11 @@ export const buildOrangeHouse: Builder = (ctx) => {
       }
     }
     for (const [c0, c1] of cuts) {                    // head over the doorway
-      put3(c0, c1, FLOOR_H + UP_DOOR_H, headYAt((c0 + c1) / 2));
+      // between the neighbours' WALL_T/4 extensions, not over them: overlapped, the
+      // head's faces lay on theirs from the yard and above
+      const hy = headYAt((c0 + c1) / 2), tm = (c0 + c1) / 2;
+      upWall.push([c1 - c0 - WALL_T * 0.5, hy - (FLOOR_H + UP_DOOR_H), WALL_T,
+        x0 + ux * tm, (FLOOR_H + UP_DOOR_H + hy) / 2, z0 + uz * tm, a]);
     }
   }
   emit(upWall, mat.stuccoTerracotta, true);
@@ -747,7 +816,9 @@ export const buildOrangeHouse: Builder = (ctx) => {
     const cuts: [number, number][] = [];
     if (Math.abs(dz) < 1e-6 && Math.abs(z0 - backZ) < 1e-6) {
       const tA = (H.deckX - UP_DOOR_W / 2 - x0) * ux, tB = (H.deckX + UP_DOOR_W / 2 - x0) * ux;
-      const c0 = Math.max(0, Math.min(tA, tB)), c1 = Math.min(len, Math.max(tA, tB));
+      // TUCK wider than the doorway: the pane and rail ends lay on the door jambs'
+      // inner faces (glass over cream, at the one door a player uses upstairs)
+      const c0 = Math.max(0, Math.min(tA, tB) - TUCK), c1 = Math.min(len, Math.max(tA, tB) + TUCK);
       if (c1 > c0) cuts.push([c0, c1]);
     }
     for (const [t0, t1] of subtract(0, len, cuts)) {
@@ -778,7 +849,9 @@ export const buildOrangeHouse: Builder = (ctx) => {
     q.setFromAxisAngle(UP, a);
     glass.setMatrixAt(i, m4.compose(
       v.set(mx + nx * (FACE - 0.05), bandCy, mz + nz * (FACE - 0.05)), q, sc.set(len, bandH, 0.09)));
-    for (const [yy, th] of [[BAND_HEAD + 0.07, 0.14], [BAND_SILL - 0.07, 0.14],
+    // the sill rail's top and the head rail's soffit were the wall boxes' own planes;
+    // each now overlaps its wall by TUCK (a rail sits ON a sill, not flush with it)
+    for (const [yy, th] of [[BAND_HEAD + 0.07 - TUCK, 0.14], [BAND_SILL - 0.07 + TUCK, 0.14],
       [TRANSOM_Y, 0.11]] as P2[]) {
       rails.setMatrixAt(ri++, m4.compose(
         v.set(mx + nx * (FACE + 0.02), yy, mz + nz * (FACE + 0.02)), q, sc.set(len, th, 0.17)));
@@ -813,8 +886,10 @@ export const buildOrangeHouse: Builder = (ctx) => {
       // middle of the opening - the frame showed exactly that before this guard
       if (face[0] === backZ && Math.abs(x - H.deckX) < UP_DOOR_W / 2 + 0.25) continue;
       const head = EAVE_Y + TILT_K * (face[0] - midZ);
+      // TUCK lower than the wall it stands against: a fin's foot on the recess soffit
+      // was on the upper wall's own bottom plane
       fins.setMatrixAt(fi++, m4.compose(
-        v.set(x, (FLOOR_H + head) / 2, face[0] + face[1] * 0.075),
+        v.set(x, (FLOOR_H + head) / 2 - TUCK, face[0] + face[1] * 0.075),
         NOROT, sc.set(0.16, head - FLOOR_H, 0.18)));
     }
   }
@@ -854,16 +929,23 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const bayCx = (d: number): number =>
     xOuter - GE * (BAY_JAMB + BAY_W / 2 + d * (BAY_W + BAY_JAMB));
   const cream = mat.stuccoCream;
-  const wallBox = (w: number, h: number, d: number, x: number, yBase: number, z: number): void => {
-    g.add(slab(w, h, d, cream, x, yBase, z));
+  /**
+   * `proud` grows the MESH by that much on every face; the collider keeps the nominal
+   * box. The end wall gets it: the back wall and the street piers both ran out to the
+   * wing's corner, so their end faces lay on the end wall's outer face and their
+   * street/yard faces on its end faces - 0.25 x 3.65 m of stucco on stucco at both
+   * corners, and their tops on its top. Proud by TUCK, the end wall alone is seen.
+   */
+  const wallBox = (w: number, h: number, d: number, x: number, yBase: number, z: number, proud = 0): void => {
+    g.add(slab(w + 2 * proud, h + proud, d + 2 * proud, cream, x, yBase, z));
     colliders.push(aabbSlab(x, yBase, z, w, h, d));
   };
   const [gzA, gzB] = span(frontZ, gBack);
-  wallBox(GT, GARAGE_H, gzB - gzA, xOuter - GE * (GT / 2), 0, (gzA + gzB) / 2);
+  wallBox(GT, GARAGE_H, gzB - gzA, xOuter - GE * (GT / 2), 0, (gzA + gzB) / 2, TUCK);
   wallBox(GARAGE_LEN, GARAGE_H, GT, gx, 0, gBack - S * (GT / 2));
   // short return closing the gap between the garage face and the recessed house face
   wallBox(GT, GARAGE_H, Math.abs(GND_FRONT - frontZ) + GT,
-    xHouse - GE * (GT / 2), 0, (frontZ + GND_FRONT) / 2);
+    xHouse - GE * (GT / 2), 0, (frontZ + GND_FRONT) / 2, TUCK);   // proud: the front wall's end face was on its inner face
   // street face: piers between the bays, header over them
   const [fwA, fwB] = span(xOuter, xHouse);
   const bayCuts: [number, number][] = [];
@@ -883,7 +965,9 @@ export const buildOrangeHouse: Builder = (ctx) => {
   // and that plateau is what the player actually stands on indoors (the probe settles
   // at y = 0.15 in every room), so a finish laid at y = 0 is buried and invisible.
   g.add(slab(GARAGE_LEN - GT * 2, 0.05, GARAGE_DEPTH - GT * 2, mat.concrete, gx, 0.115, gz));
-  g.add(slab(GARAGE_LEN, 0.12, GARAGE_DEPTH, cream, gx, GARAGE_H - 0.12, gz));
+  // roof slab INSIDE the wall ring and TUCK under the wall tops: full-size it put its
+  // four edges on the walls' outer faces and its top on theirs
+  g.add(slab(GARAGE_LEN - 2 * TUCK, 0.12, GARAGE_DEPTH - 2 * TUCK, cream, gx, GARAGE_H - 0.12 - TUCK, gz));
 
   const br = GARAGE_LEN / (2 * GARAGE_BAYS);
   const bgeo = new THREE.CylinderGeometry(br, br, GARAGE_DEPTH, 16, 1, false,
@@ -960,8 +1044,8 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const canZ = frontZ + OUT * (CANOPY_OUT / 2 - 0.06);
   g.add(box(CANOPY_LEN, 0.22, CANOPY_OUT + 0.12, mat.roofWhite,
     porchX, CANOPY_Y - 0.11, canZ));
-  g.add(box(CANOPY_LEN, 0.36, 0.12, mat.roofWhite,
-    porchX, CANOPY_Y - 0.18, frontZ + OUT * CANOPY_OUT));
+  g.add(box(CANOPY_LEN + 2 * TUCK, 0.36, 0.12, mat.roofWhite,
+    porchX, CANOPY_Y - 0.18 + TUCK, frontZ + OUT * CANOPY_OUT));   // fascia lip proud of the slab, returned past its ends
 
   // NT04: the eave cantilevers over a CONCRETE DECK, not bare lawn. ground.ts tops
   // the lawn plateau at KERB_HEIGHT + 0.001, so the slab rises from y=0 and stands
@@ -975,7 +1059,10 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const dX = DECK_X;
   const dOut = DECK_OUT_Z;
   const dCz = DECK_CZ;
-  g.add(box(DECK_LEN, 0.18, DECK_OUT + 0.1, mat.deckBoards, dX, DECK_Y - 0.09, dCz));
+  // The deck MESH stops at the wall face: carried 0.1 m into the house its top lay on
+  // the slab's and the wall tops' plane and its end face on the free-end wall's.
+  // The collider keeps the nominal box (the wall is solid where it overlaps).
+  g.add(box(DECK_LEN, 0.18, DECK_OUT, mat.deckBoards, dX, DECK_Y - 0.09, backZ + S * (DECK_OUT / 2)));
   colliders.push(aabb(dX, DECK_Y - 0.09, dCz, DECK_LEN, 0.18, DECK_OUT + 0.1));
   const dL = dX - DECK_LEN / 2, dR = dX + DECK_LEN / 2;
   // The deck's four legs used to flank a gap at the OUTER edge's centre, because that
@@ -1010,7 +1097,7 @@ export const buildOrangeHouse: Builder = (ctx) => {
     top.quaternion.copy(q);
     g.add(top);
     const n = Math.max(1, Math.round(len / 0.16));
-    for (let k = 0; k <= n; k++) {
+    for (let k = 1; k < n; k++) {   // the ends are posts; a baluster inside one tied its foot
       const t = k / n;
       bal.push({ x: x0 + dx * t, z: z0 + dz * t, a });
     }
@@ -1023,9 +1110,15 @@ export const buildOrangeHouse: Builder = (ctx) => {
       q.setFromAxisAngle(UP, b.a), sc.set(1, 1, 1)));
   });
   g.add(balusters);
-  for (const [nx, nz] of [[dL, dOut], [dR, dOut], [dNear, backZ], [dNear, dOut],
-    [STAIR_HEAD_X, gapLo], [STAIR_HEAD_X, gapHi], [STAIR_HEAD_X, backZ]] as P2[]) {
-    postRows.push([0.14, RAIL_H + 0.1, 0.14, nx, DECK_Y + (RAIL_H + 0.1) / 2, nz, 0]);
+  // [dNear, dOut] is one of [dL, dOut] / [dR, dOut] whichever way the flight runs -
+  // the same post was built twice, every face on every face
+  const railPosts: P2[] = [[dL, dOut], [dR, dOut], [dNear, backZ],
+    [STAIR_HEAD_X, gapLo], [STAIR_HEAD_X, gapHi], [STAIR_HEAD_X, backZ]];
+  for (const [nx, nz] of railPosts) {
+    // a post on the wall line straddles deck and wall; its foot sits TUCK into the
+    // deck so it is not on the upper wall's own bottom plane
+    const dz = Math.abs(nz - backZ) < 1e-6 ? TUCK : 0;
+    postRows.push([0.14, RAIL_H + 0.1 + dz, 0.14, nx, DECK_Y + (RAIL_H + 0.1 - dz) / 2, nz, 0]);
   }
 
   // -------------------------------------------------- exterior timber stair
@@ -1037,7 +1130,9 @@ export const buildOrangeHouse: Builder = (ctx) => {
   const slopeA = Math.atan2(DECK_Y - footY, STAIR_RUN);
   const stringHyp = Math.hypot(STAIR_RUN, DECK_Y - footY);
   const railM = mat.painted(PAL.timber, 0.88, 0);
-  for (const sz of [dCz - (STAIR_W / 2 - 0.05), dCz + (STAIR_W / 2 - 0.05)]) {
+  // stringers TUCK proud of the flight's width: at STAIR_W / 2 their outer faces were
+  // the tread ends' planes, deck boards dithering with dark timber down both sides
+  for (const sz of [dCz - (STAIR_W / 2 - 0.05 + TUCK), dCz + (STAIR_W / 2 - 0.05 + TUCK)]) {
     // A box is symmetric about its own centre, so -FE * slopeA gives the right LINE
     // for either hand; the tread boxes below carry the direction.
     const st = box(stringHyp + 0.3, 0.34, 0.1,

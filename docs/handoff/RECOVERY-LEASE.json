@@ -1,0 +1,12 @@
+{
+  "owner": "Codex",
+  "machine": "dave-gaming-pc",
+  "branch": "recovery/wave7-20260919",
+  "path": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
+  "purpose": "Recover and validate interrupted September 19 work",
+  "base": "b1a310005f2f2133364f7b20c3e842ff161a2eff",
+  "snapshot": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z",
+  "write_scope": "This recovery worktree only; original checkout retained",
+  "expires": "2026-09-19T20:00:00Z",
+  "status": "active"
+}

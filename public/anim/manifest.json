@@ -1,5 +1,5 @@
 {
-  "baked": "2026-09-18",
+  "baked": "2026-09-19",
   "generator": {
     "motionModel": "kimodo-soma-rp-v1.1-f32.gguf",
     "textBundle": "llm2vec-text-bundle",
@@ -26,38 +26,6 @@
     "rootY": "kept, scaled deviation from rest, then grounded on the 10th-percentile toe height"
   },
   "clips": [
-    {
-      "id": "idle",
-      "file": "idle.glb",
-      "bytes": 23720,
-      "frames": 49,
-      "duration": 1.6,
-      "fps": 30,
-      "trimmed": [
-        63,
-        111
-      ],
-      "loop": true,
-      "loopSeam": 0.1471,
-      "speed": 0.01,
-      "speedRoot": 0.019,
-      "speedFeet": 0.01,
-      "cycleFrames": 0,
-      "stride": 0.016,
-      "footSlideCm": 1.4,
-      "footTravelCm": null,
-      "strides": 2,
-      "hipYRange": [
-        0.83,
-        0.838
-      ],
-      "headingDeg": -0.1,
-      "seed": 1001,
-      "promptId": "idle",
-      "prompt": "a soldier stands still at ease holding a rifle across his chest, weight shifting slightly, small natural sway, breathing",
-      "seedNote": null,
-      "embeddingSha256": "f22c5865482a1e1fc2b4c8c6693c4e1853d2da94e3bef2616ecd1a59a0beda32"
-    },
     {
       "id": "walk",
       "file": "walk.glb",
@@ -123,38 +91,6 @@
       "embeddingSha256": "e47dbee53455e1b91e900d600fe4bacb050a665b5ff7cae33d616ab9864b2e4a"
     },
     {
-      "id": "sprint",
-      "file": "sprint.glb",
-      "bytes": 13528,
-      "frames": 20,
-      "duration": 0.633,
-      "fps": 30,
-      "trimmed": [
-        60,
-        79
-      ],
-      "loop": true,
-      "loopSeam": 0.2684,
-      "speed": 2.74,
-      "speedRoot": 3.96,
-      "speedFeet": 2.74,
-      "cycleFrames": 19,
-      "stride": 1.735,
-      "footSlideCm": 0,
-      "footTravelCm": null,
-      "strides": 0,
-      "hipYRange": [
-        0.789,
-        0.841
-      ],
-      "headingDeg": -0.4,
-      "seed": 1104,
-      "promptId": "sprint",
-      "prompt": "a soldier sprints flat out at top speed, very long powerful bounding strides, both feet leaving the ground, arms driving hard, body low and forward",
-      "seedNote": "second seed. The first (1004) measured 2.90 m/s, inside the blend tree's RUN band (2.3-4.1); a sprint clip must sit above 4.1 to ever be selected on its own terms.",
-      "embeddingSha256": "86036f854e1639e2af702ec8bfa3db26f5c26147a108f485a5b0efcb624f42d2"
-    },
-    {
       "id": "crouch-idle",
       "file": "crouch-idle.glb",
       "bytes": 25132,
@@ -217,38 +153,6 @@
       "prompt": "a soldier advances in a combat crouch, back straight and chest up, knees bent, taking short steady steps, rifle shouldered, loopable",
       "seedNote": "second seed. The first (1006, 'torso low') produced a duck-walk: pelvis 0.52 m with the torso near horizontal. Photographed at captures/anim/crouchwalk-side.png before the re-roll.",
       "embeddingSha256": "5a0b2dbba4761e8b024a58ab8eb2d8aa57430d798888e5c05734b28477f84b7f"
-    },
-    {
-      "id": "aim",
-      "file": "aim.glb",
-      "bytes": 23724,
-      "frames": 49,
-      "duration": 1.6,
-      "fps": 30,
-      "trimmed": [
-        71,
-        119
-      ],
-      "loop": true,
-      "loopSeam": 0.036,
-      "speed": 0,
-      "speedRoot": 0.006,
-      "speedFeet": 0,
-      "cycleFrames": 0,
-      "stride": 0,
-      "footSlideCm": 0.5,
-      "footTravelCm": null,
-      "strides": 2,
-      "hipYRange": [
-        0.854,
-        0.856
-      ],
-      "headingDeg": 0.6,
-      "seed": 1007,
-      "promptId": "aim-rifle-idle",
-      "prompt": "a soldier stands still aiming a rifle straight ahead with both hands, elbows tucked in, holding steady",
-      "seedNote": null,
-      "embeddingSha256": "ed6f65fb7b97d3faf85889cf61b5e8606bb64f63d66eb4afcdd21fbbd227e655"
     },
     {
       "id": "aim-rifle-walk",
@@ -513,6 +417,68 @@
       "prompt": "a person is shot, buckles at the knees and collapses forward onto the ground, ending face down and motionless",
       "seedNote": null,
       "embeddingSha256": "d18310d9a27567d7bad1ea2d6a106124ec74f56d481cdfa77d176d8f8ee38ba7"
+    },
+    {
+      "id": "aim",
+      "promptId": "aim-rifle-idle",
+      "prompt": "a soldier stands upright with his legs straight and his back vertical, head level, aiming a rifle straight ahead with both hands at shoulder height, elbows tucked in close to his ribs, holding steady, loopable",
+      "seedNote": null,
+      "file": "aim.glb",
+      "bytes": 24416,
+      "frames": 51,
+      "duration": 1.667,
+      "fps": 30,
+      "trimmed": [
+        54,
+        104
+      ],
+      "loop": true,
+      "loopSeam": 0.0403,
+      "speed": 0,
+      "speedRoot": 0.01,
+      "speedFeet": 0,
+      "cycleFrames": 0,
+      "stride": 0,
+      "footSlideCm": 0.9,
+      "footTravelCm": null,
+      "strides": 2,
+      "hipYRange": [
+        0.902,
+        0.904
+      ],
+      "headingDeg": 0.2,
+      "seed": 1207
+    },
+    {
+      "id": "sprint",
+      "promptId": "sprint",
+      "prompt": "a soldier sprints forward flat out at top speed, long fast strides, tall through the chest with the head up, arms driving straight forward and back close to the sides, elbows in, loopable",
+      "seedNote": null,
+      "file": "sprint.glb",
+      "bytes": 20580,
+      "frames": 40,
+      "duration": 1.3,
+      "fps": 30,
+      "trimmed": [
+        42,
+        81
+      ],
+      "loop": true,
+      "loopSeam": 0.1321,
+      "speed": 2.84,
+      "speedRoot": 2.75,
+      "speedFeet": 2.84,
+      "cycleFrames": 39,
+      "stride": 3.692,
+      "footSlideCm": 4,
+      "footTravelCm": null,
+      "strides": 5,
+      "hipYRange": [
+        0.809,
+        0.861
+      ],
+      "headingDeg": -5.2,
+      "seed": 1204
     }
   ],
   "renamed": {
@@ -520,6 +486,7 @@
     "fire-recoil": "fire"
   },
   "dropped": [
-    "calib-right-arm"
+    "calib-right-arm",
+    "idle"
   ]
 }

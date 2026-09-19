@@ -249,31 +249,75 @@ function quad(
  * raycast, so an uncollided pad would leave the player walking 0.14 m sunk into
  * it. Pass `out = null` ONLY for geometry outside the hard shell.
  */
+/**
+ * `tuck` moves the MESH's four side faces in from the nominal footprint - [minX,
+ * maxX, minZ, maxZ] in metres, negative pushes a face OUT - while the collider always
+ * keeps the nominal box, so a plateau edge can be hidden 5 mm inside a wall that
+ * stands on it without moving the floor the player walks on. A pad edge that shares
+ * a plane with something built on it (a house wall on the floor pad's edge, a garage
+ * apron's end on the frontage pad's end) is a z-fight at that plane, clean from one
+ * viewpoint and a dither patch from the next; `scripts/coplanar.mjs` lists them.
+ */
+type Tuck = [number, number, number, number];
 function pad(
   out: AABB[] | null,
   x0: number, x1: number, z0: number, z1: number,
   top: number, material: THREE.Material, uvM: number,
+  tuck: Tuck = [0, 0, 0, 0],
 ): THREE.Mesh {
-  const w = Math.abs(x1 - x0);
-  const d = Math.abs(z1 - z0);
-  const g = new THREE.BoxGeometry(w, top, d);
+  const [xa, xb] = x0 < x1 ? [x0, x1] : [x1, x0];
+  const [za, zb] = z0 < z1 ? [z0, z1] : [z1, z0];
+  const w = xb - xa;
+  const d = zb - za;
+  const mx0 = xa + tuck[0], mx1 = xb - tuck[1], mz0 = za + tuck[2], mz1 = zb - tuck[3];
+  const g = new THREE.BoxGeometry(mx1 - mx0, top, mz1 - mz0);
   scaleUV(g, w / uvM, d / uvM);
   const m = new THREE.Mesh(g, material);
-  m.position.set((x0 + x1) / 2, top / 2, (z0 + z1) / 2);
-  if (out) out.push(aabbSlab((x0 + x1) / 2, Y_BASE, (z0 + z1) / 2, w, top, d));
+  m.position.set((mx0 + mx1) / 2, top / 2, (mz0 + mz1) / 2);
+  if (out) out.push(aabbSlab((xa + xb) / 2, Y_BASE, (za + zb) / 2, w, top, d));
   return flat(m);
 }
+/** A face moved this far off a plane it shared is out of the depth tie and invisible. */
+const TUCK = 0.005;
+const TUCK_ALL: Tuck = [TUCK, TUCK, TUCK, TUCK];
 
-/** A point at arc length `s` round the nominal apron rectangle, with its
- *  outward normal, as [x, z, nx, nz]. */
-const APRON_PERIM = 2 * (APRON_X_MAX - APRON_X_MIN) + 4 * APRON_Z;
+/**
+ * A point at arc length `s` round the nominal apron outline, with its outward normal,
+ * as [x, z, nx, nz]. The outline is the apron rectangle with its four corners ROUNDED
+ * to CORNER_R. It was a sharp rectangle: each edge was offset inward along its own
+ * normal, so where the bite differed between two edges the contour jumped at the
+ * corner and crossed itself, and earcut filled the crossing on BOTH the paving and the
+ * desert fringe - 16.6 m2 of the two y=0 sheets on top of each other (coplanar.mjs,
+ * patches at (-36, 60) and (44, -61)). An inward offset of a convex arc whose radius
+ * exceeds the largest bite cannot fold, so the corners are arcs of CORNER_R > RAGGED_MAX.
+ */
+const CORNER_R = 8.0;
+const STRAIGHT_X = (APRON_X_MAX - APRON_X_MIN) - 2 * CORNER_R;
+const STRAIGHT_Z = 2 * APRON_Z - 2 * CORNER_R;
+const CORNER_L = (Math.PI / 2) * CORNER_R;
+const APRON_PERIM = 2 * STRAIGHT_X + 2 * STRAIGHT_Z + 4 * CORNER_L;
 function edgeSample(s: number): [number, number, number, number] {
-  const w = APRON_X_MAX - APRON_X_MIN;
-  const d = 2 * APRON_Z;
-  if (s < w) return [APRON_X_MIN + s, -APRON_Z, 0, -1];
-  if (s < w + d) return [APRON_X_MAX, -APRON_Z + (s - w), 1, 0];
-  if (s < 2 * w + d) return [APRON_X_MAX - (s - w - d), APRON_Z, 0, 1];
-  return [APRON_X_MIN, APRON_Z - (s - 2 * w - d), -1, 0];
+  const arc = (cx: number, cz: number, a0: number, t: number): [number, number, number, number] => {
+    const a = a0 + (t / CORNER_L) * (Math.PI / 2);
+    const nx = Math.cos(a), nz = Math.sin(a);
+    return [cx + CORNER_R * nx, cz + CORNER_R * nz, nx, nz];
+  };
+  // -z edge, +x arc, +x edge, +z arc, +z edge, -x arc, -x edge, -z arc
+  if (s < STRAIGHT_X) return [APRON_X_MIN + CORNER_R + s, -APRON_Z, 0, -1];
+  s -= STRAIGHT_X;
+  if (s < CORNER_L) return arc(APRON_X_MAX - CORNER_R, -APRON_Z + CORNER_R, -Math.PI / 2, s);
+  s -= CORNER_L;
+  if (s < STRAIGHT_Z) return [APRON_X_MAX, -APRON_Z + CORNER_R + s, 1, 0];
+  s -= STRAIGHT_Z;
+  if (s < CORNER_L) return arc(APRON_X_MAX - CORNER_R, APRON_Z - CORNER_R, 0, s);
+  s -= CORNER_L;
+  if (s < STRAIGHT_X) return [APRON_X_MAX - CORNER_R - s, APRON_Z, 0, 1];
+  s -= STRAIGHT_X;
+  if (s < CORNER_L) return arc(APRON_X_MIN + CORNER_R, APRON_Z - CORNER_R, Math.PI / 2, s);
+  s -= CORNER_L;
+  if (s < STRAIGHT_Z) return [APRON_X_MIN, APRON_Z - CORNER_R - s, -1, 0];
+  s -= STRAIGHT_Z;
+  return arc(APRON_X_MIN + CORNER_R, -APRON_Z + CORNER_R, Math.PI, s);
 }
 
 /**
@@ -520,19 +564,22 @@ export const buildGround: Builder = (ctx) => {
       T_LAWN, ctx.mat.lawn, UV_LAWN,
     ));
 
-    // interior floor: main block, laid just over the lawn pad
+    // interior floor: main block, laid just over the lawn pad. Its edges are the
+    // house's outer wall planes (|x| = HOUSE_HALF_LEN, |z| = HOUSE_BACK), so the pad's
+    // 3 mm lip above the lawn shared those planes with the stucco: tucked 5 mm inside.
     g.add(pad(
       colliders, -HOUSE_HALF_LEN, HOUSE_HALF_LEN,
       s * FRONT_LAWN_OUTER, s * HOUSE_BACK,
-      T_FLOOR, ctx.mat.concrete, UV_PAVING,
+      T_FLOOR, ctx.mat.concrete, UV_PAVING, TUCK_ALL,
     ));
 
-    // interior floor: garage wing, read off the house descriptor
+    // interior floor: garage wing, read off the house descriptor; same tuck, the
+    // garage's outer and back walls stand exactly on its nominal edge
     g.add(pad(
       colliders,
       h.garageX - GARAGE_LEN / 2, h.garageX + GARAGE_LEN / 2,
       s * FRONT_LAWN_OUTER, s * (FRONT_LAWN_OUTER + GARAGE_DEPTH),
-      T_FLOOR, ctx.mat.concrete, UV_PAVING,
+      T_FLOOR, ctx.mat.concrete, UV_PAVING, TUCK_ALL,
     ));
 
     // back yard, rear wall out to the timber back fence
@@ -544,12 +591,15 @@ export const buildGround: Builder = (ctx) => {
 
     // garage apron: read the garage end off the house descriptor, never assumed.
     // Warm flagstone, not cool concrete, so the drive reads as part of the paving.
+    // It rides over the frontage pad, and both end on the pavement line - two lips,
+    // 0.146 and 0.141 tall, on one plane, open to the east apron where the ring runs
+    // out. The apron's road-side face is pushed 5 mm proud so it alone is seen.
     g.add(pad(
       colliders,
       h.garageX - GARAGE_LEN / 2 - DRIVE_FLARE,
       h.garageX + GARAGE_LEN / 2 + DRIVE_FLARE,
       s * PAVEMENT_OUTER, s * FRONT_LAWN_OUTER,
-      T_DRIVE, warmFlag, UV_FLAT,
+      T_DRIVE, warmFlag, UV_FLAT, s < 0 ? [0, 0, 0, -TUCK] : [0, 0, -TUCK, 0],
     ));
   }
 
@@ -567,10 +617,12 @@ export const buildGround: Builder = (ctx) => {
     for (const s of [-1, 1] as const) {
       g.add(slab(xSpan, PERIM_H, PERIM_W, berm, xMid, Y_BASE, s * zEdge));
     }
-    g.add(slab(PERIM_W, PERIM_H, zSpan, berm, BOUND_X_MAX + PERIM_W / 2, Y_BASE, 0));
+    // the x runs BUTT the z runs (which carry the corners); both used to reach the
+    // corner and stack the same six faces there
+    g.add(slab(PERIM_W, PERIM_H, 2 * BOUND_Z, berm, BOUND_X_MAX + PERIM_W / 2, Y_BASE, 0));
     // -x wall, split around the street mouth
     const mouth = PAVEMENT_OUTER;
-    const wingLen = BOUND_Z + PERIM_W - mouth;
+    const wingLen = BOUND_Z - mouth;
     for (const s of [-1, 1] as const) {
       g.add(slab(
         PERIM_W, PERIM_H, wingLen, berm,
@@ -641,13 +693,18 @@ export const buildGround: Builder = (ctx) => {
       [ROAD_X_MIN + 1.2, 0],
     ];
     const lineSpecs: DecalSpec[] = [];
+    // The stem's centre line ends where the bulb begins: carried on to ROAD_X_MAX it
+    // crossed the circulation ring on the same rung (a dash on a dash at x = 7). The
+    // loop still runs to ROAD_X_MAX and draws its two rands per dash - section 13's
+    // lamp and furniture colliders come from the same stream - it just stops pushing.
     for (let x = ROAD_X_MIN + 1.5; x < ROAD_X_MAX - 1.0; x += 5.0) {
       let clear = true;
       for (const s of coverKeep) {
         if (Math.abs(s[0] - x - 1.0) < 1.6 && Math.abs(s[1]) < 0.8) { clear = false; break; }
       }
       if (!clear) continue;
-      lineSpecs.push({ x: x + (ctx.rand() - 0.5) * 0.2, z: (ctx.rand() - 0.5) * 0.06, w: 2.0, d: 0.15 });
+      const dash = { x: x + (ctx.rand() - 0.5) * 0.2, z: (ctx.rand() - 0.5) * 0.06, w: 2.0, d: 0.15 };
+      if (x < KERB_JOIN_X - 1.0) lineSpecs.push(dash);
     }
     // Stop bar where the stem meets the bulb.
     lineSpecs.push({ x: ROAD_X_MAX - 1.2, z: 0, w: 0.45, d: ROAD_HALF_WIDTH * 1.3 });
@@ -702,25 +759,34 @@ export const buildGround: Builder = (ctx) => {
     }
     if (drainSpecs.length) g.add(decalMesh(ironMat, drainSpecs, Y_GUTTER));
 
-    // Tyre scuff arcs + oil spots on the bulb.
+    // Tyre scuff arcs + oil spots on the bulb. All on one rung, so two that land on
+    // each other fight; a scuff that overlaps an earlier one is swung round the bulb
+    // (deterministically - every ctx.rand() call below is kept, because the lamp and
+    // furniture colliders in section 13 are drawn from the same stream).
     const scuffSpecs: DecalSpec[] = [];
+    const scuffFree = (x: number, z: number, w: number, d: number): boolean =>
+      scuffSpecs.every((o) => Math.hypot(o.x - x, o.z - z) > (Math.hypot(w, d) + Math.hypot(o.w, o.d)) / 2);
+    const placeScuff = (a: number, r: number, w: number, d: number, rot: number): void => {
+      for (let k = 0; k < 12; k++) {
+        const aa = a + k * 0.37;
+        const x = HEAD_CENTER_X + Math.cos(aa) * r, z = Math.sin(aa) * r;
+        if (!scuffFree(x, z, w, d)) continue;
+        scuffSpecs.push({ x, z, w, d, rot: rot + (aa - a) * -1 });
+        return;
+      }
+    };
     for (let i = 0; i < 16; i++) {
       const a = ctx.rand() * Math.PI * 2;
       const r = 2.0 + ctx.rand() * (HEAD_RADIUS - 3.0);
-      scuffSpecs.push({
-        x: HEAD_CENTER_X + Math.cos(a) * r, z: Math.sin(a) * r,
-        w: 1.2 + ctx.rand() * 1.2, d: 0.22 + ctx.rand() * 0.13,
-        rot: -a + Math.PI / 2 + (ctx.rand() - 0.5) * 0.5,
-      });
+      const w = 1.2 + ctx.rand() * 1.2, d = 0.22 + ctx.rand() * 0.13;
+      placeScuff(a, r, w, d, -a + Math.PI / 2 + (ctx.rand() - 0.5) * 0.5);
     }
     for (let i = 0; i < 6; i++) {
       const a = ctx.rand() * Math.PI * 2;
       const r = ctx.rand() * (HEAD_RADIUS - 2.5);
       const s = 0.35 + ctx.rand() * 0.45;
-      scuffSpecs.push({
-        x: HEAD_CENTER_X + Math.cos(a) * r, z: Math.sin(a) * r,
-        w: s, d: s * (0.7 + ctx.rand() * 0.5), rot: ctx.rand() * Math.PI,
-      });
+      const d = s * (0.7 + ctx.rand() * 0.5), rot = ctx.rand() * Math.PI;
+      placeScuff(a, r, s, d, rot);
     }
     if (scuffSpecs.length) g.add(decalMesh(scuffMat, scuffSpecs, Y_SCUFF));
 
@@ -736,10 +802,25 @@ export const buildGround: Builder = (ctx) => {
       }
       return false;
     };
+    // Everything on the Y_PAVE_MARK rung shares it with the four tactile pads (placed
+    // below); a joint or a stain laid across one is two colours on one plane. Specs
+    // are still DRAWN from ctx.rand() exactly as before and dropped afterwards, so the
+    // stream feeding section 13's colliders is untouched.
+    const tactileAt: [number, number][] = [
+      [KERB_JOIN_X - 0.9, PAVEMENT_OUTER - 0.55], [KERB_JOIN_X - 0.9, -(PAVEMENT_OUTER - 0.55)],
+      [ROAD_X_MIN + 0.9, PAVEMENT_OUTER - 0.55], [ROAD_X_MIN + 0.9, -(PAVEMENT_OUTER - 0.55)],
+    ];
+    const onTactile = (sp: DecalSpec): boolean => {
+      const c = Math.abs(Math.cos(sp.rot ?? 0)), sn = Math.abs(Math.sin(sp.rot ?? 0));
+      const hw = (c * sp.w + sn * sp.d) / 2 + 0.35 + 0.05;   // pad half-size 0.35 + a hair
+      const hd = (sn * sp.w + c * sp.d) / 2 + 0.35 + 0.05;
+      return tactileAt.some(([tx, tz]) => Math.abs(sp.x - tx) < hw && Math.abs(sp.z - tz) < hd);
+    };
+    const keep = (arr: DecalSpec[], sp: DecalSpec): void => { if (!onTactile(sp)) arr.push(sp); };
     for (const s of [-1, 1] as const) {
       for (let x = ROAD_X_MIN + 1.0; x < KERB_JOIN_X; x += 3.0) {
         if (overDrive(s, x, 0.4)) continue;
-        paveSpecs.push({ x: x + (ctx.rand() - 0.5) * 0.15, z: s * bandMid, w: 0.09, d: bandD });
+        keep(paveSpecs, { x: x + (ctx.rand() - 0.5) * 0.15, z: s * bandMid, w: 0.09, d: bandD });
       }
     }
     const ringMid = HEAD_RADIUS + KERB_WIDTH + (HEAD_PAVE_R - HEAD_RADIUS - KERB_WIDTH) / 2;
@@ -770,7 +851,7 @@ export const buildGround: Builder = (ctx) => {
         const w = 1.1 + ctx.rand() * 0.5;
         const cz = s * (bandMid + (ctx.rand() - 0.5) * 0.4);
         const spec = { x: cx, z: cz, w, d: bandD * 0.62 };
-        if (ctx.rand() < 0.5) stainSpecs.push(spec); else flagSpecs.push(spec);
+        if (ctx.rand() < 0.5) keep(stainSpecs, spec); else keep(flagSpecs, spec);
         stainRects.push([cx, cz, w / 2 + 0.15, (bandD * 0.62) / 2 + 0.15]);
         // tar strip: short transverse bead tucked against the bay's joint end,
         // clear of the stained slab in the same bay and the utility cover.
@@ -779,7 +860,7 @@ export const buildGround: Builder = (ctx) => {
         const tz = s * (bandMid + (ctx.rand() - 0.5) * bandD * 0.4);
         if (Math.abs(tx - utilX) < 0.6 && Math.abs(tz - s * bandMid) < 0.7) continue;
         if (!overDrive(s, tx, 0.6)) {
-          tarSpecs.push({ x: tx, z: tz, w: 0.13, d: 0.9 + ctx.rand() * 1.0 });
+          keep(tarSpecs, { x: tx, z: tz, w: 0.13, d: 0.9 + ctx.rand() * 1.0 });
         }
       }
     }
@@ -797,7 +878,7 @@ export const buildGround: Builder = (ctx) => {
         }
       }
       if (hit) continue;
-      paveSpecs.push({
+      keep(paveSpecs, {
         x: cx, z: cz,
         w: 0.07, d: 0.8 + ctx.rand() * 1.0, rot: (ctx.rand() - 0.5) * 1.2,
       });
@@ -819,12 +900,7 @@ export const buildGround: Builder = (ctx) => {
     if (dropSpecs.length) g.add(decalMesh(ctx.mat.kerb, dropSpecs, Y_PAVE_MARK));
 
     // Tactile pad hints at the bulb junction + the -x street mouth corners.
-    const tactileSpecs: DecalSpec[] = [
-      { x: KERB_JOIN_X - 0.9, z: PAVEMENT_OUTER - 0.55, w: 0.7, d: 0.7 },
-      { x: KERB_JOIN_X - 0.9, z: -(PAVEMENT_OUTER - 0.55), w: 0.7, d: 0.7 },
-      { x: ROAD_X_MIN + 0.9, z: PAVEMENT_OUTER - 0.55, w: 0.7, d: 0.7 },
-      { x: ROAD_X_MIN + 0.9, z: -(PAVEMENT_OUTER - 0.55), w: 0.7, d: 0.7 },
-    ];
+    const tactileSpecs: DecalSpec[] = tactileAt.map(([x, z]) => ({ x, z, w: 0.7, d: 0.7 }));
     g.add(decalMesh(tactileMat, tactileSpecs, Y_PAVE_MARK));
 
     // Pavement utility covers: small steel squares clear of the driveway spans.
@@ -937,7 +1013,8 @@ export const buildGround: Builder = (ctx) => {
           const a = sg * LAMP_SPLAY + (ctx.rand() - 0.5) * 0.08;
           const dx = Math.sin(a);
           const dz = -s * Math.cos(a);
-          arms.push({ p: [lx + dx * LAMP_ARM * 0.45, topY, pz + dz * LAMP_ARM * 0.45], ry: Math.atan2(dx, dz) });
+          // both arms pass over the column and their top/bottom faces met there
+          arms.push({ p: [lx + dx * LAMP_ARM * 0.45, topY + (sg > 0 ? TUCK : 0), pz + dz * LAMP_ARM * 0.45], ry: Math.atan2(dx, dz) });
           heads.push({ p: [lx + dx * (LAMP_ARM - 0.1), topY - 0.08, pz + dz * (LAMP_ARM - 0.1)], ry: Math.atan2(dx, dz) });
           lenses.push({ p: [lx + dx * (LAMP_ARM - 0.1), topY - 0.16, pz + dz * (LAMP_ARM - 0.1)], ry: Math.atan2(dx, dz) });
         }

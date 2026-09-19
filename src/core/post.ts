@@ -61,9 +61,12 @@ import { denoise } from 'three/addons/tsl/display/DenoiseNode.js';
 import { ssr } from 'three/addons/tsl/display/SSRNode.js';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import type { WorldRenderer } from './renderer';
+import { buildAtmosphereFx, type Atmosphere, type TodName, type WeatherName } from './atmosphere';
 
 /** Which path the chain took. `off` = WebGPU present but a pass failed. */
 export type PostBackend = 'webgpu' | 'webgl2' | 'off';
+
+export interface PostEffects { ao: boolean; ssr: boolean; bloom: boolean }
 
 export interface PostChain {
   /** Render one frame. Allocation-free after build. */
@@ -75,7 +78,22 @@ export interface PostChain {
   /** False when degraded to direct rendering. */
   enabled: boolean;
   backend: PostBackend;
+  /**
+   * Options menu (src/ui/settings-apply.ts). Three uniform(1) scalars multiplied into the
+   * EXISTING graph - occlusion -> mix(1, occlusion, aoOn), the SSR contribution x ssrOn,
+   * the bloom glints x bloomOn. Uniform writes only: no node, material or light changes
+   * (PASS 82), so a toggle costs nothing and cannot invalidate a program.
+   */
+  setEffects: (e: PostEffects) => void;
+  getEffects: () => PostEffects;
+  /** The analytic haze on/off (a uniform). Smoke volumes are gameplay and never switch off. */
+  setFog: (enabled: boolean) => void;
+  getFog: () => boolean;
+  /** Time of day + weather, forwarded to core/atmosphere.ts. Returns false on an unknown name. */
+  setAtmosphere: (preset: TodName, weather: WeatherName) => boolean;
 }
+
+const _drawSize = new THREE.Vector2();
 
 // Bloom stays tight and restrained: only ~HDR glints (sun on chrome/glass)
 // clear the threshold, with low strength and a small radius.
@@ -93,6 +111,7 @@ export function buildPost(
   renderer: WorldRenderer,
   scene: THREE.Scene,
   camera: THREE.PerspectiveCamera,
+  atmosphere: Atmosphere,
 ): PostChain {
   // Same detection technique as renderer.ts actualBackend: the WebGPU backend
   // flags itself, anything else is the silent WebGL2 fallback.
@@ -101,7 +120,7 @@ export function buildPost(
 
   if (onWebGPU) {
     try {
-      return buildChain(renderer, scene, camera);
+      return buildChain(renderer, scene, camera, atmosphere);
     } catch {
       /* fall through to the direct-render fallback below */
     }
@@ -110,6 +129,9 @@ export function buildPost(
   // WebGL2, or a WebGPU pass that threw at build time: direct render, never
   // a black screen. One literal, one site — every degradation path lands here.
   // Safe with respect to rule 1: if the chain never built, no MRT shader exists.
+  // The options toggles have nothing to drive here; they are remembered and reported.
+  const effects: PostEffects = { ao: true, ssr: true, bloom: true };
+  let fogOn = true;
   return {
     render: () => {
       renderer.render(scene, camera);
@@ -122,6 +144,11 @@ export function buildPost(
     },
     enabled: false,
     backend: onWebGPU ? 'off' : 'webgl2',
+    setEffects: (e) => { effects.ao = e.ao; effects.ssr = e.ssr; effects.bloom = e.bloom; },
+    getEffects: () => ({ ...effects }),
+    setFog: (v) => { fogOn = v; },
+    getFog: () => fogOn,
+    setAtmosphere: (p, w) => atmosphere.set(p) && atmosphere.setWeather(w),
   };
 }
 
@@ -334,6 +361,7 @@ function buildChain(
   renderer: WorldRenderer,
   scene: THREE.Scene,
   camera: THREE.PerspectiveCamera,
+  atmosphere: Atmosphere,
 ): PostChain {
     const scenePass = pass(scene, camera);
     // Four RGBA16F attachments = 32 bytes per sample, which is exactly the WebGPU
@@ -461,9 +489,18 @@ function buildChain(
     const dFade = float(1).sub(smoothstep(float(30), float(70), viewZ));
     const mNear2 = mix(float(1), mNear, dFade);
     const occlusion = mFar.min(mNear2);
+    // Options menu (lobby lane, verified 2026-09-19): AO / SSR / bloom / haze toggles are
+    // four uniform(1) scalars multiplied into the graph built above. A write to one of
+    // them changes no node, no material and no light (PASS 82); `?post=ao` reads the
+    // toggled term so ao:false photographs as a white sheet, which is the proof.
+    const aoOn = uniform(1);
+    const ssrOn = uniform(1);
+    const bloomOn = uniform(1);
+    const fogOn = uniform(1);
+    const occlusionOn = mix(float(1), occlusion, aoOn);
     // Work on rgb only. `color.mul(occlusion)` also multiplies ALPHA, and this canvas
     // is not opaque - a frame at alpha 0.6 composites against the page background.
-    const lit = color.rgb.mul(occlusion);
+    const lit = color.rgb.mul(occlusionOn);
 
     // 2 — SSR on road/paving/glazing, opacity-weighted additive. maxDistance 12
     // covers the street width (the default 1 m only reflects a bumper); opacity
@@ -481,17 +518,31 @@ function buildChain(
       ssrNode.thickness.value = 0.3;
       ssrNode.opacity.value = 0.55;
       const reflection = ssrNode.getTextureNode();
-      graded = lit.add(reflection.rgb.mul(reflection.a).mul(occlusion));
+      graded = lit.add(reflection.rgb.mul(reflection.a).mul(occlusionOn).mul(ssrOn));
     } catch {
       /* env-map fallback: keep the GTAO-graded colour without SSR */
     }
 
+    // 2b — ATMOSPHERE (core/atmosphere.ts): the analytic height/distance haze with sun
+    // in-scatter, and the raymarched smoke volumes, composited on LINEAR radiance here -
+    // after AO and SSR, before bloom and before the renderer's ACES + sRGB output pass.
+    // The scene has no THREE.Fog any more; this IS the fog, and at the noon/clear default
+    // its density and colour are the old FogExp2's, so the default frame does not move
+    // except where AO used to darken already-fogged distance (aerial perspective, S5).
+    // Cost: one half-resolution quad for the smoke march; the haze is inline.
+    const drawSize = renderer.getDrawingBufferSize(_drawSize);
+    const fx = buildAtmosphereFx({
+      color: graded, depth, viewPos, viewZ, projInv, camera,
+      u: atmosphere.uniforms, fogOn, width: drawSize.x, height: drawSize.y,
+    });
+    const atmo = fx.color;
+
     // 3 — tight bloom, then 4 — subtle vignette.
     const glints = bloom(
-      vec4(graded, float(1)), BLOOM_STRENGTH, BLOOM_RADIUS, BLOOM_THRESHOLD,
+      vec4(atmo, float(1)), BLOOM_STRENGTH, BLOOM_RADIUS, BLOOM_THRESHOLD,
     );
     repairSamplerUnsubscribe(glints);
-    const bloomed = graded.add(glints.rgb);
+    const bloomed = atmo.add(glints.rgb.mul(bloomOn));
     const dist = length(uv().sub(0.5));
     const shade = float(1).sub(
       smoothstep(float(VIGNETTE_INNER), float(VIGNETTE_OUTER), dist).mul(VIGNETTE_DEPTH),
@@ -516,10 +567,14 @@ function buildChain(
       // is doing nothing here, BLACK means it is applying its full AO_STRENGTH. It is
       // a contrast stretch of the diagnostic only - the graded frame below is
       // untouched, and these are still display values, not linear ones.
-      const aoView = occlusion.sub(float(1 - AO_STRENGTH)).div(float(AO_STRENGTH));
+      const aoView = occlusionOn.sub(float(1 - AO_STRENGTH)).div(float(AO_STRENGTH));
       outputNode = vec4(vec3(aoView), float(1));
     }
     else if (debug === 'off') outputNode = vec4(color.rgb, float(1));
+    // `?post=fog` is the haze factor (black = clear air, white = fully fogged), and
+    // `?post=smoke` the smoke opacity 1 - T. Both display-valued like `?post=ao`.
+    else if (debug === 'fog') outputNode = vec4(vec3(fx.hazeFactor), float(1));
+    else if (debug === 'smoke') outputNode = vec4(vec3(float(1).sub(fx.smoke.a)), float(1));
     else outputNode = vec4(bloomed.mul(shade), float(1));
 
     // Our own full-screen quad, NOT PostProcessing — see note 2 at the top of this
@@ -540,6 +595,7 @@ function buildChain(
     // then the MRT shaders are already cached (rule 1), so the direct fallback may
     // itself draw nothing: it is a diagnostic of last resort, not a safety net.
     let chainBroken = false;
+    const effects: PostEffects = { ao: true, ssr: true, bloom: true };
     return {
       render: () => {
         if (chainBroken) {
@@ -562,12 +618,25 @@ function buildChain(
         // needs an explicit resize alongside the renderer.
         renderer.setSize(w, h);
         scenePass.setSize(w, h);
+        const ds = renderer.getDrawingBufferSize(_drawSize);
+        fx.setSize(ds.x, ds.y);
       },
       dispose: () => {
         material.dispose();
         scenePass.dispose();
+        fx.dispose();
       },
       enabled: true,
       backend: 'webgpu',
+      setEffects: (e) => {
+        effects.ao = e.ao; effects.ssr = e.ssr; effects.bloom = e.bloom;
+        aoOn.value = e.ao ? 1 : 0;
+        ssrOn.value = e.ssr ? 1 : 0;
+        bloomOn.value = e.bloom ? 1 : 0;
+      },
+      getEffects: () => ({ ...effects }),
+      setFog: (v) => { fogOn.value = v ? 1 : 0; },
+      getFog: () => fogOn.value > 0.5,
+      setAtmosphere: (p, w) => atmosphere.set(p) && atmosphere.setWeather(w),
     };
 }

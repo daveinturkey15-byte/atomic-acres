@@ -5,6 +5,28 @@ Started 2026-09-17. This repository is deliberately small and stays that way.
 
 Workspace rules in `C:/Users/david/Desktop/stuff/AGENTS.md` and active AKP apply.
 
+## September 19 recovery and continuation
+
+Read `docs/handoff/CURRENT.json` and its checkpoint first. This is the standalone
+project begun September 17, even where the menu and remote use the Atomic Acres
+name. The older `atomic-acres-browser-arena` project is a systems reference only;
+do not merge its history, modules, meshes, textures or build machinery into this one.
+
+The owner's September 19 direction permits assets authored here with Blender,
+Trellis 2 and image-to-3D workflows, with editable inputs, provenance, collision,
+material/UV checks and measured runtime budgets. This supersedes the initial
+"code-only" restriction where it would forbid those authoring tools. Existing
+procedural assets remain the comparison baseline; generation alone is not acceptance.
+Use gameplay frames as inputs for photoreal target images, preserve layout and camera,
+and accept changes only after looking at the actual game and measuring performance.
+
+Recovery worktree: `C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919`.
+Original Claude checkout and raw snapshot are retained. Codex owns this recovery
+branch; all delegated audits in the recovery were read-only. Unfinished preserved
+work is not an accepted feature merely because it is committed. The checkpoint
+records remaining blockers and the distinction between verified local preview and
+the older public deployment.
+
 ## What this project is not
 
 It is a clean restart of a much larger effort. The old project is **reference only**:

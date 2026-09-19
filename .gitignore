@@ -1,4 +1,5 @@
 node_modules
+.recovery-runtime/
 dist
 captures/*.png
 captures/*.json

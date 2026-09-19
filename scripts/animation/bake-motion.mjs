@@ -77,7 +77,20 @@ for (const p of prompts) {
 
   writeFileSync(promptFile, p.text, 'utf8');
 
-  if (!existsSync(embedFile)) {
+  // The embedding cache is keyed on the PROMPT TEXT, not on the clip id.
+  //
+  // It used to be keyed on the id alone (`embed/<id>.f32`), and that silently
+  // defeats the one thing a re-roll is for: round 2 of the animation lane
+  // rewrote idle's prompt to name the posture, the id stayed `idle`, the cached
+  // embedding from the OLD prompt was still on disk, and the "new" clip would
+  // have been generated from the old sentence with only the seed changed. The
+  // stamp beside each embedding records the text it was encoded from, so a
+  // changed prompt re-encodes and an unchanged one still costs nothing.
+  const textKey = createHash('sha256').update(p.text, 'utf8').digest('hex').slice(0, 16);
+  const stampFile = embedFile + '.txt';
+  const stale = !existsSync(embedFile) || !existsSync(stampFile)
+    || readFileSync(stampFile, 'utf8').trim() !== textKey;
+  if (stale) {
     if (!existsSync(textBundle)) { console.error(`text bundle absent at ${textBundle}`); process.exit(1); }
     const t = Date.now();
     // KIMODO_TEXT_LAYER_CHUNK keeps the encoder's VRAM slice small so a sibling
@@ -86,7 +99,10 @@ for (const p of prompts) {
       stdio: 'inherit', windowsHide: true,
       env: { ...process.env, KIMODO_TEXT_LAYER_CHUNK: process.env.KIMODO_TEXT_LAYER_CHUNK || '4' },
     });
-    console.log(`[bake] encode   ${p.id.padEnd(16)} ${((Date.now() - t) / 1000).toFixed(0)}s`);
+    writeFileSync(stampFile, textKey, 'utf8');
+    console.log(`[bake] encode   ${p.id.padEnd(16)} ${((Date.now() - t) / 1000).toFixed(0)}s  text ${textKey}`);
+  } else {
+    console.log(`[bake] encode   ${p.id.padEnd(16)} cached (prompt text unchanged, ${textKey})`);
   }
   const bytes = statSync(embedFile).size;
   if (bytes !== 4096 * 4) { console.error(`${p.id}: embedding is ${bytes} bytes, expected ${4096 * 4}`); process.exit(1); }
@@ -99,12 +115,24 @@ for (const p of prompts) {
   console.log(`[bake] generate ${p.id.padEnd(16)} frames=${p.frames} seed=${seed} ${((Date.now() - t1) / 1000).toFixed(0)}s`);
 
   results.push({
-    id: p.id, text: p.text, frames: p.frames, seed, loopHint: !!p.loop,
+    id: p.id, text: p.text, note: p.note ?? null, ship: p.ship !== false,
+    frames: p.frames, seed, loopHint: !!p.loop,
     steps: lib.generator.steps, device: lib.generator.device, fps: lib.generator.fps,
-    embeddingSha256: sha256(embedFile), raw: outDir,
+    embeddingSha256: sha256(embedFile), promptSha256: textKey, raw: outDir,
   });
 }
 
+// MERGE, never clobber. A `--only idle` run used to write a manifest containing
+// idle alone, which silently destroyed the provenance of the other fifteen clips
+// still sitting in raw/ - and retarget-soma.mjs reads this file to know what to
+// retarget, so a partial re-bake would quietly reduce the shipped set to one
+// clip. Re-baked ids replace their own row; every other row survives.
+const manifestPath = join(outRoot, 'bake-manifest.json');
+let prior = { clips: [] };
+if (existsSync(manifestPath)) {
+  try { prior = JSON.parse(readFileSync(manifestPath, 'utf8')); } catch { prior = { clips: [] }; }
+}
+const rebaked = new Set(results.map((r) => r.id));
 const manifest = {
   baked: new Date().toISOString().slice(0, 10),
   generator: lib.generator,
@@ -113,8 +141,8 @@ const manifest = {
     encode: `kmd-encode.exe <textBundle> <prompt.txt> <embedding.f32>`,
     generate: `kmd-generate-embed.exe <motion.gguf> <embedding.f32> <frames> ${lib.generator.steps} <seed> <outDir> --device ${lib.generator.device}`,
   },
-  clips: results,
+  clips: [...(prior.clips ?? []).filter((c) => !rebaked.has(c.id)), ...results],
 };
-writeFileSync(join(outRoot, 'bake-manifest.json'), JSON.stringify(manifest, null, 2));
+writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 console.log(`\n[bake] ${results.length} clip(s) in ${((Date.now() - t0all) / 1000 / 60).toFixed(1)} min -> ${rawDir}`);
 console.log('[bake] next: node scripts/animation/inspect-motion.mjs --all ' + rawDir);

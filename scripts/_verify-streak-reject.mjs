@@ -56,7 +56,7 @@ const ENTRY = [
   "import { BOT_STREAK_RETRY_MS } from '../src/game/bot-sense';",
   "import { GameHost } from '../src/game/host';",
   "import { StreakRuntime } from '../src/game/killstreaks/runtime';",
-  "import { streakPort } from '../src/game/session';",
+  "import { streakPort } from '../src/game/session-streaks';",
   "import { createWorldQuery } from '../src/game/world-query';",
   "import { TEAM_A, TEAM_B, WARMUP_MS, rulesFor } from '../src/game/rules';",
   "import { BOUND_X_MAX } from '../src/core/layout';",
