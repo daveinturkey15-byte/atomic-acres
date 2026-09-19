@@ -570,3 +570,27 @@ land: atmosphere (draft in scratchpad), animation r2 (blend/anim-qa partials), p
 targets. The frozen build on :4190 is HEAD `3067718` (AO depth fade) and is unaffected.
 For the 09:30 inspection: whatever has been verified and committed by then is what
 :4190 shows; the working tree is NOT it.
+
+**08:58 (19 Sep).** LOBBY lane HOLDS (`wf_edb62d8a-986`): main / solo-setup / multiplayer /
+options / credits / pause / end-of-match / rematch; a bot-rules panel projected from
+rules.ts tables and applied (verified: 3 Veteran bots, kill limit 10, FF on, team
+balance); options that measurably move the renderer (FOV 72->110 moved a landmark edge
+632->715 px as predicted, resolution scale halves the drawing buffer, shadow map select
+changes the live shadow RT 4096->1024); persistence across reload; every menu state
+photographed at 1280x720; and a REAL two-browser multiplayer proof - WebRTC data
+channels (reliable ctl + unordered fast) signalled by scripts/net-signal.mjs (SSE/POST,
+:4310, spawnGuarded), two separate Chromes host/join by room code through the menus,
+guest movement tracked within 17 ms median, a kill registered on both HUDs, 120 s no
+disconnect, with a NEGATIVE control (BroadcastChannel cannot cross the two instances).
+Not proved: LAN (relay needs --host 0.0.0.0) and WAN (iceServers empty by design). Also
+removed a real netcode defect: the host 'coast' double-counted jittered input (992
+forward snaps / 4.3 m lead in the seeded proof -> 110 / 0 m). STAGED, NOT COMMITTED:
+bots.ts imports the ORDNANCE lane's uncommitted modules (bot-sense exports, ./ordnance,
+ActorSnapshot kit fields) so the lobby cannot build standalone - it lands together with
+ordnance when that verifier reports. REQUESTS for other owners: main.ts - ui.bindMatch
+(match) after createLocalMatch, and hide bodies whose id left match.bots() (stale rigs
+after Leave); post.ts/world.ts - setEffects({ao,ssr,bloom}) as uniforms + world.post
+(folded into the atmosphere brief); player.ts - setSensitivity / setInvertY / setFov
+(input shims work today); weapons - a master gain hook; host-life.ts - respawn delayMs
+pass-through from MatchRules; mouse-button rebinding. ATMOSPHERE lane launching now
+(post.ts, world.ts free). tsc clean on the whole tree at 08:52.
