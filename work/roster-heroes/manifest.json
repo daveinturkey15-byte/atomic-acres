@@ -1,0 +1,65 @@
+{
+  "manifest": "work/roster-heroes/manifest.json",
+  "schema": 1,
+  "stage": "source-only",
+  "status": "recipe-authored in THIS lane; no GLBs built here, no renders, no runtime wiring. Recovery root separately holds generated MP5 + M14-EBR originals (see recovery_root); LMG has no GLB anywhere yet.",
+  "recovery_root": {
+    "path": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/public/assets/roster-heroes",
+    "mp5_glb": "present (heroes-build-2300 export, 13 draws)",
+    "m14_ebr_glb": "present (heroes-build-2300 export, 14 draws)",
+    "lmg_glb": "absent: pre-export assert lmg_stock stray Y -0.4500..-0.3000 vs frozen y_min -0.42 blocked export",
+    "validator_note": "root validator read 1194 tris MP5 / 1862 tris EBR then failed mag lookup on a real-mesh bug (name-vs-index); fixed in scripts/assets/verify-roster-heroes.mjs, rerun pending"
+  },
+  "scope": "MP5 compact SMG, M14 EBR scoped marksman rifle, belt-fed LMG only",
+  "reference_lane": "frozen 2D art reference only; images guide silhouettes, no image-to-3D performed",
+  "references": {
+    "root": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/docs/reference/production-catalog/weapons",
+    "mp5": { "image": "mp5.png", "sha256": "0A19EA14268C61258D08F2705C4513B7E4EC15F3647BA04C9ED1EFEE8E8DE649", "catalog": "catalog-weapons-b.json" },
+    "m14-ebr": { "image": "m14-ebr.png", "sha256": "7CC4FDE13A3D164BCC5D913C9457777C85F9C6C5AD335D3A34D8CEFC8809E104", "catalog": "catalog-weapons-b.json" },
+    "lmg": { "image": "lmg.png", "sha256": "C0FA3D2CD4ACD083AF377FE0C08327E5B10A73B299A44E7F9F8FC684D3103FB5", "catalog": "catalog-weapons-a.json" },
+    "comparison_baseline": "public/assets/catalog-carbine/carbine.glb (kept, unmutated; visual comparison only)"
+  },
+  "licenses": {
+    "recipe_code": "repo-owned original code (scripts/blender/build_roster_heroes.py + scripts/assets/verify-roster-heroes.mjs)",
+    "output_assets": "original project-authored game art on export (GLB + embedded procedural PNGs); no third-party mesh, texture, or module copied",
+    "reference_images": "root production-catalog art reference; 2D silhouette guide only, not embedded, not converted"
+  },
+  "guns": {
+    "mp5": {
+      "glb": "public/assets/roster-heroes/mp5.glb",
+      "meshes": ["mp5_receiver", "mp5_barrel_jacket", "mp5_muzzle", "mp5_front_sight", "mp5_rear_drum", "mp5_handguard", "mp5_grip_frame", "mp5_trigger_pack", "mp5_magazine", "mp5_stock_rails", "mp5_stock_plate", "mp5_charging", "mp5_claw_rail"],
+      "materials": ["mp5_metal", "mp5_polymer", "mp5_accent"],
+      "sockets": {"anchor_muzzle": [0.0, 0.345, 0.030], "anchor_grip": [0.0, -0.020, -0.075], "anchor_support": [0.0, 0.150, -0.005], "anchor_mag": [0.0, 0.045, -0.045]},
+      "magazine": {"object": "mp5_magazine", "pivot": "anchor_mag at straight-box feed top"}
+    },
+    "m14-ebr": {
+      "glb": "public/assets/roster-heroes/m14-ebr.glb",
+      "meshes": ["ebr_chassis", "ebr_receiver", "ebr_bolt_handle", "ebr_barrel", "ebr_brake", "ebr_scope", "ebr_top_rail", "ebr_side_rails", "ebr_stock", "ebr_buttpad", "ebr_grip", "ebr_trigger", "ebr_magazine", "ebr_bipod"],
+      "materials": ["ebr_metal", "ebr_polymer", "ebr_accent"],
+      "sockets": {"anchor_muzzle": [0.0, 0.630, 0.038], "anchor_grip": [0.0, -0.150, -0.075], "anchor_support": [0.0, 0.330, 0.005], "anchor_mag": [0.0, 0.060, -0.055]},
+      "magazine": {"object": "ebr_magazine", "pivot": "anchor_mag at short-box feed top"}
+    },
+    "lmg": {
+      "glb": "public/assets/roster-heroes/lmg.glb",
+      "meshes": ["lmg_receiver", "lmg_feed_cover", "lmg_feed_tray", "lmg_ammo_box", "lmg_barrel", "lmg_heat_shield", "lmg_muzzle", "lmg_carry_handle", "lmg_sights", "lmg_bipod", "lmg_lower_guard", "lmg_stock", "lmg_buttpad", "lmg_grip", "lmg_trigger", "lmg_cocking"],
+      "materials": ["lmg_metal", "lmg_polymer", "lmg_accent"],
+      "sockets": {"anchor_muzzle": [0.0, 0.575, 0.040], "anchor_grip": [0.0, -0.170, -0.080], "anchor_support": [0.0, 0.300, -0.010], "anchor_mag": [-0.060, 0.060, 0.020]},
+      "magazine": {"object": "lmg_ammo_box", "pivot": "anchor_mag at side-box feed-chute interface"}
+    }
+  },
+  "budgets_per_gun": {"tris": 14000, "draws": 18, "materials": 3, "embedded_png": 2, "png_px": 1024},
+  "build": {
+    "recipe": "scripts/blender/build_roster_heroes.py",
+    "invoke": "blender --background --factory-startup --threads 2 --python scripts/blender/build_roster_heroes.py -- --gun all --out <repo-root>",
+    "engine": "Blender 5.1.2, CPU only, no bake, no render, no subdivision, no booleans, no downloads"
+  },
+  "verify": {
+    "script": "scripts/assets/verify-roster-heroes.mjs",
+    "invoke": "node scripts/assets/verify-roster-heroes.mjs --strict",
+    "bin_chunk": "bufferView.byteOffset is relative to BIN chunk body (20 + jsonLen + 8), never to whole file"
+  },
+  "integration": {
+    "loader_contract": "docs/roster-heroes-handoff.md#loader-integration-contract",
+    "runtime_state": "no runtime patch; baseline loads nothing from public/assets/roster-heroes/"
+  }
+}
