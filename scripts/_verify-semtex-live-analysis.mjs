@@ -385,4 +385,85 @@ test('falsifier: fallback renderer/post backend is refuted', () => {
   assert.equal(c.pass, false);
 });
 
+// 24. Replay of live 2224 beat shape: 7 frames armed after release INTENTION,
+// committed at the own thrown line, cleared one delivery frame after commit,
+// then held null/0 to the blast. Mirrors the actual receipt (arm 19872.9,
+// release 20275.5, thrown 20387, last armed 20396.8, first clear 20414.8, det
+// 21889): the beat between intent and commit MUST NOT fail inventory.
+test('replay: 2224 release->commit beat with delivery frame holds inventory', () => {
+  const input = makeGolden();
+  const relT = 1450;
+  const throwT = 1562; // +112 ms ~= THROW_RELEASE_S, as 20275.5 -> 20387
+  const detT = 3100;
+  input.armPerfNow = 1000;
+  input.releasePerfNow = relT;
+  input.lineTail = [
+    `${throwT} grenade-thrown you semtex id=42`,
+    `${detT} grenade-detonated you semtex id=42 victims=1 at=-6.000,0.100,5.500`,
+    `${detT + 10} smoke-volume id=99 blast x=-6.000 y=0.100 z=5.500`,
+  ];
+  // Beat window: frames in (relT, throwT] still read armed/tac=1 (correct).
+  // One delivery frame just after commit still reads armed, then clears and
+  // stays cleared to the blast — the 20396.8 -> 20414.8 shape.
+  for (const f of input.frames) {
+    if (f.t <= throwT) {
+      f.tactical = 1;
+      f.armed = f.t >= 1000 ? 'semtex' : null;
+      f.flights = [];
+    } else if (f.t <= throwT + 18) {
+      f.tactical = 1; // delivery lag: commit admitted, view not yet applied
+      f.armed = 'semtex';
+      f.flights = [];
+    } else {
+      f.tactical = 0;
+      f.armed = null;
+    }
+  }
+  const res = analyseSemtexRun(input);
+  const c = res.checks.find((x) => x.name === 'inventory-consumed');
+  assert.equal(c.pass, true, `2224 beat shape must hold inventory: ${c.detail}`);
+});
+
+// 25. Falsifier: genuinely STUCK armed after admission — never clears before
+// the blast. The beat admits transient armed before the first clear; it MUST
+// NOT admit armed that persists to detonation.
+test('falsifier: armed never clearing after admission is refuted', () => {
+  const input = makeGolden();
+  for (const f of input.frames) {
+    if (f.t >= 1000) f.armed = 'semtex'; // stuck: clear never comes
+    if (f.t > 1450) f.tactical = 0; // pouch moved, hand did not
+  }
+  const res = analyseSemtexRun(input);
+  assert.equal(res.verdict, 'REFUTED');
+  const c = res.checks.find((x) => x.name === 'inventory-consumed');
+  assert.equal(c.pass, false, 'stuck-armed must fail inventory even with the pouch spent');
+});
+
+// 26. Falsifier: armed clears then RESURRECTS after admission. Bounded
+// completion is not enough — the hand must STAY empty after the first clear.
+test('falsifier: armed resurrecting after the first clear is refuted', () => {
+  const input = makeGolden();
+  let cleared = false;
+  for (const f of input.frames) {
+    if (f.t > 1450 && f.armed === null) cleared = true;
+    if (cleared && f.t > 2500 && f.t < 2900) f.armed = 'semtex'; // resurrection
+  }
+  const res = analyseSemtexRun(input);
+  assert.equal(res.verdict, 'REFUTED');
+  const c = res.checks.find((x) => x.name === 'inventory-consumed');
+  assert.equal(c.pass, false, 'armed resurrection after clear must fail inventory');
+});
+
+// 27. Falsifier: pouch NEVER consumed after admission — charge held past the
+// commit while the hand clears. Anchored to the admission line, not to the
+// release intention: frames after the thrown timestamp never reach 0.
+test('falsifier: tactical never reaching 0 after admission is refuted', () => {
+  const input = makeGolden();
+  for (const f of input.frames) f.tactical = 1; // never spent, before or after
+  const res = analyseSemtexRun(input);
+  assert.equal(res.verdict, 'REFUTED');
+  const c = res.checks.find((x) => x.name === 'inventory-consumed');
+  assert.equal(c.pass, false);
+});
+
 console.log(`\n[semtex-analysis] All ${passed}/${total} CPU tests passed.`);

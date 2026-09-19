@@ -448,6 +448,60 @@
   font-variant-numeric: tabular-nums;
 }
 
+#start .aa-prims {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
+  gap: 8px;
+}
+
+#start .aa-prim {
+  font: inherit;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  color: #e8eef7;
+  background: rgba(12, 18, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 2px;
+  padding: 7px 10px;
+  cursor: pointer;
+  box-sizing: border-box;
+  min-width: 0;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+#start .aa-prim:hover {
+  background: rgba(18, 28, 40, 0.95);
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+#start .aa-prim.aa-selected {
+  border-color: #ff9c4a;
+  background: rgba(20, 30, 44, 0.96);
+  box-shadow: 0 0 0 1px #ff9c4a;
+}
+
+#start .aa-prim-name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #f2f6fb;
+}
+
+#start .aa-prim-line {
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  color: rgba(232, 238, 247, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+
+#start .aa-prim-stats {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 #start .aa-loadlethal {
   margin-top: -2px;
 }
@@ -546,6 +600,17 @@
 #start .aa-options .aa-setting { width: min(480px, 100%); }
 #start .aa-solo .aa-setting { width: min(440px, 100%); }
 
+/* Solo mobile 2px horizontal overflow (captures/menu-hud-2132/solo-mobile-overflow.json:
+ * .aa-root scrolls 377 against a 375 client while .aa-loadout measures exact):
+ * the solo settings column and its grid/select children measured their borders
+ * outside their 100% tracks (content-box), and the setting-row label's
+ * automatic minimum kept the 1fr track from shrinking. Fix the children, not
+ * the scroller — no overflow-x hidden here. */
+#start .aa-solo .aa-setting { box-sizing: border-box; min-width: 0; max-width: 100%; }
+#start .aa-setting-row > * { min-width: 0; }
+#start .aa-select { box-sizing: border-box; max-width: 100%; }
+#start .aa-setting input[type="range"] { box-sizing: border-box; }
+
 /* --- Options Tabs --- */
 #start .aa-tabs {
   display: flex;
@@ -643,6 +708,7 @@
 #start .aa-map:focus-visible,
 #start .aa-kit:focus-visible,
 #start .aa-tac:focus-visible,
+#start .aa-prim:focus-visible,
 #start .aa-tab:focus-visible,
 #start .aa-setting input[type="range"]:focus-visible,
 #start .aa-setting input[type="checkbox"]:focus-visible,

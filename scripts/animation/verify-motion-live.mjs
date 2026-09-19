@@ -5,118 +5,103 @@
  * ROOT-RUN ONLY. This file owns a browser (stock Chrome) and a server URL.
  * The animation-lane worker must NOT run it (no browser/GPU/server there).
  *
- * Route (all requirements from the lane brief):
+ * REVISION 3 (new-stage finish) - why 2124 was rejected (root looked at PNGs):
+ * 1. AXIS. mesh.ts lays the receiver along +z ("points where the figure faces"),
+ *    skeleton.ts says "Forward is +z", blend.ts follows actor-forward (+Z).
+ *    Revision 2 inferred -Z from a wrongly framed photo and parked every lens
+ *    at dz < 0 - BEHIND the actor - so visibility() correctly reported "back"
+ *    in 17/21 cells. All staging math now lives in motion-stage.mjs (source
+ *    contract: actor yaw 0 faces +Z, every front-ish lens has dz > 0) and this
+ *    harness imports it instead of duplicating it.
+ * 2. MENU. The old overlay.click() + 1500 ms never waited for the match: the
+ *    first camera was reset by spawn during countdown/warmup and photographed
+ *    the interior spawn view with no actor. Now: click Play solo -> Deploy,
+ *    then await __NTGAME.snapshot().match.phase === 'active' before staging.
+ * 3. STAGE. The old grid scan trusted collidersAt points only and staged the
+ *    front lens inside uncollided annex geometry (interior wall, no actor) or
+ *    collocated with a street-light pole. Now: named STAGE_ANCHORS in order,
+ *    each probed with the whole-subject set (footprint ring + every lens feet
+ *    column + point-sampled lens->chest sight-lines from stagePoints()); the
+ *    first anchor with zero hits wins, else a frame-visible fatal - never a
+ *    silent fallback.
+ * 4. POSES. Projected/visibility numbers are accepted ONLY when the live
+ *    player/lens pose (new read-only __NT.playerPose) and the live figure pose
+ *    (__NTANIM.list) still match the expected stage + lens after settle. A
+ *    respawn or drift reads as poseMismatch failure, not as a passed frame.
+ *
+ * Route:
  * - stock-browser.mjs owned Chrome: real WebGPU adapter, no feature flags.
- * - Explicit URL: MOTION_URL (default http://127.0.0.1:4194/, the
- *   dist-animation-review candidate). Refuses :4188 so a default checkout
- *   can never be photographed by mistake. Never spawns a preview server.
+ * - Explicit URL: --url or MOTION_URL/NT_URL (default the 4195 candidate).
+ *   Refuses :4188 so a default checkout can never be photographed by mistake.
+ *   Never spawns a preview server.
+ * - Explicit out tag: --tag or MOTION_TAG. Every PNG/summary carries it.
  * - Dist identity + WebGPU/post: records the served index-*.js bundle and
  *   requires __NTPOST.backend === 'webgpu' with post enabled.
- * - Same in-world figures: figure 0 via the existing place/drive/carry
- *   controls plus the __NTANIM overlay path on the live rig. The game's own
- *   rAF loop draws every frame: teleport + release only, never
- *   __NT.goto/__NT.render.
- * - VISUAL CLIP PLAYBACK ONLY, now with a QA-only frame-loop beat scrub:
- *   __NTANIM.scrubThrow pins rig.upper to an exact authored beat every rAF
- *   (and zeroes heldFor, so the rig's anticipation watchdog cannot drop the
- *   coil mid-run). No game event is fired or claimed - grenade event
- *   admission is CPU-proved in verify-throw-presentation.mjs; live network
- *   admission stays OPEN.
- *
- * REVISION 2 - why 1935 was rejected (root looked at the PNGs):
- * 1. The stage scan trusted __NT.collidersAt only. (-14,-10) scored clutter 0
- *    but the front lens teleported INSIDE the orange house's west annex -
- *    visual geometry with no colliders - and photographed an interior wall
- *    with no actor. Occupancy is not LOS. The stage is now constrained to the
- *    central turning circle (open by construction), and EVERY frame must pass
- *    a rig-measured visibility gate: __NTANIM.visibility (chest bone world
- *    frame) requires visible + in-frustum + expected facing + sane distance,
- *    read AFTER the screenshot so the recorded gate describes the presented
- *    surface.
- * 2. Beats were free-played: screenshot + luma + stats outran the 0.45 s
- *    release, so every release/recovery frame recorded phase 'none' while the
- *    check green-lit from a stale earlier read. Beats are now SCRUB-PINNED:
- *    windup 0.18 hold / release 0.45 / recovery 0.70 re-asserted on the frame
- *    loop, and throwDetail is sampled immediately BEFORE and AFTER the
- *    screenshot. A frame may only be labelled windup/release/recovery when
- *    both samples carry the beat phase within 50 ms of the pinned elapsed -
- *    the phase is proven at the captured render, not after it.
- * 3. Framing: the old 'front' view sat at dz:+D, i.e. BEHIND a yaw-0 actor
- *    (actor yaw 0 faces -z; the 1935 three-quarter PNG shows its back). All
- *    four lenses now sit in the actor's FRONT hemisphere with
- *    camYaw = atan2(dx, dz) so the lens aims at the chest, and D drops
- *    3.6 -> 2.4 so the operator fills the frame. Facing expectations are
- *    strict for the stand scenario (front/side/threequarter/low) and
- *    reject-'back' for crouch/prone/moving, whose pitched chest frames can
- *    legitimately soften the label.
- * - Views: front / side / three-quarter / low across windup, release and
- *   recovery, plus crouch / prone / moving (treadmill) stances. The low lens
- *   sits at 0.38 m (y=-1.30), never an invalid floor camera. HUD is hidden
- *   for frames only (owned style tag, removed on cleanup).
- * - Bounded: MAX_FRAMES 24, per-shot timeouts, dark-frame / budget / error
- *   checks, owned cleanup (scrub unpin, showAll, unpin, style removal, close).
+ * - Same in-world figures: figure 0 via place/drive/carry/pin plus the
+ *   __NTANIM overlay path on the live rig. The game's own rAF loop draws every
+ *   frame: teleport + release only, never __NT.goto/__NT.render.
+ * - VISUAL CLIP PLAYBACK ONLY, with a QA-only frame-loop beat scrub:
+ *   __NTANIM.scrubThrow pins rig.upper to an exact authored beat every rAF.
+ *   No game event is fired or claimed - grenade event admission is CPU-proved
+ *   in verify-throw-presentation.mjs; live network admission stays OPEN.
+ * - Views: motion-stage.mjs VIEWS/BEATS. --views bounded (default) = stand x
+ *   front/side/threequarter x 3 beats = 9 frames to establish staging; --views
+ *   full restores the 21-frame plan. Facing is strict for stand, reject-'back'
+ *   otherwise. All thresholds frozen (see checks below).
  */
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stockBrowser } from '../lib/stock-browser.mjs';
+import {
+  BEATS,
+  LENS_HEIGHT,
+  STAGE_ANCHORS,
+  expectedFacingLabel,
+  pickPlan,
+  stagePoints,
+} from './motion-stage.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..', '..');
 const OUT = join(ROOT, 'captures', 'motion-live');
-const URL = process.env.MOTION_URL || process.env.NT_URL || 'http://127.0.0.1:4194/';
-const TAG = process.env.MOTION_TAG || 'throw-live';
+
+const argv = process.argv.slice(2);
+const opt = (name, dflt = '') => {
+  const i = argv.indexOf('--' + name);
+  return i >= 0 && i + 1 < argv.length ? argv[i + 1] : dflt;
+};
+const URL = opt('url', process.env.MOTION_URL || process.env.NT_URL || 'http://127.0.0.1:4195/');
+const TAG = opt('tag', process.env.MOTION_TAG || 'motion-newstage');
+const VIEW_MODE = opt('views', 'bounded');
+
 const MAX_FRAMES = 24;
 const DARK_THRESHOLD = 40;
 const CALL_BUDGET = 1200;
 const TRI_BUDGET = 900_000;
-const LENS_HEIGHT = 1.68; // EYE_HEIGHT, core/layout.ts - teleport y is the feet
-const D = 2.4; // was 3.6: the operator read far too small in the 1935 frames
+const ELAPSED_TOL = 0.05; // one 60 Hz frame of pin drift, far under either phase gap
+const POS_TOL = 0.08; // metres: teleport readback vs expected feet
+const ANG_TOL = 0.03; // radians: yaw/pitch readback vs expected
 
 if (URL.includes(':4188')) {
-  console.error(`[motion-live] refusing ${URL}: :4188 is another checkout's build; set MOTION_URL to the 4194 candidate`);
+  console.error(`[motion-live] refusing ${URL}: :4188 is another checkout's build; pass --url for the candidate`);
   process.exit(2);
 }
-
-// Actor yaw 0 faces -z (MEASURED on motion-root-1935: the south-east
-// three-quarter camera photographed the figure's back). camYaw = atan2(dx, dz)
-// makes the lens forward (-sin, -cos) point from the offset back at the chest.
-const VIEWS = [
-  { name: 'front', dx: 0, dz: -D, yaw: Math.PI, pitch: -0.06, y: 0, facing: 'front' },
-  { name: 'side', dx: D, dz: 0, yaw: Math.PI / 2, pitch: -0.06, y: 0, facing: 'side' },
-  { name: 'threequarter', dx: D * 0.72, dz: -D * 0.72, yaw: Math.PI * 0.75, pitch: -0.08, y: 0, facing: 'front' },
-  // y is the PLAYER's feet; syncCamera puts the lens at +1.68 m.
-  // -1.30 => lens at 0.38 m. Never below -1.30 (lens under the floor).
-  { name: 'low', dx: D * 0.42, dz: -D * 0.52, yaw: Math.atan2(0.42, -0.52), pitch: 0.2, y: -1.3, facing: 'front' },
-];
-for (const v of VIEWS) {
-  if (v.y < -1.3) throw new Error(`motion-live: invalid floor camera ${v.name} y=${v.y}`);
-  const derived = Math.atan2(v.dx, v.dz);
-  const err = Math.atan2(Math.sin(derived - v.yaw), Math.cos(derived - v.yaw));
-  if (Math.abs(err) > 1e-9) throw new Error(`motion-live: ${v.name} yaw does not aim the lens at the actor (atan2(dx,dz)=${derived})`);
+let plan;
+try {
+  plan = pickPlan(VIEW_MODE);
+} catch (e) {
+  console.error(`[motion-live] ${String(e.message)}`);
+  process.exit(2);
 }
-
-const SCENARIOS = [
-  { name: 'stand', speed: 0, crouch: false, prone: false, views: ['front', 'side', 'threequarter', 'low'] },
-  { name: 'crouch', speed: 0.8, crouch: true, prone: false, views: ['threequarter'] },
-  { name: 'prone', speed: 0.5, crouch: false, prone: true, views: ['threequarter'] },
-  // Treadmill: pinned on the mark so the 0.9 s overlay stays framed while
-  // the blend tree keeps the run gait (speed 3.4) ticking underneath.
-  { name: 'moving', speed: 3.4, crouch: false, prone: false, views: ['threequarter'] },
-];
-const BEATS = [
-  { name: 'windup', scrub: 'windup', phase: 'hold', elapsed: 0.18 },
-  { name: 'release', scrub: 'release', phase: 'release', elapsed: 0.45 },
-  { name: 'recovery', scrub: 'recovery', phase: 'recovery', elapsed: 0.7 },
-];
-const ELAPSED_TOL = 0.05; // one 60 Hz frame of pin drift, far under either phase gap
-const expectFrames = SCENARIOS.reduce((n, s) => n + s.views.length * BEATS.length, 0);
+const expectFrames = plan.reduce((n, s) => n + s.views.length * BEATS.length, 0);
 if (expectFrames > MAX_FRAMES) throw new Error(`motion-live: plan ${expectFrames} frames exceeds bound ${MAX_FRAMES}`);
 
 mkdirSync(OUT, { recursive: true });
 const result = {
   url: URL,
   tag: TAG,
+  views: VIEW_MODE,
   proof: 'VISUAL clip playback only - __NTANIM.throwBody with a QA-only frame-loop beat scrub (rig.upper pin) on in-world figures, NOT a grenade event. Event admission is CPU-proved elsewhere; live network admission stays OPEN.',
   budgets: { calls: CALL_BUDGET, triangles: TRI_BUDGET, maxFrames: MAX_FRAMES, dark: DARK_THRESHOLD },
   frames: [],
@@ -144,63 +129,85 @@ try {
     hasScrub: typeof window.__NTANIM?.scrubThrow === 'function',
     hasVisibility: typeof window.__NTANIM?.visibility === 'function',
     hasDetail: typeof window.__NTANIM?.throwDetail === 'function',
+    hasList: typeof window.__NTANIM?.list === 'function',
+    hasPlayerPose: typeof window.__NT?.playerPose === 'function',
+    figureCount: typeof window.__NTANIM?.count === 'function' ? window.__NTANIM.count() : null,
     post: window.__NTPOST ? { enabled: window.__NTPOST.enabled, backend: window.__NTPOST.backend } : null,
   }));
   result.dist = identity;
   check('explicit candidate URL (not the 4188 default)', !URL.includes(':4188'), URL);
   check('dist bundle identity recorded', !!identity.bundle, identity.bundle);
   check('throwBody QA present', identity.hasThrowBody === true, identity.hasThrowBody);
-  check('scrub + visibility + detail QA present (rebuild dist from this lane first)',
-    identity.hasScrub && identity.hasVisibility && identity.hasDetail,
-    { scrub: identity.hasScrub, visibility: identity.hasVisibility, detail: identity.hasDetail });
+  check('scrub + visibility + detail + list QA present (rebuild dist from this lane first)',
+    identity.hasScrub && identity.hasVisibility && identity.hasDetail && identity.hasList,
+    { scrub: identity.hasScrub, visibility: identity.hasVisibility, detail: identity.hasDetail, list: identity.hasList });
+  check('playerPose readback present (settle assertion needs it)', identity.hasPlayerPose === true, identity.hasPlayerPose);
   check('WebGPU post path live', !!identity.post?.enabled && identity.post?.backend === 'webgpu', identity.post);
   if (!identity.hasThrowBody) throw new Error('__NTANIM.throwBody missing: rebuild dist from this lane first');
-  if (!identity.hasScrub || !identity.hasVisibility || !identity.hasDetail) {
-    throw new Error('__NTANIM.scrubThrow/visibility/throwDetail missing: the served dist predates the QA surface this harness proves with');
+  if (!identity.hasScrub || !identity.hasVisibility || !identity.hasDetail || !identity.hasList || !identity.hasPlayerPose) {
+    throw new Error('__NTANIM.scrubThrow/visibility/throwDetail/list or __NT.playerPose missing: the served dist predates the QA surface this harness proves with');
   }
   if (!identity.post?.enabled || identity.post?.backend !== 'webgpu') {
     throw new Error(`not the WebGPU game path (got ${JSON.stringify(identity.post)}); refusing fallback pixels`);
   }
 
-  // Menu path is part of the evidence; the game loop must be running.
-  await page.evaluate(() => { const o = document.getElementById('start'); if (o) o.click(); });
-  await page.waitForTimeout(1500);
+  // REAL menu path: Play solo -> Deploy, then await the live match. The old
+  // synthetic overlay.click() + fixed wait staged the first camera during
+  // warmup and spawn reset it - that is how 2124 photographed an interior.
+  const clickedSolo = await page.evaluate(() => {
+    const btns = [...document.querySelectorAll('#start button')];
+    const solo = btns.find((b) => /play solo/i.test(b.textContent ?? ''));
+    if (!solo) return false;
+    solo.click();
+    return true;
+  });
+  check('menu: Play solo entered', clickedSolo === true, clickedSolo);
+  if (!clickedSolo) throw new Error('Play solo button not found under #start; refusing synthetic overlay shortcut');
+  const clickedDeploy = await page.evaluate(() => {
+    const btns = [...document.querySelectorAll('#start button')];
+    const deploy = btns.find((b) => /^deploy$/i.test((b.textContent ?? '').trim()));
+    if (!deploy || deploy.classList.contains('aa-hidden')) return false;
+    deploy.click();
+    return true;
+  });
+  check('menu: Deploy pressed', clickedDeploy === true, clickedDeploy);
+  if (!clickedDeploy) throw new Error('Deploy button not found/visible; refusing to stage pre-match');
+  await page.waitForFunction(() => {
+    try { return window.__NTGAME?.snapshot()?.match?.phase === 'active'; }
+    catch { return false; }
+  }, null, { timeout: 60_000 });
+  const phaseAtStage = await page.evaluate(() => {
+    try { return window.__NTGAME.snapshot().match.phase; } catch { return 'unknown'; }
+  });
+  result.menu = { playSolo: true, deploy: true, phaseAtStage };
+  check('match active before staging (spawn cannot reset the lens)', phaseAtStage === 'active', phaseAtStage);
 
   // Hide DOM chrome for frames only; the canvas and rAF loop are untouched.
   await page.addStyleTag({ content: '#hud,#crosshair{display:none !important}' });
 
-  // Pick a CLEAR stage. Constrained to the central turning circle
-  // (layout.ts: HEAD_CENTER (0,0), HEAD_RADIUS 9.2): every lens offset is
-  // <= D, so a stage at radius <= 6.8 keeps stage, lenses and sight-lines on
-  // open road. The 1935 run let this scan wander to (-14,-10), where clutter
-  // read 0 but the front lens landed inside uncollided annex geometry.
-  const stage = await page.evaluate(([d]) => {
-    const busy = (x, z) => {
-      let n = 0;
-      for (const y of [0.4, 1.0, 1.7]) n += window.__NT.collidersAt(x, z, y).length;
-      return n;
-    };
-    const cams = [[0, -d], [d, 0], [d * 0.72, -d * 0.72], [d * 0.42, -d * 0.52]];
-    let best = null;
-    for (let x = -6; x <= 6; x += 2) {
-      for (let z = -6; z <= 6; z += 2) {
-        if (Math.hypot(x, z) > 6.8) continue;
-        let n = busy(x, z) * 8;
-        for (let a = 0; a < 8; a++) n += busy(x + Math.cos(a) * 1.3, z + Math.sin(a) * 1.3) * 2;
-        for (const [dx, dz] of cams) {
-          n += busy(x + dx, z + dz) * 3;
-          n += busy(x + dx * 0.5, z + dz * 0.5) * 4;
-        }
-        if (!best || n < best.n) best = { x, z, n };
-      }
+  // NAMED stage, probed whole-subject. Every STAGE_ANCHORS entry is tried in
+  // order through stagePoints() (footprint ring + each lens feet column +
+  // point-sampled lens->chest sight-lines); the first anchor with zero
+  // collider hits wins. No blind grid, no silent fallback.
+  const anchors = STAGE_ANCHORS.map((a) => ({ ...a, pts: stagePoints(a) }));
+  const probe = await page.evaluate((list) => list.map((a) => {
+    let hits = 0;
+    const hitTags = {};
+    for (const p of a.pts) {
+      const n = window.__NT.collidersAt(p.x, p.z, p.y).length;
+      if (n > 0) { hits += n; hitTags[p.tag] = (hitTags[p.tag] ?? 0) + n; }
     }
-    return { x: best.x, z: best.z, yaw: 0, clutter: best.n };
-  }, [D]);
-  result.stage = stage;
-  check('stage is clear of colliders', stage.clutter === 0, stage);
-  check('stage sits inside the turning circle (open ground by construction)', Math.hypot(stage.x, stage.z) <= 6.8, stage);
-  console.log(`[motion-live] ${URL} bundle=${identity.bundle} stage=(${stage.x},${stage.z}) clutter=${stage.clutter}`);
+    return { name: a.name, x: a.x, z: a.z, hits, hitTags };
+  }), anchors.map((a) => ({ name: a.name, x: a.x, z: a.z, pts: a.pts })));
+  result.stageProbe = probe;
+  const stage = probe.find((p) => p.hits === 0) ?? null;
+  check('a named open stage probed clear (footprint + lenses + sight-lines)',
+    stage !== null, probe.map((p) => ({ name: p.name, hits: p.hits, hitTags: p.hitTags })));
+  if (!stage) throw new Error(`no STAGE_ANCHORS entry probed clear: ${JSON.stringify(probe.map((p) => ({ name: p.name, hits: p.hits })))}`);
+  result.stage = { ...stage, yaw: 0 };
+  console.log(`[motion-live] ${URL} bundle=${identity.bundle} stage=${stage.name} (${stage.x},${stage.z})`);
 
+  const normAng = (a) => Math.atan2(Math.sin(a), Math.cos(a));
   const lumaOf = (shot) => page.evaluate(async (b64) => {
     const img = new Image();
     img.src = 'data:image/png;base64,' + b64;
@@ -215,30 +222,42 @@ try {
     return s / (d.length / 4);
   }, shot.toString('base64'));
 
-  /** Camera stand + figure placement for one view; settles the frame loop. */
+  /** Lens stand + figure placement for one view; asserts settle readback. */
   async function frame(sc, view) {
     await page.evaluate(([st, cfg, v]) => {
       window.__NT.setMode('walk');
       window.__NTANIM.solo(0);
-      window.__NTANIM.place(0, st.x, st.z, st.yaw);
+      window.__NTANIM.place(0, st.x, st.z, 0);
       window.__NTANIM.drive(0, cfg.speed, cfg.crouch, cfg.prone);
       window.__NTANIM.carry(0, null);
-      window.__NTANIM.pin(0, st.x, st.z, st.yaw);
+      window.__NTANIM.pin(0, st.x, st.z, 0);
       window.__NTANIM.scrubThrow(0, null); // drop any previous beat pin; cancels the overlay
       window.__NT.teleport(st.x + v.dx, v.y, st.z + v.dz, v.yaw, v.pitch);
       if (window.__NT.release) window.__NT.release();
       try { window.__NT.weaponCmd('visible', false); } catch { /* lane-owned */ }
-    }, [stage, sc, view]);
-    await page.waitForTimeout(700);
+    }, [{ x: stage.x, z: stage.z }, sc, view]);
+    await page.waitForTimeout(700); // several real frames at 60 Hz
+    const live = await page.evaluate(() => ({
+      player: window.__NT.playerPose(),
+      figure: (window.__NTANIM.list() ?? []).find((f) => f.i === 0) ?? null,
+    }));
+    const expX = stage.x + view.dx;
+    const expZ = stage.z + view.dz;
+    const playerOk = Math.hypot(live.player.x - expX, live.player.z - expZ) <= POS_TOL
+      && Math.abs(normAng(live.player.yaw - view.yaw)) <= ANG_TOL
+      && Math.abs(normAng(live.player.pitch - view.pitch)) <= ANG_TOL
+      && live.player.mode === 'walk';
+    const figureOk = !!live.figure
+      && Math.hypot(live.figure.x - stage.x, live.figure.z - stage.z) <= POS_TOL
+      && Math.abs(normAng(live.figure.yaw - 0)) <= ANG_TOL;
+    return { live, expected: { x: expX, z: expZ, yaw: view.yaw, pitch: view.pitch }, playerOk, figureOk };
   }
 
   async function shoot(scenario, view, beat) {
     if (result.frames.length >= MAX_FRAMES) throw new Error(`frame limit ${MAX_FRAMES} exceeded`);
     const b = beat;
     // QA-only VISUAL scrub: pin the authored clip to this beat on the frame
-    // loop. The pin re-asserts elapsed/hold every rAF (and holds heldFor at 0
-    // for windup), so every rendered frame - including the one the screenshot
-    // composites - IS the beat pose. No game event is fired or claimed.
+    // loop. No game event is fired or claimed.
     const pinned = await page.evaluate(([i, s]) => window.__NTANIM.scrubThrow(i, s), [0, b.scrub]);
     if (!pinned) throw new Error(`scrubThrow refused the ${b.name} pin`);
     await page.waitForTimeout(120); // the pin must have asserted on real rendered frames
@@ -253,6 +272,8 @@ try {
         detail: window.__NTANIM.throwDetail(0),
         vis: window.__NTANIM.visibility(0, cx, cy, cz, yaw, pitch),
         stats: window.__NT.stats(),
+        player: window.__NT.playerPose(),
+        figure: (window.__NTANIM.list() ?? []).find((f) => f.i === 0) ?? null,
       }), [stage.x + view.dx, view.y + LENS_HEIGHT, stage.z + view.dz, view.yaw, view.pitch]),
       lumaOf(shot),
     ]);
@@ -268,16 +289,33 @@ try {
     check(`${scenario}/${view.name} ${b.name} renders at pinned ${b.phase} @${b.elapsed}s (before AND after shot)`,
       phaseOk, { before, after: after.detail });
 
-    // Facing is strict for the stand scenario; crouch/prone/moving pitch the
-    // chest frame, so their gate is "not the actor's back".
-    const facingOk = view.facing === 'side'
+    // POSE GATE: projected points are evidence only when the live lens and the
+    // live actor still match the expected stage + lens. A respawn or drift is
+    // a visible failure here, never an accepted frame.
+    const expX = stage.x + view.dx;
+    const expZ = stage.z + view.dz;
+    const lensOk = Math.hypot(after.player.x - expX, after.player.z - expZ) <= POS_TOL
+      && Math.abs(normAng(after.player.yaw - view.yaw)) <= ANG_TOL
+      && Math.abs(normAng(after.player.pitch - view.pitch)) <= ANG_TOL;
+    const actorOk = !!after.figure
+      && Math.hypot(after.figure.x - stage.x, after.figure.z - stage.z) <= POS_TOL
+      && Math.abs(normAng(after.figure.yaw - 0)) <= ANG_TOL;
+    const poseOk = lensOk && actorOk;
+    check(`${scenario}/${view.name} ${b.name} poses match expected (lens + actor, live readback)`,
+      poseOk, { player: after.player, figure: after.figure, expected: { x: expX, z: expZ, yaw: view.yaw, pitch: view.pitch } });
+
+    // Facing: strict for stand (motion-stage expectation), reject-'back' for
+    // crouch/prone/moving whose pitched chest frames soften the label. Gated
+    // on poseOk: a well-framed number from the wrong pose is not evidence.
+    const want = expectedFacingLabel(scenario, view);
+    const facingOk = poseOk && (want === 'side'
       ? after.vis.facing === 'side'
-      : scenario === 'stand'
-        ? after.vis.facing === view.facing
-        : after.vis.facing !== 'back';
+      : want === null
+        ? after.vis.facing !== 'back'
+        : after.vis.facing === want);
     const visOk = after.vis.visible && after.vis.inFrustum && facingOk
       && after.vis.distance > 1.2 && after.vis.distance < 3.2;
-    check(`${scenario}/${view.name} lens sees the operator (${view.name}, rig-measured)`, visOk, after.vis);
+    check(`${scenario}/${view.name} lens sees the operator (${view.name}, rig-measured, pose-gated)`, visOk, after.vis);
 
     const s = after.stats;
     const measured = Number.isFinite(s.calls) && Number.isFinite(s.triangles) && s.calls > 2;
@@ -285,8 +323,10 @@ try {
       name: `${scenario}-${view.name}-${b.name}`,
       file,
       proof: 'visual-clip-playback-scrubbed',
+      stage: stage.name,
       phase: after.detail.phase,
       phaseAtRender: { beat: b.name, expected: b.phase, before: before.phase, after: after.detail.phase, elapsedBefore: before.elapsed, elapsedAfter: after.detail.elapsed, pinnedElapsed: b.elapsed, ok: phaseOk },
+      pose: { lensOk, actorOk, ok: poseOk, player: after.player, figure: after.figure },
       vis: after.vis,
       luma: +luma.toFixed(1),
       lit: luma >= DARK_THRESHOLD,
@@ -298,10 +338,13 @@ try {
     return frame;
   }
 
-  for (const sc of SCENARIOS) {
+  const { VIEWS } = await import('./motion-stage.mjs');
+  for (const sc of plan) {
     for (const viewName of sc.views) {
       const view = VIEWS.find((v) => v.name === viewName);
-      await frame(sc, view); // camera settle; scrub left clean by frame()
+      const settle = await frame(sc, view); // lens settle; scrub left clean by frame()
+      check(`${sc.name}/${view.name} lens settled on the expected pose (not the spawn view)`,
+        settle.playerOk && settle.figureOk, settle);
       for (const beat of BEATS) await shoot(sc.name, view, beat);
       await page.evaluate(() => window.__NTANIM.scrubThrow(0, null));
     }
@@ -338,7 +381,7 @@ try {
   result.finishedAt = new Date().toISOString();
   result.pass = !result.fatal && result.checks.every((c) => c.pass);
   writeFileSync(join(OUT, `${TAG}-summary.json`), JSON.stringify(result, null, 2));
-  if (owned) await owned.close();
+  if (owned) await owned.close(); // owned stock Chrome always closed, pass or fail
 }
 
 console.log(JSON.stringify({ pass: result.pass, frames: result.frames.length, checks: result.checks, fatal: result.fatal ?? null }, null, 2));

@@ -1,7 +1,7 @@
 /**
  * The loadout section of the pre-match panel: field-kit cards with derived
- * trait bars and weapon stats, the tactical-grenade choice, and a deploy
- * readout of what the next life actually carries.
+ * trait bars and weapon stats, the primary-weapon choice, the tactical-grenade
+ * choice, and a deploy readout of what the next life actually carries.
  *
  * DATA, NOT COPY. Every name, stat line and bar is derived at render time from
  * `game/loadout.ts`, `game/ordnance.ts` and `weapons/catalog.ts` — a new kit,
@@ -20,6 +20,12 @@
  * selection stands, so nothing a custom-slot editor authors is silently
  * clobbered. Picking a kit card returns to the pure kit selection.
  *
+ * Choosing a primary keeps the grenade the next life already carries and
+ * follows the same slot rule as the tactical choice: it reuses a custom slot
+ * that already holds the exact pair, else the first free one, and refuses —
+ * without writing — when every slot is authored and none matches. Only ids in
+ * `PRIMARY_IDS` are offered or accepted; anything else is refused with a note.
+ *
  * DOM contract: the section mounts inside the `#start` overlay, so every
  * control stops propagation like the rest of the menu (the `menus.ts`
  * one-click contract: a stray click must never begin a match), and every
@@ -28,7 +34,7 @@
  */
 
 import {
-  FIELD_KITS, SAVE_REFUSAL_LABELS, fieldKitById, kitTraits, loadLoadout, resolveLoadout,
+  FIELD_KITS, PRIMARY_IDS, SAVE_REFUSAL_LABELS, SIDEARM_IDS, fieldKitById, kitTraits, loadLoadout, resolveLoadout,
   saveLoadout, type GrenadeId, type KitTraits, type LoadoutStore,
 } from '../game/loadout';
 import {
@@ -168,6 +174,45 @@ export function buildLoadoutSection(): LoadoutSection {
   }
   root.append(kits);
 
+  // --- Primary weapon choice ------------------------------------------------
+  // Derived from PRIMARY_IDS (playable non-sidearms), never a second table: a
+  // new catalog primary appears here by existing. Gated prototypes and
+  // sidearms are not in PRIMARY_IDS, so they are never offered — and
+  // selectPrimary re-checks membership rather than trusting the button.
+  const primLabel = document.createElement('div');
+  primLabel.className = 'aa-loadsub';
+  primLabel.textContent = 'Primary weapon';
+  root.append(primLabel);
+
+  const prims = document.createElement('div');
+  prims.className = 'aa-prims';
+  prims.setAttribute('role', 'group');
+  prims.setAttribute('aria-label', 'Primary weapon');
+  const primButtons = new Map<string, HTMLButtonElement>();
+  for (const id of PRIMARY_IDS) {
+    const def = weaponById(id);
+    if (!def) continue;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'aa-prim';
+    btn.setAttribute('aria-pressed', 'false');
+    const name = document.createElement('span');
+    name.className = 'aa-prim-name';
+    name.textContent = def.name;
+    const line = document.createElement('span');
+    line.className = 'aa-prim-line';
+    line.textContent = weaponLine(id) ?? id;
+    btn.append(name, line);
+    btn.addEventListener('click', (e) => { stop(e); selectPrimary(id); });
+    primButtons.set(id, btn);
+    prims.append(btn);
+  }
+  root.append(prims);
+
+  const primStats = document.createElement('div');
+  primStats.className = 'aa-note aa-prim-stats';
+  root.append(primStats);
+
   // --- Tactical grenade choice --------------------------------------------
   const tacLabel = document.createElement('div');
   tacLabel.className = 'aa-loadsub';
@@ -263,6 +308,45 @@ export function buildLoadoutSection(): LoadoutSection {
     apply({ ...store, custom, selected: { kind: 'custom', slot: sel.slot } });
   }
 
+  function selectPrimary(id: string): void {
+    if (!PRIMARY_IDS.includes(id) || SIDEARM_IDS.includes(id)) {
+      note.textContent = 'That weapon is not selectable yet.';
+      return;
+    }
+    const store = loadLoadout();
+    const keep = resolveLoadout(store).grenade; // the grenade the next life already carries
+    const sel = store.selected;
+    if (sel.kind === 'kit') {
+      const kit = fieldKitById(sel.id);
+      if (kit.primary === id) return; // the kit already carries it
+      // Same slot rule as selectTactical: reuse the slot that already holds
+      // this exact pair, else the first free one; refuse without writing when
+      // every slot is authored and none matches.
+      const matching = store.custom.findIndex((c) => c !== null && c.primary === id && c.grenade === keep);
+      const free = store.custom.findIndex((c) => c === null);
+      if (matching < 0 && free < 0) {
+        note.textContent = 'All custom slots hold authored loadouts and none matches this weapon — clear a slot first.';
+        return;
+      }
+      const slot = matching >= 0 ? matching : free;
+      const custom = store.custom.slice();
+      custom[slot] = {
+        name: `${weaponById(id)?.name ?? id} · ${GRENADE_BY_ID.get(keep)?.name ?? keep}`.slice(0, 24),
+        primary: id,
+        grenade: keep,
+      };
+      apply({ ...store, custom, selected: { kind: 'custom', slot } });
+      return;
+    }
+    const custom = store.custom.slice();
+    const target = custom[sel.slot];
+    if (!target) return; // sanitizeSelection never selects an empty slot; guard anyway
+    if (target.primary === id) return;
+    const gname = GRENADE_BY_ID.get(target.grenade)?.name ?? target.grenade;
+    custom[sel.slot] = { ...target, primary: id, name: `${weaponById(id)?.name ?? id} · ${gname}`.slice(0, 24) };
+    apply({ ...store, custom, selected: { kind: 'custom', slot: sel.slot } });
+  }
+
   // --- Readout -------------------------------------------------------------
   function refresh(): void {
     const store = loadLoadout();
@@ -279,6 +363,11 @@ export function buildLoadoutSection(): LoadoutSection {
       btn.classList.toggle('aa-selected', active);
       btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     }
+    for (const [id, btn] of primButtons) {
+      const active = id === resolved.primary;
+      btn.classList.toggle('aa-selected', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
 
     const primaryName = weaponById(resolved.primary)?.name ?? resolved.primary;
     const sidearmName = weaponById(resolved.sidearm)?.name ?? resolved.sidearm;
@@ -286,6 +375,9 @@ export function buildLoadoutSection(): LoadoutSection {
     const sel = store.selected;
     const origin = sel.kind === 'kit' ? fieldKitById(sel.id).title : store.custom[sel.slot]?.name ?? 'Custom';
     deployLine.textContent = `Deploying · ${origin} — ${primaryName} · ${sidearmName} · ${tacDisplayName}`;
+    const primDef = weaponById(resolved.primary);
+    const band = primDef ? ` · ${primDef.damage.nearRange}–${primDef.damage.farRange} m` : '';
+    primStats.textContent = `${weaponLine(resolved.primary) ?? resolved.primary}${band}`;
   }
 
   refresh();

@@ -19,10 +19,18 @@
  *                            could never give
  *   single-throw-single-id   one own thrown line, one id, and the id never
  *                            comes back after it retires (no duplicate throw)
- *   inventory-consumed       the tactical pouch 1 -> 0 across the window,
- *                            armed 'semtex' between arm and release, null
- *                            after; respawn inside the window poisons it and
- *                            is reported, never papered over
+ *   inventory-consumed       the tactical pouch 1 -> 0 across the AUTHORITATIVE
+ *                            throw commit (own `grenade-thrown` line), armed
+ *                            'semtex' held before it, null completed before the
+ *                            blast with no armed/tactical resurrection after;
+ *                            respawn inside the window poisons it and is
+ *                            reported, never papered over. The harness's
+ *                            releasePerfNow is button-release INTENTION
+ *                            (hand.release() starts the 0.12 s throw); the pouch
+ *                            moves only on the admitted throw (host-ordnance.ts
+ *                            grenadeClaim second claim + ordnance-inventory),
+ *                            so frames between intent and commit MUST still read
+ *                            armed — that beat is correct, not stuck.
  *   detonated-exactly-once   one own `grenade-detonated` line for that id
  *   fuse-from-stick          detonation timestamp - first-contact timestamp
  *                            inside fuse +/- tolerance (the fuse is rewritten
@@ -57,7 +65,7 @@ export const VIEW_LOG_MAX = 300;
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 
-const OWN_THROW = /^\d+ grenade-thrown you semtex id=(\d+)/;
+const OWN_THROW = /^(\d+) grenade-thrown you semtex id=(\d+)/;
 const OWN_DETONATED = /^(\d+) grenade-detonated you semtex id=(\d+) victims=\d+ at=(-?[\d.]+),(-?[\d.]+),(-?[\d.]+)/;
 const BLAST_SMOKE = /^(\d+) smoke-volume id=\d+ blast\b/;
 
@@ -184,21 +192,58 @@ export function analyseSemtexRun(input = {}) {
     'ids=[' + ids.join(',') + '] ownThrownLines=' + thrownLines.length +
     (resurrected ? ' the retired flight reappeared' : ''));
 
-  // --- inventory consumed -----------------------------------------------------
+  // --- inventory consumed (authoritative commit, not UI intent) -----------------
+  // Authority: src/game/host-ordnance.ts grenadeClaim — arm sets kit.armed and
+  // emits grenade-armed + ordnance-inventory with the pouch UNCHANGED; the
+  // second claim (throw) does kit.tactical--, kit.armed=null, and emits
+  // grenade-thrown + ordnance-inventory in the same tick. The view applies that
+  // inventory event to self.tactical/self.armed (src/game/ordnance-view.ts
+  // 'ordnance-inventory'). The harness's releasePerfNow stamps INTENTION:
+  // command('grenade') -> hand.release() -> start('throw'); the claim itself
+  // fires at THROW_RELEASE_S=0.12 s (src/weapons/ordnance-hand.ts) via
+  // consumeRelease -> OrdnanceInput.update (gated on host-confirmed arm) ->
+  // controller.takeClaim (src/weapons/ordnance-input.ts, controller.ts).
+  // Live 2224: release 20275.5, own thrown 20387 (+112 ms ~= beat), last armed
+  // 20396.8, first clear 20414.8 (+28 ms host->view + 1 rAF), 7 frames armed
+  // after intent, tac 1->0 with the same clear, then null/0 held to det 21889.
+  // Frames in (release, commit] MUST stay armed — that beat is correct.
+  // Boundary is therefore the own grenade-thrown line's timestamp. Transient
+  // armed between commit and first clear is delivery; armed AFTER the first
+  // clear, or never clearing before the blast, is stuck/resurrection and fails.
   if (released) {
-    const before = frames.filter((f) => f.t <= releasePerfNow);
-    const after = frames.filter((f) => f.t > releasePerfNow);
+    const throwMatches = thrownLines.map((l) => OWN_THROW.exec(l)).filter(Boolean);
+    const admissionAt = throwMatches.length === 1 ? Number(throwMatches[0][1]) : null;
+    const admissionId = throwMatches.length === 1 ? Number(throwMatches[0][2]) : null;
+    const detMatch = lineTail.map((l) => OWN_DETONATED.exec(l)).filter(Boolean);
+    const detAt = detMatch.length === 1 ? Number(detMatch[0][1]) : null;
+    const orderedCommit = admissionAt !== null && admissionAt >= releasePerfNow;
+    const idMatchesFlight = admissionId !== null && ids.length === 1 && admissionId === ids[0];
+    const before = admissionAt !== null ? frames.filter((f) => f.t <= admissionAt) : [];
+    const after = admissionAt !== null ? frames.filter((f) => f.t > admissionAt) : [];
     const respawned = new Set(frames.map((f) => f.spawnSeq)).size > 1;
     const hadCharge = before.some((f) => f.tactical >= 1);
-    const spent = after.some((f) => f.tactical === 0);
     const armedSeen = before.some((f) => f.armed === 'semtex');
-    const disarmed = after.some((f) => f.armed === null);
-    const stillArmed = after.some((f) => f.armed === 'semtex');
-    add('inventory-consumed', hadCharge && spent && armedSeen && disarmed && !stillArmed && !respawned,
+    const firstSpent = after.find((f) => f.tactical === 0) ?? null;
+    const firstDisarmed = after.find((f) => f.armed === null) ?? null;
+    const spent = firstSpent !== null;
+    const disarmed = firstDisarmed !== null;
+    const bounded = spent && disarmed && (detAt === null || (firstSpent.t <= detAt && firstDisarmed.t <= detAt));
+    const armedResurrected = disarmed ? after.some((f) => f.t > firstDisarmed.t && f.armed === 'semtex') : false;
+    const tacticalResurrected = spent ? after.some((f) => f.t > firstSpent.t && f.tactical >= 1) : false;
+    const beatFrames = disarmed ? after.filter((f) => f.armed === 'semtex' && f.t <= firstDisarmed.t).length : after.filter((f) => f.armed === 'semtex').length;
+    add('inventory-consumed', orderedCommit && idMatchesFlight && hadCharge && spent && armedSeen && disarmed && bounded && !armedResurrected && !tacticalResurrected && !respawned,
       (respawned ? 'RESPAWN inside the window poisons this check; ' : '') +
-      'pouch ' + (hadCharge ? 'had a charge' : 'never had one') + ' -> ' + (spent ? '0' : 'not seen at 0') +
-      ', armed seen=' + armedSeen + ' cleared=' + disarmed + (stillArmed ? ' STILL ARMED after release' : ''));
+      'commit@' + String(admissionAt) + (orderedCommit ? ' (>= release ' + String(releasePerfNow) + ')' : ' (NOT ordered after release ' + String(releasePerfNow) + ')') +
+      (idMatchesFlight ? ' id=' + String(admissionId) + ' matches flight' : ' id=' + String(admissionId) + ' vs flight [' + ids.join(',') + ']') +
+      ', pouch ' + (hadCharge ? 'had a charge' : 'never had one') + ' -> ' + (spent ? '0@' + firstSpent.t.toFixed(1) : 'not seen at 0') +
+      ', armed seen=' + armedSeen + ' cleared=' + (disarmed ? 'null@' + firstDisarmed.t.toFixed(1) : 'never') +
+      ' beatFrames=' + beatFrames +
+      (bounded ? '' : ' NOT BOUNDED before blast@' + String(detAt)) +
+      (armedResurrected ? ' ARMED-RESURRECTED after clear' : '') +
+      (tacticalResurrected ? ' TACTICAL-RESURRECTED after spend' : ''));
     facts.respawnedDuringWindow = respawned;
+    facts.inventoryAdmissionAt = admissionAt;
+    facts.inventoryBeatFrames = beatFrames;
   } else {
     add('inventory-consumed', false, 'no ordered arm/release pair');
   }

@@ -507,6 +507,7 @@ interface QA {
   /** Inspection-mode control for headless fly/noclip checks. Additive only. */
   setMode: (m: MoveMode) => void;
   mode: () => MoveMode;
+  playerPose: () => { x: number; y: number; z: number; yaw: number; pitch: number; mode: MoveMode; camX: number; camY: number; camZ: number };
   teleport: (x: number, y: number, z: number, yaw?: number, pitch?: number) => void;
   setFlySpeed: (v: number) => void;
   weaponCmd: (cmd: string, arg?: string | number | boolean) => unknown;
@@ -578,6 +579,10 @@ const qa: QA = {
   },
   mode() {
     return player.getMode();
+  },
+  playerPose() {
+    const p = player.state.pos;
+    return { x: p.x, y: p.y, z: p.z, yaw: player.state.yaw, pitch: player.state.pitch, mode: player.getMode(), camX: world.camera.position.x, camY: world.camera.position.y, camZ: world.camera.position.z };
   },
   teleport(x, y, z, yaw = 0, pitch = 0) {
     player.teleport(x, y, z, yaw, pitch);
