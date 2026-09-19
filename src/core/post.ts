@@ -127,25 +127,109 @@ export function buildPost(
  * not free parameters - measure them again if the scene scale, the AO radius or the
  * camera's near/far change. AO_STRENGTH is the only taste knob here.
  *
- * MEASURED 2026-09-18, raw denoised term, percentiles per fidelity station (the
- * previous values, 0.895 / 0.62, were recorded while the pass was rendering nothing
- * and describe no real frame):
+ * RE-MEASURED 2026-09-19 at radius 3.0 (the ao-retune round). Method, because the
+ * numbers are only worth what the method is: the debug view is written through the
+ * renderer's output pass, so its pixels are DISPLAY values, not the linear term. A
+ * calibration ramp (a temporary `vec3(uv().x)` debug output) was photographed through
+ * the identical path to build the display->linear curve, which lands linear 1.0 on
+ * display 229 exactly - the anchor every previous reader of this file assumed. Every
+ * figure below is that curve applied to the written PNG.
  *
- *   station           p1     p5     p25    p50
- *   aerial            0.722  0.760  0.936  1.00
- *   yardOrange        0.685  0.853  0.968  1.00
- *   yardWhite         0.722  0.878  0.968  1.00
- *   streetElevation   0.136  0.351  0.741  0.968
- *   plaza             0.584  0.853  1.00   1.00
+ *   station           p1     p5     p25    p50      (r = 0.9 -> r = 3.0)
+ *   aerial            0.724  0.807  1.00   1.00     0.858  0.976  1.00   1.00
+ *   yardOrange        0.688  0.833  0.976  1.00     0.672  0.858  1.00   1.00
+ *   yardWhite         0.688  0.833  0.976  1.00     0.706  0.885  1.00   1.00
+ *   streetElevation   0.598  0.807  1.00   1.00     0.626  0.833  1.00   1.00
+ *   plaza             0.461  0.807  1.00   1.00     0.408  0.785  1.00   1.00
+ *   interiorOrange    0.561  0.724  1.00   1.00     0.487  0.672  0.913  1.00
  *
- * So an unoccluded surface emits exactly 1.0 and the occluded tail runs to ~0.14.
- * Anchoring AO_OPEN at 0.895 put more than half of every frame past the top of the
- * ramp and squeezed all the contact information into the 5% of pixels below it -
- * which is what "the AO is on but I cannot see it" looked like.
+ * An unoccluded surface still emits exactly 1.0, so AO_OPEN stays 1.0 - measured on
+ * open sunlit asphalt at turningHead (0.993) and open lawn at spawnA (1.000), not
+ * inferred from sky.
+ *
+ * AO_DEEP moved 0.35 -> 0.672 and that is a CORRECTION OF A STALE CONSTANT, not a
+ * taste change. 0.35 was p5 of streetElevation, and streetElevation has since been
+ * moved off [-3, eye, 4.0] because that point was INSIDE the pale coach - a maximally
+ * enclosed view. On today's geometry nothing emits anything near 0.35 at p5; the most
+ * enclosed station in the list is interiorOrange, whose p5 at r = 3.0 is 0.672. Left
+ * at 0.35 the ramp's bottom third addressed values the term no longer produces, so
+ * real contact only ever reached half of AO_STRENGTH.
  */
 const AO_OPEN = 1.0;        // a fully unoccluded surface
-const AO_DEEP = 0.35;       // p5 of the most enclosed station; below this it saturates
+const AO_DEEP = 0.672;      // p5 of the most enclosed station; below this it saturates
 const AO_STRENGTH = 0.55;   // a fully occluded contact lands at 1 - this
+
+type Listener = (event: unknown) => void;
+interface ListenerHost {
+  _listeners?: Record<string, Listener[]>;
+  removeEventListener: (type: string, fn: Listener) => void;
+}
+interface BloomInternals {
+  _renderTargetBright?: THREE.RenderTarget;
+  _renderTargetsHorizontal?: THREE.RenderTarget[];
+  _renderTargetsVertical?: THREE.RenderTarget[];
+}
+
+/**
+ * HEAP LEAK REPAIR — measured 2026-09-19, 4.44 MB/min with nothing moving on screen.
+ *
+ * three r180's `Sampler` builds a BRAND NEW `onDispose` closure every time its texture
+ * is re-pointed and hands THAT closure to `removeEventListener`
+ * (node_modules/three/src/renderers/common/Sampler.js:59) — a function identity the
+ * texture has never held, so the unsubscribe silently does nothing while the matching
+ * `addEventListener` always lands. One dead listener per re-point, forever.
+ *
+ * On its own that is harmless: most samplers are pointed once. BloomNode re-points its
+ * blur samplers TWICE PER FRAME, because the five mip passes share one material per mip
+ * and swap `colorTexture.value` between the horizontal and vertical halves
+ * (BloomNode.js:313 and :318). Eleven bloom mip textures x ~2 listeners per frame at
+ * 55 fps is ~1200 retained closures and their scope Contexts every second.
+ *
+ * Measured on the real loop through `scripts/_heapleak.mjs`: `UnrealBloomPass.h0` held
+ * 8089 `dispose` listeners at t+80 s — contributed by SIX distinct registrants (heap
+ * snapshot, `scripts/_heapregs.mjs`). 8083 of them were failed unsubscribes.
+ *
+ * THE REPAIR, and why it needs no magic number: an unsubscribe that cannot match is
+ * still a statement of intent — "this sampler is leaving this texture" — and three
+ * makes it exactly once per re-point, immediately before registering on the new
+ * texture. So when a `removeEventListener` arrives with a listener this texture never
+ * held, drop the oldest registration made by the same function instead. Every add is
+ * then paired with exactly one removal and the list settles at the number of samplers
+ * genuinely bound to the texture. Nothing is capped, trimmed or sampled.
+ *
+ * Scoped to the bloom node's own eleven render-target textures: it is the only thing in
+ * this chain that re-points a sampler per frame, and a global patch would change
+ * `EventDispatcher` semantics for the whole app. Degrades to a no-op if a future three
+ * renames these fields — the leak would come back, `_heapleak.mjs` would catch it.
+ */
+function repairSamplerUnsubscribe(bloomNode: unknown): void {
+  const bn = bloomNode as BloomInternals;
+  const targets = [
+    bn._renderTargetBright,
+    ...(bn._renderTargetsHorizontal ?? []),
+    ...(bn._renderTargetsVertical ?? []),
+  ];
+
+  for (const rt of targets) {
+    if (!rt || !rt.texture) continue;
+    const host = rt.texture as unknown as ListenerHost;
+    const inherited = host.removeEventListener.bind(rt.texture);
+
+    host.removeEventListener = (type: string, fn: Listener): void => {
+      const list = host._listeners?.[type];
+      if (!list || list.indexOf(fn) !== -1) {
+        inherited(type, fn);      // an unsubscribe that CAN match: ordinary behaviour
+        return;
+      }
+      // Cannot match. Honour the intent: retire the oldest registration made by this
+      // same function. The caller re-registers on its new texture in the next
+      // statement, so the live registration count is preserved exactly.
+      const source = fn.toString();
+      const stale = list.findIndex((held) => held.toString() === source);
+      if (stale !== -1) list.splice(stale, 1);
+    };
+  }
+}
 
 function buildChain(
   renderer: WorldRenderer,
@@ -164,15 +248,30 @@ function buildChain(
     const metal = scenePass.getTextureNode('metalness');
     const rough = scenePass.getTextureNode('roughness');
 
-    // 1 — GTAO: contact darkening under eaves, vehicles, kerbs. Radius 0.9 m:
+    // 1 — GTAO: contact darkening under eaves, vehicles, kerbs. Radius 3.0 m:
     // the default 0.25 only sees 25 cm crevices and misses every kerb, tyre and
-    // eave contact in a metre-scale scene. The normal texture is not optional in
+    // eave contact in a metre-scale scene, and 0.9 was still a kerb-and-eave horizon
+    // that could not see room-scale enclosure.
+    //
+    // READ THIS BEFORE RAISING radius AGAIN TO FIX AN INTERIOR. Radius alone cannot
+    // do it, and 2026-09-19 measured why. GTAONode accepts a horizon sample only
+    // inside `if (abs(viewDelta.z) < thickness)` (GTAONode.js:357 and :371), so
+    // `thickness` - not `radius` - is what bounds how far away an occluder may be in
+    // view-space depth. radius only decides where samples are TAKEN; thickness decides
+    // which of them are allowed to COUNT. At 0.6 m every room-scale occluder (a
+    // ceiling 2.4 m up, a side wall 2 m away, the facing wall 4.5 m off) is rejected.
+    // Measured consequence: the interior wall at interiorOrange emits raw AO 1.000
+    // with p5 also 1.000 - not one occluded pixel - at r = 0.9 AND at r = 3.0, while
+    // the same frame's floor fell 122.4 -> 99.7 and its ceiling 45.0 -> 39.7. The
+    // radius bought real floor/ceiling falloff and bought nothing at all on the walls.
+    //
+    // The normal texture is not optional in
     // practice: GTAONode reconstructs normals from depth when it is passed null, and
     // on this stack that path emitted exactly ZERO everywhere (measured through a raw
     // -AO debug output, mean 0.0 / max 0 at every playcap station), which multiplies
     // the whole frame to black. That is why the MRT is worth rule 1 above.
     const aoNode = ao(depth, normal, camera);
-    aoNode.radius.value = 0.9;
+    aoNode.radius.value = 3.0;
     aoNode.samples.value = 32;             // 16 and 24 both speckle at this radius
     aoNode.distanceExponent.value = 1.4;   // bias toward near contacts
     aoNode.thickness.value = 0.6;
@@ -229,6 +328,7 @@ function buildChain(
     const glints = bloom(
       vec4(graded, float(1)), BLOOM_STRENGTH, BLOOM_RADIUS, BLOOM_THRESHOLD,
     );
+    repairSamplerUnsubscribe(glints);
     const bloomed = graded.add(glints.rgb);
     const dist = length(uv().sub(0.5));
     const shade = float(1).sub(

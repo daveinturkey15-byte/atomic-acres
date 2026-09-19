@@ -379,3 +379,14 @@ wants the source text back it is two string constants. Characters lane launched
 (`wf_e07c393b-832`): one SkinnedMesh per figure (34 meshes -> <=3 draws/pass) and an
 operator dress instead of mannequin teal; verifier measures draws/figure, heap, four
 views. Geometry repair (`wf_8cdb6581-97c`) still in round 1.
+
+**02:35 (19 Sep).** Leak verifier HOLDS (its own harness, 30 floor samples per run,
+calibrated with an injected on-heap leak it read at 2.73 MB/min): zero rigs 0.145,
+eleven rigs 0.295 MB/min, worst estimator 0.348, all bloom textures' listener counts
+identical at t+60 and t+300 across 14k frames (was 8089 at t+80 before). post.ts
+committed at the exact bytes all three critics measured (md5 507376fb: AO round 1 +
+the sampler shim). Carried: no regression guard sees this leak yet (only the untracked
+_heap*.mjs instruments, now tracked); Runtime.getHeapUsage is BLIND to typed-array /
+external memory (a 4.4 MB/min Uint8Array leak read flat) - a GPU or ArrayBuffer leak
+needs a different metric; the shim retires the oldest same-function registration, not
+the caller's own - harmless only while RenderTarget.dispose dispatches on the target.
