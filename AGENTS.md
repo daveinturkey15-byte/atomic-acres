@@ -57,12 +57,46 @@ this in `garageIsOnTheRight()`. Do not hardcode a sign anywhere else.
 ## Verifying a change
 
 ```bash
-npm run check      # tsc, must be clean
-npm run capture    # headless captures of every station + console errors
+npm run check      # tsc + the render-site allow-list, must be clean
+npm run build      # every harness serves dist/, never the source
+npm run playcap    # four positions photographed through the REAL game loop
+npm run capture    # every camera station, its draw calls, and console errors
+npm run soak       # THE LONG GATE (3.5 min) - heap and process memory under play
 ```
 
-`capture` starts its **own** dev server on a port it picks, so it can never photograph
-a stale preview. It fails the process on any page error.
+`npm run verify` chains check / playcap / capture / traverse. **`soak` is deliberately
+not in it, and not in `check`** — it plays the game for three and a half minutes, so it
+belongs before a hand-off or after anything that touches the render chain, not in the
+inner loop.
+
+Every harness uses the ONE shared `vite preview` on **:4188** (`scripts/lib/preview.mjs`)
+and spawns real Chrome over CDP through `scripts/lib/proc-guard.mjs`. Playwright's
+bundled Chromium has no WebGPU adapter, so a harness that calls `chromium.launch()` is
+measuring the WebGL2 fallback with the whole post chain switched off.
+
+What each one is for, and what it cannot tell you:
+
+- **`playcap`** is the gate for anything touching `core/world.ts`, `core/post.ts` or the
+  render block of `main.ts`. It clicks to play and photographs the game's own frame loop,
+  failing on a dark frame. Its threshold is frozen; lowering it to get green is the
+  mistake it exists to prevent.
+- **`capture`** drives `__NT.goto()`, which is the QA render path, **not** the path the
+  player takes — that difference is how a black screen shipped behind ten green captures.
+  Its draw-call numbers are read as a delta inside the same synchronous evaluate as the
+  render, because the frame loop resets `renderer.info` every tick and a read taken after
+  the screenshot reported 0 for the whole earlier life of this harness. A station that
+  reports no draw calls now prints **MEASURED NOTHING** and fails the process. The frames
+  carry no viewmodel and no bots, so they sit a little under `playcap` at the same spot.
+- **`soak`** answers "does it leak while it is being played". It fails on a post-GC JS
+  floor climbing ≥ 0.5 MB/min (least squares over every sample after t+60; two-point
+  slopes carry ~0.75 MB/min of floor oscillation) and on the renderer process's own
+  working set growing monotonically by more than 20 MB. Both series, because
+  `Runtime.getHeapUsage` is **blind** to typed-array and external memory — a 4.4 MB/min
+  Uint8Array leak read flat through it. Prove it can still fail before trusting a green
+  run: `node scripts/soak.mjs --inject-kb-per-s 200`.
+- **`node scripts/_verify-streak-reject.mjs`** is the headless, browser-free falsifier for
+  the killstreak backoff: it forces one unplaceable sentry claim and fails if the presser
+  is answered with silence or re-presses inside the 4 s hold.
 
 **Then look at the frames.** A capture that nobody opened is not evidence. A station
 whose `ref` is `null` is a diagnostic view and must never be used to claim the map looks

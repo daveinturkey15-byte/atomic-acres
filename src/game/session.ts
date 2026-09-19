@@ -138,7 +138,7 @@ export interface LocalMatch {
  * refused cases both travel as events, which is what keeps a refused press
  * from being a dead key (§5.4). `advance` gains the host's target table.
  */
-function streakPort(rt: StreakRuntime, matchEpoch: number): StreakRuntimePort {
+export function streakPort(rt: StreakRuntime, matchEpoch: number): StreakRuntimePort {
   return {
     registerActor: (id: ActorId, team: TeamId) => rt.registerActor(id, team),
     recordElimination: (id, streak, now) => rt.recordElimination(id, streak, now),
@@ -175,6 +175,20 @@ function streakPort(rt: StreakRuntime, matchEpoch: number): StreakRuntimePort {
   };
 }
 
+/**
+ * One director's whole numeric surface, in one place so the retire path and the
+ * report path cannot read different sets. `metrics` plus the three counts the
+ * director exposes as getters rather than as metric keys.
+ */
+function directorNumbers(d: BotDirector): Record<string, number> {
+  return {
+    ...d.metrics,
+    botDeaths: d.deathCount,
+    reinforcements: d.reinforcementCount,
+    refusedReinforcements: d.refusedReinforcementCount,
+  };
+}
+
 /** Display names, DERIVED from the ids. No second roster of callsigns (§5.5). */
 function displayNameFor(id: ActorId): string {
   return id === LOCAL_ACTOR_ID ? 'YOU' : id.replace(/-/g, ' ').toUpperCase();
@@ -204,6 +218,9 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
   const instrument = createSessionLog(LOCAL_ACTOR_ID);
 
   const build = (now: number): void => {
+    // Bank the outgoing director's numbers BEFORE it is dropped. This is the
+    // only moment they still exist; after the reassignment below they are gone.
+    if (director !== null) instrument.retireDirector(directorNumbers(director));
     epoch++;
     const runtime = new StreakRuntime({ seed: (opts.seed ?? 1) + epoch, matchEpoch: epoch });
     const h = new GameHost({
@@ -283,12 +300,18 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
     log: () => instrument.lines.slice(),
     los: (ax, ay, az, bx, by, bz) => world.lineOfSight({ x: ax, y: ay, z: az }, { x: bx, y: by, z: bz }),
     groundY: (x, z) => world.groundY(x, z),
+    // Everything here is SESSION-cumulative except `bots` and `matchKills`,
+    // which are a level and a per-match count and say so. The bot numbers used
+    // to be read straight off the live `BotDirector`, and `session.ts` builds a
+    // NEW one on every rematch: `streakRefused` — the counter that proved the
+    // 8ba75f7 streak livelock fix — therefore read 0 for the whole of match 2
+    // however many refusals match 1 had, and a reader would conclude none
+    // occurred. `session-log.ts` now banks each director's numbers as it is
+    // retired and `botTotals` adds the live one back on.
     counters: () => ({
       ...instrument.tally, epoch,
       bots: director === null ? 0 : director.roster.length,
-      botDeaths: director === null ? 0 : director.deathCount,
-      reinforcements: director === null ? 0 : director.reinforcementCount,
-      ...(director === null ? {} : director.metrics),
+      ...instrument.botTotals(director === null ? null : directorNumbers(director)),
     }),
     localId: LOCAL_ACTOR_ID,
 

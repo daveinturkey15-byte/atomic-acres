@@ -29,6 +29,9 @@ import type {
   TeamId,
 } from './events';
 import { STREAK_DENIAL_LABELS } from './events';
+// The reject vocabulary, imported rather than re-spelled (§5.5). `gate.ts` is a
+// leaf over `./events` too, so this adds no cycle and no second label table.
+import { STREAK_CLAIM_REJECT_LABELS, type StreakClaimReject } from './killstreaks/gate';
 
 // ---------------------------------------------------------------------------
 // Capacity — the authority for how much feed exists
@@ -196,7 +199,16 @@ export function feedLineForStreakActivated(e: StreakActivatedEvent, ctx: FeedCon
  */
 export function feedLineForStreakDenied(e: StreakDeniedEvent, ctx: FeedContext): FeedLineEvent | null {
   if (e.actorId !== ctx.selfId) return null;
-  return line(e.at, streakTitle(ctx, e.streakId) + ': ' + STREAK_DENIAL_LABELS[e.reason], 'events', 'own');
+  // A world-state refusal carries `detail`, and its label is the true one:
+  // `reason` had to be mapped onto the frozen nine to reach the wire and the
+  // HUD, and `gate.ts` is explicit that showing SUPPORT OFFLINE IN THIS ARENA
+  // for "you cannot put it there" tells the player something untrue about the
+  // map. Looked up from the reject table, never re-worded here.
+  const detail = e.detail === undefined
+    ? undefined
+    : STREAK_CLAIM_REJECT_LABELS[e.detail as StreakClaimReject];
+  const label = detail ?? STREAK_DENIAL_LABELS[e.reason];
+  return line(e.at, streakTitle(ctx, e.streakId) + ': ' + label, 'events', 'own');
 }
 
 // ---------------------------------------------------------------------------

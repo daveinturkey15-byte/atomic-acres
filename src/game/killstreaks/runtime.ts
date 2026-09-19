@@ -4,7 +4,10 @@
  * It owns the earn / bank / spend ledger and the live entities that ledger
  * pays for. Health, score, kills, deaths, spawns and the match clock belong to
  * `host.ts`: this is called by the host, returns events, and decides nothing
- * else. Hard cap 380 lines — growth belongs in `effects/`.
+ * else. Hard cap 400 lines (AGENTS.md); it was written to a self-imposed 380
+ * and left no headroom, so the SHAPES of a refusal now live in `gate.ts`
+ * beside the vocabulary they belong to, and further growth belongs in
+ * `effects/`.
  *
  * The five rules IMPORT-PLAN §1.1 says the old 3,511-line runtime paid for:
  *  1. **Per-life continuity.** Death clears the ladder and the per-cycle
@@ -20,10 +23,12 @@
  *  5. **Validate before consuming**: a blocked activation retries exactly.
  *
  * Player-facing refusals are the nine frozen `StreakDenialReason`s, emitted as
- * `StreakDeniedEvent`; a forged claim gets `gate.ts`'s host-internal
- * `StreakClaimReject` and no event. Determinism is seed-only: `advance` reads
- * the clock only for its step, and an effect seed hashes the match epoch, the
- * activation ordinal and the streak id.
+ * `StreakDeniedEvent`; a FORGED claim gets `gate.ts`'s host-internal
+ * `StreakClaimReject` and no event — bar the two WORLD-STATE rejects an honest
+ * press can hit, which `gate.ts:rejectedOutcome` maps back to a denial (a press
+ * that answers nothing is a dead key, and this one livelocked the bot backoff).
+ * Determinism is seed-only: `advance` reads the clock only for its step, and an
+ * effect seed hashes the match epoch, the activation ordinal and the streak id.
  */
 
 import {
@@ -37,7 +42,7 @@ import {
   DEFAULT_STREAK_LOADOUT, STREAK_CATALOG, streakById, validateStreakLoadout,
   type StreakCatalog, type StreakLoadout,
 } from './catalog';
-import { evaluateActivation, STREAK_CLAIM_REJECT_LABELS, type ActivationContext, type StreakClaimReject } from './gate';
+import { evaluateActivation, rejectedOutcome, type ActivationContext, type StreakClaimReject } from './gate';
 import { createRecon, reconRevealsTo, stepRecon, type ReconState } from './effects/recon';
 import { createCounterRecon, jamsTeam, stepCounterRecon, type CounterReconState } from './effects/counter-recon';
 import { createSentry, stepSentry, validateSentryPlacement, type SentryState, type SentryTarget } from './effects/sentry';
@@ -237,9 +242,14 @@ export class StreakRuntime {
   }
 
   activate(intent: StreakIntent, now: number, world: WorldQuery): ActivationOutcome {
-    const reject = (reason: StreakClaimReject): ActivationOutcome => Object.freeze({
-      accepted: false as const, outcome: 'rejected' as const, reason, label: STREAK_CLAIM_REJECT_LABELS[reason], events: Object.freeze([]),
-    });
+    // `streakId` is known only once the slot resolves; a forgery refused before
+    // that has none to name, and gets no event either way.
+    const reject = (reason: StreakClaimReject, streakId = ''): ActivationOutcome => {
+      const r = rejectedOutcome(reason, now, intent.actorId, streakId, intent.slot);
+      const owner = r.denial === null ? undefined : this.actors.get(intent.actorId);
+      if (owner !== undefined) { owner.cause = r.denial; owner.at = now; }
+      return r.outcome;
+    };
     const a = this.actors.get(intent.actorId);
     if (!a) return reject('unknown-actor');
     if (!Number.isFinite(now)) return reject('malformed-claim');
@@ -277,7 +287,7 @@ export class StreakRuntime {
       return Object.freeze({ accepted: false as const, outcome: 'denied' as const, reason: verdict.reason, label: STREAK_DENIAL_LABELS[verdict.reason], events: Object.freeze([e as GameEvent]) });
     }
 
-    if (this.live.size >= MAX_LIVE_INSTANCES) return reject('instance-cap');
+    if (this.live.size >= MAX_LIVE_INSTANCES) return reject('instance-cap', streakId);
 
     // Rule 5: everything that can fail resolves BEFORE a charge moves.
     const kind = EFFECT_KIND[streakId];
@@ -285,7 +295,7 @@ export class StreakRuntime {
     let placed: { x: number; y: number; z: number } | null = null;
     if (kind === 'sentry') {
       const p = validateSentryPlacement(anchor.x, anchor.z, world);
-      if (!p.ok) return reject('no-placement');
+      if (!p.ok) return reject('no-placement', streakId);
       placed = { x: p.x, y: p.y, z: p.z };
     }
 

@@ -79,10 +79,11 @@ export class BotDirector {
     botTicks: 0, sightTicks: 0, engageTicks: 0, fireTicks: 0,
     shots: 0, streakPresses: 0, blockedSteps: 0,
     // `streakPresses` cannot tell four charges spent from four refused.
-    // NOT named `streakDenied`: `session.ts:counters()` spreads these metrics
-    // OVER `session-log.ts`'s tally, which already owns that key — cumulative
-    // there, rebuilt with every director here. The clash would have replaced
-    // the number the proof reads with one that resets on every rematch.
+    // THIS DIRECTOR ONLY, and a rematch builds a new one: quote
+    // `LocalMatch.counters()`, which banks each retiring director's numbers in
+    // `session-log.ts` and reports the session total. NOT named `streakDenied`:
+    // that key is the tally's, counted from events, and the clash would have
+    // hidden one number behind the other.
     streakRefused: 0, streakBlocks: 0,
   };
 

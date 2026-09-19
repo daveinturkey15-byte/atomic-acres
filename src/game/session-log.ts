@@ -26,6 +26,21 @@ export interface SessionLog {
   record(e: GameEvent): void;
   /** Called on a rematch: the per-match counters reset, the cumulative do not. */
   newMatch(): void;
+  /**
+   * Bank a retiring `BotDirector`'s own counters before `session.ts` throws it
+   * away. Without this every number the director owns — refusals, presses,
+   * shots, deaths, reinforcements — reads ZERO for the first seconds after a
+   * rematch, and a reader concludes none of it ever happened. That is not
+   * hypothetical: `streakRefused` is the counter that proved the 8ba75f7
+   * livelock fix, and past one rematch it proved nothing.
+   */
+  retireDirector(metrics: Readonly<Record<string, number>>): void;
+  /**
+   * SESSION-CUMULATIVE director numbers: everything already retired, plus the
+   * live director's own. This is the figure to quote; `BotDirector.metrics` is
+   * one director's slice of it.
+   */
+  botTotals(live: Readonly<Record<string, number>> | null): Record<string, number>;
 }
 
 export function createSessionLog(selfId: ActorId): SessionLog {
@@ -39,12 +54,26 @@ export function createSessionLog(selfId: ActorId): SessionLog {
     matchKills: 0,
   };
   const lines: string[] = [];
+  /** Director counters banked from every match that has already ended. */
+  const retiredBots: Record<string, number> = {};
 
   return {
     tally,
     lines,
     newMatch(): void {
       tally.matchKills = 0;
+    },
+    retireDirector(metrics): void {
+      for (const [k, v] of Object.entries(metrics)) {
+        if (Number.isFinite(v)) retiredBots[k] = (retiredBots[k] ?? 0) + v;
+      }
+    },
+    botTotals(live): Record<string, number> {
+      const out: Record<string, number> = { ...retiredBots };
+      if (live !== null) {
+        for (const [k, v] of Object.entries(live)) out[k] = (out[k] ?? 0) + v;
+      }
+      return out;
     },
     record(e: GameEvent): void {
       const at = e.at.toFixed(0);
@@ -74,7 +103,12 @@ export function createSessionLog(selfId: ActorId): SessionLog {
         line = at + ' streak-activated ' + e.actorId + ' ' + e.streakId + ' left=' + e.chargesLeft;
       } else if (e.type === 'streak-denied') {
         tally.streakDenied++;
-        line = at + ' streak-denied ' + e.actorId + ' slot' + e.slot + ' ' + e.reason;
+        // `detail` is set only when the refusal came from world state rather
+        // than the gate, and it is the only place the precise cause survives:
+        // `reason` is mapped onto the frozen nine, so a `no-placement` reject
+        // would otherwise read here as a map that does not support the streak.
+        line = at + ' streak-denied ' + e.actorId + ' slot' + e.slot + ' ' + e.reason
+          + (e.detail === undefined ? '' : '/' + e.detail);
       } else if (e.type === 'streak-ended') {
         tally.streakEnded++;
         line = at + ' streak-ended ' + e.streakId + ' ' + e.reason;

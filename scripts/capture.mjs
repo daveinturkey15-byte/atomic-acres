@@ -1,13 +1,42 @@
 /**
  * Headless capture harness.
  *
- * Starts ITS OWN dev server on a port it picks, so it can never photograph a stale
- * preview left running by something else. Drives window.__NT to each camera station,
+ * Uses the ONE shared preview (`lib/preview.mjs`) so it can never photograph a
+ * stale server of its own, drives window.__NT to each camera station,
  * screenshots it, and reports console errors and renderer stats.
  *
  *   node scripts/capture.mjs                  all stations
  *   node scripts/capture.mjs aerial yardOrange   named stations
  *   node scripts/capture.mjs --tag pass2       label the output set
+ *
+ * ## The draw-call gate, and why it read 0 for its whole life
+ *
+ * `main.ts:frame()` calls `renderer.info.reset()` at the TOP of every frame
+ * (autoReset is off, so the post chain's several renders per frame accumulate
+ * into one honest per-frame number). That loop keeps running while the capture
+ * holds the camera — it just skips its own render — so every rAF tick zeroes
+ * the counters.
+ *
+ * This harness used to `evaluate(render)`, take a screenshot, and then
+ * `evaluate(stats)`. The screenshot is an await: fifteen-odd rAF ticks, and
+ * therefore fifteen resets, happen inside it. The read that followed reported
+ * the frame the game had NOT drawn — 0 calls, 0 triangles — and the AGENTS.md
+ * budget line printed that as if it were a measurement. Two lanes reported it
+ * independently. `scripts/playcap.mjs` was never wrong about this because it
+ * lets the game's own loop draw, so a read between frames finds the last real
+ * frame.
+ *
+ * The fix is to read the counters in the SAME synchronous evaluate as the
+ * render, as a DELTA across one `__NT.render()`. Nothing — no rAF, no reset —
+ * can run between the two reads, so the number is exactly one frame's worth
+ * whatever the loop is doing. A 0 is now reported as MEASURED NOTHING and
+ * fails the process, because a station that renders nothing is a defect and the
+ * one thing this file must never do again is print it as a measurement.
+ *
+ * NOTE when comparing with playcap: these frames are the QA render path with
+ * the viewmodel hidden (`goto()` calls `weapons.setVisible(false)`), so the
+ * counts sit slightly BELOW playcap's at the same spot, which also draws the
+ * gun overlay. Same scene, one fewer pass.
  */
 import { chromium } from 'playwright';
 import { usePreview } from './lib/preview.mjs';
@@ -20,6 +49,10 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'captures');
+
+/** AGENTS.md "Budgets". Over is a warning here; the gate that FAILS is a zero. */
+const CALL_BUDGET = 1200;
+const TRIANGLE_BUDGET = 900_000;
 
 const argv = process.argv.slice(2);
 let tag = '';
@@ -171,6 +204,8 @@ const stations = await page.evaluate(() => window.__NT.stations);
 const names = wanted.length ? wanted : Object.keys(stations);
 
 const results = [];
+const blind = [];
+const overBudget = [];
 for (const name of names) {
   if (!stations[name]) {
     console.warn('[capture] no such station: ' + name);
@@ -184,16 +219,42 @@ for (const name of names) {
     console.error('    !! overlay could not be removed at ' + name);
     process.exitCode = 2;
   }
-  await page.evaluate(() => window.__NT.render());
+
+  // ---- THE MEASUREMENT. One synchronous evaluate: render, then read, with
+  // nothing in between that could call renderer.info.reset(). The numbers are
+  // DELTAS across that one render, so whatever the frame loop left in the
+  // counters cancels out. `renderCallsTotal` is the session count of render()
+  // invocations (main.ts exposes it under its own name precisely so it is not
+  // mistaken for a budget) - its delta proves the chain actually ran.
+  const stats = await page.evaluate(() => {
+    const before = window.__NT.stats();
+    window.__NT.render();
+    const after = window.__NT.stats();
+    return {
+      calls: after.calls - before.calls,
+      triangles: after.triangles - before.triangles,
+      renders: after.renderCallsTotal - before.renderCallsTotal,
+      geometries: after.geometries,
+      textures: after.textures,
+      programs: after.programs,
+    };
+  });
+
   const file = join(OUT, (tag ? tag + '-' : '') + name + '.png');
   await page.screenshot({ path: file });
-  const stats = await page.evaluate(() => window.__NT.stats());
-  // a station that renders almost nothing is a defect, not a view
-  if (stats.calls < 8) console.warn('    !! only ' + stats.calls + ' draw calls at ' + name);
-  results.push({ station: name, ref: stations[name].ref, note: stations[name].note, file, stats });
+
+  const measured = Number.isFinite(stats.calls) && stats.calls > 0 && stats.renders > 0;
+  if (!measured) blind.push(name);
+  else if (stats.calls > CALL_BUDGET || stats.triangles > TRIANGLE_BUDGET) overBudget.push(name);
+
+  results.push({ station: name, ref: stations[name].ref, note: stations[name].note, file, measured, stats });
   console.log('  ' + name.padEnd(16)
-    + String(stats.calls).padStart(5) + ' calls  '
-    + String(Math.round(stats.triangles / 1000)).padStart(5) + 'k tris'
+    + (measured
+      ? String(stats.calls).padStart(5) + ' calls  '
+        + String(Math.round(stats.triangles / 1000)).padStart(5) + 'k tris'
+        + (stats.calls > CALL_BUDGET ? '  OVER ' + CALL_BUDGET : '')
+        + (stats.triangles > TRIANGLE_BUDGET ? '  OVER ' + TRIANGLE_BUDGET + ' tris' : '')
+      : '  MEASURED NOTHING (' + stats.calls + ' calls over ' + stats.renders + ' renders)')
     + (stations[name].ref ? '   ref=' + stations[name].ref.split(' ')[0] : '   (diagnostic)'));
 }
 
@@ -203,6 +264,9 @@ const summary = {
   url,
   tag,
   viewport: '1600x900',
+  budgets: { calls: CALL_BUDGET, triangles: TRIANGLE_BUDGET },
+  blind,
+  overBudget,
   moduleStats,
   results,
   pageErrors,
@@ -226,5 +290,15 @@ if (consoleErrors.length) {
   console.log('\n[capture] CONSOLE ERRORS (' + consoleErrors.length + '):');
   for (const e of consoleErrors.slice(0, 10)) console.log('  ' + e);
 }
+if (overBudget.length) {
+  console.log('\n[capture] OVER the ' + CALL_BUDGET + '-call / '
+    + TRIANGLE_BUDGET + '-triangle budget at: ' + overBudget.join(', '));
+}
+if (blind.length) {
+  console.log('\n[capture] MEASURED NOTHING at: ' + blind.join(', ')
+    + '\n  A station that reports no draw calls has either not rendered or is not being'
+    + '\n  read on the frame it rendered. Either way it is not a measurement, and the'
+    + '\n  budget line above it means nothing. Do not treat this run as evidence.');
+}
 console.log('\n[capture] wrote ' + results.length + ' captures to captures/');
-process.exit(pageErrors.length ? 2 : 0);
+process.exit(pageErrors.length || blind.length ? 2 : 0);

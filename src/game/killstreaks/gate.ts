@@ -32,6 +32,7 @@ import {
   STREAK_DENIAL_LABELS,
   STREAK_DENIAL_REASONS,
   type MatchPhaseName,
+  type StreakDeniedEvent,
   type StreakDenialReason,
 } from '../events';
 
@@ -121,6 +122,70 @@ export const STREAK_CLAIM_REJECT_LABELS: Readonly<Record<StreakClaimReject, stri
   'instance-cap': 'TOO MUCH SUPPORT IN PLAY',
   'no-placement': 'NO ROOM THERE',
 });
+
+/**
+ * The two rejects above that an HONEST client can produce, mapped onto the
+ * frozen player-facing nine so the presser gets an answer.
+ *
+ * `instance-cap` and `no-placement` are not forgeries: a real press at a real
+ * moment hits either of them, so returning no reason and no event is the dead
+ * key §5.4 exists to stop — and it was one. A `no-placement` reject answered
+ * `null` to the presser, so `game/bots.ts`'s 4 s backoff never engaged and a
+ * bot re-pressed the same slot at 20 Hz for as long as it stood somewhere a
+ * sentry could not go, with every denial counter reading zero throughout.
+ *
+ * The note above says mislabelling these as `arena-unsupported` tells the
+ * player something untrue about the map. That is still true of the LABEL, so
+ * the mapping is only half the answer: `runtime.activate` also stamps the
+ * precise reject on `StreakDeniedEvent.detail`, and the session log and the
+ * feed prefer it. The frozen reason keeps the wire validator, the HUD label
+ * table and `BOT_STREAK_TERMINAL_DENIALS` working unchanged; `detail` carries
+ * the cause. Nothing here is a gate branch — the gate still cannot produce
+ * these, `STREAK_DENIAL_REASONS` is unchanged and `assertGateOrder` is
+ * untouched.
+ */
+export const REJECT_AS_DENIAL: Readonly<Partial<Record<StreakClaimReject, StreakDenialReason>>> =
+  Object.freeze({
+    'instance-cap': 'arena-unsupported',
+    'no-placement': 'arena-unsupported',
+  });
+
+/**
+ * A refused claim, assembled once so `runtime.activate` stays a decision list.
+ *
+ * `denial` is the `StreakDeniedEvent` the presser is owed, or `null` for a
+ * forgery — which is the whole difference between the two vocabularies, made
+ * into one branch instead of scattered `return reject(...)`s that each had to
+ * remember it. The caller still owns its own bookkeeping (the ledger's `cause`
+ * edge); this owns only the shapes.
+ */
+export function rejectedOutcome(
+  reason: StreakClaimReject,
+  at: number,
+  actorId: string,
+  streakId: string,
+  slot: number,
+): {
+  readonly denial: StreakDeniedEvent | null;
+  readonly outcome: {
+    readonly accepted: false; readonly outcome: 'rejected';
+    readonly reason: StreakClaimReject; readonly label: string;
+    readonly events: readonly StreakDeniedEvent[];
+  };
+} {
+  const mapped = REJECT_AS_DENIAL[reason];
+  const denial: StreakDeniedEvent | null = mapped === undefined ? null : Object.freeze({
+    type: 'streak-denied' as const, at, actorId, streakId, slot, reason: mapped, detail: reason,
+  });
+  return Object.freeze({
+    denial,
+    outcome: Object.freeze({
+      accepted: false as const, outcome: 'rejected' as const, reason,
+      label: STREAK_CLAIM_REJECT_LABELS[reason],
+      events: Object.freeze(denial === null ? [] : [denial]),
+    }),
+  });
+}
 
 export type ActivationEvaluation =
   | { readonly allowed: true; readonly streakId: string; readonly slot: number }

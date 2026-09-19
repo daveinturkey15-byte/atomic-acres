@@ -170,6 +170,17 @@ export interface StreakDeniedEvent {
   readonly streakId: string;
   readonly slot: number;
   readonly reason: StreakDenialReason;
+  /**
+   * Set only when the refusal came from WORLD STATE rather than the gate: the
+   * `StreakClaimReject` id (`no-placement`, `instance-cap`) that actually
+   * fired, mapped onto `reason` by
+   * `killstreaks/gate.ts:REJECT_AS_DENIAL`. Not a stale mirror of `reason` —
+   * it is strictly more than `reason` can say, because the frozen nine have no
+   * word for "you cannot put it there", and without it a log line would report
+   * a map that does not support the streak when the map supports it fine.
+   * Typed as a plain string so this file stays the leaf it says it is.
+   */
+  readonly detail?: string;
 }
 
 /** A live streak entity left the world. */
