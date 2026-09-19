@@ -40,6 +40,7 @@ import { SHOT_REJECT_LABELS } from './events';
 import { BannerArbiter, feedLineForDamage, feedLineForDeath, feedLineForKill, feedLineForStreakActivated, feedLineForStreakDenied, feedLineForStreakEarned, type FeedContext } from './feed';
 import { shouldRevealEnemy, type MapBlip } from './minimap';
 import { OrdnanceView, decorateKillLine, isOrdnanceEvent } from './ordnance-view';
+import { MortarView, isMortarEvent } from './killstreaks/effects/mortar-view';
 
 // ---------------------------------------------------------------------------
 // The view
@@ -139,6 +140,8 @@ export class GameClient {
   private readonly banners = new BannerArbiter();
   /** The ordnance lane's projection: flights, smoke, drops, what we hold. Read by presentation. */
   readonly ordnance: OrdnanceView;
+  /** The mortar projection: host-authoritative warning discs + recent detonations. Read by presentation. Spectators read the same bus. */
+  readonly mortar: MortarView;
 
   private team: TeamId | null = null;
   private health: number | null = null;
@@ -152,6 +155,7 @@ export class GameClient {
 
   constructor(readonly selfId: ActorId) {
     this.ordnance = new OrdnanceView(selfId);
+    this.mortar = new MortarView();
   }
 
   /** Display names arrive from the roster, which `net/room.ts` owns. */
@@ -196,6 +200,9 @@ export class GameClient {
 
   applyEvent(e: GameEvent): void {
     if (e.at > this.now) this.now = e.at;
+    if (isMortarEvent(e) || e.type === 'streak-ended') {
+      this.mortar.apply(e);
+    }
     if (isOrdnanceEvent(e)) {
       const l = this.ordnance.apply(e);
       if (l !== null) this.pushLine({ text: l.text, dest: 'events', tone: l.tone });

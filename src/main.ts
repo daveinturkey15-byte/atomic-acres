@@ -334,6 +334,7 @@ function releaseEnvironmentCanary(): void {
 addEventListener('pagehide', () => {
   releaseEnvironmentCanary();
   weapons.dispose();
+  ordnance.dispose();
   combatFeedback.dispose();
 });
 // The first click lands on the overlay (it covers the canvas), so dismiss and lock

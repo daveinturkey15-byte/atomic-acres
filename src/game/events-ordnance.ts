@@ -182,6 +182,72 @@ export interface MeleeEvent {
 }
 
 // ---------------------------------------------------------------------------
+// Mortar — HOST-AUTHORITATIVE telegraph + impact (visible slice, 2026-09-19)
+// ---------------------------------------------------------------------------
+//
+// Integrator addition, not a lane fork: the prior mortar slice admitted damage
+// with no warning and no localized visual, which is not acceptable gameplay.
+// Both events are emitted ONLY by the host's mortar stepper (`effects/mortar.ts`);
+// guests never author one (a guest claim naming these ids is data, never an
+// instruction). The telegraph fires once per tube, BEFORE the first impact, so
+// no damage is ever untelegraphed. Each impact fires exactly once per scheduled
+// slot, co-located with the damage it caused. Dust/smoke aftermath is
+// VISUAL-ONLY (drawn from `mortar-impact` by presentation): it never enters the
+// smoke contract, so it never blinds bots or disagrees with `world-query.ts`.
+//
+// `instanceId` ties both to the tube's `streak-activated` / `streak-ended`.
+// `endsAt` is the host's live expiry for the tube (telegraph retires then, or
+// on `streak-ended`, whichever comes first).
+
+/** Authoritative warning: a mortar tube opened on this disc. Draw the ring NOW. */
+export interface MortarTelegraphEvent {
+  readonly type: 'mortar-telegraph';
+  readonly at: number;
+  readonly instanceId: number;
+  readonly actorId: ActorId;
+  readonly team: TeamId;
+  readonly streakId: string;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  /** Scatter-disc radius (`effects/mortar.ts:MORTAR_SPREAD_M`). */
+  readonly radius: number;
+  /** Scheduled impacts (`effects/mortar.ts:MORTAR_IMPACTS`). */
+  readonly impacts: number;
+  /** Host time the tube goes quiet. */
+  readonly endsAt: number;
+}
+
+/** Authoritative detonation: one scheduled slot went off HERE. Flash + ring + thump. */
+export interface MortarImpactEvent {
+  readonly type: 'mortar-impact';
+  readonly at: number;
+  readonly instanceId: number;
+  readonly actorId: ActorId;
+  readonly team: TeamId;
+  readonly streakId: string;
+  /** Which scheduled slot (0-based). Exactly one event per slot per tube. */
+  readonly index: number;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  /** Hostiles that took splash from this slot. */
+  readonly victims: number;
+}
+
+export type MortarEvent = MortarTelegraphEvent | MortarImpactEvent;
+
+/** Every mortar discriminant, frozen. Folded into `GameEvent` by `events.ts`, not into `OrdnanceEvent` (that lane's view stays untouched). */
+export const MORTAR_EVENT_TYPES = [
+  'mortar-telegraph',
+  'mortar-impact',
+] as const;
+export type MortarEventType = (typeof MORTAR_EVENT_TYPES)[number];
+
+export function isMortarEventType(v: unknown): v is MortarEventType {
+  return typeof v === 'string' && (MORTAR_EVENT_TYPES as readonly string[]).includes(v);
+}
+// ---------------------------------------------------------------------------
 // Death drops and pickups
 // ---------------------------------------------------------------------------
 

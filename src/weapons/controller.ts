@@ -654,6 +654,17 @@ export class WeaponsController {
     this.audioSvc.blast();
   }
 
+  /** A mortar slot went off here: the SAME flash/dust/spark pools as a grenade, but the thump arrives separately through `mortarThump` with distance, so a disc across the map never plays at full volume. Never a light. */
+  mortarFlash(x: number, y: number, z: number): void {
+    this.tmpEnd.set(x, y, z);
+    this.effects.blast(this.tmpEnd, this.camera.quaternion);
+  }
+
+  /** One mortar thump at its distance: the existing spatial impact contract (`AudioService.impact`), always dusty. Garnish, never gameplay. */
+  mortarThump(distanceM: number): void {
+    this.audioSvc.impact(distanceM, true);
+  }
+
   /** The host swapped our primary for a drop's: hold that gun, with the rounds it had. */
   adoptWeapon(weaponId: string, rounds: number): boolean {
     const idx = this.weapons.findIndex((w) => w.def.id === weaponId);

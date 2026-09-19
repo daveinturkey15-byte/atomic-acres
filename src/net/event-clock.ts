@@ -53,6 +53,11 @@ export function localizeGameEvent(event: GameEvent, offset: number): GameEvent {
       return { ...event, at, diesAt: hostTimeToGuest(event.diesAt, offset) };
     case 'drop-changed':
       return { ...event, at, diesAt: hostTimeToGuest(event.diesAt, offset) };
+    case 'mortar-telegraph':
+      // The warning disc's live expiry is an absolute host time like
+      // `match-phase.endsAt`: shift it by the same offset so the remaining
+      // duration (`endsAt - at`) survives the host->guest boundary.
+      return { ...event, at, endsAt: hostTimeToGuest(event.endsAt, offset) };
     default:
       return { ...event, at };
   }

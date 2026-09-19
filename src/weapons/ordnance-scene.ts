@@ -35,6 +35,8 @@ import { WEAPONS } from './catalog';
 import type { WeaponsController } from './controller';
 import { DropFx, nearestDropView } from './drops';
 import { GrenadeFx } from './grenades';
+import { MortarFx } from './mortar-fx';
+import { drainMortarAudio } from '../game/killstreaks/effects/mortar-audio';
 
 /** The white-out holds at its peak for this fraction of the flash, then fades linearly. */
 export const FLASH_HOLD_FRACTION = 0.25;
@@ -55,6 +57,7 @@ export class OrdnanceScene {
   private client: GameClient | null = null;
   private readonly world: WorldQuery;
   private readonly grenades: GrenadeFx;
+  private readonly mortarFx: MortarFx;
   private readonly drops: DropFx;
   private readonly hud: HudApi;
   private readonly weapons: WeaponsController;
@@ -67,8 +70,10 @@ export class OrdnanceScene {
   constructor(opts: OrdnanceSceneOptions) {
     this.world = createWorldQuery(opts.colliders);
     this.grenades = new GrenadeFx(opts.mat, this.world);
+    this.mortarFx = new MortarFx(opts.mat);
     this.drops = new DropFx(opts.mat);
     opts.scene.add(this.grenades.group);
+    opts.scene.add(this.mortarFx.group);
     opts.scene.add(this.drops.group);
     this.hud = opts.hud;
     this.weapons = opts.weapons;
@@ -86,6 +91,11 @@ export class OrdnanceScene {
   bind(client: GameClient | null): void {
     this.grenades.reset();
     this.grenades.group.visible = client !== null;
+    // Mortar presentation resets with the match, synced to the view's stable
+    // seq so a rematch never replays the previous tube's impacts.
+    if (client !== null) client.mortar.reset();
+    this.mortarFx.reset(client === null ? 0 : client.mortar.impactSeq);
+    this.mortarFx.group.visible = client !== null;
     this.drops.group.visible = client !== null;
     this.client = client;
     this.tacticalId = OrdnanceScene.tacticalFor();
@@ -107,6 +117,15 @@ export class OrdnanceScene {
     return this.client?.ordnance ?? null;
   }
 
+  /**
+   * Page/game teardown: release the mortar ring geometries. Grenade/drop fx
+   * own no geometries; shared `MaterialLibrary` materials are never touched.
+   * Idempotent; rebind after dispose is a fresh bind, never a replay.
+   */
+  dispose(): void {
+    this.mortarFx.release();
+  }
+
   /** One frame. `nowMs` is `performance.now()`, the host clock domain; (px, py, pz) the player's feet. */
   update(dt: number, nowMs: number, px: number, py: number, pz: number): void {
     const c = this.client;
@@ -115,6 +134,13 @@ export class OrdnanceScene {
     v.expire(nowMs);
     this.grenades.update(dt, nowMs, v, this.onBlast, this.volumetricSmoke());
     this.drops.update(nowMs, v);
+
+    // Mortar: warning discs + dust rings from the host's telegraph/impacts.
+    // The flash star comes from the existing effects pool; the thump from the
+    // existing spatial impact contract. Nothing here decides anything.
+    c.mortar.expire(nowMs);
+    this.mortarFx.update(nowMs, c.mortar, (x, y, z) => this.weapons.mortarFlash(x, y, z));
+    drainMortarAudio(c.mortar, { x: px, y: py, z: pz }, { impact: (d) => this.weapons.mortarThump(d) });
 
     const self = v.self;
     // Verdicts the controller must act on, as edges off the projection's counters.
@@ -169,6 +195,12 @@ export class OrdnanceScene {
         id: s.id, kind: s.kind, radius: s.radius, x: s.x, y: s.y, z: s.z,
         bornAt: s.bornAt, diesAt: s.diesAt,
       })),
+      mortar: {
+        telegraphs: c.mortar.telegraphs.map((t) => ({ inst: t.instanceId, x: t.x, z: t.z, r: t.radius })),
+        impacts: c.mortar.impacts.length,
+        impactSeq: c.mortar.impactSeq,
+        counts: { ...c.mortar.counts },
+      },
       hand: this.weapons.command('ordnance'),
     };
   }

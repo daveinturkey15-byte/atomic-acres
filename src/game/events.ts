@@ -33,7 +33,7 @@
 export * from './vocab';
 export * from './events-ordnance';
 
-import { ORDNANCE_EVENT_TYPES, type OrdnanceEvent } from './events-ordnance';
+import { MORTAR_EVENT_TYPES, ORDNANCE_EVENT_TYPES, type MortarEvent, type OrdnanceEvent } from './events-ordnance';
 import type {
   ActorId,
   DamageCause,
@@ -246,7 +246,11 @@ export type GameEvent =
   // The ordnance lane's shapes (grenades, smoke, flash, knife, drops). Declared
   // in `./events-ordnance` for the 400-line cap and folded in here, so the
   // union is still one union and the bus still carries one vocabulary.
-  | OrdnanceEvent;
+  | OrdnanceEvent
+  // Mortar telegraph + impact (visible slice 2026-09-19). Declared beside the
+  // ordnance shapes but NOT in `OrdnanceEvent`, so `ordnance-view.ts` stays
+  // untouched and the mortar projection owns exactly these two.
+  | MortarEvent;
 
 /** Every discriminant, frozen. This IS the list; nothing derives it. */
 export const GAME_EVENT_TYPES = [
@@ -263,6 +267,7 @@ export const GAME_EVENT_TYPES = [
   'match-phase',
   'feed',
   ...ORDNANCE_EVENT_TYPES,
+  ...MORTAR_EVENT_TYPES,
 ] as const;
 export type GameEventType = (typeof GAME_EVENT_TYPES)[number];
 

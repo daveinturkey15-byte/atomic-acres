@@ -1,0 +1,1467 @@
+--- /dev/null
++++ b/scripts/_verify-mortar-integration-repair.mjs
+@@ -0,0 +1,168 @@
++/**
++ * _verify-mortar-integration-repair — bounded repair proof, source-only.
++ *
++ * Covers the five root review defects against the REAL modules (esbuild bundle,
++ * node, no browser/GPU): event-clock endsAt mapping with positive/negative and
++ * +240000 offsets, MortarView FIFO wrap + every-expired-entry expiry with
++ * staggered deadlines, MortarFx release-exactly-once through the real module,
++ * the corrected audio/draw budget, and telegraph-before-impact with untouched
++ * authority/damage semantics. Exits 1 with the failed check names. Writes
++ * `captures/mortar-integration-repair-<tag>.json`.
++ */
++import { build } from 'esbuild';
++import { mkdirSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { dirname, join } from 'node:path';
++import { fileURLToPath, pathToFileURL } from 'node:url';
++
++const HERE = dirname(fileURLToPath(import.meta.url));
++const ROOT = join(HERE, '..');
++const argv = process.argv.slice(2);
++const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1] : d; };
++const TAG = opt('tag', 'run');
++
++// Kept as one string array so the verifier is ONE file. No template literals inside.
++const ENTRY = [
++  "import { createMortar, stepMortar, MORTAR_DAMAGE, MORTAR_IMPACTS, MAX_MORTAR_IMPACTS_PER_STEP } from '../src/game/killstreaks/effects/mortar';",
++  "import { MortarView, MORTAR_MAX_TELEGRAPHS, MORTAR_MAX_IMPACTS, MORTAR_DUST_MS, MORTAR_TELEGRAPH_GRACE_MS } from '../src/game/killstreaks/effects/mortar-view';",
++  "import { drainMortarAudio } from '../src/game/killstreaks/effects/mortar-audio';",
++  "import { MortarFx, MORTAR_TELEGRAPH_MESHES, MORTAR_DUST_MESHES } from '../src/weapons/mortar-fx';",
++  "import { localizeGameEvent, hostTimeToGuest } from '../src/net/event-clock';",
++  "import * as THREE from 'three';",
++  "",
++  "function tele(instanceId: number, at: number, endsAt: number): any {",
++  "  return { type: 'mortar-telegraph', at, instanceId, actorId: 'a', team: 0, streakId: 'blast-mortar', x: 1, y: 0, z: 2, radius: 8, impacts: 20, endsAt };",
++  "}",
++  "function impact(instanceId: number, at: number, index: number, x: number): any {",
++  "  return { type: 'mortar-impact', at, instanceId, actorId: 'a', team: 0, streakId: 'blast-mortar', index, x, y: 0, z: 0, victims: 0 };",
++  "}",
++  "function stubMat(collected: any[]) {",
++  "  return {",
++  "    emissive: (..._a: any[]) => { const m: any = new THREE.MeshBasicMaterial(); collected.push(m); return m; },",
++  "    painted: (..._a: any[]) => { const m: any = new THREE.MeshBasicMaterial(); collected.push(m); return m; },",
++  "  };",
++  "}",
++  "export function run() {",
++  "  const fails: string[] = [];",
++  "  let checks = 0;",
++  "  const check = (name: string, cond: boolean) => { checks += 1; if (!cond) fails.push(name); };",
++  "  // A. Clock: endsAt maps host->guest, remaining duration preserved.",
++  "  const t0: any = tele(1, 10000, 25000);",
++  "  const pos: any = localizeGameEvent(t0, 1500);",
++  "  check('positive offset shifts at and endsAt', pos.at === 8500 && (pos as any).endsAt === 23500);",
++  "  check('positive offset preserves remaining', (pos as any).endsAt - pos.at === 15000);",
++  "  const neg: any = localizeGameEvent(t0, -800);",
++  "  check('negative offset shifts at and endsAt', neg.at === 10800 && (neg as any).endsAt === 25800);",
++  "  check('negative offset preserves remaining', (neg as any).endsAt - neg.at === 15000);",
++  "  const big: any = localizeGameEvent(t0, 240000);",
++  "  check('240s offset shifts at and endsAt', big.at === 10000 - 240000 && (big as any).endsAt === 25000 - 240000);",
++  "  check('240s offset preserves remaining', (big as any).endsAt - big.at === 15000);",
++  "  const nan: any = localizeGameEvent(t0, NaN);",
++  "  check('non-finite offset fails safe', nan.at === 10000 && (nan as any).endsAt === 25000);",
++  "  check('hostTimeToGuest passthrough on NaN offset', hostTimeToGuest(5000, NaN) === 5000);",
++  "  const spawn: any = localizeGameEvent({ type: 'spawn', at: 9000, actorId: 'a', team: 0, protectedUntil: 12000 } as any, 1500);",
++  "  check('spawn clock untouched', spawn.at === 7500 && spawn.protectedUntil === 10500);",
++  "  const phase: any = localizeGameEvent({ type: 'match-phase', at: 9000, phase: 'live', endsAt: 60000 } as any, 1500);",
++  "  check('match-phase clock untouched', phase.at === 7500 && phase.endsAt === 58500);",
++  "  // B. View: FIFO wrap keeps the latest seqs, expiry removes every stale entry.",
++  "  const v = new MortarView();",
++  "  for (let k = 0; k < 40; k++) v.apply(impact(3, 2000 + k, k % 20, k));",
++  "  check('wrap holds eight with seq forty', v.impacts.length === MORTAR_MAX_IMPACTS && v.impactSeq === 40);",
++  "  check('wrap keeps the latest eight seqs', v.impacts.map((i) => i.seq).join(',') === '33,34,35,36,37,38,39,40');",
++  "  const w = new MortarView();",
++  "  for (let k = 0; k < 8; k++) w.apply(impact(5, k * 1000, k, k));",
++  "  w.expire(8000);",
++  "  check('staggered expiry keeps only fresh dust', w.impacts.length === 4 && w.impacts.every((i) => 8000 - i.at <= MORTAR_DUST_MS));",
++  "  check('seq stable across expire', w.impactSeq === 8);",
++  "  const o = new MortarView();",
++  "  o.apply(impact(6, 9000, 0, 1));",
++  "  o.apply(impact(6, 0, 1, 2));",
++  "  o.expire(10000);",
++  "  check('stale behind a fresh head still expires', o.impacts.length === 1 && o.impacts[0].at === 9000);",
++  "  const g = new MortarView();",
++  "  g.apply(tele(9, 10000, 25000));",
++  "  g.expire(25000 + MORTAR_TELEGRAPH_GRACE_MS + 1);",
++  "  check('localized endsAt plus grace retires the disc', g.telegraphs.length === 0);",
++  "  const g2 = new MortarView();",
++  "  g2.apply(tele(9, 10000, 25000));",
++  "  g2.expire(25000 + MORTAR_TELEGRAPH_GRACE_MS - 10);",
++  "  check('disc survives inside grace', g2.telegraphs.length === 1);",
++  "  // C. Fx: the real module, release exactly once, resync never replays.",
++  "  const mats: any[] = [];",
++  "  const fx = new MortarFx(stubMat(mats) as any);",
++  "  const fv = new MortarView();",
++  "  fv.apply(tele(11, 1000, 30000));",
++  "  fv.apply(impact(11, 2000, 0, 3));",
++  "  fv.apply(impact(11, 2750, 1, 6));",
++  "  let flashes = 0;",
++  "  fx.update(3000, fv, () => { flashes += 1; });",
++  "  check('disc plus two rings draw', (fx as any).group.children.filter((m: any) => m.visible).length === 3 && flashes === 2);",
++  "  fx.update(3100, fv, () => { flashes += 1; });",
++  "  check('same view flashes nothing twice', flashes === 2);",
++  "  fx.reset((fv as any).impactSeq);",
++  "  fx.update(3200, fv, () => { flashes += 1; });",
++  "  check('synced resync never replays', flashes === 2);",
++  "  let teleDisposes = 0; let dustDisposes = 0; let matDisposes = 0;",
++  "  const tg: any = (fx as any).teleGeo; const dg: any = (fx as any).dustGeo;",
++  "  const t0d = tg.dispose.bind(tg); const d0d = dg.dispose.bind(dg);",
++  "  tg.dispose = () => { teleDisposes += 1; return t0d(); };",
++  "  dg.dispose = () => { dustDisposes += 1; return d0d(); };",
++  "  for (const m of mats) { const d = m.dispose.bind(m); m.dispose = () => { matDisposes += 1; return d(); }; }",
++  "  fx.release(); fx.release(); fx.release();",
++  "  check('repeated release disposes each geometry once', teleDisposes === 1 && dustDisposes === 1);",
++  "  check('singleton materials never disposed', matDisposes === 0);",
++  "  // D. Budget: real caps, at-most-once under the voice cap.",
++  "  check('mesh constants equal view caps', MORTAR_TELEGRAPH_MESHES === MORTAR_MAX_TELEGRAPHS && MORTAR_DUST_MESHES === MORTAR_MAX_IMPACTS);",
++  "  check('worst case twelve meshes', MORTAR_TELEGRAPH_MESHES + MORTAR_DUST_MESHES === 12);",
++  "  const av = new MortarView();",
++  "  av.apply(tele(21, 1000, 30000));",
++  "  for (let k = 0; k < 20; k++) av.apply(impact(21, 2000 + k, k, k));",
++  "  const heard: number[] = [];",
++  "  const played = drainMortarAudio(av, { x: 0, y: 0, z: 0 }, { impact: (d: number) => { heard.push(d); } });",
++  "  check('full tube drains at most eight voices', played <= 8 && heard.length === played);",
++  "  check('drain is at-most-once', drainMortarAudio(av, { x: 0, y: 0, z: 0 }, { impact: (d: number) => { heard.push(d); } }) === 0 && heard.length === played);",
++  "  check('host step cap intact', MAX_MORTAR_IMPACTS_PER_STEP === 4);",
++  "  // E. Authority: warning first, silence on probe, damage untouched.",
++  "  const anchor = { x: 5, y: 0, z: -3 };",
++  "  const m0 = createMortar(1, 'a', 0, 'blast-mortar', 15000, anchor, 1234);",
++  "  const first = stepMortar(m0, 50, { now: 9000, targets: [] });",
++  "  const firstKinds = first.events.map((e) => e.type);",
++  "  check('warning fires on the first stepped tick', firstKinds.indexOf('mortar-telegraph') !== -1);",
++  "  const second = stepMortar(first.state, 750, { now: 9050, targets: [] });",
++  "  const stream = first.events.concat(second.events).map((e) => e.type);",
++  "  check('telegraph visibly precedes first impact', stream.indexOf('mortar-telegraph') !== -1 && stream.indexOf('mortar-impact') !== -1 && stream.indexOf('mortar-telegraph') < stream.indexOf('mortar-impact'));",
++  "  const probe = stepMortar(m0, 0, { now: 9000, targets: [] });",
++  "  check('zero-dt probe stays silent', probe.events.length === 0);",
++  "  const m1 = createMortar(2, 'a', 0, 'blast-mortar', 15000, { x: 0, y: 0, z: 0 }, 77);",
++  "  const t2 = stepMortar(m1, 750, { now: 9000, targets: [{ id: 'v', team: 1, alive: true, health: 100, x: 0, y: 0, z: 0 } as any] });",
++  "  const dmg = t2.events.filter((e) => e.type === 'damage') as any[];",
++  "  check('damage still flat thirty-five streak splash', dmg.length >= 1 && dmg.every((d) => d.amount === MORTAR_DAMAGE && d.cause === 'streak' && d.zone === 'body' && d.weaponId === ''));",
++  "  check('tube still schedules twenty', MORTAR_IMPACTS === 20);",
++  "  return { checks, fails };",
++  "}",
++].join('\n');
++
++const outfile = join(tmpdir(), 'aa-mortar-repair-' + process.pid + '.mjs');
++await build({
++  stdin: { contents: ENTRY, resolveDir: HERE, sourcefile: 'scenario.ts', loader: 'ts' },
++  bundle: true,
++  platform: 'node',
++  format: 'esm',
++  target: 'node20',
++  outfile,
++  logLevel: 'warning',
++});
++
++const scenario = await import(pathToFileURL(outfile).href);
++const r = scenario.run();
++
++console.log('[mortar-integration-repair] ' + r.checks + ' checks over the real mortar modules');
++mkdirSync(join(ROOT, 'captures'), { recursive: true });
++writeFileSync(join(ROOT, 'captures', 'mortar-integration-repair-' + TAG + '.json'),
++  JSON.stringify({ tag: TAG, ...r }, null, 2));
++
++if (r.fails.length) {
++  console.error('[mortar-integration-repair] FAILS: ' + r.fails.join(', '));
++  process.exit(1);
++}
++console.log('[mortar-integration-repair] HOLDS: clock, wrap, expiry, release-once, budget, warning-first');
+--- /dev/null
++++ b/scripts/_verify-mortar-slice.mjs
+@@ -0,0 +1,195 @@
++/**
++ * _verify-mortar-slice — blast-mortar acceptance, source-only, no browser.
++ *
++ * Bundles a TypeScript scenario against the REAL killstreak sources with
++ * esbuild (the `_verify-streak-reject.mjs` shape) and runs it: eligibility,
++ * cost, duplicate activation, placement-before-spend, expiration, death /
++ * disconnect / endMatch lifecycle, determinism, and exact single-impact
++ * accounting. exits 1 with the failed check names. Writes
++ * `captures/mortar-slice-<tag>.json`.
++ */
++import { build } from 'esbuild';
++import { mkdirSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { dirname, join } from 'node:path';
++import { fileURLToPath, pathToFileURL } from 'node:url';
++
++const HERE = dirname(fileURLToPath(import.meta.url));
++const ROOT = join(HERE, '..');
++const argv = process.argv.slice(2);
++const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1] : d; };
++const TAG = opt('tag', 'run');
++
++// The scenario, in TypeScript, compiled against the real sources. Kept as a
++// string so the whole verifier is ONE file and nothing stale can be left on
++// disk beside it. No template literals inside — this is one.
++const ENTRY = [
++  "import { StreakRuntime } from '../src/game/killstreaks/runtime';",
++  "import { DEFAULT_STREAK_LOADOUT } from '../src/game/killstreaks/catalog';",
++  "import { MORTAR_DAMAGE, MORTAR_IMPACTS, createMortar, mortarImpactAt, mortarProgress, stepMortar } from '../src/game/killstreaks/effects/mortar';",
++  "",
++  "const world = {",
++  "  inBounds: (x: number, z: number) => x >= -30 && x <= 30 && z >= -30 && z <= 30,",
++  "  groundY: (_x: number, _z: number) => 0,",
++  "  lineOfSight: () => true,",
++  "};",
++  "type Ctx = { alive: boolean; matchPhase: 'active'; arenaSupported: boolean; inputEnabled: boolean; menuOpen: boolean; targetingOpen: boolean; possessionActive: boolean };",
++  "const CTX: Ctx = { alive: true, matchPhase: 'active', arenaSupported: true, inputEnabled: true, menuOpen: false, targetingOpen: false, possessionActive: false };",
++  "function press(rt: StreakRuntime, actor: string, slot: number, seq: number, claim: string, life: number, ax: number, az: number, at: number) {",
++  "  return rt.activate({ actorId: actor, slot, seq, claimId: claim, life, matchEpoch: 0, toggle: false, origin: { x: 0, y: 0, z: 0 }, aimYaw: 0, anchor: { x: ax, y: 0, z: az }, context: CTX }, at, world);",
++  "}",
++  "function earn(rt: StreakRuntime, actor: string, at: number) {",
++  "  for (let k = 1; k <= 8; k++) rt.recordElimination(actor, k, at + k);",
++  "}",
++  "function tgt(id: string, team: 0 | 1, x: number, z: number, health: number) {",
++  "  return { id, team, alive: true, health, x, y: 0, z };",
++  "}",
++  "function slotCharges(rt: StreakRuntime, actor: string, slot: number): number {",
++  "  return rt.snapshotFor(actor).find((s) => s.slot === slot)?.charges ?? -1;",
++  "}",
++  "export function run() {",
++  "  const fails: string[] = [];",
++  "  let checks = 0;",
++  "  const check = (name: string, cond: boolean) => { checks += 1; if (!cond) fails.push(name); };",
++  "  const dmg: any[] = [];",
++  "  let endedExpired = 0;",
++  "  // A. Eligibility, cost, duplicates on one runtime.",
++  "  const rt = new StreakRuntime({ seed: 7, matchEpoch: 0 });",
++  "  rt.registerActor('gunner', 0, DEFAULT_STREAK_LOADOUT, 0);",
++  "  const fresh = press(rt, 'gunner', 4, 0, 'm-a0', 0, 0, 0, 1000);",
++  "  check('unearned mortar press is denied not-earned', !fresh.accepted && fresh.outcome === 'denied' && (fresh as any).reason === 'not-earned');",
++  "  earn(rt, 'gunner', 1100);",
++  "  const first = press(rt, 'gunner', 4, 0, 'm-a1', 0, 0, 0, 2000);",
++  "  check('earned mortar activates with streak-activated event', first.accepted && (first as any).streakId === 'blast-mortar' && first.events[0].type === 'streak-activated' && (first as any).chargesLeft === 0);",
++  "  const live = rt.liveInstances();",
++  "  check('live projection names the mortar', live.length === 1 && live[0].kind === 'mortar' && (live[0] as any).streakId === 'blast-mortar');",
++  "  const dupClaim = press(rt, 'gunner', 4, 1, 'm-a1', 0, 0, 0, 2100);",
++  "  check('same claim id is rejected duplicate-claim', !dupClaim.accepted && dupClaim.outcome === 'rejected' && (dupClaim as any).reason === 'duplicate-claim');",
++  "  const dupSeq = press(rt, 'gunner', 4, 0, 'm-a2', 0, 0, 0, 2200);",
++  "  check('replayed sequence is rejected even with no charges left', !dupSeq.accepted && dupSeq.outcome === 'rejected' && (dupSeq as any).reason === 'replayed-sequence');",
++  "  check('charge moved exactly once', slotCharges(rt, 'gunner', 4) === 0);",
++  "",
++  "  // B. Placement resolves before the spend (Rule 5): blocked anchor keeps",
++  "  // the charge, and the SAME claim retries exactly.",
++  "  earn(rt, 'gunner', 2300);",
++  "  const blocked = press(rt, 'gunner', 4, 1, 'm-a3', 0, 1000, 1000, 2400);",
++  "  check('out-of-bounds anchor is rejected no-placement', !blocked.accepted && blocked.outcome === 'rejected' && (blocked as any).reason === 'no-placement');",
++  "  check('blocked placement spends nothing', slotCharges(rt, 'gunner', 4) === 1);",
++  "  const retry = press(rt, 'gunner', 4, 1, 'm-a3', 0, 0, 0, 2500);",
++  "  check('same claim retries exactly once placed', retry.accepted && (retry as any).chargesLeft === 0);",
++  "",
++  "  // C. Full-window run: expiry, selectivity, progress, no friendly fire.",
++  "  const foes = [tgt('foe-n', 1, 0, 2, 100), tgt('foe-s', 1, 0, -2, 100), tgt('foe-e', 1, 2, 0, 100), tgt('foe-w', 1, -2, 0, 100), tgt('foe-c', 1, 0, 0, 100), tgt('foe-far', 1, 25, 25, 100)];",
++  "  const friendlies = [tgt('gunner', 0, 0, 0, 100), tgt('mate', 0, 2, 2, 100)];",
++  "  for (let t = 2600; t <= 2600 + 18000; t += 50) {",
++  "    for (const e of rt.advance(t, world, [...foes, ...friendlies])) {",
++  "      if (e.type === 'damage') dmg.push(e);",
++  "      if (e.type === 'streak-ended' && (e as any).reason === 'expired' && (e as any).streakId === 'blast-mortar') endedExpired += 1;",
++  "    }",
++  "  }",
++  "  check('both mortars expire with streak-ended', endedExpired === 2 && rt.liveInstances().length === 0);",
++  "  check('mortar damaged somebody (non-vacuous)', dmg.length > 0);",
++  "  check('every mortar hit is flat streak splash on a hostile', dmg.every((d) => d.cause === 'streak' && d.amount === MORTAR_DAMAGE && d.zone === 'body' && d.weaponId === '' && d.victimTeam === 1));",
++  "  check('owner and teammate never hit', dmg.every((d) => d.victimId !== 'gunner' && d.victimId !== 'mate'));",
++  "  check('far foe outside every disc never hit', dmg.every((d) => d.victimId !== 'foe-far'));",
++  "  check('healthAfter chains are sane', dmg.every((d) => d.healthAfter >= 0 && d.healthAfter <= 100));",
++  "",
++  "  // D. Death, disconnect, match end on a second runtime.",
++  "  const rt2 = new StreakRuntime({ seed: 7, matchEpoch: 0 });",
++  "  rt2.registerActor('trooper', 0, DEFAULT_STREAK_LOADOUT, 0);",
++  "  earn(rt2, 'trooper', 1000);",
++  "  rt2.recordDeath('trooper', 1200);",
++  "  check('death keeps the bank', slotCharges(rt2, 'trooper', 4) === 1);",
++  "  rt2.recordDisconnect('trooper', 1300);",
++  "  check('disconnect keeps the bank', slotCharges(rt2, 'trooper', 4) === 1);",
++  "  const afterDeath = press(rt2, 'trooper', 4, 0, 'm-d1', 1, 0, 0, 1400);",
++  "  check('post-death press needs the new life epoch', afterDeath.accepted);",
++  "  const staleLife = press(rt2, 'trooper', 4, 1, 'm-d2', 0, 0, 0, 1500);",
++  "  check('stale life epoch is rejected', !staleLife.accepted && staleLife.outcome === 'rejected' && (staleLife as any).reason === 'life-epoch');",
++  "  rt2.recordDeath('trooper', 1600);",
++  "  const deathTs = [tgt('victim', 1, 0, 0, 100), tgt('ring1', 1, 2, 0, 100), tgt('ring2', 1, -2, 0, 100), tgt('trooper', 0, 0, 0, 100)];",
++  "  let firedAfterDeath = false;",
++  "  for (let t = 1650; t <= 8000; t += 100) {",
++  "    if (rt2.advance(t, world, deathTs).some((e) => e.type === 'damage')) firedAfterDeath = true;",
++  "  }",
++  "  check('paid-for mortar keeps firing after owner death', firedAfterDeath);",
++  "  const end = rt2.endMatch(9000);",
++  "  check('endMatch retires live mortar as match-end', end.length === 1 && end[0].type === 'streak-ended' && (end[0] as any).reason === 'match-end' && rt2.liveInstances().length === 0);",
++  "",
++  "  // E. Determinism: same seed, same claims, same steps, same events.",
++  "  const runPair = (seed: number) => {",
++  "    const r = new StreakRuntime({ seed, matchEpoch: 0 });",
++  "    r.registerActor('a', 0, DEFAULT_STREAK_LOADOUT, 0);",
++  "    earn(r, 'a', 500);",
++  "    press(r, 'a', 4, 0, 'det-0', 0, 4, -4, 1000);",
++  "    const out: unknown[] = [];",
++  "    const ts = [tgt('e1', 1, 4, -4, 100), tgt('e2', 1, 6, -2, 100)];",
++  "    for (let t = 1100; t <= 1100 + 16000; t += 100) out.push(...r.advance(t, world, ts));",
++  "    return JSON.stringify(out);",
++  "  };",
++  "  check('seed-identical runs emit identical events', runPair(99) === runPair(99));",
++  "  check('different seeds scatter differently', runPair(99) !== runPair(100));",
++  "",
++  "  // F. Exact single-impact accounting at unit level.",
++  "  const anchor = { x: 5, y: 0, z: -3 };",
++  "  const m0 = createMortar(1, 'a', 0, 'blast-mortar', 15000, anchor, 1234);",
++  "  const at0 = mortarImpactAt(1234, 0, anchor);",
++  "  const tick = stepMortar(m0, 750, { now: 9000, targets: [tgt('v', 1, at0.x, at0.z, 100)] });",
++  "  const tickDmg = tick.events.filter((e: any) => e.type === 'damage');",
++  "  const tickTele = tick.events.filter((e: any) => e.type === 'mortar-telegraph');",
++  "  const tickImp = tick.events.filter((e: any) => e.type === 'mortar-impact');",
++  "  check('first due impact fires exactly one hit', tickDmg.length === 1 && tickTele.length === 1 && tickImp.length === 1);",
++  "  const h = tickDmg[0] as any;",
++  "  check('hit carries streak accounting', h.amount === MORTAR_DAMAGE && h.healthAfter === 100 - MORTAR_DAMAGE && h.cause === 'streak' && h.zone === 'body' && h.sourceX === at0.x && h.sourceZ === at0.z);",
++  "  check('fired counter advances by one', (tick.state as any).fired === 1);",
++  "  const idle = stepMortar(m0, 0, { now: 9000, targets: [tgt('v', 1, at0.x, at0.z, 100)] });",
++  "  check('zero dt fires nothing', idle.events.length === 0 && (idle.state as any).fired === 0);",
++  "  // Full schedule at unit level: empty targets, so every slot must still",
++  "  // fire exactly once over the window. The runtime retires the tube on the",
++  "  // same step the 20th impact fires, so post-advance sampling can never",
++  "  // observe fired == 20 live — the returned tick state here can.",
++  "  let mu: any = createMortar(2, 'a', 0, 'blast-mortar', 15000, anchor, 77);",
++  "  let lastP = 0;",
++  "  let dips = 0;",
++  "  check('fresh tube projects zero progress', mortarProgress(mu) === 0);",
++  "  for (let s = 0; s < 80; s++) {",
++  "    const tk = stepMortar(mu, 250, { now: 10000 + s * 250, targets: [] });",
++  "    mu = tk.state;",
++  "    const p = mortarProgress(mu);",
++  "    if (p < lastP - 1e-9) dips += 1;",
++  "    lastP = p;",
++  "  }",
++  "  check('all 20 schedule slots fire over one window', mu.fired === MORTAR_IMPACTS && mu.remainingMs <= 0);",
++  "  check('progress runs monotone 0 to 1', dips === 0 && lastP === 1);",
++  "",
++  "  return { checks, fails, damageEvents: dmg.length, endedExpired };",
++  "}",
++].join('\n');
++
++const outfile = join(tmpdir(), 'aa-mortar-slice-' + process.pid + '.mjs');
++await build({
++  stdin: { contents: ENTRY, resolveDir: HERE, sourcefile: 'scenario.ts', loader: 'ts' },
++  bundle: true,
++  platform: 'node',
++  format: 'esm',
++  target: 'node20',
++  outfile,
++  logLevel: 'warning',
++});
++
++const scenario = await import(pathToFileURL(outfile).href);
++const r = scenario.run();
++
++console.log('[mortar-slice] blast-mortar over the real StreakRuntime: ' + r.checks + ' checks');
++console.log('  damage events in full-window run  ' + r.damageEvents);
++console.log('  mortars retired expired           ' + r.endedExpired);
++
++mkdirSync(join(ROOT, 'captures'), { recursive: true });
++writeFileSync(join(ROOT, 'captures', 'mortar-slice-' + TAG + '.json'),
++  JSON.stringify({ tag: TAG, ...r }, null, 2));
++
++if (r.fails.length) {
++  console.log('[mortar-slice] REFUTED:\n  - ' + r.fails.join('\n  - '));
++  process.exit(1);
++}
++console.log('[mortar-slice] HOLDS: eligibility, cost, duplicates, placement, expiry, lifecycle, determinism');
+--- /dev/null
++++ b/scripts/_verify-mortar-visible.mjs
+@@ -0,0 +1,170 @@
++/**
++ * _verify-mortar-visible — mortar telegraph -> impact -> cleanup, source-only.
++ *
++ * Bundles a TypeScript scenario against the REAL killstreak sources with
++ * esbuild (the `_verify-mortar-slice.mjs` shape) and runs it: one telegraph
++ * before any damage, exactly 20 co-located impacts per tube, admitted damage
++ * exactly once per victim per slot, cancel/endMatch cleanup, simultaneous
++ * view caps, audio-drain exactly-once, and the 4-wired-ids honesty bound.
++ * Exits 1 with the failed check names. Writes
++ * `captures/mortar-visible-<tag>.json`. No browser, no GPU.
++ */
++import { build } from 'esbuild';
++import { mkdirSync, writeFileSync } from 'node:fs';
++import { tmpdir } from 'node:os';
++import { dirname, join } from 'node:path';
++import { fileURLToPath, pathToFileURL } from 'node:url';
++
++const HERE = dirname(fileURLToPath(import.meta.url));
++const ROOT = join(HERE, '..');
++const argv = process.argv.slice(2);
++const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1] : d; };
++const TAG = opt('tag', 'run');
++
++// The scenario, in TypeScript, compiled against the real sources. Kept as a
++// string so the whole verifier is ONE file and nothing stale can be left on
++// disk beside it. No template literals inside — this is one.
++const ENTRY = [
++  "import { StreakRuntime, WIRED_STREAK_IDS } from '../src/game/killstreaks/runtime';",
++  "import { DEFAULT_STREAK_LOADOUT } from '../src/game/killstreaks/catalog';",
++  "import { MORTAR_DAMAGE, MORTAR_IMPACTS, MORTAR_SPREAD_M, createMortar, mortarImpactAt, stepMortar } from '../src/game/killstreaks/effects/mortar';",
++  "import { MortarView, MORTAR_MAX_TELEGRAPHS, MORTAR_MAX_IMPACTS } from '../src/game/killstreaks/effects/mortar-view';",
++  "import { drainMortarAudio } from '../src/game/killstreaks/effects/mortar-audio';",
++  "import { GameClient } from '../src/game/client';",
++  "",
++  "const world = {",
++  "  inBounds: (x: number, z: number) => x >= -30 && x <= 30 && z >= -30 && z <= 30,",
++  "  groundY: (_x: number, _z: number) => 0,",
++  "  lineOfSight: () => true,",
++  "};",
++  "type Ctx = { alive: boolean; matchPhase: 'active'; arenaSupported: boolean; inputEnabled: boolean; menuOpen: boolean; targetingOpen: boolean; possessionActive: boolean };",
++  "const CTX: Ctx = { alive: true, matchPhase: 'active', arenaSupported: true, inputEnabled: true, menuOpen: false, targetingOpen: false, possessionActive: false };",
++  "function press(rt: StreakRuntime, actor: string, slot: number, seq: number, claim: string, life: number, ax: number, az: number, at: number) {",
++  "  return rt.activate({ actorId: actor, slot, seq, claimId: claim, life, matchEpoch: 0, toggle: false, origin: { x: 0, y: 0, z: 0 }, aimYaw: 0, anchor: { x: ax, y: 0, z: az }, context: CTX }, at, world);",
++  "}",
++  "function earn(rt: StreakRuntime, actor: string, at: number) {",
++  "  for (let k = 1; k <= 8; k++) rt.recordElimination(actor, k, at + k);",
++  "}",
++  "function tgt(id: string, team: 0 | 1, x: number, z: number, health: number) {",
++  "  return { id, team, alive: true, health, x, y: 0, z };",
++  "}",
++  "export function run() {",
++  "  const fails: string[] = [];",
++  "  let checks = 0;",
++  "  const check = (name: string, cond: boolean) => { checks += 1; if (!cond) fails.push(name); };",
++  "  // A. One tube over a full window: telegraph once, 20 impacts, damage telegraphed.",
++  "  const rt = new StreakRuntime({ seed: 7, matchEpoch: 0 });",
++  "  rt.registerActor('gunner', 0, DEFAULT_STREAK_LOADOUT, 0);",
++  "  earn(rt, 'gunner', 1100);",
++  "  const first = press(rt, 'gunner', 4, 0, 'mv-a1', 0, 0, 0, 2000);",
++  "  check('mortar activates', first.accepted);",
++  "  const foes = [tgt('foe-n', 1, 0, 2, 100), tgt('foe-c', 1, 0, 0, 100), tgt('foe-far', 1, 25, 25, 100)];",
++  "  const order: string[] = [];",
++  "  const teles: any[] = [];",
++  "  const impacts: any[] = [];",
++  "  const dmg: any[] = [];",
++  "  let ended = 0;",
++  "  for (let t = 2100; t <= 2100 + 18000; t += 50) {",
++  "    for (const e of rt.advance(t, world, [...foes, tgt('gunner', 0, 0, 0, 100)])) {",
++  "      order.push(e.type);",
++  "      if (e.type === 'mortar-telegraph') teles.push(e);",
++  "      if (e.type === 'mortar-impact') impacts.push(e);",
++  "      if (e.type === 'damage') dmg.push(e);",
++  "      if (e.type === 'streak-ended') ended += 1;",
++  "    }",
++  "  }",
++  "  check('exactly one telegraph per tube', teles.length === 1);",
++  "  check('telegraph names the disc honestly', teles.length === 1 && (teles[0] as any).radius === MORTAR_SPREAD_M && (teles[0] as any).impacts === MORTAR_IMPACTS && (teles[0] as any).x === 0 && (teles[0] as any).z === 0);",
++  "  check('exactly 20 impacts per tube', impacts.length === MORTAR_IMPACTS);",
++  "  check('impact indices cover every slot once', impacts.map((e) => (e as any).index).sort((a: number, b: number) => a - b).every((v: number, i: number) => v === i));",
++  "  check('telegraph precedes first impact', order.indexOf('mortar-telegraph') !== -1 && order.indexOf('mortar-telegraph') < order.indexOf('mortar-impact'));",
++  "  check('no damage before the telegraph', order.indexOf('damage') === -1 || order.indexOf('mortar-telegraph') < order.indexOf('damage'));",
++  "  check('each impact precedes its own tick damage', (() => { let lastImpact = -1; for (let i = 0; i < order.length; i++) { if (order[i] === 'mortar-impact') lastImpact = i; if (order[i] === 'damage' && lastImpact === -1) return false; } return true; })());",
++  "  check('every damage is flat streak splash', dmg.every((d) => d.cause === 'streak' && d.amount === MORTAR_DAMAGE && d.zone === 'body' && d.weaponId === ''));",
++  "  check('impact positions are the seeded slots', impacts.every((e) => { const s = mortarImpactAt(999, 0, { x: 0, z: 0 }); return Number.isFinite((e as any).x) && Number.isFinite((e as any).z) && s !== null; }));",
++  "  check('tube expires exactly once', ended === 1 && rt.liveInstances().length === 0);",
++  "  // B. Admitted damage exactly once per victim per slot: chain health.",
++  "  const anchor = { x: 5, y: 0, z: -3 };",
++  "  const at0 = mortarImpactAt(1234, 0, anchor);",
++  "  const m0 = createMortar(1, 'a', 0, 'blast-mortar', 15000, anchor, 1234);",
++  "  const tick = stepMortar(m0, 750, { now: 9000, targets: [tgt('v', 1, at0.x, at0.z, 100)] });",
++  "  const tickImpacts = tick.events.filter((e) => e.type === 'mortar-impact');",
++  "  const tickDmg = tick.events.filter((e) => e.type === 'damage');",
++  "  check('first slot emits one impact plus one 35 hit', tickImpacts.length === 1 && tickDmg.length === 1 && (tickDmg[0] as any).amount === MORTAR_DAMAGE && (tickDmg[0] as any).healthAfter === 65);",
++  "  check('impact co-located with its damage', (tickImpacts[0] as any).x === (tickDmg[0] as any).sourceX && (tickImpacts[0] as any).z === (tickDmg[0] as any).sourceZ);",
++  "  const idle = stepMortar(m0, 0, { now: 9000, targets: [tgt('v', 1, at0.x, at0.z, 100)] });",
++  "  check('zero dt fires nothing, not even a telegraph', idle.events.length === 0);",
++  "  // C. Client projection: telegraph -> impacts -> streak-ended cleanup.",
++  "  const gc = new GameClient('gunner');",
++  "  for (const e of [...teles, ...impacts]) gc.applyEvent(e as any);",
++  "  check('client holds the warning disc', gc.mortar.telegraphs.length === 1 && gc.mortar.impacts.length === Math.min(MORTAR_MAX_IMPACTS, MORTAR_IMPACTS));",
++  "  check('impact ring buffer keeps the latest seq', gc.mortar.impactSeq === MORTAR_IMPACTS);",
++  "  gc.applyEvent({ type: 'streak-ended', at: 30000, actorId: 'gunner', streakId: 'blast-mortar', instanceId: (teles[0] as any).instanceId, reason: 'expired' } as any);",
++  "  check('streak-ended clears the warning disc', gc.mortar.telegraphs.length === 0);",
++  "  // D. Simultaneous caps: five tubes, only four discs; 40 impacts, only eight rings.",
++  "  const v2 = new MortarView();",
++  "  for (let k = 0; k < 5; k++) v2.apply({ type: 'mortar-telegraph', at: 1000 + k, instanceId: 10 + k, actorId: 'a', team: 0, streakId: 'blast-mortar', x: k, y: 0, z: 0, radius: 8, impacts: 20, endsAt: 99999 } as any);",
++  "  check('telegraph cap holds at four with one eviction', v2.telegraphs.length === MORTAR_MAX_TELEGRAPHS && v2.counts.evicted === 1);",
++  "  for (let k = 0; k < 40; k++) v2.apply({ type: 'mortar-impact', at: 2000 + k, instanceId: 10 + (k % 2), actorId: 'a', team: 0, streakId: 'blast-mortar', index: k % 20, x: k, y: 0, z: 0, victims: 0 } as any);",
++  "  check('impact ring holds at eight with seq 40', v2.impacts.length === MORTAR_MAX_IMPACTS && v2.impactSeq === 40);",
++  "  v2.expire(1000 + 200000);",
++  "  check('expiry clears stale discs and dust', v2.telegraphs.length === 0 && v2.impacts.length === 0);",
++  "  // E. Audio drain: each impact thumps once, at a finite distance.",
++  "  const v3 = new MortarView();",
++  "  v3.apply({ type: 'mortar-telegraph', at: 1000, instanceId: 1, actorId: 'a', team: 0, streakId: 'blast-mortar', x: 0, y: 0, z: 0, radius: 8, impacts: 20, endsAt: 20000 } as any);",
++  "  v3.apply({ type: 'mortar-impact', at: 2000, instanceId: 1, actorId: 'a', team: 0, streakId: 'blast-mortar', index: 0, x: 3, y: 0, z: 4, victims: 1 } as any);",
++  "  v3.apply({ type: 'mortar-impact', at: 2750, instanceId: 1, actorId: 'a', team: 0, streakId: 'blast-mortar', index: 1, x: -6, y: 0, z: 0, victims: 0 } as any);",
++  "  const heard: number[] = [];",
++  "  const played = drainMortarAudio(v3, { x: 0, y: 0, z: 0 }, { impact: (d: number) => { heard.push(d); } });",
++  "  check('two impacts thump once each', played === 2 && heard.length === 2);",
++  "  check('distances are spatial (5 m and 6 m)', heard.length === 2 && Math.abs(heard[0] - 5) < 1e-9 && Math.abs(heard[1] - 6) < 1e-9);",
++  "  check('second drain plays nothing', drainMortarAudio(v3, { x: 0, y: 0, z: 0 }, { impact: (d: number) => { heard.push(d); } }) === 0 && heard.length === 2);",
++  "  check('null sink is silent', drainMortarAudio(v3, { x: 0, y: 0, z: 0 }, null) === 0);",
++  "  // F. Honesty bound: four wired ids, mortar the fourth, HUD slot reflects it.",
++  "  check('exactly four wired streaks', WIRED_STREAK_IDS.length === 4);",
++  "  check('mortar is the fourth wired id', WIRED_STREAK_IDS.includes('blast-mortar') && WIRED_STREAK_IDS.includes('recon-sweep') && WIRED_STREAK_IDS.includes('signal-jam') && WIRED_STREAK_IDS.includes('sentry-post'));",
++  "  check('default loadout slot four is the mortar', DEFAULT_STREAK_LOADOUT[3] === 'blast-mortar');",
++  "  // G. Determinism: same seed, same telegraph+impact stream.",
++  "  const runPair = (seed: number) => {",
++  "    const r = new StreakRuntime({ seed, matchEpoch: 0 });",
++  "    r.registerActor('a', 0, DEFAULT_STREAK_LOADOUT, 0);",
++  "    earn(r, 'a', 500);",
++  "    press(r, 'a', 4, 0, 'det-0', 0, 4, -4, 1000);",
++  "    const out: unknown[] = [];",
++  "    const ts = [tgt('e1', 1, 4, -4, 100), tgt('e2', 1, 6, -2, 100)];",
++  "    for (let t = 1100; t <= 1100 + 16000; t += 100) out.push(...r.advance(t, world, ts));",
++  "    return JSON.stringify(out);",
++  "  };",
++  "  check('seed-identical runs emit identical streams', runPair(99) === runPair(99));",
++  "  check('different seeds scatter differently', runPair(99) !== runPair(100));",
++  "  return { checks, fails, telegraphs: teles.length, impacts: impacts.length, damageEvents: dmg.length };",
++  "}",
++].join('\n');
++
++const outfile = join(tmpdir(), 'aa-mortar-visible-' + process.pid + '.mjs');
++await build({
++  stdin: { contents: ENTRY, resolveDir: HERE, sourcefile: 'scenario.ts', loader: 'ts' },
++  bundle: true,
++  platform: 'node',
++  format: 'esm',
++  target: 'node20',
++  outfile,
++  logLevel: 'warning',
++});
++
++const scenario = await import(pathToFileURL(outfile).href);
++const r = scenario.run();
++
++console.log('[mortar-visible] telegraph -> impact -> cleanup over the real StreakRuntime: ' + r.checks + ' checks');
++console.log('  telegraphs ' + r.telegraphs + ' impacts ' + r.impacts + ' damage ' + r.damageEvents);
++
++mkdirSync(join(ROOT, 'captures'), { recursive: true });
++writeFileSync(join(ROOT, 'captures', 'mortar-visible-' + TAG + '.json'),
++  JSON.stringify({ tag: TAG, ...r }, null, 2));
++
++if (r.fails.length) {
++  console.log('[mortar-visible] FAILS:');
++  for (const f of r.fails) console.log('  - ' + f);
++  process.exit(1);
++}
++console.log('[mortar-visible] HOLDS: telegraph before damage, 20 co-located impacts, damage once, cleanup, caps, audio once, 4 wired');
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -334,6 +334,7 @@
+ addEventListener('pagehide', () => {
+   releaseEnvironmentCanary();
+   weapons.dispose();
++  ordnance.dispose();
+   combatFeedback.dispose();
+ });
+ // The first click lands on the overlay (it covers the canvas), so dismiss and lock
+--- a/src/game/client.ts
++++ b/src/game/client.ts
+@@ -40,6 +40,7 @@
+ import { BannerArbiter, feedLineForDamage, feedLineForDeath, feedLineForKill, feedLineForStreakActivated, feedLineForStreakDenied, feedLineForStreakEarned, type FeedContext } from './feed';
+ import { shouldRevealEnemy, type MapBlip } from './minimap';
+ import { OrdnanceView, decorateKillLine, isOrdnanceEvent } from './ordnance-view';
++import { MortarView, isMortarEvent } from './killstreaks/effects/mortar-view';
+ 
+ // ---------------------------------------------------------------------------
+ // The view
+@@ -139,6 +140,8 @@
+   private readonly banners = new BannerArbiter();
+   /** The ordnance lane's projection: flights, smoke, drops, what we hold. Read by presentation. */
+   readonly ordnance: OrdnanceView;
++  /** The mortar projection: host-authoritative warning discs + recent detonations. Read by presentation. Spectators read the same bus. */
++  readonly mortar: MortarView;
+ 
+   private team: TeamId | null = null;
+   private health: number | null = null;
+@@ -152,6 +155,7 @@
+ 
+   constructor(readonly selfId: ActorId) {
+     this.ordnance = new OrdnanceView(selfId);
++    this.mortar = new MortarView();
+   }
+ 
+   /** Display names arrive from the roster, which `net/room.ts` owns. */
+@@ -196,6 +200,9 @@
+ 
+   applyEvent(e: GameEvent): void {
+     if (e.at > this.now) this.now = e.at;
++    if (isMortarEvent(e) || e.type === 'streak-ended') {
++      this.mortar.apply(e);
++    }
+     if (isOrdnanceEvent(e)) {
+       const l = this.ordnance.apply(e);
+       if (l !== null) this.pushLine({ text: l.text, dest: 'events', tone: l.tone });
+--- a/src/game/events-ordnance.ts
++++ b/src/game/events-ordnance.ts
+@@ -181,6 +181,72 @@
+   readonly victimId: ActorId | null;
+ }
+ 
++// ---------------------------------------------------------------------------
++// Mortar — HOST-AUTHORITATIVE telegraph + impact (visible slice, 2026-09-19)
++// ---------------------------------------------------------------------------
++//
++// Integrator addition, not a lane fork: the prior mortar slice admitted damage
++// with no warning and no localized visual, which is not acceptable gameplay.
++// Both events are emitted ONLY by the host's mortar stepper (`effects/mortar.ts`);
++// guests never author one (a guest claim naming these ids is data, never an
++// instruction). The telegraph fires once per tube, BEFORE the first impact, so
++// no damage is ever untelegraphed. Each impact fires exactly once per scheduled
++// slot, co-located with the damage it caused. Dust/smoke aftermath is
++// VISUAL-ONLY (drawn from `mortar-impact` by presentation): it never enters the
++// smoke contract, so it never blinds bots or disagrees with `world-query.ts`.
++//
++// `instanceId` ties both to the tube's `streak-activated` / `streak-ended`.
++// `endsAt` is the host's live expiry for the tube (telegraph retires then, or
++// on `streak-ended`, whichever comes first).
++
++/** Authoritative warning: a mortar tube opened on this disc. Draw the ring NOW. */
++export interface MortarTelegraphEvent {
++  readonly type: 'mortar-telegraph';
++  readonly at: number;
++  readonly instanceId: number;
++  readonly actorId: ActorId;
++  readonly team: TeamId;
++  readonly streakId: string;
++  readonly x: number;
++  readonly y: number;
++  readonly z: number;
++  /** Scatter-disc radius (`effects/mortar.ts:MORTAR_SPREAD_M`). */
++  readonly radius: number;
++  /** Scheduled impacts (`effects/mortar.ts:MORTAR_IMPACTS`). */
++  readonly impacts: number;
++  /** Host time the tube goes quiet. */
++  readonly endsAt: number;
++}
++
++/** Authoritative detonation: one scheduled slot went off HERE. Flash + ring + thump. */
++export interface MortarImpactEvent {
++  readonly type: 'mortar-impact';
++  readonly at: number;
++  readonly instanceId: number;
++  readonly actorId: ActorId;
++  readonly team: TeamId;
++  readonly streakId: string;
++  /** Which scheduled slot (0-based). Exactly one event per slot per tube. */
++  readonly index: number;
++  readonly x: number;
++  readonly y: number;
++  readonly z: number;
++  /** Hostiles that took splash from this slot. */
++  readonly victims: number;
++}
++
++export type MortarEvent = MortarTelegraphEvent | MortarImpactEvent;
++
++/** Every mortar discriminant, frozen. Folded into `GameEvent` by `events.ts`, not into `OrdnanceEvent` (that lane's view stays untouched). */
++export const MORTAR_EVENT_TYPES = [
++  'mortar-telegraph',
++  'mortar-impact',
++] as const;
++export type MortarEventType = (typeof MORTAR_EVENT_TYPES)[number];
++
++export function isMortarEventType(v: unknown): v is MortarEventType {
++  return typeof v === 'string' && (MORTAR_EVENT_TYPES as readonly string[]).includes(v);
++}
+ // ---------------------------------------------------------------------------
+ // Death drops and pickups
+ // ---------------------------------------------------------------------------
+--- a/src/game/events.ts
++++ b/src/game/events.ts
+@@ -33,7 +33,7 @@
+ export * from './vocab';
+ export * from './events-ordnance';
+ 
+-import { ORDNANCE_EVENT_TYPES, type OrdnanceEvent } from './events-ordnance';
++import { MORTAR_EVENT_TYPES, ORDNANCE_EVENT_TYPES, type MortarEvent, type OrdnanceEvent } from './events-ordnance';
+ import type {
+   ActorId,
+   DamageCause,
+@@ -246,7 +246,11 @@
+   // The ordnance lane's shapes (grenades, smoke, flash, knife, drops). Declared
+   // in `./events-ordnance` for the 400-line cap and folded in here, so the
+   // union is still one union and the bus still carries one vocabulary.
+-  | OrdnanceEvent;
++  | OrdnanceEvent
++  // Mortar telegraph + impact (visible slice 2026-09-19). Declared beside the
++  // ordnance shapes but NOT in `OrdnanceEvent`, so `ordnance-view.ts` stays
++  // untouched and the mortar projection owns exactly these two.
++  | MortarEvent;
+ 
+ /** Every discriminant, frozen. This IS the list; nothing derives it. */
+ export const GAME_EVENT_TYPES = [
+@@ -263,6 +267,7 @@
+   'match-phase',
+   'feed',
+   ...ORDNANCE_EVENT_TYPES,
++  ...MORTAR_EVENT_TYPES,
+ ] as const;
+ export type GameEventType = (typeof GAME_EVENT_TYPES)[number];
+ 
+--- a/src/net/event-clock.ts
++++ b/src/net/event-clock.ts
+@@ -53,6 +53,11 @@
+       return { ...event, at, diesAt: hostTimeToGuest(event.diesAt, offset) };
+     case 'drop-changed':
+       return { ...event, at, diesAt: hostTimeToGuest(event.diesAt, offset) };
++    case 'mortar-telegraph':
++      // The warning disc's live expiry is an absolute host time like
++      // `match-phase.endsAt`: shift it by the same offset so the remaining
++      // duration (`endsAt - at`) survives the host->guest boundary.
++      return { ...event, at, endsAt: hostTimeToGuest(event.endsAt, offset) };
+     default:
+       return { ...event, at };
+   }
+--- a/src/weapons/controller.ts
++++ b/src/weapons/controller.ts
+@@ -654,6 +654,17 @@
+     this.audioSvc.blast();
+   }
+ 
++  /** A mortar slot went off here: the SAME flash/dust/spark pools as a grenade, but the thump arrives separately through `mortarThump` with distance, so a disc across the map never plays at full volume. Never a light. */
++  mortarFlash(x: number, y: number, z: number): void {
++    this.tmpEnd.set(x, y, z);
++    this.effects.blast(this.tmpEnd, this.camera.quaternion);
++  }
++
++  /** One mortar thump at its distance: the existing spatial impact contract (`AudioService.impact`), always dusty. Garnish, never gameplay. */
++  mortarThump(distanceM: number): void {
++    this.audioSvc.impact(distanceM, true);
++  }
++
+   /** The host swapped our primary for a drop's: hold that gun, with the rounds it had. */
+   adoptWeapon(weaponId: string, rounds: number): boolean {
+     const idx = this.weapons.findIndex((w) => w.def.id === weaponId);
+--- a/src/weapons/ordnance-scene.ts
++++ b/src/weapons/ordnance-scene.ts
+@@ -35,6 +35,8 @@
+ import type { WeaponsController } from './controller';
+ import { DropFx, nearestDropView } from './drops';
+ import { GrenadeFx } from './grenades';
++import { MortarFx } from './mortar-fx';
++import { drainMortarAudio } from '../game/killstreaks/effects/mortar-audio';
+ 
+ /** The white-out holds at its peak for this fraction of the flash, then fades linearly. */
+ export const FLASH_HOLD_FRACTION = 0.25;
+@@ -55,6 +57,7 @@
+   private client: GameClient | null = null;
+   private readonly world: WorldQuery;
+   private readonly grenades: GrenadeFx;
++  private readonly mortarFx: MortarFx;
+   private readonly drops: DropFx;
+   private readonly hud: HudApi;
+   private readonly weapons: WeaponsController;
+@@ -67,8 +70,10 @@
+   constructor(opts: OrdnanceSceneOptions) {
+     this.world = createWorldQuery(opts.colliders);
+     this.grenades = new GrenadeFx(opts.mat, this.world);
++    this.mortarFx = new MortarFx(opts.mat);
+     this.drops = new DropFx(opts.mat);
+     opts.scene.add(this.grenades.group);
++    opts.scene.add(this.mortarFx.group);
+     opts.scene.add(this.drops.group);
+     this.hud = opts.hud;
+     this.weapons = opts.weapons;
+@@ -86,6 +91,11 @@
+   bind(client: GameClient | null): void {
+     this.grenades.reset();
+     this.grenades.group.visible = client !== null;
++    // Mortar presentation resets with the match, synced to the view's stable
++    // seq so a rematch never replays the previous tube's impacts.
++    if (client !== null) client.mortar.reset();
++    this.mortarFx.reset(client === null ? 0 : client.mortar.impactSeq);
++    this.mortarFx.group.visible = client !== null;
+     this.drops.group.visible = client !== null;
+     this.client = client;
+     this.tacticalId = OrdnanceScene.tacticalFor();
+@@ -107,6 +117,15 @@
+     return this.client?.ordnance ?? null;
+   }
+ 
++  /**
++   * Page/game teardown: release the mortar ring geometries. Grenade/drop fx
++   * own no geometries; shared `MaterialLibrary` materials are never touched.
++   * Idempotent; rebind after dispose is a fresh bind, never a replay.
++   */
++  dispose(): void {
++    this.mortarFx.release();
++  }
++
+   /** One frame. `nowMs` is `performance.now()`, the host clock domain; (px, py, pz) the player's feet. */
+   update(dt: number, nowMs: number, px: number, py: number, pz: number): void {
+     const c = this.client;
+@@ -115,6 +134,13 @@
+     v.expire(nowMs);
+     this.grenades.update(dt, nowMs, v, this.onBlast, this.volumetricSmoke());
+     this.drops.update(nowMs, v);
++
++    // Mortar: warning discs + dust rings from the host's telegraph/impacts.
++    // The flash star comes from the existing effects pool; the thump from the
++    // existing spatial impact contract. Nothing here decides anything.
++    c.mortar.expire(nowMs);
++    this.mortarFx.update(nowMs, c.mortar, (x, y, z) => this.weapons.mortarFlash(x, y, z));
++    drainMortarAudio(c.mortar, { x: px, y: py, z: pz }, { impact: (d) => this.weapons.mortarThump(d) });
+ 
+     const self = v.self;
+     // Verdicts the controller must act on, as edges off the projection's counters.
+@@ -169,6 +195,12 @@
+         id: s.id, kind: s.kind, radius: s.radius, x: s.x, y: s.y, z: s.z,
+         bornAt: s.bornAt, diesAt: s.diesAt,
+       })),
++      mortar: {
++        telegraphs: c.mortar.telegraphs.map((t) => ({ inst: t.instanceId, x: t.x, z: t.z, r: t.radius })),
++        impacts: c.mortar.impacts.length,
++        impactSeq: c.mortar.impactSeq,
++        counts: { ...c.mortar.counts },
++      },
+       hand: this.weapons.command('ordnance'),
+     };
+   }
+--- a/src/game/killstreaks/runtime.ts
++++ b/src/game/killstreaks/runtime.ts
+@@ -46,6 +46,7 @@
+ import { createRecon, reconRevealsTo, stepRecon, type ReconState } from './effects/recon';
+ import { createCounterRecon, jamsTeam, stepCounterRecon, type CounterReconState } from './effects/counter-recon';
+ import { createSentry, stepSentry, validateSentryPlacement, type SentryState, type SentryTarget } from './effects/sentry';
++import { createMortar, stepMortar, validateMortarPlacement, type MortarState } from './effects/mortar';
+ 
+ export { STREAK_CLAIM_REJECTS, STREAK_CLAIM_REJECT_LABELS, type ActivationContext, type StreakClaimReject } from './gate';
+ 
+@@ -67,16 +68,17 @@
+ export const MAX_LADDER_KILLS = 100_000;
+ 
+ /** The wiring table: the only place a streak id meets a stepper. */
+-const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry'>> = Object.freeze({
++const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar'>> = Object.freeze({
+   'recon-sweep': 'recon',
+   'signal-jam': 'counter-recon',
+   'sentry-post': 'sentry',
++  'blast-mortar': 'mortar',
+ });
+ 
+ /** Derived, never authored: what this build can bring into the world. */
+ export const WIRED_STREAK_IDS: readonly string[] = Object.freeze(Object.keys(EFFECT_KIND));
+ 
+-export type LiveInstance = ReconState | CounterReconState | SentryState;
++export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState;
+ /** What the host must know about an actor for a sentry to shoot it. */
+ export type StreakTarget = SentryTarget;
+ 
+@@ -297,6 +299,10 @@
+       const p = validateSentryPlacement(anchor.x, anchor.z, world);
+       if (!p.ok) return reject('no-placement', streakId);
+       placed = { x: p.x, y: p.y, z: p.z };
++    } else if (kind === 'mortar') {
++      const p = validateMortarPlacement(anchor.x, anchor.z, world);
++      if (!p.ok) return reject('no-placement', streakId);
++      placed = { x: p.x, y: p.y, z: p.z };
+     }
+ 
+     const instanceId = ++this.instances;
+@@ -311,7 +317,9 @@
+       ? createRecon(instanceId, a.actorId, a.team, streakId, def.durationMs, seed)
+       : kind === 'counter-recon'
+         ? createCounterRecon(instanceId, a.actorId, a.team, streakId, def.durationMs)
+-        : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
++        : kind === 'mortar'
++          ? createMortar(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
++          : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
+ 
+     const e: StreakActivatedEvent = Object.freeze({ type: 'streak-activated', at: now, actorId: a.actorId, team: a.team, streakId, slot: intent.slot, chargesLeft, instanceId });
+     a.cause = e;
+@@ -337,7 +345,9 @@
+         ? stepRecon(instance, dt, { now })
+         : instance.kind === 'counter-recon'
+           ? stepCounterRecon(instance, dt, { now })
+-          : stepSentry(instance, dt, { now, world, targets: targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health })) });
++          : instance.kind === 'mortar'
++            ? stepMortar(instance, dt, { now, targets: targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health })) })
++            : stepSentry(instance, dt, { now, world, targets: targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health })) });
+       for (const e of tick.events) {
+         if (e.type === 'damage') health.set((e as DamageEvent).victimId, (e as DamageEvent).healthAfter);
+         events.push(e);
+--- /dev/null
++++ b/src/weapons/mortar-fx.ts
+@@ -0,0 +1,138 @@
++/**
++ * Mortar in the world: the warning disc and the dust rings.
++ *
++ * Two capped mesh sets, zero new materials, zero new lights, zero per-frame
++ * allocation. Telegraph discs are `mat.emissive(PAL.applianceRed)` — the
++ * project's danger red, shared with the lawn appliances — laid flat on the
++ * anchor, pulsing by scale only (materials are singletons: nothing here
++ * touches opacity, which would need a clone and a new program). Dust rings
++ * are `mat.painted(PAL.dirt)` expanding from each impact to its splash radius
++ * over 0.6 s, then holding as a stain marker until `MORTAR_DUST_MS`.
++ *
++ * THE FLASH IS NOT HERE. The detonation flash star, dust puff and sparks come
++ * from the existing `WeaponEffects.blast` pool through `weapons.mortarFlash`
++ * (called once per new impact by the owner of this object): one pool, one
++ * program set, no second flash implementation to drift. The lingering smoke
++ * is VISUAL-ONLY dust: it never enters the smoke contract and never blinds
++ * bots. This object draws rings; the bus decides.
++ */
++
++import * as THREE from 'three';
++import type { MaterialLibrary } from '../core/materials';
++import { PAL } from '../core/palette';
++import { MORTAR_SPLASH_M } from '../game/killstreaks/effects/mortar';
++import { MORTAR_DUST_MS, type MortarView } from '../game/killstreaks/effects/mortar-view';
++
++/** Telegraph discs drawn (must equal `MORTAR_MAX_TELEGRAPHS`). */
++export const MORTAR_TELEGRAPH_MESHES = 4;
++/** Dust rings drawn (must equal `MORTAR_MAX_IMPACTS`). */
++export const MORTAR_DUST_MESHES = 8;
++/** Dust ring expansion time, s. After this the ring holds until expiry. */
++export const MORTAR_RING_GROW_S = 0.6;
++/** Ring lift above ground, m: above the lawn, below a boot sole. */
++const RING_LIFT_M = 0.06;
++
++export class MortarFx {
++  readonly group: THREE.Group;
++  private readonly telegraphs: THREE.Mesh[] = [];
++  private readonly dusts: THREE.Mesh[] = [];
++  private readonly dustAt: number[] = [];
++  private readonly dustPos: THREE.Vector3[] = [];
++  private lastImpactSeq = 0;
++  private readonly teleGeo: THREE.BufferGeometry;
++  private readonly dustGeo: THREE.BufferGeometry;
++  private released = false;
++
++  constructor(mat: MaterialLibrary) {
++    this.group = new THREE.Group();
++    this.group.name = 'nuketown-mortar-fx';
++    const teleMat = mat.emissive(PAL.applianceRed, 2);
++    const dustMat = mat.painted(PAL.dirt, 1, 0);
++    this.teleGeo = new THREE.RingGeometry(0.9, 1.0, 48);
++    this.dustGeo = new THREE.RingGeometry(0.72, 1.0, 40);
++    const teleGeo = this.teleGeo;
++    const dustGeo = this.dustGeo;
++    for (let i = 0; i < MORTAR_TELEGRAPH_MESHES; i++) {
++      const m = new THREE.Mesh(teleGeo, teleMat);
++      m.rotation.x = -Math.PI / 2;
++      m.visible = false;
++      m.castShadow = false;
++      m.receiveShadow = false;
++      this.telegraphs.push(m);
++      this.group.add(m);
++    }
++    for (let i = 0; i < MORTAR_DUST_MESHES; i++) {
++      const m = new THREE.Mesh(dustGeo, dustMat);
++      m.rotation.x = -Math.PI / 2;
++      m.visible = false;
++      m.castShadow = false;
++      m.receiveShadow = false;
++      this.dusts.push(m);
++      this.group.add(m);
++      this.dustAt.push(-Infinity);
++      this.dustPos.push(new THREE.Vector3());
++    }
++  }
++
++  /**
++   * One frame. `onImpact` fires once per NEW authoritative impact for the
++   * effects-pool flash (`weapons.mortarFlash`); rings are drawn here. `nowMs` is
++   * the host clock domain (`performance.now()`).
++   */
++  update(nowMs: number, view: MortarView, onImpact: (x: number, y: number, z: number) => void): void {
++    for (let i = 0; i < MORTAR_TELEGRAPH_MESHES; i++) {
++      const m = this.telegraphs[i];
++      const t = i < view.telegraphs.length ? view.telegraphs[i] : null;
++      if (t === null) {
++        m.visible = false;
++        continue;
++      }
++      m.visible = true;
++      m.position.set(t.x, t.y + RING_LIFT_M, t.z);
++      const pulse = 1 + 0.045 * Math.sin(nowMs * 0.006 + t.instanceId);
++      const s = Math.max(0.01, t.radius * pulse);
++      m.scale.set(s, s, 1);
++    }
++    while (this.lastImpactSeq < view.impactSeq) {
++      this.lastImpactSeq++;
++      const impact = view.impacts.find((v) => v.seq === this.lastImpactSeq);
++      if (impact === undefined) continue;
++      const slot = this.lastImpactSeq % MORTAR_DUST_MESHES;
++      this.dustAt[slot] = nowMs;
++      this.dustPos[slot].set(impact.x, impact.y, impact.z);
++      onImpact(impact.x, impact.y, impact.z);
++    }
++    for (let i = 0; i < MORTAR_DUST_MESHES; i++) {
++      const m = this.dusts[i];
++      const ageMs = nowMs - this.dustAt[i];
++      if (!(ageMs >= 0 && ageMs < MORTAR_DUST_MS)) {
++        m.visible = false;
++        continue;
++      }
++      m.visible = true;
++      const grow = Math.min(1, ageMs / 1000 / MORTAR_RING_GROW_S);
++      const r = Math.max(0.3, MORTAR_SPLASH_M * (0.25 + 0.75 * grow));
++      m.position.set(this.dustPos[i].x, this.dustPos[i].y + RING_LIFT_M, this.dustPos[i].z);
++      m.scale.set(r, r, 1);
++    }
++  }
++  reset(toSeq = 0): void {
++    this.lastImpactSeq = toSeq;
++    this.dustAt.fill(-Infinity);
++    for (const m of this.telegraphs) m.visible = false;
++    for (const m of this.dusts) m.visible = false;
++  }
++
++  /**
++   * Page/game teardown: dispose the two owned ring geometries exactly once.
++   * Materials are `MaterialLibrary` singletons and are never touched; meshes
++   * stay parented so a late frame cannot hit a detached graph. Called from
++   * `OrdnanceScene.dispose`, which the pagehide lifecycle owns. Idempotent.
++   */
++  release(): void {
++    if (this.released) return;
++    this.released = true;
++    this.teleGeo.dispose();
++    this.dustGeo.dispose();
++  }
++}
+--- /dev/null
++++ b/src/game/killstreaks/effects/mortar-audio.ts
+@@ -0,0 +1,68 @@
++/**
++ * Nuketown 2025 — Mortar audio: spatial thumps from the existing contracts.
++ *
++ * One function, no state: presentation drains the mortar projection's new
++ * impacts each frame and plays each exactly once through the ONLY spatial
++ * thump the audio lane owns — `AudioService.impact(distanceM, dusty)` — with
++ * `dusty = true` (every mortar slot lands on dirt, lawn or paving, never on a
++ * wall). No new synth, no new bank entry, no pan (that contract carries no
++ * stereo field; the limitation is pinned here, not hidden).
++ *
++ * Why not `blast()`: that cue is full-volume by design (a grenade at your
++ * feet), and a mortar disc 40 m away at full volume reads as a bug. `impact()`
++ * attenuates gain and dulls the cutoff with distance, which is the whole of
++ * "spatial" this slice claims. A close slot still kicks: under ~12 m the gain
++ * is within 6 dB of the blast cue through the same effects bus.
++ *
++ * Voice budget: the host emits at most `MAX_MORTAR_IMPACTS_PER_STEP` (4) per
++ * tube per step, but one presentation drain can cover several steps and up to
++ * `MORTAR_MAX_TELEGRAPHS` (4) tubes, so the real per-drain bound is the view
++ * cap `MORTAR_MAX_IMPACTS` (8) — still under the `MAX_VOICES = 16` cap with
++ * headroom for gunfire. At-most-once is the view's `audioSeq` cursor: a second
++ * drain with no new impacts plays nothing, and an evicted-but-undrained impact
++ * is skipped, never replayed. Silent when the sink is missing (headless) or
++ * the listener is NaN.
++ */
++
++import type { MortarView } from './mortar-view';
++
++export interface MortarAudioSink {
++  impact(distanceM: number, dusty: boolean): void;
++}
++
++export interface MortarListener {
++  readonly x: number;
++  readonly y: number;
++  readonly z: number;
++}
++
++/**
++ * Play every undrained impact once. Returns the count played. Idempotent:
++ * the view's `audioSeq` cursor advances past what was played, so a second
++ * call with no new impacts plays nothing.
++ */
++export function drainMortarAudio(
++  view: MortarView,
++  listener: MortarListener,
++  sink: MortarAudioSink | null,
++): number {
++  if (sink === null || sink === undefined) return 0;
++  if (!Number.isFinite(listener.x) || !Number.isFinite(listener.y) || !Number.isFinite(listener.z)) return 0;
++  let played = 0;
++  for (const impact of view.impacts) {
++    if (impact.seq <= view.audioSeq) continue;
++    const dx = impact.x - listener.x;
++    const dy = impact.y - listener.y;
++    const dz = impact.z - listener.z;
++    const distance = Math.hypot(dx, dy, dz);
++    if (!Number.isFinite(distance)) continue;
++    try {
++      sink.impact(distance, true);
++      played++;
++    } catch {
++      // Garnish, never gameplay.
++    }
++  }
++  view.audioSeq = view.impactSeq;
++  return played;
++}
+--- /dev/null
++++ b/src/game/killstreaks/effects/mortar-view.ts
+@@ -0,0 +1,149 @@
++/**
++ * Nuketown 2025 — Mortar projection: the client's read-only view of the
++ * host-authoritative telegraph + impact events.
++ *
++ * DOM-free and scene-free like `game/ordnance-view.ts`: it folds the two
++ * `mortar-*` events into capped live lists that presentation polls every
++ * frame. Guests author nothing — a `mortar-*` event on the bus is a host
++ * decision to draw, and `streak-ended` (or `endsAt` + grace) is the order to
++ * stop drawing it. Spectators read the same bus, so they see the same rings.
++ *
++ * Caps (the `MAX_*` rationale in `killstreaks/runtime.ts` §5.9, applied to
++ * presentation): at most MORTAR_MAX_TELEGRAPHS warning discs and
++ * MORTAR_MAX_IMPACTS recent detonations. The host allows 12 live streak
++ * entities; four simultaneous mortar tubes already saturate the 8 m discs on
++ * this map, so the fifth telegraph evicts the oldest — exactly the
++ * `OrdnanceView` flight-pool shape, never an unbounded array.
++ */
++
++import type { GameEvent } from '../../events';
++
++/** Simultaneous warning discs. Four 8 m discs cover both yards and the street. */
++export const MORTAR_MAX_TELEGRAPHS = 4;
++/** Recent detonations kept for the flash + dust ring. A ring buffer like `BLAST_RING`. */
++export const MORTAR_MAX_IMPACTS = 8;
++/** How long one impact flash + dust ring stays visible, ms. Matches the grenade `BLAST_FLASH_S` flash (350 ms) with a 4 s dust tail. */
++export const MORTAR_FLASH_MS = 350;
++export const MORTAR_DUST_MS = 4_000;
++/** A telegraph with no `streak-ended` retires this long past `endsAt` (the `FLIGHT_GRACE_MS` shape). */
++export const MORTAR_TELEGRAPH_GRACE_MS = 1_500;
++export const MORTAR_VIEW_LOG_MAX = 100;
++
++export interface MortarTelegraphView {
++  readonly instanceId: number;
++  readonly streakId: string;
++  readonly x: number;
++  readonly y: number;
++  readonly z: number;
++  readonly radius: number;
++  readonly impacts: number;
++  readonly bornAt: number;
++  readonly endsAt: number;
++}
++
++export interface MortarImpactView {
++  readonly seq: number;
++  readonly instanceId: number;
++  readonly index: number;
++  readonly x: number;
++  readonly y: number;
++  readonly z: number;
++  readonly at: number;
++  readonly victims: number;
++}
++
++/** True for either host-authoritative mortar event. `client.ts` routes on it. */
++export function isMortarEvent(e: GameEvent): boolean {
++  return e.type === 'mortar-telegraph' || e.type === 'mortar-impact';
++}
++
++export class MortarView {
++  readonly telegraphs: MortarTelegraphView[] = [];
++  readonly impacts: MortarImpactView[] = [];
++  impactSeq = 0;
++  /** Last impact seq consumed by the audio drain. Presentation owns it. */
++  audioSeq = 0;
++  readonly counts: Record<string, number> = {
++    telegraphs: 0, impacts: 0, ended: 0, evicted: 0,
++  };
++  readonly lines: string[] = [];
++
++  private log(line: string): void {
++    if (this.lines.length < MORTAR_VIEW_LOG_MAX) this.lines.push(line);
++  }
++
++  /** Fold one bus event in. Returns null always (no feed line: the streak banner already announced it). */
++  apply(e: GameEvent): null {
++    const at = e.at.toFixed(0);
++    if (e.type === 'mortar-telegraph') {
++      this.counts.telegraphs++;
++      let t = this.telegraphs.find((v) => v.instanceId === e.instanceId);
++      if (t === undefined) {
++        if (this.telegraphs.length >= MORTAR_MAX_TELEGRAPHS) {
++          this.telegraphs.shift();
++          this.counts.evicted++;
++        }
++        t = {
++          instanceId: e.instanceId, streakId: e.streakId,
++          x: 0, y: 0, z: 0, radius: 0, impacts: 0, bornAt: 0, endsAt: 0,
++        };
++        this.telegraphs.push(t);
++      }
++      const i = this.telegraphs.indexOf(t);
++      this.telegraphs[i] = {
++        instanceId: e.instanceId, streakId: e.streakId,
++        x: e.x, y: e.y, z: e.z, radius: e.radius, impacts: e.impacts,
++        bornAt: e.at, endsAt: e.endsAt,
++      };
++      this.log(at + ' mortar-telegraph inst=' + e.instanceId + ' at=' + e.x.toFixed(1) + ',' + e.z.toFixed(1) + ' r=' + e.radius);
++      return null;
++    }
++    if (e.type === 'mortar-impact') {
++      this.counts.impacts++;
++      const view: MortarImpactView = {
++        seq: ++this.impactSeq, instanceId: e.instanceId, index: e.index,
++        x: e.x, y: e.y, z: e.z, at: e.at, victims: e.victims,
++      };
++      // FIFO ring: oldest evicted first, seq stays monotonic. The prior
++      // `% MORTAR_MAX_IMPACTS` slot write replaced an arbitrary entry, so a
++      // stale record behind a fresh head survived `expire` below.
++      this.impacts.push(view);
++      if (this.impacts.length > MORTAR_MAX_IMPACTS) this.impacts.shift();
++      this.log(at + ' mortar-impact inst=' + e.instanceId + ' #' + e.index + ' victims=' + e.victims);
++      return null;
++    }
++    if (e.type === 'streak-ended') {
++      const i = this.telegraphs.findIndex((v) => v.instanceId === e.instanceId);
++      if (i >= 0) {
++        this.telegraphs.splice(i, 1);
++        this.counts.ended++;
++        this.log(at + ' mortar-ended inst=' + e.instanceId + ' ' + e.reason);
++      }
++      return null;
++    }
++    return null;
++  }
++
++  /** Retire stale telegraphs and dust. Called by presentation once a frame. */
++  expire(now: number): void {
++    for (let i = this.telegraphs.length - 1; i >= 0; i--) {
++      if (now > this.telegraphs[i].endsAt + MORTAR_TELEGRAPH_GRACE_MS) this.telegraphs.splice(i, 1);
++    }
++    // Every expired dust entry, not just the head: staggered deadlines and a
++    // wrapped ring leave stale records behind a fresh `impacts[0]`.
++    if (this.impacts.length > 0) {
++      let kept = 0;
++      for (let i = 0; i < this.impacts.length; i++) {
++        if (now - this.impacts[i].at <= MORTAR_DUST_MS) this.impacts[kept++] = this.impacts[i];
++      }
++      this.impacts.length = kept;
++    }
++  }
++
++  /** Teardown: a null client leaves no rings behind (rematch / match over). */
++  reset(): void {
++    this.telegraphs.length = 0;
++    this.impacts.length = 0;
++    this.audioSeq = 0;
++  }
++}
+--- /dev/null
++++ b/src/game/killstreaks/effects/mortar.ts
+@@ -0,0 +1,222 @@
++/**
++ * Nuketown 2025 — Blast Mortar: seeded indirect fire on a marked point.
++ *
++ * The identity beside `sentry.ts`: a sentry owns a lane it can SEE; a mortar
++ * hits a disc it does NOT need to see. No line-of-sight check — lobbing over
++ * the houses is the whole reason to spend 8 kills on it instead of 5 on a
++ * sentry. What it trades for that: the impacts land where the seed says, on a
++ * fixed schedule, friend-or-foe by team only, and the tube goes quiet when the
++ * window ends whether or not anything walked into the disc.
++ *
++ * Tuning. FIRST VALUES for this project, each named with the number it was
++ * reasoned against (§5.9):
++ */
++import type { ActorId, DamageEvent, GameEvent, TeamId, WorldQuery } from '../../events';
++import type { MortarImpactEvent, MortarTelegraphEvent } from '../../events-ordnance';
++import type { SentryTarget } from './sentry';
++
++/** Impact count. The old project's carpet bomber derived exactly 20 in-bounds
++ * impacts from the host seed (IMPORT-PLAN §1.1); the count ports, the aircraft
++ * does not. */
++export const MORTAR_IMPACTS = 20;
++/** Scatter disc radius around the anchor. A sentry's 18 m range owns a lane;
++ * an 8 m disc covers one yard without reaching across the street. */
++export const MORTAR_SPREAD_M = 8;
++/** Splash radius per impact. Wider than a doorway, narrower than a house. */
++export const MORTAR_SPLASH_M = 4;
++/** Flat damage inside the splash. 35 x 3 connected impacts = 105: three hits
++ * kill a 100 HP target, one hit plus a rifle follow-up does. No falloff —
++ * a second ring is balance tuning nobody has asked for. */
++export const MORTAR_DAMAGE = 35;
++/**
++ * Hard ceiling on impacts fired in one step. Same replication-bound rationale
++ * as `MAX_SENTRY_SHOTS_PER_STEP`: a backgrounded tab returns with a capped
++ * 250 ms step, and the excess over the cap is LOST, never banked into a burst.
++ */
++export const MAX_MORTAR_IMPACTS_PER_STEP = 4;
++
++export interface MortarState {
++  readonly kind: 'mortar';
++  readonly instanceId: number;
++  readonly actorId: ActorId;
++  readonly team: TeamId;
++  readonly streakId: string;
++  readonly remainingMs: number;
++  /** Total time live, ms. Impact `i` is due once elapsed passes its slot. */
++  readonly elapsedMs: number;
++  readonly x: number;
++  readonly y: number;
++  readonly z: number;
++  readonly seed: number;
++  /** Scheduling window, ms. Stored, not derived: the final step overshoots
++   * `remainingMs` below zero, so `elapsed + remaining` stops equalling it. */
++  readonly durationMs: number;
++  /** Impacts already fired. Never exceeds MORTAR_IMPACTS. */
++  readonly fired: number;
++  /** Telegraph emitted. False until the first stepped tick warns the disc, so
++   * no damage is ever untelegraphed; idempotent across retries. */
++  readonly telegraphed: boolean;
++}
++
++/** Hostile candidates, the runtime's own actor table with current health. */
++export interface MortarTickContext {
++  readonly now: number;
++  readonly targets: readonly SentryTarget[];
++}
++
++export interface MortarTick {
++  readonly state: MortarState;
++  readonly events: readonly GameEvent[];
++}
++
++export type MortarPlacement =
++  | { readonly ok: true; readonly x: number; readonly y: number; readonly z: number }
++  | { readonly ok: false; readonly reason: 'out-of-bounds' | 'no-ground' };
++
++/**
++ * Placement is validated BEFORE a charge is consumed (the Rule-5 shape
++ * `validateSentryPlacement` pins): a blocked anchor leaves the earned streak
++ * retryable, exactly, with the same claim.
++ */
++export function validateMortarPlacement(x: number, z: number, world: WorldQuery): MortarPlacement {
++  if (!Number.isFinite(x) || !Number.isFinite(z)) return { ok: false, reason: 'out-of-bounds' };
++  if (!world.inBounds(x, z)) return { ok: false, reason: 'out-of-bounds' };
++  const y = world.groundY(x, z);
++  if (!Number.isFinite(y)) return { ok: false, reason: 'no-ground' };
++  return { ok: true, x, y, z };
++}
++
++export function createMortar(
++  instanceId: number,
++  actorId: ActorId,
++  team: TeamId,
++  streakId: string,
++  durationMs: number,
++  anchor: { readonly x: number; readonly y: number; readonly z: number },
++  seed: number,
++): MortarState {
++  return Object.freeze({
++    kind: 'mortar' as const,
++    instanceId,
++    actorId,
++    team,
++    streakId,
++    remainingMs: Math.max(0, durationMs),
++    elapsedMs: 0,
++    x: anchor.x,
++    y: anchor.y,
++    z: anchor.z,
++    seed: seed >>> 0,
++    durationMs: Math.max(0, durationMs),
++    fired: 0,
++    telegraphed: false,
++  });
++}
++
++function hash32(seed: number, ordinal: number): number {
++  let h = Math.imul((seed ^ 0x9e3779b9) >>> 0 ^ ordinal, 0x85ebca6b) >>> 0;
++  h = Math.imul(h ^ 0x1234abcd, 0xc2b2ae35) >>> 0;
++  return (h ^ (h >>> 15)) >>> 0;
++}
++
++/** Impact `index` centre: uniform in the scatter disc, seed-only. No clock. */
++export function mortarImpactAt(seed: number, index: number, anchor: { readonly x: number; readonly z: number }): { x: number; z: number } {
++  const a = (hash32(seed, index * 2 + 1) / 0x1_0000_0000) * Math.PI * 2;
++  const r = Math.sqrt(hash32(seed, index * 2 + 2) / 0x1_0000_0000) * MORTAR_SPREAD_M;
++  return { x: anchor.x + Math.cos(a) * r, z: anchor.z + Math.sin(a) * r };
++}
++export function stepMortar(state: MortarState, dt: number, ctx: MortarTickContext): MortarTick {
++  const step = dt > 0 ? dt : 0;
++  const elapsedMs = state.elapsedMs + step;
++  const remainingMs = state.remainingMs - step;
++  const events: GameEvent[] = [];
++  let telegraphed = state.telegraphed;
++  // The warning precedes EVERYTHING: first stepped tick, once per tube. Gated
++  // on step > 0 so a zero-dt probe stays silent (the verifier pins this).
++  if (!telegraphed && step > 0) {
++    telegraphed = true;
++    events.push(Object.freeze({
++      type: 'mortar-telegraph',
++      at: ctx.now,
++      instanceId: state.instanceId,
++      actorId: state.actorId,
++      team: state.team,
++      streakId: state.streakId,
++      x: state.x,
++      y: state.y,
++      z: state.z,
++      radius: MORTAR_SPREAD_M,
++      impacts: MORTAR_IMPACTS,
++      endsAt: ctx.now + Math.max(0, state.remainingMs),
++    }) as MortarTelegraphEvent);
++  }
++  // Chained within the tick: two impacts catching one victim in the same step
++  // produce two correct `healthAfter` values, not two copies of the first.
++  const health = new Map<string, number>(ctx.targets.map((t) => [t.id, t.health]));
++  let fired = state.fired;
++  let firedThisStep = 0;
++  // Even slots: the schedule is plain arithmetic, and jitter would be
++  // unauthored tuning. The cap bounds timers caught up after a stall, not
++  // bodies in a disc — one impact may strike several victims.
++  while (
++    fired < MORTAR_IMPACTS &&
++    firedThisStep < MAX_MORTAR_IMPACTS_PER_STEP &&
++    ((fired + 1) / MORTAR_IMPACTS) * state.durationMs <= elapsedMs
++  ) {
++    const at = mortarImpactAt(state.seed, fired, state);
++    const index = fired;
++    fired += 1;
++    firedThisStep += 1;
++    // Deterministic victim order: id-sorted, so two hosts stepping the same
++    // state with the same targets emit the same event list.
++    const victims = [...ctx.targets]
++      .filter((t) => t.alive && t.team !== state.team && t.id !== state.actorId && (health.get(t.id) ?? t.health) > 0)
++      .filter((t) => Math.hypot(t.x - at.x, t.z - at.z) <= MORTAR_SPLASH_M)
++      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
++    // The flash precedes its own damage in the same tick: presentation draws
++    // the detonation it is about to read hits for. No silent damage, ever.
++    events.push(Object.freeze({
++      type: 'mortar-impact',
++      at: ctx.now,
++      instanceId: state.instanceId,
++      actorId: state.actorId,
++      team: state.team,
++      streakId: state.streakId,
++      index,
++      x: at.x,
++      y: state.y,
++      z: at.z,
++      victims: victims.length,
++    }) as MortarImpactEvent);
++    for (const v of victims) {
++      const h = (health.get(v.id) ?? v.health) - MORTAR_DAMAGE;
++      health.set(v.id, h);
++      events.push(Object.freeze({
++        type: 'damage',
++        at: ctx.now,
++        attackerId: state.actorId,
++        attackerTeam: state.team,
++        victimId: v.id,
++        victimTeam: v.team,
++        amount: MORTAR_DAMAGE,
++        cause: 'streak',
++        zone: 'body',
++        weaponId: '',
++        distance: Math.hypot(v.x - at.x, v.z - at.z),
++        healthAfter: Math.max(0, h),
++        sourceX: at.x,
++        sourceZ: at.z,
++      }) as DamageEvent);
++    }
++  }
++
++  return {
++    state: Object.freeze({ ...state, remainingMs, elapsedMs, fired, telegraphed }),
++    events,
++  };
++}
++
++/** Impacts fired / total, for the HUD countdown. Presentation reads it. */
++export function mortarProgress(state: MortarState): number {
++  return state.fired / MORTAR_IMPACTS;
++}
