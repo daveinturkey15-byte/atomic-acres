@@ -1,0 +1,177 @@
+{
+  "created_at": "2026-09-19T15:34:00+01:00",
+  "total_metadata_bytes": 296638,
+  "candidates": {
+    "searsia_burchellii": {
+      "name": "Searsia Burchellii",
+      "authors": {
+        "James Ray Cock": "modeling",
+        "Jenelle van Heerden": "photography"
+      },
+      "license": "CC0 1.0 Universal",
+      "asset_url": "https://polyhaven.com/a/searsia_burchellii",
+      "info_api_url": "https://api.polyhaven.com/info/searsia_burchellii",
+      "files_api_url": "https://api.polyhaven.com/files/searsia_burchellii",
+      "published_polycount": 1427042,
+      "published_dimensions_mm": [
+        8356.36568069458,
+        5062.767505645752,
+        3246.9784803688526
+      ],
+      "gltf_1k_package_bytes": 34610829,
+      "gltf_1k_triangles_total": 616336,
+      "meshes": [
+        {
+          "name": "Cube.014",
+          "triangles": 361558
+        },
+        {
+          "name": "Cube.015",
+          "triangles": 210262
+        },
+        {
+          "name": "Cube.016",
+          "triangles": 44516
+        }
+      ],
+      "material_count": 3,
+      "image_count": 3,
+      "unique_textures_included": [
+        "textures/searsia_burchellii_diff_1k.jpg",
+        "textures/searsia_burchellii_nor_gl_1k.jpg",
+        "textures/searsia_burchellii_arm_1k.jpg"
+      ]
+    },
+    "tree_small_02": {
+      "name": "Tree Small 02",
+      "authors": {
+        "Rico Cilliers": "All"
+      },
+      "license": "CC0 1.0 Universal",
+      "asset_url": "https://polyhaven.com/a/tree_small_02",
+      "info_api_url": "https://api.polyhaven.com/info/tree_small_02",
+      "files_api_url": "https://api.polyhaven.com/files/tree_small_02",
+      "published_polycount": 4652585,
+      "published_dimensions_mm": [
+        2921.434998512268,
+        4292.873501777649,
+        4649.933725595474
+      ],
+      "gltf_1k_package_bytes": 100974143,
+      "gltf_1k_triangles_total": 2062487,
+      "meshes": [
+        {
+          "name": "BezierCurve.002",
+          "triangles": 2062487
+        }
+      ],
+      "material_count": 3,
+      "image_count": 9,
+      "unique_textures_included": [
+        "textures/tree_small_02_branch_nor_gl_1k.jpg",
+        "textures/tree_small_02_branch_diff_1k.jpg",
+        "textures/tree_small_02_branch_arm_1k.jpg",
+        "textures/tree_small_02_leaves_nor_gl_1k.jpg",
+        "textures/tree_small_02_leaves_diff_1k.jpg",
+        "textures/tree_small_02_leaves_arm_1k.jpg",
+        "textures/tree_small_02_nor_gl_1k.jpg",
+        "textures/tree_small_02_diff_1k.jpg",
+        "textures/tree_small_02_arm_1k.jpg"
+      ]
+    },
+    "island_tree_02": {
+      "name": "Island Tree 02",
+      "authors": {
+        "Rob Tuytel": "scanning, processing",
+        "Rico Cilliers": "cleanup, processing"
+      },
+      "license": "CC0 1.0 Universal",
+      "asset_url": "https://polyhaven.com/a/island_tree_02",
+      "info_api_url": "https://api.polyhaven.com/info/island_tree_02",
+      "files_api_url": "https://api.polyhaven.com/files/island_tree_02",
+      "published_polycount": 1762064,
+      "published_dimensions_mm": [
+        8485.51321029663,
+        4078.6155462265015,
+        3408.9039135724306
+      ],
+      "gltf_1k_package_bytes": 46172406,
+      "gltf_1k_triangles_total": 1072213,
+      "meshes": [
+        {
+          "name": "mesh.001",
+          "triangles": 1072213
+        }
+      ],
+      "material_count": 3,
+      "image_count": 9,
+      "unique_textures_included": [
+        "textures/island_tree_02_nor_gl_1k.jpg",
+        "textures/island_tree_02_diff_1k.jpg",
+        "textures/island_tree_02_arm_1k.jpg",
+        "textures/island_tree_02_leaves_nor_gl_1k.jpg",
+        "textures/island_tree_02_leaves_diff_1k.jpg",
+        "textures/island_tree_02_leaves_arm_1k.jpg",
+        "textures/island_tree_02_branches_nor_gl_1k.jpg",
+        "textures/island_tree_02_branches_diff_1k.jpg",
+        "textures/island_tree_02_branches_arm_1k.jpg"
+      ]
+    },
+    "searsia_lucida": {
+      "name": "Searsia Lucida",
+      "authors": {
+        "James Ray Cock": "modeling",
+        "Jenelle van Heerden": "Photography"
+      },
+      "license": "CC0 1.0 Universal",
+      "asset_url": "https://polyhaven.com/a/searsia_lucida",
+      "info_api_url": "https://api.polyhaven.com/info/searsia_lucida",
+      "files_api_url": "https://api.polyhaven.com/files/searsia_lucida",
+      "published_polycount": 841648,
+      "published_dimensions_mm": [
+        4782.970905303955,
+        2844.3095684051514,
+        2339.1980212181807
+      ],
+      "gltf_1k_package_bytes": 19816833,
+      "gltf_1k_triangles_total": 377192,
+      "meshes": [
+        {
+          "name": "Cube.070",
+          "triangles": 113405
+        },
+        {
+          "name": "Cube.071",
+          "triangles": 88629
+        },
+        {
+          "name": "Cube.068",
+          "triangles": 77603
+        },
+        {
+          "name": "Cube.069",
+          "triangles": 56320
+        },
+        {
+          "name": "Cube.064",
+          "triangles": 27701
+        },
+        {
+          "name": "Cube.065",
+          "triangles": 7232
+        },
+        {
+          "name": "Cube.067",
+          "triangles": 6302
+        }
+      ],
+      "material_count": 3,
+      "image_count": 3,
+      "unique_textures_included": [
+        "textures/searsia_lucida_nor_gl_1k.jpg",
+        "textures/searsia_lucida_diff_1k.jpg",
+        "textures/searsia_lucida_arm_1k.jpg"
+      ]
+    }
+  }
+}

@@ -1,11 +1,11 @@
 {
   "schema": "nuketown-2025/collider-snapshot/1",
-  "capturedAt": "2026-09-19T13:30:35.756Z",
+  "capturedAt": "2026-09-19T14:51:53.714Z",
   "source": {
     "pageUrl": "http://127.0.0.1:4192/",
-    "candidateJsUrl": "http://127.0.0.1:4192/assets/index-OESe3EVZ.js",
-    "candidateJsFilename": "index-OESe3EVZ.js",
-    "candidateJsBuildHash": "OESe3EVZ"
+    "candidateJsUrl": "http://127.0.0.1:4192/assets/index-CZ1WkqZ7.js",
+    "candidateJsFilename": "index-CZ1WkqZ7.js",
+    "candidateJsBuildHash": "CZ1WkqZ7"
   },
   "complete": true,
   "scope": "complete exact collider list returned by __NT.colliderSnapshot(); no spatial sampling or rounding",
@@ -16,17 +16,17 @@
     "ground": {
       "objects": 63,
       "colliders": 61,
-      "ms": 14
+      "ms": 13
     },
     "orange-house": {
-      "objects": 205,
+      "objects": 52,
       "colliders": 233,
-      "ms": 38.5
+      "ms": 50.2
     },
     "white-house": {
       "objects": 65,
       "colliders": 203,
-      "ms": 8.6
+      "ms": 7.7
     },
     "third-house": {
       "objects": 15,
@@ -36,42 +36,42 @@
     "vehicles": {
       "objects": 122,
       "colliders": 23,
-      "ms": 47
+      "ms": 41.7
     },
     "yards": {
-      "objects": 57,
+      "objects": 58,
       "colliders": 78,
-      "ms": 12
+      "ms": 15.2
     },
     "skyline": {
       "objects": 52,
       "colliders": 0,
-      "ms": 11.2
+      "ms": 12.4
     },
     "plaza": {
       "objects": 38,
       "colliders": 19,
-      "ms": 1.5
+      "ms": 2.1
     },
     "mannequins": {
       "objects": 22,
       "colliders": 14,
-      "ms": 1
+      "ms": 1.6
     },
     "surround": {
       "objects": 22,
       "colliders": 10,
-      "ms": 2.8
+      "ms": 4.1
     },
     "field-cases": {
       "objects": 5,
       "colliders": 1,
-      "ms": 0
+      "ms": 0.4
     },
     "industrial-barrels": {
       "objects": 2,
       "colliders": 4,
-      "ms": 0.2
+      "ms": 0.3
     },
     "desert-trees": {
       "objects": 2,

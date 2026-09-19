@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import type { AABB, Builder } from '../core/kit';
 import { aabb, aabbSlab, box, extrude, group, slab } from '../core/kit';
+import { batchStatic } from '../core/static-batch';
 import { PAL } from '../core/palette';
 import {
   CANOPY_LEN, CANOPY_OUT, CANOPY_Y, DECK_LEN, DECK_OUT, DECK_Y, EAVE_Y, FLOOR_H,
@@ -1202,5 +1203,8 @@ export const buildOrangeHouse: Builder = (ctx) => {
   put(0.12, 0.2, 0.12, porchGlow, backDoorX - 0.95, 2.0, backZ + S * 0.1);
   put(0.2, 0.05, 0.18, steelM, backDoorX - 0.95, 2.14, backZ + S * 0.1);
 
+  // Static opaque parts share draws; transparent panes retain their own sorting.
+  // Keep batching within this house so culling never spans unrelated buildings.
+  batchStatic(g, 'orange-house');
   return { group: g, colliders };
 };

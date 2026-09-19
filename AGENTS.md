@@ -27,6 +27,16 @@ work is not an accepted feature merely because it is committed. The checkpoint
 records remaining blockers and the distinction between verified local preview and
 the older public deployment.
 
+In this recovery lane, `4191` is the accepted inspection artifact and `4192` is
+the candidate. Set `AA_PREVIEW_PORT=4192` for the legacy capture/playcap/traverse/
+soak harnesses; use their explicit URL option or `NT_URL` where supported.
+Do not let the older default `4188` below select another checkout's build.
+Give playcap and capture different tags (for example `j-play` and `j-qa`):
+`capture` removes prior PNG/JSON outputs with its tag prefix.
+Root owns browser/GPU validation and promotion. External workers must use the
+recorded provider launcher and assigned file scope; a successful worker process
+is not acceptance of its output.
+
 ## What this project is not
 
 It is a clean restart of a much larger effort. The old project is **reference only**:

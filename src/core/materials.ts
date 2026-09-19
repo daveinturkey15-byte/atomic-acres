@@ -244,6 +244,8 @@ export interface MaterialLibrary {
   timber: THREE.Material;
   timberDark: THREE.Material;
   deckBoards: THREE.Material;
+  /** fence course boards: timber fallback, upgraded to the wooden_planks photo set */
+  fenceBoard: THREE.Material;
   hedge: THREE.Material;
   leaf: THREE.Material;
   leafCards: THREE.Material;
@@ -830,6 +832,10 @@ export function buildMaterials(): MaterialLibrary {
     timber: std({ map: timberSet.map, roughness: 1, roughnessMap: timberSet.roughnessMap, normalMap: timberSet.normalMap, normalScale: new THREE.Vector2(0.7, 0.7), metalness: 0 }),
     timberDark: std({ map: timberDarkSet.map, roughness: 1, roughnessMap: timberDarkSet.roughnessMap, normalMap: timberDarkSet.normalMap, normalScale: new THREE.Vector2(0.7, 0.7), metalness: 0 }),
     deckBoards: std({ map: deckSet.map, roughness: 1, roughnessMap: deckSet.roughnessMap, normalMap: deckSet.normalMap, normalScale: new THREE.Vector2(0.7, 0.7), metalness: 0 }),
+    // Fence course boards share the timber family's textures, so the fallback
+    // looks exactly like the boards this material replaces and no new program
+    // family is compiled; the async upgrade below swaps in the photo maps.
+    fenceBoard: std({ map: timberSet.map, roughness: 1, roughnessMap: timberSet.roughnessMap, normalMap: timberSet.normalMap, normalScale: new THREE.Vector2(0.7, 0.7), metalness: 0 }),
     hedge: std({ map: hedgeTex, roughness: 1, roughnessMap: hedgeRough, normalMap: hedgeNormal, normalScale: new THREE.Vector2(0.8, 0.8), metalness: 0 }),
     leaf: std({ map: leafTex, roughness: 1, roughnessMap: leafRough, metalness: 0 }),
     leafCards: vegetation.leafCards,
@@ -1016,6 +1022,14 @@ export function buildMaterials(): MaterialLibrary {
     diffuse: 'textures/polyhaven/distressed-painted-planks/diffuse.jpg',
     roughness: 'textures/polyhaven/distressed-painted-planks/rough.jpg',
     normal: 'textures/polyhaven/distressed-painted-planks/normal.jpg',
+  }, 1);
+  // Fence course boards: the intake-lane wooden_planks set (md5-verified in
+  // docs/fence-texture-candidate.md). Repeat 1 - the fence-boards helper puts
+  // physical 2 m-per-tile UVs directly on the geometry.
+  upgrade(lib.fenceBoard, {
+    diffuse: 'assets/wooden-planks/wooden_planks_diff_1k.jpg',
+    roughness: 'assets/wooden-planks/wooden_planks_rough_1k.jpg',
+    normal: 'assets/wooden-planks/wooden_planks_nor_gl_1k.jpg',
   }, 1);
   // Sparse Grass remains in the reviewed asset library; the first runtime
   // comparison read as bare soil here, so this lawn retains its soft turf fallback.

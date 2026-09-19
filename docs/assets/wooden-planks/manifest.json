@@ -1,0 +1,130 @@
+{
+  "analysis": {
+    "diffuse": {
+      "luminanceMean": 0.4124,
+      "luminanceP10P50P90": [
+        0.3556,
+        0.418,
+        0.4583
+      ],
+      "meanLinear": [
+        0.2072,
+        0.1317,
+        0.081
+      ],
+      "meanSrgb": [
+        0.4926,
+        0.3983,
+        0.3152
+      ],
+      "meanSrgbHex": "#7e6650",
+      "planks": {
+        "gradientEnergyRatio": 3.6435,
+        "method": "dominant FFT peak of mean |luminance gradient| along the seam axis",
+        "plankCount": 30.0,
+        "plankLongAxis": "horizontal",
+        "plankPitchMeters": 0.0666,
+        "plankPitchPx": 34.1,
+        "seamAxis": "horizontal"
+      },
+      "warmthRoverBLinear": 2.559
+    },
+    "roughness": {
+      "colorSpace": "linear (data map, NoColorSpace)",
+      "mean": 0.7009,
+      "p10P50P90": [
+        0.6902,
+        0.702,
+        0.7098
+      ],
+      "std": 0.0088
+    }
+  },
+  "asset": {
+    "apiFilesEndpoint": "https://api.polyhaven.com/files/wooden_planks",
+    "apiFilesHash": "3bd84dff0e4cc93dd451fa92de3ddaa553a80e3e",
+    "description": "Free 8K texture of dry, worn wooden planks, even flat boards with subtle cracks, knots and narrow gaps, showing a soft, matte wood grain.",
+    "displayName": "Wooden Planks",
+    "id": "wooden_planks",
+    "physicalSizeMeters": [
+      2.0,
+      2.0
+    ],
+    "providerDimensionsMm": [
+      2000,
+      2000
+    ],
+    "sourcePage": "https://polyhaven.com/a/wooden_planks"
+  },
+  "authors": [
+    {
+      "name": "Charlotte Baglioni",
+      "role": "Photography"
+    },
+    {
+      "name": "Dario Barresi",
+      "role": "Processing"
+    }
+  ],
+  "budget": {
+    "maxTotalBytes": 3000000,
+    "withinBudget": true
+  },
+  "files": [
+    {
+      "bytes": 489587,
+      "channel": "Diffuse",
+      "file": "public/assets/wooden-planks/wooden_planks_diff_1k.jpg",
+      "format": "JPEG",
+      "height": 1024,
+      "md5": "045a70f787fcb4b60ee5c9878a9bd674",
+      "providerBytes": 489587,
+      "providerMd5": "045a70f787fcb4b60ee5c9878a9bd674",
+      "sha256": "1273876d6f92fb1a1d29c1bb28f548a9256154187531e84f993b56e347f1d17b",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_planks/wooden_planks_diff_1k.jpg",
+      "srgb": true,
+      "width": 1024
+    },
+    {
+      "bytes": 705118,
+      "channel": "nor_gl",
+      "file": "public/assets/wooden-planks/wooden_planks_nor_gl_1k.jpg",
+      "format": "JPEG",
+      "height": 1024,
+      "md5": "03206d820a026239db91a1ff3d8c589d",
+      "providerBytes": 705118,
+      "providerMd5": "03206d820a026239db91a1ff3d8c589d",
+      "sha256": "6c85ff0a410a2993cc09d25859d7d735bc05e9f15dc51393d2e58aa2ce8a0916",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_planks/wooden_planks_nor_gl_1k.jpg",
+      "srgb": false,
+      "width": 1024
+    },
+    {
+      "bytes": 233217,
+      "channel": "Rough",
+      "file": "public/assets/wooden-planks/wooden_planks_rough_1k.jpg",
+      "format": "JPEG",
+      "height": 1024,
+      "md5": "006e1ad8b5a59e783c25b3b36c3a9e9b",
+      "providerBytes": 233217,
+      "providerMd5": "006e1ad8b5a59e783c25b3b36c3a9e9b",
+      "sha256": "c1b1a7e3266a082d66f1c786a28a05674227158684d655e42ab2420e47ae746e",
+      "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_planks/wooden_planks_rough_1k.jpg",
+      "srgb": false,
+      "width": 1024
+    }
+  ],
+  "integrity": {
+    "bytesModified": false,
+    "generatedMaps": false,
+    "verification": "provider md5 + byte size + JPEG decode + 1024x1024"
+  },
+  "license": {
+    "assetPageUrl": "https://polyhaven.com/a/wooden_planks",
+    "evidenceUrl": "https://polyhaven.com/license",
+    "name": "CC0 1.0"
+  },
+  "resolution": "1k JPG",
+  "schema": 1,
+  "totalBytes": 1427922
+}

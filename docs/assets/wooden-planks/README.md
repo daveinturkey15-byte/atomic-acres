@@ -1,0 +1,3 @@
+# Wooden planks provenance
+
+The three JPEGs are byte-preserved provider files; paths, hashes, sizes and cached API metadata were verified at integration. Original intake analysis is historical evidence. Its FFT plank-count estimate is not a geometry contract. The original five-band seam model was incomplete and I2 was visually rejected. The current complete JPEG scan detects all low-median row clusters; four inspected56px plank-interior strips avoid them. Runtime deliberately uses uniform2.286x art scaling relative to the provider2m surface, preserving aspect rather than claiming native physical scale. See docs/fence-uv-canary.md and captures/checkpoint-j-fence/.

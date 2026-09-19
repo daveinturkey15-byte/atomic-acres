@@ -8,16 +8,16 @@ state that keeps source, runtime, and subjective review separate. Bounded review
 are recorded only when the evidence path is named; they do not imply photoreal quality
 or an exact shipped build.
 
-This audit contains 42 entries: 16 Kimodo GLB clips, 8 CMU fallback motion files, the
+This audit contains 43 entries: 16 Kimodo GLB clips, 8 CMU fallback motion files, the
 field-case GLB, the industrial barrel prop, the Quiver Tree GLB, the operator material
-candidate, 4 PBR sets, the authored v3 audio bank, the recorded CC0 five-shot canary,
+candidate, 5 PBR sets, the authored v3 audio bank, the recorded CC0 five-shot canary,
 the recorded CC0 eight-file foley bank, the four-map foliage source, and 6
 2D/reference targets. The old Atomic Acres checkout was not inspected. Secrets,
 profiles, logs, source archives, and audition-only media are excluded from runtime
 claims.
 
 `sourceCommit` and `sourceCommitAnchor` are both the current dirty-tree anchor
-`fb7151498ac8e826e3c1066484219420c3c7a8bc`. The previous inventory baseline was
+`deb30fd`. The previous inventory baseline was
 `232e13bc48b5e9ba5607a566540ac55054131312`; it is retained in `library.json` because
 older entries were measured against that baseline. `sourceDirty: true` means this is
 an anchor only, not an exact shipped-build record. Root owns final copy, integration,
@@ -43,6 +43,7 @@ browser, GPU, listening, and visual review.
 | `animation/kimodo/idle-rejected` | Retained generated comparison GLB; procedural idle remains runtime | 23,720 | `verified-source` | Kimodo output retained for evidence; rejected for runtime in `public/anim/LICENCES.md`. |
 | `animation/cmu-fallback/*` | 8 offline `.anim.json` fallbacks; not loaded by the current Kimodo registry | 515,754 | `verified-source` | CMU and three.js sample evidence are preserved in `public/anim/manifest-cmu.json` and `public/anim/LICENCES.md`. |
 | `texture/polyhaven/*` | Sparse Grass, Asphalt 07, Concrete Pavement 03, Distressed Painted Planks PBR trios | 8,448,182 | mixed | Poly Haven, CC0 1.0. Local and source evidence are in `public/textures/polyhaven/manifest.json`; per-file hashes are in `library.json`. Sparse Grass remains rejected for the current lawn treatment. |
+| `texture/polyhaven/wooden_planks` | `public/assets/wooden-planks/wooden_planks_{diff,nor_gl,rough}_1k.jpg`; candidate fence-board PBR trio, provider surface 2 m × 2 m | 1,427,922 | `integrated` | Poly Haven Wooden Planks, CC0 1.0. Exact 3-JPG bytes, MD5/SHA-256 values and 1024² metadata are in `docs/assets/wooden-planks/manifest.json` and `library.json`. I1 oversized grain and I2 extra photo seams were rejected; root viewed and accepted the modest I3 refinement in three checkpoint-j-fence frames. Runtime uses uniform 2.286x art scaling, not the native provider scale. See `docs/fence-uv-canary.md` and `docs/PROVIDER-RUN-RECEIPTS.md`. |
 | `texture/vegetation/island_tree_01_leaves` | Four 1k leaf maps for alpha-tested cards and compact tree crowns | 5,462,812 | `runtime-review-open` | Poly Haven `island_tree_01`, CC0 1.0. Exact bytes, SHA-256, source URLs and source MD5 values are in `public/textures/vegetation/manifest.json`. Correction 3 is wired and its modest silhouette was viewed and accepted; it still reads topiary and carries no photoreal claim. The canary remains bounded at 19,760 triangles and five static draws. |
 | `audio/authored-bank-v3` | 21 44.1 kHz mono weapon, cue, footfall and weather WAV files | 1,202,204 | `runtime-review-open` | Deterministic synthesis from `src/audio/render-bank.mjs`; no external samples. Service mappings and the stock-browser lifecycle are verified at 21 decoded buffers, five recorded shots, and eight recorded foley cues; ear quality remains OPEN. |
 | `audio/recorded-cc0-5shot-canary` | `public/audio-recorded/rec-shot-<family>.wav` five-shot source pack with authored fallback; audition is `docs/audio-auditions/recorded-guns.wav` | 502,960 | `runtime-review-open` | CC0 1.0 evidence is in `public/audio-recorded/manifest.json`; audition SHA-256 `896d93968295a4f1494bb828b4b2c2d1b1b27a04b23baee8e221a3cd6af69e4f`. The 11-check lifecycle and live remote-miss presentation pass; ear quality and source clipping remain OPEN. |
@@ -57,6 +58,10 @@ The PBR state split is deliberate. `asphalt_07`, `concrete_pavement_03`, and
 review still open. `sparse_grass` is source-verified but **rejected for this lawn**
 after the root capture read as broad tufts, bare soil, and small conifers; the softened
 procedural turf fallback remains the active direction.
+The `wooden_planks` fence uses four measured 56 px plank-interior strips. U and V
+share a uniform 4.571428571 m-per-UV art scale (2.286x the provider surface),
+which keeps grain proportions coherent without extra photo seams. I1 and I2
+are rejected; root viewed all three I3 frames and accepted this modest refinement.
 
 ## Provenance details
 
@@ -161,3 +166,6 @@ that a 3D reconstruction exists.
 11. Keep the industrial barrel source and four-collider integration; the exact full-collider proof passes, while barrel-specific player traversal and final promotion remain OPEN.
 12. Keep the wired operator material candidate under review. Its one shared 256×256 texture and one-draw figure path are bounded, while the subtle front-view response and overall quality remain OPEN.
 13. Keep the single-file Quiver Tree canary wired through the root preload and builder; the two placement/render frames pass and were viewed, while final visual-quality and placement-specific traversal remain OPEN.
+14. Preserve the root-viewed `wooden_planks` I3 single-plank crop and isotropic
+art scale. I1 grain distortion and I2 photo seams remain rejected controls.
+Evidence: `docs/fence-uv-canary.md` and `docs/PROVIDER-RUN-RECEIPTS.md`.

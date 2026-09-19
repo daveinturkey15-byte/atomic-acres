@@ -1,0 +1,101 @@
+{
+  "schema": "standalone-root-acceptance/1",
+  "checkpoint": "J",
+  "reviewed_at": "2026-09-19T15:06:02.744114+00:00",
+  "source_parent": "deb30fd19b6de9f4193ecc2e4c158bde27bd308a",
+  "source_commit": "See dist/build-info.json after promotion; this receipt is committed with the runtime source.",
+  "candidate_bundle": "index-CZ1WkqZ7.js",
+  "candidate_bundle_sha256": "b59626e64bf9d57d59dd4f40d0db18431dd97e6cf3cc19ca24f6d6258d8ec0d1",
+  "play": {
+    "url": "http://localhost:4192/",
+    "threshold": 40,
+    "results": [
+      {
+        "name": "spawnA",
+        "luma": 93.3,
+        "ok": true,
+        "calls": 799,
+        "tris": 575251
+      },
+      {
+        "name": "circle",
+        "luma": 120.3,
+        "ok": true,
+        "calls": 645,
+        "tris": 524429
+      },
+      {
+        "name": "spawnB",
+        "luma": 127.1,
+        "ok": true,
+        "calls": 891,
+        "tris": 592491
+      },
+      {
+        "name": "orangeInside",
+        "luma": 124.3,
+        "ok": true,
+        "calls": 824,
+        "tris": 581029
+      }
+    ],
+    "errors": []
+  },
+  "qa": {
+    "stations": 13,
+    "max_calls": 864,
+    "max_triangles": 580445,
+    "errors": 0,
+    "blind": 0,
+    "over_budget": 0
+  },
+  "same_four_view_max_calls": {
+    "before": 1189,
+    "after": 891,
+    "reduction_percent": 25.06
+  },
+  "soak": {
+    "elapsed": 210.7,
+    "frames": 12041,
+    "js": {
+      "slope": -0.232,
+      "r2": 0.025,
+      "n": 16
+    },
+    "proc": {
+      "slope": 2.913,
+      "r2": 0.156,
+      "n": 16
+    },
+    "procMono": {
+      "netMB": 9.46,
+      "upFraction": 0.47
+    },
+    "fails": []
+  },
+  "colliders": "652 exact rows and owners unchanged against accepted G snapshot",
+  "traversal": "5/5 routes;4/4 house faces;zero browser errors",
+  "fence": "I1 and I2 rejected. I3 three actual viewed frames accepted as a modest refinement. 3 byte-preserved 1k JPEGs. Complete seam scan; four56px crops; uniform2.286x art scale.",
+  "orange": "Actual builder equivalence proof; position1e-5m,normal/UV1e-6 limits; real position/UV/shadow corruptions rejected;204->51 meshes;233 colliders unchanged.",
+  "resume": "Ancestor fc8c4c8: H3 real same-profile refresh/rejoin16/16, Deadeye and equipment restored, movement6.016m, next shot accepted. H2 normal network24/24. H host-loss9/9. J CPU different-peer/countdown/rematch edge proof passes.",
+  "animation": "Ancestor deb30fd: real 648-frame pose equivalence maxFloatDiff0. J real gameplay/soak includes scratch reuse.",
+  "root_viewed": [
+    "checkpoint-j-play-spawnB.png",
+    "checkpoint-j-play-orangeInside.png",
+    "checkpoint-j-interiorOrange.png",
+    "checkpoint-j-spawnB.png",
+    "checkpoint-j-fence/white-back.png",
+    "checkpoint-j-fence/orange-back-grazing.png",
+    "checkpoint-j-fence/white-west-return.png"
+  ],
+  "open": [
+    "Whole scene remains stylized; no photoreal claim",
+    "WAN and two-device multiplayer",
+    "Exact magazine/reserve split across reload resume",
+    "Bearer token old-transport reclaim policy",
+    "Bedroom0.42m stress radius",
+    "Reflection canary rejected and PMREM disposal residue",
+    "Subjective audio quality",
+    "Future tree conversion/render acceptance"
+  ]
+}

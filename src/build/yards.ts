@@ -47,6 +47,7 @@ import {
 import { ORANGE_STAIR_FOOTPRINT } from './orange-house';
 import { WHITE_STAIR_FOOTPRINT } from './white-house';
 import { buildVegetationTrees, type TreeSpec } from './vegetation-tree';
+import { buildFenceCourseBoards, type FenceBoardSeg } from './fence-boards';
 
 // ---------------------------------------------------------------- derived frame
 const YARD_W = YARD_X_MAX - YARD_X_MIN;
@@ -337,6 +338,8 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   const PLINTH_H = 0.5, COPING_H = 0.08, BOARD_TOP = 1.91, POST_TOP = 2.04;
   const PLINTH = mat.painted(PAL.rubbleStone, 0.95, 0);
   const COPING = mat.painted(PAL.rubbleMortar, 0.95, 0);
+  /** course boards collect here; ONE merged photo-textured mesh is flushed after all runs */
+  const boardSegs: FenceBoardSeg[] = [];
 
   /**
    * Tall horizontal-board fence on a rubble plinth, holes punched clean through.
@@ -370,9 +373,14 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
       // a return run's coping is TUCK taller both ways, so where it meets the back run's
       // coping in the corner square neither the tops nor the overhanging soffits tie
       B.put(COPING, 0.36, COPING_H + (cornerAtA ? 2 * TUCK : 0), len, cx, PLINTH_H + COPING_H / 2, cz, ry);
-      for (let c = 0; c < 5; c++) {   // 5 stacked courses, 0.25 boards + 0.02 gaps
-        const y = y0 + 0.125 + c * 0.27;
-        B.put(mat.timber, 0.06, 0.25, len, cx, y, cz, ry);
+      // 5 stacked course boards, 0.25 boards + 0.02 gaps: recorded as segments and
+      // merged into ONE photo-textured mesh after all runs (fence-boards.ts) - the
+      // old instanced unit boxes stretched the whole plank photo across every face.
+      // The B batch still owns plinth/coping/cap/rails/posts.
+      {
+        const [x0, z0] = at(s0);
+        const [x1, z1] = at(s1);
+        boardSegs.push({ x0, z0, x1, z1, u0: s0 });
       }
       B.put(mat.timberDark, 0.2, 0.08, len, cx, BOARD_TOP + 0.04, cz, ry);  // cap: segmented
       for (const y of [y0 + 0.42, y0 + 1.02]) {   // back rails behind the boards
@@ -401,6 +409,8 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     fence(YARD_X_MAX, zf, YARD_X_MAX, h.side * HOUSE_BACK, [], true);
   }
   fence(BOUNDARY_X, -BOUND_Z, BOUNDARY_X, BOUND_Z, []);           // cul-de-sac boundary
+  // ALL fence course boards of the map: one mesh, one material (mat.fenceBoard).
+  g.add(buildFenceCourseBoards(boardSegs, mat.fenceBoard).mesh);
   /** Fence runs meet at the yard corners on purpose; the prop overlap check skips them. */
   const FENCE_END = colliders.length;
 

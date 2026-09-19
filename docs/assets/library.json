@@ -3,7 +3,7 @@
   "generatedAt": "2026-09-19",
   "project": "nuketown-2025-standalone",
   "sourceTree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
-  "sourceCommit": "fb7151498ac8e826e3c1066484219420c3c7a8bc",
+  "sourceCommit": "deb30fd",
   "stateDefinitions": {
     "verified-source": "File and provenance evidence are present; runtime integration is not claimed.",
     "integrated": "Repository code explicitly references or loads the path; visual acceptance is separate.",
@@ -1362,6 +1362,89 @@
       ]
     },
     {
+      "id": "texture/polyhaven/wooden_planks",
+      "kind": "pbr-texture-set",
+      "format": "jpeg-trio",
+      "sourcePath": "https://polyhaven.com/a/wooden_planks",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\assets\\wooden-planks",
+      "repoPath": "public/assets/wooden-planks",
+      "origin": "Poly Haven Wooden Planks by Charlotte Baglioni (photography) and Dario Barresi (processing); 1k diffuse, nor_gl and roughness maps.",
+      "license": "CC0 1.0",
+      "licenseEvidence": [
+        "docs/assets/wooden-planks/manifest.json",
+        "docs/fence-uv-canary.md",
+        "https://polyhaven.com/a/wooden_planks",
+        "https://polyhaven.com/license"
+      ],
+      "bytes": 1427922,
+      "files": [
+        {
+          "repoPath": "public/assets/wooden-planks/wooden_planks_diff_1k.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\assets\\wooden-planks\\wooden_planks_diff_1k.jpg",
+          "bytes": 489587,
+          "md5": "045a70f787fcb4b60ee5c9878a9bd674",
+          "sha256": "1273876d6f92fb1a1d29c1bb28f548a9256154187531e84f993b56e347f1d17b",
+          "width": 1024,
+          "height": 1024,
+          "srgb": true,
+          "kind": "diffuse",
+          "role": "Wooden Planks diffuse",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_planks/wooden_planks_diff_1k.jpg"
+        },
+        {
+          "repoPath": "public/assets/wooden-planks/wooden_planks_nor_gl_1k.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\assets\\wooden-planks\\wooden_planks_nor_gl_1k.jpg",
+          "bytes": 705118,
+          "md5": "03206d820a026239db91a1ff3d8c589d",
+          "sha256": "6c85ff0a410a2993cc09d25859d7d735bc05e9f15dc51393d2e58aa2ce8a0916",
+          "width": 1024,
+          "height": 1024,
+          "srgb": false,
+          "kind": "normalGL",
+          "role": "Wooden Planks normalGL",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_planks/wooden_planks_nor_gl_1k.jpg"
+        },
+        {
+          "repoPath": "public/assets/wooden-planks/wooden_planks_rough_1k.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\assets\\wooden-planks\\wooden_planks_rough_1k.jpg",
+          "bytes": 233217,
+          "md5": "006e1ad8b5a59e783c25b3b36c3a9e9b",
+          "sha256": "c1b1a7e3266a082d66f1c786a28a05674227158684d6555e42ab2420e47ae746e",
+          "width": 1024,
+          "height": 1024,
+          "srgb": false,
+          "kind": "roughness",
+          "role": "Wooden Planks roughness",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wooden_planks/wooden_planks_rough_1k.jpg"
+        }
+      ],
+      "runtimeRole": "candidate fence-board diffuse, normalGL and roughness response",
+      "state": "integrated",
+      "decision": "I3 modest visual refinement accepted in three root-viewed checkpoint-j-fence frames; final artifact promotion remains separately gated",
+      "visualReview": "I1 anisotropic oversized grain and I2 internal photo seams rejected. I3 uses complete JPEG seam scanning and 56px plank-interior strips with uniform U/V art scaling; root viewed all three frames.",
+      "physicalSizeMeters": [
+        2,
+        2
+      ],
+      "runtimeUvMapping": {
+        "providerSurfaceMeters": {
+          "u": 2,
+          "v": 2
+        },
+        "uTileMeters": 4.571428571428571,
+        "vStripPixels": 56,
+        "worldBoardHeightMeters": 0.25,
+        "sourceImagePixels": 1024,
+        "uniformArtScale": 2.2857142857142856,
+        "nativePhysicalScale": false
+      },
+      "runtimeEvidence": [
+        "captures/checkpoint-j-fence/result.json",
+        "captures/checkpoint-j-fence-cpu.txt",
+        "captures/checkpoint-j-fence-negative.txt"
+      ]
+    },
+    {
       "id": "audio/authored-bank-v3",
       "kind": "audio-bank",
       "format": "wav",
@@ -2220,9 +2303,9 @@
       "evidence": "captures/desert-trees/result.json and captures/refinement-build.txt prove CPU module output/build only; docs/quiver-tree-integration.md records the measured GLB and OPEN live review"
     }
   ],
-  "worktreeState": "dirty recovery tree; sourceCommit/sourceCommitAnchor fb7151498ac8e826e3c1066484219420c3c7a8bc are current anchors only; previous inventory baseline 232e13bc48b5e9ba5607a566540ac55054131312 is retained for older entries; entries describe measured on-disk artifacts and root integration evidence, not an exact shipped build",
-  "sourceCommitAnchor": "fb7151498ac8e826e3c1066484219420c3c7a8bc",
+  "worktreeState": "dirty recovery tree; sourceCommit/sourceCommitAnchor fc8c4c8 are current anchors only; previous inventory baseline 232e13bc48b5e9ba5607a566540ac55054131312 is retained for older entries; entries describe measured on-disk artifacts and root integration evidence, not an exact shipped build",
+  "sourceCommitAnchor": "deb30fd",
   "sourceDirty": true,
-  "sourceCommitStatus": "current dirty-tree anchor fb7151498ac8e826e3c1066484219420c3c7a8bc; previous inventory baseline was 232e13bc48b5e9ba5607a566540ac55054131312; this inventory is not an exact shipped-build claim",
+  "sourceCommitStatus": "current dirty-tree anchor fc8c4c8; previous inventory baseline was 232e13bc48b5e9ba5607a566540ac55054131312; this inventory is not an exact shipped-build claim",
   "previousInventorySourceCommitAnchor": "232e13bc48b5e9ba5607a566540ac55054131312"
 }
