@@ -88,6 +88,12 @@ interface Overlay {
 }
 
 const _q = new THREE.Quaternion();
+// Aim pitch and recoil are uniform across the three twisted upper-body bones.
+// Build the two rotations once per rig update instead of constructing a pair of
+// quaternions and Eulers inside that bone loop.
+const _qPitch = new THREE.Quaternion();
+const _qRecoil = new THREE.Quaternion();
+const _eScratch = new THREE.Euler();
 
 // ---------------------------------------------------------------------------
 // Weapon-carry layer
@@ -499,21 +505,18 @@ export class CharacterRig {
     const w = input.aimWeight;
     if (w > 0.001 || this.upper || this.recoil > 0.001) {
       this.aimPose = this.sampler.sample('aim', 0.5);
+      const recoilOn = this.recoil > 0.001;
+      _qPitch.setFromEuler(_eScratch.set(input.aimPitch * 0.7, 0, 0));
+      if (recoilOn) _qRecoil.setFromEuler(_eScratch.set(0.22 * this.recoil, 0, 0));
+      const blend = Math.max(w, this.recoil * 0.85);
       for (const [name, bone] of Object.entries(this.bones)) {
         if (UPPER_BODY[name] !== true) continue;
         const target = this.aimPose[name as StandardBoneName];
         _q.copy(target);
-        if (name === 'Chest' || name === 'LeftArm' || name === 'RightArm') {
-          _q.multiply(new THREE.Quaternion().setFromEuler(
-            new THREE.Euler(input.aimPitch * 0.7, 0, 0),
-          ));
-        }
-        if (this.recoil > 0.001 && (name === 'Chest' || name === 'LeftArm' || name === 'RightArm')) {
-          _q.multiply(new THREE.Quaternion().setFromEuler(
-            new THREE.Euler(0.22 * this.recoil, 0, 0),
-          ));
-        }
-        bone.quaternion.slerp(_q, Math.max(w, this.recoil * 0.85));
+        const twisted = name === 'Chest' || name === 'LeftArm' || name === 'RightArm';
+        if (twisted) _q.multiply(_qPitch);
+        if (twisted && recoilOn) _q.multiply(_qRecoil);
+        bone.quaternion.slerp(_q, blend);
       }
       if (this.upper) {
         const dur = this.library[this.upper.clip].clip.duration;
@@ -710,7 +713,9 @@ export class CharacterRig {
         this.strideSkate.set(side, 0);
       }
       this.stanceActive.set(side, inStance);
-      this.footPrev.set(side, this.footWorld.clone());
+      const slot = this.footPrev.get(side);
+      if (slot) slot.copy(this.footWorld);
+      else this.footPrev.set(side, this.footWorld.clone());
       this.footPrevY.set(side, y);
       this.footPrevT.set(side, now);
     }
