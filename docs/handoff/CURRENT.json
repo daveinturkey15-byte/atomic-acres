@@ -12,7 +12,7 @@
   "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z",
   "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
   "inspection_time": "2026-09-20T05:45:00+01:00",
-  "lease_updated_at": "2026-09-19T23:14:00.4509099+01:00",
+  "lease_updated_at": "2026-09-19T23:16:01.0218529+01:00",
   "source_checkpoint": "2139d697434bf97bf38683eb0ed25e554096fd71",
   "inspection_report": "docs/handoff/INSPECTION-2026-09-19.md",
   "bundle_sha256": "e8cb3f4fa86437ef164deded998e3613d5220d2115e52335096545af1ab13a91",
@@ -293,9 +293,11 @@
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
       "started_at": "2026-09-19T23:11:54+01:00",
-      "ended_at": null,
-      "observed_models": null,
-      "state": "running source-only; process completion not acceptance",
+      "ended_at": "2026-09-19T23:15:14+01:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "state": "process-completed",
       "accepted": false
     },
     {
@@ -332,9 +334,11 @@
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
       "started_at": "2026-09-19T23:10:50+01:00",
-      "ended_at": null,
-      "observed_models": null,
-      "state": "running source-only; process completion not acceptance",
+      "ended_at": "2026-09-19T23:15:48+01:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "state": "process-completed",
       "accepted": false
     }
   ],
@@ -459,7 +463,7 @@
     "motion": "Screenshotluma/budgetPASSdoesnotestablishactorvisibility, framingorposephase. Frontviewactualinteriorwall; rejectharnessclaim.",
     "commit": "VERIFIED50explicitpaths checkpointed; firstcommitattemptfailedmissingauthoridentity, retried per-command CodexRecovery identity, no globalconfigchange."
   },
-  "active_external_lanes": 4,
+  "active_external_lanes": 2,
   "awaiting_root_review": [
     "fourcurrentexternalhandoffs whenended",
     "hero3D runtime pixels",
@@ -468,10 +472,10 @@
     "mortar liveadmission+FX"
   ],
   "checkpoint_bundle": {
-    "path": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/overnight-3d233d4-candidate.bundle",
-    "requires": "29efde589c2e0e9b5c184bc7abd5bd52d6f7f259",
+    "path": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/overnight-2314.bundle",
+    "requires": "3d233d4f3af0925d21c3ffa76aebd55aca75267a",
     "verified": true,
-    "sha256": "a6b70b8239a97ef5d9b6a482f9a74b179a18935ff40fce4e3ce4582a29776f9f"
+    "sha256": "33d285c1c315b1a52addff52fb8fbcf110bb852421a31f2c2fe2e529f3d0f068"
   },
   "latest_review": "docs/handoff/REVIEW-2026-09-19-2305.md",
   "provider_cooldowns": {
@@ -529,9 +533,10 @@
     "net_proof": "captures/net-refinement/result.json"
   },
   "orchestration_backup": {
-    "path": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/overnight-orchestration-2228",
-    "files": 44,
-    "bytes": 17954524,
-    "manifest": "manifest.json"
+    "path": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/overnight-orchestration-2315",
+    "files": 55,
+    "bytes": 37729465,
+    "manifest": "manifest.json",
+    "extra": "CURRENT-final.json saved after manifest"
   }
 }
