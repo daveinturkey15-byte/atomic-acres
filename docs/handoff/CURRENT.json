@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4191/",
-  "status": "VERIFIED frozenK4191 retained. Candidate579a866 at4198 has13-primary selector,18Semtexlivechecks and24two-browsernetchecks pass. Three authoredgunGLBs strictvalidated not yet runtime. Authoredmountain4194 mechanicallygreen butVISUALLYREJECTED asblanktowers; baseline retained. Four usefulexternal source lanes continue.",
+  "status": "VERIFIED frozenK4191 retained. Candidate579a866 at4198 has13-primary selector,18Semtexlivechecks and24two-browsernetchecks pass. Three authoredgunGLBs strictvalidated not yet runtime. Authoredmountain4194 mechanicallygreen butVISUALLYREJECTED asblanktowers; baseline retained. Hero-runtime and newterrain outputs completed and await review; operator andmortar writers continue.",
   "owner": "Codex",
   "stop_state": "OpenAI orchestration/review/acceptance only. Native implementation workers stopped at preserved checkpoints. External lane receipts and resource headroom must be reconciled each cycle.",
   "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z",
@@ -32,7 +32,7 @@
     "heavy_job_policy": "serialize GPU/browser/Blender2threads2GiB; >=12GiBfreeRAM and>=3GiBfreeVRAM plusheadroom"
   },
   "next_actions": [
-    "Read currentfour externalreceipts first; review2305 23:12addendum forfailures/results. RootHEAD87c9d48 includesoptinmountainandthreeheroassets. Candidate4198 source579a866 passesUI/semtex/net; frozenK4191 unchanged.",
+    "FIRST review newlycompleted muse-hero-runtime-finish handoff inprop worktree and muse-mountains-visual-rebuild handoff inenvironment worktree, thenoperator/mortar currentreceipts. RootHEADa8d90bd metadata; source87c9d48. Candidate4198 passesUI/semtex/net; frozenK4191 HTTPsha reverified23:15. Two activewriters plus twoawaitingacceptance.",
     "GLMhero runtime20m timeout preserving work/roster-heroes-runtime/{controller-heroes-integration.patch,roster-heroes-loader.ts,baseline,w,apply-test}. Muse15min continuation nowowns. Root3GLBs validated andbuilt. Reviewpatchpreservingcurrent16playable+4gated+carbine thenactualhip/ADS/reload.",
     "Mountainsbuild repaired48/48CPU and28browser gates passBUTlooked-atpicturesREJECTED: blanktrapezoidtowers+emptyhorizon.4194 rejectedartifact preserved. Muse NEWconnectedterrain outerloop owns separatebuild_mountain_terrain.py, no furtheroldrecipetweak ordefaultenable.",
     "Mortalvisible firstrepair owns stale-bind/root-patch/netclock/ringexpiry/disposal findings. Do notcopyoldlanewholefiles. No damagewithoutlooked-at warning/impact;4of11notfullstreaks.",
