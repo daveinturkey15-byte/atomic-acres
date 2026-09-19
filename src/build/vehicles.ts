@@ -1306,13 +1306,26 @@ export const buildVehicles: Builder = (ctx) => {
     -36 + nudge(),
     3.0,
     NOSE_DOWN_STEM - 0.05 + skew());
-  // Show-condition two-tone in the open road stem, held to the orange kerb
+  // Show-condition two-tone at the MOUTH of the road stem, held to the orange kerb
   // side so the far lane stays open. Kept carBlue: the display sedan above is
   // the teal show car now, and plaza.ts owns the NT05 dais car.
+  //
+  // It used to stand at x = -HOUSE_HALF_LEN * 0.3 (-1.9): "the open road stem" before
+  // the 2026-09-18 re-proportioning, the middle of the turning head after it - and
+  // the hero coach is parked across that head. The saloon sat INSIDE the coach: 6.97 m2
+  // of plan overlap, 3473 of its vertices in the coach's oriented box, and the owner
+  // saw it ("the car in between the two buses ... is going into one of the buses").
+  // scripts/_ownerfix-geom.mjs carfit searched every placement on the carriageway
+  // with >= 0.45 m of mesh clearance to both coaches, 1 m off every camera station and
+  // the circle-centre landmark and 0.9 m off the traverse legs: the nearest parallel
+  // slot is this one, nose east toward the coach, 0.6 m short of its nose and 3.3 m
+  // off the second bus - the parked line down the street reads coach, saloon, coach
+  // from the orange pavement (captures/ownerfix-after-car-pavement-2.png).
+  // nudge() and skew() are still consumed here so every later vehicle keeps its jitter.
   park(makeSaloon(ctx, PAL.carBlue, { fin: 0.32, twoTone: true, brightwork: true }),
-    -HOUSE_HALF_LEN * 0.3 + nudge(),
+    -(HEAD_RADIUS - 1.2) + nudge(),
     ORANGE.side * ROAD_HALF_WIDTH * 0.52,
-    0.18 + skew());
+    -0.09 + skew());
 
   // SECOND BUS on the head, white (+z) half, nosed down the stem — the old
   // rigid slot. A stem gate-3 with a true ~3 m slot is geometrically exclusive
