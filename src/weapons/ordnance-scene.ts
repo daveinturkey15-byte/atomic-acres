@@ -145,16 +145,24 @@ export class OrdnanceScene {
     }
   }
 
-  /** QA readout for the browser proof: the projection's log, counts and live pools. */
+  /** QA readout for the browser proof: the projection's log, counts, live pools and flights. */
   qa(): Record<string, unknown> {
     const c = this.client;
     if (c === null) return { bound: false };
     const v = c.ordnance;
     return {
       bound: true,
+      selfId: v.selfId,
       lines: v.lines.slice(),
       counts: { ...v.counts },
       self: { ...v.self },
+      // READ-ONLY QA projection of the live flights: bounded (FLIGHT_POOL) copies
+      // of id, kind, owner, position, rest state and clock stamps. The host and
+      // presentation keep every decision; nothing here writes back.
+      flights: v.flights.filter((f) => f.live).map((f) => ({
+        id: f.id, grenadeId: f.grenadeId, ownerId: f.ownerId, sticky: f.sticky === true,
+        x: f.x, y: f.y, z: f.z, resting: f.resting, bornAt: f.bornAt, detonatesAt: f.detonatesAt,
+      })),
       live: this.grenades.counts(v),
       drops: v.drops.map((d) => ({ id: d.id, weaponId: d.weaponId, rounds: d.rounds, grenades: d.grenades, x: d.x, y: d.y, z: d.z })),
       smokes: v.smokes.map((s) => ({
