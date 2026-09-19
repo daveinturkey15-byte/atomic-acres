@@ -488,3 +488,15 @@ inverted), so S5 3 -> 2 at aerial stations. Committed as the improved state. Rou
 fade the FAR term by grazing angle (|n.v| from the MRT normal) and by view depth beyond
 ~35 m - the two things a false grazing/distant sample has that a real room occluder does
 not - measured separately, near term and interiors untouched.
+
+**06:20 (19 Sep).** Vehicles batching round 2 HOLDS and is committed: 310 -> 120 objects,
+the trailer z-fight fixed at source (panel deleted, not recessed - the recess made the
+doorway a shut glazed shutter), static-batch.ts guarded against lights / hidden /
+instanceColor / mirrored with a bundled test. EVERY STATION IS UNDER 1200 CALLS for the
+first time (playcap 1162/775/1159/974; captures 702-1138) - partly the characters lane's
+uncommitted single-mesh figures, so re-measure when that lands. Frozen HEAD build for
+the owner: http://127.0.0.1:4190/ (scratchpad snapshot, port pinned in
+leak-watch/protected-ports.txt, refreshed after each landing). Running: characters
+(`wf_3f9f5abf-3fa`), AO round 4 far-term fades (`wf_8eee1ee3-f74`). Open from this
+round: side-doorway panel/rub-rail coplanar strip; the unplaced show car; capture.mjs's
+'2 calls' stats-reset race.
