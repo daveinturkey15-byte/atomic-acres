@@ -6,13 +6,13 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4191/",
-  "status": "VERIFIED frozenK4191 retained. Candidate3d233d4 at4195 has20designed/16playable weapons;23actualWebGPU firing/HUD checks and210ssoak pass(existing noise caveat). Host-height restores realguestcrit/fatal and24netchecks pass4197. Semtex live17/18, inventory timing boundary OPEN. Five disjoint external source-only lanes; no promotion.",
+  "status": "VERIFIED frozenK4191 retained. Candidate3d233d4 at4195 has20designed/16playable weapons;23actualWebGPU firing/HUD checks and210ssoak pass(existing noise caveat). Host-height restores realguestcrit/fatal and24netchecks pass4197. Semtex live17/18, inventory timing boundary OPEN. Three active external source-only lanes; heroasset andmotion outputs awaitreview; no promotion.",
   "owner": "Codex",
   "stop_state": "OpenAI orchestration/review/acceptance only. Native implementation workers stopped at preserved checkpoints. External lane receipts and resource headroom must be reconciled each cycle.",
   "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z",
   "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
   "inspection_time": "2026-09-20T05:45:00+01:00",
-  "lease_updated_at": "2026-09-19T22:27:55+01:00",
+  "lease_updated_at": "2026-09-19T22:29:34+01:00",
   "source_checkpoint": "2139d697434bf97bf38683eb0ed25e554096fd71",
   "inspection_report": "docs/handoff/INSPECTION-2026-09-19.md",
   "bundle_sha256": "e8cb3f4fa86437ef164deded998e3613d5220d2115e52335096545af1ab13a91",
@@ -32,7 +32,7 @@
     "heavy_job_policy": "5temporarydisjointsource-only lanes;one10min;serializeGPU/browser/Blender2threads2GiB;12GiBfreeRAM3GiBfreeVRAMreserve"
   },
   "next_actions": [
-    "Read only current5externalreceipts and changedhandoffs. Temporary5source-only lanes justified39.47GiBRAMfree/12389MiBVRAMfree;10mSemtexrepairendsfirst,return4. GLMmountainintegration20mtimeout, AGY nowownsretainedpartials withabsolute sourcepaths. Historicalrows archived; no transcriptbroadreads.",
+    "Read current3active receipts plus newlyended muse-roster-hero-assets and muse-motion-new-stage-finish handoffs first. Thenreview Semtexboundary andmountainintegration whenended. Historicalrows archived. CurrentHEAD2417a91 metadata; runtimebuild source3d233d4.",
     "Candidate4195 dist-roster-2214 is root3d233d4.20designed/16playable,13primaries3sidearms,4unsupportedexotics structuralgated.23WebGPU live checks pass and4photos VIEWED;11playable entries still borrowed5rig art. CPU96switches+147geometries exactlyonce,17carbine,83ordnance,10store,streakreject pass. Do not say20unique finished3Dguns.",
     "Host-height ce4ce5a accepted narrow scope: same failed gueststationaryharness now body34/head51/fatal15, zero drift, clean peers;24netrefinement120s includingcrouch/prone/240sclockskewsmoke passes. Candidate4197 immutable retained; no aimthreshold/harnessgate relaxed.",
     "Semtex liveproofran4195:17/18REFUTED, actualWebGPU/realmenu/ownID59stuckframes1034msfuse0.196mblast/norespawn/noerrors pass;inventoryarmedfor7framesafterbuttonintent fails. Intent20275.5,hostthrow20387,lastarmed20396.8,clear20414.8. SecondboundedMuseaudit must establish authoritative boundary withoutarbitrarytolerance or droppingassertion. Imagesviewed:smallcasing/whiteblast;FXartstillweak. Rootmechanicallyrestored missingoriginalJSDocterminator thatcommentedoutimports (failedbeforebrowser, preserved).",
@@ -323,9 +323,11 @@
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
       "started_at": "2026-09-19T21:19:17+00:00",
-      "ended_at": null,
-      "observed_models": [],
-      "state": "running; source-only; process completion not acceptance",
+      "ended_at": "2026-09-19T21:24:01+00:00",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "state": "process-completed",
       "accepted": false
     },
     {
@@ -336,7 +338,8 @@
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
       "state": "running CPU-only bounded10minute review/repair2",
-      "accepted": false
+      "accepted": false,
+      "ended_at": null
     },
     {
       "lane": "agy-mountains-integration-finish",
@@ -347,7 +350,8 @@
       "effort": "high",
       "actual_model": null,
       "state": "running source-only;GLM20mtimeout writerended;continuepreservedpartials",
-      "accepted": false
+      "accepted": false,
+      "ended_at": null
     }
   ],
   "continue_after_inspection": true,
@@ -471,13 +475,13 @@
     "commit": "VERIFIED50explicitpaths checkpointed; firstcommitattemptfailedmissingauthoridentity, retried per-command CodexRecovery identity, no globalconfigchange."
   },
   "active_external_lanes": [
-    "muse-roster-hero-assets",
     "muse-roster-menu",
-    "muse-motion-new-stage-finish",
     "muse-semtex-inventory-boundary",
     "agy-mountains-integration-finish"
   ],
   "awaiting_root_review": [
+    "muse-roster-hero-assets",
+    "muse-motion-new-stage-finish",
     "Semtex inventorycausalboundary secondrepair,17/18actualproof retained",
     "AGY mountainsintegrationfinish afterGLMtimeout; strictvalidatorBINoffset andrealR>=280keepout fix",
     "Muse roster-menu primaryselection and2pxoverflow",
@@ -510,7 +514,9 @@
   "temporary_parallelism": {
     "cap": 5,
     "reason": "Measured39.47GiBfreeRAM/12389MiBfreeVRAM; fifthlane short10minCPU-onlysemtexcausal-boundaryrepair, disjointfromUI/motion/heroguns/mountain. Returnto4whenitends.",
-    "local_gpu_jobs": 0
+    "local_gpu_jobs": 0,
+    "current_active_count": 3,
+    "current_note": "Hero asset andmotion finish writers have ended; outputs await nextrootreview. Max5 wasbrief; current3active."
   },
   "latest_soak": {
     "artifact": "captures/leak/roster-2217-soak.json",
@@ -543,5 +549,11 @@
     "acceptance": "11CPU checks, real stationaryguest body34/head51/fatal15,24two-browser120s checks;no consoleerrors",
     "proof": "captures/cfb-live/cfb-height-2200-1789851449724-result.json",
     "net_proof": "captures/net-refinement/result.json"
+  },
+  "orchestration_backup": {
+    "path": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/overnight-orchestration-2228",
+    "files": 44,
+    "bytes": 17954524,
+    "manifest": "manifest.json"
   }
 }
