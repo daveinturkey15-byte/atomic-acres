@@ -86,9 +86,20 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
   title.className = 'aa-h2';
   title.textContent = 'Solo vs bots';
   root.append(title);
-  // The loadout section persists its own store (game/loadout.ts) and applies
-  // to both panel modes: a loadout is the local player's, in solo and lobby.
-  root.append(buildLoadoutSection().root);
+  // Composition: the loadout keeps its own store (game/loadout.ts) and applies
+  // to both panel modes (a loadout is the local player's, in solo and lobby).
+  // On wide screens CSS places the two columns side by side so Deploy stays
+  // near; on narrow screens they stack with the setup rows before the action
+  // area. Every control below keeps its behaviour; only the parent changes.
+  const cols = document.createElement('div');
+  cols.className = 'aa-solo-cols';
+  const loadoutCol = document.createElement('div');
+  loadoutCol.className = 'aa-solo-loadout';
+  loadoutCol.append(buildLoadoutSection().root);
+  const setupCol = document.createElement('div');
+  setupCol.className = 'aa-solo-setup';
+  cols.append(loadoutCol, setupCol);
+  root.append(cols);
 
   const refreshers: Array<() => void> = [];
   const change = (patch: Partial<SoloSetup>): void => {
@@ -100,7 +111,7 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
 
   const modeSel = selectOf('Mode', SHIPPED_MATCH_MODES.map((m) => ({ value: m, text: MODE_LABEL[m] })), (v) => change({ mode: v as MatchMode }));
   refreshers.push(() => { modeSel.value = setup.mode; });
-  root.append(row('Mode', modeSel));
+  setupCol.append(row('Mode', modeSel));
 
   const botsRow = document.createElement('label');
   botsRow.className = 'aa-setting';
@@ -121,7 +132,7 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
   bots.addEventListener('input', (e) => { stop(e); change({ bots: Number(bots.value) }); });
   botsRow.append(bh, bots);
   refreshers.push(() => { bots.value = String(setup.bots); bv.textContent = setup.bots + (setup.bots === 1 ? ' bot' : ' bots'); });
-  root.append(botsRow);
+  setupCol.append(botsRow);
 
   const diff = document.createElement('div');
   diff.className = 'aa-seg';
@@ -146,23 +157,23 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
       b.setAttribute('aria-checked', id === setup.difficulty ? 'true' : 'false');
     }
   });
-  root.append(row('Difficulty', diff));
+  setupCol.append(row('Difficulty', diff));
   const diffNote = document.createElement('div');
   diffNote.className = 'aa-hint aa-diffnote';
   refreshers.push(() => {
     const p = BOT_DIFFICULTY_PRESETS[setup.difficulty];
     diffNote.textContent = `${p.label}: reacts in ${p.reactionMs} ms, engages to ${p.fireRangeM} m, aim error ${(p.aimErrorRad * 1000).toFixed(0)} mrad`;
   });
-  root.append(diffNote);
+  setupCol.append(diffNote);
 
   const killSel = selectOf('Kill limit', KILL_LIMITS.map((k) => ({ value: k === null ? 'none' : String(k), text: k === null ? 'No limit' : k + ' kills' })),
     (v) => change({ scoreLimit: v === 'none' ? null : Number(v) }));
   refreshers.push(() => { killSel.value = setup.scoreLimit === null ? 'none' : String(setup.scoreLimit); });
-  root.append(row('Kill limit', killSel));
+  setupCol.append(row('Kill limit', killSel));
 
   const timeSel = selectOf('Time limit', TIME_LIMITS_MS.map((t) => ({ value: String(t), text: formatClock(t) })), (v) => change({ durationMs: Number(v) }));
   refreshers.push(() => { timeSel.value = String(setup.durationMs); });
-  root.append(row('Time limit', timeSel));
+  setupCol.append(row('Time limit', timeSel));
 
   const ff = document.createElement('input');
   ff.type = 'checkbox';
@@ -170,7 +181,7 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
   ff.addEventListener('click', stop);
   ff.addEventListener('change', (e) => { stop(e); change({ friendlyFire: ff.checked }); });
   refreshers.push(() => { ff.checked = setup.friendlyFire; ff.disabled = setup.mode === 'ffa'; });
-  root.append(row('Friendly fire', ff));
+  setupCol.append(row('Friendly fire', ff));
 
   const respawnSel = selectOf('Respawn delay', RESPAWN_DELAYS_MS.map((t) => ({ value: String(t), text: (t / 1000).toFixed(1) + ' s' })), (v) => change({ respawnMs: Number(v) }));
   refreshers.push(() => { respawnSel.value = String(setup.respawnMs); });
@@ -178,7 +189,7 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
 
   const teamSel = selectOf('Team balance', BOT_TEAM_LAYOUTS.map((t) => ({ value: t, text: TEAM_LABEL[t] })), (v) => change({ teams: v as BotTeamLayout }));
   refreshers.push(() => { teamSel.value = setup.teams; teamSel.disabled = setup.mode === 'ffa'; });
-  root.append(row('Team balance', teamSel));
+  setupCol.append(row('Team balance', teamSel));
 
   const btns = document.createElement('div');
   btns.className = 'aa-row';

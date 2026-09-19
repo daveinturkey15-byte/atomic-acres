@@ -52,9 +52,13 @@ import {
   getPresentRosterHeroSockets,
   isRosterHeroesCanaryRequested,
   loadRosterHeroRig,
+  ROSTER_HERO_SIGHT_ANCHORS,
   ROSTER_HERO_WEAPON_IDS,
+  solveRosterHeroAdsMount,
+  type RosterHeroAdsMount,
   type RosterHeroLoaderOptions,
   type RosterHeroRig,
+  type RosterHeroWeaponId,
 } from './roster-heroes-loader';
 
 const DEG = Math.PI / 180;
@@ -90,19 +94,26 @@ const HIP_OFFSET = new THREE.Vector3(0.22, -0.2, -0.45);
 const ADS_OFFSET = new THREE.Vector3(0, -0.148, -0.3);
 
 /**
- * Per-adopted-hero ADS presentation trim (repair1, heroes-2346 follow-up).
- * The three hero GLBs share a ~0.092 sight line while the procedural family
- * rigs sit at ~0.095, so one shared ADS_OFFSET leaves hero sights low
- * (MP5 post ~130 px under centre, EBR egg, LMG block). Small additive trim,
- * applied ONLY while an adopted GLB hero rig is active and scaled by adsT —
+ * Per-adopted-hero ADS mount, SOLVED from the authored sight anchors
+ * (roster-heroes-loader ROSTER_HERO_SIGHT_ANCHORS) instead of repair1's
+ * hand-tuned +0.005/+0.002 y trim, which left the sight line ~5 cm under
+ * the axis (~90-185 px at ADS focal lengths). The solver returns the exact
+ * rig translation + pitch/yaw that put BOTH anchors on the camera axis at
+ * settled ADS:
+ *   mp5     offsetY +0.0593, pitch -0.0116 rad (-0.66 deg, drum peep sits
+ *           4 mm under the post line), yaw 0
+ *   m14-ebr offsetY +0.0546, pitch +0.0031 rad, yaw 0
+ *   lmg     offsetY +0.0543, pitch +0.0041 rad, yaw 0
+ * Applied ONLY while an adopted GLB hero rig is active, scaled by adsT —
  * the 16 baseline rigs and the carbine canary never match heroRigs and keep
- * byte-identical placement. Tune by looking at ?heroes=canary ADS frames.
+ * byte-identical placement. The gun moves; camera, reticle and hit ray
+ * never do.
  */
-const HERO_ADS_TRIM: Readonly<Record<string, THREE.Vector3>> = Object.freeze({
-  'mp5': new THREE.Vector3(0, 0.005, 0),
-  'm14-ebr': new THREE.Vector3(0, 0.002, 0),
-  'lmg': new THREE.Vector3(0, 0.002, 0),
-});
+const HERO_ADS_MOUNT: Readonly<Record<string, RosterHeroAdsMount>> = Object.freeze(
+  Object.fromEntries(
+    ROSTER_HERO_WEAPON_IDS.map((id) => [id, solveRosterHeroAdsMount(id, ADS_OFFSET.y)]),
+  ),
+) as Readonly<Record<string, RosterHeroAdsMount>>;
 
 interface WeaponState {
   def: WeaponDef;
@@ -562,13 +573,13 @@ export class WeaponsController {
     this.handLower = this.ord.update(dt, this.camera.position, this.camera.quaternion, time, bobX, bobY);
     for (let id = this.ord.takeClaim(); id !== null; id = this.ord.takeClaim()) this.claim(id);
     this.tmpOffset.lerpVectors(HIP_OFFSET, ADS_OFFSET, this.adsT);
-    // repair1: centre adopted hero sights only. Never the camera, never the
+    // repair2: the SOLVED hero mount (HERO_ADS_MOUNT) rides the same adsT
+    // blend — hip pose untouched at factor 0, settled ADS puts both authored
+    // sight anchors on the camera axis. Never the camera, never the
     // reticle, never a fallback rig — the gun moves, nothing else does.
-    const heroTrim = HERO_ADS_TRIM[cur.def.id];
-    if (heroTrim !== undefined && this.adsT > 0 && this.heroRigs.has(cur.def.id)) {
-      this.tmpOffset.x += heroTrim.x * this.adsT;
-      this.tmpOffset.y += heroTrim.y * this.adsT;
-      this.tmpOffset.z += heroTrim.z * this.adsT;
+    const heroMount = HERO_ADS_MOUNT[cur.def.id];
+    if (heroMount !== undefined && this.adsT > 0 && this.heroRigs.has(cur.def.id)) {
+      this.tmpOffset.y += heroMount.offsetY * this.adsT;
     }
     this.tmpOffset.x += Math.sin(time * 1.1) * swayAmp * adsDamp + bobX + 0.04 * this.handLower;
     this.tmpOffset.y += Math.cos(time * 1.7) * swayAmp * 0.7 * adsDamp + bobY
@@ -577,9 +588,11 @@ export class WeaponsController {
       - 0.09 * this.handLower;
     this.tmpOffset.applyQuaternion(this.camera.quaternion).add(this.camera.position);
     cur.rig.group.position.copy(this.tmpOffset);
+    const heroBlend = heroMount !== undefined && this.heroRigs.has(cur.def.id) ? this.adsT : 0;
     this.tmpEuler.set(
-      0.21 * this.sprintBlend - 0.35 * reloadDip + 0.3 * this.handLower,
-      0,
+      0.21 * this.sprintBlend - 0.35 * reloadDip + 0.3 * this.handLower
+        + (heroMount?.pitch ?? 0) * heroBlend,
+      (heroMount?.yaw ?? 0) * heroBlend,
       -0.12 * this.handLower,
     );
     this.tmpQuat.setFromEuler(this.tmpEuler);
@@ -850,6 +863,49 @@ export class WeaponsController {
       }
       case 'state':
         return this.snapshot(true);
+      case 'sights': {
+        // QA-only (repair2): live screen projection of the active hero's
+        // authored sight anchors. Everything is measured from the real rig
+        // world matrices and the real camera projection AFTER the frame
+        // loop rendered them — no synthetic camera, no synthetic pose.
+        // ready gates on settled ADS so the numbers are the settled mount,
+        // not a blend frame. pass = both anchors within 5 px of centre.
+        const cur = this.weapons[this.active];
+        const heroRig = this.heroRigs.get(cur.def.id);
+        const anchors = ROSTER_HERO_SIGHT_ANCHORS[cur.def.id as RosterHeroWeaponId];
+        if (!heroRig || !anchors) {
+          return { active: false, id: cur.def.id, ready: false, pass: false };
+        }
+        const w = typeof window !== 'undefined' ? window.innerWidth : 0;
+        const h = typeof window !== 'undefined' ? window.innerHeight : 0;
+        const centre: [number, number] = [w / 2, h / 2];
+        const project = (a: readonly [number, number, number]): [number, number] => {
+          const v = new THREE.Vector3(a[0], a[1], a[2]);
+          heroRig.group.localToWorld(v);
+          v.project(this.camera);
+          return [
+            +(((v.x + 1) / 2) * w).toFixed(1),
+            +((1 - (v.y + 1) / 2) * h).toFixed(1),
+          ];
+        };
+        const front = project(anchors.front);
+        const rear = project(anchors.rear);
+        const err = Math.max(
+          Math.abs(front[0] - centre[0]), Math.abs(front[1] - centre[1]),
+          Math.abs(rear[0] - centre[0]), Math.abs(rear[1] - centre[1]),
+        );
+        return {
+          active: true,
+          ready: this.adsT >= 0.995 && !cur.reloading,
+          adsT: +this.adsT.toFixed(3),
+          id: cur.def.id,
+          centre,
+          front,
+          rear,
+          errPx: +err.toFixed(1),
+          pass: err <= 5,
+        };
+      }
       case 'hud':
         return this.hud;
       case 'visible':

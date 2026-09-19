@@ -373,7 +373,19 @@ export function buildLoadoutSection(): LoadoutSection {
     const sidearmName = weaponById(resolved.sidearm)?.name ?? resolved.sidearm;
     const tacDisplayName = GRENADE_BY_ID.get(activeTac)?.name ?? activeTac;
     const sel = store.selected;
-    const origin = sel.kind === 'kit' ? fieldKitById(sel.id).title : store.custom[sel.slot]?.name ?? 'Custom';
+    // A custom slot written by a kit/tactical or kit/primary choice is
+    // auto-named after that same pair ("Linekeeper · Semtex", "MP5 · Semtex":
+    // selectTactical uses the kit title, selectPrimary the weapon name), so
+    // printing the stored name AND the resolved pair reads the pair twice
+    // (roster-menu-2259: "DEPLOYING · MP5 · SEMTEX — MP5 · DUSTER · SEMTEX").
+    // Show 'Custom' for an auto-mirror and keep a genuinely authored name
+    // ("Hold A · Smoke") verbatim. Candidates mirror the two generators
+    // exactly, including their 24-character slice.
+    const storedName = sel.kind === 'kit' ? null : store.custom[sel.slot]?.name ?? null;
+    const mirrorHeads = [primaryName, ...FIELD_KITS.map((k) => k.title)];
+    const autoMirror = storedName !== null && mirrorHeads.some((head) =>
+      `${head} · ${tacDisplayName}`.slice(0, 24).toLowerCase() === storedName.toLowerCase());
+    const origin = sel.kind === 'kit' ? fieldKitById(sel.id).title : !storedName || autoMirror ? 'Custom' : storedName;
     deployLine.textContent = `Deploying · ${origin} — ${primaryName} · ${sidearmName} · ${tacDisplayName}`;
     const primDef = weaponById(resolved.primary);
     const band = primDef ? ` · ${primDef.damage.nearRange}–${primDef.damage.farRange} m` : '';

@@ -405,6 +405,77 @@ export function getPresentRosterHeroSockets(group: THREE.Object3D): string[] {
 }
 
 /**
+ * Authored aiming anchors per hero, in rig space (muzzle -Z, up +Y, right
+ * +X), read straight off the recipe meshes in
+ * scripts/blender/build_roster_heroes.py: the front post TIP and the rear
+ * aperture/notch CENTRE the shooter actually aims through. repair1 proved
+ * these do not sit on the camera axis at settled ADS; repair2 solves the
+ * mount from them instead of hand-trimming.
+ */
+export interface RosterHeroSightAnchors {
+  /** Front post tip, rig space metres: [x, y, z]. */
+  readonly front: readonly [number, number, number];
+  /** Rear peep/notch centre, rig space metres: [x, y, z]. */
+  readonly rear: readonly [number, number, number];
+}
+
+export const ROSTER_HERO_SIGHT_ANCHORS: Readonly<
+  Record<RosterHeroWeaponId, RosterHeroSightAnchors>
+> = Object.freeze({
+  // mp5: post top z_blender 0.092 at y 0.285; drum peep centre z 0.088 at
+  // y -0.060 (discs + open tube both centred 0.088).
+  'mp5': { front: [0, 0.092, -0.285], rear: [0, 0.088, 0.060] },
+  // m14-ebr: post top 0.092 at y 0.450; aperture notch centre z 0.094 at
+  // y -0.200 (ears 0.084..0.104, open top).
+  'm14-ebr': { front: [0, 0.092, -0.450], rear: [0, 0.094, 0.200] },
+  // lmg: post top 0.092 at y 0.420; feed-cover notch centre z 0.094 at
+  // y -0.070 (ears 0.084..0.104, open top).
+  'lmg': { front: [0, 0.092, -0.420], rear: [0, 0.094, 0.070] },
+} as const);
+
+/** One solved per-hero ADS rig correction, applied scaled by adsT. */
+export interface RosterHeroAdsMount {
+  /** Extra camera-local rig translation (metres) at full ADS. */
+  readonly offsetY: number;
+  /** Extra rig pitch about +X (radians) at full ADS (euler YXZ order). */
+  readonly pitch: number;
+  /** Extra rig yaw about +Y (radians) at full ADS (euler YXZ order). */
+  readonly yaw: number;
+}
+
+/**
+ * Closed-form ADS mount for one hero: the rig translation and small
+ * pitch/yaw that put BOTH sight anchors exactly on the camera axis (screen
+ * centre) at settled ADS, given the shared ADS mount height `mountY`.
+ *
+ * Derivation, camera-local space, rig origin at (0, mountY, mountZ), rig
+ * axes aligned with the camera (euler ~0 at ADS): a small pitch p about +X
+ * moves an anchor at rig offset a to y' ~= a.y - a.z*p while leaving its
+ * depth ~a.z. Both anchors reach one common height iff
+ * p = (aF.y - aR.y) / (aF.z - aR.z), with h = aF.y - aF.z*p; the
+ * translation then cancels mountY + h. Yaw is the same construction on
+ * (x, z); both are 0 when the gun's sight line is already parallel.
+ * Live sway/bob stay additive in the frame path — at the damped ADS
+ * amplitude (~0.7 mm) that is <=2-3 px at peep depth, inside the capture
+ * gate's 5 px.
+ */
+export function solveRosterHeroAdsMount(
+  weaponId: string,
+  mountY: number,
+): RosterHeroAdsMount {
+  const anchors = ROSTER_HERO_SIGHT_ANCHORS[weaponId as RosterHeroWeaponId];
+  if (!anchors) return { offsetY: 0, pitch: 0, yaw: 0 };
+  const [fx, fy, fz] = anchors.front;
+  const [rx, ry, rz] = anchors.rear;
+  const dz = fz - rz;
+  if (dz === 0) return { offsetY: 0, pitch: 0, yaw: 0 };
+  const pitch = (fy - ry) / dz;
+  const yaw = (fx - rx) / dz;
+  const height = fy - fz * pitch; // == ry - rz*pitch by construction
+  return { offsetY: -mountY - height, pitch, yaw };
+}
+
+/**
  * Load an authored hero viewmodel rig by its own playable weapon id.
  * Falls back to that weapon's family procedural rig on ANY error (bad asset,
  * missing sockets/magazine, cancelled load) when options.mat is provided;

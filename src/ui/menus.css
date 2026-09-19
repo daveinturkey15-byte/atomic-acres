@@ -866,3 +866,79 @@
     animation: none;
   }
 }
+
+/* --- Menu composition: compact kits + two-column solo (2026-09-19) ---
+ * What the roster captures showed (captures/roster-menu-2259/solo-1600.png,
+ * solo-390.png): four tall kit cards, thirteen primary cards, the tactical
+ * row, and a Deploy line that printed the auto-mirrored custom name AND the
+ * resolved pair — all stacked above the setup rows, so Deploy sat offscreen
+ * even at 900 px high. Composition fix; no control removed, no semantics
+ * changed (loadout-panel.ts still derives every line from the game tables):
+ * - unselected kit cards collapse to role/title/weapon/tactical; the summary
+ *   and trait bars open contextually on the selected or keyboard-focused
+ *   card (the full text stays in the card's title attribute either way);
+ * - the solo panel widens and splits loadout/setup into two columns where
+ *   space permits, one column below that, with the Deploy row full-width;
+ * - every new track sizes its children (box-sizing + min-width: 0) so the
+ *   older 2 px overflow fix holds — no overflow-x clipping anywhere here. */
+#start .aa-solo { max-width: 1120px; }
+#start .aa-solo-cols {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+#start .aa-solo-cols > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
+#start .aa-solo-loadout { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+#start .aa-solo-loadout .aa-loadout { width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box; }
+#start .aa-solo-setup {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+#start .aa-solo-setup > * { min-width: 0; max-width: 100%; }
+#start .aa-kits {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+#start .aa-kit { padding: 8px 10px; min-width: 0; box-sizing: border-box; }
+#start .aa-kit .aa-kit-summary {
+  min-height: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+#start .aa-kit.aa-selected .aa-kit-summary,
+#start .aa-kit:focus-visible .aa-kit-summary { display: block; }
+#start .aa-kit .aa-kit-bars { display: none; }
+#start .aa-kit.aa-selected .aa-kit-bars,
+#start .aa-kit:focus-visible .aa-kit-bars { display: flex; }
+#start .aa-prims {
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 6px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+#start .aa-prim { padding: 6px 8px; }
+#start .aa-tacs { min-width: 0; box-sizing: border-box; }
+#start .aa-tac { min-width: 0; box-sizing: border-box; }
+#start .aa-loadline { overflow-wrap: anywhere; }
+@media (min-width: 1024px) {
+  #start .aa-solo-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: 20px;
+    align-items: start;
+  }
+  #start .aa-solo .aa-kits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

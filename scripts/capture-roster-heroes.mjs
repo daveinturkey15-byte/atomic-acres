@@ -55,7 +55,7 @@
 
 import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { join, dirname, basename } from 'node:path';
+import { join, dirname, basename, isAbsolute } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { stockBrowser } from './lib/stock-browser.mjs';
 
@@ -74,6 +74,13 @@ const targetUrl = opt('url', positionalUrl ?? DEFAULT_URL);
 const tag = (opt('tag', 'roster-heroes').replace(/[^a-zA-Z0-9-_]+/g, '-').slice(0, 64) || 'roster-heroes');
 const OUT = join(ROOT, 'captures', tag);
 mkdirSync(OUT, { recursive: true });
+
+// Which built dist proves the served bundle (source side of the sha256).
+// Default: this repo's dist/. --dist=<dir> (absolute, or repo-relative)
+// hashes ANY candidate's own build output, so the exact source/live hash
+// works from any checkout against any candidate server.
+const distOpt = opt('dist', 'dist');
+const DIST_DIR = isAbsolute(distOpt) ? distOpt : join(ROOT, distOpt);
 
 const OVERALL_MS = 180_000;
 const T0 = Date.now();
@@ -112,6 +119,7 @@ const result = {
   baseResources: null,
   finalResources: null,
   rosterSweep: [],
+  sights: {},
   pass: false,
 };
 
@@ -155,12 +163,12 @@ try {
 
   // Served-bundle provenance: the live candidate must serve exactly the built JS.
   try {
-    const names = readdirSync(join(ROOT, 'dist-heroes-2342', 'assets')).filter((n) => /^index-.*\.js$/.test(n)).sort();
+    const names = readdirSync(join(DIST_DIR, 'assets')).filter((n) => /^index-.*\.js$/.test(n)).sort();
     if (names.length === 0) {
       result.errors.push('no built bundle in dist/assets; root must run this after build');
     } else {
       const asset = names[names.length - 1];
-      const sourceSha256 = sha256(readFileSync(join(ROOT, 'dist-heroes-2342', 'assets', asset)));
+      const sourceSha256 = sha256(readFileSync(join(DIST_DIR, 'assets', asset)));
       const liveBuf = Buffer.from(await (await fetch(new URL(targetUrl).origin + '/assets/' + asset)).arrayBuffer());
       const liveSha256 = sha256(liveBuf);
       result.bundle = { asset, sourceSha256, liveSha256, match: sourceSha256 === liveSha256 };
@@ -277,6 +285,21 @@ try {
     await page.screenshot({ path: join(OUT, adsFile), timeout: cap(30_000) });
     const adsState = await snap();
     result.frames.push({ weapon: id, pose: 'ads', path: 'captures/' + tag + '/' + adsFile, state: adsState, refilled: false });
+    // repair2 gate: at settled ADS BOTH authored sight anchors must project
+    // within 5 px of screen centre — live rig matrices, live camera, real
+    // projection, read while still aiming (before ads drops).
+    await wf(page, () => {
+      try { return window.__NT?.weaponCmd?.('sights')?.ready === true; } catch { return false; }
+    }, 15_000);
+    const sights = await page.evaluate(() => {
+      try { return window.__NT?.weaponCmd?.('sights') ?? null; } catch { return null; }
+    });
+    result.sights[id] = sights;
+    if (!sights || sights.active !== true || sights.pass !== true) {
+      throw new Error('ADS sight-projection gate failed for ' + id + ': ' + JSON.stringify(sights));
+    }
+    result.frames[result.frames.length - 1].sights = { front: sights.front, rear: sights.rear, errPx: sights.errPx };
+
     await page.evaluate(() => window.__NT?.weaponCmd?.('ads', false));
     if (!adsState || adsState.ads !== true) throw new Error('not actually aiming at the ADS photo for ' + id + ' (got ' + JSON.stringify(adsState) + ')');
 
@@ -333,7 +356,8 @@ try {
     && result.frames.length === 9
     && heroesOk
     && sweepOk
-    && !!result.bundle?.match;
+    && !!result.bundle?.match
+    && HERO_IDS.every((hid) => result.sights[hid]?.pass === true);
 } catch (e) {
   if (!result.fatal) result.fatal = String(e && e.message ? e.message : e);
   result.pass = false;
