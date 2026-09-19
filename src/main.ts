@@ -37,6 +37,8 @@ import { buildFieldCases } from './build/field-cases';
 import { loadFieldCase } from './assets/field-case';
 import { buildIndustrialBarrels } from './build/industrial-barrels';
 import { preloadIndustrialBarrel } from './props/industrial-barrel';
+import { buildDesertTrees } from './build/desert-trees';
+import { preloadQuiverTree } from './props/quiver-tree';
 
 const BUILDERS: [string, Builder][] = [
   ['ground', buildGround],
@@ -51,6 +53,7 @@ const BUILDERS: [string, Builder][] = [
   ['surround', buildSurround],
   ['field-cases', buildFieldCases],
   ['industrial-barrels', buildIndustrialBarrels],
+  ['desert-trees', buildDesertTrees],
 ];
 
 // The one invariant, asserted rather than commented. From either back yard, facing
@@ -78,6 +81,7 @@ const worldTargets: THREE.Object3D[] = [];
 await Promise.all([
   loadFieldCase().catch((error: unknown) => console.warn('[field-case] unavailable', error)),
   preloadIndustrialBarrel().catch((error: unknown) => console.warn('[industrial-barrel] unavailable', error)),
+  preloadQuiverTree().catch((error: unknown) => console.warn('[quiver-tree] unavailable', error)),
 ]);
 
 for (const [name, build] of BUILDERS) {
@@ -432,6 +436,15 @@ interface QA {
   stats: () => Record<string, unknown>;
   moduleStats: typeof moduleStats;
   colliderCount: number;
+  colliderSnapshot: () => {
+    count: number;
+    colliders: Array<{
+      i: number;
+      owner: string;
+      min: [number, number, number];
+      max: [number, number, number];
+    }>;
+  };
   render: () => void;
   probeReset: (x: number, z: number) => void;
   probeWalkTo: (tx: number, tz: number, maxSteps: number, tolerance?: number) => boolean;
@@ -557,6 +570,17 @@ const qa: QA = {
   },
   moduleStats,
   colliderCount: colliders.length,
+  colliderSnapshot() {
+    return {
+      count: colliders.length,
+      colliders: colliders.map((c, i) => ({
+        i,
+        owner: colliderOwner[i],
+        min: [c.min.x, c.min.y, c.min.z],
+        max: [c.max.x, c.max.y, c.max.z],
+      })),
+    };
+  },
   render() {
     // Must be world.render(), not renderer.render(): the capture harness drives
     // this, and for the whole life of the project it was photographing the scene

@@ -15,7 +15,7 @@ try {
   await page.addStyleTag({ content: '#start,#hud,#crosshair{display:none!important}' });
   result.module = await page.evaluate(() => window.__NT.moduleStats['industrial-barrels']);
   if (result.module?.colliders !== 4) throw new Error('four loaded barrels and colliders required');
-  for (const [name,x,z] of [['white-east',11.6,34.8],['white-west',-10.8,31.8],['orange-east',11.3,-33],['orange-west',-10.6,-34.2]]) {
+  for (const [name,x,z] of [['white-east',10.41,34.97],['white-west',-12.46,32.15],['orange-east',11.58,-31.83],['orange-west',-11.84,-34.03]]) {
     const at = await page.evaluate(([name,x,z]) => {
       const dx=x>0?-1.5:1.5, dz=z>0?-1.8:1.8;
       window.__NT.stations[name]={pos:[x+dx,1.35,z+dz],yaw:Math.atan2(dx,dz),pitch:-Math.atan2(.7,Math.hypot(dx,dz)),fov:60,ref:null,note:'asset/collision canary'};
@@ -27,7 +27,7 @@ try {
     await page.screenshot({path:join(out,name+'.png')});
     result.frames.push({name,stats,colliders:at});
   }
-  result.pass=result.frames.length===4&&result.frames.every(f=>sceneWasMeasured(f.stats)&&f.stats.calls<=1200&&f.stats.triangles<=900000&&f.colliders.some(c=>c.owner==='industrial-barrels'))&&!result.errors.length;
+  result.pass=result.frames.length===4&&result.frames.every(f=>sceneWasMeasured(f.stats)&&f.stats.calls<=1200&&f.stats.triangles<=900000&&f.colliders.length===1&&f.colliders[0].owner==='industrial-barrels')&&!result.errors.length;
 } catch(e){result.fatal=String(e);result.pass=false;}
 finally{writeFileSync(join(out,'result.json'),JSON.stringify(result,null,2));await owned.close();}
 console.log(JSON.stringify(result,null,2));

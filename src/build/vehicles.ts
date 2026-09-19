@@ -1008,10 +1008,14 @@ function makeSaloon(ctx: BuildContext, colour: number, o: SaloonOpts): Vehicle {
     ? ctx.mat.painted(PAL.coachCream, 0.36, 0.3)
     : paint;
 
-  // lower body: rocker to beltline, bonnet down at the nose, boot up at the tail
+  // lower body: rocker to beltline, bonnet down at the nose, boot up at the tail.
+  // The nose-top and deck-edge corners are chamfered one step each: the full-width
+  // 90-degree edges caught the sun as slab highlight lines (rear 3/4 read). Extrema
+  // (and so the collider: len/wid/hgt below) are unchanged.
   const body: Pt[] = [
-    [-L / 2, 0.34], [L / 2, 0.34], [L / 2 + 0.02, 0.78], [1.12, 0.9],
-    [-1.6, 0.94], [-L / 2 + 0.06, 0.98], [-L / 2 - 0.02, 0.76],
+    [-L / 2, 0.34], [L / 2, 0.34], [L / 2 + 0.02, 0.62], [L / 2 - 0.06, 0.78],
+    [1.12, 0.9], [-1.6, 0.94], [-L / 2 + 0.06, 0.98], [-L / 2 + 0.02, 0.90],
+    [-L / 2 - 0.02, 0.76],
   ];
   g.add(extrude(body, W, paint));
 
@@ -1022,7 +1026,14 @@ function makeSaloon(ctx: BuildContext, colour: number, o: SaloonOpts): Vehicle {
   g.add(extrude(glass, W * 0.82, ctx.mat.windowDark));
   const quarter: Pt[] = [[-1.6, 0.88], [-1.0, 0.88], [-1.0, 1.37], [-1.18, 1.37]];
   g.add(extrude(quarter, W * 0.84, paint));
-  g.add(box(1.86, 0.1, W * 0.86, roofPaint, -0.3, 1.41, 0));
+  // crowned roof cap: same footprint/height/material as the old flat box, but the
+  // nose and tail ends roll down one step each instead of breaking at 90 degrees.
+  // One extruded mesh replaces one box mesh: no new draw call, same roofPaint.
+  const roof: Pt[] = [
+    [-1.23, 1.36], [0.63, 1.36], [0.57, 1.43], [0.40, 1.46],
+    [-1.00, 1.46], [-1.17, 1.43],
+  ];
+  g.add(extrude(roof, W * 0.86, roofPaint));
 
   // tail fins, one blade per quarter, base buried under the boot lid
   const fin: Pt[] = [

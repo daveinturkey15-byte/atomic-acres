@@ -411,15 +411,47 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     const ry = Math.atan2(ux, uz);
     const n = Math.max(2, Math.round(L / 2.6));
     const w = rr(0.74, 0.92);
+    const fr = (x: number): number => x - Math.floor(x);
+    const wave = (s: number): number =>
+      -0.035 + Math.sin(s * 2.1 + ax * 0.7 + az * 1.3) * 0.03;
     for (let i = 0; i < n; i++) {
       const s0 = (i / n) * L, s1 = ((i + 1) / n) * L;
       const len = s1 - s0, hh = hgt * rr(0.92, 1.08), body = hh - w / 2;
       const cx = ax + ux * (s0 + s1) / 2, cz = az + uz * (s0 + s1) / 2;
       B.put(mat.hedge, w, body, len, cx, body / 2, cz, ry);
-      // the rounded top runs TUCK short of the box at both ends: its flat caps were
-      // the box's own end faces (hedge on hedge, different UVs, at every block joint)
-      C.span(mat.hedge, w / 2, ax + ux * (s0 + TUCK), body, az + uz * (s0 + TUCK),
-        ax + ux * (s1 - TUCK), body, az + uz * (s1 - TUCK));
+      // wavy crown axis: smooth sine along the run, biased 35mm below the old flat
+      // axis so the ridge top (axis + w/2) peaks at hh-5mm, never above the collider.
+      const y0 = body + wave(s0 + TUCK), y1 = body + wave(s1 - TUCK);
+      // A tilted cylinder cap has a small run-axis projection. Add that measured
+      // projection to the visual tuck, then sample the actual wave at the inset ends.
+      const crownRun = Math.max(1e-6, len - 2 * TUCK);
+      const crownRise = Math.abs(y1 - y0);
+      const crownCapProjection = (w / 2) * crownRise / Math.hypot(crownRun, crownRise);
+      const crownInset = Math.min(len * 0.45, TUCK + crownCapProjection + 0.001);
+      const c0 = s0 + crownInset, c1 = s1 - crownInset;
+      C.span(mat.hedge, w / 2, ax + ux * c0, body + wave(c0), az + uz * c0,
+        ax + ux * c1, body + wave(c1), az + uz * c1);
+      // one tucked crown lump per block: deterministic hashes from the block centre,
+      // zero rand() consumed so downstream props stay byte-identical. Each lump pokes
+      // 20mm through the upper cylinder slopes (visible) yet stays inside the box
+      // collider (lateral edge = cylHalf + 20mm <= 0.45w, top <= hh).
+      const q1 = fr(Math.sin(cx * 12.9898 + cz * 78.233 + i * 37.719) * 43758.5453);
+      const q2 = fr(Math.sin(cx * 39.346 + cz * 11.135 + i * 74.731) * 24634.6345);
+      const q3 = fr(Math.sin(cx * 73.156 + cz * 27.423 + i * 19.19) * 56445.2344);
+      const q4 = fr(Math.sin(cx * 91.17 + cz * 47.31 + i * 11.77) * 32412.7788);
+      const q5 = fr(Math.sin(cx * 53.41 + cz * 83.77 + i * 43.13) * 38342.6117);
+      const q6 = fr(Math.sin(cx * 13.73 + cz * 57.97 + i * 29.37) * 43125.6363);
+      const bw = w * (0.70 + 0.10 * q1);
+      const bh = w * (0.34 + 0.06 * q2);
+      const bd = w * (0.78 + 0.14 * q3);
+      const ly = body + w * (0.26 + 0.04 * q6);
+      const dy = ly - body;
+      const cylHalf = Math.sqrt(Math.max(0, (w / 2) * (w / 2) - dy * dy));
+      const edge = cylHalf + 0.02;
+      const side = q4 < 0.5 ? -1 : 1;
+      const ox = side * Math.max(0, edge - bw / 2);
+      const sh = (q5 - 0.5) * len * 0.25;
+      S.put(mat.hedge, bw, bh, bd, cx + ux * sh + uz * ox, ly, cz + uz * sh - ux * ox, ry);
       colliders.push(aabbSlab(cx, 0, cz, Math.abs(ux) * len + Math.abs(uz) * w, hh,
         Math.abs(uz) * len + Math.abs(ux) * w));
     }

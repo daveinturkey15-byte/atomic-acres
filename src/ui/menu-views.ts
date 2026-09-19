@@ -76,8 +76,8 @@ export function buildMain(): MainView {
   foot.append(text('div', 'aa-fan', FAN_LINE), text('div', 'aa-fan aa-credits', LICENCE_LINES.join(' · ')));
   root.append(
     text('div', 'aa-eyebrow', 'A fan project inspired by Black Ops 2'),
-    text('h1', 'aa-title', 'ATOMIC ACRES'),
-    text('div', 'aa-sub', 'Nuketown 2025'),
+    text('h1', 'aa-title', 'NUKETOWN 2025'),
+    text('div', 'aa-sub', 'Solo skirmishes and multiplayer'),
     btnRow,
     text('div', 'aa-maphead', 'Map'),
     maps.root,
@@ -122,7 +122,7 @@ export interface CreditsView {
 export function buildCredits(): CreditsView {
   const root = view('Credits', 'aa-creditsview');
   const lines = [
-    'Atomic Acres — a from-scratch browser FPS on Three.js WebGPU / TSL.',
+    'Nuketown 2025 — a standalone browser FPS rebuilt on Three.js WebGPU / TSL.',
     'Map, props, characters and effects are procedural: built in code, no downloaded art.',
     FAN_LINE,
     ...LICENCE_LINES,

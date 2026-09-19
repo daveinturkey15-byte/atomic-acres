@@ -32,6 +32,9 @@ import {
   type ShotMsg,
   type StreakIntentMsg,
 } from './protocol';
+// The guest's inbound-host liveness uses the SAME constant the host uses to
+// sweep quiet seats, so neither side of the wire outlives the other's patience.
+import { LIVENESS_MS } from './room-admit';
 import {
   cleanName, createPose, integrateInput, roomClosed, roomOpened,
   type PlayerStance, type Pose, type TimerId,
@@ -63,6 +66,10 @@ export interface SelfAck {
 /** Game-tag message tags a guest forwards to its match driver. */
 const GAME_TAGS: ReadonlySet<string> = new Set([
   'shot-reject', 'shot-fired', 'damage', 'kill', 'spawn', 'streak-state', 'match-state', 'ordnance',
+]);
+/** Directional receive allow-list. Guest-authored wire shapes are never host heartbeats. */
+const HOST_MESSAGE_TYPES: ReadonlySet<string> = new Set([
+  'welcome', 'reject', 'roster', 'start', 'state', 'ping', 'pong', 'bye', ...GAME_TAGS,
 ]);
 
 export class GuestClient {
@@ -102,6 +109,14 @@ export class GuestClient {
   private readonly resume: ResumeClaim | null;
   private readonly localPrimaryId: string | (() => string | undefined) | undefined;
   private disposed = false;
+  /** Guest-local time of the last VALID host message while admitted; -1 until welcome. */
+  private lastHostMsgAt = -1;
+  /** The inbound-silence watchdog has fired; it closes exactly once. */
+  private hostSilenceFired = false;
+  /** Guards the transport unsubscribe so teardown paths can share one call. */
+  private detached = false;
+  /** Newest host state tick admitted; stale/duplicate states do not refresh liveness. */
+  private lastHostStateTick = -1;
   private clockOffset = 0;
   private clockSamples = 0;
   private players: readonly PlayerSample[] = [];
@@ -136,10 +151,7 @@ export class GuestClient {
       }
       this.joinAttempts += 1;
       if (this.joinAttempts * 750 >= this.joinTimeoutMs) {
-        this.clearJoinTimer();
-        this.state = 'closed';
-        this.rejectReason = 'timeout';
-        this.onChange();
+        this.closeTerminal('closed', 'timeout', false);
         return;
       }
       this.retryJoin();
@@ -245,14 +257,25 @@ export class GuestClient {
     this.transport.send(this.hostPeer, msg);
   }
 
-  /** Manual liveness ping (auto interval calls this every 2 s). */
+  /**
+   * Manual liveness ping (auto interval calls this every 2 s). This is also
+   * the inbound-host watchdog's only heartbeat: if no VALID host word has
+   * arrived for LIVENESS_MS (guest-local now) while admitted, the guest
+   * closes once with `host-left` — a host whose uplink died never gets to
+   * send the bye this guest would otherwise wait for forever.
+   */
   ping(nowMs: number): void {
     if (this.disposed || this.state === 'closed' || this.state === 'rejected') return;
+    const admitted = this.state === 'lobby' || this.state === 'starting' || this.state === 'playing';
+    if (admitted && this.lastHostMsgAt >= 0 && nowMs - this.lastHostMsgAt > LIVENESS_MS) {
+      this.onHostSilence();
+      return;
+    }
     this.transport.send(this.hostPeer, { type: 'ping', t: nowMs });
   }
 
   startAutoPing(): void {
-    if (this.pingTimer !== null || this.disposed) return;
+    if (this.pingTimer !== null || this.disposed || this.hostSilenceFired) return;
     this.pingTimer = setInterval(() => this.ping(this.now()), 2000);
   }
 
@@ -263,22 +286,7 @@ export class GuestClient {
   }
 
   dispose(): void {
-    if (this.disposed) return;
-    this.disposed = true;
-    if (this.pingTimer !== null) {
-      clearInterval(this.pingTimer);
-      this.pingTimer = null;
-    }
-    this.clearJoinTimer();
-    this.unsubscribe();
-    try {
-      this.transport.send(this.hostPeer, { type: 'bye' });
-    } catch {
-      /* host already gone. */
-    }
-    this.state = 'closed';
-    roomClosed();
-    this.onChange();
+    this.closeTerminal('closed', this.rejectReason, true);
   }
 
   // -- internals ------------------------------------------------------------
@@ -290,19 +298,84 @@ export class GuestClient {
     }
   }
 
+  /**
+   * One-way host loss without a bye. Same teardown shape as dispose(): the
+   * transport listener and every owned timer are released HERE, no new
+   * polling timer is created, and the transition fires exactly once. A later
+   * dispose() is a no-op because the terminal path already released the
+   * listener, room count, callback, and any optional bye.
+   */
+  private onHostSilence(): void {
+    if (this.hostSilenceFired || this.disposed) return;
+    this.hostSilenceFired = true;
+    this.closeTerminal('closed', 'host-left', false);
+  }
+
+  /** The sole terminal path: one room close, one callback, and no timer/listener left. */
+  private closeTerminal(
+    nextState: 'rejected' | 'closed',
+    reason: RejectReason | 'timeout' | 'host-left' | null,
+    sendBye: boolean,
+  ): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.detach();
+    this.clearJoinTimer();
+    if (this.pingTimer !== null) {
+      clearInterval(this.pingTimer);
+      this.pingTimer = null;
+    }
+    if (sendBye) {
+      try {
+        this.transport.send(this.hostPeer, { type: 'bye' });
+      } catch {
+        /* host already gone. */
+      }
+    }
+    this.state = nextState;
+    this.rejectReason = reason;
+    roomClosed();
+    this.onChange();
+  }
+
+  private detach(): void {
+    if (this.detached) return;
+    this.detached = true;
+    this.unsubscribe();
+  }
+
   private handle(from: PeerId, raw: unknown): void {
     if (from !== this.hostPeer || !isNetMessage(raw)) return;
+    // A closed, rejected or disposed guest ignores ALL late traffic: a queued
+    // welcome must never resurrect a seat the host already ended.
+    if (this.disposed || this.state === 'closed' || this.state === 'rejected') return;
     const msg = raw;
     const nowMs = this.now();
+    // isNetMessage is structural and admits both wire directions. Keep the
+    // heartbeat boundary directional: host-peer inputs/claims are invalid here.
+    if (!HOST_MESSAGE_TYPES.has(msg.type)) return;
     if (GAME_TAGS.has(msg.type)) {
+      if (this.state === 'joining') return;
+      this.lastHostMsgAt = nowMs;
       this.gameHandler?.(msg as GameNetMessage);
       return;
     }
     switch (msg.type) {
       case 'welcome':
+        if (this.state !== 'joining') {
+          const sameSeat = msg.playerId === this.playerId &&
+            (msg.token === undefined || (this.token !== null && msg.token === this.token));
+          if (!sameSeat) return;
+          this.lastHostMsgAt = nowMs;
+          this.rosterCache = msg.roster;
+          this.onChange();
+          break;
+        }
         this.clearJoinTimer();
+        this.lastHostMsgAt = nowMs;
         this.playerId = msg.playerId;
         this.token = msg.token ?? null;
+        this.lastHostStateTick = -1;
         // Seed immediately so events arriving before the first scheduled pong
         // use the right epoch; the first NTP sample replaces this estimate.
         this.clockOffset = msg.hostNow - nowMs;
@@ -311,29 +384,37 @@ export class GuestClient {
         this.onChange();
         break;
       case 'reject':
-        this.clearJoinTimer();
-        this.state = 'rejected';
-        this.rejectReason = msg.reason;
-        this.onChange();
+        if (this.state === 'joining') this.closeTerminal('rejected', msg.reason, false);
         break;
       case 'roster':
+        if (this.state === 'joining') break;
         // Guests render ONLY this: the host's word replaces, never patches.
         this.rosterCache = msg.roster;
+        this.lastHostMsgAt = nowMs;
         this.onChange();
         break;
       case 'start':
+        if (this.state !== 'lobby' && this.state !== 'starting') break;
+        if (this.startTick >= 0 && msg.startTick <= this.startTick) break;
         this.startTick = msg.startTick;
         if (this.clockSamples === 0) this.clockOffset = msg.hostNow - nowMs;
         this.state = 'starting';
+        this.lastHostMsgAt = nowMs;
         this.onChange();
         break;
       case 'state':
-        this.applyState(msg.tick, msg.hostNow, msg.players, nowMs);
+        if (this.state !== 'joining' && this.applyState(msg.tick, msg.hostNow, msg.players, nowMs)) {
+          this.lastHostMsgAt = nowMs;
+        }
         break;
       case 'ping':
+        if (this.state === 'joining') break;
+        this.lastHostMsgAt = nowMs;
         this.transport.send(this.hostPeer, { type: 'pong', t: msg.t, now: nowMs });
         break;
       case 'pong': {
+        if (this.state === 'joining') break;
+        this.lastHostMsgAt = nowMs;
         const rtt = Math.max(0, nowMs - msg.t);
         this.diag.recordRtt(rtt);
         if (msg.now !== undefined) {
@@ -346,9 +427,7 @@ export class GuestClient {
         break;
       }
       case 'bye':
-        this.state = 'closed';
-        this.rejectReason = 'host-left';
-        this.onChange();
+        this.closeTerminal('closed', 'host-left', false);
         break;
       default:
         break;
@@ -371,11 +450,16 @@ export class GuestClient {
     return false;
   }
 
-  private applyState(tick: number, hostNow: number, players: PlayerSample[], nowMs: number): void {
+  private applyState(tick: number, hostNow: number, players: PlayerSample[], nowMs: number): boolean {
+    if (!Number.isSafeInteger(tick) || tick <= this.lastHostStateTick) return false;
+    this.lastHostStateTick = tick;
+    // An admitted lobby guest can use a fresh state as a liveness word while
+    // waiting for the separate resume/start protocol to place it in a phase.
+    if (this.state === 'lobby') return true;
     if (this.state === 'starting' && this.startTick >= 0 && tick >= this.startTick) {
       this.state = 'playing';
     }
-    if (this.state !== 'playing' && this.state !== 'starting') return;
+    if (this.state !== 'playing' && this.state !== 'starting') return false;
     this.diag.tick(nowMs);
     // Age in the host's clock domain, so a cross-machine offset does not read as lag.
     this.diag.recordAge(Math.max(0, nowMs + this.clockOffset - hostNow));
@@ -419,5 +503,6 @@ export class GuestClient {
     }
     this.stateHandler?.(players, hostNow);
     this.onChange();
+    return true;
   }
 }

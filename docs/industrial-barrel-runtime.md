@@ -35,7 +35,7 @@ network request during runtime.
 `src/props/industrial-barrel.ts` exports:
 
 - `INDUSTRIAL_BARREL_URL` and `INDUSTRIAL_BARREL_SIZE`
-- `preloadIndustrialBarrel()` and `industrialBarrelReady`
+- `preloadIndustrialBarrel()` (the unused mutable ready export was removed)
 - `loadIndustrialBarrel()` / `getIndustrialBarrel()` for one shared-buffer clone
 - `disposeIndustrialBarrel()` for shutdown or route replacement
 

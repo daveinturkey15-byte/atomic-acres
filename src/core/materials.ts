@@ -8,6 +8,7 @@
  */
 import * as THREE from 'three';
 import { createOperatorMaterial } from '../characters/operator-materials';
+import { createTurfTextures, disposeTurfTextures } from './turf-material';
 import { MeshBasicNodeMaterial, MeshStandardNodeMaterial } from 'three/webgpu';
 import type { Node } from 'three/webgpu';
 import type { ShaderNodeObject } from 'three/tsl';
@@ -313,12 +314,18 @@ export function buildMaterials(): MaterialLibrary {
    * read the WETNESS uniform. `k` is how strongly this surface responds (asphalt 1,
    * lawn 0.5). Same maps, same params, same singleton discipline.
    */
-  const wetStd = (p: THREE.MeshStandardMaterialParameters, k: number): THREE.Material => {
+  const wetStd = (
+    p: THREE.MeshStandardMaterialParameters,
+    k: number,
+    ownMaps = true,
+  ): THREE.Material => {
     const m = new MeshStandardNodeMaterial(p);
     own(m);
-    if (p.map) own(p.map);
-    if (p.roughnessMap) own(p.roughnessMap);
-    if (p.normalMap) own(p.normalMap);
+    // The turf cache owns the lawn maps as one set so teardown also clears its
+    // module cache. Other wet surfaces keep the historical per-map ownership.
+    if (ownMaps && p.map) own(p.map);
+    if (ownMaps && p.roughnessMap) own(p.roughnessMap);
+    if (ownMaps && p.normalMap) own(p.normalMap);
     const wet = WETNESS.mul(k);
     const refresh = (): void => {
       // materialColor/materialRoughness resolve map fields during the Three.js
@@ -364,11 +371,13 @@ export function buildMaterials(): MaterialLibrary {
     blotches(c, s, 8, s * 0.05, s * 0.16, (a) => 'rgba(216,210,198,' + a + ')', 0.1);
   });
 
-  // ---- mown lawn: broad value drift and quiet mow bands. The former 8-cell
-  // checker read as green triangles at gameplay range; keep the procedural
-  // fallback deterministic, but let the real CC0 grass set carry close detail
-  // when its complete diffuse/roughness/normal trio arrives.
-  const lawnTex = tex(512, 10, (c, s) => {
+  // Preserve the old lawn callbacks while the new turf is compared. These
+  // throwaway canvases are intentionally generated and disposed in this build:
+  // blotches() and speckle() consume the shared stream in draw order, so a
+  // hand-counted skip would be a second implementation of those callbacks and
+  // could shift every later map. The one-time CPU allocation is bounded and no
+  // previous lawn resource reaches a material or GPU.
+  const previousLawnTex = tex(512, 10, (c, s) => {
     c.fillStyle = hex(PAL.lawn);
     c.fillRect(0, 0, s, s);
     const band = s / 12;
@@ -383,6 +392,10 @@ export function buildMaterials(): MaterialLibrary {
     speckle(c, s, 1800, 0.035);
     speckle(c, s, 900, 0.028, false);
   });
+  previousLawnTex.dispose();
+  const turf = createTurfTextures();
+  const { lawnTex, lawnRough, lawnNormal } = turf;
+  own({ dispose: () => disposeTurfTextures(turf) });
 
   const asphaltTex = tex(512, 22, (c, s) => {
     c.fillStyle = hex(PAL.asphalt);
@@ -552,8 +565,9 @@ export function buildMaterials(): MaterialLibrary {
     speckle(c, s, 4000, 0.3);
     speckle(c, s, 1500, 0.25, false);
   }, 1.2);
-  // Lawn: matte ~0.95; mow stripes mirrored as a VALUE pattern in roughness.
-  const lawnRough = dataTex(256, 10, (c, s) => {
+  // Preserve the former lawn roughness/normal stream for downstream maps; the
+  // replacement turf set supplies the live lawn maps above.
+  const previousLawnRough = dataTex(256, 10, (c, s) => {
     c.fillStyle = R(0.95);
     c.fillRect(0, 0, s, s);
     const band = s / 8;
@@ -563,12 +577,14 @@ export function buildMaterials(): MaterialLibrary {
     blotches(c, s, 5, s * 0.04, s * 0.1, (a) => 'rgba(225,225,225,' + a + ')', 0.25);
     speckle(c, s, 800, 0.08);
   });
-  const lawnNormal = normalTex(256, 10, (c, s) => {
+  previousLawnRough.dispose();
+  const previousLawnNormal = normalTex(256, 10, (c, s) => {
     c.fillStyle = gray(128);
     c.fillRect(0, 0, s, s);
     speckle(c, s, 5000, 0.3);
     speckle(c, s, 2500, 0.28, false);
   }, 0.8);
+  previousLawnNormal.dispose();
   // Hedge: matte ~0.96 with leaf-lump roughness + blobby normals.
   const hedgeRough = dataTex(256, 5, (c, s) => {
     c.fillStyle = R(0.96);
@@ -789,7 +805,7 @@ export function buildMaterials(): MaterialLibrary {
     paving: wetStd({ map: pavingTex, roughness: 1, roughnessMap: pavingRough, normalMap: pavingNormal, normalScale: new THREE.Vector2(0.8, 0.8), metalness: 0 }, 0.9),
     asphalt: wetStd({ map: asphaltTex, roughness: 1, roughnessMap: asphaltRough, normalMap: asphaltNormal, normalScale: new THREE.Vector2(0.6, 0.6), metalness: 0 }, 1.0),
     kerb: wetStd({ color: PAL.kerb, roughness: 1, roughnessMap: kerbRough, normalMap: kerbNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }, 0.8),
-    lawn: wetStd({ map: lawnTex, roughness: 1, roughnessMap: lawnRough, normalMap: lawnNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }, 0.5),
+    lawn: wetStd({ map: lawnTex, roughness: 1, roughnessMap: lawnRough, normalMap: lawnNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }, 0.5, false),
     sand: wetStd({ color: PAL.sand, roughness: 1, roughnessMap: sandRough, normalMap: sandNormal, normalScale: new THREE.Vector2(0.5, 0.5), metalness: 0 }, 0.6),
     stuccoCream: std({ map: creamSet.map, roughness: 1, roughnessMap: creamSet.roughnessMap, normalMap: creamSet.normalMap, normalScale: new THREE.Vector2(0.5, 0.5), metalness: 0 }),
     stuccoTerracotta: std({ map: terraSet.map, roughness: 1, roughnessMap: terraSet.roughnessMap, normalMap: terraSet.normalMap, normalScale: new THREE.Vector2(0.6, 0.6), metalness: 0 }),

@@ -1,0 +1,2228 @@
+{
+  "schema": "nuketown-2025/asset-library/1",
+  "generatedAt": "2026-09-19",
+  "project": "nuketown-2025-standalone",
+  "sourceTree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
+  "sourceCommit": "fb7151498ac8e826e3c1066484219420c3c7a8bc",
+  "stateDefinitions": {
+    "verified-source": "File and provenance evidence are present; runtime integration is not claimed.",
+    "integrated": "Repository code explicitly references or loads the path; visual acceptance is separate.",
+    "runtime-review-open": "Asset is present or wired but root still owns runtime, performance, or subjective review."
+  },
+  "acceptanceRule": "Entries may record bounded runtime or subjective review outcomes with explicit evidence, but no entry claims photoreal/source-quality acceptance or an exact shipped build. sourceCommit/sourceCommitAnchor identify the current dirty-tree anchor; generated images remain 2D reference targets.",
+  "exclusions": [
+    "old Atomic Acres checkout and its assets",
+    "secrets, profiles and logs"
+  ],
+  "entries": [
+    {
+      "id": "animation/kimodo/walk",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\walk.glb",
+      "repoPath": "public/anim/walk.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 15640,
+      "sha256": "c88c38fc7b935f98b3be9ce8c07e565fd3d84e1ee2e63d21eb6a098f4d5c1628",
+      "runtimeRole": "21-bone baked loop motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "runtime gait capture verifies the explicit 4.8 m/s jog/run selection; the 11-pose viewmodel capture is separate, and animation visual quality remains root-owned",
+      "runtimeVerification": {
+        "scope": "root stock-browser gait capture",
+        "status": "pass",
+        "jogSpeedMps": 4.8,
+        "selectedLocomotion": "run",
+        "evidence": "captures/gait-poses/result.json"
+      },
+      "clip": {
+        "id": "walk",
+        "frames": 26,
+        "durationS": 0.833,
+        "fps": 30,
+        "loop": true,
+        "speedMps": 1.97,
+        "strideM": 1.642,
+        "footSlideCm": 3.8,
+        "loopSeam": 0.1244,
+        "seed": 1102,
+        "promptId": "walk",
+        "prompt": "a soldier walks forward slowly and casually at an unhurried stroll, short relaxed steps, arms swinging gently, loopable",
+        "embeddingSha256": "a55cd27acf3ac3b466c12b8463b32665388ddf5ddc5f2c3ae80930e78f241eb2"
+      }
+    },
+    {
+      "id": "animation/kimodo/run",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\run.glb",
+      "repoPath": "public/anim/run.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 12820,
+      "sha256": "d6414924dad74386ec530a74ebfe75c1719ecae4985330a18730dc30f23d67f1",
+      "runtimeRole": "21-bone baked loop motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "runtime gait capture verifies the explicit 6.6 m/s sprint selection; animation visual quality remains root-owned",
+      "runtimeVerification": {
+        "scope": "root stock-browser gait capture",
+        "status": "pass",
+        "sprintSpeedMps": 6.6,
+        "selectedLocomotion": "sprint",
+        "evidence": "captures/gait-poses/result.json"
+      },
+      "clip": {
+        "id": "run",
+        "frames": 18,
+        "durationS": 0.567,
+        "fps": 30,
+        "loop": true,
+        "speedMps": 2.67,
+        "strideM": 1.513,
+        "footSlideCm": 6.2,
+        "loopSeam": 0.1261,
+        "seed": 1003,
+        "promptId": "run",
+        "prompt": "a soldier jogs forward at a steady pace holding a rifle at the ready, elbows bent, even strides, loopable",
+        "embeddingSha256": "e47dbee53455e1b91e900d600fe4bacb050a665b5ff7cae33d616ab9864b2e4a"
+      }
+    },
+    {
+      "id": "animation/kimodo/crouch-idle",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\crouch-idle.glb",
+      "repoPath": "public/anim/crouch-idle.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 25132,
+      "sha256": "ff85fb84e2e4175b50a6c3f6fce8de3e29cb991b605f229196a76e85a9dd4bb2",
+      "runtimeRole": "21-bone baked loop motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "crouch-idle",
+        "frames": 53,
+        "durationS": 1.733,
+        "fps": 30,
+        "loop": true,
+        "speedMps": 0,
+        "strideM": 0,
+        "footSlideCm": 0.5,
+        "loopSeam": 0.0296,
+        "seed": 1105,
+        "promptId": "crouch-idle",
+        "prompt": "a soldier holds a half-kneeling combat crouch with his back straight and chest up, knees bent, rifle shouldered, steady",
+        "embeddingSha256": "b9deca0259f834d29b64191e646102d526d4b4b7274acd4c4dd0e9fd04dd00c9"
+      }
+    },
+    {
+      "id": "animation/kimodo/crouch-walk",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\crouch-walk.glb",
+      "repoPath": "public/anim/crouch-walk.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 17392,
+      "sha256": "e3f1e5b98c00b3c5f772dbe9fc1e28ff38c3e4d86dabf188b6b5d1fd6ad35161",
+      "runtimeRole": "21-bone baked loop motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "crouch-walk",
+        "frames": 31,
+        "durationS": 1,
+        "fps": 30,
+        "loop": true,
+        "speedMps": 1.4,
+        "strideM": 1.4,
+        "footSlideCm": 2.4,
+        "loopSeam": 0.1376,
+        "seed": 1106,
+        "promptId": "crouch-walk",
+        "prompt": "a soldier advances in a combat crouch, back straight and chest up, knees bent, taking short steady steps, rifle shouldered, loopable",
+        "embeddingSha256": "5a0b2dbba4761e8b024a58ab8eb2d8aa57430d798888e5c05734b28477f84b7f"
+      }
+    },
+    {
+      "id": "animation/kimodo/aim-rifle-walk",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\aim-rifle-walk.glb",
+      "repoPath": "public/anim/aim-rifle-walk.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 13536,
+      "sha256": "d02322a137f638f63eb44611b2ee8756039b90a89a1b86b2b1a1b67bf5fda38d",
+      "runtimeRole": "21-bone baked loop motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "aim-rifle-walk",
+        "frames": 20,
+        "durationS": 0.633,
+        "fps": 30,
+        "loop": true,
+        "speedMps": 1.95,
+        "strideM": 1.235,
+        "footSlideCm": 1.4,
+        "loopSeam": 0.0806,
+        "seed": 1008,
+        "promptId": "aim-rifle-walk",
+        "prompt": "a soldier walks forward slowly while aiming a rifle straight ahead with both hands, upper body steady, loopable",
+        "embeddingSha256": "5482a68569fe0b3be551f42092cb73836f4e87a34c3e1d7ac92b825423c152f7"
+      }
+    },
+    {
+      "id": "animation/kimodo/jump",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\jump.glb",
+      "repoPath": "public/anim/jump.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 32928,
+      "sha256": "192f781a506f4bd6c2255ad5d186cffd34f34d72a14374288116355df81ceb91",
+      "runtimeRole": "21-bone baked one-shot motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "jump",
+        "frames": 75,
+        "durationS": 2.467,
+        "fps": 30,
+        "loop": false,
+        "speedMps": 0.2,
+        "strideM": 0.493,
+        "footSlideCm": null,
+        "loopSeam": 0.3583,
+        "seed": 2001,
+        "promptId": "jump",
+        "prompt": "a person crouches and then jumps straight up off both feet, tucking the knees at the top",
+        "embeddingSha256": "e4d55931b19b445b496f1a0c452cfa6123d0fe95a75d6f04f39a2c322d496e39"
+      }
+    },
+    {
+      "id": "animation/kimodo/land",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\land.glb",
+      "repoPath": "public/anim/land.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 27612,
+      "sha256": "b98ff00da7de0831361dedc130c13dfc26cc7867ec9153f860b5ffea81641886",
+      "runtimeRole": "21-bone baked one-shot motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "land",
+        "frames": 60,
+        "durationS": 1.967,
+        "fps": 30,
+        "loop": false,
+        "speedMps": 0.05,
+        "strideM": 0.098,
+        "footSlideCm": null,
+        "loopSeam": 1.4789,
+        "seed": 2002,
+        "promptId": "land",
+        "prompt": "a person lands from a drop, absorbing the impact by bending both knees deeply, then straightens back up",
+        "embeddingSha256": "6a7fbe86cdfc633a61168b763c347c100ba0077c3402b14606d1371827c686f1"
+      }
+    },
+    {
+      "id": "animation/kimodo/turn-left",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\turn-left.glb",
+      "repoPath": "public/anim/turn-left.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 32920,
+      "sha256": "ab457245c07d8f17cf6fee78d2bd2a157d675524d27a5dfb9eaf495f16d31183",
+      "runtimeRole": "21-bone baked one-shot motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "turn-left",
+        "frames": 75,
+        "durationS": 2.467,
+        "fps": 30,
+        "loop": false,
+        "speedMps": 0.01,
+        "strideM": 0.025,
+        "footSlideCm": null,
+        "loopSeam": 1.7949,
+        "seed": 2003,
+        "promptId": "turn-left",
+        "prompt": "a person standing still pivots ninety degrees to their left on the spot, feet stepping around",
+        "embeddingSha256": "9811633424e0dbee154467e09ee64937f9ea7977b232bd26d96eea66379c1e29"
+      }
+    },
+    {
+      "id": "animation/kimodo/turn-right",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\turn-right.glb",
+      "repoPath": "public/anim/turn-right.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 32900,
+      "sha256": "a605ae26f4f935e65e0af0c2e0f2e27ada611dcde336067cd841e05ac40fe9e2",
+      "runtimeRole": "21-bone baked one-shot motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "turn-right",
+        "frames": 75,
+        "durationS": 2.467,
+        "fps": 30,
+        "loop": false,
+        "speedMps": 0,
+        "strideM": 0,
+        "footSlideCm": null,
+        "loopSeam": 1.9347,
+        "seed": 2004,
+        "promptId": "turn-right",
+        "prompt": "a person standing still pivots ninety degrees to their right on the spot, feet stepping around",
+        "embeddingSha256": "230111f5332f445380c3a5ca92baaaa934f579c4a6057700a2268f1b367a7ff1"
+      }
+    },
+    {
+      "id": "animation/kimodo/fire",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\fire.glb",
+      "repoPath": "public/anim/fire.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 22312,
+      "sha256": "14dfeb6554a3b5a247aa2d793ad5ab5dcfe103ed2e0dde3a8dd52b44aecd12ca",
+      "runtimeRole": "21-bone baked one-shot motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "fire",
+        "frames": 45,
+        "durationS": 1.467,
+        "fps": 30,
+        "loop": false,
+        "speedMps": 0,
+        "strideM": 0,
+        "footSlideCm": null,
+        "loopSeam": 0.2022,
+        "seed": 2005,
+        "promptId": "fire-recoil",
+        "prompt": "a soldier firing a rifle absorbs the recoil, the shoulders and head jolting back sharply and then resettling",
+        "embeddingSha256": "c44e18755b866a714d5079733d4cbcc0d4813ba4df9bb8bdee75d45627c84b60"
+      }
+    },
+    {
+      "id": "animation/kimodo/reload",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\reload.glb",
+      "repoPath": "public/anim/reload.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 41720,
+      "sha256": "90ed22adf477312518ecb704e29d7ef7500dd130706233aebcab4bcfd67fc12c",
+      "runtimeRole": "21-bone baked one-shot motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "reload",
+        "frames": 100,
+        "durationS": 3.3,
+        "fps": 30,
+        "loop": false,
+        "speedMps": 0,
+        "strideM": 0,
+        "footSlideCm": null,
+        "loopSeam": 0.8809,
+        "seed": 2006,
+        "promptId": "reload",
+        "prompt": "a soldier lowers a rifle slightly, brings his right hand down to his belt and up to the weapon, then raises the rifle again",
+        "embeddingSha256": "25ab0d44ac461cec9217dd849233d56b817f18e716573356cbeccf5c55c031d3"
+      }
+    },
+    {
+      "id": "animation/kimodo/hit-react",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\hit-react.glb",
+      "repoPath": "public/anim/hit-react.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 27596,
+      "sha256": "ec9fb16eb188ce1d2df974c80b91ae3014bfe87ea18ef975e4c4ce9ffc6a1f45",
+      "runtimeRole": "21-bone baked one-shot motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "hit-react",
+        "frames": 60,
+        "durationS": 1.967,
+        "fps": 30,
+        "loop": false,
+        "speedMps": 0,
+        "strideM": 0,
+        "footSlideCm": null,
+        "loopSeam": 0.8259,
+        "seed": 2007,
+        "promptId": "hit-react",
+        "prompt": "a person is struck hard in the chest and staggers backward, torso recoiling, arms flinching",
+        "embeddingSha256": "a393cd38c9c874f9582daff9ac0328bd9c37e10f62f2978a1c10aa1f5dee6165"
+      }
+    },
+    {
+      "id": "animation/kimodo/death",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\death.glb",
+      "repoPath": "public/anim/death.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 45260,
+      "sha256": "8c873146a71bcea8a33b4a5b017da76fa2012d4968c2c22a0a3b4b4949e88354",
+      "runtimeRole": "21-bone baked one-shot motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "death",
+        "frames": 110,
+        "durationS": 3.633,
+        "fps": 30,
+        "loop": false,
+        "speedMps": 0.07,
+        "strideM": 0.254,
+        "footSlideCm": null,
+        "loopSeam": 7.6368,
+        "seed": 2008,
+        "promptId": "death",
+        "prompt": "a person is shot, buckles at the knees and collapses forward onto the ground, ending face down and motionless",
+        "embeddingSha256": "d18310d9a27567d7bad1ea2d6a106124ec74f56d481cdfa77d176d8f8ee38ba7"
+      }
+    },
+    {
+      "id": "animation/kimodo/aim",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\aim.glb",
+      "repoPath": "public/anim/aim.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 24416,
+      "sha256": "5b848b3b0ea0ba4f1b2dec03e79783677f853d1da77994bd7c95fa49e72082f2",
+      "runtimeRole": "21-bone baked loop motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "aim",
+        "frames": 51,
+        "durationS": 1.667,
+        "fps": 30,
+        "loop": true,
+        "speedMps": 0,
+        "strideM": 0,
+        "footSlideCm": 0.9,
+        "loopSeam": 0.0403,
+        "seed": 1207,
+        "promptId": "aim-rifle-idle",
+        "prompt": "a soldier stands upright with his legs straight and his back vertical, head level, aiming a rifle straight ahead with both hands at shoulder height, elbows tucked in close to his ribs, holding steady, loopable",
+        "embeddingSha256": null
+      }
+    },
+    {
+      "id": "animation/kimodo/sprint",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\sprint.glb",
+      "repoPath": "public/anim/sprint.glb",
+      "origin": "Generated locally from a Kimodo SOMA-RP text prompt, then retargeted to this project standard 21-bone rig. No raw motion or weights are shipped.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 20580,
+      "sha256": "6cf5b5304ed65a3a3c2852c63fb30fbe063065fdc527c4e0a927bce2ab9420ee",
+      "runtimeRole": "21-bone baked loop motion clip; loaded by src/characters/kimodo-clips.ts",
+      "state": "integrated",
+      "visualReview": "open; integration state does not claim visual acceptance",
+      "clip": {
+        "id": "sprint",
+        "frames": 40,
+        "durationS": 1.3,
+        "fps": 30,
+        "loop": true,
+        "speedMps": 2.84,
+        "strideM": 3.692,
+        "footSlideCm": 4,
+        "loopSeam": 0.1321,
+        "seed": 1204,
+        "promptId": "sprint",
+        "prompt": "a soldier sprints forward flat out at top speed, long fast strides, tall through the chest with the head up, arms driving straight forward and back close to the sides, elbows in, loopable",
+        "embeddingSha256": null
+      }
+    },
+    {
+      "id": "animation/kimodo/idle-rejected",
+      "kind": "animation",
+      "format": "glb",
+      "sourcePath": "C:/Users/david/projects/kimodo.cpp/weights/models/kimodo-soma-rp-v1.1-f32.gguf",
+      "conditioningBundlePath": "C:/Users/david/projects/kimodo.cpp/weights/generated/llm2vec-text-bundle/",
+      "pipelinePath": "scripts/animation/retarget-soma.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\idle.glb",
+      "repoPath": "public/anim/idle.glb",
+      "origin": "Generated Kimodo clip retained for reproducible rejection evidence; inspect-clip reports source kimodo-soma-rp-v1.1 and seed 1001.",
+      "license": {
+        "generator": "NVIDIA Open Model License (Kimodo SOMA-RP v1.1; outputs are attributed to the project per local licence record)",
+        "conditioning": "Meta Llama 3 Community License (LLM2Vec bundle remains local; Built with Meta Llama 3 attribution required)",
+        "evidence": [
+          "public/anim/LICENCES.md",
+          "docs/LICENCES-ANIMATION.md"
+        ],
+        "modelSha256": "3bf1229f4c1eff1d28f5196a854113da2df9a11a5e21c60694630903bf948ee4",
+        "modelBytes": 1133166784
+      },
+      "bytes": 23720,
+      "sha256": "27c8b8a48750dc034b24840914c741f20ff0768e6585f24a5a064a970f942b96",
+      "runtimeRole": "comparison only; rejected standing idle, runtime uses authored procedural idle from src/characters/clips.ts",
+      "state": "verified-source",
+      "decision": "rejected-for-runtime",
+      "visualReview": "rejected by existing posture evidence; no claim of visual acceptance",
+      "clip": {
+        "frames": 49,
+        "durationS": 1.6,
+        "fps": 30,
+        "loop": true,
+        "sourceSeed": 1001,
+        "measuredBy": "scripts/animation/inspect-clip.mjs"
+      }
+    },
+    {
+      "id": "animation/cmu-fallback/walk",
+      "kind": "animation-fallback",
+      "format": "anim.json",
+      "sourcePath": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/007/07_01.bvh",
+      "pipelinePath": "scripts/fetch-anim.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\walk.anim.json",
+      "repoPath": "public/anim/walk.anim.json",
+      "origin": "CMU 07_01 walk",
+      "license": "CMU Graphics Lab Motion Capture Database - free for all uses, no registration (http://mocap.cs.cmu.edu/)",
+      "licenseEvidence": [
+        "public/anim/LICENCES.md",
+        "public/anim/manifest-cmu.json"
+      ],
+      "bytes": 54483,
+      "sha256": "4aae853bf0376d0d512bf79c853b296ad1d5fd519a06fc049cda2181456b1892",
+      "runtimeRole": "offline fallback source; not loaded by the current Kimodo runtime registry",
+      "state": "verified-source",
+      "visualReview": "open; fallback substitution is not wired",
+      "clip": {
+        "fpsIn": 120,
+        "fpsOut": 30,
+        "frames": 80,
+        "trim": [
+          1,
+          316
+        ],
+        "metresPerUnit": 0.054755
+      }
+    },
+    {
+      "id": "animation/cmu-fallback/run",
+      "kind": "animation-fallback",
+      "format": "anim.json",
+      "sourcePath": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/009/09_01.bvh",
+      "pipelinePath": "scripts/fetch-anim.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\run.anim.json",
+      "repoPath": "public/anim/run.anim.json",
+      "origin": "CMU 09_01 run",
+      "license": "CMU Graphics Lab Motion Capture Database - free for all uses, no registration (http://mocap.cs.cmu.edu/)",
+      "licenseEvidence": [
+        "public/anim/LICENCES.md",
+        "public/anim/manifest-cmu.json"
+      ],
+      "bytes": 28362,
+      "sha256": "482fb47d4192bbd16b45d52eccd9ea789db51492e866202618f66f1dae32c6d7",
+      "runtimeRole": "offline fallback source; not loaded by the current Kimodo runtime registry",
+      "state": "verified-source",
+      "visualReview": "open; fallback substitution is not wired",
+      "clip": {
+        "fpsIn": 120,
+        "fpsOut": 30,
+        "frames": 38,
+        "trim": [
+          1,
+          148
+        ],
+        "metresPerUnit": 0.053002
+      }
+    },
+    {
+      "id": "animation/cmu-fallback/sprint",
+      "kind": "animation-fallback",
+      "format": "anim.json",
+      "sourcePath": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/009/09_05.bvh",
+      "pipelinePath": "scripts/fetch-anim.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\sprint.anim.json",
+      "repoPath": "public/anim/sprint.anim.json",
+      "origin": "CMU 09_05 run (fast)",
+      "license": "CMU Graphics Lab Motion Capture Database - free for all uses, no registration (http://mocap.cs.cmu.edu/)",
+      "licenseEvidence": [
+        "public/anim/LICENCES.md",
+        "public/anim/manifest-cmu.json"
+      ],
+      "bytes": 27668,
+      "sha256": "9e23e98cef5c7b1914dce1aea328b8044a635e90333dcfd9dc5bd8e715d1eb4a",
+      "runtimeRole": "offline fallback source; not loaded by the current Kimodo runtime registry",
+      "state": "verified-source",
+      "visualReview": "open; fallback substitution is not wired",
+      "clip": {
+        "fpsIn": 120,
+        "fpsOut": 30,
+        "frames": 37,
+        "trim": [
+          1,
+          143
+        ],
+        "metresPerUnit": 0.053046
+      }
+    },
+    {
+      "id": "animation/cmu-fallback/crouch-walk",
+      "kind": "animation-fallback",
+      "format": "anim.json",
+      "sourcePath": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/136/136_09.bvh",
+      "pipelinePath": "scripts/fetch-anim.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\crouch-walk.anim.json",
+      "repoPath": "public/anim/crouch-walk.anim.json",
+      "origin": "CMU 136_09 walk crouched",
+      "license": "CMU Graphics Lab Motion Capture Database - free for all uses, no registration (http://mocap.cs.cmu.edu/)",
+      "licenseEvidence": [
+        "public/anim/LICENCES.md",
+        "public/anim/manifest-cmu.json"
+      ],
+      "bytes": 171662,
+      "sha256": "33abcf1abe6746f4214a11491850768e5ccb8f61842fde079fc62ea780e5584b",
+      "runtimeRole": "offline fallback source; not loaded by the current Kimodo runtime registry",
+      "state": "verified-source",
+      "visualReview": "open; fallback substitution is not wired",
+      "clip": {
+        "fpsIn": 120,
+        "fpsOut": 30,
+        "frames": 263,
+        "trim": [
+          83,
+          1130
+        ],
+        "metresPerUnit": 0.043501
+      }
+    },
+    {
+      "id": "animation/cmu-fallback/jump",
+      "kind": "animation-fallback",
+      "format": "anim.json",
+      "sourcePath": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/016/16_05.bvh",
+      "pipelinePath": "scripts/fetch-anim.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\jump.anim.json",
+      "repoPath": "public/anim/jump.anim.json",
+      "origin": "CMU 16_05 forward jump",
+      "license": "CMU Graphics Lab Motion Capture Database - free for all uses, no registration (http://mocap.cs.cmu.edu/)",
+      "licenseEvidence": [
+        "public/anim/LICENCES.md",
+        "public/anim/manifest-cmu.json"
+      ],
+      "bytes": 51526,
+      "sha256": "02bf1fdc2717c389b4edb403e72efe60f6f6bba35699f7ce49f8ef81aff5e49f",
+      "runtimeRole": "offline fallback source; not loaded by the current Kimodo runtime registry",
+      "state": "verified-source",
+      "visualReview": "open; fallback substitution is not wired",
+      "clip": {
+        "fpsIn": 120,
+        "fpsOut": 30,
+        "frames": 75,
+        "trim": [
+          1,
+          295
+        ],
+        "metresPerUnit": 0.051982
+      }
+    },
+    {
+      "id": "animation/cmu-fallback/turn-left",
+      "kind": "animation-fallback",
+      "format": "anim.json",
+      "sourcePath": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/016/16_41.bvh",
+      "pipelinePath": "scripts/fetch-anim.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\turn-left.anim.json",
+      "repoPath": "public/anim/turn-left.anim.json",
+      "origin": "CMU 16_41 run/jog 90-degree left turn",
+      "license": "CMU Graphics Lab Motion Capture Database - free for all uses, no registration (http://mocap.cs.cmu.edu/)",
+      "licenseEvidence": [
+        "public/anim/LICENCES.md",
+        "public/anim/manifest-cmu.json"
+      ],
+      "bytes": 30360,
+      "sha256": "d724ecf740ea7fbc1f080354ef367e1345a379e0f80e3af2094b7649d4929abe",
+      "runtimeRole": "offline fallback source; not loaded by the current Kimodo runtime registry",
+      "state": "verified-source",
+      "visualReview": "open; fallback substitution is not wired",
+      "clip": {
+        "fpsIn": 120,
+        "fpsOut": 30,
+        "frames": 41,
+        "trim": [
+          1,
+          160
+        ],
+        "metresPerUnit": 0.055527
+      }
+    },
+    {
+      "id": "animation/cmu-fallback/turn-right",
+      "kind": "animation-fallback",
+      "format": "anim.json",
+      "sourcePath": "https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/016/16_43.bvh",
+      "pipelinePath": "scripts/fetch-anim.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\turn-right.anim.json",
+      "repoPath": "public/anim/turn-right.anim.json",
+      "origin": "CMU 16_43 run/jog 90-degree right turn",
+      "license": "CMU Graphics Lab Motion Capture Database - free for all uses, no registration (http://mocap.cs.cmu.edu/)",
+      "licenseEvidence": [
+        "public/anim/LICENCES.md",
+        "public/anim/manifest-cmu.json"
+      ],
+      "bytes": 38728,
+      "sha256": "d1fa2f7067544c7bc2c3f3023d83f4185a629c55e607324920ebb7503f4fb855",
+      "runtimeRole": "offline fallback source; not loaded by the current Kimodo runtime registry",
+      "state": "verified-source",
+      "visualReview": "open; fallback substitution is not wired",
+      "clip": {
+        "fpsIn": 120,
+        "fpsOut": 30,
+        "frames": 54,
+        "trim": [
+          1,
+          210
+        ],
+        "metresPerUnit": 0.05466
+      }
+    },
+    {
+      "id": "animation/cmu-fallback/pirouette",
+      "kind": "animation-fallback",
+      "format": "anim.json",
+      "sourcePath": "https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/bvh/pirouette.bvh",
+      "pipelinePath": "scripts/fetch-anim.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\anim\\pirouette.anim.json",
+      "repoPath": "public/anim/pirouette.anim.json",
+      "origin": "three.js sample - loader proof",
+      "license": "three.js example model (mrdoob/three.js, MIT licence) - loader/retarget path proof only",
+      "licenseEvidence": [
+        "public/anim/LICENCES.md",
+        "public/anim/manifest-cmu.json"
+      ],
+      "bytes": 112965,
+      "sha256": "6e8a01b8ae354ee1b0fde02ebc692a5d057bf664ddcefd951509feab92f78e07",
+      "runtimeRole": "offline fallback source; not loaded by the current Kimodo runtime registry",
+      "state": "verified-source",
+      "visualReview": "open; fallback substitution is not wired",
+      "clip": {
+        "fpsIn": 120,
+        "fpsOut": 30,
+        "frames": 149,
+        "trim": [
+          0,
+          591
+        ],
+        "metresPerUnit": 0.011431
+      }
+    },
+    {
+      "id": "prop/field-case",
+      "kind": "model",
+      "format": "glb",
+      "sourcePath": "scripts/blender/build_field_case.py",
+      "editableSource": {
+        "repoPath": "docs/field-case/field-case.blend",
+        "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\field-case\\field-case.blend",
+        "bytes": 323953,
+        "sha256": "2e6cebbd2301f919df99008547c63f730f7896d25ad7aca5775436127c9edfe5",
+        "role": "editable authoring source"
+      },
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\assets\\field-case\\field-case.glb",
+      "repoPath": "public/assets/field-case/field-case.glb",
+      "origin": "Original Blender-authored hard-surface prop with final olive polymer and steel material pass; no downloaded geometry or models.",
+      "license": "original authored geometry and hand-authored maps; no external inputs",
+      "licenseEvidence": [
+        "docs/field-case/README.md",
+        "docs/field-case/build-report.json"
+      ],
+      "bytes": 487972,
+      "sha256": "d3286def0cc476edcebe3f038503168694821fc38916b554860bfcc764036d56",
+      "runtimeRole": "static field equipment prop canary; loader and placement are present in src/assets/field-case.ts and src/build/field-cases.ts",
+      "state": "integrated",
+      "visualReview": "root viewed the current material pass and accepted its modest runtime response for this canary; no photoreal acceptance claim is made",
+      "runtimeVerification": {
+        "scope": "root stock-browser field-case material capture",
+        "status": "pass",
+        "station": "fieldCaseThreeQuarter",
+        "evidence": "captures/field-case-material/result.json",
+        "subjectiveQuality": "modest; no photoreal acceptance"
+      },
+      "metrics": {
+        "triangles": 3608,
+        "materials": 3,
+        "textures": 5,
+        "dimensionsM": {
+          "declared_body": [
+            0.9,
+            0.5,
+            0.5
+          ],
+          "measured_exterior": [
+            0.919,
+            0.515,
+            0.564
+          ],
+          "axis": "x,y,z in exported glTF space; fittings included"
+        },
+        "colliderM": [
+          0.9,
+          0.5,
+          0.48
+        ]
+      },
+      "buildReceipt": {
+        "repoPath": "docs/field-case/build-report.json",
+        "bytes": 2186,
+        "sha256": "e8e5a5c10631c3cab4f8a45271235d758aef1f9936caf856dda605db7a5bad52",
+        "glbBytes": 487972,
+        "glbSha256": "d3286def0cc476edcebe3f038503168694821fc38916b554860bfcc764036d56"
+      }
+    },
+    {
+      "id": "prop/industrial-barrel",
+      "kind": "model",
+      "format": "glb",
+      "sourcePath": "https://polyhaven.com/a/barrel_03",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\assets\\industrial-barrel\\industrial-barrel.glb",
+      "repoPath": "public/assets/industrial-barrel/industrial-barrel.glb",
+      "origin": "Poly Haven barrel_03, a weathered blue painted steel drum by Serhii Khromov; packed from the official 1k glTF set.",
+      "license": "CC0 1.0 Universal (public domain)",
+      "licenseEvidence": [
+        "docs/industrial-barrel.md",
+        "https://polyhaven.com/license"
+      ],
+      "bytes": 573188,
+      "sha256": "ac47c9c9a377d5911c739338bef0cc8cdd325975a739668cecc21bf78029863b",
+      "runtimeRole": "four static industrial-barrel clones loaded by src/props/industrial-barrel.ts and placed by src/build/industrial-barrels.ts",
+      "state": "runtime-review-open",
+      "visualReview": "Root viewed the weathered blue PBR drum in four passing views. The exact full-collider CPU proof passes all four placements; no photoreal claim is made, and barrel-specific player traversal/final promotion remain OPEN.",
+      "runtimeVerification": {
+        "scope": "root stock-browser views plus exact full-collider CPU placement proof",
+        "status": "pass",
+        "viewCount": 4,
+        "colliderCount": 4,
+        "evidence": [
+          "captures/industrial-barrels/result.json",
+          "captures/checkpoint-g-barrel-full-proof.txt",
+          "docs/verification/2026-09-19/collider-snapshot.json"
+        ],
+        "fixtureComplete": true,
+        "fixtureColliderCount": 652,
+        "fixtureSha256": "437acc78adffece89cc338e58b362e15cbb584f3cb32583db98133b08d0069f",
+        "minColliderGapM": {
+          "white-east-fence": 0.561,
+          "white-west-fence": 0.46,
+          "orange-east-fence": 0.716,
+          "orange-west-fence": 0.569
+        },
+        "selfColliderRule": "exclude only the placement own snapshot row; all other snapshot colliders, including the other barrel rows, remain obstacles",
+        "mapTraversalEvidence": "captures/checkpoint-e-traverse.txt: 5/5 routes and 4/4 house faces",
+        "barrelSpecificTraversal": "open",
+        "finalPromotion": "open"
+      },
+      "metrics": {
+        "triangles": 1473,
+        "vertices": 1126,
+        "meshes": 1,
+        "primitives": 1,
+        "materials": 1,
+        "embeddedMaps": 3,
+        "cachedGeometry": 1,
+        "cachedMasterBytes": 573188,
+        "dimensionsM": [
+          0.634,
+          0.93,
+          0.639
+        ],
+        "colliders": 4
+      }
+    },
+    {
+      "id": "prop/quiver-tree",
+      "kind": "3d-prop",
+      "format": "glb",
+      "sourcePath": "https://polyhaven.com/a/quiver_tree_02",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\assets\\quiver-tree\\quiver-tree.glb",
+      "repoPath": "public/assets/quiver-tree/quiver-tree.glb",
+      "origin": "Poly Haven Quiver Tree 02, converted locally with Blender 5.1 CPU decimation from the official 1k glTF source; no old-game asset or image-generation output is used as runtime geometry.",
+      "license": "CC0 1.0 Universal (public domain)",
+      "licenseEvidence": [
+        "https://polyhaven.com/a/quiver_tree_02",
+        "https://polyhaven.com/license",
+        "https://api.polyhaven.com/info/quiver_tree_02",
+        "https://api.polyhaven.com/files/quiver_tree_02"
+      ],
+      "bytes": 3526860,
+      "sha256": "2d65c167548c1d4d47d56ae457516cc074bc18a5fb22d67ac03604f2fe6c546e",
+      "runtimeRole": "two native-scale Quiver Tree instances emitted by src/build/desert-trees.ts and preloaded by src/main.ts; one InstancedMesh draw using shared geometry/material",
+      "integrationStatus": "src/main.ts imports preloadQuiverTree and buildDesertTrees; the exact two-frame placement/render canary and Vite production build pass, while final visual-quality and placement-specific traversal acceptance remain OPEN",
+      "state": "runtime-review-open",
+      "visualReview": "Root viewed both native-scale yard placement/render frames and the canary passes. Final visual-quality and placement-specific traversal acceptance remain OPEN; no photoreal or exact shipped-build claim is made.",
+      "runtimeVerification": {
+        "scope": "root actual-candidate Quiver placement/render canary plus Vite production build",
+        "status": "pass",
+        "captureEvidence": [
+          "captures/checkpoint-e-plants.txt",
+          "captures/desert-trees/result.json",
+          "captures/checkpoint-e-summary.json"
+        ],
+        "buildEvidence": "captures/refinement-build.txt",
+        "errors": 0,
+        "objectCount": 2,
+        "colliderCount": 2,
+        "placementCount": 2,
+        "placementRenderFrames": 2,
+        "framesViewed": true,
+        "mapTraversalEvidence": "captures/checkpoint-e-traverse.txt: 5/5 routes and 4/4 house faces",
+        "liveVisualQuality": "open",
+        "placementSpecificTraversal": "open"
+      },
+      "measuredUse": {
+        "trianglesPerInstance": 37500,
+        "totalTriangles": 75000,
+        "positionVertices": 25488,
+        "materialCount": 1,
+        "embeddedMapCount": 3,
+        "staticMeshDraws": 1,
+        "nativeBoundsM": {
+          "x": 0.8719641566,
+          "y": 1.4688606262,
+          "z": 0.8804900646
+        },
+        "placements": [
+          {
+            "name": "quiver-tree-white-yard",
+            "x": -3,
+            "y": 0.151,
+            "z": 34,
+            "yaw": 0
+          },
+          {
+            "name": "quiver-tree-orange-yard",
+            "x": 6.25,
+            "y": 0.151,
+            "z": -34,
+            "yaw": 1.4
+          }
+        ],
+        "colliderAuthority": "full audited scene-local bounds, rotated into honest AABBs by src/build/desert-trees.ts"
+      },
+      "provenance": {
+        "sourceWorktree": "C:/Users/david/Desktop/stuff/worktrees/nuketown-agy-desert-tree-20260919",
+        "sourceCommit": "fb7151498ac8e826e3c1066484219420c3c7a8bc",
+        "generator": "Blender 5.1 background CPU conversion with --threads 2; decimated source mesh to 37,500 triangles on attempt 1",
+        "editableInput": "work/quiver-tree/quiver_tree_02.blend (retained in the source conversion worktree)",
+        "sourceArtifactSha256": {
+          "candidateDocumentation": "8382bbb08d62dc664de090eb424c0d2b2695b97fa81fe6743e97a9992271e2a6",
+          "importScript": "35e70b7dc06c3b861480149164e7905bb0fc63680574e886bc0bc7d234362d5d",
+          "blenderPreparationScript": "331398cadc09799b0747563daa18ec1250f4ce574edc517b5c984b7fe84f353a",
+          "shippedGlb": "2d65c167548c1d4d47d56ae457516cc074bc18a5fb22d67ac03604f2fe6c546e"
+        },
+        "sourceDimensionsMm": [
+          872.0614,
+          880.8198,
+          1468.8802
+        ],
+        "embeddedImageSha256": {
+          "normalOpenGL": "5073a1d9563331d8a7bc57a36cae9f1d1d69470395be0c460a12c57026b5f1f0",
+          "diffuseSrgb": "546a745ad765529d3c310178321e145909f4817b06679788ad24d29ec7eae7b7",
+          "armAoRoughMetal": "5d12b154c534503b68766cda96f6486fa0faeb22734b300c58ede695deb2915e"
+        },
+        "shippedFilenamePolicy": "only public/assets/quiver-tree/quiver-tree.glb; converter alias output quiver_tree_02.glb is absent and excluded from the library"
+      }
+    },
+    {
+      "id": "character/operator-material-candidate",
+      "kind": "material-candidate",
+      "format": "procedural-node-material",
+      "sourcePath": "src/characters/operator-materials.ts",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\src\\characters\\operator-materials.ts",
+      "repoPath": "src/characters/operator-materials.ts",
+      "origin": "Deterministic shared operator surface candidate using the existing baked vertex-colour dress and one generated detail texture.",
+      "license": "original work in this repository, same terms as the project",
+      "licenseEvidence": [
+        "src/characters/operator-materials.ts",
+        "docs/operator-material-refinement.md"
+      ],
+      "runtimeRole": "shared operator material returned by src/core/materials.ts and used by src/main.ts",
+      "state": "integrated",
+      "visualReview": "the current front view reads the detail only subtly; no quality acceptance claim is made",
+      "runtimeVerification": {
+        "scope": "root stock-browser operator material capture",
+        "status": "pass",
+        "materials": 1,
+        "textures": 1,
+        "textureSize": "256x256",
+        "textureBytes": 262144,
+        "normalMaps": 0,
+        "drawCallsPerFigure": 1,
+        "extraDrawCalls": 0,
+        "evidence": "captures/operator-material-run.txt"
+      }
+    },
+    {
+      "id": "texture/polyhaven/sparse_grass",
+      "kind": "pbr-texture-set",
+      "format": "jpeg-trio",
+      "sourcePath": "https://polyhaven.com/a/sparse_grass",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\sparse-grass",
+      "repoPath": "public/textures/polyhaven/sparse-grass",
+      "origin": "Poly Haven Sparse Grass by Amal Kumar; 1k diffuse, roughness and normal maps.",
+      "license": "CC0 1.0",
+      "licenseEvidence": [
+        "public/textures/polyhaven/manifest.json",
+        "https://polyhaven.com/a/sparse_grass",
+        "https://polyhaven.com/af/our-api"
+      ],
+      "bytes": 2859599,
+      "files": [
+        {
+          "repoPath": "public/textures/polyhaven/sparse-grass/diffuse.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\sparse-grass\\diffuse.jpg",
+          "bytes": 955945,
+          "sha256": "ae94f2b34597b9108eefd88217f55eccaec6d6b382e858a478ee92df90e66617",
+          "kind": "diffuse",
+          "role": "Sparse Grass diffuse"
+        },
+        {
+          "repoPath": "public/textures/polyhaven/sparse-grass/rough.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\sparse-grass\\rough.jpg",
+          "bytes": 463340,
+          "sha256": "9ebe6d03a9551c17d1802835c92c1442acb8f5d38d4874ee8c37770f11c4bed1",
+          "kind": "roughness",
+          "role": "Sparse Grass roughness"
+        },
+        {
+          "repoPath": "public/textures/polyhaven/sparse-grass/normal.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\sparse-grass\\normal.jpg",
+          "bytes": 1440314,
+          "sha256": "1c840a24807346ddaaf94a5057aee4078fcec3a4cd84bfe45da7d3b480ef460b",
+          "kind": "normalGL",
+          "role": "Sparse Grass normalGL"
+        }
+      ],
+      "runtimeRole": "lawn albedo, roughness and normal response",
+      "state": "verified-source",
+      "decision": "rejected-for-lawn; retain as source reference until a different treatment is justified",
+      "visualReview": "root capture rejected the broad tuft / bare-soil read for this lawn",
+      "physicalSizeMeters": [
+        2,
+        2
+      ]
+    },
+    {
+      "id": "texture/polyhaven/asphalt_07",
+      "kind": "pbr-texture-set",
+      "format": "jpeg-trio",
+      "sourcePath": "https://polyhaven.com/a/asphalt_07",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\asphalt-07",
+      "repoPath": "public/textures/polyhaven/asphalt-07",
+      "origin": "Poly Haven Asphalt 07 by Charlotte Baglioni; 1k diffuse, roughness and normal maps.",
+      "license": "CC0 1.0",
+      "licenseEvidence": [
+        "public/textures/polyhaven/manifest.json",
+        "https://polyhaven.com/a/asphalt_07",
+        "https://polyhaven.com/af/our-api"
+      ],
+      "bytes": 2384983,
+      "files": [
+        {
+          "repoPath": "public/textures/polyhaven/asphalt-07/diffuse.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\asphalt-07\\diffuse.jpg",
+          "bytes": 912821,
+          "sha256": "ac1dd04834e969f76c63773fd3ce7fba75727e36abd4bddb2fbeb06098e0f810",
+          "kind": "diffuse",
+          "role": "Asphalt 07 diffuse"
+        },
+        {
+          "repoPath": "public/textures/polyhaven/asphalt-07/rough.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\asphalt-07\\rough.jpg",
+          "bytes": 310740,
+          "sha256": "6030181a0b84cd405e88b1ae6d9e69b3fbc88c608633d79f5dd2000b9c55b6cc",
+          "kind": "roughness",
+          "role": "Asphalt 07 roughness"
+        },
+        {
+          "repoPath": "public/textures/polyhaven/asphalt-07/normal.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\asphalt-07\\normal.jpg",
+          "bytes": 1161422,
+          "sha256": "63543f5c0cee136adfb748622227a11ce53d4de0bf65eb23098a0711de353893",
+          "kind": "normalGL",
+          "role": "Asphalt 07 normalGL"
+        }
+      ],
+      "runtimeRole": "street asphalt",
+      "state": "integrated",
+      "visualReview": "open; source wiring exists but visual acceptance remains root-owned",
+      "physicalSizeMeters": [
+        2.5,
+        2.5
+      ]
+    },
+    {
+      "id": "texture/polyhaven/concrete_pavement_03",
+      "kind": "pbr-texture-set",
+      "format": "jpeg-trio",
+      "sourcePath": "https://polyhaven.com/a/concrete_pavement_03",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\concrete-pavement-03",
+      "repoPath": "public/textures/polyhaven/concrete-pavement-03",
+      "origin": "Poly Haven Concrete Pavement 03 by Charlotte Baglioni; 1k diffuse, roughness and normal maps.",
+      "license": "CC0 1.0",
+      "licenseEvidence": [
+        "public/textures/polyhaven/manifest.json",
+        "https://polyhaven.com/a/concrete_pavement_03",
+        "https://polyhaven.com/af/our-api"
+      ],
+      "bytes": 2075648,
+      "files": [
+        {
+          "repoPath": "public/textures/polyhaven/concrete-pavement-03/diffuse.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\concrete-pavement-03\\diffuse.jpg",
+          "bytes": 830452,
+          "sha256": "0c23759579103fc334bb9211c71fd026322b44fceb9cdeba8f2d7e0b17fefc8e",
+          "kind": "diffuse",
+          "role": "Concrete Pavement 03 diffuse"
+        },
+        {
+          "repoPath": "public/textures/polyhaven/concrete-pavement-03/rough.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\concrete-pavement-03\\rough.jpg",
+          "bytes": 227809,
+          "sha256": "89876ea83fe2e8e14a0349607f3fd9174c14a7e9a01b56d91e49adb0b7484c09",
+          "kind": "roughness",
+          "role": "Concrete Pavement 03 roughness"
+        },
+        {
+          "repoPath": "public/textures/polyhaven/concrete-pavement-03/normal.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\concrete-pavement-03\\normal.jpg",
+          "bytes": 1017387,
+          "sha256": "b3d20510e5f6625c264a6491c343d025cfff8ab525d08363a42f21afb0e1d5e0",
+          "kind": "normalGL",
+          "role": "Concrete Pavement 03 normalGL"
+        }
+      ],
+      "runtimeRole": "paving and concrete apron",
+      "state": "integrated",
+      "visualReview": "open; source wiring exists but visual acceptance remains root-owned",
+      "physicalSizeMeters": [
+        2.1,
+        2.1
+      ]
+    },
+    {
+      "id": "texture/polyhaven/distressed_painted_planks",
+      "kind": "pbr-texture-set",
+      "format": "jpeg-trio",
+      "sourcePath": "https://polyhaven.com/a/distressed_painted_planks",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\distressed-painted-planks",
+      "repoPath": "public/textures/polyhaven/distressed-painted-planks",
+      "origin": "Poly Haven Distressed Painted Planks by Rob Tuytel; 1k diffuse, roughness and normal maps.",
+      "license": "CC0 1.0",
+      "licenseEvidence": [
+        "public/textures/polyhaven/manifest.json",
+        "https://polyhaven.com/a/distressed_painted_planks",
+        "https://polyhaven.com/af/our-api"
+      ],
+      "bytes": 1127952,
+      "files": [
+        {
+          "repoPath": "public/textures/polyhaven/distressed-painted-planks/diffuse.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\distressed-painted-planks\\diffuse.jpg",
+          "bytes": 366553,
+          "sha256": "ec8d54700e32d583ec3cd64089de73810de1e177874266fe29e931d33ab5ca1e",
+          "kind": "diffuse",
+          "role": "Distressed Painted Planks diffuse"
+        },
+        {
+          "repoPath": "public/textures/polyhaven/distressed-painted-planks/rough.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\distressed-painted-planks\\rough.jpg",
+          "bytes": 337009,
+          "sha256": "e264068652b135ed477ea123a751c83bb33d6693e16f4c4458dc57bca6ae675c",
+          "kind": "roughness",
+          "role": "Distressed Painted Planks roughness"
+        },
+        {
+          "repoPath": "public/textures/polyhaven/distressed-painted-planks/normal.jpg",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\polyhaven\\distressed-painted-planks\\normal.jpg",
+          "bytes": 424390,
+          "sha256": "65372398238b1a4d723e414b195e94900e076fa63d9409c5acc9b55d795abe88",
+          "kind": "normalGL",
+          "role": "Distressed Painted Planks normalGL"
+        }
+      ],
+      "runtimeRole": "deck boards",
+      "state": "integrated",
+      "visualReview": "open; source wiring exists but visual acceptance remains root-owned",
+      "physicalSizeMeters": [
+        1.6,
+        1.6
+      ]
+    },
+    {
+      "id": "audio/authored-bank-v3",
+      "kind": "audio-bank",
+      "format": "wav",
+      "sourcePath": "src/audio/render-bank.mjs",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio",
+      "repoPath": "public/audio",
+      "origin": "authored offline by src/audio/render-bank.mjs (deterministic synthesis, no external samples); bank v3 adds 8 footfall/weather files",
+      "license": "original work in this repository, same terms as the project",
+      "licenseEvidence": [
+        "public/audio/manifest.json",
+        "src/audio/render-bank.mjs"
+      ],
+      "bytes": 1202204,
+      "files": [
+        {
+          "repoPath": "public/audio/shot-longhorn.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\shot-longhorn.wav",
+          "bytes": 48554,
+          "sha256": "d599a5aae58f7916dffdd547caab792f344b57cef17f8f48399cb390781a79b8",
+          "key": "longhorn",
+          "role": "longhorn",
+          "seed": 1101,
+          "durationS": 0.55,
+          "peak": 0.89,
+          "rms": 0.1116
+        },
+        {
+          "repoPath": "public/audio/shot-rattler.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\shot-rattler.wav",
+          "bytes": 35324,
+          "sha256": "c1e278273a807e61cdffd821e8433c6459556e6064e41502d5e23bdf460d740e",
+          "key": "rattler",
+          "role": "rattler",
+          "seed": 1102,
+          "durationS": 0.4,
+          "peak": 0.89,
+          "rms": 0.076
+        },
+        {
+          "repoPath": "public/audio/shot-coachman.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\shot-coachman.wav",
+          "bytes": 70604,
+          "sha256": "26453c695de2ccb4683e4df0e34fbad4f16ea7fcd08d5466235a59c064059c42",
+          "key": "coachman",
+          "role": "coachman",
+          "seed": 1103,
+          "durationS": 0.8,
+          "peak": 0.89,
+          "rms": 0.1004
+        },
+        {
+          "repoPath": "public/audio/shot-deadeye.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\shot-deadeye.wav",
+          "bytes": 97064,
+          "sha256": "f17febd290d4080b49aac36e2d26c3bedb0cdbcb866ebecd28fbc659d1f29714",
+          "key": "deadeye",
+          "role": "deadeye",
+          "seed": 1104,
+          "durationS": 1.1,
+          "peak": 0.89,
+          "rms": 0.1255
+        },
+        {
+          "repoPath": "public/audio/shot-duster.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\shot-duster.wav",
+          "bytes": 30912,
+          "sha256": "1a951e56dc7f7ed2c6b6a80e0639dc426e55d7b5036586deff0587a184c66941",
+          "key": "duster",
+          "role": "duster",
+          "seed": 1105,
+          "durationS": 0.35,
+          "peak": 0.89,
+          "rms": 0.0881
+        },
+        {
+          "repoPath": "public/audio/cue-reload-start.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\cue-reload-start.wav",
+          "bytes": 30912,
+          "sha256": "515dc20d90daa7f1e58df481d88cb411ce77fe9363948b690c4491256b02fe46",
+          "key": "reloadStart",
+          "role": "reloadStart",
+          "seed": 2101,
+          "durationS": 0.35,
+          "peak": 0.55,
+          "rms": 0.0371
+        },
+        {
+          "repoPath": "public/audio/cue-reload-end.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\cue-reload-end.wav",
+          "bytes": 35324,
+          "sha256": "1840b9bcbba66a7d99bf9a3aa8d0886ac85926cb326999a212bd4efad219834c",
+          "key": "reloadEnd",
+          "role": "reloadEnd",
+          "seed": 2102,
+          "durationS": 0.4,
+          "peak": 0.65,
+          "rms": 0.0623
+        },
+        {
+          "repoPath": "public/audio/cue-dryfire.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\cue-dryfire.wav",
+          "bytes": 13274,
+          "sha256": "dbdbcfe77ebf109f7908712e3bccd338786d9fbbc305e3ef0bd788c8c75156b7",
+          "key": "dryFire",
+          "role": "dryFire",
+          "seed": 2103,
+          "durationS": 0.15,
+          "peak": 0.5,
+          "rms": 0.0257
+        },
+        {
+          "repoPath": "public/audio/cue-switch.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\cue-switch.wav",
+          "bytes": 22094,
+          "sha256": "39a7f74a6c76b74f440de53f9d42300cb3f66e1839cd1f4ae7d3cad16f6d6c0e",
+          "key": "switch",
+          "role": "switch",
+          "seed": 2104,
+          "durationS": 0.25,
+          "peak": 0.45,
+          "rms": 0.028
+        },
+        {
+          "repoPath": "public/audio/cue-impact-dirt.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\cue-impact-dirt.wav",
+          "bytes": 26504,
+          "sha256": "4c060f9c9b67d5aadd0980182810786149cf7c7400682ca786d2bdbc20e5fbdc",
+          "key": "impactDirt",
+          "role": "impactDirt",
+          "seed": 2105,
+          "durationS": 0.3,
+          "peak": 0.6,
+          "rms": 0.1056
+        },
+        {
+          "repoPath": "public/audio/cue-impact-hard.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\cue-impact-hard.wav",
+          "bytes": 22094,
+          "sha256": "c1284fb8516802534c5c84f2cdaf4305469a47e62b1e2106cbfb2f9ad7206fd7",
+          "key": "impactHard",
+          "role": "impactHard",
+          "seed": 2106,
+          "durationS": 0.25,
+          "peak": 0.6,
+          "rms": 0.064
+        },
+        {
+          "repoPath": "public/audio/cue-hitmark.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\cue-hitmark.wav",
+          "bytes": 7100,
+          "sha256": "e1f50bf18a08925d739e9018ff57e87e1fc0e35ca89f8327117e760de0dff729",
+          "key": "hitmark",
+          "role": "hitmark",
+          "seed": 2107,
+          "durationS": 0.08,
+          "peak": 0.4,
+          "rms": 0.0244
+        },
+        {
+          "repoPath": "public/audio/cue-blast.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\cue-blast.wav",
+          "bytes": 141164,
+          "sha256": "ddc6d49c656fd6f2f6cc3aba06ade52a42af9afcc36f16a272fec31cd3718c8c",
+          "key": "blast",
+          "role": "blast",
+          "seed": 2108,
+          "durationS": 1.6,
+          "peak": 0.89,
+          "rms": 0.1616
+        },
+        {
+          "repoPath": "public/audio/step-concrete-a.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\step-concrete-a.wav",
+          "bytes": 12392,
+          "sha256": "f271fc5bcbbbb6b57e59959f6990964d18bd44556ee16f0e4eb546cf24d5ad7b",
+          "key": "concreteA",
+          "role": "concreteA",
+          "seed": 3101,
+          "durationS": 0.14,
+          "peak": 0.55,
+          "rms": 0.0744
+        },
+        {
+          "repoPath": "public/audio/step-concrete-b.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\step-concrete-b.wav",
+          "bytes": 12392,
+          "sha256": "be5390f7802605751effa413c8f1efa21f6da77b3dbf63ca268de9d9029ab689",
+          "key": "concreteB",
+          "role": "concreteB",
+          "seed": 3102,
+          "durationS": 0.14,
+          "peak": 0.55,
+          "rms": 0.0783
+        },
+        {
+          "repoPath": "public/audio/step-grass-a.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\step-grass-a.wav",
+          "bytes": 15038,
+          "sha256": "e95a23a2285c364e4c6551797dcc4fa991fb6f689e3cebf20bb5860dbb062ad6",
+          "key": "grassA",
+          "role": "grassA",
+          "seed": 3103,
+          "durationS": 0.17,
+          "peak": 0.5,
+          "rms": 0.0629
+        },
+        {
+          "repoPath": "public/audio/step-grass-b.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\step-grass-b.wav",
+          "bytes": 15920,
+          "sha256": "2ebc13c67a1c7f2cf61de8a6a859dd4685c2774fe8406431da8f3ebcd18e6fa6",
+          "key": "grassB",
+          "role": "grassB",
+          "seed": 3104,
+          "durationS": 0.18,
+          "peak": 0.5,
+          "rms": 0.0689
+        },
+        {
+          "repoPath": "public/audio/step-gravel-a.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\step-gravel-a.wav",
+          "bytes": 13274,
+          "sha256": "a56b85ffd5ff3828150640db04f39371f842c1f4a70180a0645f11d3b41c3fd6",
+          "key": "gravelA",
+          "role": "gravelA",
+          "seed": 3105,
+          "durationS": 0.15,
+          "peak": 0.5,
+          "rms": 0.0442
+        },
+        {
+          "repoPath": "public/audio/step-gravel-b.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\step-gravel-b.wav",
+          "bytes": 14156,
+          "sha256": "5718e24329594784a725c0338a2ad60710aabfed74aed05e1ae8014087dc53bb",
+          "key": "gravelB",
+          "role": "gravelB",
+          "seed": 3106,
+          "durationS": 0.16,
+          "peak": 0.5,
+          "rms": 0.0549
+        },
+        {
+          "repoPath": "public/audio/ambient-wind.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\ambient-wind.wav",
+          "bytes": 308744,
+          "sha256": "facd006dcf1c0cab6f2f4ea05aab9c4f630db8704d40a5f626151e3d79fa008e",
+          "key": "wind",
+          "role": "wind",
+          "seed": 3201,
+          "durationS": 3.5,
+          "peak": 0.2889,
+          "rms": 0.0626
+        },
+        {
+          "repoPath": "public/audio/ambient-rain.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio\\ambient-rain.wav",
+          "bytes": 229364,
+          "sha256": "993f9f7cc4044b186c7923e08d5e48f43f79e7af0ec094e933ae271c6fd1d9da",
+          "key": "rain",
+          "role": "rain",
+          "seed": 3202,
+          "durationS": 2.6,
+          "peak": 0.3187,
+          "rms": 0.1123
+        }
+      ],
+      "runtimeRole": "44.1 kHz mono authored 21-file weapon, gameplay cue, footfall and weather bank; service mappings are in src/audio/service.ts",
+      "state": "runtime-review-open",
+      "visualReview": "source and service mappings are present; the stock-browser lifecycle decoded 21 bounded buffers including five recorded shots and eight recorded foley cues; ear quality remains OPEN",
+      "runtimeVerification": {
+        "scope": "stock-browser audio service lifecycle",
+        "status": "pass",
+        "checkCount": 11,
+        "decodedBufferCount": 21,
+        "recordedShotCount": 5,
+        "recordedFoleyCount": 8,
+        "ambientLoopCount": 2,
+        "transientVoiceCap": 16,
+        "evidence": "captures/audio-lifecycle-rerun.txt",
+        "earQuality": "open"
+      },
+      "bank": {
+        "version": 3,
+        "sampleRate": 44100,
+        "channels": 1,
+        "bitDepth": 16,
+        "totalBytes": 1202204
+      },
+      "manifestBytes": 5820,
+      "manifestSha256": "cf5df636d80d4d151a4ff752766cdd7582e9407a9fef03a1d618cbd842225972"
+    },
+    {
+      "id": "audio/recorded-cc0-5shot-canary",
+      "kind": "audio-bank",
+      "format": "wav",
+      "sourcePath": "public/audio-recorded/manifest.json",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-recorded",
+      "repoPath": "public/audio-recorded",
+      "bytes": 502960,
+      "manifestBytes": 4920,
+      "manifestSha256": "0bbda0d6d1ee75c6231a9ee7f1926125ff110f9ce811f26c541c10741294a01b",
+      "files": [
+        {
+          "repoPath": "public/audio-recorded/rec-shot-longhorn.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-recorded\\rec-shot-longhorn.wav",
+          "bytes": 97064,
+          "sha256": "22df6fc6dc62a55baf521710ee1d7adb3050fc137a5a2786c3bc5df1a38a9cf7",
+          "key": "longhorn",
+          "role": "Winchester Model 1894 lever-action .32WS, mid-distance single shot",
+          "sourceMember": "Prepared SFX Library/Model 1894/L_17P.wav",
+          "sourceSha256": "f2d381043f74967786367d2b23f68a6d5a3fe74c26ff4d3a00002ab05e913117",
+          "durationS": 1.1,
+          "peakDbfs": -1,
+          "rmsDbfs": -27.246
+        },
+        {
+          "repoPath": "public/audio-recorded/rec-shot-rattler.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-recorded\\rec-shot-rattler.wav",
+          "bytes": 88244,
+          "sha256": "4a77192f1206630e2556b3df7460dab9b235b03434e2cc1f71e0e6f6f82464e2",
+          "key": "rattler",
+          "role": "Carl Gustav M45 SMG 9mm, mid-distance single shot",
+          "sourceMember": "Prepared SFX Library/Carl Gustav M45/G_20P.wav",
+          "sourceSha256": "137630298417203c83f885402f1b5d10913c1b96ca0ad31fde50d30314bf3223",
+          "durationS": 1,
+          "peakDbfs": -1,
+          "rmsDbfs": -31.02
+        },
+        {
+          "repoPath": "public/audio-recorded/rec-shot-coachman.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-recorded\\rec-shot-coachman.wav",
+          "bytes": 105884,
+          "sha256": "3c9fa38ec212bc428b3471dcc73107d8bb97376f760b48679984152b698524a2",
+          "key": "coachman",
+          "role": "Winchester Model 12 pump 12ga, mid-distance single shot",
+          "sourceMember": "Prepared SFX Library/Model 12/K_17P.wav",
+          "sourceSha256": "df18e60e5742bc18373ff46e5c471ef71849b138120d165f26104b249679ace0",
+          "durationS": 1.2,
+          "peakDbfs": -1,
+          "rmsDbfs": -28.997
+        },
+        {
+          "repoPath": "public/audio-recorded/rec-shot-deadeye.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-recorded\\rec-shot-deadeye.wav",
+          "bytes": 105884,
+          "sha256": "15436310adeb825592090fe1af013f2ca01e8dc90b0714095750e1754d3015d4",
+          "key": "deadeye",
+          "role": "Mosin Nagant bolt 7.62x54R, mid-distance single shot",
+          "sourceMember": "Prepared SFX Library/Mosin Nagant/M_26P.wav",
+          "sourceSha256": "51261c62c8c1dce64cd700e948dda4794473797753457621b480eff54ba30445",
+          "durationS": 1.2,
+          "peakDbfs": -1,
+          "rmsDbfs": -28.401
+        },
+        {
+          "repoPath": "public/audio-recorded/rec-shot-duster.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-recorded\\rec-shot-duster.wav",
+          "bytes": 105884,
+          "sha256": "0c10a5dbdffcade7860c81d6aeaca385a0e5a558b666873416bbf7b4c0e6383f",
+          "key": "duster",
+          "role": "M1911 .45 pistol, mid-distance single shot",
+          "sourceMember": "Prepared SFX Library/1911/A_34P.wav",
+          "sourceSha256": "df95fc52049f3d1e4cf0a8c018fc0f0b4abded12de1d615a279422206c415935",
+          "durationS": 1.2,
+          "peakDbfs": -1,
+          "rmsDbfs": -25.017
+        }
+      ],
+      "origin": "Five recorded firearm shots transformed from The Free Firearm Sound Library source archive; current manifest is the CC0 1.0 evidence record.",
+      "license": "CC0 1.0 Universal (public domain)",
+      "licenseEvidence": [
+        "public/audio-recorded/manifest.json",
+        "docs/recorded-audio.md"
+      ],
+      "runtimeRole": "recorded-shot comparison bank requested at public/audio-recorded/rec-shot-<family>.wav; authored public/audio/shot-<family>.wav remains the fallback",
+      "state": "runtime-review-open",
+      "visualReview": "the recorded five-shot bank is decoded and used by the service lifecycle; ear quality and source-clipping review remain OPEN, so no listening or quality acceptance claim is made",
+      "runtimeVerification": {
+        "scope": "root stock-browser audio service lifecycle",
+        "status": "pass",
+        "checkCount": 11,
+        "recordedShotCount": 5,
+        "recordedFoleyCount": 8,
+        "boundedBufferCount": 21,
+        "missingRecordedFallbackCount": 5,
+        "disposal": "pass",
+        "recordedPath": "public/audio-recorded/rec-shot-<family>.wav",
+        "authoredFallbackPath": "public/audio/shot-<family>.wav",
+        "earQuality": "open",
+        "sourceClipping": "open",
+        "evidence": [
+          "captures/audio-lifecycle-rerun.txt",
+          "captures/remote-audio-live-fixed.txt"
+        ],
+        "remoteMissPresentation": "pass"
+      },
+      "audition": {
+        "repoPath": "docs/audio-auditions/recorded-guns.wav",
+        "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\audio-auditions\\recorded-guns.wav",
+        "bytes": 626264,
+        "sha256": "896d93968295a4f1494bb828b4b2c2d1b1b27a04b23baee8e221a3cd6af69e4f",
+        "role": "audition-only; exclude from runtime loading"
+      },
+      "bank": {
+        "sampleRate": 44100,
+        "channels": 1,
+        "bitDepth": 16,
+        "shotCount": 5,
+        "totalBytes": 502960
+      }
+    },
+    {
+      "id": "reference/imagegen/concept-pass-1",
+      "kind": "reference-target",
+      "format": "2d-image-collection",
+      "sourcePath": "docs/reference/concept/manifest.json",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\reference\\concept\\manifest.json",
+      "repoPath": "docs/reference/concept/manifest.json",
+      "origin": "recorded in the local manifest; generated concept imagery",
+      "license": "Generated for this project; target imagery only, not a distributable 3D asset.",
+      "licenseEvidence": [
+        "docs/reference/concept/manifest.json"
+      ],
+      "bytes": 74815263,
+      "manifestBytes": 26744,
+      "manifestSha256": "b175c76ba63f2edfd796acb74e9926db2e675fddadaa984c7e4ca118a89e9976",
+      "targetImageCount": 53,
+      "runtimeRole": "2D look, lighting and material reference only; never load as geometry or claim image-to-3D reconstruction",
+      "state": "verified-source",
+      "decision": "reference-only",
+      "visualReview": "target collection; no runtime acceptance claim",
+      "style": "original 1960s show-town target imagery"
+    },
+    {
+      "id": "reference/imagegen/concept-pass-2",
+      "kind": "reference-target",
+      "format": "2d-image-collection",
+      "sourcePath": "docs/reference/concept2/manifest.json",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\reference\\concept2\\manifest.json",
+      "repoPath": "docs/reference/concept2/manifest.json",
+      "origin": "recorded in the local manifest; local and cloud image generation routes are recorded per file",
+      "license": "Generated for this project; target imagery only, not a distributable 3D asset.",
+      "licenseEvidence": [
+        "docs/reference/concept2/manifest.json"
+      ],
+      "bytes": 86212362,
+      "manifestBytes": 53904,
+      "manifestSha256": "d24a8775c574a822c5d3af2f83763a03e3c346317e402f78ee0bda0527b78d9c",
+      "targetImageCount": 59,
+      "runtimeRole": "2D look, lighting and material reference only; never load as geometry or claim image-to-3D reconstruction",
+      "state": "verified-source",
+      "decision": "reference-only",
+      "visualReview": "target collection; no runtime acceptance claim",
+      "style": "original show-town target imagery"
+    },
+    {
+      "id": "reference/imagegen/photoreal-studies",
+      "kind": "reference-target",
+      "format": "2d-image-collection",
+      "sourcePath": "docs/reference/photoreal/MANIFEST.md",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\reference\\photoreal\\MANIFEST.md",
+      "repoPath": "docs/reference/photoreal/MANIFEST.md",
+      "origin": "generated photographic material and light studies",
+      "license": "Generated for this project; target imagery only, not a distributable 3D asset.",
+      "licenseEvidence": [
+        "docs/reference/photoreal/MANIFEST.md"
+      ],
+      "bytes": 26637094,
+      "manifestBytes": 5760,
+      "manifestSha256": "f6025011aeb6f24c1b6097d2e2397e559fda464a761c26467223b3a1d43a585b",
+      "targetImageCount": 13,
+      "runtimeRole": "2D look, lighting and material reference only; never load as geometry or claim image-to-3D reconstruction",
+      "state": "verified-source",
+      "decision": "reference-only",
+      "visualReview": "target collection; no runtime acceptance claim",
+      "style": "material and lighting calibration targets"
+    },
+    {
+      "id": "reference/field-case-material-target",
+      "kind": "reference-target",
+      "format": "png",
+      "sourcePath": "docs/reference/refinement-targets/field-case.provenance.json",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\reference\\refinement-targets\\field-case.png",
+      "repoPath": "docs/reference/refinement-targets/field-case.png",
+      "bytes": 2003027,
+      "sha256": "1b9bc99bf0ba146cf3c3579dade7591ce3e41bf516bbb9a671198706a24ec2cb",
+      "dimensions": [
+        1376,
+        768
+      ],
+      "origin": "2D material and lighting proposal derived from the runtime source frame through the recorded thread work receipt; target imagery only.",
+      "license": "Generated for this project; target imagery only, not a distributable 3D asset.",
+      "licenseEvidence": [
+        "docs/reference/refinement-targets/field-case.provenance.json"
+      ],
+      "runtimeRole": "field-case material and lighting target only; never load as geometry or claim image-to-3D reconstruction",
+      "state": "verified-source",
+      "visualReview": "reference target; no runtime acceptance claim",
+      "threadReceipt": {
+        "receiptPath": "C:/Users/david/Documents/Codex/2026-09-19/hi/work/target-case/receipt.json",
+        "receiptSha256": "1f916e1a3f81fbcf5f782752cbe66440378f15670031c53d486b5483a9966fe7",
+        "sourcePath": "C:/Users/david/Documents/Codex/2026-09-19/hi/work/target-case/source.png",
+        "sourceSha256": "01f45d64bc1ec0018f8ca89ca6b833a0dc10d3a049d17508599042087b367687",
+        "targetPath": "C:/Users/david/Documents/Codex/2026-09-19/hi/work/target-case/target.png",
+        "targetSha256": "1b9bc99bf0ba146cf3c3579dade7591ce3e41bf516bbb9a671198706a24ec2cb",
+        "runId": "delegated-agy-2a70d804-c3db-4f8f-bd1e-e005a409a58a",
+        "status": "review-required",
+        "imageModel": "not reported by tool"
+      }
+    },
+    {
+      "id": "audio/recorded-cc0-8foley",
+      "kind": "audio-bank",
+      "format": "wav",
+      "sourcePath": "public/audio-foley/manifest.json",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-foley",
+      "repoPath": "public/audio-foley",
+      "origin": "Eight transformed recorded foley cues from the Fantozzi footsteps and OpenGameArt gun-reload sources; the manifest preserves source members and transforms.",
+      "license": "CC0 1.0 Universal (public domain)",
+      "licenseEvidence": [
+        "public/audio-foley/manifest.json",
+        "https://opengameart.org/content/fantozzis-footsteps-grasssand-stone",
+        "https://opengameart.org/content/gun-reload-sounds",
+        "http://creativecommons.org/publicdomain/zero/1.0/"
+      ],
+      "bytes": 294836,
+      "manifestBytes": 11979,
+      "manifestSha256": "d1e4e40640a6c9756fe227de34352568176a312cab96fcffdf01ea92d7c8f0d8",
+      "files": [
+        {
+          "repoPath": "public/audio-foley/rec-step-hard-a.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-foley\\rec-step-hard-a.wav",
+          "bytes": 32934,
+          "sha256": "2f7e1cca0caa4e5970820dca16c29be204b06ded1f3e00d40818c9eff77d892b",
+          "role": "hard: Stone, generic hard surface per page",
+          "sourceMember": "Fantozzi-footsteps/flac/Fantozzi-StoneL1.flac"
+        },
+        {
+          "repoPath": "public/audio-foley/rec-step-hard-b.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-foley\\rec-step-hard-b.wav",
+          "bytes": 31502,
+          "sha256": "73a4f8c6b09f899b505ff2998f9aa4ed45ca029ce244edfb827892b60225449d",
+          "role": "hard: Stone, generic hard surface per page",
+          "sourceMember": "Fantozzi-footsteps/flac/Fantozzi-StoneR1.flac"
+        },
+        {
+          "repoPath": "public/audio-foley/rec-step-grass-a.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-foley\\rec-step-grass-a.wav",
+          "bytes": 39076,
+          "sha256": "e006944d162a650dfeddda018a41c1b2a79a1b83e647fa40dc44a243c2745004",
+          "role": "grass: Sand-as-grass per page note",
+          "sourceMember": "Fantozzi-footsteps/flac/Fantozzi-SandL1.flac"
+        },
+        {
+          "repoPath": "public/audio-foley/rec-step-grass-b.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-foley\\rec-step-grass-b.wav",
+          "bytes": 35530,
+          "sha256": "5afcc1b2a9bf7b77c5263887596b03a139bf38093940639757d6d9fc5631f994",
+          "role": "grass: Sand-as-grass per page note",
+          "sourceMember": "Fantozzi-footsteps/flac/Fantozzi-SandR1.flac"
+        },
+        {
+          "repoPath": "public/audio-foley/rec-step-gravel-a.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-foley\\rec-step-gravel-a.wav",
+          "bytes": 29294,
+          "sha256": "675a6cb81adcc125f7fdd71beda93964228caf99f364a0a966bd8ba026f36f13",
+          "role": "APPROXIMATION: Stone for gravel; no true gravel in pack",
+          "sourceMember": "Fantozzi-footsteps/flac/Fantozzi-StoneL2.flac"
+        },
+        {
+          "repoPath": "public/audio-foley/rec-step-gravel-b.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-foley\\rec-step-gravel-b.wav",
+          "bytes": 28022,
+          "sha256": "3d0719d8e21359db22b596a01abd51f8db0ce4254d6e69ac6f993fb2222e0d97",
+          "role": "APPROXIMATION: Stone for gravel; no true gravel in pack",
+          "sourceMember": "Fantozzi-footsteps/flac/Fantozzi-StoneR2.flac"
+        },
+        {
+          "repoPath": "public/audio-foley/rec-reload-start.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-foley\\rec-reload-start.wav",
+          "bytes": 52964,
+          "sha256": "0e3098de6b7495fb9f69129cfc666fe48dbb641c716cd02103362899847aefd1",
+          "role": "early mechanism cluster of gunreload1.wav",
+          "sourceMember": "derived from gunreload1.wav"
+        },
+        {
+          "repoPath": "public/audio-foley/rec-reload-end.wav",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\audio-foley\\rec-reload-end.wav",
+          "bytes": 45514,
+          "sha256": "e559a9c7ede44efc92ad65088ae6b974cf7083447715828b154a83fd43f03056",
+          "role": "late double-hit of assaultriflereload1_0.wav",
+          "sourceMember": "derived from assaultriflereload1_0.wav"
+        }
+      ],
+      "audition": {
+        "repoPath": "docs/audio-auditions/recorded-foley.wav",
+        "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\audio-auditions\\recorded-foley.wav",
+        "bytes": 448878,
+        "sha256": "463f8f202f07dc6c3e5f166810be4382c76d83da7e3678555a6d0dc901552ff8",
+        "role": "audition-only; exclude from runtime loading"
+      },
+      "runtimeRole": "candidate recorded foley comparison bank for hard, grass, gravel and reload cues; no current runtime mapping is claimed",
+      "integrationStatus": "service preload and lifecycle decoding are wired; gameplay surface mapping and listening choice remain open",
+      "sourceArchivePolicy": "source archives and downloaded masters remain provenance-only and are excluded from the repository and runtime",
+      "state": "runtime-review-open",
+      "visualReview": "not applicable; the stock-browser lifecycle decoded all eight foley files inside the 21-buffer bound, but ear quality and gameplay mapping remain OPEN; no listening acceptance claim",
+      "runtimeVerification": {
+        "scope": "stock-browser audio service lifecycle",
+        "status": "pass",
+        "decodedBufferCount": 21,
+        "recordedShotCount": 5,
+        "recordedFoleyCount": 8,
+        "evidence": "captures/audio-lifecycle-rerun.txt",
+        "gameplayMapping": "open",
+        "earQuality": "open"
+      },
+      "quality": "OPEN: manifest records source mapping and transforms; root ear review and gameplay surface choice are required"
+    },
+    {
+      "id": "texture/vegetation/island_tree_01_leaves",
+      "kind": "pbr-texture-set",
+      "format": "png-quad",
+      "sourcePath": "public/textures/vegetation/manifest.json",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\vegetation",
+      "repoPath": "public/textures/vegetation",
+      "origin": "Poly Haven island_tree_01 1k leaf channels used by the standalone procedural tree canary; no downloaded geometry or model is included.",
+      "license": "CC0 1.0 Universal",
+      "licenseEvidence": [
+        "public/textures/vegetation/manifest.json",
+        "https://polyhaven.com/a/island_tree_01",
+        "https://polyhaven.com/license",
+        "https://api.polyhaven.com/files/island_tree_01"
+      ],
+      "bytes": 5462812,
+      "manifestBytes": 1998,
+      "manifestSha256": "94e9b011700600191b302ae64deace902e1307004f5a97fb62215595359764ec",
+      "files": [
+        {
+          "repoPath": "public/textures/vegetation/island_tree_01_leaves_diff_1k.png",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\vegetation\\island_tree_01_leaves_diff_1k.png",
+          "bytes": 1638916,
+          "sha256": "63d3563a22a62151f338ceb4e992de7c31b62e8e3582e2762d5071f02d286349",
+          "role": "sRGB leaf albedo",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/island_tree_01/island_tree_01_leaves_diff_1k.png",
+          "sourceMd5": "f5dcd85f170c154cba9cb8367af5dbdd"
+        },
+        {
+          "repoPath": "public/textures/vegetation/island_tree_01_leaves_alpha_1k.png",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\vegetation\\island_tree_01_leaves_alpha_1k.png",
+          "bytes": 57438,
+          "sha256": "f4341f147988dbe6b58d9ca841a8f0e4bcff25bc40d05f9877da82006d489c39",
+          "role": "leaf cutout mask",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/island_tree_01/island_tree_01_leaves_alpha_1k.png",
+          "sourceMd5": "5ad9fb9a06e70c069bd3d3ba23577375"
+        },
+        {
+          "repoPath": "public/textures/vegetation/island_tree_01_leaves_nor_gl_1k.png",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\vegetation\\island_tree_01_leaves_nor_gl_1k.png",
+          "bytes": 2886859,
+          "sha256": "e58402f30c7108ec6321e0c689009508f6ab138c81612d9a67238038ac108211",
+          "role": "linear tangent-space normal",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/island_tree_01/island_tree_01_leaves_nor_gl_1k.png",
+          "sourceMd5": "13a7610b0459f3175ca049b70eadbfea"
+        },
+        {
+          "repoPath": "public/textures/vegetation/island_tree_01_leaves_rough_1k.png",
+          "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\public\\textures\\vegetation\\island_tree_01_leaves_rough_1k.png",
+          "bytes": 879599,
+          "sha256": "b7e9a1857f63617344968bb43693786bfed7dd15bedca3193ce333f233fbab78",
+          "role": "linear leaf roughness",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Models/png/1k/island_tree_01/island_tree_01_leaves_rough_1k.png",
+          "sourceMd5": "6195150c02ed2522f8ab60c2ec02f1b9"
+        }
+      ],
+      "runtimeRole": "alpha-tested leaf-card and compact interior-canopy material source for the ten-tree canary",
+      "integrationStatus": "maps and correction 3 are wired in the ten-tree canary; the bounded runtime capture was viewed and accepted as a modest silhouette",
+      "state": "runtime-review-open",
+      "visualReview": "root viewed and accepted correction 3 as a modest silhouette; it still reads topiary, so no photoreal foliage acceptance claim is made",
+      "runtimeVerification": {
+        "scope": "root tree canary capture",
+        "status": "pass",
+        "captureEvidence": [
+          "captures/leaf-cards-noon/result.json",
+          "captures/leaf-cards-noon/yardWhite.png"
+        ],
+        "canaryTriangleBudget": 19760,
+        "staticDraws": 5,
+        "subjectiveQuality": "modest silhouette; topiary read remains"
+      },
+      "measuredUse": {
+        "mapCount": 4,
+        "resolution": "1k",
+        "canaryTriangleBudget": 19760,
+        "staticDraws": 5,
+        "placementCount": 10,
+        "colliderAuthority": "unchanged in yards.ts"
+      }
+    },
+    {
+      "id": "reference/viewmodel-material-closeup",
+      "kind": "reference-target",
+      "format": "png",
+      "sourcePath": "docs/reference/refinement-targets/viewmodel.provenance.json",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\reference\\refinement-targets\\viewmodel.png",
+      "repoPath": "docs/reference/refinement-targets/viewmodel.png",
+      "bytes": 1417788,
+      "sha256": "0da577f7406c1bcb028f8615702ccb54aac1653219951317c1fb54c5b5912102",
+      "dimensions": [
+        1376,
+        768
+      ],
+      "provenanceBytes": 556,
+      "provenanceSha256": "da72c82bec6366fcbeb04b414897a45b9ffbf67b8834de47a2e62247ee6c935a",
+      "origin": "Generated 2D close-up material-direction target for the viewmodel; used to guide cloth, glove, wood and parkerized-steel response.",
+      "license": "Generated for this project; target imagery only, not a distributable 3D asset.",
+      "licenseEvidence": [
+        "docs/reference/refinement-targets/viewmodel.provenance.json"
+      ],
+      "runtimeRole": "2D close-up look reference and procedural material recipe only; never load as geometry, texture, photogrammetry or reconstruction evidence",
+      "state": "verified-source",
+      "decision": "recipe-only reference; not photogrammetry",
+      "visualReview": "reference target only; the procedural viewmodel factory is wired and the 11-pose stock-browser capture passed, while gun alignment remains OPEN",
+      "runtimeVerification": {
+        "scope": "root stock-browser viewmodel capture",
+        "status": "pass",
+        "poseCount": 11,
+        "factory": "src/weapons/viewmodel.ts",
+        "evidence": "captures/hand-poses/result.json",
+        "gunAlignment": "open"
+      },
+      "recipeSource": {
+        "repoPath": "docs/viewmodel-materials.md",
+        "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\viewmodel-materials.md",
+        "bytes": 6422,
+        "sha256": "a8a06f70ba581e49104c8d67a8d316d23f8ad2b4e1ff286bceb07f3f8f02e8f0",
+        "role": "procedural PBR material factory specification; additive cache recipe, not captured surface data"
+      },
+      "relatedImplementation": {
+        "repoPath": "docs/viewmodel-refinement.md",
+        "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\viewmodel-refinement.md",
+        "bytes": 2211,
+        "sha256": "9b01f7c9312f155f278984b32e5ba2a1119acfb682fd00e7409a37e7ac940308",
+        "role": "procedural viewmodel geometry and arm refinement notes"
+      },
+      "provenance": {
+        "source": "captures/candidate-stock-circle.png",
+        "sourceSha256": "59b2bc687954f4448887da1fa5a9e1870b24dda5ecfea8d5310770ae4182a5a3",
+        "resultSha256": "0da577f7406c1bcb028f8615702ccb54aac1653219951317c1fb54c5b5912102",
+        "imageModel": "unreported"
+      }
+    },
+    {
+      "id": "reference/yard-white-foliage-target",
+      "kind": "reference-target",
+      "format": "png",
+      "sourcePath": "docs/reference/refinement-targets/provenance.json",
+      "localPath": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\docs\\reference\\refinement-targets\\yard-white.png",
+      "repoPath": "docs/reference/refinement-targets/yard-white.png",
+      "bytes": 1707762,
+      "sha256": "9d68a865631071a7769a682b9a2d3c002fd1cd04aea2a4e8a70d63293cb1ba02",
+      "dimensions": [
+        1376,
+        768
+      ],
+      "provenanceBytes": 561,
+      "provenanceSha256": "9cabb9ec801a6961e572ac1857b239837744e2377be6229d1d13fd862d3cc6c7",
+      "origin": "2D yard foliage and lighting target used to judge the procedural tree canary; no 3D reconstruction is represented.",
+      "license": "Generated for this project; target imagery only, not a distributable 3D asset.",
+      "licenseEvidence": [
+        "docs/reference/refinement-targets/provenance.json"
+      ],
+      "runtimeRole": "foliage silhouette, layering and yard composition reference only",
+      "state": "verified-source",
+      "decision": "reference-only; no geometry or runtime acceptance claim",
+      "visualReview": "target reference; root tree capture review remains open"
+    }
+  ],
+  "refinementQueue": [
+    {
+      "id": "sparse-grass",
+      "priority": "high",
+      "action": "Keep source manifest and maps for provenance, but do not use the current tuft treatment for this lawn; procedural turf fallback remains the active direction.",
+      "evidence": "root runtime capture decision"
+    },
+    {
+      "id": "field-case-materials",
+      "priority": "medium",
+      "action": "Keep the accepted topology and modest current material pass; no photoreal claim is made. Revisit against docs/reference/refinement-targets/field-case.png only if the root material changes.",
+      "evidence": "on-disk GLB/build receipt plus captures/field-case-material/result.json"
+    },
+    {
+      "id": "audio-authored-bank-v3",
+      "priority": "high",
+      "action": "Keep the source/service integration and perform the remaining live ear-quality review through the 21-file authored v3 bank; quality remains OPEN.",
+      "evidence": "public/audio/manifest.json plus captures/audio-lifecycle-rerun.txt"
+    },
+    {
+      "id": "animation-sprint",
+      "priority": "medium",
+      "action": "Keep the Kimodo sprint source record; the stock-browser gait capture verifies explicit 4.8 m/s jog and 6.6 m/s sprint selection. Prone leg clearance is corrected, while gun alignment remains OPEN.",
+      "evidence": "captures/gait-poses/result.json plus docs/animation-refinement.md"
+    },
+    {
+      "id": "coach-glb",
+      "priority": "low",
+      "action": "The Blender coach pipeline is documented, but public/assets/coach.glb is absent from this recovery tree; regenerate and runtime-review only if the asset is still needed.",
+      "evidence": "docs/ASSET-PIPELINE.md versus current filesystem"
+    },
+    {
+      "id": "audio-recorded-cc0-5shot-canary",
+      "priority": "high",
+      "action": "Rebuild the actual game and review the five-shot CC0 canary through public/audio-recorded/rec-shot-<family>.wav for ear quality and source clipping, retaining the authored fallback.",
+      "evidence": "current public/audio-recorded/manifest.json plus captures/audio-lifecycle-rerun.txt and captures/remote-audio-live-fixed.txt; ear/source review remains OPEN"
+    },
+    {
+      "id": "audio-recorded-cc0-8foley",
+      "priority": "medium",
+      "action": "Keep the eight recorded foley cues and audition WAV separate from gameplay mapping. The service lifecycle decodes them inside the bounded bank; root must listen and decide surface mapping before using individual cues. Source archives stay excluded.",
+      "evidence": "public/audio-foley/manifest.json plus captures/audio-lifecycle-rerun.txt; quality remains OPEN"
+    },
+    {
+      "id": "vegetation-island-tree-01-leaves",
+      "priority": "medium",
+      "action": "Keep correction 3 at the measured 19,760 triangles and five static draws. Root viewed and accepted the modest silhouette, but the topiary read and any photoreal foliage claim remain OPEN; preserve the existing ten colliders and positions.",
+      "evidence": "public/textures/vegetation/manifest.json, docs/tree-canary.md, and captures/leaf-cards-noon/result.json"
+    },
+    {
+      "id": "reference-viewmodel-material-closeup",
+      "priority": "medium",
+      "action": "Keep the close-up target as recipe guidance; the procedural viewmodel factory is wired and the bounded 11-pose browser capture passed. Gun alignment remains OPEN. Treat docs/viewmodel-materials.md as a recipe, never as photogrammetry or a texture source.",
+      "evidence": "docs/reference/refinement-targets/viewmodel.provenance.json plus captures/hand-poses/result.json"
+    },
+    {
+      "id": "reference-yard-white-foliage-target",
+      "priority": "medium",
+      "action": "Keep as a visual comparison target for tree captures; correction 3 was viewed as a modest silhouette but still reads topiary. It does not authorize geometry extraction or a photoreal runtime claim.",
+      "evidence": "docs/reference/refinement-targets/provenance.json plus captures/leaf-cards-noon/yardWhite.png"
+    },
+    {
+      "id": "industrial-barrel",
+      "priority": "medium",
+      "action": "Keep the CC0 barrel source and four-collider integration; root must complete final player traversal before accepting the placement.",
+      "evidence": "docs/industrial-barrel.md plus captures/industrial-barrels/result.json; four views pass, traversal remains OPEN"
+    },
+    {
+      "id": "operator-material-candidate",
+      "priority": "medium",
+      "action": "Keep the wired one-material, one-256x256-texture operator candidate under review; its subtle front-view response and overall quality remain OPEN.",
+      "evidence": "src/characters/operator-materials.ts, src/core/materials.ts, and captures/operator-material-run.txt"
+    },
+    {
+      "id": "quiver-tree",
+      "priority": "medium",
+      "action": "Keep the single-file Quiver Tree canary wired through preloadQuiverTree/buildDesertTrees; root must inspect live yard frames and rerun traversal before accepting either placement.",
+      "evidence": "captures/desert-trees/result.json and captures/refinement-build.txt prove CPU module output/build only; docs/quiver-tree-integration.md records the measured GLB and OPEN live review"
+    }
+  ],
+  "worktreeState": "dirty recovery tree; sourceCommit/sourceCommitAnchor fb7151498ac8e826e3c1066484219420c3c7a8bc are current anchors only; previous inventory baseline 232e13bc48b5e9ba5607a566540ac55054131312 is retained for older entries; entries describe measured on-disk artifacts and root integration evidence, not an exact shipped build",
+  "sourceCommitAnchor": "fb7151498ac8e826e3c1066484219420c3c7a8bc",
+  "sourceDirty": true,
+  "sourceCommitStatus": "current dirty-tree anchor fb7151498ac8e826e3c1066484219420c3c7a8bc; previous inventory baseline was 232e13bc48b5e9ba5607a566540ac55054131312; this inventory is not an exact shipped-build claim",
+  "previousInventorySourceCommitAnchor": "232e13bc48b5e9ba5607a566540ac55054131312"
+}

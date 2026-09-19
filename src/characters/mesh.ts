@@ -265,6 +265,14 @@ function operatorParts(d: FactionDress): Part[] {
     // Rolled cuff: the hard line where sleeve becomes skin.
     add({ bone: S('Arm'), geo: tube(0.060, 0.053, 0.046), slot: CLOTH, colour: d.fatigue,
       tint: 0.86, pos: [0, -0.262, 0] });
+    // Sleeve-hem seam and elbow fold: two thin open rings that break the arm
+    // capsule at 1-4 m. 16 triangles each; radii sit on the cuff (0.053) and
+    // forearm (0.043) silhouettes, so no envelope changes. CLOTH slot, so the
+    // tonal camo covers them; rigid weight-1 skinning on the limb bones.
+    add({ bone: S('Arm'), geo: tube(0.054, 0.052, 0.014, 8, true), slot: CLOTH,
+      colour: d.fatigue, tint: 0.82, pos: [0, -0.286, 0] });
+    add({ bone: S('ForeArm'), geo: tube(0.047, 0.044, 0.030, 8, true), slot: CLOTH,
+      colour: d.fatigue, tint: 0.82, pos: [0, -0.015, 0] });
     add({ bone: S('ForeArm'), geo: cap(0.043, 0.18), slot: SKIN, colour: d.skin,
       pos: [0, -0.136, 0] });
     add({ bone: S('Hand'), geo: box(0.074, 0.104, 0.058), slot: DARK, colour: d.boot,
@@ -305,6 +313,10 @@ function operatorParts(d: FactionDress): Part[] {
     // Blouse: the trouser gathered over the boot top.
     add({ bone: S('Leg'), geo: tube(0.074, 0.064, 0.058), slot: CLOTH, colour: d.fatigue,
       tint: 0.92, pos: [0, -0.262, 0] });
+    // Trouser gather over the boot: one thin ring on the blouse silhouette
+    // (0.064), 16 triangles, same cloth/camo treatment as the sleeve bands.
+    add({ bone: S('Leg'), geo: tube(0.066, 0.064, 0.016, 8, true), slot: CLOTH,
+      colour: d.fatigue, tint: 0.84, pos: [0, -0.296, 0] });
     add({ bone: S('Leg'), geo: tube(0.062, 0.058, 0.135, 8, true), slot: DARK,
       colour: d.boot, pos: [0, -0.336, 0] });
     add({ bone: S('Foot'), geo: ball(), slot: DARK, colour: d.boot,
