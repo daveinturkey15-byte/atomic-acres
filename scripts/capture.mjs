@@ -26,12 +26,11 @@
  * lets the game's own loop draw, so a read between frames finds the last real
  * frame.
  *
- * The fix is to read the counters in the SAME synchronous evaluate as the
- * render, as a DELTA across one `__NT.render()`. Nothing — no rAF, no reset —
- * can run between the two reads, so the number is exactly one frame's worth
- * whatever the loop is doing. A 0 is now reported as MEASURED NOTHING and
- * fails the process, because a station that renders nothing is a defect and the
- * one thing this file must never do again is print it as a measurement.
+ * Read a synchronous render delta on a fresh animation frame. Three 0.180
+ * PassNode caches its scene pass within a renderer frame, so a second render
+ * in the same frame can otherwise count only the two final post quads.
+ * scripts/lib/measure-frame.mjs rejects that case as well as reset/zero reads.
+ * See docs/frame-measurement-repair.md for the retained failure and controls.
  *
  * NOTE when comparing with playcap: these frames are the QA render path with
  * the viewmodel hidden (`goto()` calls `weapons.setVisible(false)`), so the
@@ -40,6 +39,7 @@
  */
 import { chromium } from 'playwright';
 import { usePreview } from './lib/preview.mjs';
+import { measureFrame, sceneWasMeasured } from './lib/measure-frame.mjs';
 import { spawnGuarded, killTree } from './lib/proc-guard.mjs';
 import { existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -220,30 +220,12 @@ for (const name of names) {
     process.exitCode = 2;
   }
 
-  // ---- THE MEASUREMENT. One synchronous evaluate: render, then read, with
-  // nothing in between that could call renderer.info.reset(). The numbers are
-  // DELTAS across that one render, so whatever the frame loop left in the
-  // counters cancels out. `renderCallsTotal` is the session count of render()
-  // invocations (main.ts exposes it under its own name precisely so it is not
-  // mistaken for a budget) - its delta proves the chain actually ran.
-  const stats = await page.evaluate(() => {
-    const before = window.__NT.stats();
-    window.__NT.render();
-    const after = window.__NT.stats();
-    return {
-      calls: after.calls - before.calls,
-      triangles: after.triangles - before.triangles,
-      renders: after.renderCallsTotal - before.renderCallsTotal,
-      geometries: after.geometries,
-      textures: after.textures,
-      programs: after.programs,
-    };
-  });
+  const stats = await measureFrame(page);
 
   const file = join(OUT, (tag ? tag + '-' : '') + name + '.png');
   await page.screenshot({ path: file });
 
-  const measured = Number.isFinite(stats.calls) && stats.calls > 0 && stats.renders > 0;
+  const measured = sceneWasMeasured(stats);
   if (!measured) blind.push(name);
   else if (stats.calls > CALL_BUDGET || stats.triangles > TRIANGLE_BUDGET) overBudget.push(name);
 
