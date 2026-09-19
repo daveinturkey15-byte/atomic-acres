@@ -146,7 +146,13 @@ export function initMenus(deps: { hud: HudApi; player: MenuPlayer; world: MenuWo
   const fan = document.createElement('div');
   fan.className = 'aa-fan';
   fan.textContent = 'Unofficial fan project — not affiliated with Activision or Treyarch.';
-  main.append(eyebrow, title, sub, btnRow, mapHead, mapSelect.root, fan);
+  // Attribution the animation supply chain requires (docs/LICENCES-ANIMATION.md,
+  // obligation 3): the text encoder behind the baked clips is Llama-3-derived, and the
+  // motion model is NVIDIA's. Both lines are licence text, not decoration - keep them.
+  const credits = document.createElement('div');
+  credits.className = 'aa-fan aa-credits';
+  credits.textContent = 'Built with Meta Llama 3 · Motion: NVIDIA Kimodo SOMA-RP v1.1 (NVIDIA Open Model License)';
+  main.append(eyebrow, title, sub, btnRow, mapHead, mapSelect.root, fan, credits);
 
   // ---- settings ----
   const settingsPanel = buildSettingsPanel({

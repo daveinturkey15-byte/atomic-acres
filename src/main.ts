@@ -15,6 +15,7 @@ import { WeaponsController } from './weapons/controller';
 import { initUI } from './ui/index';
 import { wireNetcode } from './net/wire';
 import { createCharacterSystem, type CharacterHandle } from './characters';
+import { loadBakedClips } from './characters/kimodo-clips';
 import { createLocalMatch, type LocalMatch } from './game/session';
 import { PAL } from './core/palette';
 
@@ -91,6 +92,11 @@ player.setColliders(colliders);
 // Materials are ctx.mat singletons: painted() with a new uniform set is fine, a new
 // program is not. Placed on open ground the traverse routes already prove walkable,
 // so a figure cannot spawn inside a wall.
+// Baked Kimodo clips must be resident BEFORE the first CharacterSystem is built:
+// CharacterRig creates one AnimationAction per clip in its constructor. Sixteen
+// glTF clips, 350 kB, generated locally (public/anim/LICENCES.md). Top-level await
+// is fine here - tsconfig and vite both target es2022.
+await loadBakedClips();
 const characters = createCharacterSystem(world.scene, {
   skin: mat.painted(PAL.mannequin, 0.72, 0),
   cloth: mat.painted(PAL.signTeal, 0.62, 0.04),
