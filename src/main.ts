@@ -26,6 +26,8 @@ import { createStaticReflectionProbe, type StaticReflectionProbe } from './core/
 import { createCombatFeedbackAdapter } from './ui/combat-feedback-adapter';
 import './ui/combat-feedback.css';
 import { getEnvironmentFlags } from './core/environment-flags';
+import { isAuthoredMountainsOptIn } from './build/authored-mountains';
+import { preloadAssets, releaseAsset } from './core/assets';
 
 import { buildGround } from './build/ground';
 import { buildOrangeHouse } from './build/orange-house';
@@ -84,6 +86,12 @@ const worldTargets: THREE.Object3D[] = [];
 // remains absent instead of blocking the playable map or retrying each frame.
 await Promise.all([
   loadFieldCase().catch((error: unknown) => console.warn('[field-case] unavailable', error)),
+  // Authored mountains GLB: opt-in only (?mountains=authored). Baseline and
+  // canary runs must not fetch the file at all - no request, no 404 noise.
+  // A miss warns once and the skyline keeps the procedural canary fallback.
+  ...(isAuthoredMountainsOptIn()
+    ? [preloadAssets(['authored-mountains']).catch((error: unknown) => console.warn('[authored-mountains] unavailable, canary fallback', error))]
+    : []),
   preloadIndustrialBarrel().catch((error: unknown) => console.warn('[industrial-barrel] unavailable', error)),
   preloadQuiverTree().catch((error: unknown) => console.warn('[quiver-tree] unavailable', error)),
 ]);
@@ -284,7 +292,22 @@ function releaseEnvironmentCanary(): void {
         }
       }
     }
+    const authored = target.getObjectByName('authored_mountains');
+    if (authored?.userData && typeof authored.userData === 'object' && 'dispose' in authored.userData) {
+      const release = (authored.userData as { dispose?: unknown }).dispose;
+      if (typeof release === 'function') {
+        try {
+          release();
+        } catch {
+          /* idempotent release */
+        }
+      }
+    }
   }
+  // Clones are detached above; now retire the cached master for the rest of
+  // the page lifetime. Exactly-once, pending-load safe, coach untouched; a
+  // no-op (and a fetch guard) when the authored lane never loaded.
+  releaseAsset('authored-mountains');
 }
 addEventListener('pagehide', () => {
   releaseEnvironmentCanary();

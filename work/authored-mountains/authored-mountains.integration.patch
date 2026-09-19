@@ -1,0 +1,277 @@
+--- a/src/core/assets.ts
++++ b/src/core/assets.ts
+@@ -31,11 +31,12 @@
+ }
+ 
+ /** Asset names produced by the Blender pipeline lane. */
+-export type AssetName = 'coach';
++export type AssetName = 'coach' | 'authored-mountains';
+ 
+ /** Vite `base` is relative, so this stays correct under Pages subpaths. */
+ export const ASSET_URLS: Record<AssetName, string> = {
+   coach: `${baseUrl()}assets/coach.glb`,
++  'authored-mountains': `${baseUrl()}assets/authored-mountains/authored-mountains.glb`,
+ };
+ 
+ function baseUrl(): string {
+@@ -53,6 +54,9 @@
+ const masters = new Map<AssetName, THREE.Group>();
+ /** In-flight loads, so concurrent callers share one fetch + decode. */
+ const pending = new Map<AssetName, Promise<THREE.Group>>();
++/** Names released for the rest of the page lifetime (pagehide lane). */
++const released = new Set<AssetName>();
++
+ 
+ /** Resolves when the latest gated preload settles; initially resolved. */
+ export let assetsReady: Promise<void> = Promise.resolve();
+@@ -66,6 +70,9 @@
+  * callers, and resolve to the cached master scene.
+  */
+ function ensureLoaded(name: AssetName): Promise<THREE.Group> {
++  if (released.has(name)) {
++    return Promise.reject(new Error(`asset released for page lifetime: ${name}`));
++  }
+   const hit = masters.get(name);
+   if (hit) return Promise.resolve(hit);
+   const flight = pending.get(name);
+@@ -74,6 +81,7 @@
+   const started = loader
+     .loadAsync(ASSET_URLS[name])
+     .then((gltf) => {
++      pending.delete(name);
+       const master = gltf.scene;
+       master.updateMatrixWorld(true);
+       master.traverse((child) => {
+@@ -83,8 +91,11 @@
+           mesh.receiveShadow = true;
+         }
+       });
++      if (released.has(name)) {
++        disposeScene(master);
++        return master;
++      }
+       masters.set(name, master);
+-      pending.delete(name);
+       return master;
+     })
+     .catch((err: unknown) => {
+@@ -138,34 +149,120 @@
+  */
+ export function disposeAssets(): void {
+   for (const master of masters.values()) {
+-    master.traverse((child) => {
+-      const mesh = child as THREE.Mesh;
+-      if (!mesh.isMesh) return;
+-      mesh.geometry?.dispose();
+-      const materials = Array.isArray(mesh.material)
+-        ? mesh.material
+-        : mesh.material
+-          ? [mesh.material]
+-          : [];
+-      for (const material of materials) {
+-        const record = material as unknown as Record<string, unknown>;
+-        for (const key of Object.keys(record)) {
+-          const value = record[key] as { isTexture?: boolean; dispose?: () => void };
+-          if (
+-            value !== null &&
+-            typeof value === 'object' &&
+-            value.isTexture === true &&
+-            typeof value.dispose === 'function'
+-          ) {
+-            value.dispose();
+-          }
+-        }
+-        material.dispose();
+-      }
+-    });
++    disposeScene(master);
+   }
+   masters.clear();
+   pending.clear();
+ }
+ 
++const disposedMasters = new WeakSet<THREE.Object3D>();
++
++/**
++ * Deep-dispose one scene's GPU resources (geometries, materials, textures)
++ * with Set-based deduplication per release. Meshes sharing geometry,
++ * materials sharing textures, or packed ORM textures wired to multiple
++ * slots (roughnessMap, metalnessMap, aoMap) are disposed exactly once.
++ */
++export function disposeScene(master: THREE.Object3D): void {
++  if (disposedMasters.has(master)) return;
++  disposedMasters.add(master);
++
++  const geometries = new Set<THREE.BufferGeometry>();
++  const materials = new Set<THREE.Material>();
++  const textures = new Set<THREE.Texture>();
++
++  master.traverse((child) => {
++    const mesh = child as THREE.Mesh;
++    if (!mesh.isMesh) return;
++    if (mesh.geometry && typeof mesh.geometry.dispose === 'function') {
++      geometries.add(mesh.geometry);
++    }
++    const mats = Array.isArray(mesh.material)
++      ? mesh.material
++      : mesh.material
++        ? [mesh.material]
++        : [];
++    for (const mat of mats) {
++      if (mat && typeof mat.dispose === 'function') {
++        materials.add(mat);
++      }
++    }
++  });
++
++  for (const mat of materials) {
++    const record = mat as unknown as Record<string, unknown>;
++    for (const key of Object.keys(record)) {
++      const val = record[key];
++      if (
++        val !== null &&
++        typeof val === 'object' &&
++        (val as { isTexture?: boolean }).isTexture === true &&
++        typeof (val as { dispose?: () => void }).dispose === 'function'
++      ) {
++        textures.add(val as THREE.Texture);
++      }
++    }
++  }
++
++  for (const tex of textures) {
++    try {
++      tex.dispose();
++    } catch {
++      /* idempotent dispose */
++    }
++  }
++  for (const mat of materials) {
++    try {
++      mat.dispose();
++    } catch {
++      /* idempotent dispose */
++    }
++  }
++  for (const geom of geometries) {
++    try {
++      geom.dispose();
++    } catch {
++      /* idempotent dispose */
++    }
++  }
++}
++
++/**
++ * Release ONE cached scene for the rest of the page lifetime. The pagehide
++ * lane for opt-in assets (authored-mountains). Never touches other cached
++ * assets (coach) or scene objects, and is exactly-once:
++ * - never loaded: the name is retired, so nothing fetches it afterwards;
++ * - pending: the in-flight load completes safely, then the late master is
++ *   dropped from the cache and disposed without being retained;
++ * - cached: disposed once. Callers detach clones FIRST (clones share the
++ *   master's buffers; disposing under a mounted clone corrupts it).
++ * Unknown names are a silent no-op. Repeat calls after the first do nothing.
++ */
++export function releaseAsset(name: string): void {
++  if (!(name in ASSET_URLS)) return;
++  const key = name as AssetName;
++  if (released.has(key)) return;
++  released.add(key);
++
++  const master = masters.get(key);
++  if (master) {
++    masters.delete(key);
++    disposeScene(master);
++  }
++
++  const flight = pending.get(key);
++  if (flight) {
++    pending.delete(key);
++    void flight.then(
++      (late) => {
++        masters.delete(key);
++        disposeScene(late);
++      },
++      () => {
++        /* a failed pending load has nothing to dispose; caught to avoid unhandled rejection */
++      },
++    );
++  }
++}
++
+ function readinessSlot(): { ready: boolean } | undefined {
+--- a/src/build/skyline.ts
++++ b/src/build/skyline.ts
+@@ -26,6 +26,7 @@
+ import { buildRidgeGeometry } from './terrain-ridges';
+ import { isDistantMountainsEnabled } from '../core/environment-flags';
+ import { createDistantMountainsCanary } from './distant-mountains-canary';
++import { createAuthoredMountains, isAuthoredMountainsOptIn } from './authored-mountains';
+ 
+ /** half the playable footprint - used only for things that belong TO the map */
+ const MAP_R = (BOUND_X_MAX - BOUND_X_MIN) / 2;   // 22.25
+@@ -572,7 +573,14 @@
+   // Counts are up from 9-10 to 14-18 per ring: at MAP_R*5.3 = 118 m nine massifs closed
+   // the circle, at 300 m they leave 100 m gaps between them and the range reads as
+   // separate lumps rather than as a range. Two silhouettes per layer, as before.
+-  if (isDistantMountainsEnabled()) {
++  if (isAuthoredMountainsOptIn()) {
++    // Authored Blender-native backdrop (?mountains=authored). Mounts the GLB
++    // clone when resident, else falls back to the procedural canary
++    // synchronously — the canary path below is untouched.
++    const authored = createAuthoredMountains(ctx);
++    g.add(authored.group);
++    g.userData.dispose = authored.dispose;
++  } else if (isDistantMountainsEnabled()) {
+     const canary = createDistantMountainsCanary(ctx);
+     g.add(canary.group);
+     // Same key the page lifecycle traverses for (see main.ts releaseEnvironmentCanary):
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -26,6 +26,8 @@
+ import { createCombatFeedbackAdapter } from './ui/combat-feedback-adapter';
+ import './ui/combat-feedback.css';
+ import { getEnvironmentFlags } from './core/environment-flags';
++import { isAuthoredMountainsOptIn } from './build/authored-mountains';
++import { preloadAssets, releaseAsset } from './core/assets';
+ 
+ import { buildGround } from './build/ground';
+ import { buildOrangeHouse } from './build/orange-house';
+@@ -84,6 +86,12 @@
+ // remains absent instead of blocking the playable map or retrying each frame.
+ await Promise.all([
+   loadFieldCase().catch((error: unknown) => console.warn('[field-case] unavailable', error)),
++  // Authored mountains GLB: opt-in only (?mountains=authored). Baseline and
++  // canary runs must not fetch the file at all - no request, no 404 noise.
++  // A miss warns once and the skyline keeps the procedural canary fallback.
++  ...(isAuthoredMountainsOptIn()
++    ? [preloadAssets(['authored-mountains']).catch((error: unknown) => console.warn('[authored-mountains] unavailable, canary fallback', error))]
++    : []),
+   preloadIndustrialBarrel().catch((error: unknown) => console.warn('[industrial-barrel] unavailable', error)),
+   preloadQuiverTree().catch((error: unknown) => console.warn('[quiver-tree] unavailable', error)),
+ ]);
+@@ -284,7 +292,22 @@
+         }
+       }
+     }
+-  }
++    const authored = target.getObjectByName('authored_mountains');
++    if (authored?.userData && typeof authored.userData === 'object' && 'dispose' in authored.userData) {
++      const release = (authored.userData as { dispose?: unknown }).dispose;
++      if (typeof release === 'function') {
++        try {
++          release();
++        } catch {
++          /* idempotent release */
++        }
++      }
++    }
++  }
++  // Clones are detached above; now retire the cached master for the rest of
++  // the page lifetime. Exactly-once, pending-load safe, coach untouched; a
++  // no-op (and a fetch guard) when the authored lane never loaded.
++  releaseAsset('authored-mountains');
+ }
+ addEventListener('pagehide', () => {
+   releaseEnvironmentCanary();

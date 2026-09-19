@@ -31,11 +31,12 @@ declare global {
 }
 
 /** Asset names produced by the Blender pipeline lane. */
-export type AssetName = 'coach';
+export type AssetName = 'coach' | 'authored-mountains';
 
 /** Vite `base` is relative, so this stays correct under Pages subpaths. */
 export const ASSET_URLS: Record<AssetName, string> = {
   coach: `${baseUrl()}assets/coach.glb`,
+  'authored-mountains': `${baseUrl()}assets/authored-mountains/authored-mountains.glb`,
 };
 
 function baseUrl(): string {
@@ -53,6 +54,9 @@ let loader: GLTFLoader | undefined;
 const masters = new Map<AssetName, THREE.Group>();
 /** In-flight loads, so concurrent callers share one fetch + decode. */
 const pending = new Map<AssetName, Promise<THREE.Group>>();
+/** Names released for the rest of the page lifetime (pagehide lane). */
+const released = new Set<AssetName>();
+
 
 /** Resolves when the latest gated preload settles; initially resolved. */
 export let assetsReady: Promise<void> = Promise.resolve();
@@ -66,6 +70,9 @@ function assertKnown(name: string): asserts name is AssetName {
  * callers, and resolve to the cached master scene.
  */
 function ensureLoaded(name: AssetName): Promise<THREE.Group> {
+  if (released.has(name)) {
+    return Promise.reject(new Error(`asset released for page lifetime: ${name}`));
+  }
   const hit = masters.get(name);
   if (hit) return Promise.resolve(hit);
   const flight = pending.get(name);
@@ -74,6 +81,7 @@ function ensureLoaded(name: AssetName): Promise<THREE.Group> {
   const started = loader
     .loadAsync(ASSET_URLS[name])
     .then((gltf) => {
+      pending.delete(name);
       const master = gltf.scene;
       master.updateMatrixWorld(true);
       master.traverse((child) => {
@@ -83,8 +91,11 @@ function ensureLoaded(name: AssetName): Promise<THREE.Group> {
           mesh.receiveShadow = true;
         }
       });
+      if (released.has(name)) {
+        disposeScene(master);
+        return master;
+      }
       masters.set(name, master);
-      pending.delete(name);
       return master;
     })
     .catch((err: unknown) => {
@@ -138,34 +149,120 @@ export function getAsset(name: string): THREE.Group | undefined {
  */
 export function disposeAssets(): void {
   for (const master of masters.values()) {
-    master.traverse((child) => {
-      const mesh = child as THREE.Mesh;
-      if (!mesh.isMesh) return;
-      mesh.geometry?.dispose();
-      const materials = Array.isArray(mesh.material)
-        ? mesh.material
-        : mesh.material
-          ? [mesh.material]
-          : [];
-      for (const material of materials) {
-        const record = material as unknown as Record<string, unknown>;
-        for (const key of Object.keys(record)) {
-          const value = record[key] as { isTexture?: boolean; dispose?: () => void };
-          if (
-            value !== null &&
-            typeof value === 'object' &&
-            value.isTexture === true &&
-            typeof value.dispose === 'function'
-          ) {
-            value.dispose();
-          }
-        }
-        material.dispose();
-      }
-    });
+    disposeScene(master);
   }
   masters.clear();
   pending.clear();
+}
+
+const disposedMasters = new WeakSet<THREE.Object3D>();
+
+/**
+ * Deep-dispose one scene's GPU resources (geometries, materials, textures)
+ * with Set-based deduplication per release. Meshes sharing geometry,
+ * materials sharing textures, or packed ORM textures wired to multiple
+ * slots (roughnessMap, metalnessMap, aoMap) are disposed exactly once.
+ */
+export function disposeScene(master: THREE.Object3D): void {
+  if (disposedMasters.has(master)) return;
+  disposedMasters.add(master);
+
+  const geometries = new Set<THREE.BufferGeometry>();
+  const materials = new Set<THREE.Material>();
+  const textures = new Set<THREE.Texture>();
+
+  master.traverse((child) => {
+    const mesh = child as THREE.Mesh;
+    if (!mesh.isMesh) return;
+    if (mesh.geometry && typeof mesh.geometry.dispose === 'function') {
+      geometries.add(mesh.geometry);
+    }
+    const mats = Array.isArray(mesh.material)
+      ? mesh.material
+      : mesh.material
+        ? [mesh.material]
+        : [];
+    for (const mat of mats) {
+      if (mat && typeof mat.dispose === 'function') {
+        materials.add(mat);
+      }
+    }
+  });
+
+  for (const mat of materials) {
+    const record = mat as unknown as Record<string, unknown>;
+    for (const key of Object.keys(record)) {
+      const val = record[key];
+      if (
+        val !== null &&
+        typeof val === 'object' &&
+        (val as { isTexture?: boolean }).isTexture === true &&
+        typeof (val as { dispose?: () => void }).dispose === 'function'
+      ) {
+        textures.add(val as THREE.Texture);
+      }
+    }
+  }
+
+  for (const tex of textures) {
+    try {
+      tex.dispose();
+    } catch {
+      /* idempotent dispose */
+    }
+  }
+  for (const mat of materials) {
+    try {
+      mat.dispose();
+    } catch {
+      /* idempotent dispose */
+    }
+  }
+  for (const geom of geometries) {
+    try {
+      geom.dispose();
+    } catch {
+      /* idempotent dispose */
+    }
+  }
+}
+
+/**
+ * Release ONE cached scene for the rest of the page lifetime. The pagehide
+ * lane for opt-in assets (authored-mountains). Never touches other cached
+ * assets (coach) or scene objects, and is exactly-once:
+ * - never loaded: the name is retired, so nothing fetches it afterwards;
+ * - pending: the in-flight load completes safely, then the late master is
+ *   dropped from the cache and disposed without being retained;
+ * - cached: disposed once. Callers detach clones FIRST (clones share the
+ *   master's buffers; disposing under a mounted clone corrupts it).
+ * Unknown names are a silent no-op. Repeat calls after the first do nothing.
+ */
+export function releaseAsset(name: string): void {
+  if (!(name in ASSET_URLS)) return;
+  const key = name as AssetName;
+  if (released.has(key)) return;
+  released.add(key);
+
+  const master = masters.get(key);
+  if (master) {
+    masters.delete(key);
+    disposeScene(master);
+  }
+
+  const flight = pending.get(key);
+  if (flight) {
+    pending.delete(key);
+    void flight.then(
+      (late) => {
+        masters.delete(key);
+        disposeScene(late);
+      },
+      () => {
+        /* a failed pending load has nothing to dispose; caught to avoid unhandled rejection */
+      },
+    );
+  }
 }
 
 function readinessSlot(): { ready: boolean } | undefined {

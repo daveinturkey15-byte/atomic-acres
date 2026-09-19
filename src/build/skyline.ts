@@ -26,6 +26,7 @@ import {
 import { buildRidgeGeometry } from './terrain-ridges';
 import { isDistantMountainsEnabled } from '../core/environment-flags';
 import { createDistantMountainsCanary } from './distant-mountains-canary';
+import { createAuthoredMountains, isAuthoredMountainsOptIn } from './authored-mountains';
 
 /** half the playable footprint - used only for things that belong TO the map */
 const MAP_R = (BOUND_X_MAX - BOUND_X_MIN) / 2;   // 22.25
@@ -572,7 +573,14 @@ export const buildSkyline: Builder = (ctx) => {
   // Counts are up from 9-10 to 14-18 per ring: at MAP_R*5.3 = 118 m nine massifs closed
   // the circle, at 300 m they leave 100 m gaps between them and the range reads as
   // separate lumps rather than as a range. Two silhouettes per layer, as before.
-  if (isDistantMountainsEnabled()) {
+  if (isAuthoredMountainsOptIn()) {
+    // Authored Blender-native backdrop (?mountains=authored). Mounts the GLB
+    // clone when resident, else falls back to the procedural canary
+    // synchronously — the canary path below is untouched.
+    const authored = createAuthoredMountains(ctx);
+    g.add(authored.group);
+    g.userData.dispose = authored.dispose;
+  } else if (isDistantMountainsEnabled()) {
     const canary = createDistantMountainsCanary(ctx);
     g.add(canary.group);
     // Same key the page lifecycle traverses for (see main.ts releaseEnvironmentCanary):
