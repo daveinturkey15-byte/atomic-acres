@@ -189,10 +189,71 @@ export function buildPost(
  * that frame would sit at exactly 1 - AO_STRENGTH with no gradient inside it; at 0.194
  * it is 5.4%, against 5.7% before this round - i.e. the deepest creases still reach
  * full strength and everything above them keeps a ramp.
+ *
+ * TWO SCALES, TWO DEEP POINTS - 2026-09-19, the ao-twoscale round.
+ *
+ * One kernel cannot be both extents. r3.0/t3.0 integrates room-scale occluders (the
+ * interior wall fields finally ramp: interiorOrange gradient p95-p5 24.0 against the
+ * reference's 24.1) but steps over everything within a metre of a surface: the spawnA
+ * crate base went 65.4 -> 71.4 (LIGHTER, no contact pool at all), the wall/ceiling
+ * junction that r0.9/t0.6 drew as an ink line reaching 0.0 became a 24-luma soft valley
+ * 36 px wide, and on midStreet the width manufactures occlusion on a flat coach flank
+ * in open air. The extent that must be SHORT for a crease is the extent that must be
+ * LONG for a room, so the term is run twice and combined.
+ *
+ * Each term keeps its OWN deep point, measured by the same rule on the same route -
+ * whole-frame p5 of the most enclosed station (interiorOrange) on a clean `goto()`
+ * frame, that term alone, its own AO_DEEP temporarily 0 so `?post=ao` displays the raw
+ * term. Measured this round, radius 0.9 / thickness 0.6 / samples 16, denoise
+ * unchanged: AO_DEEP_NEAR = 0.7210, whole-frame p5 of interiorOrange. The r = 0.9 column of
+ * the table above says 0.724 for this kernel at samples 32, measured months of
+ * geometry ago - independent agreement to 0.003, not the source of the number. (The
+ * 0.669 in the thickness table is r = 3.0 / t = 0.6, a third kernel; do not confuse
+ * them.) The other stations on the same route read p5 0.781 spawnA, 0.906 midStreet,
+ * 0.703 whitePoolRoom - whitePoolRoom is lower but is reached by teleport and is not a
+ * station, so the rule takes interiorOrange, exactly as it did for the far term.
+ *
+ * The combination is DARKEST WINS - `min(mFar, mNear)` - and the operator was chosen
+ * by measurement, not by argument. Both multipliers live in [1 - AO_STRENGTH, 1], so
+ * their min does too: both terms saturated is 0.45 = 1 - AO_STRENGTH exactly, the floor
+ * this file has always had, preserved to the bit. And min is IDEMPOTENT on an idle
+ * term: wherever the near term reads 1.0 (an open wall plane) the result IS mFar, so
+ * the far term's hard-won room-scale falloff passes through UNCHANGED, and wherever the
+ * far term is idle a crease still reaches full strength.
+ *
+ * The geometric mean sqrt(mFar) * sqrt(mNear) was built and photographed first and is
+ * NOT shipped, because it does not have that property. It is true that an open wall
+ * gives mNear = 1 and sqrt(1) = 1 - but sqrt(mFar) != mFar, so the far term's own
+ * darkening is square-rooted everywhere the near term is idle, which is exactly the
+ * wall fields. Measured, same tree, post.ts the only variable, chain frames:
+ *
+ *   interiorOrange wall gradient p95-p5   24.0 baseline -> 16.3 geo-mean -> 23.1 min
+ *   whitePoolRoom  wall gradient p95-p5   28.9 baseline -> 16.9 geo-mean -> 28.9 min
+ *   whitePoolRoom  wall lower, ?post=ao  207.0 baseline -> 220.5 geo-mean -> 207.0 min
+ *   spawnA crate base contact             73.6 baseline -> 70.3 geo-mean -> 64.5 min
+ *   interiorOrange wall/ceiling junction  201.9 baseline -> 149.1 geo-mean -> 0.0 min
+ *     (?post=ao floor of the valley at x = 760, y 60..180; 0.0 is a full-strength line)
+ *
+ * The geometric mean gave back a third of the previous round's wall field to buy a
+ * shallower crease. min gives the crease AND keeps the field. The cost of min, stated:
+ * the fraction of the frame at full AO_STRENGTH roughly doubles, interiorOrange 5.5% ->
+ * 10.6%, because two terms have two different deepest-5% sets and min takes their
+ * union. Each term individually still satisfies the AO_DEEP rule.
+ *
+ * What min does NOT fix: the far term's false grazing-angle wash on the flat coach
+ * flank at midStreet is untouched (?post=ao flank right 186.1 -> 185.9), because min
+ * leaves mFar alone wherever mNear is idle, and on a flat panel in open air it is.
+ * Dropping the far thickness 3.0 -> 2.0 was built and measured as a separate probe: it
+ * removes the wash completely (flank right 185.9 -> 228.5, i.e. no occlusion at all)
+ * and destroys the wall fields with it (interiorOrange gradient 23.1 -> 14.0,
+ * whitePoolRoom 28.9 -> 11.7, both ?post=ao wall profiles flat at 229 top to bottom,
+ * with AO_DEEP correctly re-derived to 0.486 for that thickness). The room falloff
+ * lives between 2 and 3 m of depth extent because that is the room. NOT SHIPPED.
  */
 const AO_OPEN = 1.0;        // a fully unoccluded surface
-const AO_DEEP = 0.194;      // p5 of the most enclosed station; below this it saturates
-const AO_STRENGTH = 0.55;   // a fully occluded contact lands at 1 - this
+const AO_DEEP = 0.194;      // FAR term: p5 of the most enclosed station at r3.0/t3.0
+const AO_DEEP_NEAR = 0.721; // NEAR term: the same rule at r0.9/t0.6 - see above
+const AO_STRENGTH = 0.55;   // both terms fully occluded lands at 1 - this
 
 type Listener = (event: unknown) => void;
 interface ListenerHost {
@@ -344,10 +405,40 @@ function buildChain(
     aoDenoised.normalPhi.value = 6;
     aoDenoised.radius.value = 6;
 
-    const occRaw = aoDenoised.r;
-    const occlusion = occRaw.remapClamp(
+    // 1b — the NEAR kernel. Same node, same denoise constants, the SHORT extent:
+    // radius 0.9 / thickness 0.6 is exactly the kernel that drew crisp junction lines
+    // and a crate base at 65 in the ao-retune round-0 frames, and it is blind to
+    // room-scale enclosure (GTAONode rejects a horizon sample whose view-space depth
+    // delta exceeds `thickness`, GTAONode.js:357/:371). 16 samples, not 32: the far
+    // term carries the large smooth field where undersampling reads as speckle, and
+    // this one only has to resolve the metre inside a corner. Cost is one GTAO pass
+    // plus one denoise pass, both full-screen and resolution-bound.
+    const aoNear = ao(depth, normal, camera);
+    aoNear.radius.value = 0.9;
+    aoNear.samples.value = 16;
+    aoNear.distanceExponent.value = 1.4;
+    aoNear.thickness.value = 0.6;
+
+    const aoNearDenoised = denoise(aoNear.getTextureNode(), depth, normal, camera);
+    aoNearDenoised.lumaPhi.value = 8;
+    aoNearDenoised.depthPhi.value = 3;
+    aoNearDenoised.normalPhi.value = 6;
+    aoNearDenoised.radius.value = 6;
+
+    const occFar = aoDenoised.r;
+    const occNear = aoNearDenoised.r;
+    const mFar = occFar.remapClamp(
       float(AO_DEEP), float(AO_OPEN), float(1 - AO_STRENGTH), float(1),
     );
+    const mNear = occNear.remapClamp(
+      float(AO_DEEP_NEAR), float(AO_OPEN), float(1 - AO_STRENGTH), float(1),
+    );
+    // Darkest wins. Measured against the geometric mean and a far-thickness probe in
+    // the block above AO_OPEN: min is the only combine that keeps the far term's wall
+    // field intact while letting the near term cut a full-strength crease. Both
+    // multipliers live in [1 - AO_STRENGTH, 1], so their min does too and `?post=ao`'s
+    // rescale below stays valid unchanged.
+    const occlusion = mFar.min(mNear);
     // Work on rgb only. `color.mul(occlusion)` also multiplies ALPHA, and this canvas
     // is not opaque - a frame at alpha 0.6 composites against the page background.
     const lit = color.rgb.mul(occlusion);

@@ -471,3 +471,20 @@ Detect a wedged lane by its agent-*.jsonl mtime, not its journal. Also found: tw
 factories in vehicles.ts (makeDisplaySedan, makeDisplayPlinth - the teal show car on its
 plinth is written and never placed); the pixel-diff method needs Math.random seeded
 from the harness because materials.ts paints 43 random textures per load.
+
+**05:40 (19 Sep).** AO round 3 (`wf_05b69780-de8`) - TWO-SCALE AO shipped: a near GTAO
+term (r0.9/t0.6/16 samples, its own AO_DEEP_NEAR 0.721 measured on a clean frame)
+combined with the far term by min(), not the briefed geometric mean - the builder built
+the mean first, photographed it (it square-roots the far term's own darkening and gave
+back a third of the wall field: gradient 24.0 -> 16.3) and shipped min, which is
+idempotent on an idle term. Average 2.2 -> 2.3; 7 of 8 gates: crate base 72 -> 64.5,
+junction crease back to a full-strength ink line, wall gradients 24.1 / 28.9 preserved,
+exteriors within 3%, sky bit-identical, no halo, whitePoolRoom fps certified 60 with the
+extra pass. FAILED gate: the midStreet grazing wash on the coach flank is bit-unchanged -
+min() can only darken. NEW at integration: at distance the far kernel invents solid
+fields on large planes at grazing incidence (aerial skyline slabs 0 -> 42-47% solid,
+yardWhite ridge 62%, farthest geometry now darkest in frame - aerial perspective
+inverted), so S5 3 -> 2 at aerial stations. Committed as the improved state. Round 4:
+fade the FAR term by grazing angle (|n.v| from the MRT normal) and by view depth beyond
+~35 m - the two things a false grazing/distant sample has that a real room occluder does
+not - measured separately, near term and interiors untouched.
