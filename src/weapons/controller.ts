@@ -89,6 +89,21 @@ const RECOIL_RING = 256;
 const HIP_OFFSET = new THREE.Vector3(0.22, -0.2, -0.45);
 const ADS_OFFSET = new THREE.Vector3(0, -0.148, -0.3);
 
+/**
+ * Per-adopted-hero ADS presentation trim (repair1, heroes-2346 follow-up).
+ * The three hero GLBs share a ~0.092 sight line while the procedural family
+ * rigs sit at ~0.095, so one shared ADS_OFFSET leaves hero sights low
+ * (MP5 post ~130 px under centre, EBR egg, LMG block). Small additive trim,
+ * applied ONLY while an adopted GLB hero rig is active and scaled by adsT —
+ * the 16 baseline rigs and the carbine canary never match heroRigs and keep
+ * byte-identical placement. Tune by looking at ?heroes=canary ADS frames.
+ */
+const HERO_ADS_TRIM: Readonly<Record<string, THREE.Vector3>> = Object.freeze({
+  'mp5': new THREE.Vector3(0, 0.005, 0),
+  'm14-ebr': new THREE.Vector3(0, 0.002, 0),
+  'lmg': new THREE.Vector3(0, 0.002, 0),
+});
+
 interface WeaponState {
   def: WeaponDef;
   rig: ViewmodelRig;
@@ -547,6 +562,14 @@ export class WeaponsController {
     this.handLower = this.ord.update(dt, this.camera.position, this.camera.quaternion, time, bobX, bobY);
     for (let id = this.ord.takeClaim(); id !== null; id = this.ord.takeClaim()) this.claim(id);
     this.tmpOffset.lerpVectors(HIP_OFFSET, ADS_OFFSET, this.adsT);
+    // repair1: centre adopted hero sights only. Never the camera, never the
+    // reticle, never a fallback rig — the gun moves, nothing else does.
+    const heroTrim = HERO_ADS_TRIM[cur.def.id];
+    if (heroTrim !== undefined && this.adsT > 0 && this.heroRigs.has(cur.def.id)) {
+      this.tmpOffset.x += heroTrim.x * this.adsT;
+      this.tmpOffset.y += heroTrim.y * this.adsT;
+      this.tmpOffset.z += heroTrim.z * this.adsT;
+    }
     this.tmpOffset.x += Math.sin(time * 1.1) * swayAmp * adsDamp + bobX + 0.04 * this.handLower;
     this.tmpOffset.y += Math.cos(time * 1.7) * swayAmp * 0.7 * adsDamp + bobY
       - 0.05 * this.sprintBlend

@@ -1,0 +1,82 @@
+{
+  "manifest": "work/operator-sand/manifest.json",
+  "schema": 1,
+  "stage": "source-only",
+  "status": "recipe-authored in THIS lane; no GLBs built here, no renders, no runtime wiring. Built and validated only by root run.",
+  "recovery_root": {
+    "path": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919",
+    "operator_sand_glb": "absent: unexecuted by author lane per source-only contract; root builds serially",
+    "validator_note": "node scripts/assets/verify-operator-sand.mjs ready for root execution"
+  },
+  "repair_provenance": {
+    "repair": 1,
+    "preserved_failed_recipe": "work/operator-sand/failed-axis.py",
+    "root_failure_evidence": ".recovery-runtime/operator-2350/validation.txt",
+    "fixes": [
+      "canonical bone neutral frame: all 21 edit bones head=REST_WORLD[name], tail=head+(0, 0.05, 0), roll=0.0",
+      "gltf exporter export_yup=False: keeps raw +Y up, +Z forward coordinates without -90 deg X swizzle",
+      "gltf exporter export_armature_object_remove=True: removes OperatorSand_Rig object node so Hips root parent is null"
+    ]
+  },
+  "scope": "Sand operator character asset recipe for standard 21-bone Three.js rig",
+  "reference_lane": "frozen 2D art reference only; images guide silhouettes, no image-to-3D or mocap performed",
+  "references": {
+    "root": "docs/reference/production-catalog/operators",
+    "turnaround": { "image": "operator-sand-turnaround.png" },
+    "poses": { "image": "operator-sand-poses.png" },
+    "comparison_baseline": "captures/motion-live/motion-2256-stand-front-release.png (spherical-head mannequin replaced by this recipe)"
+  },
+  "licenses": {
+    "recipe_code": "repo-owned original code (scripts/blender/build_operator_sand.py + scripts/assets/verify-operator-sand.mjs)",
+    "output_assets": "original project-authored game art on export (GLB + embedded procedural PNGs); no third-party mesh, texture, or module copied",
+    "reference_images": "root production-catalog art reference; 2D silhouette guide only, not embedded, not converted"
+  },
+  "character": {
+    "name": "OperatorSand",
+    "target_glb": "work/operator-sand/operator-sand.glb",
+    "target_blend": "work/operator-sand/operator-sand.blend",
+    "skeleton": {
+      "bones": 21,
+      "definition": "src/characters/skeleton.ts",
+      "forward": "+Z",
+      "up": "+Y",
+      "height_m": 1.78
+    },
+    "meshes": [
+      "OperatorSand_Body",
+      "OperatorSand_Gear"
+    ],
+    "materials": [
+      "Sand_Cloth",
+      "Sand_Gear"
+    ],
+    "textures": [
+      { "name": "Sand_Cloth_Base", "resolution": [1024, 1024], "format": "PNG", "colorspace": "sRGB" },
+      { "name": "Sand_Gear_Base", "resolution": [1024, 1024], "format": "PNG", "colorspace": "sRGB" },
+      { "name": "Sand_Shared_ORM", "resolution": [512, 512], "format": "PNG", "colorspace": "Non-Color" }
+    ]
+  },
+  "budgets": {
+    "triangles": { "min": 12000, "max": 22000, "measured_python": 13596 },
+    "skinned_primitives_max": 2,
+    "materials_max": 2,
+    "embedded_png_max": 3,
+    "png_resolution_max": 1024,
+    "vram_texture_bytes": 9437184,
+    "threads_cap": 2,
+    "memory_cap_gib": 2.0
+  },
+  "build": {
+    "recipe": "scripts/blender/build_operator_sand.py",
+    "invoke": "\"C:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.exe\" --background --python scripts/blender/build_operator_sand.py",
+    "engine": "Blender 5.1, CPU only, fixed 2 threads, no bake, no render, no subdivision, no booleans, no downloads"
+  },
+  "verify": {
+    "script": "scripts/assets/verify-operator-sand.mjs",
+    "invoke": "node scripts/assets/verify-operator-sand.mjs work/operator-sand/operator-sand.glb",
+    "bin_chunk": "bufferView.byteOffset relative to BIN chunk body (20 + jsonLen + 8)"
+  },
+  "integration": {
+    "mesh_contract": "src/characters/mesh.ts documents later integration; no runtime loader modified in this slice"
+  }
+}

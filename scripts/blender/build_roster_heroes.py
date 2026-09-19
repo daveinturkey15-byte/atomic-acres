@@ -1,9 +1,13 @@
 # Roster hero guns — Blender-native editable recipe (source-only slice)
 #
 # Builds THREE visually distinct hero guns, each in a fresh scene:
-#   mp5      compact SMG (stamped receiver, short barrel, sliding-stock rails, drum diopter)
-#   m14-ebr  scoped marksman rifle (EBR chassis, long barrel, tube scope, full rails)
-#   lmg      belt-fed LMG (bulky receiver, feed cover, side ammo box, carry handle, bipod)
+#   mp5      compact SMG (repair1: rounded stamped tube, curved ribbed mag,
+#            contoured furniture, OPEN hood + aperture drum, slim claw)
+#   m14-ebr  marksman rifle (repair1: reference has NO tube scope — open
+#            front-post + rear-aperture irons on the existing rail instead
+#            of the opaque capped tube; EBR chassis, long barrel, full rails)
+#   lmg      belt-fed LMG (repair1: sights moved off the carry handle onto
+#            gas block / feed cover as open post + notch; handle kept)
 #
 # Authoring axes (Blender, Z-up), same convention as the carbine lane:
 #   +Y = muzzle (forward), +Z = up, +X = weapon right. Origin at grip/trigger.
@@ -171,6 +175,24 @@ class Mesh:
         self.faces.append([b + i * 2 for i in reversed(range(seg))])
         self.faces.append([b + i * 2 + 1 for i in range(seg)])
 
+    def tube_open(self, r, depth, seg=10, center=(0, 0, 0), axis="Y", r2=None):
+        # Capless tube: see-through peep/aperture rings. cyl() caps both
+        # ends, which is what made the MP5 drum peep and any ring sight
+        # read as a solid plug. Sides only, same axis convention as cyl().
+        r2 = r if r2 is None else r2
+        half = depth * 0.5
+        R = {"Y": _rot_x(math.pi / 2), "X": _rot_y(-math.pi / 2)}.get(
+            axis, ((1.0, 0.0, 0.0), (0.0, 1.0, 0.0), (0.0, 0.0, 1.0)))
+        b = len(self.verts)
+        for i in range(seg):
+            a = TAU * i / seg
+            c, s = math.cos(a), math.sin(a)
+            self.verts.append(_xform((r * c, r * s, -half), R, center))
+            self.verts.append(_xform((r2 * c, r2 * s, half), R, center))
+        for i in range(seg):
+            j = (i + 1) % seg
+            self.faces.append([b + i * 2, b + j * 2, b + j * 2 + 1, b + i * 2 + 1])
+
     def rail(self, y0, y1, width=0.0212, base_z=0.064, top_z=0.0785,
              notch=0.0035, pitch=0.0100, nw=0.0053):
         hw = width * 0.5
@@ -198,74 +220,113 @@ class Mesh:
 # gets the receiver/barrel/stock/magazine/grip/rail/optic its role needs.
 # ----------------------------------------------------------------------------
 def build_mp5(M, P, A):
+    # repair1 (2026-09-19, vs docs/reference/production-catalog/weapons/mp5.png):
+    # rounded stamped tube + ribs instead of a square box; curved ribbed mag;
+    # contoured handguard/grip; OPEN hood front (no top bar) and aperture
+    # drum rear (see-through peep, no caps); slim low claw. Same 13 meshes,
+    # same mats per mesh, same 4 sockets, same bounds, same magazine node.
     d = {}
     recv = Mesh("mp5_receiver", M, bevel=(0.0015, 1))
-    recv.box((0.042, 0.340, 0.052), (0.0, 0.030, 0.030))
-    recv.box((0.046, 0.060, 0.056), (0.0, -0.110, 0.030))  # trigger housing block
-    recv.box((0.004, 0.055, 0.020), (0.0215, 0.060, 0.032))  # ejection hint, +X
+    recv.cyl(0.024, 0.300, seg=16, center=(0.0, 0.030, 0.034), axis="Y")  # stamped tube
+    recv.box((0.003, 0.260, 0.004), (0.0235, 0.030, 0.034))  # pressed crease +X
+    recv.box((0.003, 0.260, 0.004), (-0.0235, 0.030, 0.034))  # pressed crease -X
+    recv.box((0.038, 0.100, 0.036), (0.0, -0.085, 0.008))  # lower trigger housing
+    recv.box((0.003, 0.050, 0.016), (0.0245, 0.055, 0.036))  # ejection hint +X
+    recv.box((0.003, 0.022, 0.006), (-0.0215, -0.075, 0.018), rz=0.4)  # selector
+    recv.box((0.044, 0.020, 0.054), (0.0, -0.135, 0.030))  # rear end-cap collar
     d["mp5_receiver"] = recv
 
     bar = Mesh("mp5_barrel_jacket", M, smooth=True)
     bar.cyl(0.011, 0.100, seg=14, center=(0.0, 0.250, 0.030), axis="Y")
+    bar.cyl(0.0135, 0.008, seg=14, center=(0.0, 0.215, 0.030), axis="Y")  # collars
+    bar.cyl(0.0135, 0.008, seg=14, center=(0.0, 0.275, 0.030), axis="Y")
+    bar.cyl(0.0125, 0.012, seg=14, center=(0.0, 0.298, 0.030), axis="Y")  # thread collar
     d["mp5_barrel_jacket"] = bar
 
     muz = Mesh("mp5_muzzle", M, smooth=True)
-    muz.cyl(0.014, 0.045, seg=14, center=(0.0, 0.3225, 0.030), axis="Y")
-    muz.cyl(0.0155, 0.010, seg=14, center=(0.0, 0.310, 0.030), axis="Y")
+    muz.cyl(0.014, 0.040, seg=14, center=(0.0, 0.325, 0.030), axis="Y")
+    muz.cyl(0.0155, 0.008, seg=14, center=(0.0, 0.312, 0.030), axis="Y")
+    for ax, az in ((0.0, 0.0445), (-0.0126, 0.0228), (0.0126, 0.0228)):  # 3-lug hints
+        muz.box((0.004, 0.010, 0.004), (ax, 0.318, az))
     d["mp5_muzzle"] = muz
 
     fs = Mesh("mp5_front_sight", M)
-    fs.box((0.004, 0.004, 0.022), (0.0, 0.285, 0.052))  # post
-    fs.box((0.024, 0.006, 0.004), (0.0, 0.285, 0.064))  # hood bar
-    fs.box((0.004, 0.006, 0.014), (-0.012, 0.285, 0.057))
-    fs.box((0.004, 0.006, 0.014), (0.012, 0.285, 0.057))
+    fs.cyl(0.013, 0.020, seg=14, center=(0.0, 0.285, 0.030), axis="Y")  # barrel band
+    fs.box((0.008, 0.010, 0.024), (0.0, 0.285, 0.052))  # riser band->base
+    fs.box((0.010, 0.018, 0.010), (0.0, 0.285, 0.066))  # base
+    fs.box((0.003, 0.003, 0.024), (0.0, 0.285, 0.080))  # post, top 0.092
+    fs.box((0.003, 0.016, 0.022), (-0.0095, 0.285, 0.079))  # open ears, NO top bar
+    fs.box((0.003, 0.016, 0.022), (0.0095, 0.285, 0.079))
     d["mp5_front_sight"] = fs
 
     rs = Mesh("mp5_rear_drum", M, smooth=True)
-    rs.cyl(0.009, 0.020, seg=12, center=(0.0, -0.060, 0.068), axis="X")
-    rs.box((0.024, 0.030, 0.006), (0.0, -0.060, 0.058))
+    rs.box((0.024, 0.030, 0.010), (0.0, -0.060, 0.063))  # riser base
+    rs.cyl(0.010, 0.004, seg=12, center=(-0.008, -0.060, 0.088), axis="X")  # drum discs
+    rs.cyl(0.010, 0.004, seg=12, center=(0.008, -0.060, 0.088), axis="X")
+    rs.box((0.020, 0.010, 0.004), (0.0, -0.060, 0.098))  # yoke straps
+    rs.box((0.020, 0.010, 0.004), (0.0, -0.060, 0.078))
+    rs.tube_open(0.0045, 0.020, seg=10, center=(0.0, -0.060, 0.088), axis="Y")  # peep
     d["mp5_rear_drum"] = rs
 
     hg = Mesh("mp5_handguard", P, bevel=(0.002, 1))
-    hg.box((0.044, 0.110, 0.050), (0.0, 0.150, 0.022))
-    for i in range(3):  # grip ribs — edge detail, not subdivision
-        hg.box((0.046, 0.008, 0.052), (0.0, 0.115 + i * 0.030, 0.022))
+    hg.box((0.046, 0.040, 0.052), (0.0, 0.115, 0.020))  # tapered swell, rear->front
+    hg.box((0.044, 0.040, 0.050), (0.0, 0.155, 0.020))
+    hg.box((0.042, 0.036, 0.048), (0.0, 0.192, 0.021))
+    hg.box((0.004, 0.090, 0.040), (-0.024, 0.155, 0.018))  # palm swells
+    hg.box((0.004, 0.090, 0.040), (0.024, 0.155, 0.018))
+    for i in range(3):  # grip ribs
+        hg.box((0.048, 0.007, 0.054), (0.0, 0.120 + i * 0.030, 0.020))
+    hg.box((0.043, 0.008, 0.049), (0.0, 0.212, 0.021))  # front cap
     d["mp5_handguard"] = hg
 
     gf = Mesh("mp5_grip_frame", P, bevel=(0.002, 1))
-    gf.box((0.030, 0.050, 0.110), (0.0, -0.055, -0.045), rx=-0.28)
-    gf.box((0.026, 0.020, 0.030), (0.0, -0.030, 0.005))  # tang into housing
+    gf.box((0.030, 0.050, 0.105), (0.0, -0.058, -0.048), rx=-0.28)  # raked grip
+    gf.box((0.032, 0.030, 0.060), (0.0, -0.066, -0.062), rx=-0.28)  # palm swell
+    gf.box((0.030, 0.005, 0.012), (0.0, -0.036, -0.055), rx=-0.28)  # finger ribs
+    gf.box((0.030, 0.005, 0.012), (0.0, -0.040, -0.075), rx=-0.28)
+    gf.box((0.026, 0.025, 0.030), (0.0, -0.028, 0.002))  # beavertail tang
     d["mp5_grip_frame"] = gf
 
     trg = Mesh("mp5_trigger_pack", M)
-    trg.box((0.007, 0.006, 0.020), (0.0, -0.045, -0.020))  # rear post
-    trg.box((0.007, 0.006, 0.014), (0.0, 0.005, -0.024))  # front post
-    trg.box((0.007, 0.056, 0.004), (0.0, -0.020, -0.032))  # bow
-    trg.box((0.004, 0.006, 0.020), (0.0, -0.020, -0.018), rx=-0.20)  # trigger
-    trg.box((0.010, 0.030, 0.004), (0.0, 0.045, -0.020), rx=0.15)  # paddle
+    trg.box((0.006, 0.020, 0.004), (0.0, 0.000, -0.026), rx=0.30)  # guard front
+    trg.box((0.006, 0.045, 0.004), (0.0, -0.022, -0.034))  # guard bow
+    trg.box((0.006, 0.020, 0.004), (0.0, -0.044, -0.026), rx=-0.30)  # guard rear
+    trg.box((0.004, 0.006, 0.018), (0.0, -0.020, -0.020), rx=-0.20)  # blade
+    trg.box((0.010, 0.028, 0.003), (0.0, 0.045, -0.022), rx=0.15)  # paddle release
     d["mp5_trigger_pack"] = trg
 
     mag = Mesh("mp5_magazine", P, bevel=(0.001, 1))
-    mag.box((0.026, 0.040, 0.130), (0.0, 0.030, -0.110), rx=0.10)  # straight box mag
-    mag.box((0.028, 0.044, 0.012), (0.0, 0.017, -0.172), rx=0.10)  # baseplate
+    mag.box((0.026, 0.036, 0.055), (0.0, 0.042, -0.072), rx=0.10)  # curved: top
+    mag.box((0.025, 0.034, 0.055), (0.0, 0.030, -0.122), rx=0.24)  # curved: mid
+    mag.box((0.024, 0.032, 0.050), (0.0, 0.014, -0.168), rx=0.38)  # curved: lower
+    mag.box((0.027, 0.036, 0.006), (0.0, 0.036, -0.097), rx=0.17)  # ribs
+    mag.box((0.026, 0.034, 0.006), (0.0, 0.022, -0.145), rx=0.31)
+    mag.box((0.028, 0.042, 0.014), (0.0, 0.006, -0.196), rx=0.38)  # baseplate
+    mag.box((0.028, 0.010, 0.016), (0.0, 0.026, -0.196), rx=0.38)  # finger lip
     d["mp5_magazine"] = mag
 
     rails = Mesh("mp5_stock_rails", M, smooth=True)
     rails.cyl(0.005, 0.130, seg=10, center=(-0.012, -0.205, 0.045), axis="Y")
     rails.cyl(0.005, 0.130, seg=10, center=(0.012, -0.205, 0.045), axis="Y")
+    rails.box((0.034, 0.012, 0.060), (0.0, -0.142, 0.038))  # endplate collar
+    rails.box((0.006, 0.010, 0.006), (-0.012, -0.160, 0.045))  # latches
+    rails.box((0.006, 0.010, 0.006), (0.012, -0.160, 0.045))
     d["mp5_stock_rails"] = rails
 
     plate = Mesh("mp5_stock_plate", P, bevel=(0.002, 1))
-    plate.box((0.040, 0.020, 0.110), (0.0, -0.275, 0.005))  # collapsed endplate
+    plate.box((0.038, 0.018, 0.105), (0.0, -0.276, 0.002))  # buttplate
+    plate.box((0.036, 0.030, 0.020), (0.0, -0.282, -0.045))  # toe curve
+    plate.box((0.030, 0.006, 0.006), (0.0, -0.276, -0.052))  # sling bar
     d["mp5_stock_plate"] = plate
 
     ch = Mesh("mp5_charging", M, smooth=True)
-    ch.cyl(0.005, 0.060, seg=10, center=(-0.026, 0.100, 0.048), axis="Y")
-    ch.cyl(0.009, 0.020, seg=10, center=(-0.026, 0.135, 0.048), axis="Y")
+    ch.cyl(0.0045, 0.070, seg=10, center=(-0.0265, 0.090, 0.050), axis="Y")  # tube
+    ch.box((0.020, 0.012, 0.012), (-0.034, 0.128, 0.052))  # cocking handle
+    ch.cyl(0.009, 0.006, seg=10, center=(-0.0265, 0.140, 0.050), axis="Y")  # end cap
     d["mp5_charging"] = ch
 
     claw = Mesh("mp5_claw_rail", M)
-    claw.rail(-0.100, 0.020, width=0.024, base_z=0.060, top_z=0.070)
+    claw.rail(-0.100, 0.020, width=0.020, base_z=0.058, top_z=0.0635)  # slim low mount
     d["mp5_claw_rail"] = claw
     return d
 
@@ -297,13 +358,22 @@ def build_ebr(M, P, A):
     brake.cyl(0.0175, 0.012, seg=14, center=(0.0, 0.605, 0.038), axis="Y")
     d["ebr_brake"] = brake
 
-    scope = Mesh("ebr_scope", A, smooth=True)
-    scope.cyl(0.021, 0.150, seg=16, center=(0.0, -0.060, 0.105), axis="Y")  # tube
-    scope.cyl(0.026, 0.045, seg=16, center=(0.0, 0.030, 0.105), axis="Y", r2=0.021)  # bell
-    scope.cyl(0.011, 0.018, seg=12, center=(0.0, -0.060, 0.130), axis="Z")  # elevation turret
-    scope.cyl(0.011, 0.018, seg=12, center=(0.024, -0.060, 0.105), axis="X")  # windage
-    scope.box((0.030, 0.060, 0.014), (0.0, -0.060, 0.082))  # mount
-    d["ebr_scope"] = scope
+    # repair1: reference EBR carries open irons on the rail, not a tube scope.
+    # The capped 16-seg tube sat 14 cm behind the procedural scope station and
+    # read as an opaque egg over the reticle. Two low iron meshes instead.
+    fs = Mesh("ebr_front_sight", M)
+    fs.box((0.012, 0.020, 0.012), (0.0, 0.450, 0.056))  # gas-block base
+    fs.box((0.003, 0.003, 0.030), (0.0, 0.450, 0.077))  # post, top 0.092
+    fs.box((0.003, 0.014, 0.020), (-0.008, 0.450, 0.080))  # protective ears
+    fs.box((0.003, 0.014, 0.020), (0.008, 0.450, 0.080))
+    d["ebr_front_sight"] = fs
+
+    rs = Mesh("ebr_rear_sight", M)
+    rs.box((0.024, 0.036, 0.008), (0.0, -0.200, 0.084))  # rail-foot base
+    rs.box((0.004, 0.010, 0.020), (-0.010, -0.200, 0.094))  # aperture ears
+    rs.box((0.004, 0.010, 0.020), (0.010, -0.200, 0.094))
+    rs.box((0.024, 0.010, 0.004), (0.0, -0.200, 0.106))  # top strap, gap stays open
+    d["ebr_rear_sight"] = rs
 
     trailtop = Mesh("ebr_top_rail", M)
     trailtop.rail(-0.240, 0.180, width=0.0212, base_z=0.070, top_z=0.080)
@@ -392,9 +462,17 @@ def build_lmg(M, P, A):
     handle.box((0.014, 0.012, 0.030), (0.0, 0.105, 0.110))  # front leg
     d["lmg_carry_handle"] = handle
 
+    # repair1: sights off the carry handle (which blocked aim at 0.14) onto
+    # the gas block + feed cover at the shared ~0.092 line; open post + notch.
     fs = Mesh("lmg_sights", M)
-    fs.box((0.004, 0.004, 0.020), (0.0, 0.105, 0.140))  # front post on handle
-    fs.box((0.026, 0.020, 0.010), (0.0, -0.045, 0.138))  # rear aperture block
+    fs.box((0.010, 0.016, 0.010), (0.0, 0.420, 0.060))  # gas-block base
+    fs.box((0.003, 0.003, 0.026), (0.0, 0.420, 0.079))  # post, top 0.092
+    fs.box((0.003, 0.012, 0.018), (-0.0075, 0.420, 0.080))  # ears
+    fs.box((0.003, 0.012, 0.018), (0.0075, 0.420, 0.080))
+    fs.box((0.026, 0.040, 0.006), (0.0, -0.070, 0.098))  # feed-cover foot
+    fs.box((0.004, 0.010, 0.020), (-0.010, -0.070, 0.094))  # notch ears
+    fs.box((0.004, 0.010, 0.020), (0.010, -0.070, 0.094))
+    fs.box((0.024, 0.010, 0.004), (0.0, -0.070, 0.106))  # top strap, notch open
     d["lmg_sights"] = fs
 
     bipod = Mesh("lmg_bipod", M, smooth=True)

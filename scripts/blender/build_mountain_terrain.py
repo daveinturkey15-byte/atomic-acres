@@ -11,7 +11,7 @@ profiles plus multi-scale erosion relief. Saddles dip to 19-29% of peak height
 but never to sky, so the horizon reads as a continuous geological panorama with
 a connected talus base. No box scaling anywhere in this file.
 
-Budgets: 3 draws, 9568 tris (<= 30000), 3 embedded 1024 PNGs, 1 material (<= 2),
+Budgets: 3 draws, 25984 tris (<= 30000), 3 embedded 1024 PNGs, 1 material (<= 2),
 keepout >= 280 m, base < -6 m, peaks > 60 m. CPU only, 2 threads, 2 GiB ceiling.
 """
 
@@ -108,40 +108,66 @@ def _mix(a, b, t):
 
 
 def _albedo(u, v):
-    band = 0.5 + 0.5 * math.sin(v * math.pi * 24.0 + 1.7 * math.sin(u * 12.0))
-    base = _mix(ROCK_LIN, DIRT_LIN, band * 0.55)
+    # Warped strat coordinate: bands vary in thickness and pinch out laterally
+    # instead of running as evenly spaced parallels.
+    warp = (0.9 * math.sin(u * math.tau * 2.0 + 1.3)
+            + 0.55 * math.sin(u * math.tau * 5.0 + v * 7.0 + 0.6)
+            + 0.30 * _hash2(u * 9.0, v * 7.0, 11.5))
+    s = v * 24.0 + warp
+    band = 0.5 + 0.5 * math.sin(s * math.pi + 0.8 * math.sin(u * math.tau * 3.0 + v * 4.0))
+    pinch = 0.45 + 0.55 * (0.5 + 0.5 * math.sin(u * math.tau * 4.0 + 2.0 * math.sin(v * 9.0 + 0.5)))
+    base = _mix(ROCK_LIN, DIRT_LIN, band * pinch * 0.60)
     talus = _sstep(0.30, 0.02, v)  # low-v toe reads as pale alluvial scree
-    base = _mix(base, SAND_LIN, talus * 0.65)
+    wash = 0.75 + 0.25 * math.sin(u * math.tau * 3.0 + 1.1)
+    base = _mix(base, SAND_LIN, talus * 0.65 * wash)
     cap = _sstep(0.72, 0.95, v)  # high-v crest tint, broken by mottle below
-    base = _mix(base, PALE_LIN, cap * 0.35)
-    n = (0.55 * _hash2(u * 37.0, v * 41.0, 11.0)
+    cap_break = 0.6 + 0.4 * _hash2(u * 23.0, v * 19.0, 14.0)
+    base = _mix(base, PALE_LIN, cap * 0.35 * cap_break)
+    n = (0.50 * _hash2(u * 37.0, v * 41.0, 11.0)
          + 0.30 * _hash2(u * 91.0, v * 83.0, 12.0)
-         + 0.15 * _hash2(u * 231.0, v * 217.0, 13.0))
-    k = 1.0 + 0.16 * n - 0.10 * band
-    return (min(1.0, base[0] * k), min(1.0, base[1] * k),
-            min(1.0, base[2] * k), 1.0)
+         + 0.20 * _hash2(u * 231.0, v * 217.0, 13.0))
+    ridge = 1.0 - abs(_hash2(u * 127.0, v * 113.0, 15.0))
+    crack = _sstep(0.12, 0.02, ridge)  # thin dark veins where ridged noise nears zero
+    fleck = _sstep(0.72, 0.92, _hash2(u * 311.0, v * 297.0, 16.0))  # sparse pale flecks
+    k = 1.0 + 0.22 * n - 0.10 * band * pinch - 0.18 * crack + 0.10 * fleck
+    r = min(1.0, base[0] * k + 0.02 * fleck)
+    g = min(1.0, base[1] * k + 0.02 * fleck)
+    b = min(1.0, base[2] * k)
+    return (r, g, b, 1.0)
 
 
 def _rough(u, v):
-    band = 0.5 + 0.5 * math.sin(v * math.pi * 24.0 + 0.6)
-    n = (0.6 * _hash2(u * 53.0, v * 47.0, 21.0)
-         + 0.4 * _hash2(u * 129.0, v * 137.0, 22.0))
-    r = 0.93 + 0.05 * n - 0.04 * band
+    warp = (0.7 * math.sin(u * math.tau * 2.0 + 0.4)
+            + 0.4 * math.sin(u * math.tau * 5.0 + v * 6.0))
+    s = v * 24.0 + warp
+    band = 0.5 + 0.5 * math.sin(s * math.pi + 0.6 + 0.5 * math.sin(u * math.tau * 3.0))
+    pinch = 0.5 + 0.5 * (0.5 + 0.5 * math.sin(u * math.tau * 4.0 + 1.7 * math.sin(v * 8.0)))
+    n = (0.55 * _hash2(u * 53.0, v * 47.0, 21.0)
+         + 0.30 * _hash2(u * 129.0, v * 137.0, 22.0)
+         + 0.15 * _hash2(u * 271.0, v * 251.0, 23.0))
+    crack = _sstep(0.12, 0.02, 1.0 - abs(_hash2(u * 127.0, v * 113.0, 15.0)))
+    r = 0.93 + 0.05 * n - 0.04 * band * pinch - 0.03 * crack
     r = min(1.0, max(0.86, r))
     return (r, r, r, 1.0)
 
 
 def _normal(u, v):
-    # Tangent-space ledges: strata steps tilt N.x, gully streaks tilt N.y.
-    ledge = math.cos(v * math.pi * 24.0 + 1.7 * math.sin(u * 12.0))
-    streak = math.cos(u * math.pi * 44.0 + 2.3 * math.sin(v * 9.0))
+    # Ledges follow the warped strat coordinate so carving and colour agree;
+    # streaks meander downslope instead of straight parallels.
+    warp = (0.9 * math.sin(u * math.tau * 2.0 + 1.3)
+            + 0.55 * math.sin(u * math.tau * 5.0 + v * 7.0 + 0.6))
+    s = v * 24.0 + warp
+    ledge = math.cos(s * math.pi + 0.8 * math.sin(u * math.tau * 3.0 + v * 4.0))
+    meander = u * math.tau * 7.0 + 2.3 * math.sin(v * 9.0 + 1.1 * math.sin(u * math.tau * 2.0))
+    streak = math.cos(meander * 2.0 + 1.2 * math.sin(s * 0.7))
     grain = _hash2(u * 311.0, v * 307.0, 31.0) * 0.15
-    nx = 0.5 + 0.10 * ledge + 0.02 * grain
-    ny = 0.5 + 0.06 * streak + 0.02 * grain
+    detail = _hash2(u * 173.0, v * 167.0, 32.0) * 0.08
+    pinch = 0.5 + 0.5 * (0.5 + 0.5 * math.sin(u * math.tau * 4.0 + 2.0 * math.sin(v * 9.0)))
+    nx = 0.5 + (0.10 * ledge * (0.5 + 0.5 * pinch) + 0.03 * detail) + 0.02 * grain
+    ny = 0.5 + (0.06 * streak + 0.03 * detail) + 0.02 * grain
     nz = 1.0
     inv = 1.0 / math.sqrt((nx - 0.5) ** 2 * 4.0 + (ny - 0.5) ** 2 * 4.0 + 1.0)
     return (nx, ny, 0.5 + 0.5 * inv, 1.0)
-
 
 img_albedo = C.make_image("MtnT_BaseColor", 1024, 1024, "sRGB", _albedo)
 img_rough = C.make_image("MtnT_Roughness", 1024, 1024, "Non-Color", _rough)
@@ -184,9 +210,10 @@ mat_rock = _principled()
 # by vertex with bmesh (no primitives, no modifiers). Broad Gaussian peak
 # profiles overlap (width > spacing) so saddles never reach sky. Radial shape
 # rises from a sunk talus toe through a crest at v=0.55, then falls outward.
-# Erosion: front-face gully chutes, strata terrace benches, two octaves of
-# ridge sin plus bounded hash grain. Mesa flattening on two capped near/mid
-# peaks only; far horns stay pointed.
+# Relief repair1: meandering dual-comb gullies with saddle guard, breathing
+# pinched strata benches, hash-placed outcrop buttresses (up/out only),
+# four-octave ridge plus slope-coupled grain. Mesa flattening on two capped
+# near/mid peaks only; far horns stay pointed.
 
 # (azimuth_deg, height_above_base_m, angular_width_rad)
 PEAKS_NEAR = [(10.0, 78.0, 0.38), (60.0, 68.0, 0.34), (115.0, 82.0, 0.40),
@@ -203,13 +230,50 @@ MESAS_MID = {2, 4}
 
 # (name, Rinner, depth, NU, NV, gullyFreq, gullyDepthFrac, strataStrength)
 RINGS = [
-    ("near", 295.0, 90.0, 192, 10, 21, 0.16, 0.32),
-    ("mid", 455.0, 130.0, 176, 9, 25, 0.18, 0.28),
-    ("far", 650.0, 170.0, 160, 8, 19, 0.14, 0.22),
+    ("near", 295.0, 90.0, 288, 20, 21, 0.16, 0.32),
+    ("mid", 455.0, 130.0, 256, 16, 25, 0.18, 0.28),
+    ("far", 650.0, 170.0, 224, 14, 19, 0.14, 0.22),
 ]
 RING_PEAKS = [PEAKS_NEAR, PEAKS_MID, PEAKS_FAR]
 RING_PHASE = (0.0, 2.13, 4.31)
 GULLY_PHASE = [rnd() * math.tau for _ in RINGS]
+OUTCROP_COUNT = (14, 12, 10)
+OUTCROP_AMP = (7.0, 10.0, 14.0)
+
+
+def _outcrop_lift(ri, theta, v):
+    # Deterministic buttresses from pure hash (no rnd use, so peak jitter
+    # sequence is unchanged). Positive lift only: pushes up and out,
+    # never inward into keepout.
+    n = OUTCROP_COUNT[ri]
+    amp0 = OUTCROP_AMP[ri]
+    total = 0.0
+    for k in range(n):
+        hc = _hash2(k * 3.7 + 1.0, ri * 17.3 + 5.0, 71.0)
+        thc = hc * math.pi
+        vc = 0.30 + 0.50 * (0.5 + 0.5 * _hash2(k * 5.1 + 2.0, ri * 11.7 + 3.0, 72.0))
+        amp = amp0 * (0.45 + 0.55 * (0.5 + 0.5 * _hash2(k * 7.3 + 4.0, ri * 5.9 + 1.0, 73.0)))
+        wth = 0.045 + 0.035 * (0.5 + 0.5 * _hash2(k * 9.1 + 3.0, ri * 3.3 + 7.0, 74.0))
+        wv = 0.09 + 0.07 * (0.5 + 0.5 * _hash2(k * 11.7 + 8.0, ri * 7.1 + 2.0, 75.0))
+        dtheta = _angdiff(theta, thc)
+        dv = v - vc
+        total += amp * math.exp(-((dtheta / wth) ** 2 + (dv / wv) ** 2))
+    return total
+
+
+def _gully_chute(ri, theta, v):
+    # Irregular chutes: two incommensurate combs on a warped strike coordinate
+    # with downslope meander plus a low-freq envelope. No even parallels.
+    phase = GULLY_PHASE[ri]
+    warp = (0.35 * math.sin(2.0 * theta + phase)
+            + 0.18 * math.sin(5.0 * theta + 0.7 + phase * 0.3))
+    w = theta + warp + 0.6 * v * math.sin(3.0 * theta + phase)
+    f1 = (21.0, 25.0, 19.0)[ri]
+    f2 = (13.0, 17.0, 11.0)[ri]
+    c1 = abs(math.sin(f1 * w + phase)) ** 1.2
+    c2 = abs(math.sin(f2 * w + 1.7 * phase + 1.3)) ** 1.6
+    env = 0.45 + 0.55 * (0.5 + 0.5 * math.sin(3.0 * theta + phase * 1.7 + 1.1 * math.sin(2.0 * theta)))
+    return (0.65 * c1 + 0.35 * c2) * env
 
 
 def _crest_height(peaks, theta):
@@ -238,27 +302,39 @@ def _height(ri, peaks, theta, v):
     else:
         s = 1.0 - 0.35 * _sstep(0.55, 1.0, v)
     y = BASE_Y + crest * s
-    # Eroded gully chutes: strongest on the mid-slope face.
-    _gf = RINGS[ri][5]
+    # Irregular eroded gullies: meandering dual-comb chutes on the mid-slope
+    # face, pinched on low saddles so carving never punches sky through gaps.
     _gd = RINGS[ri][6]
     slope_win = math.sin(math.pi * min(1.0, max(0.0, v))) ** 1.0
-    chute = abs(math.sin(_gf * theta + GULLY_PHASE[ri])) ** 1.5
-    y -= _gd * crest * chute * slope_win
-    # Strata terrace benches: pull toward the nearest bench plane.
+    chute = _gully_chute(ri, theta, v)
+    saddle_guard = 0.35 + 0.65 * min(1.0, crest / 60.0)
+    y -= _gd * crest * chute * slope_win * saddle_guard
+    # Strata terraces with geological variation: spacing breathes 4.7-8.3 m,
+    # seat coordinate warped by slope position, strength pinched laterally so
+    # benches crop out instead of ringing the whole panorama in parallel.
     _ss = RINGS[ri][7]
-    bench = math.floor((y - BASE_Y) / BENCH_M) * BENCH_M + BASE_Y
-    bench += BENCH_M * _sstep(0.35, 0.65,
-                              ((y - BASE_Y) % BENCH_M) / BENCH_M)
-    y = y + (bench - y) * _ss
+    phase = GULLY_PHASE[ri]
+    sp = BENCH_M * (0.72 + 0.56 * (0.5 + 0.5 * math.sin(2.0 * theta + phase + 1.4 * math.sin(3.0 * theta))))
+    yw = (y - BASE_Y) + 1.8 * math.sin(3.0 * theta + phase) + 1.1 * math.sin(7.0 * theta + 1.3 * phase)
+    q = yw / sp
+    bench = math.floor(q) * sp
+    bench += sp * _sstep(0.35, 0.65, q - math.floor(q))
+    bench_y = bench + BASE_Y
+    mask = 0.25 + 0.75 * (0.5 + 0.5 * math.sin(4.0 * theta + phase * 0.7 + 2.0 * math.sin(v * 7.0 + 1.0)))
+    y = y + (bench_y - y) * _ss * mask
     # Mesa caps: tabular seats on capped summits only.
     mesas = MESAS_NEAR if ri == 0 else MESAS_MID if ri == 1 else set()
     cap = _peak_cap(peaks, mesas, theta)
     if y > BASE_Y + cap:
         y = BASE_Y + cap + (y - BASE_Y - cap) * 0.15
-    # Multi-scale ridge relief + bounded grain.
+    # Multi-scale ridge relief: retained low octaves plus outcrop-scale
+    # irregular octaves; grain strengthened and slope-coupled for rock read.
     y += (2.2 * math.sin(3.0 * theta + RING_PHASE[ri])
-          + 1.1 * math.sin(7.0 * theta + 1.3 * RING_PHASE[ri]))
-    y += 1.1 * _hash2(theta * 19.0, v * 23.0, 41.0 + ri)
+          + 1.1 * math.sin(7.0 * theta + 1.3 * RING_PHASE[ri])
+          + 0.9 * math.sin(13.0 * theta + 2.1 * phase)
+          + 0.5 * math.sin(23.0 * theta + phase * 0.7))
+    y += 1.6 * _hash2(theta * 19.0, v * 23.0, 41.0 + ri)
+    y += 0.8 * _hash2(theta * 47.0, v * 31.0, 51.0 + ri) * slope_win
     return y
 
 
@@ -284,8 +360,9 @@ for ri, (rname, Rinner, depth, NU, NV, _gf, _gd, _ss) in enumerate(RINGS):
             theta = RING_PHASE[ri] + (iu % NU) / NU * math.tau
             theta = (theta + math.pi) % math.tau - math.pi
             r_base, meander = _radius(ri, Rinner, theta)
-            radius = r_base + v * depth + meander * math.sin(math.pi * v)
-            y = _height(ri, peaks, theta, v)
+            lift = _outcrop_lift(ri, theta, v)
+            radius = r_base + v * depth + meander * math.sin(math.pi * v) + lift * 1.5
+            y = _height(ri, peaks, theta, v) + lift
             x = radius * math.cos(theta)
             z = radius * math.sin(theta)
             grid[iv][iu] = bm.verts.new((x, y, z))

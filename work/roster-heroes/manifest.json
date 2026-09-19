@@ -30,11 +30,11 @@
       "meshes": ["mp5_receiver", "mp5_barrel_jacket", "mp5_muzzle", "mp5_front_sight", "mp5_rear_drum", "mp5_handguard", "mp5_grip_frame", "mp5_trigger_pack", "mp5_magazine", "mp5_stock_rails", "mp5_stock_plate", "mp5_charging", "mp5_claw_rail"],
       "materials": ["mp5_metal", "mp5_polymer", "mp5_accent"],
       "sockets": {"anchor_muzzle": [0.0, 0.345, 0.030], "anchor_grip": [0.0, -0.020, -0.075], "anchor_support": [0.0, 0.150, -0.005], "anchor_mag": [0.0, 0.045, -0.045]},
-      "magazine": {"object": "mp5_magazine", "pivot": "anchor_mag at straight-box feed top"}
+      "magazine": {"object": "mp5_magazine", "pivot": "anchor_mag at curved-mag feed top"}
     },
     "m14-ebr": {
       "glb": "public/assets/roster-heroes/m14-ebr.glb",
-      "meshes": ["ebr_chassis", "ebr_receiver", "ebr_bolt_handle", "ebr_barrel", "ebr_brake", "ebr_scope", "ebr_top_rail", "ebr_side_rails", "ebr_stock", "ebr_buttpad", "ebr_grip", "ebr_trigger", "ebr_magazine", "ebr_bipod"],
+      "meshes": ["ebr_chassis", "ebr_receiver", "ebr_bolt_handle", "ebr_barrel", "ebr_brake", "ebr_front_sight", "ebr_rear_sight", "ebr_top_rail", "ebr_side_rails", "ebr_stock", "ebr_buttpad", "ebr_grip", "ebr_trigger", "ebr_magazine", "ebr_bipod"],
       "materials": ["ebr_metal", "ebr_polymer", "ebr_accent"],
       "sockets": {"anchor_muzzle": [0.0, 0.630, 0.038], "anchor_grip": [0.0, -0.150, -0.075], "anchor_support": [0.0, 0.330, 0.005], "anchor_mag": [0.0, 0.060, -0.055]},
       "magazine": {"object": "ebr_magazine", "pivot": "anchor_mag at short-box feed top"}
@@ -48,6 +48,15 @@
     }
   },
   "budgets_per_gun": {"tris": 14000, "draws": 18, "materials": 3, "embedded_png": 2, "png_px": 1024},
+  "repair1": {
+    "lane": "nuketown-prop-20260919 (source-only)",
+    "recipe_backup": "work/hero-visual-repair/build_roster_heroes.py.bak",
+    "mp5": "rebuilt to mp5.png: rounded tube, curved ribbed mag, contoured furniture, open hood + peep drum, slim claw; 13 draws / 1478 tris (CPU)",
+    "m14-ebr": "tube scope removed per reference (irons, not scoped): open front post + rear aperture on existing rail; 15 draws / 1386 tris (CPU)",
+    "lmg": "sights off carry handle onto gas block / feed cover as open post + notch; 16 draws / 604 tris (CPU)",
+    "sight_line": "all three heroes share ~0.092 Blender-Z sight line; per-gun ADS trims in root controller patch",
+    "budgets": "frozen, unchanged"
+  },
   "build": {
     "recipe": "scripts/blender/build_roster_heroes.py",
     "invoke": "blender --background --factory-startup --threads 2 --python scripts/blender/build_roster_heroes.py -- --gun all --out <repo-root>",
