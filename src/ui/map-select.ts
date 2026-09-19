@@ -16,6 +16,7 @@ export interface MapEntry {
   id: string;
   name: string;
   tagline: string;
+  previewImage?: string;
   drawThumb(canvas: HTMLCanvasElement): void;
 }
 
@@ -32,6 +33,7 @@ export const MAPS: MapEntry[] = [
     id: 'nuketown-2025',
     name: 'Nuketown 2025',
     tagline: 'Twin houses · turning circle · tour coach',
+    previewImage: `${import.meta.env.BASE_URL}ui-art/map-preview.png`,
     drawThumb: paintMapThumb,
   },
 ];
@@ -65,18 +67,41 @@ export function buildMapSelect(): MapSelect {
       card.setAttribute('aria-pressed', 'true');
     });
 
+    const thumbWrap = document.createElement('div');
+    thumbWrap.className = 'aa-thumb-wrap';
+
+    if (m.previewImage) {
+      const hero = document.createElement('img');
+      hero.className = 'aa-map-hero';
+      hero.src = m.previewImage;
+      hero.alt = m.name + ' preview';
+      hero.loading = 'eager';
+      hero.addEventListener('error', () => {
+        hero.remove();
+        thumb.classList.remove('aa-thumb-schematic');
+        thumbWrap.classList.add('aa-thumb-fallback');
+      }, { once: true });
+      thumbWrap.append(hero);
+    }
+
     const thumb = document.createElement('canvas');
     thumb.width = THUMB_W;
     thumb.height = THUMB_H;
-    thumb.className = 'aa-thumb';
+    thumb.className = 'aa-thumb' + (m.previewImage ? ' aa-thumb-schematic' : '');
     m.drawThumb(thumb);
+    thumbWrap.append(thumb);
+
+    const meta = document.createElement('div');
+    meta.className = 'aa-mapmeta';
     const name = document.createElement('div');
     name.className = 'aa-mapname';
     name.textContent = m.name;
     const tag = document.createElement('div');
     tag.className = 'aa-maptag';
     tag.textContent = m.tagline;
-    card.append(thumb, name, tag);
+    meta.append(name, tag);
+
+    card.append(thumbWrap, meta);
     root.append(card);
   }
 

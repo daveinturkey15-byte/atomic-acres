@@ -1,101 +1,213 @@
-/* Atomic Acres — multiplayer lobby view, inside #start with the other menus.
- * Class prefix aa-; everything scoped under #start so nothing reaches the HUD.
- * The netcode diagnostics line lives in #hud (hidden by captures with it). */
+/* Atomic Acres — Multiplayer lobby view, inside #start.
+ * Shares the tactical-tech design system with menus.css.
+ * Scoped under #start so nothing leaks to HUD; #hud .aa-netline is the sole HUD element. */
 
-#start .aa-lobby { width: min(560px, 100%); }
-#start .aa-lobby .aa-setting { width: min(420px, 100%); }
+#start .aa-lobby {
+  width: min(580px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
 
+#start .aa-lobby .aa-setting {
+  width: min(440px, 100%);
+}
+
+#start .aa-lobby-idle,
+#start .aa-lobby-room {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* --- Input Fields: Tactical dark styling with amber focus --- */
 #start .aa-input {
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   color: #eaf4ff;
-  background: #101823;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  padding: 6px 10px;
+  background: #0f1722;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  padding: 7px 12px;
   min-width: 0;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
-#start .aa-input:focus-visible { outline: 2px solid #d8b23a; outline-offset: 2px; }
-#start .aa-callsign { width: 180px; }
-#start .aa-signal { width: 220px; }
+
+#start .aa-input:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: #131d2b;
+}
+
+#start .aa-input:focus-visible {
+  outline: 2px solid #ff9c4a;
+  outline-offset: 2px;
+  border-color: #ff9c4a;
+}
+
+#start .aa-callsign { width: 190px; }
+#start .aa-signal { width: 230px; }
+
 #start .aa-code-input {
-  width: 120px;
+  width: 130px;
   text-align: center;
-  letter-spacing: 4px;
+  letter-spacing: 5px;
   text-transform: uppercase;
   font-size: 18px;
+  font-weight: 700;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
 }
-#start .aa-join-row { align-items: center; }
 
+#start .aa-join-row {
+  align-items: center;
+  gap: 10px;
+}
+
+/* --- Room Join Code: Prominent Tactical Readout --- */
 #start .aa-code {
   font-size: 44px;
-  font-weight: 200;
+  font-weight: 800;
   letter-spacing: 12px;
   color: #ffd9a8;
   text-align: center;
-  padding-left: 12px; /* optically centre the letter-spaced code */
+  padding-left: 12px; /* optically centre letter-spaced code */
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  text-shadow: 0 0 16px rgba(255, 156, 74, 0.25);
+  margin: 4px 0;
 }
 
+/* --- Roster Slot List: Clean tabular team grid --- */
 #start .aa-roster {
   list-style: none;
   margin: 8px 0 0;
   padding: 0;
-  width: min(420px, 100%);
+  width: min(440px, 100%);
   border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  background: rgba(10, 15, 22, 0.75);
+  overflow: hidden;
 }
+
 #start .aa-seat {
   display: grid;
-  grid-template-columns: 22px 1fr auto;
-  gap: 8px;
+  grid-template-columns: 24px 1fr auto;
+  gap: 10px;
   align-items: center;
-  padding: 6px 10px;
-  font-size: 14px;
+  padding: 8px 12px;
+  font-size: 13px;
   color: #e8eef7;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  transition: background 0.1s ease;
 }
-#start .aa-seat:last-child { border-bottom: 0; }
-#start .aa-seat-mark { color: #7a8a9d; }
-#start .aa-seat.aa-ready .aa-seat-mark { color: #8fd694; }
-#start .aa-seat.aa-away { color: #9fb4c8; font-style: italic; }
-#start .aa-seat.aa-me { background: rgba(255, 255, 255, 0.06); }
-#start .aa-seat-state { font-size: 12px; letter-spacing: 1px; text-transform: uppercase; color: #9fb4c8; }
-#start .aa-seat.aa-ready .aa-seat-state { color: #8fd694; }
-#start .aa-seat.aa-empty { color: rgba(232, 238, 247, 0.35); grid-template-columns: 1fr; text-align: center; }
 
+#start .aa-seat:last-child {
+  border-bottom: 0;
+}
+
+#start .aa-seat-mark {
+  color: #6d7f94;
+  font-size: 14px;
+  text-align: center;
+}
+
+#start .aa-seat.aa-ready .aa-seat-mark {
+  color: #8fd694;
+}
+
+#start .aa-seat.aa-away {
+  color: #8faec9;
+  font-style: italic;
+}
+
+#start .aa-seat.aa-me {
+  background: rgba(255, 156, 74, 0.1);
+  border-left: 2px solid #ff9c4a;
+  padding-left: 10px;
+}
+
+#start .aa-seat-state {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #8faec9;
+}
+
+#start .aa-seat.aa-ready .aa-seat-state {
+  color: #8fd694;
+}
+
+#start .aa-seat.aa-empty {
+  color: rgba(232, 238, 247, 0.35);
+  grid-template-columns: 1fr;
+  text-align: center;
+  font-style: italic;
+  padding: 6px 12px;
+}
+
+/* --- Checkbox and Readiness Toggle --- */
 #start .aa-check {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   color: #e8eef7;
   cursor: pointer;
+  user-select: none;
 }
-#start .aa-check input { width: 18px; height: 18px; accent-color: #d8b23a; }
-#start .aa-rules-line { max-width: 460px; text-align: center; }
-#start .aa-lobby-status { min-height: 16px; }
+
+#start .aa-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: #ff9c4a;
+}
+
+#start .aa-rules-line {
+  max-width: 480px;
+  text-align: center;
+  font-size: 12px;
+  color: #8faec9;
+}
+
+#start .aa-lobby-status {
+  min-height: 18px;
+  font-size: 12px;
+  letter-spacing: 0.8px;
+  color: #ffd9a8;
+}
 
 #start .aa-error {
   min-height: 18px;
-  font-size: 13px;
+  font-size: 12px;
+  font-weight: 600;
   letter-spacing: 1px;
   color: #e08a8a;
   text-align: center;
 }
 
-/* The diagnostics line: monospace, bottom-centre, above the HUD's own rows. */
+/* --- Netline Diagnostics HUD Strip --- */
 #hud .aa-netline {
   position: fixed;
   left: 50%;
   bottom: 8px;
   transform: translateX(-50%);
   max-width: 96vw;
-  padding: 3px 8px;
+  padding: 3px 12px;
   font: 11px/1.4 ui-monospace, Menlo, Consolas, monospace;
   color: #cfe3ff;
-  background: rgba(8, 13, 20, 0.7);
-  border: 1px solid #3a4a5f;
+  background: rgba(8, 13, 20, 0.85);
+  border: 1px solid rgba(78, 201, 192, 0.35);
+  border-radius: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   pointer-events: none;
+  z-index: 6;
 }
+
 #hud .aa-netline.aa-hidden { display: none; }

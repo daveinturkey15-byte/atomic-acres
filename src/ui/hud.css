@@ -1,38 +1,34 @@
-/* Atomic Acres HUD — BO2 composition (bottom-corner heavy, thin condensed
- * type, desaturated with one amber accent), our own palette: accent, danger
- * and ink arrive as --aa-* custom properties set from PAL by initHud so the
- * UI and the world agree. Fallbacks match those PAL values.
+/* Atomic Acres HUD — Modern tactical-tech composition.
+ * Clean spatial hierarchy, zero bottom-right equipment/weapon/ammo collision,
+ * crisp military typography, and calibrated contrast.
  *
- * Motion rule: transform and opacity only. The health fill scales (never
- * width), the damage arc rotates (never top/left), hitmarker and vignette
- * fade. will-change sits on the three animating elements and nowhere else.
- *
- * Every number that JS also knows lives in ui/layout.ts. The hitmarker
- * keyframe offsets below are the one place the envelope shape is expressed:
- * the attack is 40 ms in all three, so the percentage differs per kind
- * (40/180, 40/210, 40/360) — a shared keyframe with a variable offset is not
- * expressible in CSS, and a single averaged offset would quietly retune two of
- * the three envelopes.
+ * Motion rule: transform and opacity only.
+ * Will-change sits on animating elements only.
  */
 
-/* debug gate: hides ONLY the pre-existing debug divs tagged .hud-debug */
+/* Debug gate: hides ONLY the pre-existing debug divs tagged .hud-debug */
 #hud.hud-debug-hidden .hud-debug {
   display: none !important;
 }
 
-/* generic hide used by every surface the game state can switch off */
+/* Generic hide used by every surface the game state can switch off */
 #hud .hud-hidden {
   display: none !important;
 }
 
-#hud .hud-own {
-  font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
-  letter-spacing: 0.06em;
-  color: var(--aa-ink, #f0ece2);
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+#hud {
+  --aa-flash: 1;
 }
 
-/* --- crosshair: hide the index.html plus, use our 4 dynamic lines --- */
+#hud .hud-own {
+  font-family: "Arial Narrow", "DIN Alternate", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: 0.05em;
+  color: var(--aa-ink, #f0ece2);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95);
+  user-select: none;
+}
+
+/* --- Crosshair: Clean dynamic tactical reticle --- */
 #crosshair.xh-lines::before,
 #crosshair.xh-lines::after {
   display: none;
@@ -49,7 +45,7 @@
 }
 #crosshair .xh {
   position: absolute;
-  background: #eaf4ff;
+  background: #f0f6ff;
   box-shadow: 0 0 2px #000;
 }
 #crosshair .xh-n { left: -1px; top: calc(-7px - var(--xh-gap)); width: 2px; height: 7px; }
@@ -57,63 +53,301 @@
 #crosshair .xh-e { top: -1px; left: var(--xh-gap); height: 2px; width: 7px; }
 #crosshair .xh-w { top: -1px; left: calc(-7px - var(--xh-gap)); height: 2px; width: 7px; }
 
-/* --- weapon block + ammo bottom-right --- */
+/* -------------------------------------------------------------------------- */
+/* Bottom-Right Tactical Weapon & Equipment Stack                             */
+/* Resolves previous overlap: Ammo (bottom), Weapon (mid), Equipment (top).   */
+/* -------------------------------------------------------------------------- */
+
+/* 1. Equipment / Grenades (Top of stack, overrides inline styling) */
+#hud .hud-grenades {
+  position: fixed !important;
+  right: max(24px, env(safe-area-inset-right, 24px)) !important;
+  bottom: calc(max(24px, env(safe-area-inset-bottom, 24px)) + 112px) !important;
+  display: flex !important;
+  gap: 12px !important;
+  justify-content: flex-end !important;
+  align-items: center !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.12em !important;
+  opacity: 0.95 !important;
+  z-index: 5;
+}
+
+#hud .hud-grenade-lethal,
+#hud .hud-grenade-tactical {
+  background: rgba(8, 13, 20, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  padding: 3px 8px;
+  text-transform: uppercase;
+  color: #f2f6fb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+#hud .hud-grenade-lethal {
+  border-left: 2px solid var(--aa-accent, #ff9c4a);
+}
+
+#hud .hud-grenade-tactical {
+  border-left: 2px solid #4ec9c0;
+}
+
+/* 2. Weapon Nameplate (Middle of stack) */
 #hud .hud-weapon {
   position: fixed;
-  right: 22px;
-  bottom: 78px;
+  right: max(24px, env(safe-area-inset-right, 24px));
+  bottom: calc(max(24px, env(safe-area-inset-bottom, 24px)) + 72px);
   display: flex;
   align-items: baseline;
   gap: 10px;
-  font-size: 15px;
-  opacity: 0.9;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  opacity: 0.95;
+  z-index: 5;
 }
-#hud .hud-weapon-name { text-transform: uppercase; }
-#hud .hud-reload { font-size: 12px; color: var(--aa-accent, #d8b23a); }
+
+#hud .hud-weapon-name {
+  text-transform: uppercase;
+  color: #f2f6fb;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+#hud .hud-reload {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--aa-accent, #ffd9a8);
+  background: rgba(255, 156, 74, 0.22);
+  border: 1px solid var(--aa-accent, #ff9c4a);
+  border-radius: 2px;
+  padding: 1px 6px;
+  text-transform: uppercase;
+}
+
 #hud .hud-reload-hidden { display: none; }
-/* Raised 22 px off the corner: the netcode lane's #hud .nt-lobby-btn sits at
- * the bottom-right and was clipping the reserve count. Measured in
- * captures/readouts-hud.png before the move. */
+
+/* 3. Ammo Readout (Base of stack) */
 #hud .hud-ammo {
   position: fixed;
-  right: 22px;
-  bottom: 40px;
-  font-size: 30px;
-  font-weight: 600;
+  right: max(24px, env(safe-area-inset-right, 24px));
+  bottom: max(24px, env(safe-area-inset-bottom, 24px));
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 38px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(90deg, transparent 0%, rgba(9, 14, 20, 0.6) 25%, rgba(9, 14, 20, 0.88) 100%);
+  border-right: 3px solid var(--aa-accent, #ff9c4a);
+  padding: 2px 10px 2px 24px;
+  border-radius: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 5;
 }
-#hud .hud-ammo .hud-reserve { font-size: 17px; opacity: 0.75; }
-#hud .hud-ammo .hud-ammo-sep { font-size: 20px; opacity: 0.6; }
-#hud .hud-ammo.hud-low .hud-mag { color: var(--aa-danger, #b8322e); }
 
-/* --- health bottom-left: fill scales on the compositor, never width --- */
+#hud .hud-mag {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  color: #f5f9fc;
+}
+
+#hud .hud-ammo .hud-ammo-sep {
+  font-size: 22px;
+  font-weight: 400;
+  opacity: 0.45;
+}
+
+#hud .hud-reserve {
+  font-size: 20px;
+  font-weight: 600;
+  opacity: 0.8;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+
+#hud .hud-ammo.hud-low .hud-mag {
+  color: var(--aa-danger, #e08a8a);
+  text-shadow: 0 0 10px rgba(184, 50, 46, 0.6);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Bottom-Left Health & Status Area                                           */
+/* -------------------------------------------------------------------------- */
 #hud .hud-health {
   position: fixed;
-  left: 22px;
-  bottom: 18px;
+  left: max(24px, env(safe-area-inset-left, 24px));
+  bottom: max(24px, env(safe-area-inset-bottom, 24px));
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  background: linear-gradient(90deg, rgba(9, 14, 20, 0.88) 0%, rgba(9, 14, 20, 0.6) 75%, transparent 100%);
+  border-left: 3px solid #4ec9c0;
+  padding: 4px 20px 4px 10px;
+  border-radius: 2px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 5;
 }
+
+#hud .hud-health.hud-low {
+  border-left-color: var(--aa-danger, #b8322e);
+}
+
 #hud .hud-hp-track {
-  width: 170px;
-  height: 10px;
-  background: rgba(255, 255, 255, 0.16);
-  border: 1px solid rgba(255, 255, 255, 0.35);
+  width: 175px;
+  height: 12px;
+  background: rgba(15, 22, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 2px;
+  overflow: hidden;
 }
+
 #hud .hud-hp-fill {
   height: 100%;
   width: 100%;
   background: var(--aa-ink, #f0ece2);
   transform: scaleX(1);
   transform-origin: left center;
+  transition: transform 0.08s ease-out;
 }
-#hud .hud-health.hud-low .hud-hp-fill { background: var(--aa-danger, #b8322e); }
-#hud .hud-hp-label { font-size: 22px; font-weight: 600; }
 
-/* --- damage vignette: peak opacity scales with the accessibility setting --- */
-#hud {
-  --aa-flash: 1;
+#hud .hud-health.hud-low .hud-hp-fill {
+  background: var(--aa-danger, #b8322e);
+  box-shadow: 0 0 8px rgba(184, 50, 46, 0.8);
 }
+
+#hud .hud-hp-label {
+  font-size: 24px;
+  font-weight: 800;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  min-width: 44px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Killstreak Strip (Bottom-Centre)                                           */
+/* -------------------------------------------------------------------------- */
+#hud .hud-streak {
+  position: fixed;
+  left: 50%;
+  bottom: max(20px, env(safe-area-inset-bottom, 20px));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  background: rgba(8, 12, 18, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  padding: 4px 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  z-index: 5;
+}
+
+#hud .hud-streak-kills {
+  font-size: 16px;
+  font-weight: 800;
+  min-width: 22px;
+  text-align: right;
+  color: #ffd9a8;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  margin-right: 4px;
+}
+
+#hud .hud-streak-slot {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  padding: 3px 8px;
+  opacity: 0.45;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+#hud .hud-streak-slot.hud-streak-ready {
+  opacity: 1;
+  border-color: var(--aa-accent, #ff9c4a);
+  color: #ffd9a8;
+  background: rgba(255, 156, 74, 0.22);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Minimap Radar (Top-Left)                                                   */
+/* -------------------------------------------------------------------------- */
+#hud .hud-minimap {
+  position: fixed;
+  left: max(22px, env(safe-area-inset-left, 22px));
+  top: max(20px, env(safe-area-inset-top, 20px));
+  z-index: 5;
+}
+
+#hud .hud-map-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #8faec9;
+  margin-bottom: 4px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+#hud .hud-map-canvas {
+  width: 148px;
+  height: 148px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-radius: 50%;
+  background: rgba(6, 10, 16, 0.75);
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.7);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Match Bar (Top-Centre)                                                     */
+/* -------------------------------------------------------------------------- */
+#hud .hud-matchbar {
+  position: fixed;
+  left: 50%;
+  top: max(14px, env(safe-area-inset-top, 14px));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 14px;
+  background: rgba(8, 12, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  padding: 4px 18px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  z-index: 5;
+}
+
+#hud .hud-bar-mode {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+  color: #8faec9;
+}
+
+#hud .hud-bar-clock {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+
+#hud .hud-bar-score {
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+
+#hud .hud-bar-score.hud-team-a { color: var(--aa-accent, #ff9c4a); }
+#hud .hud-bar-score.hud-team-b { color: #4ec9c0; }
+
+/* -------------------------------------------------------------------------- */
+/* Combat Damage & Feedback Overlays                                          */
+/* -------------------------------------------------------------------------- */
 #hud .hud-vignette {
   position: fixed;
   inset: 0;
@@ -121,14 +355,18 @@
   opacity: 0;
   will-change: opacity;
   background: radial-gradient(ellipse at center, transparent 52%, rgba(200, 20, 10, 0.55) 100%);
+  z-index: 4;
 }
-#hud .hud-vignette.hud-flash { animation: hud-dmg 0.45s ease-out; }
+
+#hud .hud-vignette.hud-flash {
+  animation: hud-dmg 0.45s ease-out;
+}
+
 @keyframes hud-dmg {
   0% { opacity: var(--aa-flash, 1); }
   100% { opacity: 0; }
 }
 
-/* --- damage-direction arc: a ring segment rotated into place --- */
 #hud .hud-dmgdir {
   position: fixed;
   left: 50%;
@@ -139,8 +377,11 @@
   pointer-events: none;
   opacity: 1;
   will-change: transform, opacity;
+  z-index: 4;
 }
+
 #hud .hud-dmgdir-hidden { opacity: 0; visibility: hidden; }
+
 #hud .hud-dmgdir-arc {
   position: absolute;
   inset: 0;
@@ -149,7 +390,6 @@
   border-top-color: var(--aa-danger, #b8322e);
 }
 
-/* --- hitmarker: three envelopes, all 40 ms attack, opacity + scale only --- */
 #hud .hud-hitmarker {
   position: fixed;
   left: 50%;
@@ -159,7 +399,9 @@
   margin: -11px 0 0 -11px;
   opacity: 0;
   will-change: opacity, transform;
+  z-index: 6;
 }
+
 #hud .hud-hitmarker .hm-a {
   position: absolute;
   left: 10px;
@@ -178,7 +420,7 @@
 #hud .hud-hitmarker.hm-head { animation: hm-head 210ms ease-out; }
 #hud .hud-hitmarker.hm-kill { animation: hm-kill 360ms ease-out; }
 #hud .hud-hitmarker.hm-head .hm-a { background: #fff4d0; }
-#hud .hud-hitmarker.hm-kill .hm-a { background: var(--aa-accent, #d8b23a); height: 10px; }
+#hud .hud-hitmarker.hm-kill .hm-a { background: var(--aa-accent, #ff9c4a); height: 10px; }
 
 @keyframes hm-body {
   0% { opacity: 0; transform: scale(0.7); }
@@ -196,7 +438,9 @@
   100% { opacity: 0; transform: scale(1); }
 }
 
-/* --- feeds: three pools, recycled rows, shown/hidden by class --- */
+/* -------------------------------------------------------------------------- */
+/* Killfeed and Event Feeds                                                   */
+/* -------------------------------------------------------------------------- */
 #hud .hud-killfeed,
 #hud .hud-feed-done,
 #hud .hud-feed-taken {
@@ -206,146 +450,188 @@
   gap: 4px;
   font-size: 13px;
   pointer-events: none;
+  z-index: 5;
 }
-#hud .hud-killfeed { right: 22px; top: 14px; align-items: flex-end; }
-#hud .hud-feed-done { right: 22px; top: 44%; align-items: flex-end; font-size: 15px; }
-#hud .hud-feed-taken { left: 22px; top: 44%; align-items: flex-start; font-size: 15px; }
+
+#hud .hud-killfeed {
+  right: max(22px, env(safe-area-inset-right, 22px));
+  top: max(16px, env(safe-area-inset-top, 16px));
+  align-items: flex-end;
+}
+
+#hud .hud-feed-done {
+  right: max(22px, env(safe-area-inset-right, 22px));
+  top: 44%;
+  align-items: flex-end;
+  font-size: 14px;
+}
+
+#hud .hud-feed-taken {
+  left: max(22px, env(safe-area-inset-left, 22px));
+  top: 44%;
+  align-items: flex-start;
+  font-size: 14px;
+}
+
 #hud .hud-feed-row {
-  background: rgba(0, 0, 0, 0.55);
-  border-right: 2px solid var(--aa-accent, #d8b23a);
-  padding: 2px 8px;
+  background: rgba(8, 12, 18, 0.75);
+  border-right: 3px solid var(--aa-accent, #ff9c4a);
+  border-radius: 2px;
+  padding: 3px 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
 }
-#hud .hud-feed-taken .hud-feed-row { border-right: 0; border-left: 2px solid var(--aa-danger, #b8322e); }
+
+#hud .hud-feed-taken .hud-feed-row {
+  border-right: 0;
+  border-left: 3px solid var(--aa-danger, #b8322e);
+}
+
 #hud .hud-feed-row.hud-feed-hidden { display: none; }
-#hud .hud-tone-own { border-right-color: var(--aa-accent, #d8b23a); }
+#hud .hud-tone-own { border-right-color: var(--aa-accent, #ff9c4a); }
 #hud .hud-tone-friendly { border-right-color: #4ec9c0; }
 #hud .hud-tone-enemy { border-right-color: var(--aa-danger, #b8322e); }
 #hud .hud-tone-neutral { border-right-color: rgba(255, 255, 255, 0.35); }
 
-/* --- match bar (top-centre): mode, clock, both team scores --- */
-#hud .hud-matchbar {
-  position: fixed;
-  left: 50%;
-  top: 12px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  font-size: 15px;
-  background: rgba(0, 0, 0, 0.45);
-  padding: 4px 14px;
-}
-#hud .hud-bar-mode { font-size: 11px; opacity: 0.7; text-transform: uppercase; }
-#hud .hud-bar-clock { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
-#hud .hud-bar-score { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
-#hud .hud-bar-score.hud-team-a { color: var(--aa-accent, #d8b23a); }
-#hud .hud-bar-score.hud-team-b { color: #4ec9c0; }
-
-/* --- banner (centre) + respawn countdown --- */
-/* 36%, not 26%: at 26% the banner sat behind the scoreboard while Tab was
- * held and "MATCH OVER" was unreadable under a score row. Measured against
- * the scoreboard's own box, which now ends at ~33% of a 900 px viewport. */
+/* -------------------------------------------------------------------------- */
+/* Banners, Respawn & Scoreboard                                              */
+/* -------------------------------------------------------------------------- */
 #hud .hud-banner {
+  width: min(600px, calc(100vw - 32px));
   position: fixed;
   left: 50%;
-  top: 36%;
+  top: 34%;
   transform: translateX(-50%);
   text-align: center;
   pointer-events: none;
+  z-index: 5;
 }
+
 #hud .hud-banner-text {
   font-size: 34px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: var(--aa-accent, #d8b23a);
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  color: var(--aa-accent, #ffd9a8);
+  text-shadow: 0 0 16px rgba(255, 156, 74, 0.4);
 }
-#hud .hud-banner-sub { font-size: 12px; opacity: 0.75; letter-spacing: 0.22em; }
+
+#hud .hud-banner-sub {
+  font-size: 13px;
+  opacity: 0.85;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+
 #hud .hud-respawn {
   position: fixed;
   left: 50%;
   top: 56%;
   transform: translateX(-50%);
   font-size: 16px;
-  letter-spacing: 0.18em;
-  color: var(--aa-danger, #b8322e);
-}
-
-/* --- streak strip (bottom-centre) --- */
-#hud .hud-streak {
-  position: fixed;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
-#hud .hud-streak-kills {
-  font-size: 18px;
-  font-weight: 600;
-  min-width: 20px;
-  text-align: right;
-  opacity: 0.85;
-}
-#hud .hud-streak-slot {
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 2px 7px;
-  opacity: 0.45;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--aa-danger, #e08a8a);
   text-transform: uppercase;
-}
-#hud .hud-streak-slot.hud-streak-ready {
-  opacity: 1;
-  border-color: var(--aa-accent, #d8b23a);
-  color: var(--aa-accent, #d8b23a);
+  z-index: 5;
 }
 
-/* --- minimap top-left --- */
-#hud .hud-minimap { position: fixed; left: 22px; top: 44px; }
-#hud .hud-map-title { font-size: 11px; opacity: 0.8; margin-bottom: 3px; }
-#hud .hud-map-canvas {
-  width: 148px;
-  height: 148px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 50%;
+#hud .hud-prompt {
+  position: fixed !important;
+  left: 50% !important;
+  top: 64% !important;
+  transform: translateX(-50%) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.16em !important;
+  padding: 6px 16px !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 3px !important;
+  background: rgba(8, 12, 18, 0.85) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6) !important;
+  z-index: 5;
 }
 
-/* --- scoreboard --- */
 #hud .hud-score {
   position: fixed;
   left: 50%;
-  top: 14%;
+  top: 100px;
   transform: translateX(-50%);
-  min-width: 340px;
-  background: rgba(0, 0, 0, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 10px 14px;
-  font-size: 14px;
+  width: min(480px, calc(100vw - 32px));
+  min-width: 0;
+  box-sizing: border-box;
+  max-height: calc(100vh - 340px);
+  overflow-y: auto;
+  background: rgba(7, 11, 16, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 3px;
+  padding: 12px 18px;
+  font-size: 13px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+  z-index: 7;
 }
+
 #hud .hud-score.hud-score-hidden { display: none; }
-#hud .hud-score-title { font-size: 12px; color: var(--aa-accent, #d8b23a); margin-bottom: 6px; }
+#hud:has(.hud-score:not(.hud-score-hidden)) .hud-banner {
+  top: auto;
+  bottom: 150px;
+}
+#hud .hud-score-title {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--aa-accent, #ffd9a8);
+  margin-bottom: 8px;
+}
+
 #hud .hud-score-row {
   display: grid;
-  grid-template-columns: 1fr 42px 42px 56px;
+  grid-template-columns: 1fr 48px 48px 64px;
   gap: 8px;
-  padding: 2px 0;
+  padding: 3px 0;
+  align-items: center;
 }
-#hud .hud-score-head { opacity: 0.55; font-size: 11px; border-bottom: 1px solid rgba(255, 255, 255, 0.18); }
-#hud .hud-score-n { text-align: right; font-variant-numeric: tabular-nums; }
-#hud .hud-score-row.hud-team-b .hud-score-name { color: #4ec9c0; }
-#hud .hud-score-row.hud-score-self { background: rgba(255, 255, 255, 0.08); }
 
-/* Be polite when the OS asks for calm, and when the player asks explicitly:
- * .hud-reduced-motion is set by setAccessibility from ui/settings.ts, so the
- * in-game toggle works on a machine whose OS preference says otherwise. */
+#hud .hud-score-head {
+  opacity: 0.65;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  padding-bottom: 4px;
+}
+
+#hud .hud-score-n {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+
+#hud .hud-score-row.hud-team-b .hud-score-name { color: #4ec9c0; }
+#hud .hud-score-row.hud-score-self {
+  background: rgba(255, 156, 74, 0.12);
+  border-left: 2px solid var(--aa-accent, #ff9c4a);
+  padding-left: 6px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Accessibility & Reduced Motion                                             */
+/* -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   #hud .hud-vignette.hud-flash { animation: none; }
   #hud .hud-dmgdir { will-change: auto; }
   #hud .hud-hitmarker { will-change: auto; }
 }
+
 #hud.hud-reduced-motion .hud-vignette.hud-flash { animation: none; }
 #hud.hud-reduced-motion .hud-hitmarker.hm-body,
 #hud.hud-reduced-motion .hud-hitmarker.hm-head,
 #hud.hud-reduced-motion .hud-hitmarker.hm-kill {
   animation-duration: 90ms;
+}
+
+@media (max-width: 768px) {
+  #hud .hud-streak { bottom: 190px; }
+  #hud .hud-ammo { font-size: 30px; }
+  #hud .hud-hp-track { width: 120px; }
+  #hud .hud-minimap { top: 78px; transform: scale(0.65); transform-origin: top left; }
+  #hud .hud-matchbar { padding: 4px 10px; gap: 10px; }
 }

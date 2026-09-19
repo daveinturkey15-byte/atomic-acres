@@ -186,6 +186,7 @@ hudHelp.textContent =
   'F fly · C noclip · wheel/[ ] speed · H help · Esc free mouse · ' +
   'LMB fire · RMB aim · R reload · 1/2 or wheel weapons · ' +
   'G frag (hold to cook) · Q tactical · V knife · hold E pick up · CTRL crouch · Z prone';
+ammoDiv.classList.add('hud-debug');
 hud.append(hudStats, hudMode, hudHelp, ammoDiv);
 // ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
 // initUI owns everything inside #hud and #start, so the capture harness still

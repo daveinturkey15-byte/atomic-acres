@@ -1,344 +1,590 @@
-/* Atomic Acres menus — BO2-ish thin sans, no Activision branding.
- * All selectors are scoped under #start so nothing leaks onto the HUD canvas. */
+/* Atomic Acres menus — Modern minimal tactical-tech composition.
+ * Scoped under #start so nothing leaks onto the HUD canvas or world. */
+
+#start {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(ellipse at 50% 35%, rgba(18, 27, 38, 0.96), rgba(7, 10, 14, 0.98));
+  color: #e8eef7;
+  z-index: 10;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  cursor: pointer;
+}
 
 #start .aa-root {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
+  width: 100%;
+  height: 100%;
   max-height: 100%;
+  box-sizing: border-box;
   overflow-y: auto;
-  padding: 24px 16px;
-  font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  padding: max(24px, env(safe-area-inset-top, 24px)) max(24px, env(safe-area-inset-right, 24px)) max(24px, env(safe-area-inset-bottom, 24px)) max(24px, env(safe-area-inset-left, 24px));
+  justify-content: flex-start;
+  cursor: default;
+}
+
+/* A view taller than the overlay scrolls from its top; a short one centres */
+#start .aa-root > .aa-view {
+  margin-top: auto;
+  margin-bottom: auto;
+  flex-shrink: 0;
 }
 
 #start .aa-view {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  width: 100%;
+  max-width: 760px;
 }
 
 #start .aa-hidden { display: none !important; }
 
+/* Pause and end-of-match sit over the live world */
+#start.aa-translucent {
+  background: radial-gradient(ellipse at center, rgba(10, 15, 22, 0.82), rgba(5, 7, 10, 0.92));
+  backdrop-filter: blur(4px);
+}
+
+/* --- Typographic hierarchy: tactical, high legibility --- */
 #start .aa-eyebrow {
-  font-size: 12px;
-  letter-spacing: 2.5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  color: #9fb4c8;
+  color: #8faec9;
 }
 
 #start .aa-title {
   margin: 0;
-  font-size: 52px;
-  font-weight: 200;
-  letter-spacing: 8px;
-  color: #f2f6fb;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
+  font-size: 54px;
+  font-weight: 800;
+  letter-spacing: 9px;
+  text-transform: uppercase;
+  color: #f5f9fc;
+  text-shadow: 0 4px 24px rgba(0, 0, 0, 0.85);
+  line-height: 1.05;
 }
 
 #start .aa-sub {
-  font-size: 15px;
-  letter-spacing: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 4.5px;
   text-transform: uppercase;
-  color: #ffb37a;
+  color: #ff9c4a;
 }
 
 #start .aa-h2 {
   margin: 0;
-  font-size: 28px;
-  font-weight: 200;
-  letter-spacing: 5px;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 4.5px;
   text-transform: uppercase;
   color: #f2f6fb;
 }
 
+#start .aa-h3 {
+  margin: 14px 0 2px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #8faec9;
+}
+
+/* --- Button rows and tactical buttons --- */
 #start .aa-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-top: 4px;
+  align-items: center;
+}
+
+#start .aa-menu-row {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
 }
 
 #start .aa-btn {
   font: inherit;
-  font-size: 14px;
-  letter-spacing: 1.5px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1.8px;
   text-transform: uppercase;
   color: #e8eef7;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  padding: 10px 26px;
+  background: rgba(18, 26, 36, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 2px;
+  padding: 10px 24px;
   cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.08s ease;
+  user-select: none;
 }
 
-#start .aa-btn:hover { background: rgba(255, 255, 255, 0.16); }
+#start .aa-btn:hover {
+  background: rgba(28, 40, 56, 0.95);
+  border-color: rgba(255, 255, 255, 0.38);
+  color: #ffffff;
+}
+
+#start .aa-btn:active {
+  transform: translateY(1px);
+}
 
 #start .aa-btn.aa-primary {
-  background: rgba(255, 138, 92, 0.18);
-  border-color: #ff8a5c;
-  color: #ffd9a8;
+  background: linear-gradient(180deg, rgba(255, 156, 74, 0.28) 0%, rgba(200, 100, 30, 0.2) 100%);
+  border-color: #ff9c4a;
+  color: #ffe6c7;
+  font-weight: 700;
 }
 
-#start .aa-btn.aa-primary:hover { background: rgba(255, 138, 92, 0.32); }
+#start .aa-btn.aa-primary:hover {
+  background: linear-gradient(180deg, rgba(255, 156, 74, 0.42) 0%, rgba(200, 100, 30, 0.34) 100%);
+  border-color: #ffb37a;
+  color: #ffffff;
+}
 
+/* --- Map Selection: Tactical Card with In-Game Hero Preview --- */
 #start .aa-maphead {
-  margin-top: 8px;
-  font-size: 12px;
-  letter-spacing: 2.5px;
+  margin-top: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  color: #9fb4c8;
+  color: #8faec9;
 }
 
 #start .aa-maps {
   display: flex;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
   justify-content: center;
 }
 
 #start .aa-map {
   font: inherit;
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(12, 18, 26, 0.92);
   border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
   padding: 8px;
   cursor: pointer;
-  width: 148px;
+  width: 270px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
 }
 
-#start .aa-map:hover { background: rgba(255, 255, 255, 0.11); }
+#start .aa-map:hover {
+  background: rgba(18, 28, 40, 0.96);
+  border-color: rgba(255, 255, 255, 0.35);
+}
 
 #start .aa-map.aa-selected {
-  border-color: #ff8a5c;
-  box-shadow: 0 0 0 1px #ff8a5c;
+  border-color: #ff9c4a;
+  background: rgba(20, 30, 44, 0.96);
+  box-shadow: 0 0 0 1px #ff9c4a, 0 8px 24px rgba(0, 0, 0, 0.6);
 }
 
-/* Portrait, and the same uniform projection the live minimap uses. The old
- * 200x120 landscape thumb only fitted by scaling x and z differently, so the
- * map-select picture was a shape the arena is not. */
+#start .aa-thumb-wrap {
+  position: relative;
+  width: 100%;
+  height: 148px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: #080d14;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#start .aa-map-hero {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.92) contrast(1.05);
+  transition: filter 0.2s ease, transform 0.25s ease;
+}
+
+#start .aa-map:hover .aa-map-hero {
+  filter: brightness(1.05) contrast(1.05);
+  transform: scale(1.03);
+}
+
+/* Fallback / original canvas thumb: hidden if hero image is present */
 #start .aa-thumb {
   display: block;
   width: 132px;
   height: 200px;
 }
 
+#start .aa-thumb.aa-thumb-schematic {
+  display: none;
+}
+
+#start .aa-thumb-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#start .aa-thumb-fallback .aa-thumb {
+  width: auto;
+  height: 100%;
+}
+
+#start .aa-mapmeta {
+  padding: 6px 2px 2px;
+}
+
 #start .aa-mapname {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 14px;
-  letter-spacing: 1px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
   color: #f2f6fb;
 }
 
 #start .aa-maptag {
-  font-size: 12px;
-  color: #9fb4c8;
+  font-size: 11px;
+  letter-spacing: 0.4px;
+  color: #8faec9;
+  margin-top: 2px;
 }
 
-#start .aa-fan {
-  margin-top: 6px;
-  font-size: 12px;
-  color: rgba(232, 238, 247, 0.55);
-}
-
+/* --- Settings, Forms and Input Controls --- */
 #start .aa-setting {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  width: 320px;
-  font-size: 14px;
+  gap: 6px;
+  width: 340px;
+  font-size: 13px;
   color: #e8eef7;
 }
 
 #start .aa-setting-head {
   display: flex;
   justify-content: space-between;
+  align-items: baseline;
 }
 
-#start .aa-val { color: #ffd9a8; }
+#start .aa-val {
+  color: #ffd9a8;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
 
-#start .aa-setting input[type="range"] { width: 100%; }
+#start .aa-setting input[type="range"] {
+  width: 100%;
+  accent-color: #ff9c4a;
+  cursor: pointer;
+}
 
 #start .aa-select {
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   color: #e8eef7;
-  background: #1b2430;
+  background: #121a24;
   border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 2px;
   padding: 6px 10px;
+  cursor: pointer;
 }
 
-/* --- keyboard: every control shows where focus is --- */
-#start .aa-btn:focus-visible,
-#start .aa-map:focus-visible,
-#start .aa-setting input[type="range"]:focus-visible,
-#start .aa-select:focus-visible {
-  outline: 2px solid #d8b23a;
-  outline-offset: 2px;
-}
-#start .aa-btn:focus:not(:focus-visible) {
-  outline: none;
-}
-
-/* --- prompt caps: text owned by the glyph scheme, never layout --- */
-#start .aa-hint {
-  margin-top: 6px;
-  font-size: 12px;
-  color: rgba(232, 238, 247, 0.7);
-}
-#start .aa-hint kbd {
-  font: 600 11px/1 ui-monospace, Menlo, Consolas, monospace;
-  color: #ffd9a8;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-bottom-width: 2px;
-  padding: 2px 6px;
-}
-#start .aa-hint kbd.pad-glyph {
-  color: #1b2430;
-  background: #d8b23a;
-  border-color: #d8b23a;
-}
-
-/* --- settings: accessibility group + checkbox rows --- */
-#start .aa-h3 {
-  margin: 14px 0 2px;
-  font-size: 12px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: rgba(232, 238, 247, 0.6);
-}
-#start .aa-setting-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-#start .aa-setting input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: #d8b23a;
-}
-#start .aa-setting input[type="checkbox"]:focus-visible {
-  outline: 2px solid #d8b23a;
-  outline-offset: 2px;
-}
-
-/* ------------------------------------------------------------------------- */
-/* Lobby lane, 2026-09-19: the shell that holds solo / multiplayer / options / */
-/* credits / pause / end views. The root fills the overlay so every click is  */
-/* a menu click; the empty backdrop is only ever reached by #start.click().   */
-/* ------------------------------------------------------------------------- */
-
-#start .aa-root {
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  justify-content: flex-start;
-  cursor: default;
-}
-/* A view taller than the overlay scrolls from its top; a short one centres.
- * (justify-content:center on an overflowing flex container clips the top.) */
-#start .aa-root > .aa-view { margin-top: auto; margin-bottom: auto; flex-shrink: 0; }
-/* Pause and end-of-match sit over the live world: dim it, do not hide it. */
-#start.aa-translucent {
-  background: rgba(7, 10, 13, 0.74);
-  backdrop-filter: blur(2px);
-}
-#start .aa-menu-row { flex-wrap: wrap; justify-content: center; }
-#start .aa-foot { margin-top: 10px; text-align: center; }
-#start .aa-credits { color: rgba(232, 238, 247, 0.45); font-size: 11px; }
-
-/* --- option status notes: the honest word beside every control --- */
-#start .aa-note {
-  font-size: 11px;
-  letter-spacing: 0.5px;
-  color: rgba(232, 238, 247, 0.5);
-}
-#start .aa-note-live { color: #8fd694; }
-#start .aa-note-shim { color: #d8b23a; }
-#start .aa-note-persist { color: rgba(232, 238, 247, 0.5); }
 #start .aa-setting-row {
   display: grid;
   grid-template-columns: 1fr auto;
-  column-gap: 14px;
-  row-gap: 0;
+  column-gap: 16px;
+  row-gap: 2px;
   align-items: center;
+  padding: 4px 0;
 }
+
 #start .aa-setting-row > :first-child { grid-column: 1; grid-row: 1; }
 #start .aa-setting-row > .aa-note { grid-column: 1; grid-row: 2; text-align: left; }
 #start .aa-setting-row > input,
 #start .aa-setting-row > select,
 #start .aa-setting-row > button,
 #start .aa-setting-row > .aa-seg,
-#start .aa-setting-row > span:nth-child(2):not(.aa-note) { grid-column: 2; grid-row: 1 / span 2; justify-self: end; }
-#start .aa-muted { color: rgba(232, 238, 247, 0.5); }
-#start .aa-options { width: min(560px, 100%); }
-#start .aa-options .aa-setting { width: min(460px, 100%); }
-#start .aa-solo .aa-setting { width: min(420px, 100%); }
+#start .aa-setting-row > span:nth-child(2):not(.aa-note) {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  justify-self: end;
+}
 
-/* --- tabs --- */
-#start .aa-tabs { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+#start .aa-setting input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #ff9c4a;
+  cursor: pointer;
+}
+
+#start .aa-note {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  color: rgba(232, 238, 247, 0.55);
+}
+#start .aa-note-live { color: #8fd694; }
+#start .aa-note-shim { color: #ffd9a8; }
+#start .aa-note-persist { color: rgba(232, 238, 247, 0.5); }
+#start .aa-muted { color: rgba(232, 238, 247, 0.5); }
+
+#start .aa-options { width: min(580px, 100%); }
+#start .aa-options .aa-setting { width: min(480px, 100%); }
+#start .aa-solo .aa-setting { width: min(440px, 100%); }
+
+/* --- Options Tabs --- */
+#start .aa-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding-bottom: 8px;
+  width: 100%;
+}
+
 #start .aa-tab {
   font: inherit;
   font-size: 12px;
+  font-weight: 600;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #9fb4c8;
+  color: #8faec9;
   background: transparent;
   border: 0;
   border-bottom: 2px solid transparent;
-  padding: 6px 12px;
+  padding: 6px 14px;
   cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
-#start .aa-tab[aria-selected="true"] { color: #ffd9a8; border-bottom-color: #ff8a5c; }
-#start .aa-tab:focus-visible { outline: 2px solid #d8b23a; outline-offset: 2px; }
-#start .aa-tabpage { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 
-/* --- segmented buttons (difficulty) --- */
+#start .aa-tab:hover {
+  color: #f2f6fb;
+}
+
+#start .aa-tab[aria-selected="true"] {
+  color: #ffd9a8;
+  border-bottom-color: #ff9c4a;
+}
+
+#start .aa-tabpage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* --- Segmented Buttons (e.g. Difficulty) --- */
 #start .aa-seg { display: flex; gap: 4px; }
-#start .aa-seg-btn { padding: 6px 12px; font-size: 12px; }
-#start .aa-seg-btn.aa-selected { border-color: #ff8a5c; color: #ffd9a8; background: rgba(255, 138, 92, 0.18); }
-#start .aa-diffnote { margin-top: -6px; }
+#start .aa-seg-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+}
+#start .aa-seg-btn.aa-selected {
+  border-color: #ff9c4a;
+  color: #ffd9a8;
+  background: rgba(255, 156, 74, 0.22);
+}
+#start .aa-diffnote { margin-top: -4px; }
 
-/* --- key bindings --- */
-#start .aa-bindings { display: flex; flex-direction: column; gap: 4px; align-items: center; }
-#start .aa-bind-row { width: min(420px, 100%); }
-#start .aa-bind-cap { min-width: 96px; padding: 5px 10px; font: 600 12px/1 ui-monospace, Menlo, Consolas, monospace; letter-spacing: 1px; }
+/* --- Key Bindings Table --- */
+#start .aa-bindings {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: center;
+  width: 100%;
+}
+
+#start .aa-bind-row { width: min(440px, 100%); }
+
+#start .aa-bind-cap {
+  min-width: 96px;
+  padding: 5px 12px;
+  font: 600 12px/1 ui-monospace, Menlo, Consolas, monospace;
+  letter-spacing: 1px;
+}
+
 #start .aa-bind-cap:disabled { opacity: 0.5; cursor: default; }
-#start .aa-bind-cap.aa-capturing { border-color: #d8b23a; color: #d8b23a; animation: aa-pulse 0.9s ease-in-out infinite; }
-#start .aa-bind-cap.aa-conflict { border-color: #b8322e; color: #e08a8a; }
-@keyframes aa-pulse { 50% { background: rgba(216, 178, 58, 0.22); } }
 
-/* --- end of match --- */
-#start .aa-outcome { font-size: 44px; letter-spacing: 10px; }
-#start .aa-why { color: #9fb4c8; letter-spacing: 2px; }
-#start .aa-table {
-  min-width: 380px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(0, 0, 0, 0.35);
-  padding: 8px 12px;
+#start .aa-bind-cap.aa-capturing {
+  border-color: #ff9c4a;
+  color: #ff9c4a;
+  animation: aa-pulse 0.9s ease-in-out infinite;
+}
+
+#start .aa-bind-cap.aa-conflict {
+  border-color: #b8322e;
+  color: #e08a8a;
+}
+
+@keyframes aa-pulse {
+  50% { background: rgba(255, 156, 74, 0.25); }
+}
+
+/* --- Keyboard Focus Accessibility --- */
+#start .aa-btn:focus-visible,
+#start .aa-map:focus-visible,
+#start .aa-tab:focus-visible,
+#start .aa-setting input[type="range"]:focus-visible,
+#start .aa-setting input[type="checkbox"]:focus-visible,
+#start .aa-select:focus-visible {
+  outline: 2px solid #ff9c4a;
+  outline-offset: 2px;
+}
+
+#start .aa-btn:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* --- Prompt Caps & Glyphs --- */
+#start .aa-hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: rgba(232, 238, 247, 0.75);
+}
+
+#start .aa-hint kbd {
+  font: 600 11px/1 ui-monospace, Menlo, Consolas, monospace;
+  color: #ffd9a8;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-bottom-width: 2px;
+  padding: 2px 6px;
+  border-radius: 2px;
+}
+
+#start .aa-hint kbd.pad-glyph {
+  color: #121a24;
+  background: #ffd9a8;
+  border-color: #ffd9a8;
+}
+
+/* --- End of Match / Scoreboard --- */
+#start .aa-outcome {
+  font-size: 46px;
+  font-weight: 800;
+  letter-spacing: 10px;
+  text-transform: uppercase;
+}
+
+#start .aa-why {
+  color: #8faec9;
+  letter-spacing: 2px;
   font-size: 14px;
+}
+
+#start .aa-table {
+  min-width: 420px;
+  max-width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 2px;
+  background: rgba(8, 12, 18, 0.75);
+  padding: 10px 14px;
+  font-size: 13px;
   color: #e8eef7;
 }
-#start .aa-trow { display: grid; grid-template-columns: 1fr 44px 44px 60px; gap: 8px; padding: 3px 0; }
-#start .aa-thead { opacity: 0.55; font-size: 11px; letter-spacing: 1px; border-bottom: 1px solid rgba(255, 255, 255, 0.18); }
-#start .aa-tn { text-align: right; font-variant-numeric: tabular-nums; }
+
+#start .aa-trow {
+  display: grid;
+  grid-template-columns: 1fr 48px 48px 64px;
+  gap: 8px;
+  padding: 4px 0;
+  align-items: center;
+}
+
+#start .aa-thead {
+  opacity: 0.65;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  padding-bottom: 4px;
+}
+
+#start .aa-tn {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+
 #start .aa-tteam-b .aa-tname { color: #4ec9c0; }
 #start .aa-tteam-a .aa-tname { color: #ffd9a8; }
-#start .aa-tself { background: rgba(255, 255, 255, 0.08); }
+#start .aa-tself {
+  background: rgba(255, 255, 255, 0.08);
+  border-left: 2px solid #ff9c4a;
+  padding-left: 4px;
+}
 
-/* --- credits --- */
-#start .aa-creditlines { display: flex; flex-direction: column; gap: 6px; max-width: 520px; text-align: center; }
-#start .aa-creditline { font-size: 14px; color: #e8eef7; }
+/* --- Credits & Legal Notice --- */
+#start .aa-foot {
+  margin-top: 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
 
-/* --- 1280x720: tighter title, the map card stays whole --- */
+#start .aa-fan {
+  font-size: 11px;
+  color: rgba(232, 238, 247, 0.5);
+  letter-spacing: 0.5px;
+}
+
+#start .aa-credits {
+  color: rgba(232, 238, 247, 0.4);
+  font-size: 10px;
+}
+
+#start .aa-creditlines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 540px;
+  text-align: center;
+  margin: 10px 0;
+}
+
+#start .aa-creditline {
+  font-size: 13px;
+  color: #e8eef7;
+  line-height: 1.5;
+}
+
+/* --- Responsive Layout & Media Queries --- */
 @media (max-height: 760px) {
-  #start .aa-root { gap: 8px; padding: 12px 16px; }
-  #start .aa-title { font-size: 40px; letter-spacing: 6px; }
-  #start .aa-view { gap: 8px; }
+  #start .aa-root { gap: 10px; padding: 12px 16px; }
+  #start .aa-title { font-size: 40px; letter-spacing: 7px; }
+  #start .aa-view { gap: 10px; }
+  #start .aa-map { width: 220px; }
+  #start .aa-thumb-wrap { height: 120px; }
   #start .aa-thumb { width: 99px; height: 150px; }
-  #start .aa-map { width: 115px; }
+}
+
+@media (max-width: 600px) {
+  #start .aa-title { font-size: 36px; letter-spacing: 5px; }
+  #start .aa-menu-row { flex-direction: column; width: 100%; max-width: 280px; }
+  #start .aa-menu-row .aa-btn { width: 100%; text-align: center; }
+  #start .aa-table { min-width: 280px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #start .aa-bind-cap.aa-capturing { animation: none; }
+  #start .aa-btn,
+  #start .aa-map,
+  #start .aa-map-hero {
+    transition: none !important;
+  }
+  #start .aa-bind-cap.aa-capturing {
+    animation: none;
+  }
 }
