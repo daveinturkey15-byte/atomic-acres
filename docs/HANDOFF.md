@@ -553,3 +553,20 @@ Committed. STILL OPEN: the midStreet coach-flank wash (far term, 2 m away, |n.v|
 - neither fade reaches it; a per-pixel thickness scaled by depth, or a normal-aware
 horizon clamp, is the next idea - one coach panel, low priority). Atmosphere lane
 launched now that post.ts is free (`wf_...` below).
+
+**07:50 (19 Sep).** ALL SEVEN LANES DIED AT ONCE at ~07:20: "You've hit your session
+limit - resets 7:40am". Seven Fable xhigh builders (+ max verifiers queued) burned the
+window in about 30 minutes. Their partial work survived in the tree (2,589 insertions
+across 35 tracked files + ~35 new files: ordnance host/physics/view/pickups modules,
+lobby room-core/rtc/lobby-session/match-host/guest, animation blend/anim-qa, the
+coplanar instrument, owner-fix probes, a 938-line atmosphere draft). The tree still
+BUILDS (vite) and is 3 tsc errors from clean (src/ui/settings-panel.ts, lobby's); the
+orphaned atmosphere draft was moved to the session scratchpad (atmo-draft/) so it could
+not block anyone. RELAUNCHED AS RESUME-IN-PLACE (each brief now opens with a RESUME NOTE
+naming its predecessor's partial files): owner-fixes `wf_c2023c92-337`, zfight-sweep
+`wf_8c6e175e-299`, ordnance `wf_faac0cc9-e99`, lobby `wf_edb62d8a-986`. Verifiers
+dropped from max to xhigh; FOUR lanes at a time, not seven. Deferred until two of those
+land: atmosphere (draft in scratchpad), animation r2 (blend/anim-qa partials), photoreal
+targets. The frozen build on :4190 is HEAD `3067718` (AO depth fade) and is unaffected.
+For the 09:30 inspection: whatever has been verified and committed by then is what
+:4190 shows; the working tree is NOT it.
