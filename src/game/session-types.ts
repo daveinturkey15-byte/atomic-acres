@@ -17,7 +17,7 @@ import type { MatchStateMsg } from '../net/protocol';
 import type { PlayerStance } from '../net/room-core';
 import type { ShotClaim } from '../weapons/controller';
 import type { GameClient } from './client';
-import type { ActorId, TeamId } from './events';
+import type { ActorId, GameEvent, TeamId } from './events';
 import type { HostStats } from './host-ports';
 
 /**
@@ -48,6 +48,10 @@ export interface SessionSnapshot {
 export interface MatchUi {
   bindClient(client: GameClient | null): void;
   setNames(names: Iterable<readonly [string, string]>): void;
+  /** Optional raw admitted-event tap for presentation-only feedback lanes. */
+  onEvent?(e: GameEvent): void;
+  /** Clear presentation state when a driver creates a new match epoch. */
+  resetPresentation?(): void;
 }
 
 /**

@@ -2,6 +2,13 @@ import * as THREE from 'three';
 import type { MaterialLibrary } from '../core/materials';
 import { PAL } from '../core/palette';
 import type { FirstPersonHandsRig } from './types';
+import {
+  buildCanarySideGeometries,
+  materializeCanarySide,
+  supportJointsFor,
+  TRIGGER_SPEC,
+  WEAPON_ANCHORS,
+} from './hand-geometry-canary';
 
 type ArmPoint = readonly [number, number, number];
 
@@ -22,41 +29,6 @@ function armSegment(
   );
   mesh.position.copy(start).add(end).multiplyScalar(0.5);
   mesh.quaternion.setFromUnitVectors(THREE.Object3D.DEFAULT_UP, direction.normalize());
-  mesh.castShadow = false;
-  mesh.receiveShadow = false;
-  return mesh;
-}
-
-function palm(
-  material: THREE.Material,
-  x: number,
-  y: number,
-  z: number,
-  rz = 0,
-  sx = 0.032,
-  sy = 0.043,
-  sz = 0.050,
-): THREE.Mesh {
-  const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 10, 7), material);
-  mesh.position.set(x, y, z);
-  mesh.scale.set(sx, sy, sz);
-  mesh.rotation.z = rz;
-  mesh.castShadow = false;
-  mesh.receiveShadow = false;
-  return mesh;
-}
-
-/** Low-profile curled digit bundle kept separate from the palm silhouette. */
-function fingerBundle(
-  material: THREE.Material,
-  x: number,
-  y: number,
-  z: number,
-  rz = 0,
-): THREE.Mesh {
-  const mesh = new THREE.Mesh(new THREE.CapsuleGeometry(0.008, 0.022, 2, 6), material);
-  mesh.position.set(x, y, z);
-  mesh.rotation.z = rz;
   mesh.castShadow = false;
   mesh.receiveShadow = false;
   return mesh;
@@ -93,46 +65,62 @@ export function createFirstPersonHands(
 
   const root = new THREE.Group();
   root.name = 'FirstPersonHands';
-  const triggerHand = new THREE.Group();
-  triggerHand.name = 'TriggerHand';
-  const triggerForearm = new THREE.Group();
-  triggerForearm.name = 'TriggerForearm';
-  const supportHand = new THREE.Group();
-  supportHand.name = 'SupportHand';
-  const supportForearm = new THREE.Group();
-  supportForearm.name = 'SupportForearm';
-  triggerHand.add(triggerForearm);
-  supportHand.add(supportForearm);
+  const triggerSide = materializeCanarySide(
+    buildCanarySideGeometries({
+      side: 'trigger',
+      elbow: TRIGGER_SPEC.elbow,
+      wrist: TRIGGER_SPEC.wrist,
+      palmCenter: TRIGGER_SPEC.palm,
+      palmRz: TRIGGER_SPEC.palmRz,
+    }),
+    { sleeve, glove, gloveDetail },
+    'trigger',
+  );
+  const anchor = WEAPON_ANCHORS.find((candidate) =>
+    candidate.supportZ === supportZ
+    && candidate.supportY === supportY
+    && candidate.reloadTarget[0] === reloadTarget[0]
+    && candidate.reloadTarget[1] === reloadTarget[1]
+    && candidate.reloadTarget[2] === reloadTarget[2])
+    ?? {
+      weapon: 'rifle' as const,
+      supportZ,
+      supportY,
+      reloadTarget: [reloadTarget[0], reloadTarget[1], reloadTarget[2]] as readonly [number, number, number],
+    };
+  const supportJoints = supportJointsFor(anchor);
+  const supportSide = materializeCanarySide(
+    buildCanarySideGeometries({
+      side: 'support',
+      elbow: supportJoints.elbow,
+      wrist: supportJoints.wrist,
+      palmCenter: supportJoints.palm,
+      palmRz: 0.15,
+    }),
+    { sleeve, glove, gloveDetail },
+    'support',
+  );
+  const triggerHand = triggerSide.hand;
+  const triggerForearm = triggerSide.forearm;
+  const supportHand = supportSide.hand;
+  const supportForearm = supportSide.forearm;
   root.add(triggerHand, supportHand);
   parent.add(root);
 
-  // Trigger hand: the connected sleeve follows the measured elbow-to-wrist
-  // segment, with a smaller thumb/index mass instead of a second mitten palm.
-  triggerForearm.add(armSegment(
-    0.031, 0.047, sleeve,
-    [0.19, -0.39, 0.28], [0.025, -0.15, 0.045],
-  ));
+  // Trigger hand: the canary supplies the connected sleeve and articulated
+  // palm/digits. Keep the separate dark cuff transition from the accepted rig.
   triggerHand.add(armSegment(
     0.033, 0.034, cuff,
     [0.039, -0.17, 0.066], [0.015, -0.135, 0.025],
   ));
-  triggerHand.add(palm(glove, 0.010, -0.112, 0.012, -0.16));
-  triggerHand.add(fingerBundle(gloveDetail, 0.039, -0.092, -0.014, -0.22));
 
-  // Support hand: these points remain tied to the weapon's handguard frame.
-  // During reload only the named SupportHand group moves toward the magazine.
-  supportForearm.add(armSegment(
-    0.030, 0.045, sleeve,
-    [-0.16, -0.39, supportZ + 0.20],
-    [-0.024, supportY - 0.047, supportZ + 0.025],
-  ));
+  // Support hand: fitted to the helper's per-weapon joints. During reload only
+  // the named SupportHand group moves toward the magazine.
   supportHand.add(armSegment(
     0.031, 0.033, cuff,
     [-0.034, supportY - 0.073, supportZ + 0.040],
     [-0.017, supportY - 0.030, supportZ + 0.013],
   ));
-  supportHand.add(palm(glove, -0.010, supportY, supportZ, 0.15));
-  supportHand.add(fingerBundle(gloveDetail, -0.036, supportY + 0.012, supportZ - 0.018, 0.22));
 
   // The reach is deliberately short and weapon-local. Builders pass the
   // measured palm target for their magazine, grip well, loading port, or

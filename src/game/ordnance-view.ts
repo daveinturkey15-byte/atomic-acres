@@ -95,6 +95,18 @@ export interface OrdnanceLine {
   readonly tone: FeedTone;
 }
 
+/** Presentation cue for third-person BODY animation: one armed/thrown edge. */
+export interface BodyThrowCue {
+  /** Monotonic across the view's life; readers consume each `seq` once. */
+  readonly seq: number;
+  readonly kind: 'armed' | 'thrown';
+  readonly actorId: ActorId;
+  readonly at: number;
+}
+
+/** Oldest cues drop when the ring is full; a throw cadence never fills it. */
+export const BODY_THROW_CUE_CAP = 32;
+
 export class OrdnanceView {
   readonly flights: FlightView[] = [];
   readonly smokes: SmokeView[] = [];
@@ -111,6 +123,13 @@ export class OrdnanceView {
     drops: 0, dropChanges: 0, dropRemoved: 0, pickups: 0, rejected: 0,
   };
   readonly lines: string[] = [];
+  /**
+   * Presentation-only ring feeding third-person body animation
+   * (`characters/throw-body.ts`). Same data the log prints, in machine form;
+   * nothing here feeds gameplay, and the caps keep allocation bounded.
+   */
+  readonly bodyThrows: BodyThrowCue[] = [];
+  private bodySeq = 0;
 
   constructor(readonly selfId: ActorId) {
     for (let i = 0; i < FLIGHT_POOL; i++) {
@@ -123,6 +142,12 @@ export class OrdnanceView {
 
   private log(line: string): void {
     if (this.lines.length < VIEW_LOG_MAX) this.lines.push(line);
+  }
+
+  /** One body-animation cue, oldest dropped at the cap. Presentation only. */
+  private pushBodyThrow(kind: 'armed' | 'thrown', actorId: ActorId, at: number): void {
+    if (this.bodyThrows.length >= BODY_THROW_CUE_CAP) this.bodyThrows.shift();
+    this.bodyThrows.push({ seq: ++this.bodySeq, kind, actorId, at });
   }
 
   /**
@@ -158,10 +183,12 @@ export class OrdnanceView {
     switch (e.type) {
       case 'grenade-armed':
         this.counts.armed++;
+        this.pushBodyThrow('armed', e.actorId, e.at);
         this.log(at + ' grenade-armed ' + e.actorId + ' ' + e.grenadeId + (e.detonatesAt === null ? '' : ' fuseAt=' + e.detonatesAt.toFixed(0)));
         return null;
       case 'grenade-thrown': {
         this.counts.thrown++;
+        this.pushBodyThrow('thrown', e.actorId, e.at);
         let slot = this.flights.find((f) => !f.live);
         if (slot === undefined) slot = this.flights.reduce((a, b) => (a.bornAt <= b.bornAt ? a : b));
         slot.live = true;

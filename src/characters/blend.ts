@@ -15,7 +15,10 @@
  */
 import * as THREE from 'three';
 import { buildStandardSkeleton, REST_OFFSETS, UPPER_BODY, type StandardBoneName } from './skeleton';
-import type { ClipLibrary, ClipName, LocomotionName } from './clips';
+import {
+  THROW_BODY_HOLD_MAX_S, THROW_BODY_HOLD_S, THROW_BODY_THROWN_ENTRY_S,
+  type ClipLibrary, type ClipName, type LocomotionName,
+} from './clips';
 
 export interface RigInput {
   /** Forward speed in m/s. The rig picks the gait and match its timeScale. */
@@ -85,6 +88,10 @@ interface Overlay {
   elapsed: number;
   /** Fade the overlay in/out over this long at each end (seconds). */
   fade: number;
+  /** Throw anticipation: advance but pin at THROW_BODY_HOLD_S until released. */
+  hold?: boolean;
+  /** Seconds spent in the anticipation hold (for its bounded watchdog). */
+  heldFor?: number;
 }
 
 const _q = new THREE.Quaternion();
@@ -278,6 +285,25 @@ export function locomotionTimeScale(speed: number, clipSpeed: number): number {
   return Math.max(0, Math.abs(speed)) / clipSpeed;
 }
 
+/**
+ * Carry the source loop's gait phase into a replacement action.
+ *
+ * A cross-fade only blends weights; `reset()` still starts the incoming clip at
+ * frame zero. That made a stance change (especially run -> crouch/prone) show a
+ * second, unrelated foot strike at the fade boundary. Looping clips all expose
+ * the same phase contract, so preserving the normalized source time removes
+ * that restart without touching root travel, authored clip speeds, or the
+ * existing 0.25 s fade.
+ */
+function syncLoopPhase(prev: THREE.AnimationAction, next: THREE.AnimationAction): void {
+  const prevDuration = prev.getClip().duration;
+  const nextDuration = next.getClip().duration;
+  if (!Number.isFinite(prevDuration) || prevDuration <= 1e-6
+    || !Number.isFinite(nextDuration) || nextDuration <= 1e-6) return;
+  const phase = ((prev.time / prevDuration) % 1 + 1) % 1;
+  next.time = phase * nextDuration;
+}
+
 export class CharacterRig {
   readonly mixer: THREE.AnimationMixer;
   private readonly actions = new Map<ClipName, THREE.AnimationAction>();
@@ -286,9 +312,14 @@ export class CharacterRig {
   private dead = false;
   private upper: Overlay | null = null;
   private recoil = 0;
-  /** Smoothed weapon-carry weight. Ramped, never stepped: a carry that snaps
-   *  to 0 on death teleports the arms out of the weapon. */
-  private carry = 1;
+  /** Smoothed weapon-carry weight, PER SIDE. Ramped, never stepped: a carry
+   *  that snaps to 0 on death teleports the arms out of the weapon. Two sides
+   *  because the grenade throw releases the LEFT arm to the authored clip
+   *  while the right keeps the rifle in stable carry — the rifle is baked to
+   *  the RightHand bone (mesh.ts), so a right-hand throw would flail the
+   *  weapon with the throwing hand. */
+  private carryRight = 1;
+  private carryLeft = 1;
   private sampler: OverlaySampler;
   /** Last sampled aim pose, refreshed while aimWeight > 0. */
   private aimPose: Record<StandardBoneName, THREE.Quaternion> | null = null;
@@ -347,6 +378,61 @@ export class CharacterRig {
     this.external = null;
   }
 
+  /**
+   * Third-person grenade-throw BODY presentation, on the same masked
+   * upper-body layer as reload/hit-react — deliberately NOT playAir. A
+   * full-body one-shot stops the mixer, which froze stance, locomotion and
+   * the plant solve for 0.9 s on every throw; a figure may throw while
+   * standing, crouched, prone or running and must keep doing all of those.
+   *
+   * The clip is a mirrored LEFT-hand authored adaptation of the H3 right-hand
+   * reference: the left arm throws, the right arm stays at carry holding the
+   * rifle. Phases, driven by the observed ordnance events (`throw-body.ts`),
+   * never by the throw itself:
+   * - 'anticipation' — `grenade-armed`: windup plays to THROW_BODY_HOLD_S and
+   *   holds the coil until the authoritative release arrives.
+   * - 'release' — `grenade-thrown`: the release is authoritative and the
+   *   projectile already spawned, so the clip enters AT the release beat
+   *   (THROW_BODY_THROWN_ENTRY_S == THROW_BODY_RELEASE_S). Any run-up before
+   *   the beat is lag, not lead. With an anticipation hold live it releases
+   *   the hold and jumps to the same entry. No anticipation held (late
+   *   network notification)? Same entry.
+   * - 'full' — raw clip playthrough for the demo/photography path only;
+   *   never wired to a game event.
+   *
+   * No-ops while dead: playDeath has cleared the overlay and a corpse does
+   * not start winding up on a stale queue entry.
+   */
+  playThrowBody(phase: 'anticipation' | 'release' | 'full'): void {
+    if (this.dead) return;
+    if (phase === 'release') {
+      const held = this.upper?.clip === 'throw' && this.upper.hold === true ? this.upper : null;
+      if (held) {
+        held.hold = false;
+        held.elapsed = THROW_BODY_THROWN_ENTRY_S;
+        return;
+      }
+    }
+    this.upper = phase === 'anticipation'
+      ? { clip: 'throw', elapsed: 0, fade: 0.12, hold: true, heldFor: 0 }
+      : { clip: 'throw', elapsed: phase === 'release' ? THROW_BODY_THROWN_ENTRY_S : 0, fade: 0.12 };
+  }
+
+  /** Drop a live throw overlay (death cleared it already; match teardown). */
+  cancelThrowBody(): void {
+    if (this.upper?.clip === 'throw') this.upper = null;
+  }
+
+  /**
+   * Throw-body overlay state, for the QA surface and proofs: 'hold' pins the
+   * authored windup awaiting the authoritative release; 'release' covers the
+   * entry beat through settle.
+   */
+  get throwBodyPhase(): 'none' | 'hold' | 'release' {
+    if (this.upper?.clip !== 'throw') return 'none';
+    return this.upper.hold === true ? 'hold' : 'release';
+  }
+
   playDeath(): void {
     this.mixer.stopAllAction();
     const action = this.actions.get('death');
@@ -364,6 +450,7 @@ export class CharacterRig {
   revive(): void {
     this.dead = false;
     this.air = null;
+    this.upper = null;
     this.external = null;
     this.mixer.stopAllAction();
     this.actions.get(this.locomotion)?.reset().play();
@@ -419,12 +506,22 @@ export class CharacterRig {
 
   /** Live weapon-carry weight, for the QA surface and the surface audit. */
   get carryWeight(): number {
-    return this.carry;
+    return Math.min(this.carryRight, this.carryLeft);
+  }
+
+  /** Per-side reads: the throw releases the LEFT side while the right keeps the rifle. */
+  get carryRightWeight(): number {
+    return this.carryRight;
+  }
+
+  get carryLeftWeight(): number {
+    return this.carryLeft;
   }
 
   update(dt: number, input: RigInput): void {
     if (this.dead) {
-      this.carry = Math.max(0, this.carry - dt * 4);
+      this.carryRight = Math.max(0, this.carryRight - dt * 4);
+      this.carryLeft = Math.max(0, this.carryLeft - dt * 4);
       this.mixer.update(dt);
       return;
     }
@@ -468,6 +565,7 @@ export class CharacterRig {
           next.enabled = true;
           next.reset();
           next.setLoop(THREE.LoopRepeat, Infinity);
+          syncLoopPhase(prev ?? next, next);
           next.play();
           if (prev) next.crossFadeFrom(prev, 0.25, true);
         }
@@ -498,9 +596,28 @@ export class CharacterRig {
 
     // ---- upper-body layer, sampled then masked onto upper bones only
     if (this.upper) {
-      this.upper.elapsed += dt;
-      const dur = this.library[this.upper.clip].clip.duration;
-      if (this.upper.elapsed >= dur) this.upper = null;
+      if (this.upper.hold === true) {
+        // Anticipation: play the windup in, then pin at the coil until the
+        // authoritative release event advances us. The watchdog CANCELS a hold
+        // whose event never comes (death cut the observer queue, match ended
+        // mid-windup) — a body must never freeze mid-coil, and must never
+        // play an autonomous fake throw masquerading as a release. A recovery
+        // that plays anything must label itself as recovery, not release.
+        this.upper.elapsed = Math.min(this.upper.elapsed + dt, THROW_BODY_HOLD_S);
+        this.upper.heldFor = (this.upper.heldFor ?? 0) + dt;
+        if (this.upper.heldFor >= THROW_BODY_HOLD_MAX_S) {
+          this.upper = null;
+        }
+      } else if (this.upper) {
+        this.upper.elapsed += dt;
+      }
+      if (!this.upper) {
+        // Watchdog cancelled the hold: skip overlay expiry this frame; the
+        // carry layer below ramps both sides back to stable carry.
+      } else {
+        const dur = this.library[this.upper.clip].clip.duration;
+        if (this.upper.elapsed >= dur) this.upper = null;
+      }
     }
     const w = input.aimWeight;
     if (w > 0.001 || this.upper || this.recoil > 0.001) {
@@ -546,8 +663,20 @@ export class CharacterRig {
       : this.upper?.clip === 'reload'
         ? 0.28
         : THREE.MathUtils.clamp(input.carryWeight ?? 1, 0, 1);
-    this.carry += THREE.MathUtils.clamp(wantCarry - this.carry, -dt * 4, dt * 4);
-    if (this.carry > 0.001) this.applyCarry(input, this.carry);
+    // Throw is NOT a single weight. The rifle is baked to the RightHand bone,
+    // so any authored RIGHT-arm excursion would flail the weapon with the
+    // throwing hand — the rejected workaround. The clip throws LEFT-handed:
+    // release the LEFT side to 0 (the excursion reads; the left hand leaves
+    // the forestock for the toss and returns) while the RIGHT side keeps
+    // solving at full weight, pinning the rifle in stable carry at the chest.
+    const throwing = this.upper?.clip === 'throw';
+    const wantRight = wantCarry;
+    const wantLeft = throwing ? 0 : wantCarry;
+    this.carryRight += THREE.MathUtils.clamp(wantRight - this.carryRight, -dt * 4, dt * 4);
+    this.carryLeft += THREE.MathUtils.clamp(wantLeft - this.carryLeft, -dt * 4, dt * 4);
+    if (this.carryRight > 0.001 || this.carryLeft > 0.001) {
+      this.applyCarry(input, this.carryRight, this.carryLeft);
+    }
   }
 
   /**
@@ -560,7 +689,7 @@ export class CharacterRig {
    * FRAME for rather than rotated: the locomotion clips' torso motion is what
    * keeps a figure alive at 20 m, and no acceptance number here needs it.
    */
-  private applyCarry(input: RigInput, w: number): void {
+  private applyCarry(input: RigInput, wr: number, wl: number): void {
     const chest = this.bones.Chest;
     chest.updateWorldMatrix(true, false);
     const aim = THREE.MathUtils.clamp(input.aimWeight, 0, 1);
@@ -574,7 +703,7 @@ export class CharacterRig {
     // reach, and the chest frame has to outlive all three solves below.
     chest.getWorldQuaternion(_cChestQ);
     _cPole.copy(POLE_RIGHT).applyQuaternion(_cChestQ).normalize();
-    solveTwoBone(this.bones.RightArm, this.bones.RightForeArm, _cT, _cPole, w);
+    solveTwoBone(this.bones.RightArm, this.bones.RightForeArm, _cT, _cPole, wr);
 
     // ---- barrel direction.
     //
@@ -608,16 +737,16 @@ export class CharacterRig {
     _cqB.setFromRotationMatrix(_cMat);
     this.bones.RightForeArm.getWorldQuaternion(_cqC);
     _cqB.premultiply(_cqC.invert());
-    this.bones.RightHand.quaternion.slerp(_cqB, w);
+    this.bones.RightHand.quaternion.slerp(_cqB, wr);
     this.bones.RightHand.updateWorldMatrix(false, true);
 
     // ---- left hand: onto the forestock, read out of the rifle's own bone.
     _cT.copy(FORESTOCK_LOCAL).applyMatrix4(this.bones.RightHand.matrixWorld);
     _cPole.copy(POLE_LEFT).applyQuaternion(_cChestQ).normalize();
-    solveTwoBone(this.bones.LeftArm, this.bones.LeftForeArm, _cT, _cPole, w);
+    solveTwoBone(this.bones.LeftArm, this.bones.LeftForeArm, _cT, _cPole, wl);
     // Glove straight on from the wrist - a support hand on a handguard, not a
     // hand that happens to be near one.
-    this.bones.LeftHand.quaternion.slerp(_cIdent, w);
+    this.bones.LeftHand.quaternion.slerp(_cIdent, wl);
   }
 
   /**

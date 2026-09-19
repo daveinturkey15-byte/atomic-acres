@@ -1,0 +1,58 @@
+{
+  "recorded": "2026-09-19",
+  "recordedBy": "OMP ground-pbr-canary lane (dave-gaming-pc)",
+  "source": {
+    "publisher": "ambientCG",
+    "license": "CC0-1.0 (site-wide: all ambientCG assets are published under Creative Commons CC0 1.0; the v2 API response carries no per-asset license field)",
+    "licenseUrl": "https://ambientcg.com/legal",
+    "apiQuery": "https://ambientcg.com/api/v2/full_json?q=asphalt | q=concrete (2026-09-19)",
+    "extraction": "HTTP Range reads of zip members (central directory parsed, only Color/NormalGL/Roughness inflated); no full-zip download in the delivery pass"
+  },
+  "assets": [
+    {
+      "id": "Asphalt030",
+      "kind": "asphalt",
+      "sourceUrl": "https://ambientcg.com/get?file=Asphalt030_1K-JPG.zip",
+      "assetPage": "https://ambientcg.com/asset?id=Asphalt030",
+      "license": "CC0-1.0",
+      "nativePhysicalTileMetres": 2.2,
+      "physicalSizeSource": "ambientCG v2 API dimensionX/dimensionY = 220x220 cm (q=asphalt response, 2026-09-19)",
+      "maps": [
+        { "file": "asphalt-1k-color.jpg", "member": "Asphalt030_1K-JPG_Color.jpg", "colorSpace": "sRGB", "bytes": 1857110, "sha256": "3095d3352a25474e2aec53dcdaa5574b839b8ce50935847f9cb38e01902891cd" },
+        { "file": "asphalt-1k-normal.jpg", "member": "Asphalt030_1K-JPG_NormalGL.jpg", "colorSpace": "none (linear data, OpenGL tangent)", "bytes": 2209659, "sha256": "52b5946c7e763abc8d56a66b42066e3868ca188214b0f07583d29a3036d35287" },
+        { "file": "asphalt-1k-roughness.jpg", "member": "Asphalt030_1K-JPG_Roughness.jpg", "colorSpace": "none (linear data)", "bytes": 718817, "sha256": "e9ff4d449ac12c000df859dad92ede192bd7a8db4a843b9e118ff6040e9c1f97" }
+      ]
+    },
+    {
+      "id": "Concrete046",
+      "kind": "pale concrete",
+      "sourceUrl": "https://ambientcg.com/get?file=Concrete046_1K-JPG.zip",
+      "assetPage": "https://ambientcg.com/asset?id=Concrete046",
+      "license": "CC0-1.0",
+      "nativePhysicalTileMetres": 2.4,
+      "physicalSizeSource": "ambientCG v2 API dimensionX/dimensionY = 240x240 cm (q=concrete response, 2026-09-19)",
+      "maps": [
+        { "file": "concrete-1k-color.jpg", "member": "Concrete046_1K-JPG_Color.jpg", "colorSpace": "sRGB", "bytes": 1092354, "sha256": "2f155b85c2656305815e94a0efcc0b0087c141e52e98395cc03eb906252150af" },
+        { "file": "concrete-1k-normal.jpg", "member": "Concrete046_1K-JPG_NormalGL.jpg", "colorSpace": "none (linear data, OpenGL tangent)", "bytes": 1080228, "sha256": "b7fb7d45f85bad9e1c61f544e90077735f8f787cd13d3c1161aece11082fe9ff" },
+        { "file": "concrete-1k-roughness.jpg", "member": "Concrete046_1K-JPG_Roughness.jpg", "colorSpace": "none (linear data)", "bytes": 671268, "sha256": "ee79cf1139197522ac6ed6dad2d9c0429626cd8f2e107aaaf9daa1f4f30e7d7d" }
+      ]
+    }
+  ],
+  "budgets": {
+    "mapCount": 6,
+    "mapCountLimit": 6,
+    "dimensionPx": 1024,
+    "dimensionLimitPx": 1024,
+    "bytesOnDisk": 7629436,
+    "deliveryFetchPassWireBytes": 7892125,
+    "downloadLimitBytes": 12582912,
+    "note": "Delivery ranged pass fetched 7.89 MB. Earlier exploratory probes (a discarded full-zip test of 10.2 MB and one buggy ranged pass) also crossed the wire; those were not part of the deliverable pipeline and are disclosed here."
+  },
+  "uvContract": {
+    "rootConvention": "build/ground.ts bakes world tiling into geometry UVs: UV_ASPHALT=40.0 m per UV unit, UV_PAVING=67.2 m per UV unit; shared textures keep texture.repeat as the ONLY per-texture multiplier.",
+    "repeatFormula": "texture.repeat = uvMetresPerUnit / tilePhysicalMetres, applied once per map by the factory",
+    "asphalt": { "uvMetresPerUnit": 40.0, "tilePhysicalMetres": 2.2, "repeat": 18.181818181818183 },
+    "paving": { "uvMetresPerUnit": 67.2, "tilePhysicalMetres": 2.4, "repeat": 28.0 },
+    "neverDoubleRepeat": "the canary never rescales geometry UVs; scaleUV() at the caller keeps its existing values"
+  }
+}

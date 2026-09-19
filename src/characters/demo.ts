@@ -96,6 +96,7 @@ function applyHeroClip(clip: ClipName): void {
   if (!spec.loop) {
     if (clip === 'jump' || clip === 'land') hero.rig.playAir(clip);
     else if (clip === 'death') hero.rig.playDeath();
+    else if (clip === 'throw') hero.rig.playThrowBody('full');
     else if (clip === 'reload' || clip === 'hit-react') hero.rig.playUpper(clip);
     else if (clip === 'fire') hero.rig.fire();
   }

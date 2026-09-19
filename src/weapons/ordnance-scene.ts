@@ -102,6 +102,11 @@ export class OrdnanceScene {
     }
   }
 
+  /** The live projection, for presentation readers outside the ordnance scene. */
+  get view(): OrdnanceView | null {
+    return this.client?.ordnance ?? null;
+  }
+
   /** One frame. `nowMs` is `performance.now()`, the host clock domain; (px, py, pz) the player's feet. */
   update(dt: number, nowMs: number, px: number, py: number, pz: number): void {
     const c = this.client;

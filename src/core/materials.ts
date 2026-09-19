@@ -44,6 +44,13 @@ import type { RainShelter } from './rain-shelter';
 import { createVegetationMaterials } from './vegetation-materials';
 import { createImpactMaterial } from './impact-material';
 import { createViewmodelMaterials, type ViewmodelMaterialSet } from '../weapons/viewmodel-materials';
+import { isGroundPbrEnabled } from './environment-flags';
+import {
+  applyGroundPbrCanaryMaps,
+  GROUND_CANARY_UV_M,
+  GROUND_CANARY_TILE_M,
+  loadCanarySurfaceSet,
+} from './ground-pbr-canary';
 
 type Ctx2D = CanvasRenderingContext2D;
 type N = ShaderNodeObject<Node>;
@@ -1003,21 +1010,95 @@ export function buildMaterials(): MaterialLibrary {
       entry.waiters.length = 0;
     }, () => disposed);
   };
-  upgrade(lib.asphalt, {
-    diffuse: 'textures/polyhaven/asphalt-07/diffuse.jpg',
-    roughness: 'textures/polyhaven/asphalt-07/rough.jpg',
-    normal: 'textures/polyhaven/asphalt-07/normal.jpg',
-  }, 16);
+  // In-flight canary texture loads are owned here: library teardown releases the
+  // cancel handles, and each handle late-disposes its completed maps (the loader
+  // never aborts the underlying Image request - see ground-pbr-canary.ts).
+  const canaryCancelHandles: Array<() => void> = [];
+  const groundCanary = isGroundPbrEnabled();
+  if (groundCanary) {
+    own({
+      dispose() {
+        for (const cancel of canaryCancelHandles) cancel();
+        canaryCancelHandles.length = 0;
+      },
+    });
+  }
+  // Ground-family texture source selection. The paving upgrade is UNCONDITIONAL:
+  // the canary replaces only the asphalt and concrete singletons, and the absent-
+  // flag (baseline) path must run the original asphalt -> paving -> concrete order
+  // byte-for-byte. Paving keeps its Polyhaven baseline in every mode.
+  if (groundCanary) {
+    const asphaltHandle = loadCanarySurfaceSet({
+      urls: {
+        diffuse: 'assets/ground-pbr-canary/asphalt-1k-color.jpg',
+        roughness: 'assets/ground-pbr-canary/asphalt-1k-roughness.jpg',
+        normal: 'assets/ground-pbr-canary/asphalt-1k-normal.jpg',
+      },
+      isDisposed: () => disposed,
+      onReady: (maps) => {
+        if (disposed) {
+          maps.map.dispose(); maps.roughnessMap.dispose(); maps.normalMap.dispose();
+          return;
+        }
+        own(maps.map); own(maps.roughnessMap); own(maps.normalMap);
+        applyGroundPbrCanaryMaps(lib.asphalt as THREE.MeshStandardMaterial, {
+          maps,
+          uvMetresPerUnit: GROUND_CANARY_UV_M.asphalt,
+          tilePhysicalMetres: GROUND_CANARY_TILE_M.asphalt,
+          normalScale: 0.6,
+          roughness: 1.0,
+        });
+        wetRefresh.get(lib.asphalt)?.();
+        lib.asphalt.needsUpdate = true;
+      },
+    });
+    canaryCancelHandles.push(asphaltHandle.cancel);
+  } else {
+    upgrade(lib.asphalt, {
+      diffuse: 'textures/polyhaven/asphalt-07/diffuse.jpg',
+      roughness: 'textures/polyhaven/asphalt-07/rough.jpg',
+      normal: 'textures/polyhaven/asphalt-07/normal.jpg',
+    }, 16);
+  }
   upgrade(lib.paving, {
     diffuse: 'textures/polyhaven/concrete-pavement-03/diffuse.jpg',
     roughness: 'textures/polyhaven/concrete-pavement-03/rough.jpg',
     normal: 'textures/polyhaven/concrete-pavement-03/normal.jpg',
   }, 32);
-  upgrade(lib.concrete, {
-    diffuse: 'textures/polyhaven/concrete-pavement-03/diffuse.jpg',
-    roughness: 'textures/polyhaven/concrete-pavement-03/rough.jpg',
-    normal: 'textures/polyhaven/concrete-pavement-03/normal.jpg',
-  }, 32);
+  if (groundCanary) {
+    const concreteHandle = loadCanarySurfaceSet({
+      urls: {
+        diffuse: 'assets/ground-pbr-canary/concrete-1k-color.jpg',
+        roughness: 'assets/ground-pbr-canary/concrete-1k-roughness.jpg',
+        normal: 'assets/ground-pbr-canary/concrete-1k-normal.jpg',
+      },
+      isDisposed: () => disposed,
+      onReady: (maps) => {
+        if (disposed) {
+          maps.map.dispose(); maps.roughnessMap.dispose(); maps.normalMap.dispose();
+          return;
+        }
+        own(maps.map); own(maps.roughnessMap); own(maps.normalMap);
+        (lib.concrete as THREE.MeshStandardMaterial).color.setHex(PAL.concrete);
+        applyGroundPbrCanaryMaps(lib.concrete as THREE.MeshStandardMaterial, {
+          maps,
+          uvMetresPerUnit: GROUND_CANARY_UV_M.paving,
+          tilePhysicalMetres: GROUND_CANARY_TILE_M.concrete,
+          normalScale: 0.35,
+          roughness: 1.0,
+        });
+        wetRefresh.get(lib.concrete)?.();
+        lib.concrete.needsUpdate = true;
+      },
+    });
+    canaryCancelHandles.push(concreteHandle.cancel);
+  } else {
+    upgrade(lib.concrete, {
+      diffuse: 'textures/polyhaven/concrete-pavement-03/diffuse.jpg',
+      roughness: 'textures/polyhaven/concrete-pavement-03/rough.jpg',
+      normal: 'textures/polyhaven/concrete-pavement-03/normal.jpg',
+    }, 32);
+  }
   upgrade(lib.deckBoards, {
     diffuse: 'textures/polyhaven/distressed-painted-planks/diffuse.jpg',
     roughness: 'textures/polyhaven/distressed-painted-planks/rough.jpg',

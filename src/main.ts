@@ -16,12 +16,16 @@ import { OrdnanceScene } from './weapons/ordnance-scene';
 import { initUI } from './ui/index';
 import { wireNetcode } from './net/wire';
 import { createCharacterSystem, type CharacterHandle } from './characters';
+import { ThrowBodyPresentation } from './characters/throw-body';
 import { loadBakedClips } from './characters/kimodo-clips';
 import { createLocalMatch, type LocalMatch, type MatchUi } from './game/session';
 import { PAL } from './core/palette';
 import { loadLoadout, resolveLoadout } from './game/loadout';
 import { WorldAudio } from './audio/world-audio';
 import { createStaticReflectionProbe, type StaticReflectionProbe } from './core/static-reflection-probe';
+import { createCombatFeedbackAdapter } from './ui/combat-feedback-adapter';
+import './ui/combat-feedback.css';
+import { getEnvironmentFlags } from './core/environment-flags';
 
 import { buildGround } from './build/ground';
 import { buildOrangeHouse } from './build/orange-house';
@@ -197,6 +201,11 @@ const ui = initUI({ player, world, audio: {
   },
 } });
 const gameHud = ui.hud;
+const combatFeedback = createCombatFeedbackAdapter({
+  hud,
+  camera: world.camera,
+  match: () => match,
+});
 // ---- Multiplayer lobby + host tech (netcode lane). Owns #hud .nt-* nodes and
 // window.__NTNET only; the world, player and QA surface are untouched.
 const netcode = wireNetcode({ player });
@@ -209,18 +218,25 @@ const ordnance = new OrdnanceScene({
   scene: world.scene, mat, colliders, hud: gameHud, weapons,
   volumetricSmoke: () => world.post.enabled,
 });
+// Third-person grenade-throw bodies. Same seam as every other ordnance
+// reader: cues come off the client's projection, resolved onto bot bodies.
+const throwBodies = new ThrowBodyPresentation();
 const worldAudio = new WorldAudio(worldTargets, mat, weapons, colliders,
   (a, b) => match?.los(a.x, a.y, a.z, b.x, b.y, b.z) ?? true);
 const matchUi: MatchUi = {
   bindClient: (c) => {
+    combatFeedback.reset();
     // Client projection is the common solo/host/guest boundary. Rebinding also
     // releases the previous match's smoke list; no bus subscription can leak.
     world.atmosphere.smoke.bind(c ? () => c.ordnance.smokes : null);
     ordnance.bind(c);
+    throwBodies.bind(c ? c.ordnance : null);
     worldAudio.bindClient(c);
     ui.bindClient(c);
   },
   setNames: (n) => ui.setNames(n),
+  onEvent: (e) => combatFeedback.onEvent(e),
+  resetPresentation: () => combatFeedback.reset(),
 };
 // ---- The match. Host + local player + bots, started by the same click that
 // dismisses the lobby overlay, so nothing runs before a player asks for it.
@@ -238,7 +254,43 @@ const startOverlay = document.getElementById('start')!;
 // Decode the small authored bank on the first menu gesture, before the first
 // shot, while retaining browser autoplay rules and persisted volume values.
 startOverlay.addEventListener('pointerdown', () => weapons.resumeAudio(), { once: true });
-addEventListener('pagehide', () => weapons.disposeAudio());
+// Candidate-geometry release. The ONLY thing this touches is owned canary geometry
+// (distant-mountains canary on the skyline module); shared singleton materials stay
+// live because rendering continues. Idempotent by construction (the factory guards
+// re-entry), so pagehide and QA can share it. Does not touch arbitrary unrelated
+// userData disposers on other scene targets.
+function releaseEnvironmentCanary(): void {
+  for (const target of worldTargets) {
+    if (target.name !== 'skyline') continue;
+    const userData: unknown = target.userData;
+    if (userData && typeof userData === 'object' && 'dispose' in userData) {
+      const release = (userData as { dispose?: unknown }).dispose;
+      if (typeof release === 'function') {
+        try {
+          release();
+        } catch {
+          /* a torn-down backdrop must never break page teardown */
+        }
+      }
+    }
+    const canary = target.getObjectByName('distant_mountains_canary');
+    if (canary?.userData && typeof canary.userData === 'object' && 'dispose' in canary.userData) {
+      const release = (canary.userData as { dispose?: unknown }).dispose;
+      if (typeof release === 'function') {
+        try {
+          release();
+        } catch {
+          /* idempotent release */
+        }
+      }
+    }
+  }
+}
+addEventListener('pagehide', () => {
+  releaseEnvironmentCanary();
+  weapons.disposeAudio();
+  combatFeedback.dispose();
+});
 // The first click lands on the overlay (it covers the canvas), so dismiss and lock
 // here; later clicks hit the canvas and re-lock via Player. Esc releases (browser
 // default) and Player drops held keys so nothing spins or keeps walking.
@@ -380,6 +432,7 @@ function frame(): void {
     const st = player.state;
     match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch, player.getStance());
     ordnance.update(dt, now, st.pos.x, st.pos.y, st.pos.z);
+    throwBodies.update((id) => botBodies.get(id)?.rig ?? null);
     for (const b of match.bots()) {
       let h = botBodies.get(b.id);
       if (!h) { h = characters.spawn(b.x, b.z, b.yaw); botBodies.set(b.id, h); }
@@ -460,6 +513,7 @@ interface QA {
   /** Ordnance lane: the client projection's log, counts and pools. Read-only. */
   ordnance: () => Record<string, unknown>;
   audio: () => ReturnType<WeaponsController['audioStats']>;
+  disposeEnvironment?: () => void;
   /** Bounded visual A/B controls; never persisted into player settings. */
   look: (options?: { exposure?: number; environment?: number; glass?: number }) => { exposure: number; environment: number; glass: number };
   remoteBodies: () => Array<{ id: string; x: number; y: number; z: number; crouch: boolean; prone: boolean; locomotion: string }>;
@@ -567,6 +621,7 @@ const qa: QA = {
       handedness,
       mode: player.getMode(),
       flySpeed: +player.getFlySpeed().toFixed(1),
+      environment: getEnvironmentFlags(),
     };
   },
   moduleStats,
@@ -642,9 +697,17 @@ const qa: QA = {
     }
     return hits;
   },
+  disposeEnvironment() {
+    // QA probe for the same release the pagehide lifecycle owns. Geometry only:
+    // disposing the shared singleton materials mid-session would tear down live
+    // rendering, so mat.dispose() must never happen here.
+    releaseEnvironmentCanary();
+  },
 };
 
 (window as unknown as { __NT: QA }).__NT = qa;
+(window as unknown as { __NT_FLAGS: unknown }).__NT_FLAGS = getEnvironmentFlags();
+(window as unknown as { __NT_ENV: unknown }).__NT_ENV = getEnvironmentFlags();
 // Assembly can finish before the asynchronous GPU device does. A capture must
 // never mistake that interval for a rendered, usable scene.
 void world.backendReady.then(() => { qa.ready = true; }, () => { /* world reports backend failure */ });

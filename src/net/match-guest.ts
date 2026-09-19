@@ -113,6 +113,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   };
 
   const record = (e: GameEvent): void => {
+    opts.ui.onEvent?.(e);
     client.applyEvent(e);
     opts.instrument.record(e);
   };
@@ -153,6 +154,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
         record(msg.e);
         break;
       case 'match-state':
+        if (lastMatch === null || (lastMatch.phase === 'ended' && msg.phase !== 'ended')) {
+          opts.ui.resetPresentation?.();
+        }
         if (lastMatch !== null && lastMatch.phase === 'ended' && msg.phase !== 'ended') matches += 1;
         if (lastMatch === null) matches = 1;
         lastMatch = msg;

@@ -154,6 +154,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     // Bank the outgoing director's numbers BEFORE it is dropped. This is the
     // only moment they still exist; after the reassignment below they are gone.
     if (director !== null) instrument.retireDirector(directorNumbers(director));
+    ui.resetPresentation?.();
     epoch++;
     const runtime = new StreakRuntime({ seed: (opts.seed ?? 1) + epoch, matchEpoch: epoch });
     const h = new GameHost({
@@ -184,6 +185,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
    *  bodies that must move, and — when a room is listening — the wire. */
   const route = (d: BotDirector, events: readonly GameEvent[], now: number): void => {
     for (const e of events) {
+      ui.onEvent?.(e);
       client.applyEvent(e);
       instrument.record(e);
       if (e.type === 'spawn') {

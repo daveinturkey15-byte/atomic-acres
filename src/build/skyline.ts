@@ -24,6 +24,8 @@ import {
   BOUND_X_MAX, BOUND_X_MIN, BOUND_Z, PAVEMENT_OUTER,
 } from '../core/layout';
 import { buildRidgeGeometry } from './terrain-ridges';
+import { isDistantMountainsEnabled } from '../core/environment-flags';
+import { createDistantMountainsCanary } from './distant-mountains-canary';
 
 /** half the playable footprint - used only for things that belong TO the map */
 const MAP_R = (BOUND_X_MAX - BOUND_X_MIN) / 2;   // 22.25
@@ -570,7 +572,14 @@ export const buildSkyline: Builder = (ctx) => {
   // Counts are up from 9-10 to 14-18 per ring: at MAP_R*5.3 = 118 m nine massifs closed
   // the circle, at 300 m they leave 100 m gaps between them and the range reads as
   // separate lumps rather than as a range. Two silhouettes per layer, as before.
-  {
+  if (isDistantMountainsEnabled()) {
+    const canary = createDistantMountainsCanary(ctx);
+    g.add(canary.group);
+    // Same key the page lifecycle traverses for (see main.ts releaseEnvironmentCanary):
+    // the factory also sets it on its own subgroup, and its release is idempotent,
+    // so the double registration collapses to one disposal.
+    g.userData.dispose = canary.dispose;
+  } else {
     // [count, ring index, half-width min/span, height min/span, half-depth min/span]
     const layers: [number, number, number, number, number, number, number, number,
       THREE.Material][] = [

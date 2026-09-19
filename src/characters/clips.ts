@@ -48,8 +48,45 @@ export type ClipName =
   | 'aim'
   | 'fire'
   | 'reload'
+  | 'throw'
   | 'hit-react'
   | 'death';
+
+/**
+ * Third-person grenade-throw body clip: total length and the internal release
+ * beat. Video-guided AUTHORING, not reconstruction: the H3 reference shows a
+ * running RIGHT-hand toss too small and blurred for footwork, so the feet stay
+ * planted and root travel is zero — and the body clip here is a mirrored
+ * LEFT-hand authored adaptation of that reference, not a skeleton extraction.
+ * The rifle is baked to the RightHand bone (mesh.ts), so a right-hand throw
+ * would swing the weapon with the throwing hand; the left hand throws while
+ * the right keeps the rifle in stable carry. The host's arm/release claims and
+ * the first-person `THROW_S` / `THROW_RELEASE_S` cadence are untouched; remote
+ * bodies play this on the observed `thrown` event the way hit-react plays on
+ * its event.
+ */
+export const THROW_BODY_S = 0.9;
+export const THROW_BODY_RELEASE_S = 0.45;
+
+/**
+ * Presentation entry points (seconds into the clip). The body clip never
+ * triggers gameplay — the host does — so these are render-side timing only:
+ *
+ * - `THROW_BODY_HOLD_S` pins the anticipation window: play the windup 0→0.18,
+ *   then hold the coil until the authoritative `grenade-thrown` event lands.
+ * - `THROW_BODY_THROWN_ENTRY_S` is where the `thrown` event enters the clip:
+ *   AT the release beat. The projectile has already spawned when the event
+ *   arrives, so any run-up before the beat is presentation LAG, not lead —
+ *   a 0.09 s run-up still leaves the visual snap 0.09 s behind the live
+ *   grenade. From-zero entry would lag 0.45 s.
+ * - `THROW_BODY_HOLD_MAX_S` bounds the hold: an armed windup whose release
+ *   event never arrives (death cut the queue, match ended) CANCELS instead of
+ *   freezing mid-coil — never an autonomous fake throw. A recovery that plays
+ *   anything must label itself as recovery, not release.
+ */
+export const THROW_BODY_HOLD_S = 0.18;
+export const THROW_BODY_THROWN_ENTRY_S = THROW_BODY_RELEASE_S;
+export const THROW_BODY_HOLD_MAX_S = 2.5;
 /** Locomotion clips the rig crossfades between. Everything else is a layer or one-shot. */
 export type LocomotionName =
   | 'idle'
@@ -513,6 +550,36 @@ export function buildClipLibrary(): Record<ClipName, ClipSpec> {
       Neck: [[0, -0.05, 0, 0], [0.5, 0.3, 0, 0], [1.1, 0.3, 0, 0], [1.6, -0.05, 0, 0]],
       Chest: [[0, 0.08, 0, 0], [0.5, 0.22, 0, 0], [1.1, 0.22, 0, 0], [1.6, 0.08, 0, 0]],
     }),
+    speed: 0, stride: 0, loop: false,
+  };
+  // Throw: standing LEFT-hand overarm grenade toss — a mirrored authored
+  // adaptation of the H3 right-hand reference (see THROW_BODY_S). Beats: windup
+  // coil (0-0.18, left arm high-back per mirrored `t690`/`t730`), release snap
+  // at 0.45, follow through (0.62), settle to rifle carry (0.9). The RIGHT arm
+  // and forearm stay at the carry pose throughout: the rifle is baked to the
+  // RightHand bone, so any right-arm excursion flails the weapon. Feet stay
+  // planted and root travel is zero: the H3 reference throws on the run at
+  // ~150 px tall, so its footwork is unrecoverable and is not fabricated here.
+  // First and last keys sit at the carry/neutral pose so the overlay fades in
+  // and out near the live pose. The game plays this through the UPPER_BODY
+  // mask (playThrowBody), so the Spine/Hips keys here read only in the raw
+  // demo — in-game the torso coil rides on Chest alone and the legs stay with
+  // the locomotion clip underneath.
+  lib['throw'] = {
+    clip: onceClip('throw', THROW_BODY_S, {
+      Hips: [[0, 0, 0, 0], [0.18, 0, -0.3, 0], [0.45, -0.04, 0.2, 0], [0.62, 0, 0.08, 0], [0.9, 0, 0, 0]],
+      Spine: [[0, 0, 0, 0], [0.18, -0.08, -0.15, 0], [0.45, 0.12, 0.1, 0], [0.62, 0.05, 0, 0], [0.9, 0, 0, 0]],
+      Chest: [[0, 0.08, 0, 0], [0.18, -0.14, -0.32, 0], [0.45, 0.22, 0.22, 0], [0.62, 0.12, 0.05, 0], [0.9, 0.08, 0, 0]],
+      Neck: [[0, -0.05, 0, 0], [0.45, -0.1, 0, 0], [0.9, -0.05, 0, 0]],
+      RightArm: [[0, -1.05, -0.2, 0.15], [0.9, -1.05, -0.2, 0.15]],
+      RightForeArm: [[0, -0.65, 0.3, 0], [0.9, -0.65, 0.3, 0]],
+      LeftArm: [[0, -1.15, 0.25, -0.15], [0.18, 2.7, 0.1, -0.2], [0.45, -1.0, 0.1, -0.1], [0.62, -0.4, 0, -0.15], [0.9, -1.15, 0.25, -0.15]],
+      LeftForeArm: [[0, -0.5, -0.35, 0], [0.18, -0.35, -0.15, 0], [0.45, -0.2, -0.1, 0], [0.62, -0.35, -0.2, 0], [0.9, -0.5, -0.35, 0]],
+      LeftUpLeg: [[0, -0.22, 0, 0], [0.45, -0.26, 0, 0], [0.9, -0.22, 0, 0]],
+      RightUpLeg: [[0, 0.16, 0, 0.04], [0.45, 0.2, 0, 0.04], [0.9, 0.16, 0, 0.04]],
+      LeftLeg: [[0, 0.32, 0, 0], [0.45, 0.38, 0, 0], [0.9, 0.32, 0, 0]],
+      RightLeg: [[0, 0.28, 0, 0], [0.45, 0.32, 0, 0], [0.9, 0.28, 0, 0]],
+    }, [0, -0.025, -0.035, -0.02, -0.03, -0.015, 0]),
     speed: 0, stride: 0, loop: false,
   };
 

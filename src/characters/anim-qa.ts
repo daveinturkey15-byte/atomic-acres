@@ -58,6 +58,18 @@ export interface AnimQA {
   external(i: number, name: string): Promise<boolean>;
   clearExternal(i: number): boolean;
   carry(i: number, weight: number | null): boolean;
+  /**
+   * Play the AUTHORED throw body clip on the live in-world figure, through
+   * the game's own `rig.playThrowBody(phase)` overlay path — not a baked
+   * external clip. `full` is the raw 0→0.9 s playthrough for photography;
+   * `anticipation`/`release` are the event-driven phases throw-body.ts uses.
+   * This is VISUAL clip playback only: it proves what the clip looks like
+   * in the world, never that a grenade event was admitted (that proof is
+   * CPU in verify-throw-presentation.mjs; live network admission stays OPEN).
+   */
+  throwBody(i: number, phase: 'anticipation' | 'release' | 'full'): boolean;
+  /** Current throw overlay state for the live proof (`none`/`hold`/`release`). */
+  throwPhase(i: number): string;
   surface(i: number): Record<string, number | string>;
   skateStart(i: number): boolean;
   skate(i: number): Record<string, number>;
@@ -214,6 +226,17 @@ export function installAnimQA(s: AnimSystem): void {
       if (weight === null) delete c.input.carryWeight;
       else c.input.carryWeight = Math.max(0, Math.min(1, weight));
       return true;
+    },
+    throwBody(i, phase) {
+      const c = pick(i);
+      if (!c) return false;
+      c.rig.playThrowBody(phase);
+      return true;
+    },
+    throwPhase(i) {
+      const c = pick(i);
+      if (!c) return 'missing';
+      return c.rig.throwBodyPhase;
     },
     /**
      * THE ACCEPTANCE MEASUREMENT: read off the SKINNED SURFACE, not the bones.

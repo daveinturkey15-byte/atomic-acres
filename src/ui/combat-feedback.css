@@ -1,0 +1,133 @@
+/* Atomic Acres — floating combat text (combat-feedback lane, 2026-09-19).
+ *
+ * The layer is a child of #hud, so the capture harness hides it with the HUD
+ * and it never leaks into a station frame. Accent/danger/ink come from the
+ * --aa-* custom properties initHud sets from PAL; the fallbacks match those
+ * PAL values (core/palette.ts).
+ *
+ * Motion rule (hud.css): transform and opacity only. The WRAPPER never
+ * animates — JS positions it once per hit with an inline transform. The inner
+ * span owns the rise; `will-change` sits on .cfb-t and nowhere else.
+ *
+ * Numbers JS also knows (src/ui/combat-feedback.ts): the 900ms animation
+ * duration is CFB_LIFETIME_MS — the JS expiry and the CSS fade end together.
+ * cfb-a / cfb-b are two identical keyframes under different names: a recycled
+ * pool node restarts its animation by alternating class, with no reflow read.
+ *
+ * `prefers-reduced-motion` (and the JS-driven .cfb-still class) swap the rise
+ * for a fade in place: same lifetime, no movement.
+ */
+
+#hud .cfb-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 6;
+  font-family: "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+}
+
+#hud .cfb-num {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--aa-ink, #f0ece2);
+  text-shadow:
+    -1px 0 0 #000,
+    1px 0 0 #000,
+    0 -1px 0 #000,
+    0 1px 0 #000,
+    0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* Head is the host's own zone field — the only critical read. */
+#hud .cfb-num.cfb-crit {
+  font-size: 19px;
+  color: var(--aa-accent, #d8b23a);
+}
+
+/* Confirmed lethal (healthAfter <= 0): the danger accent, on top of crit. */
+#hud .cfb-num.cfb-lethal {
+  color: var(--aa-danger, #b8322e);
+  font-weight: 800;
+}
+
+/* No world position (behind camera / offscreen / unknown victim): the small
+ * crosshair-anchored marker. Same palette rules, quieter size. */
+#hud .cfb-num.cfb-anchored {
+  font-size: 13px;
+  opacity: 0.92;
+}
+
+#hud .cfb-t {
+  display: inline-block;
+  will-change: transform, opacity;
+  animation: cfb-rise 900ms cubic-bezier(0.17, 0.67, 0.35, 1) forwards;
+}
+#hud .cfb-t.cfb-b {
+  animation-name: cfb-rise-b;
+}
+
+@keyframes cfb-rise {
+  0% {
+    transform: translate(-50%, -34%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  68% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, calc(-100% - 24px));
+    opacity: 0;
+  }
+}
+
+/* cfb-rise-b is byte-identical on purpose: the NAME restarts the animation. */
+@keyframes cfb-rise-b {
+  0% {
+    transform: translate(-50%, -34%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  68% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, calc(-100% - 24px));
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: fade in place, same envelope, no movement. */
+#hud .cfb-still .cfb-t {
+  animation-name: cfb-fade;
+}
+@keyframes cfb-fade {
+  0% {
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #hud .cfb-t {
+    animation-name: cfb-fade !important;
+  }
+}
