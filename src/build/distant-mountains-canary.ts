@@ -143,23 +143,49 @@ function evaluateMountainPoint(
   randOffset: number,
 ): { x: number; y: number; z: number } {
   // 1. Longitudinal Crest Silhouette Height H(theta)
-  // Multi-octave harmonic series with power shaping to avoid soft sine domes
-  const p1 = Math.sin(theta * 3.0 + randOffset);
-  const p2 = Math.cos(theta * 7.0 + randOffset * 1.37);
-  const p3 = Math.sin(theta * 13.0 - randOffset * 0.73);
-  const p4 = Math.cos(theta * 29.0 + randOffset * 2.11);
+  // Round 2: layer-decorrelated harmonics. All three rings previously shared
+  // one prime set (3/7/13/29 + sharps 5/11), so crest peaks stacked at the
+  // same angles and read as parallel ribbons. Key by mean radius — the true
+  // layer identity — so no two rings share a partial: foothills roll, mid
+  // massifs jag, far peaks swell broad with sparse horns.
+  const layerKey = cfg.radius < 400 ? 0 : cfg.radius < 550 ? 1 : 2;
+  const HF = [
+    { f1: 3, f2: 7, f3: 13, f4: 29, s1: 5, s2: 11, wSharp: 0.55, mesaCap: 0.86, colDepth: 0.10 },
+    { f1: 4, f2: 9, f3: 17, f4: 37, s1: 7, s2: 15, wSharp: 1.0, mesaCap: 0.90, colDepth: 0.22 },
+    { f1: 2, f2: 5, f3: 11, f4: 23, s1: 4, s2: 9, wSharp: 0.75, mesaCap: 1.10, colDepth: 0.16 },
+  ][layerKey];
+  // Multi-octave harmonic series with power shaping to avoid soft sine domes.
+  // Per-layer phase offsets (layerKey terms) break cross-ring peak alignment.
+  const p1 = Math.sin(theta * HF.f1 + randOffset);
+  const p2 = Math.cos(theta * HF.f2 + randOffset * 1.37 + layerKey * 1.7);
+  const p3 = Math.sin(theta * HF.f3 - randOffset * 0.73 + layerKey * 0.9);
+  const p4 = Math.cos(theta * HF.f4 + randOffset * 2.11 + layerKey * 2.3);
 
   // Sharp, faceted ridge modulation: |sin|^exponent creates crisp peaks and V-cols
-  const sharp1 = Math.pow(Math.abs(Math.sin(theta * 5.0 + randOffset * 0.5)), 1.8);
-  const sharp2 = Math.pow(Math.abs(Math.cos(theta * 11.0 - randOffset * 0.9)), 2.2);
+  const sharp1 = Math.pow(Math.abs(Math.sin(theta * HF.s1 + randOffset * 0.5 + layerKey)), 1.8);
+  const sharp2 = Math.pow(Math.abs(Math.cos(theta * HF.s2 - randOffset * 0.9 + layerKey * 2.0)), 2.2);
 
-  let crestNorm = 0.42 + 0.26 * p1 + 0.15 * p2 + 0.09 * p3 + 0.05 * p4 + 0.18 * sharp1 - 0.12 * sharp2;
+  let crestNorm = 0.42 + 0.26 * p1 + 0.15 * p2 + 0.09 * p3 + 0.05 * p4
+    + 0.18 * HF.wSharp * sharp1 - 0.12 * HF.wSharp * sharp2;
+
+  // Massif grouping: cluster the ring into ranges separated by low saddles so
+  // the skyline is not a continuous even-height band. Distinct low frequency
+  // per layer (f1 - 1 -> 2/3/1) keeps group spacing uncorrelated across rings.
+  const massifPhase = randOffset * 0.9 + layerKey * 2.4;
+  const massif = Math.pow(0.5 + 0.5 * Math.sin(theta * (HF.f1 - 1) + massifPhase), 1.5);
+  crestNorm = 0.30 * crestNorm + 0.70 * (crestNorm * (0.45 + 0.55 * massif));
+
+  // V-col carving: deep notches at sharp minima break the crest into uneven
+  // horns. Strongest on the mid massifs that own the skyline.
+  crestNorm -= HF.colDepth * Math.pow(Math.abs(Math.sin(theta * HF.s2 * 0.5 + randOffset + layerKey)), 3.0);
   crestNorm = Math.max(0.08, Math.min(1.0, crestNorm));
 
-  // Mesa plateau capping on select high summits
-  if (crestNorm > 0.82) {
-    const mesaOver = crestNorm - 0.82;
-    crestNorm = 0.82 + mesaOver * 0.28; // flatten high crowns into tabular mesas
+  // Mesa plateau capping on select high summits. The far-ring cap sits above
+  // 1.0 (disabled): flat tabular tops up there caught the sun as continuous
+  // white stripes, so far horns stay pointed and shade unevenly.
+  if (crestNorm > HF.mesaCap) {
+    const mesaOver = crestNorm - HF.mesaCap;
+    crestNorm = HF.mesaCap + mesaOver * 0.28; // flatten high crowns into tabular mesas
   }
 
   const peakHeight = cfg.minHeight + crestNorm * cfg.heightSpan;
@@ -185,17 +211,34 @@ function evaluateMountainPoint(
 
   // 3. Stepped Sedimentary Strata (Horizontal terraces & structural benches)
   if (yRel > 1.5 && slopeFraction > 0.05) {
-    // Tilted strata dip (regional fault-block tilt of ~4 degrees)
-    const dip = Math.sin(theta * 2.0 + randOffset) * 2.5;
+    // Tilted strata dip (regional fault-block tilt of ~4 degrees), phase
+    // offset per layer so benches do not align into cross-ring bands.
+    const dip = Math.sin(theta * (HF.f1 - 1) + randOffset + layerKey * 1.1) * 2.5;
     const strataArg = (yRel + dip) * (Math.PI * 2 * cfg.strataSteps / (cfg.minHeight + cfg.heightSpan));
     // Asymmetric staircase wave: steep cliff face + gentle bench shelf
     const strataMod = (Math.sin(strataArg) - 0.35 * Math.sin(2.0 * strataArg)) * cfg.strataStrength;
-    // Strata is most pronounced on mid-slopes and fades at extreme crest/foot
+    // Strata is most pronounced on mid-slopes and fades at extreme crest/foot.
+    // Round 2: angular gate breaks ledges into discontinuous outcrops — the
+    // full-ring continuous benches read as white stripe tops at grazing sun.
     const strataEnvelope = Math.sin(Math.PI * Math.min(1.0, slopeFraction));
-    yRel += strataMod * strataEnvelope * 4.0;
+    const strataGate = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(theta * (HF.s1 + 2) + randOffset * 1.9 + layerKey * 3.1));
+    yRel += strataMod * strataEnvelope * 4.0 * strataGate;
   }
 
   // 4. Dendritic Erosion Gullies & Couloirs
+  // Round 2: two-scale carving. Major buttress couloirs (low frequency, front
+  // face only) cut deep wide chutes between projecting buttresses — each is
+  // ~10+ angular segments wide so it survives vertex-normal smoothing. The
+  // inherited fine chutes (high frequency, all faces) keep surface texture.
+  // Major frequencies are coprime with the fine frequencies so they never lock.
+  const MAJOR_GULLY_FREQ = [9, 13, 7][layerKey];
+  const majorPhaseBase = theta * MAJOR_GULLY_FREQ + randOffset * 2.3 + layerKey * 1.2;
+  if (slopeFraction > 0.08 && crossRatio < crossCrest) {
+    const majorPhase = majorPhaseBase + (1.0 - slopeFraction) * 1.1;
+    const majorCut = Math.pow(Math.abs(Math.sin(majorPhase)), 1.5);
+    const majorEnvelope = Math.pow(slopeFraction, 0.7) * (1.0 - Math.pow(slopeFraction, 3.0));
+    yRel = Math.max(0, yRel - majorCut * majorEnvelope * peakHeight * 0.18);
+  }
   if (slopeFraction > 0.08) {
     const gullyPhase = theta * cfg.gullyFrequency + (1.0 - slopeFraction) * 2.5 + randOffset;
     const gullyWave1 = Math.pow(Math.abs(Math.sin(gullyPhase)), 2.6);
@@ -212,9 +255,17 @@ function evaluateMountainPoint(
   const meander = Math.sin(theta * 4.0 + randOffset) * cfg.radiusVariation
     + Math.cos(theta * 9.0 - randOffset) * (cfg.radiusVariation * 0.4);
 
-  // Frontal spur projection (flatirons extending outward between washes)
+  // Round 2: buttresses project BETWEEN major couloirs (cosine vs the gully
+  // sine: max protrusion where incision is minimal), scaled with ring size so
+  // near flatirons read at 310 m and far massifs at 660 m. The old 6.5 m
+  // uniform spur was ~1-2% of ring radius — invisible at map cameras.
+  // Mid massifs own the skyline and carry the tallest frontal buttresses;
+  // 32 m there stays inside the 105 m ring footprint and well outside R=310.
+  const BUTTRESS_AMP = [22, 32, 30][layerKey];
+  const buttressPhase = majorPhaseBase + (1.0 - slopeFraction) * 1.1;
+  const buttress = Math.pow(0.5 + 0.5 * Math.cos(buttressPhase), 1.6);
   const spurProtrusion = (crossRatio < crossCrest)
-    ? Math.cos(theta * (cfg.gullyFrequency * 0.5) + randOffset) * Math.sin(Math.PI * slopeFraction) * 6.5
+    ? (buttress - 0.45) * Math.sin(Math.PI * Math.min(1.0, slopeFraction)) * BUTTRESS_AMP
     : 0;
 
   // Radial positioning: offset from mean ring radius

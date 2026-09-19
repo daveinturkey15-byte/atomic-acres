@@ -36,6 +36,8 @@ let skateOn = false;
 // from 1571 to 1295 and would have been reported as the twelve-figure budget.
 const pinned = new Map<number, { x: number; z: number; yaw: number }>();
 let pinLoop = false;
+const scrubbed = new Map<number, 'windup' | 'release' | 'recovery'>();
+let scrubLoop = false;
 let selfTicking = false;
 let tickCount = 0;
 let tickError = '';
@@ -68,8 +70,21 @@ export interface AnimQA {
    * CPU in verify-throw-presentation.mjs; live network admission stays OPEN).
    */
   throwBody(i: number, phase: 'anticipation' | 'release' | 'full'): boolean;
-  /** Current throw overlay state for the live proof (`none`/`hold`/`release`). */
+  /** Current throw overlay state for the live proof (`none`/`hold`/`release`/`recovery`). */
   throwPhase(i: number): string;
+  /** Pin or unpin the authored throw clip to an exact beat on the frame loop for photography. */
+  scrubThrow(i: number, beat: 'windup' | 'release' | 'recovery' | null): boolean;
+  /** Detailed throw overlay status for validation. */
+  throwDetail(i: number): { phase: string; elapsed: number; hold: boolean };
+  /** Operator visibility, frustum containment, and orientation relative to camera. */
+  visibility(i: number, camX: number, camY: number, camZ: number, camYaw: number, camPitch: number): {
+    visible: boolean;
+    inFrustum: boolean;
+    distance: number;
+    camDot: number;
+    chestDotCam: number;
+    facing: string;
+  };
   surface(i: number): Record<string, number | string>;
   skateStart(i: number): boolean;
   skate(i: number): Record<string, number>;
@@ -134,20 +149,27 @@ export function installAnimQA(s: AnimSystem): void {
       pinLoop = true;
       const tick = (): void => {
         if (pinned.size === 0) { pinLoop = false; return; }
-        for (const [k, p] of pinned) {
+        // Snapshot the keys: dropping a missing actor inside the loop must not
+        // disturb the iteration, and a removed figure must not pin the loop
+        // alive as a perpetual no-op.
+        for (const [k, p] of [...pinned]) {
           const h = pick(k);
-          if (!h) continue;
+          if (!h) { pinned.delete(k); continue; }
           h.root.position.x = p.x;
           h.root.position.z = p.z;
           h.yaw = p.yaw;
           h.root.rotation.y = p.yaw;
         }
+        if (pinned.size === 0) { pinLoop = false; return; }
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
       return true;
     },
-    unpin() { pinned.clear(); },
+    unpin() {
+      pinned.clear();
+      scrubbed.clear();
+    },
     drive(i, speed, crouch = false, prone = false, sprinting?: boolean) {
       const c = pick(i);
       if (!c) return false;
@@ -236,7 +258,119 @@ export function installAnimQA(s: AnimSystem): void {
     throwPhase(i) {
       const c = pick(i);
       if (!c) return 'missing';
-      return c.rig.throwBodyPhase;
+      const rig = c.rig as unknown as {
+        upper: { clip: string; elapsed: number; hold?: boolean } | null;
+      };
+      const u = rig.upper;
+      if (!u || u.clip !== 'throw') return 'none';
+      if (u.hold === true) return 'hold';
+      if (u.elapsed >= 0.60) return 'recovery';
+      return 'release';
+    },
+    scrubThrow(i, beat) {
+      const c = pick(i);
+      if (!c) return false;
+      if (!beat) {
+        scrubbed.delete(i);
+        c.rig.cancelThrowBody();
+        return true;
+      }
+      scrubbed.set(i, beat);
+      // VISUAL SCRUB ONLY (harness aid, not gameplay): re-pins the throw
+      // overlay's elapsed/hold every frame so a photographed beat cannot drift
+      // while the camera moves. Keyed per actor — the previous closure captured
+      // the first actor's index, so the tick re-applied beat #0 to every entry
+      // and later actors never scrubbed to their own beat.
+      const applyTo = (k: number): void => {
+        const h = pick(k);
+        if (!h) { scrubbed.delete(k); return; }
+        const b = scrubbed.get(k);
+        if (!b) return;
+        const rig = h.rig as unknown as {
+          playThrowBody: (phase: 'anticipation' | 'release' | 'full') => void;
+          upper: { clip: string; elapsed: number; hold?: boolean; heldFor?: number } | null;
+        };
+        if (!rig.upper || rig.upper.clip !== 'throw') {
+          rig.playThrowBody(b === 'windup' ? 'anticipation' : 'release');
+        }
+        if (rig.upper && rig.upper.clip === 'throw') {
+          if (b === 'windup') {
+            rig.upper.elapsed = 0.18;
+            rig.upper.hold = true;
+            rig.upper.heldFor = 0;
+          } else if (b === 'release') {
+            rig.upper.elapsed = 0.45;
+            rig.upper.hold = false;
+          } else if (b === 'recovery') {
+            rig.upper.elapsed = 0.70;
+            rig.upper.hold = false;
+          }
+        }
+      };
+      applyTo(i);
+      if (scrubLoop) return true;
+      scrubLoop = true;
+      const tick = (): void => {
+        if (scrubbed.size === 0) { scrubLoop = false; return; }
+        // Snapshot the keys: a figure removed mid-run is dropped instead of
+        // holding the loop alive as a perpetual ineffective no-op.
+        for (const [k] of [...scrubbed]) {
+          const h = pick(k);
+          if (!h) { scrubbed.delete(k); continue; }
+          applyTo(k);
+        }
+        if (scrubbed.size === 0) { scrubLoop = false; return; }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+      return true;
+    },
+    throwDetail(i) {
+      const c = pick(i);
+      if (!c) return { phase: 'missing', elapsed: 0, hold: false };
+      const rig = c.rig as unknown as {
+        upper: { clip: string; elapsed: number; hold?: boolean } | null;
+      };
+      const u = rig.upper;
+      if (!u || u.clip !== 'throw') return { phase: 'none', elapsed: 0, hold: false };
+      const phase = u.hold === true ? 'hold' : u.elapsed >= 0.60 ? 'recovery' : 'release';
+      return { phase, elapsed: +u.elapsed.toFixed(3), hold: !!u.hold };
+    },
+    /**
+     * Orientation/FOV approximation ONLY — not occlusion. inFrustum is a
+     * camera-forward dot threshold, `visible` is the scene-graph flag, and
+     * nothing here raycasts the world: a wall, a closed door or another actor
+     * between the lens and the chest still reads "in frustum". Do not cite
+     * this as proof the actor is unoccluded; framing claims need a real photo.
+     */
+    visibility(i, camX, camY, camZ, camYaw, camPitch) {
+      const c = pick(i);
+      if (!c) return { visible: false, inFrustum: false, distance: -1, camDot: 0, chestDotCam: 0, facing: 'missing' };
+      c.root.updateMatrixWorld(true);
+      const chestPos = new THREE.Vector3();
+      c.rig.bones.Chest.getWorldPosition(chestPos);
+      const camPos = new THREE.Vector3(camX, camY, camZ);
+      const camToChest = chestPos.clone().sub(camPos);
+      const dist = camToChest.length();
+      if (dist > 0.001) camToChest.divideScalar(dist);
+      const camFwd = new THREE.Vector3(
+        -Math.sin(camYaw) * Math.cos(camPitch),
+        Math.sin(camPitch),
+        -Math.cos(camYaw) * Math.cos(camPitch),
+      ).normalize();
+      const camDot = camFwd.dot(camToChest);
+      const chestQ = new THREE.Quaternion();
+      c.rig.bones.Chest.getWorldQuaternion(chestQ);
+      const chestFwd = new THREE.Vector3(0, 0, 1).applyQuaternion(chestQ);
+      const chestDotCam = chestFwd.dot(camToChest.clone().negate());
+      return {
+        visible: c.root.visible,
+        inFrustum: camDot > 0.65,
+        distance: +dist.toFixed(2),
+        camDot: +camDot.toFixed(3),
+        chestDotCam: +chestDotCam.toFixed(3),
+        facing: chestDotCam > 0.35 ? 'front' : chestDotCam < -0.35 ? 'back' : 'side',
+      };
     },
     /**
      * THE ACCEPTANCE MEASUREMENT: read off the SKINNED SURFACE, not the bones.

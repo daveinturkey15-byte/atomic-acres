@@ -336,6 +336,114 @@ check(
   check('Front-Scarp Normals Face Map Center', meanIn > 0.3, `meanInward=${meanIn.toFixed(3)} (must be > 0.3)`);
   check('No Downward Front-Scarp Normals', minY > -0.15, `minNy=${minY.toFixed(3)} (inverted winding gave -0.64)`);
 }
+// Check 6c (art-round2, additive): exact budget/config freeze — round 2 is
+// evaluator math only: same 3 draws, same 15,744 tris, same tessellation,
+// same ring layout, same shared palette numbers. Any drift fails here.
+{
+  const EXPECTED = [
+    { segmentsAngle: 128, segmentsCross: 14, radius: 310, baseY: -12, radialWidth: 70 },
+    { segmentsAngle: 160, segmentsCross: 18, radius: 460, baseY: -12, radialWidth: 105 },
+    { segmentsAngle: 160, segmentsCross: 20, radius: 660, baseY: -12, radialWidth: 140 },
+  ];
+  let freezeOk = triangleCount === 15744 && drawCalls === 3;
+  let freezeDetail = `tris=${triangleCount} draws=${drawCalls}`;
+  for (let l = 0; l < 3; l++) {
+    const c = DEFAULT_CANARY_LAYERS[l];
+    const e = EXPECTED[l];
+    const tris = c.segmentsAngle * c.segmentsCross * 2;
+    if (c.segmentsAngle !== e.segmentsAngle || c.segmentsCross !== e.segmentsCross
+      || c.radius !== e.radius || c.baseY !== e.baseY || c.radialWidth !== e.radialWidth) {
+      freezeOk = false;
+    }
+    freezeDetail += ` L${l}=${tris}tris`;
+  }
+  const palOk = DEFAULT_CANARY_LAYERS[0].materialColor === 0x8a7a5e
+    && DEFAULT_CANARY_LAYERS[1].materialColor === 0xa6b4c4
+    && DEFAULT_CANARY_LAYERS[2].materialColor === 0xc6d0dc;
+  check('Round2 Freeze: Budget/Layout/Palette Unchanged', freezeOk && palOk, `${freezeDetail} pal=${palOk ? 'dirt/mtn/far' : 'DRIFT'}`);
+}
+
+// Check 6d (art-round2, additive): silhouette decorrelation — crest height
+// profiles of the three rings must not correlate (round-1 shared primes
+// stacked peaks into parallel ribbons). Pearson |r| < 0.6 on all pairs.
+{
+  const crest = [];
+  for (let l = 0; l < result.geometries.length; l++) {
+    const g = result.geometries[l];
+    const cfg = DEFAULT_CANARY_LAYERS[l];
+    const rs = cfg.segmentsAngle + 1;
+    const nF = Math.max(2, Math.round(cfg.segmentsCross * cfg.frontBias));
+    const pos = g.attributes.position;
+    const row = [];
+    for (let i = 0; i < cfg.segmentsAngle; i++) {
+      row.push(pos.getY(nF * rs + i));
+    }
+    crest.push(row);
+  }
+  const pearson = (a, b) => {
+    const n = Math.min(a.length, b.length);
+    const bs = [];
+    for (let i = 0; i < n; i++) {
+      const t = (i / n) * (b.length - 1);
+      const i0 = Math.floor(t);
+      const i1 = Math.min(b.length - 1, i0 + 1);
+      const f = t - i0;
+      bs.push(b[i0] * (1 - f) + b[i1] * f);
+    }
+    const aa = a.slice(0, n);
+    const ma = aa.reduce((s, v) => s + v, 0) / n;
+    const mb = bs.reduce((s, v) => s + v, 0) / n;
+    let sab = 0;
+    let saa = 0;
+    let sbb = 0;
+    for (let i = 0; i < n; i++) {
+      const da = aa[i] - ma;
+      const db = bs[i] - mb;
+      sab += da * db;
+      saa += da * da;
+      sbb += db * db;
+    }
+    return sab / Math.max(1e-9, Math.sqrt(saa * sbb));
+  };
+  const r01 = pearson(crest[0], crest[1]);
+  const r02 = pearson(crest[0], crest[2]);
+  const r12 = pearson(crest[1], crest[2]);
+  const maxR = Math.max(Math.abs(r01), Math.abs(r02), Math.abs(r12));
+  check(
+    'Round2 Silhouette Decorrelation (|r| < 0.6)',
+    maxR < 0.6,
+    `r01=${r01.toFixed(3)} r02=${r02.toFixed(3)} r12=${r12.toFixed(3)} max|r|=${maxR.toFixed(3)}`,
+  );
+}
+
+// Check 6e (art-round2, additive): large front buttress relief — mid-face
+// radial range must clear the meander-alone ceiling (2.8 * variation) with a
+// margin the old 6.5 m spur could not buy. Proves buttresses project.
+{
+  let reliefOk = true;
+  const parts = [];
+  for (let l = 0; l < result.geometries.length; l++) {
+    const g = result.geometries[l];
+    const cfg = DEFAULT_CANARY_LAYERS[l];
+    const rs = cfg.segmentsAngle + 1;
+    const nF = Math.max(2, Math.round(cfg.segmentsCross * cfg.frontBias));
+    const jm = Math.floor(nF / 2);
+    const pos = g.attributes.position;
+    let mn = Infinity;
+    let mx = -Infinity;
+    for (let i = 0; i < cfg.segmentsAngle; i++) {
+      const vi = jm * rs + i;
+      const r = Math.hypot(pos.getX(vi), pos.getZ(vi));
+      if (r < mn) mn = r;
+      if (r > mx) mx = r;
+    }
+    const range = mx - mn;
+    const floor = 2.8 * cfg.radiusVariation + 6;
+    if (range <= floor) reliefOk = false;
+    parts.push(`L${l}=${range.toFixed(1)}m>floor${floor.toFixed(1)}`);
+  }
+  check('Round2 Buttress Relief (front radial range)', reliefOk, parts.join(' '));
+}
 // Check 7: Determinism & Reproducibility
 const result2 = createDistantMountainsCanary(ctx);
 let byteIdentical = true;
