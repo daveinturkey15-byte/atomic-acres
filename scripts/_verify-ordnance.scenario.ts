@@ -22,6 +22,7 @@ import {
 } from '../src/game/bot-sense';
 import { WEAPONS } from '../src/weapons/catalog';
 import { FLASH_MAX_MS, GRENADE_BY_ID, isGrenadeId, KNIFE_RECOVERY_MS, ORDNANCE_IDS, SEMTEX_MAX_FLIGHT_MS, SMOKE_RADIUS_M, TACTICAL_IDS } from '../src/game/ordnance';
+import { GRENADE_RADIUS_M, launch, stepBallistic, type Ballistic } from '../src/game/ordnance-physics';
 import { GRENADE_IDS } from '../src/game/loadout';
 import { DROP_LIFETIME_MS, DROP_MAX_LIVE, fullRounds } from '../src/game/pickups';
 import { EYE_HEIGHT } from '../src/core/layout';
@@ -343,6 +344,72 @@ export function semtexScenario(): Check[] {
     wflight > 1_100 && wflight <= 1_100 + 1000, 'flightMs=' + wflight);
   check(out, 'semtex: the wall still shields the far side', w.damageTo('bwall').length === 0,
     'events=' + w.damageTo('bwall').length);
+  // Contact, not hover: the casing's CENTRE sits one skin off the 2.8 m face.
+  // The old snap-back stuck the pre-step point (measured 2.15 m, 0.65 m off).
+  check(out, 'semtex: contact — wall stick sits one casing off the face (2.60–2.80), not hovering mid-step',
+    wdet.length === 1 && wdet[0].z > 2.60 && wdet[0].z < 2.8,
+    wdet.length === 1 ? 'at=' + wdet[0].x.toFixed(2) + ',' + wdet[0].y.toFixed(2) + ',' + wdet[0].z.toFixed(2) : 'none');
+  check(out, 'semtex: contact — eye-to-casing segment is clear (no penetration)',
+    wdet.length === 1 && wdet[0].z < 2.8
+    && w.world.lineOfSight({ x: 0, y: EYE_HEIGHT, z: 0 }, { x: wdet[0].x, y: wdet[0].y, z: wdet[0].z }),
+    wdet.length === 1 ? 'at=' + wdet[0].x.toFixed(2) + ',' + wdet[0].y.toFixed(2) + ',' + wdet[0].z.toFixed(2) : 'none');
+  // Direct `stepBallistic` contact proofs at two supported dts each: wall,
+  // floor, corner and playable boundary. Bounded loops, sticky records, the
+  // same three-method port — no host, no mocks.
+  const stickTo = (colliders: AABB[], sx: number, sy: number, sz: number, vx: number, vy: number, vz: number, dt: number) => {
+    const world = createWorldQuery(colliders);
+    const b: Ballistic = { x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, resting: true, sticky: true };
+    launch(b, sx, sy, sz, vx, vy, vz);
+    let stuck = false;
+    let steps = 0;
+    for (let i = 0; i < 400 && !stuck; i++) {
+      const r = stepBallistic(b, dt, world);
+      steps++;
+      stuck = r.stuck;
+    }
+    const again = stepBallistic(b, dt, world);
+    return { world, b, stuck, steps, again };
+  };
+  const wall60 = stickTo([box(-4, 0, 2.8, 4, 3, 3.2)], 0, 1.5, 0, 0, 0, 18, 1 / 60);
+  check(out, 'semtex: contact — wall face at 1/60 s sticks one skin off (2.60–2.80), dead still',
+    wall60.stuck && wall60.b.z > 2.60 && wall60.b.z < 2.8 && wall60.b.y > 0.5
+    && wall60.b.vx === 0 && wall60.b.vy === 0 && wall60.b.vz === 0 && wall60.b.resting,
+    'at=' + wall60.b.x.toFixed(3) + ',' + wall60.b.y.toFixed(3) + ',' + wall60.b.z.toFixed(3) + ' steps=' + wall60.steps);
+  const wallMax = stickTo([box(-4, 0, 2.8, 4, 3, 3.2)], 0, 1.5, 0, 0, 0, 18, 0.1);
+  check(out, 'semtex: contact — wall face at max dt 0.1 s sticks one skin off too (tunnelling owes nothing)',
+    wallMax.stuck && wallMax.b.z > 2.60 && wallMax.b.z < 2.8 && wallMax.b.y > 0.5
+    && wallMax.b.vx === 0 && wallMax.b.vy === 0 && wallMax.b.vz === 0 && wallMax.b.resting,
+    'at=' + wallMax.b.x.toFixed(3) + ',' + wallMax.b.y.toFixed(3) + ',' + wallMax.b.z.toFixed(3) + ' steps=' + wallMax.steps);
+  check(out, 'semtex: contact — one stick edge: the step after the stick is quiet',
+    wall60.stuck && !wall60.again.stuck && !wall60.again.contact,
+    JSON.stringify(wall60.again));
+  const floor60 = stickTo([], 0, 2, 0, 0, 0, 0, 1 / 60);
+  check(out, 'semtex: contact — floor at 1/60 s rests on the skin (0.08–0.12 m)',
+    floor60.stuck && floor60.b.y >= 0.075 && floor60.b.y <= 0.12
+    && floor60.b.vx === 0 && floor60.b.vy === 0 && floor60.b.vz === 0 && floor60.b.resting,
+    'at=' + floor60.b.x.toFixed(3) + ',' + floor60.b.y.toFixed(3) + ',' + floor60.b.z.toFixed(3) + ' steps=' + floor60.steps);
+  const floorMax = stickTo([], 0, 2, 0, 0, 0, 0, 0.1);
+  check(out, 'semtex: contact — floor at max dt 0.1 s rests on the skin too, no 2R hover',
+    floorMax.stuck && floorMax.b.y >= 0.075 && floorMax.b.y <= 0.20
+    && floorMax.b.vx === 0 && floorMax.b.vy === 0 && floorMax.b.vz === 0 && floorMax.b.resting,
+    'at=' + floorMax.b.x.toFixed(3) + ',' + floorMax.b.y.toFixed(3) + ',' + floorMax.b.z.toFixed(3) + ' steps=' + floorMax.steps);
+  const corner = stickTo([box(-4, 0, 2.8, 4, 3, 3.2), box(3.8, 0, -4, 4.2, 3, 3.2)], 2, 1.5, 0, 12, 0, 12, 1 / 60);
+  check(out, 'semtex: contact — corner region sticks by a face, inside bounds, segment clear',
+    corner.stuck && (corner.b.z > 2.55 || corner.b.x > 3.55) && corner.b.z < 2.85 && corner.b.x < 4.25
+    && corner.world.inBounds(corner.b.x, corner.b.z)
+    && corner.world.lineOfSight({ x: 2, y: 1.5, z: 0 }, { x: corner.b.x, y: corner.b.y, z: corner.b.z })
+    && corner.b.vx === 0 && corner.b.vy === 0 && corner.b.vz === 0 && corner.b.resting,
+    'at=' + corner.b.x.toFixed(3) + ',' + corner.b.y.toFixed(3) + ',' + corner.b.z.toFixed(3) + ' steps=' + corner.steps);
+  const bound60 = stickTo([], 0, 1.5, 40, 0, 0, 18, 1 / 60);
+  check(out, 'semtex: contact — playable boundary at 1/60 s sticks at the edge (41.5–42.0), never outside',
+    bound60.stuck && bound60.b.z > 41.5 && bound60.b.z <= 42 && bound60.world.inBounds(bound60.b.x, bound60.b.z)
+    && bound60.b.vx === 0 && bound60.b.vy === 0 && bound60.b.vz === 0 && bound60.b.resting,
+    'at=' + bound60.b.x.toFixed(3) + ',' + bound60.b.y.toFixed(3) + ',' + bound60.b.z.toFixed(3) + ' steps=' + bound60.steps);
+  const boundMax = stickTo([], 0, 1.5, 40, 0, 0, 18, 0.1);
+  check(out, 'semtex: contact — playable boundary at max dt 0.1 s sticks at the edge too',
+    boundMax.stuck && boundMax.b.z > 41.5 && boundMax.b.z <= 42 && boundMax.world.inBounds(boundMax.b.x, boundMax.b.z)
+    && boundMax.b.vx === 0 && boundMax.b.vy === 0 && boundMax.b.vz === 0 && boundMax.b.resting,
+    'at=' + boundMax.b.x.toFixed(3) + ',' + boundMax.b.y.toFixed(3) + ',' + boundMax.b.z.toFixed(3) + ' steps=' + boundMax.steps);
   return out;
 }
 

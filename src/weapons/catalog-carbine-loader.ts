@@ -4,7 +4,7 @@
  * Standalone opt-in canary for loading the Blender-authored AR-15/M4 carbine GLTF/GLB
  * artifact into the viewmodel pipeline.
  *
- * Lifetime & Ownership Contracts:
+ * Lifetime & Ownership Contracts (bounded, single-asset):
  *   1. Bounded Single-Asset Cache: Assets are cached by canonical URL with explicit
  *      reference counting (refCount). Clones share decoded geometry and texture buffers.
  *   2. Non-Destructive Sibling Release: Disposing an individual clone decrements refCount
@@ -15,12 +15,35 @@
  *      or disposes accepted shared materials or their textures.
  *   4. Resurrection Protection: Each cache slot tracks a generation epoch. Clearing the
  *      cache increments the epoch; late-resolving promises from in-flight loads are discarded
- *      and cleaned up immediately without resurrecting into the cache.
- *   5. Strict Socket Verification: Required sockets (anchor_muzzle, anchor_grip,
+ *      and cleaned up immediately without resurrecting into the cache. Pending-map removal
+ *      is promise-identity guarded so a stale finally never deletes a newer pending load.
+ *   5. Active-clear orphan: clearing while clones are live does NOT dispose shared
+ *      master resources out from under siblings. The entry is removed from the cache and
+ *      marked orphaned; its resources dispose when the last live clone releases.
+ *   6. Stale-release guard: releasing an orphaned/stale entry never deletes a newer
+ *      same-URL entry that was installed after a clear/reload. Only the cached entry
+ *      identical to the released one is removed.
+ *   7. Post-increment release: any throw after refCount++ releases that reference
+ *      before falling back, so a failed clone never leaks a master reference.
+ *   8. Strict Socket Verification: Required sockets (anchor_muzzle, anchor_grip,
  *      anchor_support, anchor_mag) must exist in the loaded GLTF hierarchy. Missing sockets
  *      are NEVER fabricated: bad assets are rejected and fallback is engaged.
- *   6. Blender Export Orientation: Forward is -Z (glTF standard from Blender +Y forward),
+ *   9. Blender Export Orientation: Forward is -Z (glTF standard from Blender +Y forward),
  *      Up is +Y (from Blender +Z up), Right is +X.
+ *
+ * Geometry ownership (inspected against actual factories):
+ *   - GLB master: geometries/materials/textures collected by collectGltfResources are
+ *     SHARED across all clones of that URL. Clone disposal must NEVER dispose them
+ *     while siblings live; only releaseMasterEntry on last release disposes them.
+ *   - First-person hands (first-person-hands.ts + hand-geometry-canary.ts): every mesh
+ *     geometry is NEWLY allocated per createFirstPersonHands call (4 canary geometries
+ *     per side + 2 cuff cylinders = 10 owned geometries). Every material is SHARED
+ *     (mat.viewmodel.* singletons + mat.painted cuff). Hands disposal disposes ONLY
+ *     the 10 owned geometries, never shared materials.
+ *   - Procedural rifle (viewmodel.ts box/roundedBox/tube): every mesh geometry is NEWLY
+ *     allocated per buildRifleViewmodel call; every material is SHARED (mat.viewmodel.*,
+ *     mat.chrome, mat.painted, mat.glass). Procedural swap disposal disposes ONLY
+ *     owned geometries via disposeOwnedGeometries, never shared materials.
  */
 
 import * as THREE from 'three';
@@ -92,6 +115,8 @@ interface MasterCacheEntry {
   refCount: number;
   generation: number;
   autoDisposeOnZeroRef: boolean;
+  /** True once removed from the cache while clones were still live. */
+  orphaned: boolean;
 }
 
 /** URL -> cached master entry */
@@ -107,8 +132,13 @@ let defaultGltfLoader: GLTFLoader | undefined;
 
 function getBaseUrl(): string {
   try {
-    const value = (import.meta as any).env?.BASE_URL;
-    return typeof value === 'string' && value.length > 0 ? value : './';
+    const meta = import.meta as unknown as { env?: unknown };
+    const env = meta.env;
+    if (env && typeof env === 'object' && 'BASE_URL' in env) {
+      const value = env.BASE_URL;
+      return typeof value === 'string' && value.length > 0 ? value : './';
+    }
+    return './';
   } catch {
     return './';
   }
@@ -155,13 +185,30 @@ export function collectGltfResources(root: THREE.Object3D): MasterResourceSet {
         const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         for (const m of mats) {
           materials.add(m);
-          const pbr = m as any;
-          if (pbr.map && pbr.map.isTexture) textures.add(pbr.map);
-          if (pbr.normalMap && pbr.normalMap.isTexture) textures.add(pbr.normalMap);
-          if (pbr.roughnessMap && pbr.roughnessMap.isTexture) textures.add(pbr.roughnessMap);
-          if (pbr.metalnessMap && pbr.metalnessMap.isTexture) textures.add(pbr.metalnessMap);
-          if (pbr.aoMap && pbr.aoMap.isTexture) textures.add(pbr.aoMap);
-          if (pbr.emissiveMap && pbr.emissiveMap.isTexture) textures.add(pbr.emissiveMap);
+          // MeshStandardMaterial map slots are optional textures; the guard below
+          // reads only what the compiled type declares, without untyped access.
+          const pbr = m as unknown as {
+            map?: unknown;
+            normalMap?: unknown;
+            roughnessMap?: unknown;
+            metalnessMap?: unknown;
+            aoMap?: unknown;
+            emissiveMap?: unknown;
+          };
+          const asTex = (v: unknown): THREE.Texture | null =>
+            v !== null && typeof v === 'object' && 'isTexture' in v ? (v as THREE.Texture) : null;
+          const map = asTex(pbr.map);
+          if (map) textures.add(map);
+          const normalMap = asTex(pbr.normalMap);
+          if (normalMap) textures.add(normalMap);
+          const roughnessMap = asTex(pbr.roughnessMap);
+          if (roughnessMap) textures.add(roughnessMap);
+          const metalnessMap = asTex(pbr.metalnessMap);
+          if (metalnessMap) textures.add(metalnessMap);
+          const aoMap = asTex(pbr.aoMap);
+          if (aoMap) textures.add(aoMap);
+          const emissiveMap = asTex(pbr.emissiveMap);
+          if (emissiveMap) textures.add(emissiveMap);
         }
       }
     }
@@ -188,6 +235,22 @@ export function disposeResourceSet(res: MasterResourceSet): void {
   res.geometries.clear();
 }
 
+/**
+ * Dispose ONLY owned BufferGeometries under a root. Never touches materials or
+ * textures (they are shared MaterialLibrary singletons or shared master buffers).
+ * Use on a hands root for GLB rigs, or on the whole group for procedural rigs
+ * whose every geometry is per-instance owned (viewmodel.ts box/roundedBox/tube
+ * allocate a fresh geometry per mesh; hands allocate fresh geometries per call).
+ */
+export function disposeOwnedGeometries(root: THREE.Object3D): void {
+  root.traverse((node) => {
+    const mesh = node as THREE.Mesh;
+    if (mesh.isMesh && mesh.geometry) {
+      try { mesh.geometry.dispose(); } catch {}
+    }
+  });
+}
+
 /** Locate a named Object3D in the hierarchy. Returns null if not found. */
 export function findNamedSocket(root: THREE.Object3D, name: string): THREE.Object3D | null {
   let found: THREE.Object3D | null = null;
@@ -208,6 +271,15 @@ export function validateRequiredSockets(scene: THREE.Object3D): string[] {
     }
   }
   return missing;
+}
+
+/** Names of required sockets actually present under a rig group (read-only QA helper). */
+export function getPresentCarbineSockets(group: THREE.Object3D): string[] {
+  const present: string[] = [];
+  for (const name of REQUIRED_CARBINE_SOCKETS) {
+    if (findNamedSocket(group, name)) present.push(name);
+  }
+  return present;
 }
 
 /**
@@ -248,7 +320,8 @@ async function getOrLoadMasterEntry(
 
   const generationAtStart = currentGeneration;
 
-  const loadPromise = (async (): Promise<MasterCacheEntry> => {
+  let loadPromise!: Promise<MasterCacheEntry>;
+  loadPromise = (async (): Promise<MasterCacheEntry> => {
     try {
       const loader = customLoader ?? (defaultGltfLoader ??= new GLTFLoader());
       const gltf = await loader.loadAsync(key);
@@ -284,12 +357,30 @@ async function getOrLoadMasterEntry(
         refCount: 0,
         generation: generationAtStart,
         autoDisposeOnZeroRef,
+        orphaned: false,
       };
+
+      // A clear+reload may have installed a newer entry while we validated.
+      // Never clobber it: discard ours and share the winner.
+      const winner = masterCache.get(key);
+      if (winner) {
+        disposeResourceSet(resources);
+        return winner;
+      }
+      if (generationAtStart !== currentGeneration) {
+        disposeResourceSet(resources);
+        throw new Error(`[CatalogCarbineLoader] Load of '${key}' cancelled: cache was cleared during load`);
+      }
 
       masterCache.set(key, entry);
       return entry;
     } finally {
-      pendingLoads.delete(key);
+      // Promise-identity guard: a stale finally must never delete a newer pending
+      // load started after a clear/reload.
+      const pending = pendingLoads.get(key);
+      if (pending && pending.promise === loadPromise) {
+        pendingLoads.delete(key);
+      }
     }
   })();
 
@@ -297,13 +388,36 @@ async function getOrLoadMasterEntry(
   return loadPromise;
 }
 
-/** Release a reference on a master cache entry. Disposes master if refCount hits zero and autoDispose is enabled. */
+/**
+ * Release a reference on a master cache entry. Disposes master resources only when
+ * the last reference is released AND this entry still owns its cache slot (or was
+ * orphaned by an active clear). Never deletes a newer same-URL entry.
+ */
 function releaseMasterEntry(entry: MasterCacheEntry): void {
   entry.refCount = Math.max(0, entry.refCount - 1);
-  if (entry.refCount === 0 && entry.autoDisposeOnZeroRef) {
+  if (entry.refCount !== 0) return;
+  const cached = masterCache.get(entry.url);
+  if (entry.orphaned) {
+    // Orphaned by clear-while-live: the cache no longer holds us, so the last
+    // release owns disposal. Sibling resources stayed valid until now.
+    disposeResourceSet(entry.resources);
+    return;
+  }
+  if (cached === entry && entry.autoDisposeOnZeroRef) {
     masterCache.delete(entry.url);
     disposeResourceSet(entry.resources);
+    return;
   }
+  if (cached !== entry) {
+    // Stale entry (cleared then reloaded): our resources were either already
+    // disposed by the clear (refCount was 0 then) or are orphan-owned above.
+    // Never touch the newer cached entry. Dispose defensively; the set is empty
+    // when the clear already disposed, so this is a no-op then.
+    if (entry.resources.geometries.size > 0 || entry.resources.materials.size > 0) {
+      disposeResourceSet(entry.resources);
+    }
+  }
+  // Else: still cached but autoDispose disabled -> keep master for manual reuse.
 }
 
 /**
@@ -311,6 +425,8 @@ function releaseMasterEntry(entry: MasterCacheEntry): void {
  *
  * Disposes GPU resources (geometries, materials, textures) and increments the
  * generation epoch so any currently pending async loads are safely aborted on arrival.
+ * Entries with live clones are NOT disposed out from under siblings: they are removed
+ * from the cache and marked orphaned, disposing on last release instead.
  *
  * @param url Optional specific URL to clear. If omitted, clears all cached entries.
  */
@@ -321,15 +437,24 @@ export function clearMasterCarbineCache(url?: string): void {
     const key = canonicalizeUrl(url);
     const entry = masterCache.get(key);
     if (entry) {
-      masterCache.delete(key);
-      disposeResourceSet(entry.resources);
+      if (entry.refCount > 0) {
+        masterCache.delete(key);
+        entry.orphaned = true;
+      } else {
+        masterCache.delete(key);
+        disposeResourceSet(entry.resources);
+      }
     }
     pendingLoads.delete(key);
     return;
   }
 
   for (const entry of masterCache.values()) {
-    disposeResourceSet(entry.resources);
+    if (entry.refCount > 0) {
+      entry.orphaned = true;
+    } else {
+      disposeResourceSet(entry.resources);
+    }
   }
   masterCache.clear();
   pendingLoads.clear();
@@ -378,75 +503,90 @@ export async function loadCatalogCarbineRig(
     const entry = await getOrLoadMasterEntry(url, options.customLoader, autoDisposeOnZeroRef);
     entry.refCount++;
 
-    // Clone node hierarchy only. Mesh.geometry and Mesh.material reference shared master buffers.
-    const group = entry.masterScene.clone(true);
-    group.name = 'CatalogCarbineViewmodel';
+    let cloneOk = false;
+    try {
+      // Clone node hierarchy only. Mesh.geometry and Mesh.material reference shared master buffers.
+      const group = entry.masterScene.clone(true);
+      group.name = 'CatalogCarbineViewmodel';
 
-    // Locate authentic hardware empties in the cloned hierarchy (already verified in master)
-    const muzzle = findNamedSocket(group, 'anchor_muzzle')!;
-    const gripSocket = findNamedSocket(group, 'anchor_grip')!;
-    const supportSocket = findNamedSocket(group, 'anchor_support')!;
-    const magSocket = findNamedSocket(group, 'anchor_mag')!;
+      // Locate authentic hardware empties in the cloned hierarchy (already verified in master)
+      const muzzle = findNamedSocket(group, 'anchor_muzzle')!;
+      const gripSocket = findNamedSocket(group, 'anchor_grip')!;
+      const supportSocket = findNamedSocket(group, 'anchor_support')!;
+      const magSocket = findNamedSocket(group, 'anchor_mag')!;
 
-    // Eject socket: look for model empty or attach at authentic upper receiver ejection port
-    let eject = findNamedSocket(group, 'anchor_eject') ?? findNamedSocket(group, 'eject');
-    if (!eject) {
-      eject = new THREE.Object3D();
-      eject.name = 'eject';
-      eject.position.set(0.035, 0.030, -0.100);
-      group.add(eject);
-    }
+      // Eject socket: look for model empty or attach at authentic upper receiver ejection port
+      let eject = findNamedSocket(group, 'anchor_eject') ?? findNamedSocket(group, 'eject');
+      if (!eject) {
+        eject = new THREE.Object3D();
+        eject.name = 'eject';
+        eject.position.set(0.035, 0.030, -0.100);
+        group.add(eject);
+      }
 
-    applyViewmodelMeshTraits(group, renderOrder);
+      applyViewmodelMeshTraits(group, renderOrder);
 
-    // Attach authentic first-person hands calibrated to the hardware empties
-    let handsRig = undefined;
-    if (attachHands && options.mat) {
-      // Support hand attaches at anchor_support coords (z: -0.330, y: 0.002)
-      // Reload target aims toward anchor_mag coords (x: 0.010, y: -0.052, z: 0.212)
-      handsRig = createFirstPersonHands(
+      // Attach authentic first-person hands calibrated to the hardware empties
+      let handsRig = undefined;
+      if (attachHands && options.mat) {
+        // Support hand attaches at anchor_support coords (z: -0.330, y: 0.002)
+        // Reload target aims toward anchor_mag coords (x: 0.010, y: -0.052, z: 0.212)
+        handsRig = createFirstPersonHands(
+          group,
+          options.mat,
+          supportSocket.position.z,
+          supportSocket.position.y,
+          [0.010, magSocket.position.y, 0.212],
+        );
+      }
+
+      let disposed = false;
+      const dispose = (): void => {
+        if (disposed) return; // Idempotent
+        disposed = true;
+
+        // Remove from parent scene/overlay
+        if (group.parent) {
+          group.parent.remove(group);
+        }
+
+        // Hands own 10 fresh geometries (canary sides + cuff cylinders) with shared
+        // materials: dispose ONLY the hands geometries, never shared materials.
+        // The GLB clone itself shares master buffers and must NOT be disposed here;
+        // releaseMasterEntry owns master disposal on last release.
+        if (handsRig) {
+          disposeOwnedGeometries(handsRig.root);
+          if (handsRig.root.parent) {
+            handsRig.root.parent.remove(handsRig.root);
+          }
+        }
+
+        // Release instance reference from master cache entry.
+        // Master geometries/materials/textures are preserved while siblings exist.
+        releaseMasterEntry(entry);
+      };
+
+      const rig: CatalogCarbineRig = {
         group,
-        options.mat,
-        supportSocket.position.z,
-        supportSocket.position.y,
-        [0.010, magSocket.position.y, 0.212],
-      );
+        muzzle,
+        eject,
+        gripSocket,
+        supportSocket,
+        magSocket,
+        hands: handsRig,
+        isGLTFAsset: true,
+        assetUrl: entry.url,
+        dispose,
+      };
+
+      cloneOk = true;
+      return rig;
+    } finally {
+      // A throw after refCount++ (bad clone, hands failure) must not leak the reference.
+      if (!cloneOk) {
+        releaseMasterEntry(entry);
+      }
     }
-
-    let disposed = false;
-    const dispose = (): void => {
-      if (disposed) return; // Idempotent
-      disposed = true;
-
-      // Remove from parent scene/overlay
-      if (group.parent) {
-        group.parent.remove(group);
-      }
-
-      // Hands rig disposal if attached
-      if (handsRig?.root && handsRig.root.parent) {
-        handsRig.root.parent.remove(handsRig.root);
-      }
-
-      // Release instance reference from master cache entry.
-      // Master geometries/materials/textures are preserved while siblings exist.
-      releaseMasterEntry(entry);
-    };
-
-    const rig: CatalogCarbineRig = {
-      group,
-      muzzle,
-      eject,
-      gripSocket,
-      supportSocket,
-      magSocket,
-      hands: handsRig,
-      isGLTFAsset: true,
-      assetUrl: entry.url,
-      dispose,
-    };
-
-    return rig;
   } catch (err) {
     console.warn('[CatalogCarbineLoader] Falling back to procedural rifle viewmodel:', err);
 
@@ -484,14 +624,10 @@ export async function loadCatalogCarbineRig(
         fallback.group.parent.remove(fallback.group);
       }
 
-      // Dispose ONLY geometries allocated for this fallback rig instance.
+      // Dispose ONLY geometries allocated for this fallback rig instance
+      // (procedural boxes + hands canary geometries, all per-instance owned).
       // NEVER dispose shared materials or textures from options.mat!
-      fallback.group.traverse((node) => {
-        const mesh = node as THREE.Mesh;
-        if (mesh.isMesh && mesh.geometry) {
-          try { mesh.geometry.dispose(); } catch {}
-        }
-      });
+      disposeOwnedGeometries(fallback.group);
     };
 
     const rig: CatalogCarbineRig = {

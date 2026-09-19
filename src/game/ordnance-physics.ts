@@ -87,6 +87,36 @@ function clear(world: WorldQuery, ax: number, ay: number, az: number, bx: number
   return world.lineOfSight(FROM as Vec3, TO as Vec3);
 }
 
+/** Bisection rounds locating a sticky's first contact along its step segment. */
+const STICKY_BISECT = 8;
+
+/**
+ * Last clear fraction along the integrated segment `[s, e]`, using only the
+ * three `WorldQuery` contracts: the point stays in bounds, above the column
+ * floor, and on a clear segment from the step start. Bounded
+ * (`STICKY_BISECT` rounds, no allocation); `hi = 1` is the blocked end the
+ * caller already found, `lo = 0` the clear start it stepped from. The casing
+ * radius is NOT in this predicate: the caller backs the contact off along
+ * travel by `R` (the wall skin) and then lifts floor sticks to `groundY + R`,
+ * so putting `R` here too would hover floor sticks at `2R`.
+ */
+function stickyFraction(world: WorldQuery, sx: number, sy: number, sz: number, ex: number, ey: number, ez: number): number {
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < STICKY_BISECT; i++) {
+    const m = (lo + hi) / 2;
+    const px = sx + (ex - sx) * m;
+    const py = sy + (ey - sy) * m;
+    const pz = sz + (ez - sz) * m;
+    const ok = world.inBounds(px, pz)
+      && py > world.groundY(px, pz)
+      && clear(world, sx, sy, sz, px, py, pz);
+    if (ok) lo = m;
+    else hi = m;
+  }
+  return lo;
+}
+
 /** Place a grenade at a launch point with a velocity. */
 export function launch(b: Ballistic, x: number, y: number, z: number, vx: number, vy: number, vz: number): void {
   b.x = x; b.y = y; b.z = z;
@@ -99,10 +129,19 @@ export function stepBallistic(b: Ballistic, dt: number, world: WorldQuery): Step
   if (b.resting || !(dt > 0)) return STEP_QUIET;
   if (dt > GRENADE_MAX_DT) dt = GRENADE_MAX_DT;
 
+  const sx = b.x;
+  const sy = b.y;
+  const sz = b.z;
   b.vy -= GRENADE_GRAVITY * dt;
   let nx = b.x + b.vx * dt;
   let ny = b.y + b.vy * dt;
   let nz = b.z + b.vz * dt;
+  // The integrated end BEFORE any bounce/bounds/ground snap-back. The wall
+  // branch below overwrites `nx`/`ny`/`nz` with the pre-step point, so the
+  // sticky branch must bisect `[s, e]`, not reuse the snapped-back point.
+  const ex = nx;
+  const ey = ny;
+  const ez = nz;
   let contact = false;
   let grounded = false;
   /** Touched anything at all this step — at any speed. A sticky sticks on it. */
@@ -167,14 +206,38 @@ export function stepBallistic(b: Ballistic, dt: number, world: WorldQuery): Step
     }
   }
 
-  // A sticky sticks on its first touch of anything, BEFORE the bounce
-  // arithmetic above can fling it off: the position is wherever that
-  // arithmetic left the record (snapped back to the face, the column floor,
-  // or the pre-step point for a wall hit mid-step), the velocity is zero and
-  // every later step short-circuits on `resting`. Contact at any speed
-  // counts — `GRENADE_CONTACT_SPEED` is the impact-fuse's gate, not this one.
+  // A sticky sticks on its first touch of anything, at the CONTACT — not at
+  // the bounce arithmetic's snapped-back point (a wall hit leaves `nx`/`nz`
+  // on the pre-step position, up to a whole step off the face: measured
+  // 0.65 m on a 0.9 m host tick). Bisect `[s, e]` for the last clear
+  // fraction, back off along travel so the casing's SKIN (not its centre)
+  // touches the face, rest floor sticks on `groundY + R`, and fall back to
+  // the step start on a corner seam that still reads blocked. Contact at any
+  // speed counts — `GRENADE_CONTACT_SPEED` is the impact-fuse's gate, not
+  // this one. Non-stickies never reach this branch: their bounce/roll path
+  // above is untouched.
   if (b.sticky && touched) {
-    b.x = nx; b.y = ny; b.z = nz;
+    const t = stickyFraction(world, sx, sy, sz, ex, ey, ez);
+    let cx = sx + (ex - sx) * t;
+    let cy = sy + (ey - sy) * t;
+    let cz = sz + (ez - sz) * t;
+    const segLen = Math.hypot(ex - sx, ey - sy, ez - sz);
+    if (segLen > 1e-9) {
+      const back = Math.min(GRENADE_RADIUS_M, t * segLen) / segLen;
+      cx -= (ex - sx) * back;
+      cy -= (ey - sy) * back;
+      cz -= (ez - sz) * back;
+    }
+    const skin = world.groundY(cx, cz) + GRENADE_RADIUS_M;
+    if (cy <= skin) cy = skin;
+    if (!world.inBounds(cx, cz) || !clear(world, sx, sy, sz, cx, cy, cz) || cy <= world.groundY(cx, cz)) {
+      cx = sx;
+      cy = sy;
+      cz = sz;
+      const startSkin = world.groundY(cx, cz) + GRENADE_RADIUS_M;
+      if (cy < startSkin) cy = startSkin;
+    }
+    b.x = cx; b.y = cy; b.z = cz;
     b.vx = 0; b.vy = 0; b.vz = 0;
     b.resting = true;
     return STEP_STUCK;

@@ -40,6 +40,9 @@ import { AudioService, type AudioStats, type ShotFamily, type StepSurface, type 
 import {
   loadCatalogCarbineRig,
   isCarbineCanaryRequested,
+  disposeOwnedGeometries,
+  getPresentCarbineSockets,
+  type CarbineLoaderOptions,
   type CatalogCarbineRig,
 } from './catalog-carbine-loader';
 
@@ -91,6 +94,17 @@ interface WeaponQaSnapshot extends WeaponSnapshot {
   reloadProgress: number;
   /** Present only for the explicit QA state command; omitted from the frame HUD path. */
   hands?: QaHandsSnapshot | null;
+  /** Read-only carbine canary status: proves GLB adoption, not just the Longhorn name. */
+  carbine?: CarbineCanaryStatus;
+}
+
+/** Minimal read-only canary adoption status for browser QA. */
+export interface CarbineCanaryStatus {
+  requested: boolean;
+  active: boolean;
+  isGLTF: boolean;
+  url: string | null;
+  sockets: string[];
 }
 
 /**
@@ -127,7 +141,6 @@ export interface ShotClaim {
   readonly weaponId: string;
   readonly time: number;
 }
-
 interface ControllerOpts {
   camera: THREE.PerspectiveCamera;
   scene: THREE.Scene;
@@ -138,6 +151,8 @@ interface ControllerOpts {
   onShot?: (claim: ShotClaim) => void;
   /** Optional explicit opt-in for catalog carbine canary (?carbine=canary) */
   carbineCanary?: boolean;
+  /** Test seam for the pending canary load (defaults to the real GLB loader). */
+  carbineLoader?: (opts: CarbineLoaderOptions) => Promise<CatalogCarbineRig>;
 }
 /** Audio lane: weapon id to shot family. Unknown ids ride the rifle voice. */
 function familyOf(id: string): ShotFamily {
@@ -158,6 +173,7 @@ export class WeaponsController {
   private weapons: WeaponState[];
   private active = 0;
   private carbineCanaryRig: CatalogCarbineRig | null = null;
+  private carbineCanaryRequested = false;
   private disposed = false;
 
   private visible = true;
@@ -290,8 +306,10 @@ export class WeaponsController {
     this.pushHud(true);
 
     const enableCarbineCanary = opts.carbineCanary ?? isCarbineCanaryRequested();
+    this.carbineCanaryRequested = enableCarbineCanary;
     if (enableCarbineCanary) {
-      loadCatalogCarbineRig({ mat: opts.mat }).then((canaryRig) => {
+      const startCanaryLoad = opts.carbineLoader ?? loadCatalogCarbineRig;
+      startCanaryLoad({ mat: opts.mat }).then((canaryRig) => {
         if (this.disposed) {
           canaryRig.dispose();
           return;
@@ -311,9 +329,19 @@ export class WeaponsController {
         canaryRig.group.quaternion.copy(oldRig.group.quaternion);
         canaryRig.group.visible = oldRig.group.visible;
 
-        // Never overlap both guns: hide and remove old fallback rig immediately
+        // Never overlap both guns: hide and remove old fallback rig immediately.
+        // The procedural rifle owns every geometry under its group (boxes,
+        // rounded boxes, tubes, plus its hands canary geometries); its materials
+        // are shared singletons. Dispose ONLY the owned geometries so sibling
+        // GPU resources stay valid. A prior GLB rig owns its release instead.
         oldRig.group.visible = false;
         this.overlay.remove(oldRig.group);
+        const oldAsCanary = oldRig as unknown as Partial<CatalogCarbineRig>;
+        if (typeof oldAsCanary.dispose === 'function' && oldAsCanary.isGLTFAsset === true) {
+          (oldAsCanary as CatalogCarbineRig).dispose();
+        } else {
+          disposeOwnedGeometries(oldRig.group);
+        }
 
         rifle.rig = canaryRig;
         this.carbineCanaryRig = canaryRig;
@@ -643,8 +671,24 @@ export class WeaponsController {
         },
       };
     }
-    return out;
-  }
+    const rig = this.carbineCanaryRig;
+    out.carbine = rig
+      ? {
+        requested: this.carbineCanaryRequested,
+        active: true,
+        isGLTF: rig.isGLTFAsset,
+        url: rig.assetUrl ?? null,
+        sockets: getPresentCarbineSockets(rig.group),
+      }
+      : {
+        requested: this.carbineCanaryRequested,
+        active: false,
+        isGLTF: false,
+        url: null,
+        sockets: [],
+      };
+     return out;
+   }
 
   command(cmd: string, arg?: string | number | boolean): unknown {
     switch (cmd) {

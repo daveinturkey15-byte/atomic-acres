@@ -12,9 +12,15 @@
  *   7. missing sockets (bad asset rejected, never fabricated; fallback engaged)
  *   8. fallback shared material survival (shared MaterialLibrary never disposed)
  *
- * Plus asset structural proof (actual exported GLB file has all 18 meshes and 4 sockets).
+ * Plus asset structural proof (actual exported GLB file has all 18 meshes and 4 sockets),
+ * query-flag parsing, controller integration, and the lifecycle repairs:
+ *   12. factory hands disposal (owned hands geometries freed, shared materials survive)
+ *   13. active-clear orphan + stale-release guard (siblings survive, reload intact)
+ *   14. overlapping pending generation (stale discarded, newer survives)
+ *   15. post-increment error releases its reference (no leak, sibling valid)
+ *   16. controller teardown before resolution (late rig disposed, no swap)
+ *   17. canary QA status (URL/sockets/candidate-vs-fallback proves GLB adoption).
  */
-
 import { build } from 'esbuild';
 import { readFileSync, rmSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -38,6 +44,9 @@ const ENTRY = `
     findNamedSocket,
     collectGltfResources,
     disposeResourceSet,
+    disposeOwnedGeometries,
+    getPresentCarbineSockets,
+    canonicalizeUrl,
     REQUIRED_CARBINE_SOCKETS,
     CATALOG_CARBINE_GLB_URL,
     isCarbineCanaryRequested,
@@ -54,6 +63,9 @@ const ENTRY = `
     findNamedSocket,
     collectGltfResources,
     disposeResourceSet,
+    disposeOwnedGeometries,
+    getPresentCarbineSockets,
+    canonicalizeUrl,
     REQUIRED_CARBINE_SOCKETS,
     CATALOG_CARBINE_GLB_URL,
     isCarbineCanaryRequested,
@@ -529,8 +541,227 @@ try {
     console.log('✓ Proof 11: WeaponsController integration (baseline preservation, canary swap, zero overlap, safe teardown) passed.');
   }
 
+  // -------------------------------------------------------------
+  // Test 12: Actual factory hands are owned geometries and dispose
+  // (Previous GLB dispose detached hands without disposing: 0/10 freed.)
+  // -------------------------------------------------------------
+  {
+    api.clearMasterCarbineCache();
+    const mock = createMockValidScene();
+    const mockMat = createMockMaterialLibrary();
+    const mockLoader = { loadAsync: async () => ({ scene: mock.scene }) };
+    const rig = await api.loadCatalogCarbineRig({
+      url: 'mock://carbine-hands.glb',
+      customLoader: mockLoader,
+      mat: mockMat,
+      attachHands: true,
+    });
+    assert(rig.isGLTFAsset === true, 'hands rig must be GLTF asset');
+    assert(rig.hands !== undefined && rig.hands !== null, 'hands rig must attach real factory hands');
+    const handGeos = new Set();
+    rig.hands.root.traverse((n) => { if (n.isMesh && n.geometry) handGeos.add(n.geometry); });
+    assert(handGeos.size >= 8, `factory hands must own geometries (got ${handGeos.size})`);
+    let handDisposals = 0;
+    for (const g of handGeos) {
+      const orig = g.dispose.bind(g);
+      g.dispose = () => { handDisposals++; orig(); };
+    }
+    rig.dispose();
+    assert(handDisposals === handGeos.size, `all hands geometries must dispose (got ${handDisposals}/${handGeos.size})`);
+    assert(mock.disposals.geometries === 18, `master geometries must dispose on last release (got ${mock.disposals.geometries})`);
+    assert(mockMat.getDisposedCount() === 0, 'shared viewmodel/painted materials must survive hands disposal');
+    console.log('✓ Proof 12: Factory hands disposal (owned geometries freed, shared materials survive) passed.');
+  }
+
+  // -------------------------------------------------------------
+  // Test 13: Active clear orphans; stale release never deletes the reload
+  // -------------------------------------------------------------
+  {
+    api.clearMasterCarbineCache();
+    const scenes = [];
+    const freshLoader = {
+      loadAsync: async () => {
+        const m = createMockValidScene();
+        scenes.push(m);
+        return { scene: m.scene };
+      },
+    };
+    const URL = 'mock://carbine-active-clear.glb';
+    const rig1 = await api.loadCatalogCarbineRig({ url: URL, customLoader: freshLoader, attachHands: false });
+    const rig2 = await api.loadCatalogCarbineRig({ url: URL, customLoader: freshLoader, attachHands: false });
+    assert(scenes.length === 1, 'second load must share the cached master');
+    api.clearMasterCarbineCache(URL);
+    assert(scenes[0].disposals.geometries === 0, 'active clear must NOT dispose under live clones');
+    assert(api.getCarbineCacheStats().cachedUrls.length === 0, 'active clear must remove the entry from the cache');
+    const mesh2 = rig2.group.getObjectByName('part_0');
+    assert(mesh2 && mesh2.geometry.isBufferGeometry, 'sibling clone must stay usable after active clear');
+    rig1.dispose();
+    assert(scenes[0].disposals.geometries === 0, 'orphaned master must survive until the last sibling releases');
+    const rig3 = await api.loadCatalogCarbineRig({ url: URL, customLoader: freshLoader, attachHands: false });
+    assert(scenes.length === 2, 'reload after clear must decode a fresh master');
+    assert(api.getCarbineCacheStats().cachedUrls.length === 1, 'reload must install the new entry');
+    rig2.dispose();
+    assert(scenes[0].disposals.geometries === 18, 'orphaned master must dispose on last sibling release');
+    assert(api.getCarbineCacheStats().cachedUrls.length === 1, 'stale release must NOT delete the reloaded entry');
+    const mesh3 = rig3.group.getObjectByName('part_0');
+    assert(mesh3 && mesh3.geometry.isBufferGeometry, 'reloaded clone must stay usable after stale release');
+    assert(scenes[1].disposals.geometries === 0, 'reloaded master must be untouched by stale release');
+    rig3.dispose();
+    assert(scenes[1].disposals.geometries === 18, 'reloaded master must dispose on last release');
+    console.log('✓ Proof 13: Active-clear orphan + stale-release guard passed.');
+  }
+
+  // -------------------------------------------------------------
+  // Test 14: Overlapping pending loads (stale finally must not kill the new pending)
+  // -------------------------------------------------------------
+  {
+    api.clearMasterCarbineCache();
+    const URL = 'mock://carbine-overlap.glb';
+    let resolveA;
+    let resolveB;
+    const gateA = new Promise((r) => { resolveA = r; });
+    const gateB = new Promise((r) => { resolveB = r; });
+    let calls = 0;
+    const overlapLoader = {
+      loadAsync: async () => {
+        calls++;
+        return calls === 1 ? gateA : gateB;
+      },
+    };
+    const mockA = createMockValidScene();
+    const mockB = createMockValidScene();
+    const loadA = api.loadCatalogCarbineRig({ url: URL, customLoader: overlapLoader, attachHands: false });
+    api.clearMasterCarbineCache(URL);
+    const loadB = api.loadCatalogCarbineRig({ url: URL, customLoader: overlapLoader, attachHands: false });
+    resolveA({ scene: mockA.scene });
+    let threwA = false;
+    try { await loadA; } catch { threwA = true; }
+    assert(threwA, 'stale load must reject after clear');
+    assert(mockA.disposals.geometries === 18, 'stale resources must dispose immediately');
+    assert(api.getCarbineCacheStats().pendingCount === 1, 'stale finally must NOT delete the newer pending load');
+    resolveB({ scene: mockB.scene });
+    const rigB = await loadB;
+    assert(rigB.isGLTFAsset === true, 'newer pending load must succeed');
+    assert(api.getCarbineCacheStats().pendingCount === 0, 'pending state must clear after resolve');
+    rigB.dispose();
+    assert(mockB.disposals.geometries === 18, 'newer master must dispose on release');
+    console.log('✓ Proof 14: Overlapping pending generation passed.');
+  }
+
+  // -------------------------------------------------------------
+  // Test 15: Post-increment errors release the reference (no leaked refCount)
+  // -------------------------------------------------------------
+  {
+    api.clearMasterCarbineCache();
+    const mock = createMockValidScene();
+    const mockMat = createMockMaterialLibrary();
+    const sharedLoader = { loadAsync: async () => ({ scene: mock.scene }) };
+    const URL = 'mock://carbine-ref-leak.glb';
+    const sibling = await api.loadCatalogCarbineRig({ url: URL, customLoader: sharedLoader, attachHands: false });
+    const failingMat = {
+      ...mockMat,
+      painted: (color, ...rest) => {
+        if (color === 0x2c2923) throw new Error('cuff allocation failed');
+        return mockMat.painted(color, ...rest);
+      },
+    };
+    let threw = false;
+    try {
+      await api.loadCatalogCarbineRig({ url: URL, customLoader: sharedLoader, mat: failingMat, attachHands: true });
+    } catch { threw = true; }
+    assert(threw, 'hands allocation failure must reject (fallback also needs the cuff)');
+    const stats = api.getCarbineCacheStats();
+    assert(stats.refCounts[api.canonicalizeUrl(URL)] === 1, 'refCount must return to 1 after failed clone');
+    const mesh = sibling.group.getObjectByName('part_0');
+    assert(mesh && mesh.geometry.isBufferGeometry, 'sibling must stay valid after failed clone');
+    assert(mock.disposals.geometries === 0, 'sibling master must NOT dispose on failed clone');
+    sibling.dispose();
+    assert(mock.disposals.geometries === 18, 'master must dispose on last sibling release');
+    console.log('✓ Proof 15: Post-increment error releases its reference passed.');
+  }
+
+  // -------------------------------------------------------------
+  // Test 16: Controller teardown before canary resolution (no swap, no leak)
+  // -------------------------------------------------------------
+  {
+    api.clearMasterCarbineCache();
+    const mockMat = createMockMaterialLibrary();
+    const camera = new THREE.PerspectiveCamera(72, 1, 0.1, 100);
+    const scene = new THREE.Scene();
+    const mock = createMockValidScene();
+    const mockLoader = { loadAsync: async () => ({ scene: mock.scene }) };
+    let releaseGate;
+    const gate = new Promise((r) => { releaseGate = r; });
+    let createdRig = null;
+    const deferredLoader = async (opts) => {
+      await gate;
+      createdRig = await api.loadCatalogCarbineRig({
+        url: 'mock://carbine-teardown.glb',
+        customLoader: mockLoader,
+        mat: opts.mat,
+        attachHands: true,
+      });
+      return createdRig;
+    };
+    const controller = new api.WeaponsController({
+      camera, scene, mat: mockMat, targets: [], onHud: () => {},
+      carbineCanary: true, carbineLoader: deferredLoader,
+    });
+    controller.dispose();
+    releaseGate();
+    await new Promise((r) => setTimeout(r, 20));
+    assert(createdRig !== null, 'deferred canary load must still resolve its rig');
+    assert(controller.activeCarbineRig === null, 'torn-down controller must NOT adopt the late rig');
+    assert(createdRig.group.parent === null, 'late rig must be detached on teardown');
+    let canaryGroups = 0;
+    for (const child of controller.overlay.children) {
+      if (child.isGroup && child.name === 'CatalogCarbineViewmodel') canaryGroups++;
+    }
+    assert(canaryGroups === 0, `torn-down overlay must contain no canary viewmodel (got ${canaryGroups})`);
+    assert(mock.disposals.geometries === 18, 'late master must dispose when the torn-down rig releases');
+    assert(mockMat.getDisposedCount() === 0, 'shared materials must survive teardown');
+    console.log('✓ Proof 16: Controller teardown before resolution passed.');
+  }
+
+  // -------------------------------------------------------------
+  // Test 17: Read-only canary status proves GLB adoption (not just the name)
+  // -------------------------------------------------------------
+  {
+    api.clearMasterCarbineCache();
+    const mockMat = createMockMaterialLibrary();
+    const camera = new THREE.PerspectiveCamera(72, 1, 0.1, 100);
+    const scene = new THREE.Scene();
+    const baseline = new api.WeaponsController({
+      camera, scene, mat: mockMat, targets: [], onHud: () => {}, carbineCanary: false,
+    });
+    const baseState = baseline.command('state');
+    assert(baseState.carbine !== undefined, 'QA state must carry read-only carbine status');
+    assert(baseState.carbine.requested === false && baseState.carbine.active === false, 'baseline must report inactive canary');
+    assert(baseState.carbine.isGLTF === false && baseState.carbine.url === null, 'baseline must report no GLB URL');
+    baseline.dispose();
+    const mock = createMockValidScene();
+    const customLoader = { loadAsync: async () => ({ scene: mock.scene }) };
+    const preloaded = await api.loadCatalogCarbineRig({
+      url: api.CATALOG_CARBINE_GLB_URL, customLoader, attachHands: false,
+    });
+    const canary = new api.WeaponsController({
+      camera, scene, mat: mockMat, targets: [], onHud: () => {}, carbineCanary: true,
+    });
+    await new Promise((r) => setTimeout(r, 20));
+    const canaryState = canary.command('state');
+    assert(canaryState.carbine.active === true, 'canary state must report active');
+    assert(canaryState.carbine.isGLTF === true, 'canary state must prove GLTF adoption, not fallback');
+    assert(canaryState.carbine.url === api.canonicalizeUrl(api.CATALOG_CARBINE_GLB_URL), 'canary state must report the loaded URL');
+    for (const s of api.REQUIRED_CARBINE_SOCKETS) {
+      assert(canaryState.carbine.sockets.includes(s), `canary state must list socket ${s}`);
+    }
+    canary.dispose();
+    preloaded.dispose();
+    console.log('✓ Proof 17: Canary QA status (URL/sockets/candidate-vs-fallback) passed.');
+  }
+
   console.log('\n======================================================');
-  console.log('ALL 11 CPU VERIFICATION PROOFS PASSED (0 failures)');
+  console.log('ALL 17 CPU VERIFICATION PROOFS PASSED (0 failures)');
   console.log('======================================================\n');
 } finally {
   try {

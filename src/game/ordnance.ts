@@ -46,7 +46,9 @@ export interface GrenadeDef {
    * Where the fuse runs from. `arm`: the pin pull (cookable). `release`: the
    * throw. `stick`: the first surface contact — the fuse a release arms is
    * only a ceiling (`SEMTEX_MAX_FLIGHT_MS`) until the host rewrites it at the
-   * stick, so a sticky cannot be cooked and never goes off in the air.
+   * stick, so a sticky cannot be cooked. No fuse runs in flight, but the
+   * ceiling itself CAN expire mid-air: release + fuseMs + 5 s detonates
+   * wherever the casing is, contact or not.
    */
   readonly fuseFrom: 'arm' | 'release' | 'stick';
   /** Goes off on its first world contact, whatever the fuse says. */
@@ -79,14 +81,14 @@ export const SMOKE_LIFETIME_MS = 25_000;
  */
 export const BLAST_SMOKE_RADIUS_M = +(SMOKE_RADIUS_M * 0.464).toFixed(2);
 export const BLAST_SMOKE_LIFETIME_MS = SMOKE_LIFETIME_MS / 5;
-
 /**
  * The fuse a sticky's release arms is only a ceiling: old pass65 contract
  * `maximumNoImpactLifetimeMs: 5_000`. On its first surface contact the host
- * rewrites it to stick time + `fuseMs`, so this bounds how long a semtex that
- * somehow never touches anything (it cannot on this map — the playable
- * rectangle is a wall) holds a pool slot, and it is what the `grenade-thrown`
- * event carries until the stick.
+ * rewrites it to stick time + `fuseMs`. A semtex that never touches anything
+ * detonates at the ceiling in the air — the playable rectangle bounds make
+ * that near-impossible on this map, but the contract is the ceiling firing
+ * wherever the casing is, not a guarantee of contact. The ceiling is what
+ * the `grenade-thrown` event carries until the stick.
  */
 export const SEMTEX_MAX_FLIGHT_MS = 5_000;
 

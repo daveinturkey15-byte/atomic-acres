@@ -247,13 +247,15 @@ const remoteHumanId = (page) => page.evaluate(() => {
   return hit ? hit.id : null;
 });
 // Firing solution beside a live HOSTILE victim: empty of colliders, real LOS
-// at eye height. Victim re-read at aim time. Hostility comes from the live
-// snapshot (actual team/localId, never guessed): BotBody carries no team, so
-// bots() positions are joined to snapshot().actors here, inside the page.
-// victimId pins one target across repositions; otherwise the nearest hostile
-// bot is chosen. Friendlies can never be selected.
-async function firingSolution(page, victimId = null) {
-  return page.evaluate((only) => {
+// at the SAME chest/head endpoint the pull's aim gate fires at (kind chest ->
+// feet+1.0, head -> feet+1.65): an eye-to-eye ray can be clear while the ray
+// the bullet actually takes is blocked. Victim re-read at aim time. Hostility
+// comes from the live snapshot (actual team/localId, never guessed): BotBody
+// carries no team, so bots() positions are joined to snapshot().actors here,
+// inside the page. victimId pins one target across repositions; otherwise the
+// nearest hostile bot is chosen. Friendlies can never be selected.
+async function firingSolution(page, victimId = null, kind = 'chest') {
+  return page.evaluate(({ only, k }) => {
     const g = window.__NTGAME;
     const snap = g.snapshot();
     const me = snap.actors.find((a) => a.id === g.localId);
@@ -273,15 +275,14 @@ async function firingSolution(page, victimId = null) {
       for (const [dx, dz] of tries) {
         const ax = v.x + dx, az = v.z + dz;
         if (window.__NT.collidersAt(ax, az, 1.0).length > 0) continue;
-        // Eye-height LOS both ends: probePos/teleport carry feet (y=0), the
-        // eye rides EYE_HEIGHT 1.68 above (core/layout.ts; game/host-life.ts
-        // resolves occupants the same way).
-        if (!g.los(ax, 1.68, az, v.x, (v.y ?? 0) + 1.68, v.z)) continue;
+        // Shooter eye (EYE_HEIGHT 1.68 above feet, core/layout.ts; probePos/
+        // teleport carry feet y=0) to the victim endpoint this phase fires at.
+        if (!g.los(ax, 1.68, az, v.x, (v.y ?? 0) + (k === 'head' ? 1.65 : 1.0), v.z)) continue;
         return { victim: { id: v.id, x: v.x, y: v.y, z: v.z }, spot: { ax, az } };
       }
     }
     return null;
-  }, victimId);
+  }, { only: victimId, k: kind });
 }
 // Aim and trigger are SEPARATE evaluates, never one. The camera updates
 // synchronously, but the authoritative host pose/input (PoseTrack,
@@ -304,7 +305,11 @@ async function aimAt(page, victimId, kind = 'chest') {
     const pitch = Math.atan2(ty - ey, Math.hypot(dx, dz));
     window.__NT.teleport(me[0], 0, me[2], yaw, pitch);
     const los = g.los(me[0], ey, me[2], body.x, ty, body.z);
-    return { aimed: true, victimId: only, dist: +Math.hypot(dx, dz).toFixed(2), los, body: { x: +body.x.toFixed(2), y: +body.y.toFixed(2), z: +body.z.toFixed(2) } };
+    // Every aim result names BOTH sides' geometry: the shooter's actual
+    // feet/eye position and the received victim body pose — a duel failure
+    // must be diagnosable from the report alone.
+    return { aimed: true, victimId: only, dist: +Math.hypot(dx, dz).toFixed(2), los, body: { x: +body.x.toFixed(2), y: +body.y.toFixed(2), z: +body.z.toFixed(2) },
+      shooter: { x: +me[0].toFixed(2), y: +me[1].toFixed(2), z: +me[2].toFixed(2), eyeY: +ey.toFixed(2) }, endpointY: +ty.toFixed(2) };
   }, { only: victimId, k: kind });
 }
 // One REAL trigger pull with claim/admission diagnostics from live surfaces
@@ -366,12 +371,66 @@ async function protectionWait(page, victimId, capMs = 2_500, authPage = null) {
 }
 // Re-acquires a supported, collision-free, LOS-true spot for the SAME pinned
 // victim (r2's bot ran behind cover and the harness kept firing blind).
-async function reposition(page, victimId) {
-  const sol = await firingSolution(page, victimId);
+// GUEST SHOOTERS NEVER REPOSITION BY TELEPORT: a guest body moved by
+// __NT.teleport diverges from the host's acked seat by more than GUEST_SNAP_M
+// (1.0 m, src/net/match-guest.ts reconcile) and the next snapshot snaps the
+// body straight back — the r3 guest-fires signature (ten repositions, zero
+// trigger pulls, every pull skipped 'los-after-reposition'). The guest WALKS
+// with real key input instead: the 20 Hz displacement samples then carry the
+// move and the host's integration follows to the same spot.
+async function reposition(page, victimId, kind = 'chest') {
+  const sol = await firingSolution(page, victimId, kind);
   if (!sol) return null;
+  if ((await page.evaluate(() => window.__NTGAME.mode())) === 'guest') {
+    const w = await walkTo(page, sol.spot.ax, sol.spot.az, 8_000);
+    return w.arrived ? sol : null;
+  }
   await page.evaluate(([x, z]) => window.__NT.teleport(x, 0, z), [sol.spot.ax, sol.spot.az]);
   return sol;
 }
+// Frame-paced real movement for a reconciled guest. Face the spot with an
+// ANGLE-ONLY teleport (x/z unchanged, so the next displacement sample stays
+// ~zero and reconcile never sees divergence), then hold Shift+W — the same
+// trusted key events a player produces, consumed by core/player.ts's key set —
+// and poll until arrival or wedge. Positional teleports are exactly what the
+// guest reconcile loop undoes; keyboard movement is what it is built to carry.
+async function walkTo(page, tx, tz, maxMs = 9_000) {
+  const t0 = Date.now();
+  const p0 = await page.evaluate(() => window.__NT.probePos());
+  const yaw = Math.atan2(-(tx - p0[0]), -(tz - p0[2]));
+  await page.evaluate(([x, z, y]) => window.__NT.teleport(x, 0, z, y, 0), [p0[0], p0[2], yaw]);
+  let closest = Infinity, sinceImproved = 0, arrived = false;
+  let end = p0;
+  await page.keyboard.down('ShiftLeft');
+  await page.keyboard.down('KeyW');
+  try {
+    while (Date.now() - t0 < Math.min(maxMs, Math.max(0, left()))) {
+      await sleep(120);
+      end = await page.evaluate(() => window.__NT.probePos());
+      const d = Math.hypot(tx - end[0], tz - end[2]);
+      if (d < 0.9) { arrived = true; break; }
+      if (d < closest - 0.05) { closest = d; sinceImproved = 0; }
+      else if (++sinceImproved > 9) break; // wedged ~1.1 s (wall/prop): report, don't grind
+    }
+  } finally {
+    try { await page.keyboard.up('KeyW'); } catch { /* already up */ }
+    try { await page.keyboard.up('ShiftLeft'); } catch { /* already up */ }
+  }
+  return {
+    arrived,
+    walked: +Math.hypot(end[0] - p0[0], end[2] - p0[2]).toFixed(2),
+    from: { x: +p0[0].toFixed(2), y: +p0[1].toFixed(2), z: +p0[2].toFixed(2) },
+    to: { x: +end[0].toFixed(2), y: +end[1].toFixed(2), z: +end[2].toFixed(2) },
+    ms: Date.now() - t0,
+  };
+}
+// A body pose as THIS page's driver sees it: interpolated remote tracks on a
+// guest (net/snapshot PoseTrack), authoritative seats on a host. Read from the
+// auth page it is the host-approved position of a remote body.
+const bodyAt = (page, id) => page.evaluate((vid) => {
+  const b = (window.__NTGAME.bots() ?? []).find((x) => x.id === vid);
+  return b ? { x: +b.x.toFixed(2), y: +b.y.toFixed(2), z: +b.z.toFixed(2), alive: b.alive } : null;
+}, id);
 // The ONE per-pull engine behind every scenario/phase. Fires only at a
 // settled pose, only with live LOS, only after the real protection deadline.
 // Reacquires LOS after the angle pose wait (moving bot can leave LOS during wait).
@@ -394,7 +453,7 @@ async function fireShots(page, victimId, kind, opts) {
     let aim = await aimAt(page, victimId, kind);
     if (!aim.aimed) { diag.push({ pull: i, aimed: false, reason: aim.reason }); break; }
     if (!aim.los) {
-      const sol = await reposition(page, victimId);
+      const sol = await reposition(page, victimId, kind);
       if (!sol) { diag.push({ pull: i, los: false, repositioned: false, reason: 'no-los-spot' }); continue; }
       repositions++;
       await sleep(400); // pose settles after the teleport before re-aim
@@ -405,7 +464,7 @@ async function fireShots(page, victimId, kind, opts) {
     // Reacquire LOS after angle pose wait — moving bot can leave LOS during the wait
     aim = await aimAt(page, victimId, kind);
     if (!aim.los) {
-      const sol = await reposition(page, victimId);
+      const sol = await reposition(page, victimId, kind);
       if (!sol) { diag.push({ pull: i, los: false, repositioned: false, reason: 'no-los-spot-after-pose-wait' }); continue; }
       repositions++;
       await sleep(400);
@@ -467,6 +526,7 @@ async function fireShots(page, victimId, kind, opts) {
     }
     diag.push({
       pull: i, kind, dist: aim.dist, los: aim.los, protWaitedMs: prot.waited, protKnown: prot.known, repositions,
+      shooter: aim.shooter ?? null, victim: aim.body ?? null, endpointY: aim.endpointY ?? null, snaps: post.counters.snaps ?? null,
       fired: r.fired, admitted: r.triggerAdmitted, mag: r.mag, cool: r.cool, reloading: r.reloading,
       hp0, hp1, hpDelta: delta, life0, life1, clock0, clock1, dmgDelta: r.dmgDelta, rejectDelta: r.rejectDelta, rejects: r.rejects,
       newPopups: fresh.length, popups: fresh.slice(-2).map((p) => ({ text: p.text, cls: p.cls })),
@@ -478,23 +538,53 @@ async function fireShots(page, victimId, kind, opts) {
   return { fired, admitted, rejected, repositions, kill, crit, lethal, steps, diag };
 }
 // Places the shooter beside the live (stationary-through-its-own-control)
-// remote human: collider-free spot with real eye-height LOS, then settle.
-async function placeBesidePeer(shooter, victim) {
+// remote human. Spots are collider-free with real LOS at BOTH endpoints the
+// phases fire at (chest feet+1.0 AND head feet+1.65 — an eye-to-eye ray can
+// be clear while the bullet's ray is not). A guest shooter WALKS to the spot
+// with real key input — reconcile snaps a teleported guest straight back (see
+// reposition) — while an authoritative shooter teleports as before. Returns
+// { ok, placement }: placement records the local feet/eye position, the
+// host-approved position read back from the auth page's own view of this
+// shooter, and the victim pose this page received, so a failed placement
+// names both sides' geometry instead of a bare boolean.
+async function placeBesidePeer(shooter, victim, authPage = null) {
   const vPos = await victim.page.evaluate(() => window.__NT.probePos());
-  const spot = await shooter.page.evaluate(([bx, bz, by]) => {
+  const spots = await shooter.page.evaluate(([bx, bz, by]) => {
     const g = window.__NTGAME;
-    for (const [dx, dz] of [[0, 6], [6, 0], [0, -6], [-6, 0], [4, 4], [-4, 4], [4, -4], [-4, -4]]) {
+    const found = [];
+    for (const [dx, dz] of [[0, 6], [6, 0], [0, -6], [-6, 0], [4, 4], [-4, 4], [4, -4], [-4, -4], [0, 9], [9, 0]]) {
       const ax = bx + dx, az = bz + dz;
       if (window.__NT.collidersAt(ax, az, 1.0).length > 0) continue;
-      if (!g.los(ax, 1.68, az, bx, by + 1.68, bz)) continue;
-      return { ax, az };
+      if (!g.los(ax, 1.68, az, bx, by + 1.0, bz)) continue;
+      if (!g.los(ax, 1.68, az, bx, by + 1.65, bz)) continue;
+      found.push({ ax, az });
     }
-    return null;
+    return found;
   }, [vPos[0], vPos[2], vPos[1] ?? 0]);
-  if (!spot) return false;
-  await shooter.page.evaluate(([x, z]) => window.__NT.teleport(x, 0, z), [spot.ax, spot.az]);
-  await sleep(400);
-  return true;
+  const placement = {
+    guestShooter: (await shooter.page.evaluate(() => window.__NTGAME.mode())) === 'guest',
+    victim: { x: +vPos[0].toFixed(2), y: +(vPos[1] ?? 0).toFixed(2), z: +vPos[2].toFixed(2) },
+    victimSeen: await bodyAt(shooter.page, await remoteHumanId(shooter.page)),
+    tried: [],
+  };
+  if (!spots.length) return { ok: false, placement: { ...placement, reason: 'no-los-spot' } };
+  for (const spot of spots.slice(0, placement.guestShooter ? 3 : 1)) {
+    const move = placement.guestShooter
+      ? await walkTo(shooter.page, spot.ax, spot.az, 9_000)
+      : (await shooter.page.evaluate(([x, z]) => window.__NT.teleport(x, 0, z), [spot.ax, spot.az]), { teleported: true });
+    await sleep(400); // samples + acks settle; interpolation catches a stopped body
+    const local = await shooter.page.evaluate(() => {
+      const p = window.__NT.probePos();
+      return { x: +p[0].toFixed(2), y: +p[1].toFixed(2), z: +p[2].toFixed(2), eyeY: +(p[1] + 1.68).toFixed(2) };
+    });
+    const sId = (await actors(shooter.page)).localId;
+    const approved = authPage ? await bodyAt(authPage, sId) : null;
+    const approvedDiv = approved ? +Math.hypot(approved.x - local.x, approved.z - local.z).toFixed(2) : null;
+    placement.tried.push({ spot, move, local, approved, approvedDiv });
+    if (approvedDiv !== null && approvedDiv > 1.5) continue; // authority disagrees with the body — try the next spot
+    return { ok: true, placement };
+  }
+  return { ok: false, placement: { ...placement, reason: 'no-agreed-position' } };
 }
 
 // ---- scenario: solo (S1 admitted popup + S5 leave clears) ----
@@ -589,8 +679,9 @@ async function duelLeg(shooter, victim, dirLabel, authPage = null) {
   // leg's records, and a pre-clear baseline reads as negative "new" popups
   // (the CPU mock caught exactly that on the guest-fires leg).
   const vRec0 = (await cfbRecords(victim.page)).length;
-  if (!(await placeBesidePeer(shooter, victim))) {
-    open(dirLabel + ' firing position', 'no LOS spot beside the live peer');
+  const bodyPlace = await placeBesidePeer(shooter, victim, authPage);
+  if (!bodyPlace.ok) {
+    open(dirLabel + ' firing position', 'no agreed LOS position beside the live peer: ' + JSON.stringify(bodyPlace.placement).slice(0, 400));
     return null;
   }
   // Body phase: chest pulls to one admitted HP step (protection waited out
@@ -607,8 +698,9 @@ async function duelLeg(shooter, victim, dirLabel, authPage = null) {
     } catch { return null; }
   }), 12_000);
   let head = { fired: 0, admitted: 0, rejected: 0, repositions: 0, kill: false, crit: false, lethal: [], steps: [], diag: [] };
+  let headPlace = null;
   if (!revived) open(dirLabel + ' head phase entry', 'victim not alive inside the 12 s bound; head/fatal stays unproven');
-  else if (!(await placeBesidePeer(shooter, victim))) open(dirLabel + ' head-phase firing position', 'no LOS spot after respawn; head/fatal stays unproven');
+  else if (!(headPlace = await placeBesidePeer(shooter, victim, authPage)).ok) open(dirLabel + ' head-phase firing position', 'no agreed LOS position after respawn: ' + JSON.stringify(headPlace.placement).slice(0, 400) + '; head/fatal stays unproven');
   else {
     await cfbClear(shooter.page);
     head = await fireShots(shooter.page, targetId, 'head', { bound: 10, stop: 'crit-step', kills0, authPage });
@@ -616,7 +708,7 @@ async function duelLeg(shooter, victim, dirLabel, authPage = null) {
   const vActors1 = await actors(victim.page);
   const sActors1 = await actors(shooter.page);
   return {
-    targetId, body, head,
+    targetId, body, head, placement: bodyPlace.placement, headPlacement: headPlace ? headPlace.placement : null,
     victimNew: (await cfbRecords(victim.page)).length - vRec0,
     dmgDelta: (sActors1.counters.damage ?? 0) - damage0,
     killsDelta: (sActors1.counters.kills ?? 0) - kills0,
@@ -639,6 +731,7 @@ function assertDuelLeg(leg, dirLabel, victimNoun, mirror) {
     body: { fired: leg.body.fired, admitted: leg.body.admitted, rejected: leg.body.rejected, repositions: leg.body.repositions, hpDelta: bDelta, popup: b?.popup ?? null, diag: leg.body.diag },
     head: { fired: leg.head.fired, admitted: leg.head.admitted, rejected: leg.head.rejected, repositions: leg.head.repositions, hpDelta: headHpDelta, crit: leg.head.crit, kill, lethal: lethal.slice(-2), diag: leg.head.diag },
     victimNew: leg.victimNew, dmgDelta: leg.dmgDelta, killsDelta: leg.killsDelta,
+    placement: leg.placement ?? null, headPlacement: leg.headPlacement ?? null,
   };
   step(dirLabel + ' fires the real weapon and ' + victimNoun + ' HP drops (body phase)',
     leg.body.fired > 0 && Number.isFinite(bDelta) && bDelta > 0,
@@ -823,6 +916,7 @@ export {
   firingSolution,
   pullTrigger,
   reposition,
+  walkTo,
   placeBesidePeer,
   openMultiplayer,
   actors,
