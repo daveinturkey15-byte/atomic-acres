@@ -229,3 +229,19 @@ with attribution and redistribution conditions, not an MIT grant. **If a generat
 ever ships publicly, the DINOv3 attribution condition is the one to settle with the owner
 first.** Re-read the upstream licence files before any shipping use — a licence finding is
 true of a revision, not of a project.
+
+## After the run: give the memory back
+
+A completed Trellis.2 job leaves ComfyUI holding the whole model set in SYSTEM RAM as
+well as VRAM - measured 2026-09-19 05:20: the ComfyUI python process at 14.1 GB working
+set / 17.0 GB commit forty minutes after the canary finished, on a machine that had
+lost 25 GB of free RAM in that window. When `GET /queue` shows both lists empty, ask the
+server to unload through its own API (no restart, no kill - the owner's process stays up):
+
+```
+curl -s -X POST http://127.0.0.1:8188/free -H "Content-Type: application/json" -d "{\"unload_models\":true,\"free_memory\":true}"
+```
+
+Measured effect: working set 14,085 -> 3,722 MB, free RAM 13.2 -> 23.4 GB, VRAM free
+12.5 -> 14.5 GB, `/system_stats` still answering. The client should do this itself at
+the end of `generate` once the outputs are copied out; until it does, do it by hand.
