@@ -28,7 +28,7 @@
  */
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
-import { isFenceArtCanaryEnabled, buildFenceCourseBoardsCanary } from './fence-boards-canary';
+import { isFenceArtCanaryEnabled, buildFenceCourseBoardsCanary } from './fence-boards-canary.ts';
 
 export { isFenceArtCanaryEnabled, buildFenceCourseBoardsCanary };
 

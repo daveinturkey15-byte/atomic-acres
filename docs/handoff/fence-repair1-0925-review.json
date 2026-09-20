@@ -1,0 +1,54 @@
+{
+  "dist": "dist-fence-repair1-0925",
+  "url": "http://127.0.0.1:4236/",
+  "js": "index-BOy8fGsy.js",
+  "sha256": "a902641e3bd21904608815c2df009cdf302c49e38e4d1404524ad8f8fb23e7a3",
+  "http_payload_equal": true,
+  "frames": {
+    "before": {
+      "pass": true,
+      "colliders": 652,
+      "errors": [],
+      "frames": [
+        {
+          "name": "white-back",
+          "calls": 966,
+          "triangles": 859449
+        },
+        {
+          "name": "orange-back-grazing",
+          "calls": 631,
+          "triangles": 693617
+        },
+        {
+          "name": "white-west-return",
+          "calls": 531,
+          "triangles": 623505
+        }
+      ]
+    },
+    "after": {
+      "pass": true,
+      "colliders": 652,
+      "errors": [],
+      "frames": [
+        {
+          "name": "white-back",
+          "calls": 968,
+          "triangles": 877569
+        },
+        {
+          "name": "orange-back-grazing",
+          "calls": 633,
+          "triangles": 711737
+        },
+        {
+          "name": "white-west-return",
+          "calls": 533,
+          "triangles": 641625
+        }
+      ]
+    }
+  },
+  "visual_state": "Withheld from recommendation: modest grain variation, invisible/occluded fasteners likely waste8100tris. Finalrepair2 reduces cost and corrects contact. No currentpromotion."
+}

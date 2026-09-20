@@ -1,0 +1,54 @@
+--- a/src/build/yards.ts
++++ b/src/build/yards.ts
+@@ -367,6 +367,15 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
+     }
+     if (cur < L) segs.push([cur, L]);
+     const y0 = PLINTH_H + COPING_H;
++    const np = Math.max(2, Math.round(L / 2.0));   // square posts ~2 m, proud of the cap
++    const postDists: number[] = [];
++    for (let j = cornerAtA ? 1 : 0; j <= np; j++) {
++      const d = (j / np) * L;
++      if (holed(d, 0.2)) continue;
++      postDists.push(d);
++      const [x, z] = at(d);
++      B.put(mat.timberDark, 0.16, POST_TOP, 0.16, x, POST_TOP / 2, z, ry);
++    }
+     for (const [s0, s1] of segs) {
+       const len = s1 - s0;
+       const [cx, cz] = at((s0 + s1) / 2);
+@@ -381,7 +390,10 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
+       {
+         const [x0, z0] = at(s0);
+         const [x1, z1] = at(s1);
+-        boardSegs.push({ x0, z0, x1, z1, u0: s0 });
++        const posts = postDists
++          .filter((d) => d >= s0 - 0.08 && d <= s1 + 0.08)
++          .map((d) => Math.max(0.08, Math.min(len - 0.08, d - s0)));
++        boardSegs.push({ x0, z0, x1, z1, u0: s0, posts });
+       }
+       B.put(mat.timberDark, 0.2, 0.08, len, cx, BOARD_TOP + 0.04, cz, ry);  // cap: segmented
+       for (const y of [y0 + 0.42, y0 + 1.02]) {   // back rails behind the boards
+@@ -391,13 +403,6 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
+         Math.abs(ux) * len + Math.abs(uz) * 0.36, FENCE_H,
+         Math.abs(uz) * len + Math.abs(ux) * 0.36));
+     }
+-    const np = Math.max(2, Math.round(L / 2.0));   // square posts ~2 m, proud of the cap
+-    for (let j = cornerAtA ? 1 : 0; j <= np; j++) {
+-      const d = (j / np) * L;
+-      if (holed(d, 0.2)) continue;
+-      const [x, z] = at(d);
+-      B.put(mat.timberDark, 0.16, POST_TOP, 0.16, x, POST_TOP / 2, z, ry);
+-    }
+   }
+ 
+   for (const h of HOUSES) {
+@@ -411,7 +416,7 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
+   }
+   fence(BOUNDARY_X, -BOUND_Z, BOUNDARY_X, BOUND_Z, []);           // cul-de-sac boundary
+   // ALL fence course boards of the map: one mesh, one material (mat.fenceBoard).
+-  g.add(buildFenceCourseBoards(boardSegs, mat.fenceBoard).mesh);
++  g.add(buildFenceCourseBoards(boardSegs, mat.fenceBoard, mat.steel).mesh);
+   /** Fence runs meet at the yard corners on purpose; the prop overlap check skips them. */
+   const FENCE_END = colliders.length;
+ 
+

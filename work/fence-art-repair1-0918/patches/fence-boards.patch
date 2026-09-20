@@ -1,0 +1,62 @@
+--- a/src/build/fence-boards.ts
++++ b/src/build/fence-boards.ts
+@@ -15,6 +15,11 @@
+  * tile in both axes, deliberately 2.285714x the provider's declared 2 m
+  * surface scale so the complete board crop fits without crossing a seam.
+  *
++ * Canary enhancement: when `fence-art=canary` is enabled, delegates to
++ * `fence-boards-canary.ts` for weathered beveled timber boards, de-striped
++ * golden-ratio U phase offsets, transverse cut end grain, and batched
++ * hardware fastener contacts within strict draw-call and triangle budgets.
++ *
+  * Deterministic and RNG-free: same inputs give byte-identical buffers. No
+  * scene, camera, renderer or light is touched; the caller owns the material
+  * (one singleton from core/materials) and the parent group. Every temporary
+@@ -23,6 +28,9 @@
+  */
+ import * as THREE from 'three';
+ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
++import { isFenceArtCanaryEnabled, buildFenceCourseBoardsCanary } from './fence-boards-canary.ts';
++
++export { isFenceArtCanaryEnabled, buildFenceCourseBoardsCanary };
+ 
+ /** One solid segment of a fence run (holes already removed), world-space ends. */
+ export interface FenceBoardSeg {
+@@ -32,6 +40,8 @@ export interface FenceBoardSeg {
+   z1: number;
+   /** metres from the run start to this segment's start; keeps U continuous across holes */
+   u0?: number;
++  /** distance offsets along this segment [0..len] where fence posts contact the boards */
++  posts?: readonly number[];
+ }
+ 
+ /** Board geometry, mirroring the yards.ts fence build it replaced. */
+@@ -108,20 +118,27 @@ function rewriteBoxUVs(geo: THREE.BufferGeometry, len: number, u0: number, cours
+ }
+ 
+ export interface FenceBoardsBuild {
+-  mesh: THREE.Mesh;
++  mesh: THREE.Mesh | THREE.Group;
+   boxes: number;
+   triangles: number;
+   longestSegMetres: number;
++  fastenersMesh?: THREE.Mesh;
+ }
+ 
+ /**
+  * Merge every course box of every segment into ONE mesh. One draw call for
+  * the whole map's fence courses, one material, no per-board mesh or material.
++ * When `fence-art=canary` is active, delegates to the canary builder.
+  */
+ export function buildFenceCourseBoards(
+   segs: readonly FenceBoardSeg[],
+   material: THREE.Material,
++  fastenerMaterial?: THREE.Material,
+ ): FenceBoardsBuild {
++  if (isFenceArtCanaryEnabled()) {
++    return buildFenceCourseBoardsCanary(segs, material, fastenerMaterial);
++  }
++
+   const parts: THREE.BufferGeometry[] = [];
+   let longest = 0;
+   const mtx = new THREE.Matrix4();
