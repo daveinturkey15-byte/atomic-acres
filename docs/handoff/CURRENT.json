@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "Shared Blender CLI/MCP repair verified across eight saved routes; single Astra game development resumed. Memory diagnosis in progress; heavy acceptance is resource-gated. No visual successor promoted.",
+  "status": "Verified partial orange-room successor on4245: authored furniture, PBR surfaces and cleaned balustrade;210s active-game memory gate passes. Original noon failure preserved, no leak fix claimed. Lighting experiment rejected for negligible gain; next hands/carbine scope. Full visual goal unmet.",
   "owner": "Codex",
   "stop_state": "GAME DEVELOPMENT PAUSED by direct owner request; pipeline audit only. Do not resume feature work or worker launches without owner direction.",
   "backup": {
@@ -31,19 +31,19 @@
     "status": "PAUSED"
   },
   "resource_sample": {
-    "at": "2026-09-20T15:07:49.608681+01:00",
-    "free_ram_gib": 10.661354064941406,
-    "free_vram_gib": 3.783203125,
+    "at": "2026-09-20T15:55:55.4481241+01:00",
+    "free_ram_gib": 31.407283782958984,
+    "free_vram_gib": 12.587890625,
     "reserve_ram_gib": 12,
     "reserve_vram_gib": 3,
-    "note": "Measured at repair handoff. Re-sample before each heavy job; allow additional job headroom."
+    "note": "No active owned browser/Blender job; re-sample with job headroom before starting next."
   },
   "next_actions": [
-    "Diagnose the existing active-match memory failure with bounded heap/retainer comparison when resource headroom permits; preserve the failing receipt and thresholds.",
-    "Build one convincing orange-house room using current assets/UV/PBR/light/contact. Compare actual same-camera gameplay, then freeze a tested successor; target17:00BST, report a slip honestly.",
-    "Use active AKP scripts/blender/README.md and guarded shared CLI/MCP entrypoint. Preflight native tools and scene ownership; no assumption of worker inheritance.",
-    "Continue carbine/hands, weapon-image menus/custom classes and combat/streak HUD, then bot motion; revised ranges in RESUMPTION-2026-09-20-1500.md.",
-    "Keep external game workers stopped; provider/adoption/skill exclusions still apply before any future delegation."
+    "Preserve verified room R2 at4245 and all prior frozen views. Use this exact URL for17:00 inspection if no later candidate passes; report53.4fps and full visual bar OPEN.",
+    "First room remains visually incomplete. R3 aperture ambient-lighting experiment rejected; two repair slots consumed. No further parameter nudges: next room-light approach needs a bounded baked/probe artifact proof.",
+    "Inspect retained carbine GLB/current runtime contact, choose a usable guarded Blender/procedural route for first-person gun/hands. Do not relaunch completed workers or assume prior claimed asset acceptance.",
+    "Then weapon-image menu/classes and combat/streak HUD (including noisy incoming-hit stack), bot motion. Single Astra only.",
+    "Original noon memory failure retained; snapshot diagnostic and both room successors pass but no root-cause repair claimed. Apply unchanged gate to each new meaningful candidate."
   ],
   "interrupted_lanes": [
     {
@@ -2479,15 +2479,16 @@
       "launcher": "scripts/orchestration/Start-Showcase.ps1"
     },
     "visual_review": {
-      "url": "http://127.0.0.1:4240/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary",
-      "source_commit": "3301fb12fdc49e6ec4b073e7527e8b5c20c2029e",
-      "dist": "dist-operator-candidate-1038",
-      "js": "index-iQaFdY6u.js",
-      "sha256": "e5b3d2bb07b4eabf7f0c8334014ae67b3c92c35a1147290f1bea7dbb0a82da58",
-      "state": "VERIFIED scoped operator garment/rig and fence successor; full visual overhaul and 60fps OPEN. World-weapon, mountain-volume, presence and weapon-fx OFF.",
-      "verified_at": "2026-09-20T11:11:32.602871+01:00",
-      "report": "docs/handoff/OPERATOR-ACCEPTANCE-2026-09-20-1110.md",
-      "soak": "captures/leak/soak-operator-only-1106-soak.json"
+      "url": "http://127.0.0.1:4245/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary&room=authored",
+      "source_commit": "2174ae2e9d4e523664e933b79931152140a97b92",
+      "dist": "dist-orange-room-r2",
+      "js": "index-JRkP_N6s.js",
+      "sha256": "e040e81c8577ec8bca3a33fde947b14ea4bf4d00c7088a5549d84085c9f0f6ac",
+      "state": "VERIFIED partial orange-room furniture/PBR/railing successor; actual views and210s active-game gate pass. Finished room lighting, full visual overhaul and60fps remain OPEN. Rejected aperture-lighting experiment is not in this artifact.",
+      "verified_at": "2026-09-20T15:55:55.4434025+01:00",
+      "report": "docs/handoff/ROOM-REVIEW-2026-09-20-1555.md",
+      "soak": "captures/leak/room-r2-soak-1544-soak.json",
+      "capture": "captures/single-astra-noon/room-r2-authored-1543/result.json"
     },
     "visual_pending": {
       "url": "http://127.0.0.1:4238/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary",
@@ -2546,6 +2547,17 @@
       "capture": "captures/single-astra-noon/noon-final-1253/result.json",
       "soak": "captures/leak/noon-solo-soak-1232-soak.json",
       "state": "Controls, house traversal/geometry and bot presentation verified. Active-gameplay memory criterion FAILED; not promoted. Full visual quality remains unmet."
+    },
+    "operator_checkpoint": {
+      "url": "http://127.0.0.1:4240/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary",
+      "source_commit": "3301fb12fdc49e6ec4b073e7527e8b5c20c2029e",
+      "dist": "dist-operator-candidate-1038",
+      "js": "index-iQaFdY6u.js",
+      "sha256": "e5b3d2bb07b4eabf7f0c8334014ae67b3c92c35a1147290f1bea7dbb0a82da58",
+      "state": "VERIFIED scoped operator garment/rig and fence successor; full visual overhaul and 60fps OPEN. World-weapon, mountain-volume, presence and weapon-fx OFF.",
+      "verified_at": "2026-09-20T11:11:32.602871+01:00",
+      "report": "docs/handoff/OPERATOR-ACCEPTANCE-2026-09-20-1110.md",
+      "soak": "captures/leak/soak-operator-only-1106-soak.json"
     }
   },
   "backup_0420": {
@@ -2604,7 +2616,7 @@
   },
   "updated_at": "2026-09-20T15:07:49.608681+01:00",
   "current_ownership": {
-    "root": "Single Astra: shared Blender repair complete; resumed memory diagnosis and first-room visual slice. No delegation.",
+    "root": "Single Astra: room R2 verified and preserved; next carbine/hands artifact review. No active workers or GPU jobs.",
     "native_astras": "Historical specialists stopped; do not restart.",
     "external": []
   },
@@ -2738,9 +2750,10 @@
   ],
   "next_inspection": {
     "target": "2026-09-20T17:00:00+01:00",
-    "state": "estimate; no new build accepted",
+    "state": "verified partial room preview ready; no claim of finished-room or map-wide completion",
+    "url": "http://127.0.0.1:4245/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary&room=authored",
     "fallback": "http://127.0.0.1:4240/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary",
-    "report": "docs/handoff/RESUMPTION-2026-09-20-1500.md"
+    "report": "docs/handoff/ROOM-REVIEW-2026-09-20-1555.md"
   },
   "deferred_development_next_actions": [
     "Keep4242 exact13:00 candidate immutable;4212/4234/4240 unchanged. No worker launches.",
@@ -2795,7 +2808,7 @@
     "network_probe_budget_usd": 1.5,
     "jev_local_call_limit": 20,
     "notes": "API budgets are local admission estimates, not provider billing caps. No quota purchases.",
-    "completed_at": "2026-09-20T13:25:11.701534+00:00",
+    "completed_at": "2026-09-20T14:25:11.701534+01:00",
     "report": "docs/handoff/PIPELINE-COMPLETION-2026-09-20.md",
     "shared_rule": "C:/Users/david/AppData/Local/hermes/.akephalos/rules/evidence-bound-pipeline.md",
     "focused_tests": 25,

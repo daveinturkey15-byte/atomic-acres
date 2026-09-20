@@ -30,9 +30,14 @@ Exact file URLs, MD5/SHA256 and real-world tile sizes are recorded in
 `docs/assets/orange-room-surface-provenance.json`. Cloth weave is original code;
 texture code and downloaded photo output are distinct provenance routes.
 
-OPEN: gameplay pixels, PBR load completion, stability and final room lighting.
-The baseline staircase still needs its own honest geometry/collision redesign;
-this slice does not claim to finish that or the map-wide visual overhaul.
+VERIFIED partial successor: R2 actual gameplay pixels and210-second stability
+passed; see `docs/handoff/ROOM-REVIEW-2026-09-20-1555.md`. R2 adds glazed barriers
+and continuous handrails while preserving authoritative bounds. OPEN: finished
+room daylight/contact, richer dressing,60fps and the map-wide overhaul.
+
+R3's aperture ambient graph was visually negligible and rejected, despite CPU and
+render success. It is retained only behind the additional`room-light=aperture`
+diagnostic switch. Both repair slots are consumed; change lighting approach.
 
 Recipe: materials are lazy singletons in MaterialLibrary; placeholders exist
 before shader compilation and update their image with stable binding identity.

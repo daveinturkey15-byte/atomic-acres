@@ -111,7 +111,10 @@ export function installArchitecturalMaterials(
 }
 
 async function install(library: Library, loadTexture?: (url: string) => Promise<THREE.Texture>) {
-  const roomAmbient = new URLSearchParams(globalThis.location?.search ?? '').get('room') === 'authored';
+  // The aperture experiment did not meet the visible-gain bar. Retain it for
+  // reproducible diagnosis, but do not silently ship it with the furniture.
+  const query = new URLSearchParams(globalThis.location?.search ?? '');
+  const roomAmbient = query.get('room') === 'authored' && query.get('room-light') === 'aperture';
   const materials = PROFILES.map(p => library[p.key] as Surface);
   if (materials.some(m => !m.isMeshStandardMaterial) || new Set(materials).size !== materials.length) {
     throw new Error('Architecture canary requires seven distinct shared standard materials');

@@ -147,6 +147,11 @@ assert.equal(cancelled.lib.stuccoCream.map, cancelled.borrowed);
 // undone at teardown. The original aliasing negative control above stays intact.
 const priorLocation = globalThis.location;
 globalThis.location = { search: '?room=authored' };
+const furnitureOnly = library(), ft = loaders();
+const furnitureControl = await install(furnitureOnly.lib, true, ft.load);
+assert.equal(furnitureOnly.lib.stuccoCream.aoNode, undefined, 'rejected lighting experiment stays off for accepted furniture');
+furnitureControl.dispose();
+globalThis.location = { search: '?room=authored&room-light=aperture' };
 const room = library(), rt = loaders();
 const roomControl = await install(room.lib, true, rt.load);
 for (const key of keys) {
