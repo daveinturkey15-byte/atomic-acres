@@ -1,0 +1,321 @@
+{
+  "capture": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/captures/weapon-fx-temporal-2026-09-20T07-39-20-992Z-2UqpH5",
+  "rootBundle": "04face37d3415131924410150610d2088a6a41935e1c40efbc5dda086d0d182b",
+  "artifacts": [
+    {
+      "path": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/captures/weapon-fx-temporal-2026-09-20T07-39-20-992Z-2UqpH5/baseline/floor-020ms.jpg",
+      "sha256": "53805534405d5c1f9f7582faebed9b9ad6d7fef56590ed7b1f114e84bdc4b5ea",
+      "visuallyInspected": true
+    },
+    {
+      "path": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/captures/weapon-fx-temporal-2026-09-20T07-39-20-992Z-2UqpH5/baseline/floor-240ms.jpg",
+      "sha256": "c7a233e8b084bfbf52785601b6cc60ecd9f784a8d4555d8020f2d30022fac231",
+      "visuallyInspected": true
+    },
+    {
+      "path": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/captures/weapon-fx-temporal-2026-09-20T07-39-20-992Z-2UqpH5/baseline/wall-020ms.jpg",
+      "sha256": "91860d7495334c801734ece88bfecf1609a92a74e99bb3506a35d7e8367e6660",
+      "visuallyInspected": true
+    },
+    {
+      "path": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/captures/weapon-fx-temporal-2026-09-20T07-39-20-992Z-2UqpH5/baseline/wall-060ms.jpg",
+      "sha256": "19f865e241ec40bbaa476d8ebbe77858f09b91b3027e4a821281687be855a211",
+      "visuallyInspected": true
+    },
+    {
+      "path": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/captures/weapon-fx-temporal-2026-09-20T07-39-20-992Z-2UqpH5/canary/floor-020ms.jpg",
+      "sha256": "2c774b48dd102a66cf08b29935edf9e3d3ea206dd2f2aef07a3ba023b66d3bea",
+      "visuallyInspected": true
+    },
+    {
+      "path": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/captures/weapon-fx-temporal-2026-09-20T07-39-20-992Z-2UqpH5/canary/floor-240ms.jpg",
+      "sha256": "9d672aeb7e6fae12d592da28a43b48e45174cd7afc9df221baece6e75a87fb1e",
+      "visuallyInspected": true
+    },
+    {
+      "path": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/captures/weapon-fx-temporal-2026-09-20T07-39-20-992Z-2UqpH5/canary/floor-400ms.jpg",
+      "sha256": "aa87403db4e45f1786b86699c8c8c70bc7be0adf29798382e2c118de6b8e892d",
+      "visuallyInspected": true
+    },
+    {
+      "path": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/captures/weapon-fx-temporal-2026-09-20T07-39-20-992Z-2UqpH5/canary/wall-020ms.jpg",
+      "sha256": "37d2eaa59bb8651e9325873fea29e6c770d87ffc239f3d85150ddb8b8ca35f29",
+      "visuallyInspected": true
+    },
+    {
+      "path": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/captures/weapon-fx-temporal-2026-09-20T07-39-20-992Z-2UqpH5/canary/wall-060ms.jpg",
+      "sha256": "6c51e4cbe4ef3ec7f47bac7d7ba41bbe710b4e23ea052b58d5f7478c724deb8e",
+      "visuallyInspected": true
+    }
+  ],
+  "timing": [
+    {
+      "mode": "baseline",
+      "open": [
+        "Effect expiry/disposal counters are not exposed: settling samples and normal browser teardown do not prove owned-resource release.",
+        "floor early temporal coverage OPEN: 3/5 goals within declared tolerance."
+      ],
+      "errors": [],
+      "shots": [
+        {
+          "name": "floor",
+          "fireBeforeEpochMs": 1789889983096.4,
+          "fireAfterEpochMs": 1789889983101.6,
+          "impactDelta": 1,
+          "selected": [
+            {
+              "index": 2,
+              "targetMs": 20,
+              "elapsedMinMs": 3.772705078125,
+              "elapsedMaxMs": 8.972900390625,
+              "errorMs": 16.227294921875,
+              "covered": true
+            },
+            {
+              "targetMs": 60,
+              "covered": false,
+              "missing": true,
+              "nearestObserved": {
+                "index": 3,
+                "targetMs": 60,
+                "elapsedMinMs": 205.523681640625,
+                "elapsedMaxMs": 210.723876953125,
+                "errorMs": 145.523681640625,
+                "covered": false
+              }
+            },
+            {
+              "targetMs": 120,
+              "covered": false,
+              "missing": true,
+              "nearestObserved": {
+                "index": 3,
+                "targetMs": 120,
+                "elapsedMinMs": 205.523681640625,
+                "elapsedMaxMs": 210.723876953125,
+                "errorMs": 85.523681640625,
+                "covered": false
+              }
+            },
+            {
+              "index": 5,
+              "targetMs": 240,
+              "elapsedMinMs": 240.1328125,
+              "elapsedMaxMs": 245.3330078125,
+              "errorMs": 0.1328125,
+              "covered": true
+            },
+            {
+              "index": 12,
+              "targetMs": 400,
+              "elapsedMinMs": 395.096923828125,
+              "elapsedMaxMs": 400.297119140625,
+              "errorMs": 4.903076171875,
+              "covered": true
+            }
+          ]
+        },
+        {
+          "name": "wall",
+          "fireBeforeEpochMs": 1789889985474.7,
+          "fireAfterEpochMs": 1789889985481.6,
+          "impactDelta": 1,
+          "selected": [
+            {
+              "index": 1,
+              "targetMs": 20,
+              "elapsedMinMs": 5.598876953125,
+              "elapsedMaxMs": 12.4990234375,
+              "errorMs": 14.401123046875,
+              "covered": true
+            },
+            {
+              "index": 3,
+              "targetMs": 60,
+              "elapsedMinMs": 64.559814453125,
+              "elapsedMaxMs": 71.4599609375,
+              "errorMs": 4.559814453125,
+              "covered": true
+            },
+            {
+              "index": 5,
+              "targetMs": 120,
+              "elapsedMinMs": 117.552001953125,
+              "elapsedMaxMs": 124.4521484375,
+              "errorMs": 2.447998046875,
+              "covered": true
+            },
+            {
+              "index": 10,
+              "targetMs": 240,
+              "elapsedMinMs": 233.5009765625,
+              "elapsedMaxMs": 240.401123046875,
+              "errorMs": 6.4990234375,
+              "covered": true
+            },
+            {
+              "index": 17,
+              "targetMs": 400,
+              "elapsedMinMs": 399.417724609375,
+              "elapsedMaxMs": 406.31787109375,
+              "errorMs": 0.582275390625,
+              "covered": true
+            }
+          ]
+        }
+      ],
+      "firstFloorSamples": [
+        {
+          "epochMs": 1789889983134.9,
+          "cool": 0.072
+        },
+        {
+          "epochMs": 1789889983153.4,
+          "cool": 0.04
+        },
+        {
+          "epochMs": 1789889983170,
+          "cool": 0.021
+        },
+        {
+          "epochMs": 1789889983323.8,
+          "cool": 0
+        }
+      ]
+    },
+    {
+      "mode": "canary",
+      "open": [
+        "Effect expiry/disposal counters are not exposed: settling samples and normal browser teardown do not prove owned-resource release.",
+        "floor early temporal coverage OPEN: 3/5 goals within declared tolerance."
+      ],
+      "errors": [],
+      "shots": [
+        {
+          "name": "floor",
+          "fireBeforeEpochMs": 1789890010514.9001,
+          "fireAfterEpochMs": 1789890010520.3,
+          "impactDelta": 1,
+          "selected": [
+            {
+              "index": 1,
+              "targetMs": 20,
+              "elapsedMinMs": 5.242919921875,
+              "elapsedMaxMs": 10.642822265625,
+              "errorMs": 14.757080078125,
+              "covered": true
+            },
+            {
+              "targetMs": 60,
+              "covered": false,
+              "missing": true,
+              "nearestObserved": {
+                "index": 2,
+                "targetMs": 60,
+                "elapsedMinMs": 252.18505859375,
+                "elapsedMaxMs": 257.5849609375,
+                "errorMs": 192.18505859375,
+                "covered": false
+              }
+            },
+            {
+              "targetMs": 120,
+              "covered": false,
+              "missing": true,
+              "nearestObserved": {
+                "index": 2,
+                "targetMs": 120,
+                "elapsedMinMs": 252.18505859375,
+                "elapsedMaxMs": 257.5849609375,
+                "errorMs": 132.18505859375,
+                "covered": false
+              }
+            },
+            {
+              "index": 2,
+              "targetMs": 240,
+              "elapsedMinMs": 252.18505859375,
+              "elapsedMaxMs": 257.5849609375,
+              "errorMs": 12.18505859375,
+              "covered": true
+            },
+            {
+              "index": 11,
+              "targetMs": 400,
+              "elapsedMinMs": 407.289794921875,
+              "elapsedMaxMs": 412.689697265625,
+              "errorMs": 7.289794921875,
+              "covered": true
+            }
+          ]
+        },
+        {
+          "name": "wall",
+          "fireBeforeEpochMs": 1789890012818.2,
+          "fireAfterEpochMs": 1789890012825,
+          "impactDelta": 1,
+          "selected": [
+            {
+              "index": 2,
+              "targetMs": 20,
+              "elapsedMinMs": 36.382080078125,
+              "elapsedMaxMs": 43.18212890625,
+              "errorMs": 16.382080078125,
+              "covered": true
+            },
+            {
+              "index": 3,
+              "targetMs": 60,
+              "elapsedMinMs": 60.64208984375,
+              "elapsedMaxMs": 67.442138671875,
+              "errorMs": 0.64208984375,
+              "covered": true
+            },
+            {
+              "index": 6,
+              "targetMs": 120,
+              "elapsedMinMs": 123.195068359375,
+              "elapsedMaxMs": 129.9951171875,
+              "errorMs": 3.195068359375,
+              "covered": true
+            },
+            {
+              "index": 12,
+              "targetMs": 240,
+              "elapsedMinMs": 245.288818359375,
+              "elapsedMaxMs": 252.0888671875,
+              "errorMs": 5.288818359375,
+              "covered": true
+            },
+            {
+              "index": 20,
+              "targetMs": 400,
+              "elapsedMinMs": 396.52490234375,
+              "elapsedMaxMs": 403.324951171875,
+              "errorMs": 3.47509765625,
+              "covered": true
+            }
+          ]
+        }
+      ],
+      "firstFloorSamples": [
+        {
+          "epochMs": 1789890010561.6,
+          "cool": 0.073
+        },
+        {
+          "epochMs": 1789890010587.4001,
+          "cool": 0.032
+        },
+        {
+          "epochMs": 1789890010612.5,
+          "cool": 0.007
+        },
+        {
+          "epochMs": 1789890010783.7,
+          "cool": 0
+        }
+      ]
+    }
+  ]
+}
