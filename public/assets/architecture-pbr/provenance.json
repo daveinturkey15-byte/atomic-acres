@@ -83,7 +83,11 @@
     {
       "path": "plaster-surface.png",
       "source": "white_plaster_rough_01",
-      "operation": "linear luminance and roughness packing",
+      "operation": "local linear-luminance normalization and roughness packing",
+      "localNormalizationSigmaPixels": [
+        24,
+        24
+      ],
       "sourceCropPixels": [
         0,
         0,
@@ -99,13 +103,17 @@
         1.0,
         1.0
       ],
-      "bytes": 2118545,
-      "sha256": "dd55393d52d1d678452e0da99c84a08a8ddea4c531d4582368127b7aa3ca638d"
+      "bytes": 2104630,
+      "sha256": "5ae7313a9e32468d9e8a22710c92c70ff006d4ca4772835098bcbd16cfbd23fe"
     },
     {
       "path": "plaster-normal.png",
       "source": "white_plaster_rough_01",
-      "operation": "OpenGL normal resize and renormalize",
+      "operation": "OpenGL normal slope high-pass and renormalization",
+      "localNormalizationSigmaPixels": [
+        24,
+        24
+      ],
       "sourceCropPixels": [
         0,
         0,
@@ -121,13 +129,17 @@
         1.0,
         1.0
       ],
-      "bytes": 1299037,
-      "sha256": "80e07f8780aa4a81e545d09726be77d200177c2e7d1cdf1567b58d856f7d7c59"
+      "bytes": 1249761,
+      "sha256": "2d1d09566dd9fbf05cde423de1f5659229bc71014dfd7c03438a9ca9f6166d79"
     },
     {
       "path": "timber-surface.png",
       "source": "brown_planks_09",
-      "operation": "linear luminance and roughness packing",
+      "operation": "local linear-luminance normalization and roughness packing",
+      "localNormalizationSigmaPixels": [
+        24,
+        36
+      ],
       "sourceCropPixels": [
         0,
         82,
@@ -146,13 +158,17 @@
         0.68359375,
         0.1201171875
       ],
-      "bytes": 257173,
-      "sha256": "c0b257e985c946aabf602be2d15b20335df599f4bbc2c69f1666658f4ef173f5"
+      "bytes": 257769,
+      "sha256": "82be5ca0d9a95ea69ac975b0b8bc12085f62717a6eb5785e8125f33d0afb157d"
     },
     {
       "path": "timber-normal.png",
       "source": "brown_planks_09",
-      "operation": "OpenGL normal resize and renormalize",
+      "operation": "OpenGL normal slope high-pass and renormalization",
+      "localNormalizationSigmaPixels": [
+        24,
+        36
+      ],
       "sourceCropPixels": [
         0,
         82,
@@ -171,10 +187,28 @@
         0.68359375,
         0.1201171875
       ],
-      "bytes": 252536,
-      "sha256": "e1180fdb25b26070062e3e5684a541e3859a9fafbf61845efa423f4a19d36f25"
+      "bytes": 248386,
+      "sha256": "f4abf38d2721eb5edd1dcebf96364d7b58a5ad745edfd4321dd20478d719a8a3"
     }
   ],
   "packedRuntimeBytesWithMipmaps": 13981014,
-  "totalAssetBytes": 7314524
+  "totalAssetBytes": 7247779,
+  "repair1QualityControls": [
+    {
+      "material": "plaster",
+      "lowSlopeRms": 0.0008899776263471164,
+      "fineSlopeRms": 0.03773580338894948,
+      "lowLuminanceStd": 0.005961622844103439,
+      "rawLowSlopeRmsRejected": 0.0777960941195488,
+      "rawLowLuminanceStdRejected": 0.04146270081400871
+    },
+    {
+      "material": "timber",
+      "lowSlopeRms": 0.002678368530996971,
+      "fineSlopeRms": 0.03866446322997726,
+      "lowLuminanceStd": 0.010621109281450708,
+      "rawLowSlopeRmsRejected": 0.028766006231307983,
+      "rawLowLuminanceStdRejected": 0.050743915140628815
+    }
+  ]
 }

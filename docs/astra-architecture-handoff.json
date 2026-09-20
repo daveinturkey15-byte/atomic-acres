@@ -10,14 +10,16 @@
   "sceneDrawsAdded": 0,
   "perFrameUpdatesAdded": 0,
   "runtimeTextures": 4,
-  "texturePayloadBytes": 7314524,
+  "texturePayloadBytes": 7247779,
   "decodedBytesWithMipmaps": 13981014,
   "licensedSource": "CC0-1.0 Poly Haven white_plaster_rough_01 and brown_planks_09, both Rob Tuytel; exact URLs and hashes in public/assets/architecture-pbr/provenance.json",
   "sourceChanges": ["src/core/architectural-materials.ts"],
   "supportFiles": ["public/assets/architecture-pbr/", "scripts/pack-architecture-textures.py", "scripts/check-architectural-materials.mjs", "docs/astra-architecture-integration.patch", "docs/astra-architecture-handoff.md", "docs/astra-architecture-handoff.json"],
   "verified": ["tsc and render-site check", "production build (assembly patch unapplied)", "seven material identities", "r180 StandardNodeLibrary preserves hooks", "10000 cache hits", "partial load rollback and retry", "pending load cancellation", "owned and borrowed disposal controls", "all source and derived hashes", "normal finite and unit-length checks", "texture dimensions and payload budgets"],
   "open": ["root assembled renderer boot", "actual before/after pixel acceptance", "WebGL2 fallback", "moving-camera stability", "actual GPU and resource cost", "horizontal timber beam grain direction"],
-  "visualRepairCount": 0,
+  "visualRepairCount": 1,
+  "rejectedCandidate": "c3d5504; root round-0715 scalloped wall bands, cloudy timber, dirty roof underside",
+  "repair1": "Locally normalize scan luminance and high-pass normal slopes to remove repeating captured dirt/topography while retaining fine grain; bound building-scale wear to1.7percent. Read-only pack --check proves rejected raw-frequency controls and retained detail.",
   "visualRepairBudget": 2,
   "deadlineBST": "2026-09-20T08:58:00+01:00"
 }

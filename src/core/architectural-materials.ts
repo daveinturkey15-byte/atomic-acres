@@ -76,10 +76,12 @@ function nodes(surface: THREE.Texture, normal: THREE.Texture, profile: Profile) 
   const gradient = gx.mul(w.x).add(gy.mul(w.y)).add(gz.mul(w.z));
   const relief = gradient.sub(n.mul(gradient.dot(n)));
   const perturbed = n.add(relief.mul(profile.normal)).normalize();
-  // Low-frequency, restrained application wear complements the real fine scan.
-  // It is spatially fixed, bounded and never driven by time or random state.
-  const wear = p.x.mul(0.61).add(p.z.mul(0.47)).sin()
-    .mul(p.y.mul(0.83).add(p.z.mul(0.19)).sin()).mul(wood ? 0.035 : 0.025);
+  // Scan packing removes broad captured staining and normal bias. Application
+  // wear therefore lives at building scale, not in a repeating one-metre tile.
+  // Two oblique long waves have no aligned repeat over a house; amplitude is
+  // bounded to +/-1.7%, so they cannot become dark wet/mould stripes.
+  const wear = p.dot(vec3(0.11, 0.07, 0.17)).sin().mul(0.012)
+    .add(p.dot(vec3(0.31, 0.23, 0.13)).sin().mul(0.005));
   const variation = scan.r.mul(2).sub(1).mul(profile.contrast).add(1).add(wear);
   return {
     colorNode: vec4(materialColor.rgb.mul(variation), 1),

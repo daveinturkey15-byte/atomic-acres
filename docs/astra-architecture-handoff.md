@@ -70,7 +70,7 @@ All ten source/derived texture hashes and the PNG dimensions match provenance.
 Normal-map finite/unit checks measured maximum length error 0.00536 after 8-bit
 encoding. No GPU/browser/Blender process was launched by this lane.
 
-Payload: 7,314,524 texture bytes plus a small JSON manifest (below 8 MB). Four
+Repair-1 payload: 7,247,779 texture bytes plus a small JSON manifest (below 8 MB). Four
 runtime maps: plaster 1024x1024 x2, timber 1024x256 x2. Conservative RGBA8 decoded
 estimate with mipmaps is 13,981,014 bytes (13.33 MiB). There are six texture samples
 per shaded pixel (three projections each for packed surface and normal), compared
@@ -94,6 +94,40 @@ Use unchanged glazing and `lighting=authored` alongside `architecture=canary`.
 Keep geometry/draw/light counts stable; inspect rounded capsule blending and the
 one-metre plaster scale. No lighting refresh hook or per-frame update is required.
 
-Repair log: no visual repairs yet (two available). One pre-handoff TypeScript
-failure (number-array used where TSL vec2 was required) was corrected without
-weakening a check. Frozen criteria and failed evidence remain unchanged.
+## Visual repair 1 — rejected source preserved
+
+The initial candidate `c3d5504` is REJECTED visually. Parent reports its assembled
+source `6158ab2` booted eight frames without errors or new draws, but root's actual
+`captures/gauntlet/architecture/round-0715/after-spawnA.png` and
+`after-interiorOrange.png` visibly show scalloped/mould-like wall bands, cloudy
+timber and a dirty roof underside. Inspected both against `before-spawnA.png`.
+This rejection is not overridden by the initial CPU pass. The rejected maps remain
+recoverable in Git and the raw licensed inputs remain byte-identical.
+
+Cause: the source scan's metre-scale staining and low-frequency normal slopes were
+repeated as wall relief. Timber's broad board-colour clouds similarly outweighed
+grain after minification. This repair locally normalizes linear scan luminance
+and high-pass filters normal slopes before packing; it does not blindly reduce
+the existing normal/colour profile strengths. Fine scanned relief, grain and
+roughness remain. World-space application variation is bounded to +/-1.7% over
+building-scale distances rather than repeating source dirt at every metre.
+
+Frozen repair controls (`python scripts/pack-architecture-textures.py --check`):
+local-normal slope RMS <0.005 and broad packed-luminance std <0.016; fine-slope
+RMS >0.015 and fine-colour std >0.04 so a flat replacement cannot pass. The raw
+source must FAIL both broad-frequency controls. Timber's physical across-grain
+gradient must exceed along-grain by 1.3x (measured 1.80x). The check mode is read-only
+and verifies deterministic byte equality with the recipe.
+
+VERIFIED results: plaster broad-slope RMS 0.07780 -> 0.00089, timber 0.02877 ->
+0.00268; broad-colour std 0.04146 -> 0.00596 and 0.05074 -> 0.01062, respectively.
+Fine-slope RMS remains 0.03774/0.03866. All lifecycle/hash checks and `npm run check`
+pass. Four textures, dimensions, material scope, draw count contract and assembly
+API remain unchanged. No GPU used by this lane.
+
+OPEN fixed-image acceptance: spawnA cream and terracotta walls must lose the
+vertical scallop rows; the roof underside must read clean matte cream; the timber
+post/chair should show fine directional grain instead of broad muddy clouds.
+InteriorOrange must lose the repeated wet-looking bands while retaining fine
+plaster detail. Root must compare against BOTH original baseline and rejected
+round-0715 pixels. One visual repair remains after this candidate.
