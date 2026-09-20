@@ -14,8 +14,8 @@
   "source_commit": "8c0549e5268d213005462e5f33de1f4768f37b15",
   "required_commits_after_parent_motion": [
     "b49fc9ab7983fa53fd97c931828d98cb62e7db4f",
-    "6a76a9e",
-    "cb3bed8",
+    "6a76a9e533d0d2b8b37a06862f7f0730b7ae3599",
+    "cb3bed8fb97caa40438f7c5eea23dc961ae8a257",
     "8c0549e5268d213005462e5f33de1f4768f37b15"
   ],
   "flags": {
