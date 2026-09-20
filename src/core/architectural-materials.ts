@@ -10,9 +10,10 @@ import {
 } from 'three/tsl';
 import type { MaterialLibrary } from './materials';
 import { PAL } from './palette';
+import { orangeRoomAmbientNode } from './orange-room-ambient';
 
 type Surface = THREE.MeshStandardMaterial & Pick<MeshStandardNodeMaterial,
-  'colorNode' | 'roughnessNode' | 'normalNode'>;
+  'colorNode' | 'roughnessNode' | 'normalNode' | 'aoNode'>;
 type SurfaceKey = 'stuccoCream' | 'stuccoTerracotta' | 'capsuleWhite' |
   'interiorWall' | 'roofWhite' | 'timber' | 'timberDark';
 type Library = Pick<MaterialLibrary, SurfaceKey | 'dispose'>;
@@ -110,6 +111,7 @@ export function installArchitecturalMaterials(
 }
 
 async function install(library: Library, loadTexture?: (url: string) => Promise<THREE.Texture>) {
+  const roomAmbient = new URLSearchParams(globalThis.location?.search ?? '').get('room') === 'authored';
   const materials = PROFILES.map(p => library[p.key] as Surface);
   if (materials.some(m => !m.isMeshStandardMaterial) || new Set(materials).size !== materials.length) {
     throw new Error('Architecture canary requires seven distinct shared standard materials');
@@ -148,7 +150,7 @@ async function install(library: Library, loadTexture?: (url: string) => Promise<
   }
   const saved = materials.map(m => ({ color: m.color.clone(), map: m.map,
     roughnessMap: m.roughnessMap, normalMap: m.normalMap,
-    nodes: ['colorNode', 'roughnessNode', 'normalNode', 'customProgramCacheKey'].map(key => ({
+    nodes: ['colorNode', 'roughnessNode', 'normalNode', 'aoNode', 'customProgramCacheKey'].map(key => ({
       key, descriptor: Object.getOwnPropertyDescriptor(m, key),
     })),
   }));
@@ -161,13 +163,14 @@ async function install(library: Library, loadTexture?: (url: string) => Promise<
     m.map = m.roughnessMap = m.normalMap = null;
     const offset = profile.timber ? 2 : 0;
     Object.assign(m, nodes(textures[offset], textures[offset + 1], profile));
+    if (roomAmbient) m.aoNode = orangeRoomAmbientNode();
     // r180 RenderObject hashes arbitrary object-valued properties as '{}'. The
     // borrowed standard material's default key does NOT hash these node hooks,
     // so plaster and timber otherwise alias one shader despite different nodes.
     // Cache the complete key once: stable across frames, no per-draw allocation.
     // Texture identities also prevent a rebuilt library from inheriting a cached
     // node-builder state whose literal texture bindings belonged to its disposer.
-    const programKey = `${m.customProgramCacheKey()}|architecture-v2/${profile.key}/${textures[offset].uuid}/${textures[offset + 1].uuid}`;
+    const programKey = `${m.customProgramCacheKey()}|architecture-v2/${profile.key}/${textures[offset].uuid}/${textures[offset + 1].uuid}${roomAmbient ? '/room-ambient-v1' : ''}`;
     m.customProgramCacheKey = () => programKey;
     m.needsUpdate = true;
   }

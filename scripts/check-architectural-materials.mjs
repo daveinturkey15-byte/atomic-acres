@@ -143,6 +143,23 @@ assert.equal(await cancelledTask, null);
 assert.deepEqual(cl.disposals, [1, 1, 1, 1]);
 assert.equal(cancelled.lib.stuccoCream.map, cancelled.borrowed);
 
+// Room-only indirect-light graph must survive r180 adaptation and be completely
+// undone at teardown. The original aliasing negative control above stays intact.
+const priorLocation = globalThis.location;
+globalThis.location = { search: '?room=authored' };
+const room = library(), rt = loaders();
+const roomControl = await install(room.lib, true, rt.load);
+for (const key of keys) {
+  const material = room.lib[key], converted = adapter.fromMaterial(material);
+  assert.ok(material.aoNode?.isNode, 'authored ambient graph exists');
+  assert.equal(converted.aoNode, material.aoNode, 'r180 preserves authored indirect visibility');
+  assert.ok(material.customProgramCacheKey().includes('/room-ambient-v1'));
+}
+roomControl.dispose();
+assert.deepEqual(rt.disposals, [1, 1, 1, 1]);
+for (const key of keys) assert.equal(Object.hasOwn(room.lib[key], 'aoNode'), false);
+if (priorLocation === undefined) delete globalThis.location; else globalThis.location = priorLocation;
+
 const assets = resolve('public/assets/architecture-pbr');
 const provenance = JSON.parse(readFileSync(resolve(assets, 'provenance.json')));
 let total = 0;
@@ -163,6 +180,6 @@ const result = { status: 'PASS', rendererAcceptance: 'OPEN: no GPU/browser lease
   controls: ['r180 standard-to-node hooks', 'material identity', 'borrowed map ownership',
     'r180 pipeline key uniqueness and rejected collision negative control',
     '10000 cache hits', 'explicit disposal', 'library teardown', 'partial load failure and retry',
-    'teardown while loading', 'source and derived hashes', 'PNG dimensions and budgets'] };
+    'teardown while loading', 'authored room AO adapter and teardown', 'source and derived hashes', 'PNG dimensions and budgets'] };
 writeFileSync(resolve(out, 'result.json'), JSON.stringify(result, null, 2)+'\n');
 console.log(JSON.stringify(result));
