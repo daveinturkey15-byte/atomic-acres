@@ -23,6 +23,8 @@ export interface FirstPersonHandsRig {
   updateReload(progress: number): void;
   /** Restore the exact construction-time bind pose after cancel/switch/finish. */
   resetReload(): void;
+  /** Optional presentation-only stance/ordnance blend; reload clock stays in controller. */
+  updatePose?(crouch: number, prone: number, handLower: number): void;
 }
 
 /** A procedurally built first-person rig. Origin at the grip/trigger area. */
@@ -46,6 +48,8 @@ export interface MoveSample {
   grounded: boolean;
   /** crouch hold when a crouch input exists (main.ts does not send it yet) */
   crouched?: boolean;
+  /** True only for the player's prone stance; does not alter movement or spread. */
+  prone?: boolean;
 }
 
 /** Headless-readable weapon state for the QA surface and the soak test. */

@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import type { MaterialLibrary } from '../core/materials';
 import { PAL } from '../core/palette';
 import type { FirstPersonHandsRig } from './types';
+import { createHandMotion } from './first-person-hands-motion';
+import { isMotionCanaryRequested } from './viewmodel-motion';
 import {
   buildCanarySideGeometries,
   materializeCanarySide,
@@ -57,6 +59,7 @@ export function createFirstPersonHands(
   supportZ: number,
   supportY = -0.055,
   reloadTarget: readonly [number, number, number] = [0.014, -0.038, Math.min(0.18, Math.max(0.08, -supportZ * 0.52))],
+  motionCanary = isMotionCanaryRequested(),
 ): FirstPersonHandsRig {
   const sleeve = mat.viewmodel.sleeve;
   const cuff = mat.painted(PAL.opWebbingDark, 0.99, 0);
@@ -177,6 +180,14 @@ export function createFirstPersonHands(
     supportHand.rotation.set(0, 0, rz);
   };
 
+  if (motionCanary) {
+    const motion = createHandMotion(
+      { triggerHand, supportHand, supportForearm }, triggerForearm,
+      TRIGGER_SPEC, supportJoints, reloadTarget,
+    );
+    motion.resetReload();
+    return { root, triggerHand, supportHand, supportForearm, ...motion };
+  }
   resetReload();
   return { root, triggerHand, supportHand, supportForearm, updateReload, resetReload };
 }

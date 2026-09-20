@@ -40,6 +40,7 @@ import { isPlayableWeapon } from './roster';
 import { CROSSBOW_ID, isCrossbowCanaryOptIn } from './crossbow-runtime';
 import { WeaponEffects } from './effects';
 import { OrdnanceInput } from './ordnance-input';
+import { isMotionCanaryRequested, ViewmodelMotion } from './viewmodel-motion';
 import { AudioService, type AudioStats, type ShotFamily, type StepSurface, type StepOptions, type EnvironmentKind } from '../audio/service';
 import {
   loadCatalogCarbineRig,
@@ -144,6 +145,8 @@ interface QaHandsSnapshot {
 }
 
 interface WeaponQaSnapshot extends WeaponSnapshot {
+  /** Construction-time presentation canary; never a gameplay capability flag. */
+  motionCanary?: boolean;
   /** Normalized live reload phase; zero when the weapon is idle. */
   reloadProgress: number;
   /** Present only for the explicit QA state command; omitted from the frame HUD path. */
@@ -261,6 +264,8 @@ export class WeaponsController {
   private bobScale = 0;
   private speed = 0;
   private crouched = false;
+  private readonly motionCanary = isMotionCanaryRequested();
+  private readonly motion = new ViewmodelMotion();
   // Two-part recoil: fast punch (decays ~11/s) + slow climb (per-weapon recovery).
   private kickPitch = 0;
   private kickYaw = 0;
@@ -556,9 +561,11 @@ export class WeaponsController {
 
     // Reload timer with a lower-tilt-raise pose.
     let reloadDip = 0;
+    let reloadPoseProgress = 0;
     if (cur.reloading) {
       cur.reloadT -= dt;
       const progress = 1 - Math.max(0, cur.reloadT) / cur.reloadDur;
+      reloadPoseProgress = progress;
       cur.rig.hands?.updateReload(progress);
       reloadDip = Math.sin(Math.min(1, Math.max(0, progress)) * Math.PI);
       if (cur.reloadT <= 0) {
@@ -608,6 +615,23 @@ export class WeaponsController {
       (heroMount?.yaw ?? 0) * heroBlend,
       -0.12 * this.handLower,
     );
+    if (this.motionCanary) {
+      // Presentation reads the existing state; it never advances or admits events.
+      this.motion.update(
+        dt, time, FAMILY_FALLBACK[weaponFamily(def.id)], this.adsT, this.sprintBlend,
+        this.bobPhase, this.bobScale, reloadPoseProgress, this.handLower,
+        this.kickPitch, this.camera.rotation.x, this.camera.rotation.y,
+        this.crouched, move.prone === true,
+      );
+      cur.rig.hands?.updatePose?.(this.motion.crouch, this.motion.prone, this.handLower);
+      this.tmpOffset.copy(this.motion.offset);
+      this.tmpOffset.y += (heroMount?.offsetY ?? 0) * heroBlend;
+      this.tmpOffset.applyQuaternion(this.camera.quaternion).add(this.camera.position);
+      cur.rig.group.position.copy(this.tmpOffset);
+      this.tmpEuler.copy(this.motion.rotation);
+      this.tmpEuler.x += (heroMount?.pitch ?? 0) * heroBlend;
+      this.tmpEuler.y += (heroMount?.yaw ?? 0) * heroBlend;
+    }
     this.tmpQuat.setFromEuler(this.tmpEuler);
     cur.rig.group.quaternion.copy(this.camera.quaternion).multiply(this.tmpQuat);
 
@@ -768,6 +792,7 @@ export class WeaponsController {
     this.overlay.visible = v;
     this.ord.setVisible(v);
     if (!v) {
+      this.motion.reset();
       this.adsOn = false;
       this.adsT = 0;
       this.triggerHeld = false;
@@ -798,6 +823,7 @@ export class WeaponsController {
       ? Math.min(1, Math.max(0, 1 - cur.reloadT / cur.reloadDur))
       : 0;
     const out: WeaponQaSnapshot = {
+      motionCanary: this.motionCanary,
       id: cur.def.id,
       name: cur.def.name,
       mag: cur.mag,
@@ -1027,6 +1053,7 @@ export class WeaponsController {
   private switchTo(index: number): boolean {
     if (index < 0 || index >= this.weapons.length || index === this.active) return index === this.active;
     const prev = this.weapons[this.active];
+    this.motion.reset();
     prev.reloading = false;
     prev.reloadT = 0;
     prev.rig.hands?.resetReload();
