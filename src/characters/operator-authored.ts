@@ -33,12 +33,16 @@
  *   throws, never retries in a loop, never hangs startup.
  * - Per-primitive materials are captured at load exactly as authored — no
  *   modulo redistribution.
- * - Team identification: the sand GLB is a single dress, so each authored
- *   figure carries a tiny instance-owned chest patch in a caller-owned
- *   singleton material (dark for faction 0, cloth for faction 1). Zero new
- *   programs, zero new textures, +1 draw and 12 tris per figure.
+ * - Hand-held weapon: the GLB is body-only (non-skinned meshes such as the
+ *   corrected GLB's 372-tri baked hand-prop are never adopted and never
+ *   attached — adopting them would double the gun — so each figure carries
+ *   one third-person weapon from `authored-weapon.ts` on its RightHand bone,
+ *   resolved from the actor's real weapon id with a rifle fallback. Forward
+ *   is +z like the procedural rifle, so the carry/aim solver is undisturbed.
  * - Budgets: 2 skinned primitives per actor, geometry within 12k–22k tris,
- *   no per-frame allocation on the update path (spawn-time only).
+ *   no per-frame allocation on the update path (spawn-time only). The weapon
+ *   adds 5 shared-geometry boxes + muzzle in the caller material (+5 draws,
+ *   +60–72 tris per figure; sniper scope included).
  */
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -47,6 +51,14 @@ import { CharacterRig } from './blend';
 import type { ClipLibrary } from './clips';
 import type { CharacterDress, CharacterMesh } from './mesh';
 import type { CharacterHandle } from './system';
+import {
+  attachAuthoredWeapon,
+  authoredWeaponOf,
+  buildAuthoredWeapon,
+  detachAuthoredWeapon,
+  resolveAuthoredArchetype,
+  type AuthoredWeaponArchetype,
+} from './authored-weapon';
 
 /** Runtime URL. Root copies the frozen GLB here when this slice is accepted. */
 export const OPERATOR_SAND_URL = '/assets/operators/operator-sand.glb';
@@ -337,12 +349,18 @@ let markerGeo: THREE.BufferGeometry | null = null;
  * primitive wears exactly the material(s) captured at load — no modulo
  * redistribution — and owns a fresh Skeleton over the shared frozen inverses,
  * so poses are per-actor by construction.
+ *
+ * The hand-held weapon rides the caller's RightHand bone: `weaponId` is the
+ * actor's real primary (host kit / bot arsenal / loadout declaration) and is
+ * resolved to its family archetype with a rifle fallback — never one fixed
+ * renamed gun. Omit it and the figure carries the rifle archetype.
  */
 export function dressAuthored(
   root: THREE.Object3D,
   bones: Record<StandardBoneName, THREE.Bone>,
   dress: CharacterDress,
   faction: 0 | 1 | null = null,
+  weaponId?: string,
 ): CharacterMesh | null {
   if (!shared) return null;
   const cache = shared;
@@ -371,6 +389,17 @@ export function dressAuthored(
   marker.name = 'operator-team-patch';
   marker.position.set(0.14, 0.1, 0.16);
   bones.Chest.add(marker);
+  // Third-person weapon on the authored RightHand: shared geometries in the
+  // caller-owned dark material (the procedural rifle's slot), +z forward, the
+  // muzzle at the archetype tip. Rides the bone, so animation moves it.
+  const resolvedId = weaponId ?? 'longhorn';
+  const archetype = resolveAuthoredArchetype(resolvedId);
+  const weapon = buildAuthoredWeapon(dress.dark, archetype, resolvedId);
+  let weaponAttached = false;
+  if (bones.RightHand) {
+    attachAuthoredWeapon(bones, weapon);
+    weaponAttached = true;
+  }
   live += 1;
   let disposed = false;
   const handle: CharacterMesh = {
@@ -380,15 +409,37 @@ export function dressAuthored(
       disposed = true;
       live -= 1;
       marker.removeFromParent();
+      if (weaponAttached) detachAuthoredWeapon(bones.RightHand);
       for (const m of meshes) m.removeFromParent();
       // Per-figure only: the Skeleton's bone texture. Shared geometries, GLB
-      // materials/textures, the shared marker geometry and the caller's
-      // marker singletons are kept — releasing them would black out the crowd.
+      // materials/textures, the shared marker/weapon geometries and the
+      // caller's marker/weapon singletons are kept — releasing them would
+      // black out the crowd.
       skeleton.dispose();
       root.parent?.remove(root);
     },
   };
   return handle;
+}
+
+/**
+ * Swap the actor's hand-held weapon in place (weapon swap without respawn).
+ * Resolves the real weapon id to its archetype with a rifle fallback.
+ * Returns the archetype worn, or null when the root has no authored socket.
+ */
+export function swapAuthoredWeapon(
+  root: THREE.Object3D,
+  dress: CharacterDress,
+  weaponId: string,
+): AuthoredWeaponArchetype | null {
+  const current = authoredWeaponOf(root);
+  if (!current) return null;
+  const next = resolveAuthoredArchetype(weaponId);
+  const hand = current.group.parent;
+  if (!hand) return null;
+  detachAuthoredWeapon(hand);
+  hand.add(buildAuthoredWeapon(dress.dark, next, weaponId).group);
+  return next;
 }
 
 export interface AuthoredSpawn {
@@ -400,6 +451,8 @@ export interface AuthoredSpawn {
   yaw?: number;
   scale?: number;
   faction?: 0 | 1;
+  /** Actor's real primary; resolved to its archetype with a rifle fallback. */
+  weaponId?: string;
 }
 
 /**
@@ -411,7 +464,7 @@ export interface AuthoredSpawn {
 export function spawnAuthoredOperator(opts: AuthoredSpawn): CharacterHandle | null {
   if (!shared) return null;
   const std = buildStandardSkeleton();
-  const mesh = dressAuthored(std.root, std.bones, opts.dress, opts.faction ?? null);
+  const mesh = dressAuthored(std.root, std.bones, opts.dress, opts.faction ?? null, opts.weaponId);
   if (!mesh) return null;
   const rig = new CharacterRig(std.root, std.bones, opts.library);
   std.root.position.set(opts.x, 0, opts.z);

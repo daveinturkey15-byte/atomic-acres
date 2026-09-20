@@ -81,8 +81,13 @@ export class CharacterSystem {
    *   The one interaction worth knowing: mesh.ts's counter still advances on a
    *   pinned spawn, so MIXING pinned and unpinned spawns shifts which dress the
    *   unpinned ones get. Pin all of them or none of them.
+   *
+   *   @param weaponId the actor's real primary (host kit / bot arsenal /
+   *   loadout declaration) for authored figures; resolved to its family
+   *   archetype with a rifle fallback. Omit it and the figure carries the
+   *   rifle archetype — existing callers are byte-for-byte unchanged.
    */
-  spawn(x: number, z: number, yaw = 0, scale = 1, faction?: 0 | 1): CharacterHandle {
+  spawn(x: number, z: number, yaw = 0, scale = 1, faction?: 0 | 1, weaponId?: string): CharacterHandle {
     const std = buildStandardSkeleton();
     const all = this.dress.factions;
     const dress = faction !== undefined && all && all.length > 0
@@ -97,7 +102,7 @@ export class CharacterSystem {
     let wornFaction: 0 | 1 | null = faction ?? null;
     if (isAuthoredOperatorEnabled()) {
       const f = (faction ?? ((this.authoredTeams++ % 2) as 0 | 1)) as 0 | 1;
-      mesh = dressAuthored(std.root, std.bones, dress, f);
+      mesh = dressAuthored(std.root, std.bones, dress, f, weaponId);
       if (mesh) wornFaction = f;
     }
     if (!mesh) mesh = dressProcedural(std.root, std.bones, dress);
