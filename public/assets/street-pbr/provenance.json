@@ -1,0 +1,117 @@
+{
+  "lane": "road-pbr-0558",
+  "recorded": "2026-09-20",
+  "recordedBy": "Antigravity road-pbr-0558 lane (dave-gaming-pc)",
+  "sourceLicense": "CC0-1.0 (Public Domain Dedication)",
+  "outputAssetLicense": "CC0-1.0 (Public Domain Dedication)",
+  "codeLicense": "MIT",
+  "sources": [
+    {
+      "id": "asphalt_02",
+      "provider": "Poly Haven",
+      "author": "Rob Tuytel",
+      "sourcePage": "https://polyhaven.com/a/asphalt_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "nativePhysicalTileMetres": 3.0,
+      "role": "street asphalt ground response (turning circle, road strip, tail)",
+      "targetUvMetresPerUnit": 40.0,
+      "calculatedRepeat": 13.333333333333334,
+      "normalScale": 0.6,
+      "roughness": 1.0,
+      "metalness": 0.0,
+      "measuredResponse": {
+        "diffuseMeanRGB": [90.4, 89.8, 84.6],
+        "diffuseStdRGB": [23.1, 23.0, 23.0],
+        "roughnessMean": 0.77,
+        "roughnessStd": 17.0,
+        "roughnessMin": 0.29,
+        "roughnessMax": 1.00
+      },
+      "maps": [
+        {
+          "file": "asphalt_diff_1k.jpg",
+          "colorSpace": "sRGB",
+          "bytes": 731707,
+          "sha256": "1aa5ce99f58a625c71d48cfc3e68b65ca85ccb00f39e045c0a928608a0ea25ed",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_diff_1k.jpg",
+          "dimensions": [1024, 1024]
+        },
+        {
+          "file": "asphalt_nor_gl_1k.jpg",
+          "colorSpace": "linear (OpenGL tangent, +Y up)",
+          "bytes": 1240122,
+          "sha256": "42a1c381b53204e83a982db2864479a30bc127bbdeebb1006f8ee51bff099df3",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_nor_gl_1k.jpg",
+          "dimensions": [1024, 1024]
+        },
+        {
+          "file": "asphalt_rough_1k.jpg",
+          "colorSpace": "linear",
+          "bytes": 544032,
+          "sha256": "70ba3edc65525eb4dc366cf010ca7ae0bd34e0251ff0225c2dad627a873d0712",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_rough_1k.jpg",
+          "dimensions": [1024, 1024]
+        }
+      ]
+    },
+    {
+      "id": "concrete_pavement_02",
+      "provider": "Poly Haven",
+      "author": "Charlotte Baglioni",
+      "sourcePage": "https://polyhaven.com/a/concrete_pavement_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "nativePhysicalTileMetres": 1.8,
+      "role": "pavement slabs and concrete surround ground response",
+      "targetUvMetresPerUnit": 67.2,
+      "calculatedRepeat": 37.333333333333336,
+      "normalScale": 0.7,
+      "roughness": 1.0,
+      "metalness": 0.0,
+      "measuredResponse": {
+        "diffuseMeanRGB": [134.1, 123.0, 110.7],
+        "diffuseStdRGB": [15.6, 15.5, 16.1],
+        "roughnessMean": 0.78,
+        "roughnessStd": 6.0,
+        "roughnessMin": 0.68,
+        "roughnessMax": 0.95
+      },
+      "maps": [
+        {
+          "file": "pavement_diff_1k.jpg",
+          "colorSpace": "sRGB",
+          "bytes": 1052909,
+          "sha256": "e129ee6b59b6ed7f65b4c4c5ba9eb583d13d040ec26bef5d5d4e0080fe342e7a",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_02/concrete_pavement_02_diff_1k.jpg",
+          "dimensions": [1024, 1024]
+        },
+        {
+          "file": "pavement_nor_gl_1k.jpg",
+          "colorSpace": "linear (OpenGL tangent, +Y up)",
+          "bytes": 1212387,
+          "sha256": "26c09320b3373da7f55edb8165562f16d36c07161c9c715787a09daf5910450c",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_02/concrete_pavement_02_nor_gl_1k.jpg",
+          "dimensions": [1024, 1024]
+        },
+        {
+          "file": "pavement_rough_1k.jpg",
+          "colorSpace": "linear",
+          "bytes": 541803,
+          "sha256": "966ee3d1a6d343e5e72d5536fde7c04ecd32e6e95efc879a102effc527f5b679",
+          "sourceUrl": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_02/concrete_pavement_02_rough_1k.jpg",
+          "dimensions": [1024, 1024]
+        }
+      ]
+    }
+  ],
+  "budgets": {
+    "mapCount": 6,
+    "mapCountLimit": 6,
+    "dimensions": [1024, 1024],
+    "maxDimension": 2048,
+    "totalBytes": 5322960,
+    "totalBytesLimit": 8388608,
+    "withinLimits": true
+  }
+}

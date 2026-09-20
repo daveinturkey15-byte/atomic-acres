@@ -16,6 +16,16 @@
  * 3. No per-frame allocation. Every vector the frame loop touches is preallocated; the
  *    smoke uniform arrays are mutated in place; presets are frozen objects built once.
  *
+ * 4. LIGHTING MODE (?lighting=authored; world.ts parses it and passes it here). The
+ *    LEGACY table reproduces the shipped look and is the default; the AUTHORED table
+ *    re-derives the noon/clear row against docs/night/VISUAL-BAR.md ("hard, high,
+ *    slightly-warm afternoon sun; crisp shadow edges; strong blue skylight in the
+ *    shade"): ~57 deg sun elevation (was 34), deeper blue hemisphere fill, an
+ *    HDR half-float environment whose sun disc is no longer byte-clipped at 1.0,
+ *    and a dome ramp biased to a deep zenith. Both tables drive the SAME three
+ *    lights and the SAME uniform set - a mode is a table of numbers, never a
+ *    topology change (PASS 82 holds in both).
+ *
  * THE FOG PASS (design, ten lines)
  *   a. Scene depth -> view position -> world ray, through uniform(camera.matrixWorld) and
  *      uniform(camera.position): the chain renders a QuadMesh, so the TSL built-ins
@@ -143,6 +153,10 @@ export interface TodPreset {
   readonly inscatter: number;
   readonly inscatterPower: number;
   readonly exposure: number;
+  /** Dome/env horizon->zenith ramp bias. Legacy 0.85 (pale-biased); authored 1.55 (deep zenith, structure near the horizon). */
+  readonly rampBias: number;
+  /** Dome/env horizon haze band half-height. Legacy 0.3; authored 0.22. */
+  readonly horizonBand: number;
 }
 
 const v3 = (x: number, y: number, z: number): THREE.Vector3 => new THREE.Vector3(x, y, z).normalize();
@@ -159,7 +173,7 @@ const NOON_FILL = lightCol(PAL.skyTop).offsetHSL(0.02, 0.04, -0.02);
  */
 export const SUN_TARGET = new THREE.Vector3((BOUND_X_MIN + BOUND_X_MAX) / 2, 0, 0);
 const NOON_SUN_POS = new THREE.Vector3(58, 72, -92);
-const SUN_DIST = NOON_SUN_POS.distanceTo(SUN_TARGET);
+export const SUN_DIST = NOON_SUN_POS.distanceTo(SUN_TARGET);
 const NOON_SUN_DIR = NOON_SUN_POS.clone().sub(SUN_TARGET).normalize();
 
 export const TOD_PRESETS: Readonly<Record<TodName, TodPreset>> = Object.freeze({
@@ -175,6 +189,7 @@ export const TOD_PRESETS: Readonly<Record<TodName, TodPreset>> = Object.freeze({
     fogColor: lightCol(PAL.fog), fogDensity: 0.0016, fogHeight: 1e5,
     inscatter: 0.0, inscatterPower: 8,
     exposure: 1.09,
+    rampBias: 0.85, horizonBand: 0.3,
   }),
   morning: Object.freeze({
     name: 'morning',
@@ -187,6 +202,7 @@ export const TOD_PRESETS: Readonly<Record<TodName, TodPreset>> = Object.freeze({
     fogColor: lightCol(PAL.fogMorning), fogDensity: 0.0021, fogHeight: 45,
     inscatter: 0.35, inscatterPower: 6,
     exposure: 1.06,
+    rampBias: 0.85, horizonBand: 0.3,
   }),
   goldenHour: Object.freeze({
     name: 'goldenHour',
@@ -199,6 +215,7 @@ export const TOD_PRESETS: Readonly<Record<TodName, TodPreset>> = Object.freeze({
     fogColor: lightCol(PAL.fogGolden), fogDensity: 0.0022, fogHeight: 60,
     inscatter: 0.6, inscatterPower: 5,
     exposure: 1.02,
+    rampBias: 0.85, horizonBand: 0.3,
   }),
   dusk: Object.freeze({
     name: 'dusk',
@@ -211,6 +228,7 @@ export const TOD_PRESETS: Readonly<Record<TodName, TodPreset>> = Object.freeze({
     fogColor: lightCol(PAL.fogDusk), fogDensity: 0.0026, fogHeight: 50,
     inscatter: 0.7, inscatterPower: 4,
     exposure: 0.96,
+    rampBias: 0.85, horizonBand: 0.3,
   }),
   overcastNoon: Object.freeze({
     name: 'overcastNoon',
@@ -223,8 +241,63 @@ export const TOD_PRESETS: Readonly<Record<TodName, TodPreset>> = Object.freeze({
     fogColor: lightCol(PAL.fogOvercast), fogDensity: 0.0032, fogHeight: 80,
     inscatter: 0.15, inscatterPower: 3,
     exposure: 1.05,
+    rampBias: 0.85, horizonBand: 0.3,
   }),
 });
+
+// ---------------------------------------------------------------------------
+// Lighting mode gate: legacy (default, the shipped numbers) vs authored
+// ---------------------------------------------------------------------------
+
+export type LightingMode = 'legacy' | 'authored';
+
+/** `?lighting=authored` enables the authored table; any absent or other value is legacy. */
+export function lightingModeFromQuery(search: string): LightingMode {
+  try {
+    const v = new URLSearchParams(search).get('lighting')?.toLowerCase();
+    return v === 'authored' ? 'authored' : 'legacy';
+  } catch {
+    return 'legacy';
+  }
+}
+
+/**
+ * The authored noon/clear row (2026-09-20 lighting overhaul). The bar's fixed light
+ * condition is a hard, high, slightly-warm afternoon sun at about 60 deg elevation;
+ * the legacy sun sat at 34 deg. This row keeps the legacy compass bearing and raises
+ * the sun to 57 deg, warms the key, deepens and cools the hemisphere so shade reads
+ * blue instead of grey, and pushes the environment to half-float HDR so chrome,
+ * glass and paint reflect a real sun disc (85 linear, vs the byte clamp at 1.0).
+ * Every other row of the table is the legacy row untouched.
+ */
+const AUTHORED_NOON: TodPreset = Object.freeze({
+  name: 'noon',
+  sunDir: v3(0.2811, 0.8377, -0.468), // 57 deg elevation, legacy compass bearing
+  skySunDir: v3(0.45, 0.55, -0.7),
+  sunColor: lightCol(PAL.sunColor).offsetHSL(-0.012, 0.1, -0.012),
+  sunIntensity: 3.6,
+  hemiSky: lightCol(PAL.skyTop).offsetHSL(0, 0.18, -0.085),
+  hemiGround: lightCol(PAL.bounce).offsetHSL(0.01, 0.06, -0.02),
+  hemiIntensity: 0.68,
+  fillColor: NOON_FILL, fillIntensity: 0.18, fillPos: new THREE.Vector3(-70, 40, 80),
+  skyTop: skyCol(PAL.skyTop).offsetHSL(0, 0.16, -0.09),
+  skyHorizon: skyCol(PAL.skyHorizon), skySun: skyCol(PAL.sunColor),
+  glowBroad: 0.22, glowCore: 0.85, envDisc: 85, envGround: 1.0, envIntensity: 0.95,
+  fogColor: lightCol(PAL.fog), fogDensity: 0.0016, fogHeight: 1e5,
+  inscatter: 0.0, inscatterPower: 8,
+  exposure: 1.05,
+  rampBias: 1.55, horizonBand: 0.22,
+});
+
+/** The authored table: only noon is re-authored; TOD and weather remain whole. */
+export const TOD_PRESETS_AUTHORED: Readonly<Record<TodName, TodPreset>> = Object.freeze({
+  ...TOD_PRESETS,
+  noon: AUTHORED_NOON,
+});
+
+export function todPresetsFor(mode: LightingMode): Readonly<Record<TodName, TodPreset>> {
+  return mode === 'authored' ? TOD_PRESETS_AUTHORED : TOD_PRESETS;
+}
 
 /**
  * Weather is a MODIFIER over the time-of-day row, so every preset x weather pair exists
@@ -271,6 +344,7 @@ export const MAX_SMOKE = 16;
 
 export interface AtmosphereUniforms {
   skyTop: UC; skyHorizon: UC; skySun: UC; skySunDir: UV3; glowBroad: UF; glowCore: UF;
+  rampBias: UF; horizonBand: UF;
   fogColor: UC; fogDensity: UF; fogHeight: UF; inscatter: UF; inscatterPower: UF;
   sunDir: UV3;
   /** Sun colour without intensity (the in-scatter tint) and with it (the smoke key). */
@@ -293,6 +367,8 @@ export function createAtmosphereUniforms(): AtmosphereUniforms {
     skySunDir: uniform(p.skySunDir.clone()),
     glowBroad: uniform(p.glowBroad),
     glowCore: uniform(p.glowCore),
+    rampBias: uniform(p.rampBias),
+    horizonBand: uniform(p.horizonBand),
     fogColor: uniform(p.fogColor.clone()),
     fogDensity: uniform(p.fogDensity),
     fogHeight: uniform(p.fogHeight),
@@ -316,8 +392,13 @@ export function createAtmosphereUniforms(): AtmosphereUniforms {
 // The env bake - the same sky as the dome, once per preset switch
 // ---------------------------------------------------------------------------
 
-// 512x256: one-time CPU bake plus a 512 KiB upload, zero per-frame cost. 256x128
-// smeared the sun glow over ~1.4 deg/texel; chrome and glazing need a tighter hot spot.
+// 512x256: one-time CPU bake, zero per-frame cost. 256x128 smeared the sun glow over
+// ~1.4 deg/texel; chrome and glazing need a tighter hot spot. The byte format follows
+// the boot-time lighting mode: legacy keeps the original RGBA8/Uint8 environment
+// byte-for-byte; authored uploads half-float (1 MiB, WebGL2
+// OES_texture_half_float_linear) so the sun disc carries real linear energy (~85)
+// instead of clipping at the RGBA8 1.0 ceiling - the authored mode's specular
+// response comes from exactly that headroom.
 export const ENV_W = 512;
 export const ENV_H = 256;
 
@@ -330,22 +411,30 @@ function smoothstepCpu(edge0: number, edge1: number, x: number): number {
 const PAVING_LIN = skyCol(PAL.pavingWarm);
 const BOUNCE_LIN = skyCol(PAL.bounce);
 const _bakeDir = new THREE.Vector3();
+/** Scratch for apply()'s rain tint: removes the last allocation on a preset switch. */
+const _rainScratch = new THREE.Color();
 
 /**
- * Bakes the equirect into `data` (RGBA8, ENV_W x ENV_H): the same sky ramp, sun glow
- * and horizon haze as the visible dome, plus the env-only hot disc the byte texture
- * clips to white so chrome and glass glint; below the horizon a paving -> bounce
- * gradient (grazing rays see the pale surround, steep rays the dirt) scaled by
- * envGround. Linear values (NoColorSpace): lighting input, never tone-mapped. Texel
+ * Bakes the equirect into `data` (RGBA, ENV_W x ENV_H; Uint8Array in legacy mode,
+ * Uint16Array half-float in authored): the same sky ramp, sun glow and horizon haze
+ * as the visible dome, plus the env-only hot disc; below the horizon a paving ->
+ * bounce gradient (grazing rays see the pale surround, steep rays the dirt) scaled
+ * by envGround. A Uint8Array target reproduces the original RGBA8 bake BYTE FOR BYTE
+ * (round-to-byte, clip at 255) - the shipped environment, never re-coded through
+ * half-float; a Uint16Array target is the authored bake, keeping the linear value
+ * under a 96.0 ceiling so the disc carries real energy. The target type is fixed by
+ * the boot-time lighting mode (see createEnvironmentTexture); it never changes
+ * mid-run. Linear values (NoColorSpace): lighting input, never tone-mapped. Texel
  * (x, y) holds the radiance for the direction three samples it with:
  * u = atan(z, x)/2PI + 0.5, v = asin(y)/PI + 0.5. ~131k texels of scalar math per
  * switch; the cost is reported by `bakeMs()`.
  */
-export function bakeEnvironmentInto(data: Uint8Array, e: EffectiveState): void {
+export function bakeEnvironmentInto(data: Uint8Array | Uint16Array, e: EffectiveState): void {
   const top = e.skyTop, horizon = e.skyHorizon, sun = e.skySun;
   const d = _bakeDir;
   const sd = e.skySunDir;
   const g = e.envGround;
+  const cap = e.hdr ? 96 : 1;
   for (let y = 0; y < ENV_H; y++) {
     const v = (y + 0.5) / ENV_H;
     const el = (v - 0.5) * Math.PI;
@@ -377,17 +466,36 @@ export function bakeEnvironmentInto(data: Uint8Array, e: EffectiveState): void {
         b += (horizon.b * 1.02 - b) * hz;
       }
       const o = (y * ENV_W + x) * 4;
-      data[o] = Math.min(255, Math.round(r * 255));
-      data[o + 1] = Math.min(255, Math.round(gg * 255));
-      data[o + 2] = Math.min(255, Math.round(b * 255));
-      data[o + 3] = 255;
+      if (data instanceof Uint8Array) {
+        // Legacy: the original RGBA8 bake, byte for byte (round to byte, clip at 255).
+        data[o] = Math.min(255, Math.round(r * 255));
+        data[o + 1] = Math.min(255, Math.round(gg * 255));
+        data[o + 2] = Math.min(255, Math.round(b * 255));
+        data[o + 3] = 255;
+      } else {
+        // Authored: the linear value under a half-float-safe ceiling (HDR sun disc).
+        data[o] = THREE.DataUtils.toHalfFloat(Math.min(cap, r));
+        data[o + 1] = THREE.DataUtils.toHalfFloat(Math.min(cap, gg));
+        data[o + 2] = THREE.DataUtils.toHalfFloat(Math.min(cap, b));
+        data[o + 3] = THREE.DataUtils.toHalfFloat(1);
+      }
     }
   }
 }
 
-/** The env texture world.ts hands to the scene; the bytes are (re)filled by `apply`. */
-export function createEnvironmentTexture(): THREE.DataTexture {
-  const tex = new THREE.DataTexture(new Uint8Array(ENV_W * ENV_H * 4), ENV_W, ENV_H, THREE.RGBAFormat);
+/**
+ * The env texture world.ts hands to the scene; `apply` (re)fills its bytes. The mode
+ * is fixed at boot: legacy (the default) keeps the original RGBA8/UnsignedByte
+ * environment, byte-exact with the shipped build; authored uses the HalfFloat HDR
+ * one. The object and its byte type never change for the life of the boot - modes
+ * are not switched mid-run, so there is no type transition to manage.
+ */
+export function createEnvironmentTexture(mode: LightingMode = 'legacy'): THREE.DataTexture {
+  const tex = mode === 'authored'
+    ? new THREE.DataTexture(
+      new Uint16Array(ENV_W * ENV_H * 4), ENV_W, ENV_H, THREE.RGBAFormat, THREE.HalfFloatType,
+    )
+    : new THREE.DataTexture(new Uint8Array(ENV_W * ENV_H * 4), ENV_W, ENV_H, THREE.RGBAFormat);
   tex.mapping = THREE.EquirectangularReflectionMapping;
   tex.colorSpace = THREE.LinearSRGBColorSpace;
   tex.magFilter = THREE.LinearFilter;
@@ -411,6 +519,9 @@ export interface EffectiveState {
   glowBroad: number; glowCore: number; envDisc: number; envGround: number; envIntensity: number;
   fogColor: THREE.Color; fogDensity: number; fogHeight: number; inscatter: number; inscatterPower: number;
   exposure: number; shadowIntensity: number; wetness: number; rain: number;
+  rampBias: number; horizonBand: number;
+  /** Authored mode: the env bake keeps linear values above 1.0 (HDR sun disc). */
+  hdr: boolean;
 }
 
 function newEffective(): EffectiveState {
@@ -423,6 +534,7 @@ function newEffective(): EffectiveState {
     glowBroad: 0, glowCore: 0, envDisc: 0, envGround: 1, envIntensity: 1,
     fogColor: new THREE.Color(), fogDensity: 0, fogHeight: 1e5, inscatter: 0, inscatterPower: 8,
     exposure: 1, shadowIntensity: 1, wetness: 0, rain: 0,
+    rampBias: 0.85, horizonBand: 0.3, hdr: false,
   };
 }
 
@@ -452,6 +564,8 @@ export function resolveEffective(out: EffectiveState, p: TodPreset, w: WeatherMo
   out.inscatter = p.inscatter * w.inscatter;
   out.inscatterPower = p.inscatterPower;
   out.exposure = p.exposure * w.exposure;
+  out.rampBias = p.rampBias;
+  out.horizonBand = p.horizonBand;
   out.shadowIntensity = w.shadow;
   out.wetness = w.wetness;
   out.rain = w.rain;
@@ -835,6 +949,8 @@ export interface Atmosphere {
   readonly uniforms: AtmosphereUniforms;
   tod(): TodName;
   weather(): WeatherName;
+  /** Which preset table this rig drives (the `?lighting=` gate). */
+  lightingMode(): LightingMode;
   set(tod: TodName): boolean;
   setWeather(w: WeatherName): boolean;
   /** Configure once after static builders; never traverses geometry per frame. */
@@ -880,9 +996,13 @@ const _lightView = new THREE.Matrix4();
 const _corner = new THREE.Vector3();
 const _up = new THREE.Vector3(0, 1, 0);
 
-export function createAtmosphere(rig: AtmosphereRig, initialTod: TodName = 'noon', initialWeather: WeatherName = 'clear'): Atmosphere {
+export function createAtmosphere(
+  rig: AtmosphereRig, initialTod: TodName = 'noon', initialWeather: WeatherName = 'clear',
+  mode: LightingMode = 'legacy',
+): Atmosphere {
   const u = rig.uniforms;
   const eff = newEffective();
+  const table = todPresetsFor(mode);
   let tod: TodName = initialTod;
   let weather: WeatherName = initialWeather;
   let lastBakeMs = 0;
@@ -890,7 +1010,7 @@ export function createAtmosphere(rig: AtmosphereRig, initialTod: TodName = 'noon
   const rainShelter = new RainShelter();
   const rain = makeRain(u, rainShelter);
   rig.scene.add(rain);
-  const envData = rig.envTex.image.data as Uint8Array;
+  const envData = rig.envTex.image.data as Uint8Array | Uint16Array;
   const sc = rig.sun.shadow.camera;
   // the frozen square world.ts fitted for the noon sun: never tightened, only widened
   const squareHalf = sc.right;
@@ -921,7 +1041,8 @@ export function createAtmosphere(rig: AtmosphereRig, initialTod: TodName = 'noon
   };
 
   const apply = (): void => {
-    resolveEffective(eff, TOD_PRESETS[tod], WEATHER[weather]);
+    resolveEffective(eff, table[tod], WEATHER[weather]);
+    eff.hdr = mode === 'authored';
     // lights: the same three objects, new numbers
     rig.sun.color.copy(eff.sunColor);
     rig.sun.intensity = eff.sunIntensity;
@@ -938,6 +1059,7 @@ export function createAtmosphere(rig: AtmosphereRig, initialTod: TodName = 'noon
     u.skyTop.value.copy(eff.skyTop); u.skyHorizon.value.copy(eff.skyHorizon); u.skySun.value.copy(eff.skySun);
     u.skySunDir.value.copy(eff.skySunDir);
     u.glowBroad.value = eff.glowBroad; u.glowCore.value = eff.glowCore;
+    u.rampBias.value = eff.rampBias; u.horizonBand.value = eff.horizonBand;
     u.fogColor.value.copy(eff.fogColor);
     u.fogDensity.value = eff.fogDensity; u.fogHeight.value = eff.fogHeight;
     u.inscatter.value = eff.inscatter; u.inscatterPower.value = eff.inscatterPower;
@@ -945,7 +1067,7 @@ export function createAtmosphere(rig: AtmosphereRig, initialTod: TodName = 'noon
     u.sunTint.value.copy(eff.sunColor);
     u.sunLin.value.copy(eff.sunColor).multiplyScalar(eff.sunIntensity * 0.22);
     u.ambientLin.value.copy(eff.hemiSky).lerp(eff.hemiGround, 0.4).multiplyScalar(eff.hemiIntensity * 0.35);
-    u.rainTint.value.copy(eff.skyHorizon).multiplyScalar(0.9).add(u.sunLin.value.clone().multiplyScalar(0.15));
+    u.rainTint.value.copy(eff.skyHorizon).multiplyScalar(0.9).add(_rainScratch.copy(u.sunLin.value).multiplyScalar(0.15));
     // env: re-bake once into the same texture; the PMREM regenerates on its version bump
     const t0 = performance.now();
     bakeEnvironmentInto(envData, eff);
@@ -967,8 +1089,9 @@ export function createAtmosphere(rig: AtmosphereRig, initialTod: TodName = 'noon
     uniforms: u,
     tod: () => tod,
     weather: () => weather,
+    lightingMode: () => mode,
     set(name) {
-      if (!(name in TOD_PRESETS)) return false;
+      if (!(name in table)) return false;
       tod = name; apply(); return true;
     },
     setWeather(name) {
@@ -1040,7 +1163,8 @@ function installQA(api: Atmosphere): void {
       set: (n: string) => api.set(n as TodName),
       weather: (n: string) => api.setWeather(n as WeatherName),
       state: () => ({
-        tod: api.tod(), weather: api.weather(), lights: api.lightCount(), bakeMs: +api.bakeMs().toFixed(2),
+        tod: api.tod(), weather: api.weather(), lighting: api.lightingMode(),
+        lights: api.lightCount(), bakeMs: +api.bakeMs().toFixed(2),
         smokes: api.smoke.count(), shadow: api.shadowFit(),
       }),
       presets: TOD_NAMES,

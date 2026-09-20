@@ -232,7 +232,11 @@
 }
 
 /* -------------------------------------------------------------------------- */
-/* Killstreak Strip (Bottom-Centre)                                           */
+/* Killstreak Strip (Bottom-Centre): ladder readout + one card per slot        */
+/* Four honest states, no color-only meaning (each state also carries text):   */
+/* ready = amber edge + READY ×N + press hint; locked = NEED n KILLS + bar;    */
+/* spent = NEXT CYCLE; unavailable = NOT IN THIS BUILD / REWARD DROP ONLY.     */
+/* Motion: transition opacity/border/background only, no keyframes.            */
 /* -------------------------------------------------------------------------- */
 #hud .hud-streak {
   position: fixed;
@@ -240,44 +244,162 @@
   bottom: max(20px, env(safe-area-inset-bottom, 20px));
   transform: translateX(-50%);
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 6px;
-  font-size: 11px;
-  background: rgba(8, 12, 18, 0.82);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 3px;
-  padding: 4px 12px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  max-width: 96vw;
   z-index: 5;
 }
 
-#hud .hud-streak-kills {
-  font-size: 18px;
-  font-weight: 800;
-  min-width: 22px;
-  text-align: right;
-  color: #ffd9a8;
-  font-family: ui-monospace, Menlo, Consolas, monospace;
-  margin-right: 4px;
+#hud .hud-streak-ladder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 12, 18, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  padding: 5px 12px;
+  min-width: 64px;
 }
 
-#hud .hud-streak-slot {
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  padding: 3px 8px;
-  opacity: 0.6;
-  text-transform: uppercase;
-  font-weight: 600;
-  letter-spacing: 0.8px;
+#hud .hud-streak-kills {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  min-width: 22px;
+  text-align: right;
+  color: var(--aa-ink, #f0ece2);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+#hud .hud-streak-kills-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+#hud .hud-streak-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(8, 12, 18, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-left: 3px solid rgba(255, 255, 255, 0.16);
+  border-radius: 3px;
+  padding: 5px 10px;
+  min-width: 158px;
+  text-align: left;
+  opacity: 0.85;
   transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-#hud .hud-streak-slot.hud-streak-ready {
+#hud .hud-streak-key {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  line-height: 22px;
+  text-align: center;
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--aa-ink, #f0ece2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+#hud .hud-streak-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+#hud .hud-streak-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  color: var(--aa-ink, #f0ece2);
+}
+
+#hud .hud-streak-state {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  white-space: nowrap;
+  color: rgba(240, 236, 226, 0.78);
+  text-transform: uppercase;
+}
+
+#hud .hud-streak-hint {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.8px;
+  white-space: nowrap;
+  color: rgba(255, 217, 168, 0.95);
+  text-transform: uppercase;
+}
+
+#hud .hud-streak-bar {
+  display: block;
+  height: 3px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+
+#hud .hud-streak-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--aa-accent, #ff9c4a);
+  opacity: 0.75;
+  transform-origin: left center;
+  transform: scaleX(0);
+}
+
+/* READY: the one loud state — amber edge, bright key, press hint. */
+#hud .hud-streak-card.hud-streak-ready {
   opacity: 1;
+  border-color: rgba(255, 156, 74, 0.55);
+  border-left-color: var(--aa-accent, #ff9c4a);
+  background: rgba(255, 156, 74, 0.14);
+}
+#hud .hud-streak-card.hud-streak-ready .hud-streak-key {
   border-color: var(--aa-accent, #ff9c4a);
   color: #ffd9a8;
-  background: rgba(255, 156, 74, 0.22);
+  background: rgba(255, 156, 74, 0.18);
 }
+#hud .hud-streak-card.hud-streak-ready .hud-streak-state { color: #ffd9a8; }
+
+/* LOCKED: quiet, with honest progress. */
+#hud .hud-streak-card.hud-streak-locked { opacity: 0.75; }
+
+/* SPENT: dimmest live state; the banner already announced the activation. */
+#hud .hud-streak-card.hud-streak-spent { opacity: 0.5; }
+#hud .hud-streak-card.hud-streak-spent .hud-streak-bar-fill { opacity: 0.3; }
+
+/* UNAVAILABLE: clearly not pressable — dashed key, no bar fill expected. */
+#hud .hud-streak-card.hud-streak-off { opacity: 0.4; }
+#hud .hud-streak-card.hud-streak-off .hud-streak-key {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.3);
+  color: rgba(240, 236, 226, 0.6);
+  background: none;
+}
+#hud .hud-streak-card.hud-streak-off .hud-streak-name { color: rgba(240, 236, 226, 0.7); }
+
+/* Reduced motion: the strip only transitions, so switching transitions off is
+   the whole story (settings trio + OS preference). */
+@media (prefers-reduced-motion: reduce) {
+  #hud .hud-streak-card { transition: none; }
+}
+#hud.hud-reduced-motion .hud-streak-card { transition: none; }
 
 /* -------------------------------------------------------------------------- */
 /* Minimap Radar (Top-Left)                                                   */
@@ -637,7 +759,13 @@
 }
 
 @media (max-width: 768px) {
-  #hud .hud-streak { bottom: 190px; }
+  #hud .hud-streak { bottom: 190px; gap: 4px; }
+  #hud .hud-streak-card { min-width: 128px; padding: 4px 7px; gap: 6px; }
+  #hud .hud-streak-key { width: 20px; height: 20px; line-height: 18px; font-size: 13px; }
+  #hud .hud-streak-name { font-size: 11px; }
+  #hud .hud-streak-state, #hud .hud-streak-hint { font-size: 9px; letter-spacing: 0.8px; }
+  #hud .hud-streak-ladder { padding: 4px 9px; min-width: 52px; }
+  #hud .hud-streak-kills { font-size: 18px; }
   #hud .hud-ammo { font-size: 30px; }
   #hud .hud-hp-track { width: 120px; }
   #hud .hud-minimap { top: 78px; transform: scale(0.65); transform-origin: top left; }

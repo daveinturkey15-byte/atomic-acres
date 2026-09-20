@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { createWorld } from './core/world';
 import { buildMaterials } from './core/materials';
+import { installArchitecturalMaterials } from './core/architectural-materials';
 import { installReflectiveSurfaces } from './core/reflective-surfaces';
 import { makeRng, type AABB, type BuildContext, type Builder } from './core/kit';
 import { Player, type MoveMode } from './core/player';
@@ -51,6 +52,7 @@ import { preloadIndustrialBarrel } from './props/industrial-barrel';
 import { buildDesertTrees } from './build/desert-trees';
 import { preloadQuiverTree } from './props/quiver-tree';
 import { buildFacadeDetailCanary } from './build/facade-detail-canary';
+import { buildOrangeFacadeKitGated, isOrangeFacadeKitOptIn } from './build/orange-facade-kit';
 
 /** Facade detail canary opt-in: ?facade=canary only. Any absent or other value
  * keeps the baseline registry untouched. The __NT_OVERRIDE global exists so CPU
@@ -89,6 +91,15 @@ if (isFacadeDetailCanaryOptIn()) {
   BUILDERS.splice(3, 0, ['facade-detail-canary', buildFacadeDetailCanary]);
 }
 
+// Orange facade kit: opt-in dressing only (?facade-kit=canary). Without the
+// flag the registry above is untouched: zero extra draws, zero colliders, no
+// light, material or collider changes. Remove the entry to revert. Gated
+// wrapper falls back to an empty group on any load failure, so the baseline
+// house always survives. Independent batch tag 'orange-facade-kit'.
+if (isOrangeFacadeKitOptIn()) {
+  BUILDERS.splice(4, 0, ['orange-facade-kit', buildOrangeFacadeKitGated]);
+}
+
 // The one invariant, asserted rather than commented. From either back yard, facing
 // your own house, the garage is on your RIGHT - and because the houses are a 180
 // degree rotational pair, both must agree. A half-mirror breaks exactly this.
@@ -100,6 +111,7 @@ if (!handedness.every(Boolean)) {
 
 const world = createWorld(document.body);
 const mat = buildMaterials();
+await installArchitecturalMaterials(mat);
 installLawnCanaryQA(mat.lawn);
 const player = new Player(world.camera, world.renderer.domElement);
 

@@ -1,4 +1,4 @@
-# Visual overhaul — September 20
+# Visual overhaul â€” September 20
 
 VERIFIED owner priority: a substantial map-wide improvement in assets, UV/PBR surfaces, lighting and first-person arms/weapons. The overnight build remains below this bar. Frozen inspection build stays at http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2 while successors are tested separately.
 
@@ -12,7 +12,7 @@ VERIFIED owner priority: a substantial map-wide improvement in assets, UV/PBR su
 | AGY requested Gemini Flash 3.8 high | Distant mountain and skyline geometry | OPEN distance-overhaul-0605; actual model attribution UNKNOWN |
 | Two owner-authorized Astra xhigh specialists | Glass/reflections and hand/weapon motion plus geometry | See ASTRA-CONTRIBUTIONS-2026-09-20.md; implementation stops at 09:00 |
 
-VERIFIED accepted this morning: plaza batching saves 5–11 actual draw calls in paired views, with extra visible triangles in two views due to coarser culling. This is a modest performance change, not an art upgrade.
+VERIFIED accepted this morning: plaza batching saves 5â€“11 actual draw calls in paired views, with extra visible triangles in two views due to coarser culling. This is a modest performance change, not an art upgrade.
 
 VERIFIED rejected trials: glove material and carbine surface changes were too slight to meet the visual goal; both source/assets were restored. Muse pistol geometry failed actual bounds/contact checks. Failed trials remain preserved. Generated reference images and authored candidates are not counted as deployed 3D.
 
@@ -23,3 +23,7 @@ VERIFIED 06:39 review: AGY mountain geometry passed 21 CPU checks and eight WebG
 VERIFIED coach ownership code passed 54 focused CPU checks and actual GLB adoption (310 meshes, six materials, three textures). The actual candidate failed the unchanged 1,200 draw-call limit: 1,295 turningHead, 1,442 spawnA, 1,352 interiorOrange. Viewed coach also has poor wheel/front/window proportions. Rejected and root patch removed; preserve exact worker output and captures/gauntlet/coach/round-0642. A future attempt needs asset redesign and owned mesh batching, not just another loader repair.
 
 VERIFIED GLM lighting and HUD jobs hit their launcher time bounds with source partials retained. Muse lighting-finish-0638 and AGY streak-hud-finish-0638 now continue those exact partials. GLM road-real-proof-0636 and Muse facade-real-proof-0636 replace weak surrogate/static tests with real implementation checks. These are authoring lanes, not accepted improvements.
+
+VERIFIED 07:16BST: AGY road0558 plusGLM0636 actualcode15checks/negativecontrols acceptedforcandidate; fourpairedframes visiblyimproveaggregate/cracks, unchangedcalls. PolyHavenCC0 scans, noimagegenerationclaim. captures/gauntlet/street/round-0658. 210s combinedlighting/glazing/motion/hands/road soakpassesmemorygate .442MB/min JSfloor,52.6fpsaverage;60fpsOPEN.
+
+VERIFIED GLM0612+AGY0638/0655 HUD now hasactualid/fullnamebinding,34CPUadapterchecks pass. Actualbrowserready/useproofinAGY0712. Musefacadefinal0652 genuinegeometryenvelope/collisionCPU passes; currentGPUreview. MuseBlender mountains0714 failedNamespaceerror,2thread2GiBguard peakprivate211MiB; outputrecipe repair1active.

@@ -1,4 +1,4 @@
-# Astra contribution record — September 20
+# Astra contribution record â€” September 20
 
 VERIFIED authorization: Dave explicitly permitted two Astra xhigh implementation specialists until 09:00 Europe/London today. Both were dispatched as gpt-6-astra / xhigh. They self-stop by 08:58; the quarter-hour continuation checks enforce the 09:00 cutoff. Non-OpenAI authoring continues afterwards.
 
@@ -13,3 +13,9 @@ VERIFIED root's role remains orchestration, review, acceptance and mechanical in
 VERIFIED root review 06:39: shading passed eight matched-camera WebGPU frames, source/HTTP parity and zero console errors. House glass is clearer; vehicle glass remains too flat. Bounded visual repair 1 is assigned, including compatibility with the external half-float HDR lighting candidate. Initial candidate remains optional and unpromoted.
 
 VERIFIED motion source integrated as fa4c7f5, evidence 8f4ea3e. Root reran 6,970 controller frames and 172 exact action comparisons successfully. Seventeen real-game pose frames passed with zero console errors in captures/astra-motion-0634. Viewed rifle reload, prone and pistol reload show a visible tilt/reach change. Temporal playback and improved mesh acceptance remain OPEN. New hands r2 exceeded its fixed cuff envelope; preserve failure and return to passing r1 rather than attempt a third repair.
+
+VERIFIED 07:16BST: Astra glass repair1 is integrated (rootfd4a2f3,508d63c,439df6e), eight matching actualWebGPUframes pass0errors at captures/gauntlet/glazing/round-r1-0648. Viewed house/vehicle windows improve readability; approximation remains staticprobe+analytic cabin, not realtime reflection geometry.
+
+VERIFIED Astra pistol hand contact trajectory c033ade, evidenceed9dd26/b59a64a passes241reload,1205offhand,980stance samples;980minfloor34.981mm. Temporalobserver00e0803+d2b6239 failedentry0frames; notartacceptance. Observerrepairactive. Rifle/SMG/etc keep baselinegeometry; pistonrig only hands=rigged.
+
+VERIFIED Astra architecture nativec3d5504 ->root6158ab2:7materials4maps,13.33MiB decoded,0additionalcalls. CPU and8WebGPUframes pass; actualpixelsREJECT repeatedscallopedplaster and muddytimber. Visualrepair1active. No claimofmapwidevisualsuccess.

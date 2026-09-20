@@ -14,6 +14,11 @@
 import type { TeamId } from '../game/events';
 import { respawnText } from '../game/match';
 import type { HudNodes } from './hud-build';
+import {
+  projectStreakStrip,
+  streakSig,
+  type StreakCardState,
+} from './streak-presentation';
 
 /** One scoreboard row. `name` is the roster name; the HUD never invents one. */
 export interface ScoreRowView {
@@ -40,7 +45,16 @@ export interface ScoreView {
   readonly rows: readonly ScoreRowView[];
 }
 
+/**
+ * One pushed slot. `id` is the catalog streak id — supplied by `pushView`
+ * (ui/index.ts) so the strip can project cost, availability and activation
+ * from lane C's catalog; without it the card degrades to charge-count only
+ * (honest LOCKED/READY, no cost text). `label` is the roster name from the
+ * same name channel the scoreboard uses; the old truncated-id placeholder is
+ * gone.
+ */
 export interface StreakSlotView {
+  readonly id?: string;
   readonly label: string;
   readonly charges: number;
 }
@@ -62,6 +76,17 @@ function scoreSig(s: ScoreView): string {
   for (const r of s.rows) sig += r.id + r.team + r.kills + '/' + r.deaths + '/' + r.score + ';';
   return sig;
 }
+
+/** Card root class per projected state; the CSS reads these four only. */
+const STREAK_STATE_CLASS: Readonly<Record<StreakCardState, string>> = {
+  ready: 'hud-streak-ready',
+  locked: 'hud-streak-locked',
+  spent: 'hud-streak-spent',
+  unavailable: 'hud-streak-off',
+};
+const STREAK_STATE_CLASSES: readonly string[] = Object.keys(STREAK_STATE_CLASS).map(
+  (k) => STREAK_STATE_CLASS[k as StreakCardState],
+);
 
 export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
   // Seeded null, not a sentinel string: `null` means "nothing written yet", so
@@ -110,6 +135,12 @@ export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
       }
     },
 
+    /**
+     * The strip is a projection of the push through `streak-presentation.ts`:
+     * one signature gate, then text/class/transform writes onto cards built
+     * once in `hud-build.ts`. No node is ever created or destroyed here, and
+     * no state the wire does not carry (no active timer, no cooldown) is shown.
+     */
     setStreak(v: StreakHudView | null): void {
       if (v === null) {
         if (cStreak === '') return;
@@ -117,22 +148,31 @@ export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
         n.streak.classList.add('hud-hidden');
         return;
       }
-      let sig = String(v.kills);
-      for (const s of v.slots) sig += '|' + s.label + ':' + s.charges;
+      const sig = streakSig(v.kills, v.slots);
       if (sig === cStreak) return;
       cStreak = sig;
       n.streak.classList.remove('hud-hidden');
       n.streakKills.textContent = String(v.kills);
+      const cards = projectStreakStrip(v.slots, v.kills);
       for (let i = 0; i < n.streakSlots.length; i++) {
-        const el = n.streakSlots[i];
-        const s = v.slots[i];
-        if (!s) {
-          el.classList.add('hud-hidden');
+        const node = n.streakSlots[i];
+        const p = cards[i];
+        if (!p) {
+          node.root.classList.add('hud-hidden');
           continue;
         }
-        el.classList.remove('hud-hidden');
-        el.classList.toggle('hud-streak-ready', s.charges > 0);
-        el.textContent = s.charges > 1 ? s.label + ' x' + s.charges : s.label;
+        node.root.classList.remove('hud-hidden');
+        for (const cls of STREAK_STATE_CLASSES) {
+          node.root.classList.toggle(cls, cls === STREAK_STATE_CLASS[p.state]);
+        }
+        node.root.setAttribute('aria-label', p.aria);
+        node.key.textContent = p.key;
+        node.name.textContent = p.name;
+        node.state.textContent = p.stateText;
+        node.hint.textContent = p.hint ?? '';
+        node.hint.classList.toggle('hud-hidden', p.hint === null);
+        // scaleX, not width: the fill stays on the compositor (hud.ts motion rule).
+        node.barFill.style.transform = 'scaleX(' + (p.progress < 0 ? 0 : p.progress) + ')';
       }
     },
 

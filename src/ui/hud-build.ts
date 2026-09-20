@@ -18,8 +18,11 @@ import type { FeedDestination } from '../game/events';
 import { MAX_PLAYERS } from '../net/protocol';
 import { MAP_PX } from './layout';
 
-/** Five slots, as the old `KillstreakLoadoutV1`. Lane C owns their contents. */
-export const STREAK_SLOTS = 5;
+/** Four slots: `SLOT_COUNT` in `game/killstreaks/catalog.ts` (SLOT_TIERS) and the
+ * wire's `StreakSlotState[]` (loadout order) agree. The old 5 here was the
+ * retired KillstreakLoadoutV1 shape, which nothing pushes; slot 5 was built and
+ * then hidden forever. */
+export const STREAK_SLOTS = 4;
 
 export interface FeedPool {
   readonly rows: readonly HTMLElement[];
@@ -33,6 +36,16 @@ export interface ScoreRowNodes {
   readonly kills: HTMLElement;
   readonly deaths: HTMLElement;
   readonly score: HTMLElement;
+}
+
+/** One streak card, built once; `hud-match.ts` only writes text, classes and one transform. */
+export interface StreakCardNodes {
+  readonly root: HTMLElement;
+  readonly key: HTMLElement;
+  readonly name: HTMLElement;
+  readonly state: HTMLElement;
+  readonly hint: HTMLElement;
+  readonly barFill: HTMLElement;
 }
 
 export interface HudNodes {
@@ -62,7 +75,8 @@ export interface HudNodes {
   readonly respawn: HTMLElement;
   readonly streak: HTMLElement;
   readonly streakKills: HTMLElement;
-  readonly streakSlots: readonly HTMLElement[];
+  readonly streakKillsLabel: HTMLElement;
+  readonly streakSlots: readonly StreakCardNodes[];
   readonly mapCanvas: HTMLCanvasElement;
   readonly scoreboard: HTMLElement;
   readonly scoreRows: readonly ScoreRowNodes[];
@@ -169,15 +183,35 @@ export function buildHud(root: HTMLElement, crosshair: HTMLElement | null): HudN
   const respawn = el('div', 'hud-own hud-respawn hud-hidden');
   respawn.setAttribute('role', 'status');
 
-  // --- streak strip (bottom-centre) -----------------------------------------
+  // --- streak strip (bottom-centre): ladder readout + one card per slot -----
+  // Cards are structural, not text: key chip, name, state line, hint, bar.
+  // `hud-match.ts` projects the authoritative push through
+  // `streak-presentation.ts` onto these handles — text, classes and one
+  // scaleX transform only, never a rebuilt node.
   const streak = el('div', 'hud-own hud-streak hud-hidden');
+  streak.setAttribute('role', 'group');
+  streak.setAttribute('aria-label', 'Killstreaks');
+  const ladder = el('div', 'hud-streak-ladder');
   const streakKills = span('hud-streak-kills', '0');
-  streak.appendChild(streakKills);
-  const streakSlots: HTMLElement[] = [];
+  const streakKillsLabel = span('hud-streak-kills-label', 'KILLS');
+  ladder.append(streakKills, streakKillsLabel);
+  streak.appendChild(ladder);
+  const streakSlots: StreakCardNodes[] = [];
   for (let i = 0; i < STREAK_SLOTS; i++) {
-    const s = span('hud-streak-slot hud-hidden');
-    streak.appendChild(s);
-    streakSlots.push(s);
+    const card = el('div', 'hud-streak-card hud-hidden');
+    card.setAttribute('role', 'listitem');
+    const key = span('hud-streak-key');
+    const body = el('span', 'hud-streak-body');
+    const name = span('hud-streak-name');
+    const state = span('hud-streak-state');
+    const hint = span('hud-streak-hint hud-hidden');
+    const bar = el('span', 'hud-streak-bar');
+    const barFill = el('span', 'hud-streak-bar-fill');
+    bar.appendChild(barFill);
+    body.append(name, state, hint, bar);
+    card.append(key, body);
+    streak.appendChild(card);
+    streakSlots.push({ root: card, key, name, state, hint, barFill });
   }
 
   // --- minimap (top-left) ----------------------------------------------------
@@ -256,6 +290,7 @@ export function buildHud(root: HTMLElement, crosshair: HTMLElement | null): HudN
     respawn,
     streak,
     streakKills,
+    streakKillsLabel,
     streakSlots,
     mapCanvas,
     scoreboard,

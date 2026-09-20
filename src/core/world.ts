@@ -23,6 +23,14 @@
  * HERE are driven from it. The noon/clear default reproduces the numbers this file used
  * to hold inline. PASS 82 holds on every switch: the light SET never changes.
  *
+ * LIGHTING MODE (`?lighting=authored`, parsed here, resolved in atmosphere.ts): the
+ * legacy table keeps the shipped numbers; the authored table re-derives noon/clear
+ * against docs/night/VISUAL-BAR.md - ~57 deg sun (was 34), deeper blue shade fill,
+ * half-float HDR environment (the RGBA8 bake clipped its sun disc at 1.0, which is
+ * why chrome/glass/paint had no real specular), a dome ramp biased to a deep zenith,
+ * exposure 1.05. The initial light numbers below are read from the ACTIVE table so
+ * frame zero already matches the mode; apply() then re-writes the same values.
+ *
  * FOG: the scene carries no THREE.Fog on the WebGPU path. The haze is drawn by the post
  * chain (core/post.ts, from atmosphere.ts) on linear colour AFTER AO and SSR, so distant
  * occlusion is lifted by aerial perspective instead of being darkened under the fog. The
@@ -53,9 +61,14 @@ import {
   createAtmosphere,
   createAtmosphereUniforms,
   createEnvironmentTexture,
+  lightingModeFromQuery,
   parseAtmosphereQuery,
+  SUN_DIST,
+  SUN_TARGET,
+  todPresetsFor,
   type Atmosphere,
   type AtmosphereUniforms,
+  type LightingMode,
 } from './atmosphere';
 
 export interface World {
@@ -103,19 +116,22 @@ function makeSky(u: AtmosphereUniforms): THREE.Mesh {
   const sunDir = nn(u.skySunDir);
   const glowBroad = nn(u.glowBroad);
   const glowCore = nn(u.glowCore);
+  const rampBias = nn(u.rampBias);
+  const horizonBand = nn(u.horizonBand);
 
   const skyColor = Fn(() => {
     const d = normalize(positionWorld);
-    // horizon -> zenith ramp, biased so most of the visible sky is pale
+    // horizon -> zenith ramp. The bias is a uniform (legacy 0.85: most of the visible
+    // sky pale; authored 1.55: pale band hugging the horizon, deep zenith above), so
+    // a preset or mode moves the shape without touching the material.
     const h = clamp(d.y, 0, 1);
-    const disc = mix(horizonColor, topColor, pow(h, 0.85))
+    const disc = mix(horizonColor, topColor, pow(h, rampBias))
       // broad warm glow around the sun, plus a hotter core
       .add(sunColor.mul(pow(max(dot(d, sunDir), 0), 8).mul(glowBroad)))
       .add(sunColor.mul(pow(max(dot(d, sunDir), 0), 180).mul(glowCore)));
-    // Slight warm haze right at the horizon band. Edges ascending: identical to
-    // the old shader's reversed-edge smoothstep on every GPU (the smoothstep
-    // polynomial is symmetric), but well-defined instead of undefined behaviour.
-    const haze = oneMinus(smoothstep(float(-0.04), float(0.3), d.y));
+    // Slight warm haze right at the horizon band; band half-height is a uniform
+    // (legacy 0.3, authored 0.22). Edges ascending: well-defined on every GPU.
+    const haze = oneMinus(smoothstep(float(-0.04), horizonBand, d.y));
     return mix(disc, horizonColor.mul(1.02), haze);
   });
 
@@ -141,28 +157,35 @@ export function createWorld(canvasParent: HTMLElement): World {
   const sky = makeSky(uniforms);
   scene.add(sky);
 
+  // ---- lighting mode. Parsed once, BEFORE the environment exists; selects the preset
+  // table (legacy = the shipped numbers, authored = the VISUAL-BAR re-derivation) and
+  // the env texture format. Fixed for the whole boot: no mode switches mid-run, so
+  // the env texture object and its byte type never change.
+  const mode: LightingMode =
+    lightingModeFromQuery(typeof location !== 'undefined' ? location.search : '');
+
   // ---- environment map, baked from the same sky.
   // Without this every metalness>0.7 material (chrome bumpers, trim, steel) has no
   // indirect specular to reflect and renders near-BLACK. That is not a "dark metal"
   // look, it is a missing term. The node system prefilters the equirect for
   // roughness on the GPU, on both backends. The bytes are written by the atmosphere
-  // (once per preset switch); environmentIntensity 0.9 at noon: the byte-baked sun
-  // disc still clips to white so chrome/glass glints survive, but flat ambient wash
-  // drops and shade sits deeper.
-  const envTex = createEnvironmentTexture();
+  // (once per preset switch). LEGACY (the default) keeps the original RGBA8/Uint8
+  // environment byte-for-byte; AUTHORED uses HalfFloat so the sun disc keeps ~85
+  // linear and chrome, glass and paint reflect a real hot spot.
+  const envTex = createEnvironmentTexture(mode);
   scene.environment = envTex;
 
   const camera = new THREE.PerspectiveCamera(72, innerWidth / innerHeight, 0.08, 1400);
 
-  // ---- sun. High and slightly behind the +x end so the houses catch a raking light.
-  // Harsh desert noon per NT04/f-FKQOEO-1ceE-105 (hard warm key, crisp edges, cool
-  // sky fill in shade): the key stays warm (a nudge warmer than PAL.sunColor);
-  // shadow interiors go dark by starving the fills, never by touching exposure
-  // (still 1.09 in renderer.ts). Colour, intensity and position are re-applied by the
-  // atmosphere's noon preset with these exact numbers; other presets move them.
-  const sunTint = new THREE.Color(PAL.sunColor).offsetHSL(-0.008, 0.05, -0.004);
-  const sun = new THREE.DirectionalLight(sunTint, 3.35);
-  sun.position.set(58, 72, -92);
+  const boot0 = todPresetsFor(mode).noon;
+
+  // ---- sun. Numbers come from the ACTIVE preset row so frame zero equals frame one
+  // (apply() re-writes exactly these values into the same objects). Legacy noon: the
+  // historical (58, 72, -92) key, 34 deg elevation, crisp but raking. Authored noon:
+  // the same compass bearing raised to 57 deg with a warmer key, per the frozen bar's
+  // "hard, high, slightly-warm afternoon sun" light condition.
+  const sun = new THREE.DirectionalLight(boot0.sunColor.clone(), boot0.sunIntensity);
+  sun.position.copy(boot0.sunDir).multiplyScalar(SUN_DIST).add(SUN_TARGET);
   sun.castShadow = true;
   sun.shadow.mapSize.set(4096, 4096);
   sun.shadow.bias = -0.00022;
@@ -187,18 +210,17 @@ export function createWorld(canvasParent: HTMLElement): World {
   sun.target.position.set(cx, 0, 0);
   scene.add(sun);
   scene.add(sun.target);
-  // ---- fill. Cool sky above (skyTop family), warm bleached-concrete bounce below.
-  // Kept at 0.95 so occlusion — not ambient wash — carries the shadow interiors;
-  // the sniper frame's shaded terracotta sits deep while sunlit paving runs
-  // near-white, and that range needs starved shade, not raised exposure.
-  const hemi = new THREE.HemisphereLight(PAL.skyTop, PAL.bounce, 0.95);
+  // ---- fill. Cool sky above (the active row's hemiSky/hemiGround family), warm
+  // bleached-concrete bounce below. Legacy keeps 0.95; authored drops to 0.68 so
+  // occlusion - not ambient wash - carries the shadow interiors, and the deeper
+  // hemiSky tint makes shade read blue per the bar, never crushed.
+  const hemi = new THREE.HemisphereLight(boot0.hemiSky.clone(), boot0.hemiGround.clone(), boot0.hemiIntensity);
   hemi.position.set(0, 60, 0);
   scene.add(hemi);
   // A weak opposing fill so north-facing walls do not go to mud, kept low so that
-  // occlusion still does the work. Cooled a step past skyTop, capped at 0.25.
-  const fillTint = new THREE.Color(PAL.skyTop).offsetHSL(0.02, 0.04, -0.02);
-  const fill = new THREE.DirectionalLight(fillTint, 0.25);
-  fill.position.set(-70, 40, 80);
+  // occlusion still does the work (legacy 0.25, authored 0.18).
+  const fill = new THREE.DirectionalLight(boot0.fillColor.clone(), boot0.fillIntensity);
+  fill.position.copy(boot0.fillPos);
   fill.castShadow = false;
   scene.add(fill);
 
@@ -208,13 +230,13 @@ export function createWorld(canvasParent: HTMLElement): World {
   // `?tod=dusk&weather=rain&smoke=x,y,z[,r[,kind]]` pin a state for captures.
   const query = parseAtmosphereQuery(typeof location !== 'undefined' ? location.search : '');
   const atmosphere = createAtmosphere(
-    { scene, renderer, camera, sun, hemi, fill, envTex, uniforms }, query.tod, query.weather,
+    { scene, renderer, camera, sun, hemi, fill, envTex, uniforms }, query.tod, query.weather, mode,
   );
   for (const s of query.smoke) atmosphere.smoke.test(s.kind, s.x, s.y, s.z, s.r);
 
   // ---- post. Built once: buildPost probes the backend synchronously and lands
   // on the direct-render fallback (enabled:false) wherever the chain cannot run,
-  // so main.ts keeps calling renderer.render safely and render() here is the
+  // so main.ts keeps calling the direct scene path safely and render() here is the
   // post path. post.setSize forwards to the renderer, preserving resize.
   const post = buildPost(renderer, scene, camera, atmosphere);
   // Module-owned QA handle (like `__NTATMO`, `__NTANIM`, `__NTNET`): the atmosphere
@@ -230,7 +252,7 @@ export function createWorld(canvasParent: HTMLElement): World {
   if (!post.enabled) scene.fog = new THREE.FogExp2(PAL.fog, 0.0016);
 
   // THE CHAIN MUST BE THE FIRST THING THAT EVER RENDERS THIS SCENE. Read this before
-  // adding a `renderer.render(scene, camera)` anywhere, however harmless it looks.
+  // adding a direct scene render anywhere, however harmless it looks.
   //
   // The chain's scene pass writes a G-buffer (colour + view normal + metalness +
   // roughness) via MRT, so each material's fragment shader must emit four outputs.

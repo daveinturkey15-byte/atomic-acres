@@ -1,0 +1,89 @@
+{
+  "schema": 1,
+  "retrieved": "2026-09-20",
+  "lane": "road-pbr-0558",
+  "provider": "Poly Haven",
+  "license": "CC0 1.0",
+  "licenseEvidence": "https://polyhaven.com/license",
+  "resolution": "1k JPEG",
+  "totalBytes": 5322960,
+  "within8MbBudget": true,
+  "assets": [
+    {
+      "id": "asphalt_02",
+      "displayName": "Asphalt 02",
+      "author": "Rob Tuytel",
+      "sourcePage": "https://polyhaven.com/a/asphalt_02",
+      "physicalSizeMeters": [3.0, 3.0],
+      "role": "street asphalt ground response (turning circle, road strip, tail)",
+      "targetUvMetresPerUnit": 40.0,
+      "calculatedRepeat": 13.333333333333334,
+      "normalScale": 0.6,
+      "roughness": 1.0,
+      "files": [
+        {
+          "kind": "diffuse",
+          "path": "textures/asphalt_diff_1k.jpg",
+          "bytes": 731707,
+          "colorSpace": "sRGB",
+          "sha256": "1aa5ce99f58a625c71d48cfc3e68b65ca85ccb00f39e045c0a928608a0ea25ed",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_diff_1k.jpg"
+        },
+        {
+          "kind": "normalGL",
+          "path": "textures/asphalt_nor_gl_1k.jpg",
+          "bytes": 1240122,
+          "colorSpace": "linear",
+          "sha256": "42a1c381b53204e83a982db2864479a30bc127bbdeebb1006f8ee51bff099df3",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_nor_gl_1k.jpg"
+        },
+        {
+          "kind": "roughness",
+          "path": "textures/asphalt_rough_1k.jpg",
+          "bytes": 544032,
+          "colorSpace": "linear",
+          "sha256": "70ba3edc65525eb4dc366cf010ca7ae0bd34e0251ff0225c2dad627a873d0712",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/asphalt_02/asphalt_02_rough_1k.jpg"
+        }
+      ]
+    },
+    {
+      "id": "concrete_pavement_02",
+      "displayName": "Concrete Pavement 02",
+      "author": "Charlotte Baglioni",
+      "sourcePage": "https://polyhaven.com/a/concrete_pavement_02",
+      "physicalSizeMeters": [1.8, 1.8],
+      "role": "pavement and concrete surround ground response",
+      "targetUvMetresPerUnit": 67.2,
+      "calculatedRepeat": 37.333333333333336,
+      "normalScale": 0.7,
+      "roughness": 1.0,
+      "files": [
+        {
+          "kind": "diffuse",
+          "path": "textures/pavement_diff_1k.jpg",
+          "bytes": 1052909,
+          "colorSpace": "sRGB",
+          "sha256": "e129ee6b59b6ed7f65b4c4c5ba9eb583d13d040ec26bef5d5d4e0080fe342e7a",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_02/concrete_pavement_02_diff_1k.jpg"
+        },
+        {
+          "kind": "normalGL",
+          "path": "textures/pavement_nor_gl_1k.jpg",
+          "bytes": 1212387,
+          "colorSpace": "linear",
+          "sha256": "26c09320b3373da7f55edb8165562f16d36c07161c9c715787a09daf5910450c",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_02/concrete_pavement_02_nor_gl_1k.jpg"
+        },
+        {
+          "kind": "roughness",
+          "path": "textures/pavement_rough_1k.jpg",
+          "bytes": 541803,
+          "colorSpace": "linear",
+          "sha256": "966ee3d1a6d343e5e72d5536fde7c04ecd32e6e95efc879a102effc527f5b679",
+          "source": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/concrete_pavement_02/concrete_pavement_02_rough_1k.jpg"
+        }
+      ]
+    }
+  ]
+}

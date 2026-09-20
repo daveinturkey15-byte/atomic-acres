@@ -53,6 +53,7 @@ import {
   loadCanarySurfaceSet,
 } from './ground-pbr-canary';
 import { buildLawnCanarySpec, LAWN_CANARY_URLS } from './lawn-pbr-canary';
+import { upgradeStreetPbr } from './street-pbr';
 
 type Ctx2D = CanvasRenderingContext2D;
 type N = ShaderNodeObject<Node>;
@@ -1085,17 +1086,28 @@ export function buildMaterials(): MaterialLibrary {
     });
     canaryCancelHandles.push(asphaltHandle.cancel);
   } else {
-    upgrade(lib.asphalt, {
-      diffuse: 'textures/polyhaven/asphalt-07/diffuse.jpg',
-      roughness: 'textures/polyhaven/asphalt-07/rough.jpg',
-      normal: 'textures/polyhaven/asphalt-07/normal.jpg',
-    }, 16);
+    // Street PBR candidate: upgrades asphalt and paving to Poly Haven CC0 scans
+    // (asphalt_02 by Rob Tuytel, concrete_pavement_02 by Charlotte Baglioni).
+    // Delivers authentic two-scale albedo and wide dim specular lobe in raking sun.
+    const streetHandle = upgradeStreetPbr({
+      asphalt: lib.asphalt,
+      paving: lib.paving,
+      isDisposed: () => disposed,
+      onApplied: (mat) => {
+        wetRefresh.get(mat)?.();
+        mat.needsUpdate = true;
+      },
+      ownResource: own,
+    });
+    canaryCancelHandles.push(streetHandle.cancel);
   }
-  upgrade(lib.paving, {
-    diffuse: 'textures/polyhaven/concrete-pavement-03/diffuse.jpg',
-    roughness: 'textures/polyhaven/concrete-pavement-03/rough.jpg',
-    normal: 'textures/polyhaven/concrete-pavement-03/normal.jpg',
-  }, 32);
+  if (groundCanary) {
+    upgrade(lib.paving, {
+      diffuse: 'assets/street-pbr/pavement_diff_1k.jpg',
+      roughness: 'assets/street-pbr/pavement_rough_1k.jpg',
+      normal: 'assets/street-pbr/pavement_nor_gl_1k.jpg',
+    }, 37.333333333333336);
+  }
   if (groundCanary) {
     const concreteHandle = loadCanarySurfaceSet({
       urls: {
