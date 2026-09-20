@@ -9,6 +9,7 @@
  */
 import * as THREE from 'three';
 import type { MaterialLibrary } from '../core/materials';
+import { isFoliageCanaryEnabled, refineTreeFoliage } from './vegetation-foliage-canary';
 
 export interface TreeBranchSpec {
   angle: number;
@@ -195,6 +196,7 @@ function orientBetween(start: THREE.Vector3, end: THREE.Vector3, radius: number,
 export function buildVegetationTrees(
   materials: VegetationTreeMaterials | Pick<MaterialLibrary, 'bark' | 'leaf'>,
   specs: readonly TreeSpec[],
+  foliageCanary = isFoliageCanaryEnabled(),
 ): VegetationTreeResult {
   const group = new THREE.Group();
   group.name = 'vegetation-tree-canary';
@@ -371,5 +373,6 @@ export function buildVegetationTrees(
     source: 'original deterministic procedural geometry',
   };
   group.userData.vegetationStats = stats;
-  return { group, stats };
+  const result = { group, stats };
+  return foliageCanary ? refineTreeFoliage(result, specs) : result;
 }

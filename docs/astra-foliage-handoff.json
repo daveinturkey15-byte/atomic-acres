@@ -1,0 +1,78 @@
+{
+  "schema": "nuketown/astra-foliage-handoff/1",
+  "status": "CPU_PASS_GPU_OPEN",
+  "flag": "foliage=canary",
+  "integration": "No root assembly hunk required",
+  "runtimeFiles": [
+    "src/build/vegetation-tree.ts",
+    "src/build/vegetation-foliage-canary.ts"
+  ],
+  "sourceBaseline": "25b2c96ddf35918430c5ab4eea667faaaf98e786",
+  "frozen": "docs/astra-foliage-baseline.json",
+  "repairsUsed": 0,
+  "repairsLimit": 2,
+  "selfStop": "2026-09-20T08:58:00+01:00",
+  "checks": [
+    "node scripts/check-foliage-canary.mjs",
+    "npm run check",
+    "npm run build"
+  ],
+  "results": {
+    "status": "CPU_PASS_GPU_OPEN",
+    "baseline": {
+      "treeCount": 10,
+      "branchCount": 30,
+      "canopyLobeCount": 30,
+      "leafClusterCount": 1000,
+      "leafBladeCount": 4000,
+      "drawCount": 5,
+      "triangles": 19760,
+      "source": "original deterministic procedural geometry"
+    },
+    "candidate": {
+      "treeCount": 10,
+      "branchCount": 150,
+      "canopyLobeCount": 0,
+      "leafClusterCount": 3200,
+      "leafBladeCount": 12800,
+      "drawCount": 5,
+      "triangles": 29360,
+      "source": "original deterministic procedural geometry"
+    },
+    "addedDraws": 0,
+    "baselineBatch": {
+      "meshesBefore": 5,
+      "meshesAfter": 3,
+      "groups": 1,
+      "pruned": 0,
+      "left": {
+        "instanced-too-many": 1,
+        "alone-in-group": 1
+      },
+      "hazards": []
+    },
+    "candidateBatch": {
+      "meshesBefore": 5,
+      "meshesAfter": 2,
+      "groups": 1,
+      "pruned": 0,
+      "left": {
+        "instanced-too-many": 1
+      },
+      "hazards": []
+    },
+    "addedTriangles": 9600,
+    "addedTextureBytes": 0,
+    "colliderCount": 78,
+    "colliderHash": "a3c03c81fac3d8d763b87249fb90614c0c64d3f69146ebcb0372e2c0a4d05bf2",
+    "frozenCrownBounds": "10/10 contained; deliberately slipped instance rejected",
+    "lifecycle": "2 replaced meshes/geometry disposed; active geometry independently disposable; 0 borrowed disposals",
+    "assets": "4 existing CC0 source maps verified against committed SHA-256 manifest",
+    "visualAcceptance": "OPEN - root actual WebGPU frames, moving camera and runtime resource gate required"
+  },
+  "textureProvenance": "public/textures/vegetation/manifest.json",
+  "licence": "CC0 1.0",
+  "addedTextures": 0,
+  "runtime": "static construction only; existing borrowed materials",
+  "acceptance": "OPEN root actual WebGPU frames and moving-camera/resource gates"
+}
