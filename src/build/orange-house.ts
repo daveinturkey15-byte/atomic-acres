@@ -515,8 +515,23 @@ export const buildOrangeHouse: Builder = (ctx) => {
   // separate stair rebuild supplies metric UVs rather than stretching yarns.
   emit(stTread, mat.painted(room ? 0x787c6c : PAL.interiorTeal, 0.96, 0), true);
   emit(stNose, yellowM, false);
-  emit(stRail, mat.painted(PAL.timber, 0.88, 0), true);
-  emit(stPost, darkIn, true);
+  if (room) {
+    // Solid glazing retains the exact stepped barrier/shot envelope. A continuous
+    // raked timber grip replaces the chunky sawtooth silhouette; these are not
+    // empty gaps that falsely promise a shoot-through or walk-through route.
+    emit(stRail, mat.glass, false);
+    emit(stPost.map(r => [.055, r[1], .055, r[3], r[4], r[5], r[6]]), room.brass, true);
+    const a = new THREE.Vector3(railX, RISE + RAIL_IN + .055, ST_Z0 + S * GOING / 2);
+    const b = new THREE.Vector3(railX, FLOOR_H + RAIL_IN + .055, ST_Z1 - S * GOING / 2);
+    const direction = b.clone().sub(a);
+    const cap = box(.12, .075, direction.length(), room.walnut);
+    cap.position.copy(a).add(b).multiplyScalar(.5);
+    cap.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction.normalize());
+    metricUVs(cap.geometry, 1.5); g.add(cap);
+  } else {
+    emit(stRail, mat.painted(PAL.timber, 0.88, 0), true);
+    emit(stPost, darkIn, true);
+  }
   // red wall-art disc at the head of the flight (f-mGpZaLy5_hM-049)
   const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.05, 20),
     mat.painted(PAL.trailerTrim, 0.6, 0));
@@ -573,8 +588,18 @@ export const buildOrangeHouse: Builder = (ctx) => {
     const w = alongX ? m1 - m0 : 0.11, d = alongX ? 0.11 : m1 - m0;
     const mx = alongX ? (m0 + m1) / 2 : (a0 + a1) / 2, mz = alongX ? (b0 + b1) / 2 : (m0 + m1) / 2;
     const lift = alongX ? TUCK : 0, capH = 0.08 + TUCK;
-    g.add(box(w, RAIL_IN - 0.08 + lift, d, mat.painted(PAL.timber, 0.88, 0), mx, FLOOR_H + (RAIL_IN - 0.08 + lift) / 2, mz));
-    g.add(box(w + 0.06, capH, d + 0.06, darkIn, mx, FLOOR_H + RAIL_IN - 0.08 + lift + capH / 2, mz));
+    const pane = box(w, RAIL_IN - 0.08 + lift, d, room ? mat.glass : mat.painted(PAL.timber, 0.88, 0), mx, FLOOR_H + (RAIL_IN - 0.08 + lift) / 2, mz);
+    if (room) pane.castShadow = false; g.add(pane);
+    const cap = box(w + 0.06, capH, d + 0.06, room?.walnut ?? darkIn, mx, FLOOR_H + RAIL_IN - 0.08 + lift + capH / 2, mz);
+    if (room) {
+      metricUVs(cap.geometry, 1.5);
+      const length = alongX ? w : d, count = Math.ceil(length / .8);
+      for (let i = 0; i <= count; i++) {
+        const offset = (i / count - .5) * Math.max(0, length - .06);
+        g.add(box(.045, RAIL_IN, .045, room.brass, mx + (alongX ? offset : 0), FLOOR_H + RAIL_IN / 2, mz + (alongX ? 0 : offset)));
+      }
+    }
+    g.add(cap);
     const cx = (a0 + a1) / 2, cz = (b0 + b1) / 2;
     colliders.push(aabb(cx, FLOOR_H + RAIL_IN / 2, cz, Math.max(a1 - a0, 0.11), RAIL_IN, Math.max(b1 - b0, 0.11)));
   };

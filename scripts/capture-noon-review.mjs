@@ -1,6 +1,7 @@
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {stockBrowser} from './lib/stock-browser.mjs';
+import {enterSoakScenario} from './lib/soak-scenario.mjs';
 const label=process.argv[2],url=process.argv[3];
 if(!label||!url)throw new Error('label and exact URL required');
 const out=join('captures','single-astra-noon',label);mkdirSync(out,{recursive:true});
@@ -13,9 +14,7 @@ try{
  await page.goto(url,{waitUntil:'load',timeout:90000});
  await page.waitForFunction(()=>window.__NT?.ready,null,{timeout:90000});
  await page.screenshot({path:join(out,'menu.png')});
- await page.getByRole('button',{name:'Play solo',exact:true}).click();
- await page.getByRole('button',{name:'Deploy',exact:true}).click();
- await page.waitForFunction(()=>window.__NTGAME?.snapshot?.().match?.phase==='active',null,{timeout:45000});
+ result.admission=await enterSoakScenario(page,'solo-gameplay');
  result.identity=await page.evaluate(()=>({scripts:[...document.scripts].map(s=>s.src).filter(Boolean),backend:window.__NT_BACKEND,colliders:window.__NT.colliderCount}));
  await page.evaluate(()=>{const q=window.__NT;q.release();q.setMode('walk');q.teleport(0,0,-34,Math.PI,0)});
  await page.keyboard.press('KeyF');await page.waitForTimeout(150);
