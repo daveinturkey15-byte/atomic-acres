@@ -1,0 +1,102 @@
+diff --git a/src/build/vehicles.ts b/src/build/vehicles.ts
+index c50874a..f3a6a45 100644
+--- a/src/build/vehicles.ts
++++ b/src/build/vehicles.ts
+@@ -25,6 +25,7 @@ import { aabbSlab, box, extrude, group, slab } from '../core/kit';
+ import { batchStatic } from '../core/static-batch';
+ import { PAL } from '../core/palette';
+ import { coachOwnedCanaryVisual } from './coach-owned-canary';
++import { carBodyCanaryVisual } from './car-body-canary';
+ import {
+   FRONT_LAWN_OUTER, GARAGE_LEN, HEAD_CENTER_X, HEAD_RADIUS,
+   HOUSE_HALF_LEN, KERB_HEIGHT, ORANGE, PAVEMENT_OUTER, ROAD_HALF_WIDTH, WHITE,
+@@ -541,6 +542,54 @@ function makeCoachOwned(): Vehicle | null {
+     keep: (m) => m.userData.coachOwnedCanary === true,
+   };
+ }
++// ------------------------------------------- first saloon, owned canary
++
++/**
++ * Footprint the ?car-body=canary visual MUST keep: the first-saloon slot's
++ * collider slabs derive from exactly these three numbers (the makeSaloon
++ * return for L 4.8 / W 1.95 / H 1.48: len L+0.24, wid W+0.09). Separate
++ * selector and separate dims from ?coach=canary; neither lane touches the
++ * other. Pattern re-scoped from adoptCoachCanary (tolerance downscale,
++ * procedural colliders, batching via the caller's park() path).
++ */
++const CAR_BODY_CANARY_DIMS = { len: 5.04, wid: 2.04, hgt: 1.48 } as const;
++
++// Uniform downscale only when a GLB axis overshoots the envelope by more than
++// this. Never upscales, never distorts per-axis.
++const CAR_BODY_GLB_TOLERANCE = 1.1;
++
++/**
++ * The opt-in first-saloon visual (?car-body=canary): the baked agy-0923 sedan GLB
++ * as an exclusively-owned root from build/car-body-canary. Null until the boot
++ * preload resolved 'ready'; every miss returns null and the caller falls back
++ * to the procedural saloon, so the map is complete either way and the
++ * procedural saloon is never built twice.
++ */
++function makeCarBodyOwned(): Vehicle | null {
++  const visual = carBodyCanaryVisual();
++  if (!visual) return null;
++  const bounds = new THREE.Box3().setFromObject(visual);
++  const size = bounds.getSize(new THREE.Vector3());
++  if (size.x <= 0 || size.y <= 0 || size.z <= 0) return null;
++  const over = Math.max(
++    size.x / CAR_BODY_CANARY_DIMS.len,
++    size.y / CAR_BODY_CANARY_DIMS.hgt,
++    size.z / CAR_BODY_CANARY_DIMS.wid,
++  );
++  if (over > CAR_BODY_GLB_TOLERANCE) {
++    visual.scale.multiplyScalar(1 / over);
++    visual.updateMatrixWorld(true);
++    visual.position.y -= new THREE.Box3().setFromObject(visual).min.y;
++  }
++  visual.name = 'saloon';
++  visual.userData.carBodySource = 'canary';
++  return {
++    obj: visual,
++    len: CAR_BODY_CANARY_DIMS.len,
++    wid: CAR_BODY_CANARY_DIMS.wid,
++    hgt: CAR_BODY_CANARY_DIMS.hgt,
++  };
++}
+ // ------------------------------------------------------------------ second bus
+ 
+ /** Second bus on the coach shell: near-black top, cream banner, navy lower. */
+@@ -1369,7 +1418,7 @@ export const buildVehicles: Builder = (ctx) => {
+   // off the second bus - the parked line down the street reads coach, saloon, coach
+   // from the orange pavement (captures/ownerfix-after-car-pavement-2.png).
+   // nudge() and skew() are still consumed here so every later vehicle keeps its jitter.
+-  park(makeSaloon(ctx, PAL.carBlue, { fin: 0.32, twoTone: true, brightwork: true }),
++  park(makeCarBodyOwned() ?? makeSaloon(ctx, PAL.carBlue, { fin: 0.32, twoTone: true, brightwork: true }),
+     -(HEAD_RADIUS - 1.2) + nudge(),
+     ORANGE.side * ROAD_HALF_WIDTH * 0.52,
+     -0.09 + skew());
+diff --git a/src/main.ts b/src/main.ts
+index 8ac88d9..188a841 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -57,6 +57,10 @@ import {
+   preloadCoachOwnedCanary,
+   releaseCoachOwnedCanary,
+ } from './build/coach-owned-canary';
++import {
++  isCarBodyCanaryOptIn,
++  preloadCarBodyCanary,
++} from './build/car-body-canary';
+ import { buildFacadeDetailCanary } from './build/facade-detail-canary';
+ import { buildOrangeFacadeKitGated, isOrangeFacadeKitOptIn } from './build/orange-facade-kit';
+ 
+@@ -151,6 +155,10 @@ await Promise.all([
+   // 'ready' or 'fallback' and never rejects, so a missing file or a slow
+   // fetch (8s bound) degrades to the procedural coach inside the same await.
+   ...(isCoachOwnedCanaryOptIn() ? [preloadCoachOwnedCanary()] : []),
++  // Owned sedan canary (?car-body=canary only): same fetch guard - baseline
++  // runs never fetch. Independent of ?coach=canary; a miss degrades to the
++  // procedural first saloon inside the same await.
++  ...(isCarBodyCanaryOptIn() ? [preloadCarBodyCanary()] : []),
+ ]);
+ 
+ for (const [name, build] of BUILDERS) {

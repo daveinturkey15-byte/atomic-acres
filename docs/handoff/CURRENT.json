@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "VERIFIED09:30 accepted4234/frozen4212 retained unchanged; nativeAstrascompleted/stopped. Four external artjobs continue. AGYoperator0845 tenliveframes mechanicallyPASS butvisualREJECTED; Musefinalrepair2has sourcepartial. Fence repair1 sixliveframes/default/check/build/colliderguardsPASS, smallgrain gain only; expensivehiddenhardware sent finalrepair2. GLMsedan timedoutobservedglm; scope movedAGY. NewGLMworldweaponmax active. SupplycrateheadlessPASS, presentation/wire/usable-rewardOPEN, notintegrated.",
+  "status": "VERIFIED09:42 accepted4234/frozen4212 unchanged. NativeAstrasstopped. Museoperatorfinal2 repairedrealUVstripbug but actual10frames revealhollowshoulder andtoyquality:NOTPROMOTED,stopcurrentrecipeapproach. Rootrestoredsource. GLMworldgunpartial recovered aftertimeout;2CPUteardownfailures routedAGYrepair1. SedanCPU30PASS butactualBlenderfailstrictfloat32comparison; Muse5minrepair1,AGYseparatelifetimefix. Finalfencerepair2completedawaitingrootintegration; sourcecurrentlyrepair1. No newacceptedvisualmilestone.",
   "owner": "Codex",
   "stop_state": "active: preserve frozen checkpoint and continue private candidates",
   "backup": {
@@ -20,7 +20,7 @@
   },
   "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
   "inspection_time": "2026-09-20T05:45:00+01:00",
-  "lease_updated_at": "2026-09-20T09:31:55.266060+01:00",
+  "lease_updated_at": "2026-09-20T09:43:01.395923+01:00",
   "source_checkpoint": "2139d697434bf97bf38683eb0ed25e554096fd71",
   "inspection_report": "docs/handoff/SHOWCASE-2026-09-20.md",
   "bundle_sha256": "e8cb3f4fa86437ef164deded998e3613d5220d2115e52335096545af1ab13a91",
@@ -38,14 +38,14 @@
     "note": "After serializedfenceQA allownedbrowserjobs closed; externalworkerssourceonly."
   },
   "next_actions": [
-    "Keep recommended4234 and frozen4212 unchanged. Candidate4235(operator) visuallyREJECTED,4236(fence) withheldawaitingfinalcost/contactrepair. No broadunchangedbuild revalidation.",
-    "First review Museoperatorvisual0918 terminalreceipt; sourcepartials alreadyexist09:29. Exactnewrecipe to guardedBlender2threads180s2GiB, structural+texture gates then samefiveactualposes. Currentproceduralrepair2final: if stilltoy-like, preserveandchangeapproach; notthirdsamefix. AGYanatomy0845failedart10frames retained.",
-    "AGYsedan0923 owns vehicleWT/work/car-body-agy-0923 after Muse and GLMactualfailures. Require coherentcurvedcar recipe/mesh within14ktris6draws6materials, samecolliders. Sourcefirst then rootguardedbake/actualsamecamera; noothermodelretryoverlap.",
-    "GLMworldweapon0923 owns audioWT/work/world-weapon-glm-0923 (15minharddeadline~09:36:53). Thirdpersonweapon geometry/socket/lifetime finitecache,defaultoff; noFP/H3/bodyoverlap. Readterminalattribution, actualsource/CPU then in-gameframes. Do notclaim20gunscomplete.",
-    "AGYfencerepair20930 owns propWT/work/fence-art-repair2-0930. Finalrepair removes8100tris likelyhiddenboltgeometry/correctsvisiblepostcontacts<=3000addedtris target. Currentrepair1root source+actual4236 sixframeproofpreserved; no recommendation yet. ExtensionlessTS import normalization required; originalbaselineverifier bundledunchangedviaesbuild. Compare actualbefore/afterandwinding guard; no thirdrepair.",
-    "SupplycrateAGY0912 completed; rootheadlessverifierPASS, privatepatch preserved. Before rootintegration, resolve absentrealcratepresentation/guestwire and canonicalrewardpool grantsunsupported/offloadout streaks withoutusableactivation. Do notenableinvisiblecrate/emptyreward orclaim11functional. Doesnotdisplaceartjobs.",
-    "No new Astra implementation or OpenAIimagegen. Bothnativecompleted verified09:20registry. OpenAIorchestration/reviewonly; GLMmax/Musexhigh/AGYrequestedGeminiflashhigh authorized. AGYattributionunknown. SampleRAM/VRAMbeforeheavyjobs; serializedGPUand>=12GiBfreeRAM>=3GiBfreeVRAMplusheadroom.",
-    "Retain majority effort mapwideassets/UV/PBR/lighting,arms/guns/operators. Full20guns11streaks4grenadesaudio/netcodebacklogretained;Semtex18livePASS. FXfloorCDP/disposalOPEN,notinrecommendedflags. Actualqualityremainsunmet."
+    "Preserve4234recommended/4212frozen unchanged. Latestsource7e4ca94 includesoptionalrepair1fence butrecommendationexcludesit. 4235/4237operatorvariantsREJECTED;4236fence1WITHHELD. No unchangedbuild retests.",
+    "Review completedAGYfence-art-repair2-0930 exact privatefiles/patch againstrootrepair1. RootCPUwinding,unchangedbaseline/yardcollider/check gates; buildfreshcandidate andsame3actualfencecamera A/B. Claimed3480tris(+2760) andexposedpostcontacts; verifybeforeaccept. Thisisfinalrepair2; no thirdsamefix. Modestgainonly,notmapoverhaul.",
+    "Musecar-bake-repair10941 owns tiny strictfloat32equality correction invehicleWT/work/car-bake-muse-repair1-0941. RootoriginalBlenderfailedline524tyre1.52; headlampfloat/pi2checksalsosuspect. Require1umjustifiedcompare+10xdisplacednegativecontrol, noenvelope/budgetrelaxation. RootguardedCPUBlender2threads180s2GiB thenconsolidate usingfixedglbencoding andactualdim/6draw14ktrigates.",
+    "AGYcar-runtime0938 owns separatevehicleWT/work/car-runtime-agy-0938. Fixdedupedisposal/cancellation/lateownedcleanup/mainpagehide/staticbatchownership/defaultno-fetch andbudgetvalidation. Noautoscalingbadassets/rawfallbackoverbudget. Waitbothrecipe/loaderaccepted beforeactualsamecamera sedan adoption.",
+    "AGYworld-weapon-repair10941 owns audioWT/work/world-weapon-agy-repair1-0941. PreserveobservedGLMpartialwork/world-weapon-glm-0923. Roottest2FAILglobalteardown91disposes/secondcall;determine observer vsrealresourcebugandfixwithnegativecontrols. NoFP/body/animationchanges. Actual5familybudget232/200/168/256/160tris;claimnot20uniqueguns.",
+    "Operatorcurrentproceduralapproachrepairs1and2exhausted. Musecorrected atlasu_range4tuple unpackbug; actualtexture nowvisible butgeometryopen/hollowshoulderin crouch andstillcoarse. PreserveUVlesson/exactscreens+recipe; no thirdparameterrepair. Nextoperatorwork must usecoherentclosedclothingmesh/retopology/verifiedriggedassetroutetoexisting21bones, boundedlicense/resource checks rather than anothercapsuledecoratingloop.",
+    "SupplycrateAGY0912 rootheadlessPASS, stillnotintegrated. Needrealcratepresentation/guestwire andusableactivation for fullcatalog/offloadoutreward beforeenable. Preserveall11behaviorbacklogand4functionalcurrent; noemptyrewardclaims. Doesnotdisplaceartacceptance.",
+    "ContinueexternalZAImax/Musexhigh/AGYrequestedGeminiflashhigh;observedZAIandMuseproven. AGYactualmodelunknown. NoAstraimplementationafter09;onlyOpenAIorchestration/review. GPUjobsserialized>=12GiBfreeRAM>=3GiBVRAMplusjobheadroom. WholemapvisualgoalstillOPEN; full20guns11streaks4grenadesaudio/netcodebacklogretained."
   ],
   "interrupted_lanes": [
     {
@@ -1589,14 +1589,16 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "state": "process-completed",
+      "state": "mechanical-pass-visual-rejected-final2",
       "observed_models": [
         "muse-spark-1.3-contributor"
       ],
       "attribution": "observed",
       "accepted": false,
       "owned_directory": "work/operator-visual-muse-0918",
-      "started_at": "2026-09-20T08:14:08+00:00"
+      "started_at": "2026-09-20T08:14:08+00:00",
+      "note": "UV strip collapse corrected; visible cloth pattern restored. Finalrepair2 still toy-like and introduces visibly open/hollow shoulder sleeve in crouch after cap removal. Preserve useful UV finding, withhold completecandidate. Both repairs exhausted; new coherent mesh/retopology approach required, no third same-recipe tweak.",
+      "review": "docs/handoff/operator-visual-0935-review.json"
     },
     {
       "lane": "glm-world-weapon-0923",
@@ -1605,12 +1607,15 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
       "route": "zai/glm-5.3-flash",
       "effort": "max",
-      "state": "running",
-      "observed_models": [],
+      "state": "timeout-partial-recovered",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
       "attribution": "unknown",
       "accepted": false,
       "owned_directory": "work/world-weapon-glm-0923",
-      "started_at": "2026-09-20T08:21:53+00:00"
+      "started_at": "2026-09-20T08:21:53+00:00",
+      "note": "Actual15min timeout09:36:53. TwoTSsourcefiles andCPUtest preserved. Rootrerun passes all but2globalteardown checks (91disposes andsecondcall). AGYrepair10941 now owns continuation; notrootintegrated."
     },
     {
       "lane": "agy-car-body-0923",
@@ -1619,12 +1624,13 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
       "route": "gemini-3.8-flash-high",
       "effort": "high",
-      "state": "process-completed",
+      "state": "cpu-pass-blender-failed",
       "observed_models": [],
       "attribution": "unknown",
       "accepted": false,
       "owned_directory": "work/car-body-agy-0923",
-      "started_at": 1789892512.8829591
+      "started_at": 1789892512.8829591,
+      "note": "30sourceCPUcheckspass; actualguardedBlender9:37failedline524exacttuplefloat equalitytyre1.52. Noexport. Muse owns boundednumericalrepresentationrepair1; independentAGYruntimefix underway."
     },
     {
       "lane": "agy-fence-repair2-0930",
@@ -1633,12 +1639,52 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
       "route": "gemini-3.8-flash-high",
       "effort": "high",
-      "state": "running",
+      "state": "process-completed-awaiting-root-review",
       "observed_models": [],
       "attribution": "unknown",
       "accepted": false,
       "owned_directory": "work/fence-art-repair2-0930",
-      "started_at": 1789892928.5986967
+      "started_at": 1789892928.5986967,
+      "note": "Privatefinalrepair2delivered;claimed3480tris(+2760),postsurfacefasteners. Rootnotyetapplied/runnewchecksoractualframes. Only1strepair inrootsource/candidate4236."
+    },
+    {
+      "lane": "agy-car-runtime-0938",
+      "run_id": "delegated-agy-d361a3d0-82f4-4fdb-8d15-9593fb66019e",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-car-runtime-0938\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "running",
+      "observed_models": [],
+      "accepted": false,
+      "owned_directory": "work/car-runtime-agy-0938",
+      "attribution": "unknown"
+    },
+    {
+      "lane": "agy-world-weapon-repair1-0941",
+      "run_id": "delegated-agy-69580c1d-e982-42fd-92d0-d4fcf097fd11",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-world-weapon-repair1-0941\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "running",
+      "observed_models": [],
+      "accepted": false,
+      "owned_directory": "work/world-weapon-agy-repair1-0941",
+      "attribution": "unknown"
+    },
+    {
+      "lane": "muse-car-bake-repair1-0941",
+      "run_id": "delegated-omp-muse-car-bake-repair1-0941-74e88604f549495ea40c369ec9bf0aee",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-car-bake-repair1-0941-74e88604f549495ea40c369ec9bf0aee\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "running",
+      "observed_models": [],
+      "accepted": false,
+      "owned_directory": "work/car-bake-muse-repair1-0941",
+      "attribution": "unknown"
     }
   ],
   "continue_after_inspection": true,
@@ -1752,32 +1798,43 @@
   },
   "active_external_lanes": [
     {
-      "lane": "glm-world-weapon-0923",
-      "run_id": "delegated-omp-glm-world-weapon-0923-32679fceb5f84dfb9642ca3ec0804388",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-world-weapon-0923-32679fceb5f84dfb9642ca3ec0804388\\summary.json",
-      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
-      "route": "zai/glm-5.3-flash",
-      "effort": "max",
-      "state": "running",
-      "observed_models": [],
-      "attribution": "unknown",
-      "accepted": false,
-      "owned_directory": "work/world-weapon-glm-0923",
-      "started_at": "2026-09-20T08:21:53+00:00"
-    },
-    {
-      "lane": "agy-fence-repair2-0930",
-      "run_id": "delegated-agy-cb1b19c2-6a5e-4154-8fc5-8bddaa99f7b8",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-fence-repair2-0930\\summary.json",
-      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "lane": "agy-car-runtime-0938",
+      "run_id": "delegated-agy-d361a3d0-82f4-4fdb-8d15-9593fb66019e",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-car-runtime-0938\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
       "route": "gemini-3.8-flash-high",
       "effort": "high",
       "state": "running",
       "observed_models": [],
-      "attribution": "unknown",
       "accepted": false,
-      "owned_directory": "work/fence-art-repair2-0930",
-      "started_at": 1789892928.5986967
+      "owned_directory": "work/car-runtime-agy-0938",
+      "attribution": "unknown"
+    },
+    {
+      "lane": "agy-world-weapon-repair1-0941",
+      "run_id": "delegated-agy-69580c1d-e982-42fd-92d0-d4fcf097fd11",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-world-weapon-repair1-0941\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "running",
+      "observed_models": [],
+      "accepted": false,
+      "owned_directory": "work/world-weapon-agy-repair1-0941",
+      "attribution": "unknown"
+    },
+    {
+      "lane": "muse-car-bake-repair1-0941",
+      "run_id": "delegated-omp-muse-car-bake-repair1-0941-74e88604f549495ea40c369ec9bf0aee",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-car-bake-repair1-0941-74e88604f549495ea40c369ec9bf0aee\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "running",
+      "observed_models": [],
+      "accepted": false,
+      "owned_directory": "work/car-bake-muse-repair1-0941",
+      "attribution": "unknown"
     }
   ],
   "awaiting_root_review": [
@@ -1786,6 +1843,12 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
       "owned_directory": "work/supply-crate-agy-0912",
       "state": "RootheadlessPASS; visual/wire/reward activationgaps; no rootintegration"
+    },
+    {
+      "lane": "agy-fence-repair2-0930",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "owned_directory": "work/fence-art-repair2-0930",
+      "state": "Finalsourceawaitingmechanicalintegrationandactualsamecamera/budgetacceptance"
     }
   ],
   "checkpoint_bundle": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/overnight-0218.bundle",
@@ -1808,8 +1871,8 @@
     "observer_note": "Wait for asynchronously created snapshot.match; unchanged gameplay gates."
   },
   "temporary_parallelism": {
-    "count": 2,
-    "reason": "Four disjoint external art implementation jobs: Museoperator,GLMworldguns,AGYsedan,AGYfinalfencerepair. Supplycrateheadlessproofpendingintegration. NativeAstra stopped.",
+    "count": 3,
+    "reason": "Three useful externalauthoringlanes; rootacceptancequeue includescompletedfinalfence. No nativeAstra or new audit lanes.",
     "resume_normal": "At most4 useful external lanes; no blind refill/audits"
   },
   "latest_soak": {
@@ -2114,10 +2177,10 @@
       "verified_at": "2026-09-20T08:57:54.767073+01:00"
     },
     "visual_pending": {
-      "url": "http://127.0.0.1:4236/?fence-art=canary",
-      "dist": "dist-fence-repair1-0925",
-      "state": "WITHHELDsmallgain/cost; finalrepair2pending. Sourceoptionalcanaryintegrated; accepted4234 unchanged.",
-      "receipt": "docs/handoff/fence-repair1-0925-review.json"
+      "url": "http://127.0.0.1:4237/?operator=authored&operator-shape=canary",
+      "dist": "dist-operator-visual-0935",
+      "state": "REJECTED fullvisualcandidate afterUVfix;rootoptionalURLrestored; bothrepairsused. Finalfencerepairawaitsroot.",
+      "receipt": "docs/handoff/operator-visual-0935-review.json"
     },
     "previous_visual_review": {
       "url": "http://127.0.0.1:4228/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&operator=authored&lawn=canary&audiobank=2",
@@ -2183,15 +2246,14 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T09:31:55.266060+01:00",
+  "updated_at": "2026-09-20T09:43:01.395923+01:00",
   "current_ownership": {
-    "root": "OpenAIorchestration/review/mechanicalintegration only. GPU/browser/Blenderserialized.",
-    "astra_shading": "completed/stopped; no newimplementation",
-    "astra_motion": "completed/stopped; no newimplementation",
-    "muse-operator-visual-0918": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919\\work\\operator-visual-muse-0918",
-    "glm-world-weapon-0923": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919\\work\\world-weapon-glm-0923",
-    "agy-car-body-0923": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919\\work\\car-body-agy-0923",
-    "agy-fence-repair2-0930": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919\\work\\fence-art-repair2-0930"
+    "root": "OpenAIorchestration/review/mechanicalintegration only; rootserializedGPUacceptance",
+    "astra_shading": "completed/stopped",
+    "astra_motion": "completed/stopped",
+    "agy-car-runtime-0938": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919\\work\\car-runtime-agy-0938",
+    "agy-world-weapon-repair1-0941": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919\\work\\world-weapon-agy-repair1-0941",
+    "muse-car-bake-repair1-0941": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919\\work\\car-bake-muse-repair1-0941"
   },
   "retained_review_backlog_0918": [
     {

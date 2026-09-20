@@ -1,0 +1,67 @@
+{
+  "lane": "car-body-agy-0923",
+  "task": "fresh owned Blender sedan body: curved hood/cabin/trunk loft, panoramic curved windshield/backlight, flush arch lips (no disconnected blocks), seated glazing + quad headlamp lenses + bullet tailfins, tires/hubs, solid underbody; fits CURRENT saloon collision scale",
+  "envelope": {
+    "nominal_L": 4.8,
+    "nominal_W": 1.95,
+    "nominal_H": 1.48,
+    "collider_len": 5.04,
+    "collider_wid": 2.04,
+    "collider_hgt": 1.48,
+    "x": "[-2.52,+2.52] (body +-2.40)",
+    "y": "[0,1.48] (wheels rest y=0)",
+    "z": "[-1.02,+1.02] (body +-0.975)",
+    "note": "GLB visual must sit inside the procedural collider slabs; plates at +-2.49 inside 2.52; mirrors/handles inside 1.02"
+  },
+  "wheels": {
+    "axles": [-1.52, 1.52],
+    "r": 0.34,
+    "rest_y": 0,
+    "w": 0.22,
+    "whitewall_r": 0.22,
+    "zHalf": 0.86
+  },
+  "palette": {
+    "choice": "carBlue two-tone with coachCream roof and side-spear insert (matches the most-visible current saloon; credible late-50s family car)",
+    "foundation": "0x28374F",
+    "cream": "0xE8E0CD coachCream (roof + two-tone spear insert + whitewalls + plates, one slot)",
+    "metal": "0xC8CCD0 chrome (bumpers/dagmars/grille/spear/bezels/dome/drip/handles)",
+    "glass": "0x66808E windowDark (seated glazing + lenses)",
+    "rubber": "0x2E3238 truckCab (tyres/belly/gaskets/inner wheel arch tubs/grille mesh)",
+    "signal": "0xA8302C carRed (tailfin bullet lenses + reflectors)"
+  },
+  "budgets": {
+    "tris": "<=14000 (target ~6.5k-8.5k; in-Blender assert)",
+    "materials": "<=6 (BodyBlue/Cream/Chrome/Glass/TrimDark/SignalRed)",
+    "draws": "<=6 after consolidation (6 material slots -> 6 draws)",
+    "embedded_maps": "0x1024 (pure Principled scalars; bake reserved, never required)"
+  },
+  "orientation": {
+    "convention": "nose +x, y-up authored (three.js), ground centre origin; Blender z-up via world-matrix roll only",
+    "proves": [
+      "wheels: cylinder_z axle along Z, identity rotation, concentric centres",
+      "lamps: cylinder_z + object-local rotation_euler=(0,pi/2,0) at final loc, never translated after rotation",
+      "roll: _ROLL @ matrix_world premultiply (XYZ-Euler-safe); single-= assignment to rotation_euler.x is FORBIDDEN",
+      "envelope: correct axis mapping after roll (x length, y width, z height); no confusion of y and z",
+      "panes: compound curved wraparound panoramic glass + planar quads and tri pairs (no twisted quads)"
+    ]
+  },
+  "provenance": {
+    "common_py": "verbatim copy of C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919/scripts/blender/common.py (110 lines, new recovery work); patterns (mesh_from/box/cylinder_z/quad_strip/tri_list/smart_uv, _ROLL premultiply, export_apply/export_yup) re-authored from scripts/blender/build_coach_art_0742.py, NO coach geometry/dims/ribs copied",
+    "forbidden": [
+      "coach/, its recipe/helper, buses, coach artifacts (untouched, unimported)",
+      "old atomic-acres assets, imagegen, copied imagery; vehicle-reference.png behaviour-only, never traced",
+      "engines migration (stays Principled -> GLB EXPORT), Draco (not required, not used)"
+    ],
+    "glb": "Blender 5.1 exporter defaults (JSON pad 0x20, BIN pad 0x00); root consolidate with PATCHED tool only (glb-encoding-repair-0811)"
+  },
+  "adoption": {
+    "applies_to": "nuketown-recovery-20260919 (ROOT copies; this lane never edits ROOT)",
+    "selector": "?car-body=canary (exact, case-sensitive value); independent of ?coach=canary; baseline (flag absent) never fetches",
+    "colliders": "procedural only (park slabs from proc len/wid/hgt); GLB visual never feeds collision",
+    "helper": "src/build/car-body-canary.ts (NEW, standalone GLTFLoader; no core/assets.ts edit)",
+    "patch": "adoption/car-body-agy-0923.patch (vehicles.ts adopt + main.ts preload, fetch-guarded, fallback procedural)",
+    "replaces": "first carBlue twoTone saloon visual only when ?car-body=canary AND preload ready; else procedural byte-for-byte",
+    "preload": "main.ts: ...(isCarBodyCanaryOptIn() ? [preloadCarBodyCanary()] : []) -- baseline never fetches"
+  }
+}

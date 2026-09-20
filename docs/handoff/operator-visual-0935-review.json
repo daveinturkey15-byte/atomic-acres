@@ -1,0 +1,22 @@
+{
+  "at": "2026-09-20T09:43:01.395923+01:00",
+  "model_observed": "muse-spark-1.3-contributor",
+  "recipe": "work/operator-visual-muse-0918/build_operator_sand_visual_0918.py",
+  "dist": "dist-operator-visual-0935",
+  "url": "http://127.0.0.1:4237/",
+  "frames": "captures/operator-visual-0935/{before,after}",
+  "mechanical_pass": true,
+  "actual_glb_triangles": 14900,
+  "cpu_recipe_triangles": 15440,
+  "bones": 21,
+  "materials": 2,
+  "frames_count": 10,
+  "visual_accepted": false,
+  "reason": "UV strip collapse corrected; visible cloth pattern restored. Finalrepair2 still toy-like and introduces visibly open/hollow shoulder sleeve in crouch after cap removal. Preserve useful UV finding, withhold completecandidate. Both repairs exhausted; new coherent mesh/retopology approach required, no third same-recipe tweak.",
+  "js_sha256": "428038812cd8e1637f8b5c970660bfe55b90c8ff6a12e406f909988ffcbb4bc7",
+  "js_bytes": 1869095,
+  "js_http_equal": true,
+  "glb_sha256": "f578d59824638a0ea8153f9f10181b39324f6b61bedd73732e5dc88922988a6c",
+  "glb_bytes": 3717476,
+  "glb_http_equal": true
+}
