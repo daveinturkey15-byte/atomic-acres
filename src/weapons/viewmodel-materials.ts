@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { isWeaponFinishCanaryRequested, weaponSurfacePixel } from './weapon-finish-textures';
 
 /**
  * Camera-local material singletons for the first-person rigs.
@@ -93,6 +94,12 @@ function materialPixel(profile: MaterialProfile, u: number, v: number, x: number
   roughness: number;
   height: number;
 } {
+  // Improved wood/parkerized surfaces when the canary finish is requested.
+  if (profile.kind === 'wood' || profile.kind === 'steel') {
+    if (isWeaponFinishCanaryRequested()) {
+      return weaponSurfacePixel(profile.kind, profile.roughness, u, v, x, y);
+    }
+  }
   const n = octaveNoise(u * 7, v * 7, profile.name.length * 101);
   const fine = octaveNoise(u * 28, v * 28, profile.name.length * 211 + 9);
   let albedo = 0;

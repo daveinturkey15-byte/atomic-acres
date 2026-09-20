@@ -24,6 +24,7 @@ import type { AABB, BuildContext, Builder } from '../core/kit';
 import { aabbSlab, box, extrude, group, slab } from '../core/kit';
 import { batchStatic } from '../core/static-batch';
 import { PAL } from '../core/palette';
+import { coachOwnedCanaryVisual } from './coach-owned-canary';
 import {
   FRONT_LAWN_OUTER, GARAGE_LEN, HEAD_CENTER_X, HEAD_RADIUS,
   HOUSE_HALF_LEN, KERB_HEIGHT, ORANGE, PAVEMENT_OUTER, ROAD_HALF_WIDTH, WHITE,
@@ -79,6 +80,8 @@ interface Vehicle {
   wid: number;
   /** roof height above the road */
   hgt: number;
+  /** meshes batchStatic must leave unmerged (the owned coach canary root) */
+  keep?: (m: THREE.Mesh) => boolean;
 }
 
 // ------------------------------------------------------------------ helpers
@@ -504,6 +507,39 @@ function makeCoach(ctx: BuildContext): Vehicle {
 
   wheels(g, ctx, [3.55, -2.95, -4.45], 1.22, 0.54, 0.30);
   return { obj: g, len: 11.6, wid: 2.87, hgt: 3.40 };
+}
+// ------------------------------------------------- hero coach, owned canary
+
+/**
+ * Footprint the ?coach=canary visual MUST keep: park() derives every collider
+ * slab from exactly these three numbers, so an owned visual carrying anything
+ * else would silently move the collision footprint. Falsified against
+ * makeCoach's own return in work/coach-owned-adoption-0556/falsifiers.
+ */
+const COACH_CANARY_DIMS = { len: 11.6, wid: 2.87, hgt: 3.4 } as const;
+
+/**
+ * The opt-in hero coach (?coach=canary): the baked coach GLB as an
+ * exclusively-owned root from build/coach-owned-canary. The root never enters
+ * the shared asset cache and every mesh carries the `coachOwnedCanary` marker
+ * this Vehicle hands to batchStatic as `keep`, so the batcher's source-geometry
+ * disposal can never reach past this root's own GPU copies - the muse0418
+ * failure mode. Null until the boot preload resolved 'ready'; every miss (off,
+ * fetch error, timeout) returns null and the caller falls back to the
+ * procedural coach above, so the map is complete and finite either way and the
+ * procedural hull is never built twice.
+ */
+function makeCoachOwned(): Vehicle | null {
+  const visual = coachOwnedCanaryVisual();
+  if (!visual) return null;
+  visual.name = 'coach';
+  return {
+    obj: visual,
+    len: COACH_CANARY_DIMS.len,
+    wid: COACH_CANARY_DIMS.wid,
+    hgt: COACH_CANARY_DIMS.hgt,
+    keep: (m) => m.userData.coachOwnedCanary === true,
+  };
 }
 // ------------------------------------------------------------------ second bus
 
@@ -1244,7 +1280,7 @@ export const buildVehicles: Builder = (ctx) => {
     // a merged mesh is frustum-culled as a unit, and merging the head pair with the
     // stem pair would submit the far half of the street's triangles at every station
     // that can only see the near half.
-    batchStatic(v.obj, v.obj.name + parked++);
+    batchStatic(v.obj, v.obj.name + parked++, v.keep);
     // Step the collision along the vehicle's OWN length axis instead of fitting
     // one box to its bounding rectangle, so a rotated vehicle blocks its diagonal
     // and not the whole rectangle around it. The slabs tile the body exactly and
@@ -1354,7 +1390,10 @@ export const buildVehicles: Builder = (ctx) => {
   // bulb rather than square down the stem. Nosed straight at the turningHead
   // station it shows nothing but its front, and half of NT07 is the Nuketown
   // script on the flank; a quarter turn puts nose and flank in one frame.
-  parkOnHead(makeCoach(ctx),
+  // ?coach=canary swaps the VISUAL only: same parked slot, same jitter draws
+  // (nudge/skew - and neither factory consumes rand, so the placement stream
+  // is identical either way), same collider slabs.
+  parkOnHead(makeCoachOwned() ?? makeCoach(ctx),
     HEAD_CENTER_X - 0.30 + nudge(),
     ORANGE.side * HEAD_RADIUS * 0.33,
     NOSE_DOWN_STEM - 0.44 + skew());

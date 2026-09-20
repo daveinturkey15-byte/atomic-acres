@@ -1323,6 +1323,7 @@ export class WeaponsController {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.effects.dispose();
     if (this.carbineCanaryRig) {
       this.carbineCanaryRig.dispose();
       this.carbineCanaryRig = null;

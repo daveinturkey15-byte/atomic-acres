@@ -62,6 +62,8 @@ import {
 
 /** Runtime URL. Root copies the frozen GLB here when this slice is accepted. */
 export const OPERATOR_SAND_URL = '/assets/operators/operator-sand.glb';
+/** Canary URL. Root copies the shape-0800 GLB here ONLY if this slice is accepted. */
+export const OPERATOR_SAND_SHAPE_URL = '/assets/operators/operator-sand-shape-0800.glb';
 
 /** Bounded preload: a hanging server must never stall startup adoption. */
 export const OPERATOR_LOAD_TIMEOUT_MS = 8000;
@@ -133,6 +135,26 @@ export function isAuthoredOperatorEnabled(): boolean {
   }
 }
 
+/** True only behind `?operator-shape=canary`. Never enables the authored path alone. */
+export function isShapeCanaryEnabled(): boolean {
+  try {
+    if (typeof location === 'undefined' || !location.search) return false;
+    return new URLSearchParams(location.search).get('operator-shape') === 'canary';
+  } catch {
+    return false;
+  }
+}
+
+/** Resolve the sand GLB URL. Baseline untouched unless BOTH flags are present. */
+export function resolveOperatorSandUrl(): string {
+  try {
+    if (isAuthoredOperatorEnabled() && isShapeCanaryEnabled()) return OPERATOR_SAND_SHAPE_URL;
+  } catch {
+    /* fall through to baseline */
+  }
+  return OPERATOR_SAND_URL;
+}
+
 /**
  * Dispose one loaded GLTF scene exactly once per source object. Geometries,
  * materials and embedded textures are deduped through Sets, so shared
@@ -170,7 +192,7 @@ function disposeGltfScene(scene: THREE.Object3D): void {
  *   still arrives, the orphan sweeper disposes it instead of adopting.
  */
 export function preloadAuthoredOperator(
-  url: string = OPERATOR_SAND_URL,
+  url: string = resolveOperatorSandUrl(),
   timeoutMs: number = OPERATOR_LOAD_TIMEOUT_MS,
 ): Promise<AuthoredShared | null> {
   if (shared) return Promise.resolve(shared);

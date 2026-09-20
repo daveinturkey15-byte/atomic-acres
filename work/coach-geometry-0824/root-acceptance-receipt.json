@@ -1,0 +1,305 @@
+{
+  "recordedAt": "2026-09-20T08:44:44.308272+01:00",
+  "status": "VERIFIED_EXPORTED_GEOMETRY_AND_RECORDED_GPU_GATES_NARROW_VISUAL_ACCEPTANCE",
+  "sourceCommit": "dd2fc07265f1cf932e1f4ed2f83e7e346a6e1051",
+  "originalRecipe": {
+    "path": "scripts/blender/build_coach_art_0742.py",
+    "sha256": "0d36d4e0e2c032f32d0271f904220997603bc5a40da0add1c5c375d7d0d2b365"
+  },
+  "exactAcceptedRecipe": {
+    "snapshot": "accepted-bake-recipe-0840.py",
+    "source": "..\\nuketown-recovery-20260919\\work\\coach-geometry-0824\\build_coach_geometry_0824.py",
+    "byteSHA256": "8dde76cf62a943c7b7d60b1544f76f82a8c10290c3f0e5a440b09fe89ad18395",
+    "utf8NormalizedNewlineSHA256": "ba7e10cac03721ac9396c269a5c40c66ce6646c1d9b6f5a17127ed947f56250a"
+  },
+  "sourceDistinction": "Root baked the copied recipe before the final worker normal-recalculation compatibility edit. Its smart_uv uses inherited bpy.ops.mesh.normals_make_consistent; source commit uses BMesh recalc_face_normals. This four-line-only difference is preserved, not claimed GPU-tested. All geometry helpers, tests and consolidator match. Use the accepted snapshot to reproduce the reviewed source.",
+  "sourceParity": {
+    "build_coach_geometry_0824.py": {
+      "utf8TextEqual": false,
+      "workerByteSHA256": "6d7d7dc4221521e3c1c97e9ebb05e5b05edebfc919183d27d14a7c7a252a3296",
+      "rootByteSHA256": "8dde76cf62a943c7b7d60b1544f76f82a8c10290c3f0e5a440b09fe89ad18395",
+      "workerUtf8TextSHA256": "c556838129983cda967ac1a1a21cd1980a5beef0acfbcc4290b92d0bb50d1253",
+      "rootUtf8TextSHA256": "ba7e10cac03721ac9396c269a5c40c66ce6646c1d9b6f5a17127ed947f56250a"
+    },
+    "coach_geometry.py": {
+      "utf8TextEqual": true,
+      "workerByteSHA256": "9853aff29676f1523941b438828c5d43c38b52bca996354e8175225f1d380736",
+      "rootByteSHA256": "9853aff29676f1523941b438828c5d43c38b52bca996354e8175225f1d380736",
+      "workerUtf8TextSHA256": "9853aff29676f1523941b438828c5d43c38b52bca996354e8175225f1d380736",
+      "rootUtf8TextSHA256": "9853aff29676f1523941b438828c5d43c38b52bca996354e8175225f1d380736"
+    },
+    "common.py": {
+      "utf8TextEqual": true,
+      "workerByteSHA256": "cbc4d42a23236449bc414bd01bb6940b8dd1d52c1a6f2d4dac42400dd5fd0909",
+      "rootByteSHA256": "cbc4d42a23236449bc414bd01bb6940b8dd1d52c1a6f2d4dac42400dd5fd0909",
+      "workerUtf8TextSHA256": "cbc4d42a23236449bc414bd01bb6940b8dd1d52c1a6f2d4dac42400dd5fd0909",
+      "rootUtf8TextSHA256": "cbc4d42a23236449bc414bd01bb6940b8dd1d52c1a6f2d4dac42400dd5fd0909"
+    },
+    "check_geometry.py": {
+      "utf8TextEqual": true,
+      "workerByteSHA256": "c6cdc48bbacc65d36edfc72c30bb33ff447adc72aedc79f3fc7b5eeb20dcbcb3",
+      "rootByteSHA256": "c6cdc48bbacc65d36edfc72c30bb33ff447adc72aedc79f3fc7b5eeb20dcbcb3",
+      "workerUtf8TextSHA256": "c6cdc48bbacc65d36edfc72c30bb33ff447adc72aedc79f3fc7b5eeb20dcbcb3",
+      "rootUtf8TextSHA256": "c6cdc48bbacc65d36edfc72c30bb33ff447adc72aedc79f3fc7b5eeb20dcbcb3"
+    },
+    "consolidate-and-check.mjs": {
+      "utf8TextEqual": true,
+      "workerByteSHA256": "be4b802ed5e14a2ccaa0110cac975a3b7431ab8acb52adc8d35191001ef84a63",
+      "rootByteSHA256": "be4b802ed5e14a2ccaa0110cac975a3b7431ab8acb52adc8d35191001ef84a63",
+      "workerUtf8TextSHA256": "be4b802ed5e14a2ccaa0110cac975a3b7431ab8acb52adc8d35191001ef84a63",
+      "rootUtf8TextSHA256": "be4b802ed5e14a2ccaa0110cac975a3b7431ab8acb52adc8d35191001ef84a63"
+    }
+  },
+  "rawArtifact": {
+    "path": "..\\nuketown-recovery-20260919\\work\\coach-geometry-0824\\coach-geometry-0824.glb",
+    "bytes": 4800544,
+    "sha256": "4b537f51dfbdf43cece01f5dc7d40e7f3305017924b7bf40f2effe59b9332be5"
+  },
+  "acceptedArtifact": {
+    "path": "..\\nuketown-recovery-20260919\\public\\assets\\coach-geometry-0824.consolidated.glb",
+    "bytes": 4789512,
+    "sha256": "f80eb7eed01ebdbd0d78b2cc7aca50bffdbd84e342b1781eeca7485e5f92194c",
+    "workerIndependentReconsolidation": "VERIFIED identical SHA256"
+  },
+  "cpuExportCheck": {
+    "status": "BAKED_GLB_CPU_PASS_GPU_OPEN",
+    "source": {
+      "meshes": 321,
+      "nodes": 321,
+      "primitives": 321,
+      "triangles": 9824,
+      "materials": 6,
+      "bytes": 4800544
+    },
+    "output": {
+      "drawCalls": 6,
+      "triangles": 9824,
+      "materialIdentities": 6,
+      "glbBytes": 4789512
+    },
+    "bounds": [
+      [
+        -5.619999885559082,
+        -1.0267714856126986e-07,
+        -1.4000000953674316
+      ],
+      [
+        5.711236000061035,
+        3.3299999237060547,
+        1.3999998569488525
+      ]
+    ],
+    "sha256": "f80eb7eed01ebdbd0d78b2cc7aca50bffdbd84e342b1781eeca7485e5f92194c",
+    "tool": "coach-batch-0712/consolidateGlb",
+    "stats": {
+      "primsDecoded": 321,
+      "mergedGroups": 6,
+      "negativeDetPrims": 0,
+      "paddedUvVertices": 16804,
+      "generatedIndexPrims": 0,
+      "maxVertex": 8304
+    },
+    "gates": {
+      "drawCallsMax8": true,
+      "trianglesNotAboveSource": true,
+      "materialIdentitiesMax6": true
+    }
+  },
+  "rootGPUReport": {
+    "path": "..\\nuketown-recovery-20260919\\captures\\gauntlet\\coach\\round-geometry-0840\\result.json",
+    "sha256": "decbd050b6d27fee338ba0fbd26d2c29a6eeeb0e80e79eca5c88f0d651f62734",
+    "pass": true,
+    "errors": [],
+    "identities": [
+      {
+        "label": "before",
+        "base": "http://127.0.0.1:4233/",
+        "dist": "dist-art-shape-0840",
+        "js": "./assets/index-BVynUnUY.js",
+        "sha256": "da084b6b65ba921a40571be670c61f058b35b22f9e3d97e4014c19a9596d963c",
+        "parity": true
+      },
+      {
+        "label": "after",
+        "base": "http://127.0.0.1:4233/",
+        "dist": "dist-art-shape-0840",
+        "js": "./assets/index-BVynUnUY.js",
+        "sha256": "da084b6b65ba921a40571be670c61f058b35b22f9e3d97e4014c19a9596d963c",
+        "parity": true
+      }
+    ],
+    "coach": {
+      "optIn": true,
+      "state": "ready",
+      "mounted": true,
+      "taken": true,
+      "meshes": 6,
+      "materials": 6,
+      "geometries": 6,
+      "textures": 3,
+      "inScene": true
+    },
+    "frames": [
+      {
+        "label": "before",
+        "station": "plaza",
+        "filename": "before-plaza.png",
+        "backend": {
+          "renderer": "webgpu",
+          "post": "webgpu"
+        },
+        "stats": {
+          "calls": 569,
+          "triangles": 502345,
+          "renders": 25,
+          "geometries": 434,
+          "textures": 132,
+          "programs": 0
+        },
+        "measured": true
+      },
+      {
+        "label": "before",
+        "station": "turningHead",
+        "filename": "before-turningHead.png",
+        "backend": {
+          "renderer": "webgpu",
+          "post": "webgpu"
+        },
+        "stats": {
+          "calls": 704,
+          "triangles": 573053,
+          "renders": 25,
+          "geometries": 434,
+          "textures": 132,
+          "programs": 0
+        },
+        "measured": true
+      },
+      {
+        "label": "before",
+        "station": "spawnA",
+        "filename": "before-spawnA.png",
+        "backend": {
+          "renderer": "webgpu",
+          "post": "webgpu"
+        },
+        "stats": {
+          "calls": 851,
+          "triangles": 600501,
+          "renders": 25,
+          "geometries": 434,
+          "textures": 132,
+          "programs": 0
+        },
+        "measured": true
+      },
+      {
+        "label": "before",
+        "station": "interiorOrange",
+        "filename": "before-interiorOrange.png",
+        "backend": {
+          "renderer": "webgpu",
+          "post": "webgpu"
+        },
+        "stats": {
+          "calls": 761,
+          "triangles": 587303,
+          "renders": 25,
+          "geometries": 434,
+          "textures": 132,
+          "programs": 0
+        },
+        "measured": true
+      },
+      {
+        "label": "after",
+        "station": "plaza",
+        "filename": "after-plaza.png",
+        "backend": {
+          "renderer": "webgpu",
+          "post": "webgpu"
+        },
+        "stats": {
+          "calls": 558,
+          "triangles": 503525,
+          "renders": 25,
+          "geometries": 420,
+          "textures": 132,
+          "programs": 0
+        },
+        "measured": true
+      },
+      {
+        "label": "after",
+        "station": "turningHead",
+        "filename": "after-turningHead.png",
+        "backend": {
+          "renderer": "webgpu",
+          "post": "webgpu"
+        },
+        "stats": {
+          "calls": 679,
+          "triangles": 575365,
+          "renders": 25,
+          "geometries": 420,
+          "textures": 132,
+          "programs": 0
+        },
+        "measured": true
+      },
+      {
+        "label": "after",
+        "station": "spawnA",
+        "filename": "after-spawnA.png",
+        "backend": {
+          "renderer": "webgpu",
+          "post": "webgpu"
+        },
+        "stats": {
+          "calls": 826,
+          "triangles": 602813,
+          "renders": 25,
+          "geometries": 420,
+          "textures": 132,
+          "programs": 0
+        },
+        "measured": true
+      },
+      {
+        "label": "after",
+        "station": "interiorOrange",
+        "filename": "after-interiorOrange.png",
+        "backend": {
+          "renderer": "webgpu",
+          "post": "webgpu"
+        },
+        "stats": {
+          "calls": 736,
+          "triangles": 589615,
+          "renders": 25,
+          "geometries": 420,
+          "textures": 132,
+          "programs": 0
+        },
+        "measured": true
+      }
+    ]
+  },
+  "rootBakeMetrics": {
+    "claimState": "CLAIMED parent bake observation",
+    "elapsedSeconds": 12.35,
+    "peakPrivateBytes": 354021376
+  },
+  "visualReview": {
+    "worker": "VERIFIED inspected actual after-turningHead.png: panes fitted to frame, seated headlamp, attached continuous arches; silhouette coherent. Body surfacing remains stylized.",
+    "parent": "CLAIMED narrow geometry repair accepted after actual paired frames; no further geometry repair requested.",
+    "imageSHA256": "c98db726cf1c62efdb2c06016fd0403f4dd7f2c7c899f6839fa06030bf7d1203"
+  },
+  "remainingOpen": [
+    "Broader visual-bar and surfacing target",
+    "Moving-camera and sustained resource verification for this coach; not established by eight static frames"
+  ],
+  "workerExecutionBoundary": "No Blender, GPU, browser or root mutations. Worker CPU geometry checks and independent consolidation only.",
+  "stop": "HOLD; no further implementation scope"
+}
