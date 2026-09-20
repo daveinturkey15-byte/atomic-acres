@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "VERIFIED optional fence finalrepair2 passes6actualWebGPUviews; narrow modest gain4238. Recommended4234 and frozen4212 unchanged. Sedan recipe final2 rejected actualenvelope; sedan loader final2 rejected independent two-distinct-assets disposal test despite115selftestsPASS. Both approaches stopped with failures preserved. GLM world-weapon final lifecycle and AGY new operator closed-clothing source lanes continue. NativeAstras remain stopped; main visuals OPEN.",
+  "status": "VERIFIED no new visual promotion this heartbeat. Four recorded external source lanes: AGY interrupted final2 world-gun completion, AGY new closed-clothing operator, Muse new volumetric heightfield mountains, GLM visible supply crate. GLM final2 source preserved aftertimeout; no auth/quota failure. Runtime builds unchanged, nativeAstras stopped. Main visual goal OPEN.",
   "owner": "Codex",
   "stop_state": "active: preserve frozen checkpoint and continue private candidates",
   "backup": {
@@ -20,8 +20,8 @@
   },
   "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
   "inspection_time": "2026-09-20T05:45:00+01:00",
-  "lease_updated_at": "2026-09-20T10:05:00.050379+01:00",
-  "source_checkpoint": "ede1835fef3ef8501b0023b966b626af84607ea5",
+  "lease_updated_at": "2026-09-20T10:12:14.263771+01:00",
+  "source_checkpoint": "b4860cc288e3fc94285623d7fac20e1be7d5e4ce",
   "inspection_report": "docs/handoff/SHOWCASE-2026-09-20.md",
   "bundle_sha256": "e8cb3f4fa86437ef164deded998e3613d5220d2115e52335096545af1ab13a91",
   "artifact_checkpoint": "K",
@@ -31,20 +31,21 @@
     "status": "ACTIVE"
   },
   "resource_sample": {
-    "sampled_at": "2026-09-20T09:58:33.279091+01:00",
-    "free_ram_gib": 35.03,
-    "free_vram_mib": 12095,
-    "gpu_utilization_percent": 2,
-    "note": "After serialized6fenceframes; four source-only workers, no active owned Blender/browser."
+    "sampled_at": "2026-09-20T10:12:14.263771+01:00",
+    "free_ram_gib": 30.507,
+    "free_vram_mib": 5147,
+    "gpu_utilization_percent": 1,
+    "note": "Four source-only external lanes; root GPU idle. Owner VRAM activity observed; resample before QA/bake."
   },
   "next_actions": [
-    "Keep4234 recommended and4212 frozen unchanged;4238 is verified optional fence treatment only. Final fence repair2 accepted narrowly, no further same-approach repairs. No need to repeat its six frames or default CPU gates.",
-    "Sedan final Muse recipe repair2 actually FAILED root guardedBlender at unchanged width envelope +/-1.075 versus1.05; ground min-0.42 also invalid. No exportedGLB. Both repairs exhausted. Retain exact recipe inwork/car-bake-muse-repair2-0955 and receipt .recovery-runtime/car-body-repair2-1000. Next sedan work must change to envelope-first authored construction with per-part worldmatrix/extrema proof; no third patch or budget relaxation. Do not integrate loader against absent asset.",
-    "Final AGYcar-runtime-repair2-1000 root115selftestspass but independent distinct-invalid-scenes proofFAIL:2loads only1geometry/1materialdisposal. Savedwork/car-runtime-final2-rejected-1004. Do notapplypatch. Bothrepairsexhausted; no third fallback-state fix. Future sedanadoption route must simplify to one validated binary URL and proven per-object disposal. Currentbodyrecipe also rejected; keep proceduralcurrentcar until newapproach genuinely passes.",
-    "Read GLM world-weapon-repair2-0955 completed patch. Preserve5family source from GLM0923/AGY0941; actual tests count temporary disposal separately. Final fix adds real terminal hook, removes/restricts unsafe generic resource dispose and bounded lifetime. Run same-camera operator weapon views before acceptance; no FP/body changes.",
-    "AGY operator-closed-surface-1000 owns a genuinely new garment topology route: continuous closed shoulder/torso and pelvis joins, current21bones/atlas contract. Previous two parameter repairs stopped; no renamed third capsule decoration. Root actual rig/crouch/UV/pixels required; H3reference not mocap.",
-    "Supplycrate remains source-only CPU PASS, presentation/wire/reward activation OPEN. Defer behind art acceptance. Keep20guns11streaks4grenades/weather/smoke/audio backlog; Semtex18passed remains accepted.",
-    "Four exact disjoint external source lanes recorded; root alone runs local GPU/Blender/browser with >=12GiB freeRAM>=3GiB freeVRAM plusheadroom. No native/OpenAIimplementation/imagegen. Whole-map visual goal OPEN."
+    "Four current independent source lanes are in current_ownership.external. Read changed terminal receipts before touching owned source. Native Astras remain stopped; no OpenAI implementation/imagegen. Preserve recommended4234/frozen4212 and scoped optionalfence4238.",
+    "AGYworld-weapon-final2-close-1010 is finishing the EXACT interrupted GLM finalrepair2 partial, not newthird design. Root tests geometry/default/contacts/cache pass until stale removedAPI test; main terminalhook missing. Finishborrowedresource proof, boundedweakrefmetadata and real terminalhook, then exact source CPU and actual operator weapon A/B. Five families still not20uniqueguns.",
+    "AGYoperator-closed-surface-1000 owns coherent closed shoulder/torso/pelvis garment topology, existing21bones and atlas. New construction approach after priorparameterrepairsexhausted. Root closedmesh/weights/UV CPU, guardedBlender and actual riggedcrouch/prone/game A/B required; no mocapclaim.",
+    "Muse mountain-volume-1010 owns true2Dheightfield closedvolumes with depth/foothills instead of rejected verticalribbons. <=35ktris/6draws/defaultoff, provenance ifmaps. Read actual source before source-only claims; root rejects flatwall silhouettes or unchanged scalar tweaks. No sourcecollision with operator/guns.",
+    "GLM supply-crate-visual-1012 owns concrete bounded cratepresentation only. Prior authority stepper and events0912 readonly. <=4active/4draws/2500tris percrate, admitted-eventidentity/generation/expiry/disposal. Guestwire and fullcatalogrewardactivation remainOPEN; isolatedvisual must not falsely enableunfinishedstreak.",
+    "Sedan recipe final2 and loader final2 are stopped with failures preserved (actualwidth/ground bounds, independent distinctrejected-scene leak). No morepatching sameapproach or relaxinggates. Keep acceptedproceduralcar; a future newenvelope-first asset/singlevalidatedURL route needed.",
+    "Root serializes GPU/browser/Blender, >=12GiBfreeRAM>=3GiBfreeVRAMplusjobheadroom. RecentownerGPUactivity reduced freeVRAM from12GB to5GB: resample before everyheavyjob; defer if insufficient, never terminate owner. Review ready source first rather than duplicate audits. Keep full20guns11streaks4grenades etc backlog; Semtex18passed.",
+    "Heartbeat prompt shortened after09BST expired Astra permission; schedule ACTIVE every15min and quietnotification intent unchanged. Read selectedCURRENTfields/active lanes rather thanfullhistorical array. Continue after owner inspections."
   ],
   "interrupted_lanes": [
     {
@@ -1023,11 +1024,15 @@
       "route": "zai/glm-5.3-flash",
       "effort": "max",
       "started_at": "2026-09-20T05:32:14+00:00",
-      "ended_at": null,
-      "state": "running",
-      "observed_models": [],
+      "ended_at": "2026-09-20T06:50:15+01:00",
+      "state": "historical-timeout-reconciled",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
       "accepted": false,
-      "failure_reasons": []
+      "failure_reasons": [],
+      "attribution": "observed",
+      "note": "Historical running row was stale; actualreceipt timeout18min. Current root streetPBR already integrated by later work. Do not restart this old scope."
     },
     {
       "lane": "muse-facade-real-proof-0636",
@@ -1716,11 +1721,15 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
       "route": "zai/glm-5.3-flash",
       "effort": "max",
-      "state": "running",
-      "observed_models": [],
-      "attribution": "unknown",
+      "state": "timeout-final2-partial-preserved",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "attribution": "observed",
       "accepted": false,
-      "owned_directory": "work/world-weapon-glm-repair2-0955"
+      "owned_directory": "work/world-weapon-glm-repair2-0955",
+      "note": "Actual12minute timeout at10:05:11, one tool error, no quota/auth evidence. Three TS/test partials preserved. Root rerun all geometry/default/lifecycle checks pass until stale removed-helper test throws. Missing final main hook. AGY finishes exact interrupted repair2 scope, not a third redesign.",
+      "review": "work/world-weapon-glm-final2-partial-1006"
     },
     {
       "lane": "agy-car-runtime-repair2-1000",
@@ -1744,11 +1753,50 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
       "route": "gemini-3.8-flash-high",
       "effort": "high",
-      "state": "running",
+      "state": "process-completed-awaiting-review",
       "observed_models": [],
       "attribution": "unknown",
       "accepted": false,
       "owned_directory": "work/operator-closed-surface-agy-1000"
+    },
+    {
+      "lane": "agy-world-weapon-final2-close-1010",
+      "run_id": "delegated-agy-b5fe635e-bd91-47ab-ba31-56c8fd85f575",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-world-weapon-final2-close-1010\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "process-completed-awaiting-review",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/world-weapon-final2-close-agy-1010"
+    },
+    {
+      "lane": "muse-mountain-volume-1010",
+      "run_id": "delegated-omp-muse-mountain-volume-1010-991657e944a04b8292254a499faa0ade",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-mountain-volume-1010-991657e944a04b8292254a499faa0ade\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/mountain-volume-muse-1010"
+    },
+    {
+      "lane": "glm-supply-crate-visual-1012",
+      "run_id": "delegated-omp-glm-supply-crate-visual-1012-5dd49fb789864e1bb554e7fd6a8ca908",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-supply-crate-visual-1012-5dd49fb789864e1bb554e7fd6a8ca908\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/supply-crate-visual-glm-1012"
     }
   ],
   "continue_after_inspection": true,
@@ -1862,30 +1910,56 @@
   },
   "active_external_lanes": [
     {
-      "lane": "glm-world-weapon-repair2-0955",
-      "run_id": "delegated-omp-glm-world-weapon-repair2-0955-581cf3c4fd2e4374b712fa5afdbd4f58",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-world-weapon-repair2-0955-581cf3c4fd2e4374b712fa5afdbd4f58\\summary.json",
-      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
-      "route": "zai/glm-5.3-flash",
-      "effort": "max",
-      "state": "running",
-      "observed_models": [],
-      "attribution": "unknown",
-      "accepted": false,
-      "owned_directory": "work/world-weapon-glm-repair2-0955"
-    },
-    {
       "lane": "agy-operator-closed-surface-1000",
       "run_id": "delegated-agy-1e9429e4-77b2-472a-99a0-9962c4259791",
       "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-operator-closed-surface-1000\\summary.json",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
       "route": "gemini-3.8-flash-high",
       "effort": "high",
-      "state": "running",
+      "state": "process-completed-awaiting-review",
       "observed_models": [],
       "attribution": "unknown",
       "accepted": false,
       "owned_directory": "work/operator-closed-surface-agy-1000"
+    },
+    {
+      "lane": "agy-world-weapon-final2-close-1010",
+      "run_id": "delegated-agy-b5fe635e-bd91-47ab-ba31-56c8fd85f575",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-world-weapon-final2-close-1010\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "process-completed-awaiting-review",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/world-weapon-final2-close-agy-1010"
+    },
+    {
+      "lane": "muse-mountain-volume-1010",
+      "run_id": "delegated-omp-muse-mountain-volume-1010-991657e944a04b8292254a499faa0ade",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-mountain-volume-1010-991657e944a04b8292254a499faa0ade\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/mountain-volume-muse-1010"
+    },
+    {
+      "lane": "glm-supply-crate-visual-1012",
+      "run_id": "delegated-omp-glm-supply-crate-visual-1012-5dd49fb789864e1bb554e7fd6a8ca908",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-supply-crate-visual-1012-5dd49fb789864e1bb554e7fd6a8ca908\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/supply-crate-visual-glm-1012"
     }
   ],
   "awaiting_root_review": [
@@ -1903,9 +1977,9 @@
     }
   ],
   "checkpoint_bundle": {
-    "path": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/visual-0900/checkpoint-1002.bundle",
-    "head": "ede1835fef3ef8501b0023b966b626af84607ea5",
-    "requires": "c0a62c02f45a6932374609638088a6dea6df406e",
+    "path": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/visual-0900/checkpoint-1004.bundle",
+    "head": "b4860cc288e3fc94285623d7fac20e1be7d5e4ce",
+    "requires": "ede1835fef3ef8501b0023b966b626af84607ea5",
     "verified": true
   },
   "latest_review": "docs/handoff/REVIEW-2026-09-20-0255.md",
@@ -2292,7 +2366,7 @@
       "state": "VERIFIED both canonical specialists completed and stopped by08:47; collaboration status checked08:51. No native implementation restarts authorized at/after09:00BST. Exact contributions docs/handoff/ASTRA-CONTRIBUTIONS-2026-09-20.md.",
       "tracker": "docs/handoff/ASTRA-CONTRIBUTIONS-2026-09-20.md"
     },
-    "external_model_plan": "Exact live scopes: GLM5.3Flash max requested world-weapon final lifecycle, AGY requestedGeminihigh coherent operator topology. Current GLM served model awaits terminal receipt; prior GLM confirmed. MuseContributorxhigh actually served finalcarrecipe, completed but bake rejected. FinalAGYloader rejected; two repair limits enforced. No native implementation.",
+    "external_model_plan": "Four exact independent external source scopes in current_ownership. Current served models await receipts; last GLM final2 actuallyglm-5.3-flash timedout; last Muse actuallyContributor. AGY observed model unknown. No nativeimplementation.",
     "checks": "Actual same-camera pixels first, focused touched-contract checks, then integration/resource gates; no repeated full audit of stable artifact.",
     "rejected_trials": [
       "hand-materials-0548",
@@ -2305,24 +2379,11 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T10:05:00.050379+01:00",
+  "updated_at": "2026-09-20T10:12:14.263771+01:00",
   "current_ownership": {
     "root": "Review, exact integration and serialized GPU/browser acceptance only; no implementation or imagegen.",
     "native_astras": "Both completed before09BST; do not restart.",
     "external": [
-      {
-        "lane": "glm-world-weapon-repair2-0955",
-        "run_id": "delegated-omp-glm-world-weapon-repair2-0955-581cf3c4fd2e4374b712fa5afdbd4f58",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-world-weapon-repair2-0955-581cf3c4fd2e4374b712fa5afdbd4f58\\summary.json",
-        "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
-        "route": "zai/glm-5.3-flash",
-        "effort": "max",
-        "state": "running",
-        "observed_models": [],
-        "attribution": "unknown",
-        "accepted": false,
-        "owned_directory": "work/world-weapon-glm-repair2-0955"
-      },
       {
         "lane": "agy-operator-closed-surface-1000",
         "run_id": "delegated-agy-1e9429e4-77b2-472a-99a0-9962c4259791",
@@ -2330,11 +2391,50 @@
         "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
         "route": "gemini-3.8-flash-high",
         "effort": "high",
-        "state": "running",
+        "state": "process-completed-awaiting-review",
         "observed_models": [],
         "attribution": "unknown",
         "accepted": false,
         "owned_directory": "work/operator-closed-surface-agy-1000"
+      },
+      {
+        "lane": "agy-world-weapon-final2-close-1010",
+        "run_id": "delegated-agy-b5fe635e-bd91-47ab-ba31-56c8fd85f575",
+        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-world-weapon-final2-close-1010\\summary.json",
+        "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
+        "route": "gemini-3.8-flash-high",
+        "effort": "high",
+        "state": "process-completed-awaiting-review",
+        "observed_models": [],
+        "attribution": "unknown",
+        "accepted": false,
+        "owned_directory": "work/world-weapon-final2-close-agy-1010"
+      },
+      {
+        "lane": "muse-mountain-volume-1010",
+        "run_id": "delegated-omp-muse-mountain-volume-1010-991657e944a04b8292254a499faa0ade",
+        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-mountain-volume-1010-991657e944a04b8292254a499faa0ade\\summary.json",
+        "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+        "route": "meta-contributor/muse-spark-1.3-contributor",
+        "effort": "xhigh",
+        "state": "running",
+        "observed_models": [],
+        "attribution": "unknown",
+        "accepted": false,
+        "owned_directory": "work/mountain-volume-muse-1010"
+      },
+      {
+        "lane": "glm-supply-crate-visual-1012",
+        "run_id": "delegated-omp-glm-supply-crate-visual-1012-5dd49fb789864e1bb554e7fd6a8ca908",
+        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-supply-crate-visual-1012-5dd49fb789864e1bb554e7fd6a8ca908\\summary.json",
+        "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+        "route": "zai/glm-5.3-flash",
+        "effort": "max",
+        "state": "running",
+        "observed_models": [],
+        "attribution": "unknown",
+        "accepted": false,
+        "owned_directory": "work/supply-crate-visual-glm-1012"
       }
     ]
   },
