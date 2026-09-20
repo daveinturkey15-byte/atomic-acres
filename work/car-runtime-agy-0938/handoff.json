@@ -1,0 +1,59 @@
+{
+  "acceptance": {
+    "author_completion": true,
+    "root_accepted": false,
+    "note": "Author completion != accepted. ROOT applies patch and performs bake / in-game 6-camera frame acceptance."
+  },
+  "apply": {
+    "cmd": "git apply --ignore-whitespace work/car-runtime-agy-0938/car-runtime-agy-0938.patch",
+    "from": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919"
+  },
+  "budgets": {
+    "draws": "<=6 after consolidation",
+    "materials": "<=6 (BodyBlue/Cream/Chrome/Glass/TrimDark/SignalRed)",
+    "meshes": "<=6",
+    "triangles": "<=14000",
+    "envelope": "len 5.04, wid 2.04, hgt 1.48 (nominal 4.8 / 1.95 / 1.48)",
+    "orientation": "nose +x, wheels rest y=0"
+  },
+  "files": {
+    "candidate": [
+      "candidate/src/build/car-body-canary.ts",
+      "candidate/src/build/vehicles.ts",
+      "candidate/src/main.ts"
+    ],
+    "handoff": "handoff.json",
+    "patch": "car-runtime-agy-0938.patch",
+    "repair_notes": "REPAIR-NOTES.md",
+    "test": "verify-car-runtime-agy-0938.mjs"
+  },
+  "lane": "?car-body=canary (default off; exact case-sensitive opt-in). Procedural first saloon slot (ROAD_HALF_WIDTH*0.52, -(HEAD_RADIUS-1.2)+nudge, -0.09+skew). Bounded 8s preload degrades cleanly to procedural on miss/timeout/invalid.",
+  "ownership": "Standalone loader in car-body-canary.ts; core/assets cache untouched; batchStatic keep marker enforced; release idempotent with generation increment and parent detachment; deduped disposal.",
+  "provenance": {
+    "pattern": "src/build/coach-owned-canary.ts (accepted ROOT local ownership authority)",
+    "prior_worker": "work/car-body-agy-0923 (recipe completed and root-baking; recipe untouched)",
+    "root": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919 (read-only)",
+    "self": "C:/Users/david/Desktop/stuff/worktrees/nuketown-muse-vehicle-20260919/work/car-runtime-agy-0938 (sole write target)"
+  },
+  "qa": {
+    "inScene": "qa.carBodyOwned() = report + inScene (marked meshes under vehicles module). ROOT verifies inScene + materials.",
+    "report": "carBodyCanaryReport() in candidate/src/build/car-body-canary.ts exposing optIn, state, mounted, taken, meshes, materials, geometries, textures, triangles."
+  },
+  "repairs": [
+    "Deduplicated disposal of shared materials and textures using Sets in disposeScene & disposeOwned",
+    "Cancellation generation tracking on preload and release to discard and clean up late-arriving loads",
+    "Parent detachment on release (group.removeFromParent)",
+    "Release hooks wired in main.ts pagehide and qa.disposeEnvironment()",
+    "Raw GLB fallback budget enforcement: raw fallback must pass <=6 meshes, <=6 materials, <=14k tris, bounds, ground, noseaxis",
+    "Static batch exclusion via mesh.userData.carBodyCanary = true and makeCarBodyOwned keep predicate",
+    "Validation before adoption; no silent autoscaling of bad/oversized assets",
+    "Synchronous loader throw-safe wrapper in safeLoad",
+    "Read-only QA reporting: carBodyCanaryReport + qa.carBodyOwned() including inScene, geoms, mats, textures, triangles",
+    "Collider parity and placement RNG stream unchanged"
+  ],
+  "verification": {
+    "cpu_test": "node verify-car-runtime-agy-0938.mjs -> 79/79 PASS",
+    "patch_check": "git apply --check --ignore-whitespace car-runtime-agy-0938.patch -> CLEAN",
+    "tsc": "npx tsc candidate/src/build/car-body-canary.ts --noEmit -> CLEAN"
+  }
+}

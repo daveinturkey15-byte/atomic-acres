@@ -1,0 +1,60 @@
+{
+  "verified_at": "2026-09-20T09:58:33.279091+01:00",
+  "dist": "dist-fence-repair2-0956",
+  "url": "http://127.0.0.1:4238/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary",
+  "js": "index-BkJdpBgA.js",
+  "sha256": "23a26da3ba38c04ba1279452d3b3448951007d2904e809cbdbf5018cc2b0b29a",
+  "http_payload_equal": true,
+  "runtime_parent": "c0a62c02f45a6932374609638088a6dea6df406e",
+  "runtime_delta": "src/build/fence-boards-canary.ts exact AGY final repair2 patch",
+  "actual_model": "unknown; requested Gemini 3.8 Flash high via AGY",
+  "frames": {
+    "before": {
+      "pass": true,
+      "colliders": 652,
+      "errors": [],
+      "frames": [
+        {
+          "name": "white-back",
+          "calls": 966,
+          "triangles": 859449
+        },
+        {
+          "name": "orange-back-grazing",
+          "calls": 631,
+          "triangles": 693617
+        },
+        {
+          "name": "white-west-return",
+          "calls": 531,
+          "triangles": 623505
+        }
+      ]
+    },
+    "after": {
+      "pass": true,
+      "colliders": 652,
+      "errors": [],
+      "frames": [
+        {
+          "name": "white-back",
+          "calls": 968,
+          "triangles": 864969
+        },
+        {
+          "name": "orange-back-grazing",
+          "calls": 633,
+          "triangles": 699137
+        },
+        {
+          "name": "white-west-return",
+          "calls": 533,
+          "triangles": 629025
+        }
+      ]
+    }
+  },
+  "cpu": "Root reran exact source verifier, original baseline assertions unchanged via esbuild, yard collider/material/transform guard, TypeScript and build: PASS. Original inward-winding artifact still rejected. 3480 triangles versus720 baseline, +2760; no new textures/materials.",
+  "visual_state": "Accepted only as a modest optional fence improvement: less repeated grain and exposed post fasteners visible in actual grazing frames; beveled edges subtle. This does not meet map-wide overhaul bar. 4234 recommended and4212 frozen remain unchanged. No third repair.",
+  "limits": "Static geometry scope only; no new long soak or claim of60fps. Whole-map visual quality remains OPEN."
+}

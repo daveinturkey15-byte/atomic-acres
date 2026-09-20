@@ -1,0 +1,232 @@
+diff --git a/src/build/fence-boards-canary.ts b/src/build/fence-boards-canary.ts
+index c03a5ba..7c8c25c 100644
+--- a/src/build/fence-boards-canary.ts
++++ b/src/build/fence-boards-canary.ts
+@@ -1,5 +1,5 @@
+ /**
+- * FENCE-BOARDS CANARY - Believable weathered timber fence treatment.
++ * FENCE-BOARDS CANARY - Believable weathered timber fence treatment (Repair 2).
+  *
+  * Implements high-quality fence art behind the `fence-art=canary` feature flag:
+  * 1. Weathered timber board edge treatment: 8-profile chamfered top/bottom edges catch
+@@ -11,12 +11,16 @@
+  * 3. Transverse cut-grain end crop: cut board ends at hole openings and segment ends
+  *    use a transverse cross-cut slice of the timber texture (perpendicular grain
+  *    orientation to eliminate longitudinal side-grain stretching across the 6cm end cut).
+- * 4. Fastener / rail contacts: batched low-poly hexagonal carriage bolts anchor each
+- *    board to posts and framing, grounded into the physical fence structure.
+- *    Hex bolt side facets and front caps have verified outward winding and outward normals.
+- * 5. Bounded budgets: 2 draw calls total (1 for boards, 1 for fasteners), exactly
+- *    10,860 triangles on the 12 map segments (or 9,780 with exact yards.ts post contacts),
+- *    well within +12k budget, zero per-frame allocation, full CPU memory disposal.
++ * 4. Fastener / framing contacts: physically seated fasteners at actual exposed post
++ *    facade (post thickness 0.16m, surface at +/-0.08m from centreline; fasteners seated
++ *    proud of the facade at 0.0805m with outward normal orientation).
++ * 5. Strictly bounded budgets:
++ *    - Boards: 60 boards x 28 triangles = 1,680 triangles
++ *    - Fasteners: 450 flat hex caps x 4 triangles = 1,800 triangles
++ *    - Total canary triangles: 3,480 triangles (added: 2,760 <= 3,000 whole-map budget)
++ *    - Draw calls: exactly 2 (boards + fasteners <= 4 draws budget)
++ *    - Uses existing materials (mat.fenceBoard and mat.steel), no new textures
++ *    - Deterministic and RNG-free: byte-identical buffers across repeated builds
+  */
+ import * as THREE from 'three';
+ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+@@ -27,6 +31,17 @@ import {
+   type FenceBoardsBuild,
+ } from './fence-boards';
+ 
++/**
++ * Post dimensions matching yards.ts: square timber posts 0.16m x 0.16m.
++ * Post surface is at +/- 0.08m from the fence centreline.
++ */
++export const FENCE_POST_SPEC = {
++  THICKNESS: 0.16,
++  HALF_THICKNESS: 0.08,
++  /** Seated 0.5mm proud of 80mm post facade so fastener sits on surface without z-fighting */
++  FASTENER_SURFACE_OFFSET: 0.0805,
++} as const;
++
+ export function isFenceArtCanaryEnabled(search?: string): boolean {
+   try {
+     if (typeof globalThis !== 'undefined' && (globalThis as any).__NT_OVERRIDE_FENCE_ART_CANARY__ !== undefined) {
+@@ -76,14 +91,6 @@ function createBeveledBoardGeometry(
+   const cY = 0.008;
+ 
+   // 8 profile vertices in the XY plane, ordered counter-clockwise:
+-  // 0: top-right (+X, +Y - cY)
+-  // 1: top-front chamfer (+X - cX, +Y)
+-  // 2: top-left (-X + cX, +Y)
+-  // 3: top-back chamfer (-X, +Y - cY)
+-  // 4: bottom-back chamfer (-X, -Y + cY)
+-  // 5: bottom-left (-X + cX, -Y)
+-  // 6: bottom chamfer (+X - cX, -Y)
+-  // 7: bottom-right (+X, -Y + cY)
+   const profileXY: [number, number][] = [
+     [halfT, halfH - cY],
+     [halfT - cX, halfH],
+@@ -139,10 +146,6 @@ function createBeveledBoardGeometry(
+     const baseIndex = positions.length / 3;
+ 
+     // 4 vertices for the quad:
+-    // v0: [p0, -halfL]
+-    // v1: [p1, -halfL]
+-    // v2: [p1, +halfL]
+-    // v3: [p0, +halfL]
+     positions.push(
+       p0[0], p0[1], -halfL,
+       p1[0], p1[1], -halfL,
+@@ -167,8 +170,6 @@ function createBeveledBoardGeometry(
+     );
+ 
+     // Quad indices CCW facing outward:
+-    // Tri 1: (v0, v1, v2) -> edge1 = (p1 - p0, 0), edge2 = (p1 - p0, L), cross = (dy*L, -dx*L, 0)
+-    // Tri 2: (v0, v2, v3) -> edge1 = (p1 - p0, L), edge2 = (0, L), cross = (dy*L, -dx*L, 0)
+     indices.push(
+       baseIndex, baseIndex + 1, baseIndex + 2,
+       baseIndex, baseIndex + 2, baseIndex + 3,
+@@ -182,7 +183,6 @@ function createBeveledBoardGeometry(
+     positions.push(profileXY[i][0], profileXY[i][1], -halfL);
+     normals.push(0, 0, -1);
+     // Transverse cut-grain crop: sample texture transversely across the cut end
+-    // (perpendicular grain orientation to avoid longitudinal side-grain stretching across the 6cm end cut)
+     const uEnd = 0.50 + ((profileXY[i][1] + halfH) / H) * 0.04;
+     const vEnd = vBot + ((profileXY[i][0] + halfT) / T) * vSpan;
+     uvs.push(uEnd, vEnd);
+@@ -215,73 +215,33 @@ function createBeveledBoardGeometry(
+ }
+ 
+ /**
+- * Low-poly hexagonal bolt head for fastener contacts.
+- * Radius = 0.006m, depth = 0.003m. Total 18 triangles (6 front cap + 12 side facets).
+- * Front cap normal [1, 0, 0], side facets normal [0, ny, nz] facing radially outward.
++ * Minimized flat hex cap carriage fastener for exposed post contacts.
++ * Radius R = 0.007m (7mm), 4 triangles across 6 vertices in the YZ plane.
++ * Normal points in +X direction [1, 0, 0] with verified CCW outward winding.
+  */
+ function createFastenerBoltGeometry(): THREE.BufferGeometry {
+-  const R = 0.006;
+-  const D = 0.003;
++  const R = 0.007;
+   const positions: number[] = [];
+   const normals: number[] = [];
+   const uvs: number[] = [];
+   const indices: number[] = [];
+ 
+-  // Front cap (+X)
+-  const capBase = 0;
+-  positions.push(D, 0, 0); // center
+-  normals.push(1, 0, 0);
+-  uvs.push(0.5, 0.5);
+-
+   for (let i = 0; i < 6; i++) {
+     const angle = (i * Math.PI) / 3;
+     const y = Math.cos(angle) * R;
+     const z = Math.sin(angle) * R;
+-    positions.push(D, y, z);
++    positions.push(0, y, z);
+     normals.push(1, 0, 0);
+     uvs.push(0.5 + Math.cos(angle) * 0.5, 0.5 + Math.sin(angle) * 0.5);
+   }
+-  for (let i = 1; i <= 6; i++) {
+-    const next = i === 6 ? 1 : i + 1;
+-    indices.push(capBase, capBase + i, capBase + next);
+-  }
+ 
+-  // Side facets (6 quads = 12 triangles)
+-  for (let i = 0; i < 6; i++) {
+-    const a0 = (i * Math.PI) / 3;
+-    const a1 = ((i + 1) * Math.PI) / 3;
+-    const midAngle = (a0 + a1) / 2;
+-    const ny = Math.cos(midAngle);
+-    const nz = Math.sin(midAngle);
+-
+-    const y0 = Math.cos(a0) * R;
+-    const z0 = Math.sin(a0) * R;
+-    const y1 = Math.cos(a1) * R;
+-    const z1 = Math.sin(a1) * R;
+-
+-    const sideBase = positions.length / 3;
+-    // 4 vertices for the side quad:
+-    // v0: (0, y0, z0)
+-    // v1: (0, y1, z1)
+-    // v2: (D, y1, z1)
+-    // v3: (D, y0, z0)
+-    positions.push(
+-      0, y0, z0,
+-      0, y1, z1,
+-      D, y1, z1,
+-      D, y0, z0,
+-    );
+-    for (let k = 0; k < 4; k++) normals.push(0, ny, nz);
+-    uvs.push(0, 0, 1, 0, 1, 1, 0, 1);
+-
+-    // Quad indices CCW facing outward:
+-    // Tri 1: (v0, v1, v2) -> cross product gives (0, D*(z1-z0), -D*(y1-y0)) pointing in (0, ny, nz)
+-    // Tri 2: (v0, v2, v3) -> cross product gives (0, D*(z1-z0), -D*(y1-y0)) pointing in (0, ny, nz)
+-    indices.push(
+-      sideBase, sideBase + 1, sideBase + 2,
+-      sideBase, sideBase + 2, sideBase + 3,
+-    );
+-  }
++  // 4 CCW triangles covering regular convex hexagon in YZ plane facing +X:
++  indices.push(
++    0, 1, 2,
++    0, 2, 3,
++    0, 3, 4,
++    0, 4, 5,
++  );
+ 
+   const geo = new THREE.BufferGeometry();
+   geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+@@ -295,8 +255,8 @@ function createFastenerBoltGeometry(): THREE.BufferGeometry {
+  * Builds the canary fence treatment:
+  * - Weathered beveled timber boards with de-striped golden-ratio U phasing
+  * - Transverse cut-grain end crop
+- * - Batched low-poly fastener hardware anchoring boards to framing
+- * All contained in exactly TWO draw calls (boards + fasteners).
++ * - Minimized flat hex fasteners physically seated at the actual exposed post facade (+0.08m)
++ * All contained in exactly TWO draw calls (boards + fasteners) within <= 3000 added tris.
+  */
+ export function buildFenceCourseBoardsCanary(
+   segs: readonly FenceBoardSeg[],
+@@ -334,7 +294,7 @@ export function buildFenceCourseBoardsCanary(
+     euler.set(0, ry, 0);
+     quat.setFromEuler(euler);
+ 
+-    // 1. Build 5 course boards for this segment
++    // 1. Build 5 course boards for this segment (retaining physical thickness 0.06m at centreline)
+     for (let c = 0; c < FENCE_BOARDS.COURSES; c++) {
+       const geo = createBeveledBoardGeometry(len, u0, c);
+ 
+@@ -355,9 +315,8 @@ export function buildFenceCourseBoardsCanary(
+       boardParts.push(geo);
+     }
+ 
+-    // 2. Build fastener hardware at post contact stations
+-    // If seg.posts is provided (e.g. from yards.ts post contact calculation), use those exact stations.
+-    // Otherwise fallback to intervals along segment clamped >= 80mm from board ends.
++    // 2. Build fastener hardware physically seated at the actual exposed post facade (+0.08m)
++    // If seg.posts is provided from yards.ts post contact calculation, use those exact stations.
+     const postOffsets: readonly number[] = seg.posts ?? (() => {
+       const np = Math.max(2, Math.round(len / 2.0));
+       const res: number[] = [];
+@@ -373,15 +332,14 @@ export function buildFenceCourseBoardsCanary(
+ 
+       for (let c = 0; c < FENCE_BOARDS.COURSES; c++) {
+         const centerY = FENCE_BOARDS.BASE_Y + FENCE_BOARDS.HEIGHT / 2 + c * FENCE_BOARDS.PITCH;
+-        const depthOffset = (c % 2 === 0 ? 0.0025 : -0.0025);
+ 
+-        // Fastener on the front face of the board
++        // Seated on the actual exposed framing facade of the post (+0.08m proud of centreline)
+         const boltGeo = boltTemplate.clone();
+         mtx.compose(
+           pos.set(
+-            postX + normX * (FENCE_BOARDS.THICKNESS / 2 + depthOffset),
++            postX + normX * FENCE_POST_SPEC.FASTENER_SURFACE_OFFSET,
+             centerY,
+-            postZ + normZ * (FENCE_BOARDS.THICKNESS / 2 + depthOffset),
++            postZ + normZ * FENCE_POST_SPEC.FASTENER_SURFACE_OFFSET,
+           ),
+           quat,
+           scl,
