@@ -1,5 +1,7 @@
 # Weapon FX canary — source handoff
 
+UPDATE 08:45 BST: latest candidate is `92022485c9aa0a55ab9bffc945010b3328bdfbfd` after the second and final repair. See `astra-weapon-fx-final-repair.md` for the actual-pixel diagnosis, retained failures and new bundle identity. The original handoff below is retained as the r1 record; its one-repair-remaining statement is superseded. Runtime/art acceptance remains OPEN.
+
 VERIFIED source candidate: `fb322d90fe66a4b791572fa26d015afc6eade258`, after contract `2ede1f421d724435e3cab0d9a45ba69f4814362c` and initial source `fbc073e4206d635165ba2bb1cb923a1c674f8d26`. Requested author route: Astra xhigh, explicitly authorized by Dave for this bounded slice. Original analytic masks and particle code; no generated images, copied game art or external gameplay modules.
 
 The opt-in URL flag is `weapon-fx=canary`. It adds six gas lobes/wisps to each existing ordinary muzzle pop. Existing impact calls retain the decal and replace their transient square/box effects with surface-directed dust, small tumbling particles and short velocity-aligned sparks on the existing non-dusty path. The fast gas envelope decelerates; the slower wisps expand and fade. Impact debris settles against its source plane. This is bounded presentation, not a material classifier or full collision simulation.

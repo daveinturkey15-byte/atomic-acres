@@ -5,17 +5,56 @@
   "serving_model_independently_observed": false,
   "scope_contract_sha": "2ede1f421d724435e3cab0d9a45ba69f4814362c",
   "initial_source_sha": "fbc073e4206d635165ba2bb1cb923a1c674f8d26",
-  "candidate_source_sha": "fb322d90fe66a4b791572fa26d015afc6eade258",
+  "candidate_source_sha": "92022485c9aa0a55ab9bffc945010b3328bdfbfd",
   "flag": "weapon-fx=canary",
-  "source_files": ["src/weapons/effects.ts", "src/weapons/weapon-fx-canary.ts"],
+  "source_files": [
+    "src/weapons/effects.ts",
+    "src/weapons/weapon-fx-canary.ts"
+  ],
   "root_required_ownership_patch": "docs/astra-weapon-fx-controller-ownership.patch",
   "controller_source_changed_in_lane": false,
   "legacy_materials_disposed": false,
   "provenance": "Original procedural RGBA masks and pooled particle trajectories, current Three documentation and installed r180 source. No external art, copied game modules, GPU or image generation.",
-  "repairs": {"used": 1, "max": 2, "r0": "CPU pass; rejected by installed-source MRT normal audit", "r1": "Fixed camera-facing normal buffers; CPU/check/build pass; root pixels OPEN"},
-  "resources": {"batches": 3, "capacity": 192, "triangles": 384, "owned_cpu_texture_buffer_bytes": 119040, "conservative_cpu_gpu_bytes": 238080, "limit_bytes": 1048576, "additional_lights": 0},
-  "tests": {"fx_cpu_checks": 15, "negative_controls": 4, "legacy_trace_frames_per_mode": 480, "saturation_emission_calls": 6000, "controller_frames": 6970, "controller_exact_claims": 172, "mapped_profiles": 20, "archetypes": 5, "typecheck": "PASS", "build": "PASS"},
-  "child_bundle": {"path": "dist/assets/index-DZqvuvAu.js", "sha256": "ebf09c3680863cedc23854f4b31b880ddfecac372fbf1a1cdb464e8cde40aac4", "root_identity": "OPEN: root must hash combined candidate"},
-  "open": ["actual root shader compilation and console", "actual timestamped muzzle/ground/wall comparisons", "live draw/triangle/frame-time and heap/resource stability", "root integration of disposal seam and live restart", "visual target remains independent of CPU passes"],
-  "preserved_evidence": "docs/astra-weapon-fx-evidence"
+  "repairs": {
+    "used": 2,
+    "max": 2,
+    "r0": "CPU pass; rejected by installed-source MRT normal audit",
+    "r1": "Fixed camera-facing normal buffers; CPU/check/build pass; root pixels OPEN",
+    "r2": "Zero-alpha auxiliary MRT outputs after actual dark-card failure. CPU/check/build pass; root pixels OPEN; no repairs remain."
+  },
+  "resources": {
+    "batches": 3,
+    "capacity": 192,
+    "triangles": 384,
+    "owned_cpu_texture_buffer_bytes": 119040,
+    "conservative_cpu_gpu_bytes": 238080,
+    "limit_bytes": 1048576,
+    "additional_lights": 0
+  },
+  "tests": {
+    "fx_cpu_checks": 16,
+    "negative_controls": 4,
+    "legacy_trace_frames_per_mode": 480,
+    "saturation_emission_calls": 6000,
+    "controller_frames": 6970,
+    "controller_exact_claims": 172,
+    "mapped_profiles": 20,
+    "archetypes": 5,
+    "typecheck": "PASS",
+    "build": "PASS"
+  },
+  "child_bundle": {
+    "path": "dist/assets/index-Ci1JJkoC.js",
+    "sha256": "c2cea303e6d60227ca4902145db912338e3c59eedefcaacf43dabb9bfeea4064",
+    "root_identity": "OPEN: root must hash combined candidate"
+  },
+  "open": [
+    "actual root shader compilation and console",
+    "actual timestamped muzzle/ground/wall comparisons",
+    "live draw/triangle/frame-time and heap/resource stability",
+    "root integration of disposal seam and live restart",
+    "visual target remains independent of CPU passes"
+  ],
+  "preserved_evidence": "docs/astra-weapon-fx-evidence",
+  "latest_diagnosis": "docs/astra-weapon-fx-final-repair.md"
 }
