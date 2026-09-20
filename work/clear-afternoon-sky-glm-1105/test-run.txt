@@ -1,0 +1,28 @@
+$ node test/run-test.mjs
+esbuild bundle: 77 ms (three bundled, platform browser, es2022)
+$ node .build/contract-test.mjs
+exit=0
+ok - bake is deterministic (byte-identical for equal inputs)
+ok - background is a THREE.DataTexture
+ok - equirect mapping
+ok - sRGB colorSpace
+ok - RGBA8 format
+ok - bounded 2K equirect (2048x1024)
+ok - azimuth wrap is repeat (seamless)
+ok - linear filtering, no mipmap generation
+ok - near-sun sky is brighter and warmer than anti-sun
+ok - zenith saturated blue, horizon pales (air-mass gradient)
+ok - horizon reads as bright hazy pale
+ok - low sky is warm on the sun side (dust term)
+ok - create() does not enable: default OFF
+ok - disabled: scene untouched
+ok - enable() installs the owned background
+ok - enable() hides the TSL dome before the first frame
+ok - disable() restores background AND dome
+ok - re-enable reuses the same texture instance (no realloc)
+ok - dispose() while enabled restores original state
+ok - dispose() marks the handle disposed
+ok - texture getter throws AfternoonSkyDisposedError after dispose
+ok - enable() after dispose throws (late-arrival guard)
+ok - double dispose() is an idempotent no-op
+PASS 23 assertions

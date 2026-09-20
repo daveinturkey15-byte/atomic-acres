@@ -1,0 +1,933 @@
+diff --git a/src/game/events.ts b/src/game/events.ts
+index 6a7b5ce..9fe46be 100644
+--- a/src/game/events.ts
++++ b/src/game/events.ts
+@@ -32,8 +32,10 @@
+ 
+ export * from './vocab';
+ export * from './events-ordnance';
++export * from './events-crate';
+ 
+ import { ORDNANCE_EVENT_TYPES, type OrdnanceEvent } from './events-ordnance';
++import { CRATE_EVENT_TYPES, type CrateEvent } from './events-crate';
+ import type {
+   ActorId,
+   DamageCause,
+@@ -246,7 +248,9 @@ export type GameEvent =
+   // The ordnance lane's shapes (grenades, smoke, flash, knife, drops). Declared
+   // in `./events-ordnance` for the 400-line cap and folded in here, so the
+   // union is still one union and the bus still carries one vocabulary.
+-  | OrdnanceEvent;
++  | OrdnanceEvent
++  // The supply-crate slice (landed/opened), a leaf exactly like ordnance's.
++  | CrateEvent;
+ 
+ /** Every discriminant, frozen. This IS the list; nothing derives it. */
+ export const GAME_EVENT_TYPES = [
+@@ -263,6 +267,7 @@ export const GAME_EVENT_TYPES = [
+   'match-phase',
+   'feed',
+   ...ORDNANCE_EVENT_TYPES,
++  ...CRATE_EVENT_TYPES,
+ ] as const;
+ export type GameEventType = (typeof GAME_EVENT_TYPES)[number];
+ 
+diff --git a/src/game/killstreaks/runtime.ts b/src/game/killstreaks/runtime.ts
+index 1636dc4..0426012 100644
+--- a/src/game/killstreaks/runtime.ts
++++ b/src/game/killstreaks/runtime.ts
+@@ -46,6 +46,10 @@ import { evaluateActivation, rejectedOutcome, type ActivationContext, type Strea
+ import { createRecon, reconRevealsTo, stepRecon, type ReconState } from './effects/recon';
+ import { createCounterRecon, jamsTeam, stepCounterRecon, type CounterReconState } from './effects/counter-recon';
+ import { createSentry, stepSentry, validateSentryPlacement, type SentryState, type SentryTarget } from './effects/sentry';
++import {
++  createSupplyCrate, stepSupplyCrate, validateCratePlacement,
++  crateEarnedEvent, crateGrantFits, crateOpenedEvent, type SupplyCrateState,
++} from './effects/supply-crate';
+ 
+ export { STREAK_CLAIM_REJECTS, STREAK_CLAIM_REJECT_LABELS, type ActivationContext, type StreakClaimReject } from './gate';
+ 
+@@ -67,16 +71,18 @@ export const ADVANCE_DT_CAP_MS = 250;
+ export const MAX_LADDER_KILLS = 100_000;
+ 
+ /** The wiring table: the only place a streak id meets a stepper. */
+-const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry'>> = Object.freeze({
++const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'supply-crate'>> = Object.freeze({
+   'recon-sweep': 'recon',
+   'signal-jam': 'counter-recon',
+   'sentry-post': 'sentry',
++  // SOLO CANARY: earned supply-crate now reaches the authoritative stepper.
++  'supply-crate': 'supply-crate',
+ });
+ 
+ /** Derived, never authored: what this build can bring into the world. */
+ export const WIRED_STREAK_IDS: readonly string[] = Object.freeze(Object.keys(EFFECT_KIND));
+ 
+-export type LiveInstance = ReconState | CounterReconState | SentryState;
++export type LiveInstance = ReconState | CounterReconState | SentryState | SupplyCrateState;
+ /** What the host must know about an actor for a sentry to shoot it. */
+ export type StreakTarget = SentryTarget;
+ 
+@@ -298,6 +304,11 @@ export class StreakRuntime {
+       if (!p.ok) return reject('no-placement', streakId);
+       placed = { x: p.x, y: p.y, z: p.z };
+     }
++    if (kind === 'supply-crate') {
++      const p = validateCratePlacement(anchor.x, anchor.z, world);
++      if (!p.ok) return reject('no-placement', streakId);
++      placed = { x: p.x, y: p.y, z: p.z };
++    }
+ 
+     const instanceId = ++this.instances;
+     const seed = hash32(this.seed, this.matchEpoch * 1_000_003 + ++this.activations, streakId);
+@@ -311,7 +322,9 @@ export class StreakRuntime {
+       ? createRecon(instanceId, a.actorId, a.team, streakId, def.durationMs, seed)
+       : kind === 'counter-recon'
+         ? createCounterRecon(instanceId, a.actorId, a.team, streakId, def.durationMs)
+-        : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
++        : kind === 'supply-crate'
++          ? createSupplyCrate(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed, this.catalog)
++          : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
+ 
+     const e: StreakActivatedEvent = Object.freeze({ type: 'streak-activated', at: now, actorId: a.actorId, team: a.team, streakId, slot: intent.slot, chargesLeft, instanceId });
+     a.cause = e;
+@@ -337,11 +350,34 @@ export class StreakRuntime {
+         ? stepRecon(instance, dt, { now })
+         : instance.kind === 'counter-recon'
+           ? stepCounterRecon(instance, dt, { now })
+-          : stepSentry(instance, dt, { now, world, targets: targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health })) });
++          : instance.kind === 'supply-crate'
++            ? stepSupplyCrate(instance, dt, { now, world, targets: targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health })) })
++            : stepSentry(instance, dt, { now, world, targets: targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health })) });
+       for (const e of tick.events) {
+         if (e.type === 'damage') health.set((e as DamageEvent).victimId, (e as DamageEvent).healthAfter);
+         events.push(e);
+       }
++      const crate = tick.state.kind === 'supply-crate' ? tick.state : null;
++      if (crate && crate.opened && crate.remainingMs > 0) {
++        // Grant admission: the stepper says a hold COMPLETED; the runtime, the
++        // only ledger writer, decides whether the bank can take the reward.
++        // Granted exactly once because the crate leaves `live` on the grant;
++        // refused, it stays claimable and the stepper resets the hold when the
++        // holder walks away. No fabricated grant: the events are built by the
++        // effect only beside the banked charge they name.
++        const owner = this.actors.get(tick.state.actorId);
++        if (owner && crateGrantFits(owner.charges, crate.reward, MAX_BANKED_STREAKS, MAX_CHARGES_PER_STREAK)) {
++          const charges = (owner.charges.get(crate.reward) ?? 0) + 1;
++          owner.charges.set(crate.reward, charges);
++          const earned = crateEarnedEvent({ actorId: owner.actorId, team: owner.team }, crate.reward, charges, now);
++          const opened = crateOpenedEvent(id, crate, { actorId: owner.actorId, team: owner.team }, now);
++          owner.cause = earned as Extract<GameEvent, { type: 'streak-earned' }>;
++          owner.at = now;
++          this.live.delete(id);
++          events.push(earned, opened);
++          continue;
++        }
++      }
+       if (tick.state.remainingMs > 0) this.live.set(id, tick.state);
+       else events.push(this.retire(id, tick.state, now, 'expired'));
+     }
+diff --git a/src/main.ts b/src/main.ts
+index 5f412ca..488a3d9 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -13,11 +13,13 @@ import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core
+ import { STATIONS, type Station } from './core/stations';
+ import { WeaponsController } from './weapons/controller';
+ import { OrdnanceScene } from './weapons/ordnance-scene';
++import { createSupplyCrateVisual } from './weapons/supply-crate-visual';
+ import { initUI } from './ui/index';
+ import { wireNetcode } from './net/wire';
+ import { createCharacterSystem, type CharacterHandle } from './characters';
+ import { loadBakedClips } from './characters/kimodo-clips';
+ import { createLocalMatch, type LocalMatch, type MatchUi } from './game/session';
++import type { GameEvent } from './game/events';
+ import { PAL } from './core/palette';
+ import { loadLoadout, resolveLoadout } from './game/loadout';
+ import { WorldAudio } from './audio/world-audio';
+@@ -186,6 +188,9 @@ hudHelp.textContent =
+   'F fly · C noclip · wheel/[ ] speed · H help · Esc free mouse · ' +
+   'LMB fire · RMB aim · R reload · 1/2 or wheel weapons · ' +
+   'G frag (hold to cook) · Q tactical · V knife · hold E pick up · CTRL crouch · Z prone';
++hudHelp.textContent +=
++  ' · SUPPLY-CRATE CANARY (SOLO ONLY): pick Supply Crate in loadout - when its slot is READY press its streak key 3-6, ' +
++  'the crate drops at your feet, stand inside it to hold the pickup open and bank the rolled reward (no multiplayer parity)';
+ hud.append(hudStats, hudMode, hudHelp, ammoDiv);
+ // ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
+ // initUI owns everything inside #hud and #start, so the capture harness still
+@@ -231,18 +236,24 @@ match = createLocalMatch({
+     player.setStance('stand');
+   },
+ });
++// Supply-crate canary visual (solo). The stepper owns all gameplay truth;
++// this only draws what the host admitted, through the session's real event sink.
++const crateVisual = createSupplyCrateVisual({ scene: world.scene });
++(match as { setEventSink?: (s: (events: readonly GameEvent[], now: number) => void) => void })
++  .setEventSink?.((events) => crateVisual.apply(events));
+ const botBodies = new Map<string, CharacterHandle>();
+ 
+ const startOverlay = document.getElementById('start')!;
+ // Decode the small authored bank on the first menu gesture, before the first
+ // shot, while retaining browser autoplay rules and persisted volume values.
+ startOverlay.addEventListener('pointerdown', () => weapons.resumeAudio(), { once: true });
+-addEventListener('pagehide', () => weapons.disposeAudio());
++addEventListener('pagehide', () => { weapons.disposeAudio(); crateVisual.dispose(); });
+ // The first click lands on the overlay (it covers the canvas), so dismiss and lock
+ // here; later clicks hit the canvas and re-lock via Player. Esc releases (browser
+ // default) and Player drops held keys so nothing spins or keeps walking.
+ startOverlay.addEventListener('click', () => {
+   startOverlay.style.display = 'none';
++  crateVisual.clear();
+   match?.begin();
+   // requestPointerLock returns a PROMISE in current Chrome, so a refusal is an
+   // unhandled rejection, not a throw - which is the PAGEERROR WrongDocumentError
+@@ -251,6 +262,7 @@ startOverlay.addEventListener('click', () => {
+ });
+ world.renderer.domElement.addEventListener('click', () => {
+   startOverlay.style.display = 'none';
++  crateVisual.clear();
+   match?.begin();
+ });
+ // H toggles the key legend. Owned here, not in Player, because the legend is DOM.
+@@ -379,6 +391,7 @@ function frame(): void {
+     const st = player.state;
+     match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch, player.getStance());
+     ordnance.update(dt, now, st.pos.x, st.pos.y, st.pos.z);
++    crateVisual.update(now);
+     for (const b of match.bots()) {
+       let h = botBodies.get(b.id);
+       if (!h) { h = characters.spawn(b.x, b.z, b.yaw); botBodies.set(b.id, h); }
+diff --git a/src/game/events-crate.ts b/src/game/events-crate.ts
+new file mode 100644
+index 0000000..70256e6
+--- /dev/null
++++ b/src/game/events-crate.ts
+@@ -0,0 +1,63 @@
++/**
++ * Nuketown 2025 — the SUPPLY CRATE slice of the event vocabulary.
++ *
++ * A leaf, exactly like `events-crossbow.ts`: imports `vocab` only, no THREE,
++ * no `net/`, no core, no DOM, and is folded into `GameEvent` by `events.ts`
++ * WITHOUT entering `OrdnanceEvent`, so `ordnance-view.ts` stays untouched and
++ * a future `CrateView` owns exactly these two shapes (the mortar precedent).
++ *
++ * Why NOT the existing `PickupEvent` (`events-ordnance.ts`): that shape is
++ * weapon-shaped on purpose — `dropId` + `kind: 'scavenge' | 'swap'` +
++ * `weaponId` + `rounds`. A crate pickup grants a ROLLED STREAK charge, which
++ * that vocabulary cannot say without lying (`weaponId: ''`, `rounds: 0`, a
++ * kind that means the opposite of what happened). Forcing it would be an
++ * empty successful activation wearing another event's clothes. Guests never
++ * author one; a guest claim naming these ids is data, never an instruction.
++ */
++
++import type { ActorId, TeamId } from './vocab';
++
++/** Host admitted the crate into the world: draw the box NOW. */
++export interface CrateLandedEvent {
++  readonly type: 'crate-landed';
++  readonly at: number;
++  readonly instanceId: number;
++  /** The actor whose activation dropped it. */
++  readonly actorId: ActorId;
++  readonly team: TeamId;
++  readonly streakId: string;
++  readonly x: number;
++  readonly y: number;
++  readonly z: number;
++  /** Admission radius, metres — `CRATE_PICKUP_RADIUS_M` from the module. */
++  readonly radius: number;
++  /** Lifetime from admission, ms — the catalog row's `durationMs`. */
++  readonly expiresAt: number;
++  /**
++   * The ROLLED REWARD IS NOT HERE, on purpose. The old project stores the
++   * roll on the crate and never announces it before pickup; contents are
++   * host-secret until a collector opens it.
++   */
++}
++
++/** Host admitted a pickup: the rolled charge is already in the collector's bank. */
++export interface CrateOpenedEvent {
++  readonly type: 'crate-opened';
++  readonly at: number;
++  readonly instanceId: number;
++  readonly actorId: ActorId;
++  readonly team: TeamId;
++  readonly streakId: string;
++  readonly collectorId: ActorId;
++  readonly collectorTeam: TeamId;
++  /** The rolled reward, granted as one banked charge beside this event. */
++  readonly reward: string;
++  /** The exact pool unit the reward rolled from — audit trail, `rewardForUnit`. */
++  readonly rollUnit: number;
++  /** True when the collector is not on the owner's team (the old theft hold). */
++  readonly contested: boolean;
++}
++
++export type CrateEvent = CrateLandedEvent | CrateOpenedEvent;
++
++export const CRATE_EVENT_TYPES = ['crate-landed', 'crate-opened'] as const;
+diff --git a/src/game/killstreaks/effects/supply-crate.ts b/src/game/killstreaks/effects/supply-crate.ts
+new file mode 100644
+index 0000000..127fb33
+--- /dev/null
++++ b/src/game/killstreaks/effects/supply-crate.ts
+@@ -0,0 +1,278 @@
++/**
++ * Nuketown 2025 — Supply Crate: a dropped box that rolls the reward pool.
++ *
++ * Pure stepper, same contract as the other four: `step(state, dt, ctx)` returns
++ * a NEW state and the events that happened, owns no mesh, no material, no
++ * light (§5.8, §5.10). It cannot reach a renderer and cannot yield to one.
++ *
++ * ## Behavioural reference (old project, never copied)
++ *
++ * `atomic-acres-production-27e0858/src/killstreak-runtime.ts`:
++ *  - the reward is rolled ONCE AT SPAWN from the host seed
++ *    (`rollUnit = seed % pool.totalWeightUnits`, line 1216) and stored on the
++ *    entity, NOT at pickup — same crate, same reward, every replay;
++ *  - the crate lives 60 s (line 1249) — this catalog row's `durationMs`;
++ *  - pickup is a HOLD under host authority: 1.25 s own team, 2.5 s enemy
++ *    theft (line 1811), admitted inside 2.75 m with line of sight
++ *    (lines 1802-1804), reset when the collector leaves, dies or loses sight;
++ *  - a full recipient bank leaves the crate claimable (lines 56, 1813) —
++ *    the grant is refused, the capture resets, nothing is discarded.
++ *
++ * ## What this module deliberately does NOT have
++ *
++ * No capture PRESS: the host's port carries no per-tick button state, so the
++ * hold is admitted from the host's own target table alone — an actor standing
++ * in the radius IS the capture claim (host-admitted, never client-claimed).
++ * No reveal event: the roll is host-secret until `crate-opened`.
++ */
++
++import type { ActorId, GameEvent, TeamId, WorldQuery } from '../../events';
++import type { CrateLandedEvent } from '../../events-crate';
++import { rewardForUnit, type StreakCatalog } from '../catalog';
++import type { SentryTarget } from './sentry';
++
++// ---------------------------------------------------------------------------
++// Tuning. Each names the old-project number it ports (§5.9).
++// ---------------------------------------------------------------------------
++
++/** Capture admission radius. Old project line 1803: `> 2.75` interrupts. */
++export const CRATE_PICKUP_RADIUS_M = 2.75;
++/** Own-team hold, ms. Old project line 1811. */
++export const CRATE_CAPTURE_OWN_MS = 1_250;
++/** Enemy-theft hold, ms. Old project line 1811 — stealing takes twice as long. */
++export const CRATE_CAPTURE_ENEMY_MS = 2_500;
++
++export interface SupplyCrateState {
++  readonly kind: 'supply-crate';
++  readonly instanceId: number;
++  readonly actorId: ActorId;
++  readonly team: TeamId;
++  readonly streakId: string;
++  readonly remainingMs: number;
++  readonly elapsedMs: number;
++  /** Stored, not derived: the landing event reports it once. */
++  readonly durationMs: number;
++  readonly x: number;
++  readonly y: number;
++  readonly z: number;
++  readonly seed: number;
++  /** Rolled at create, seed-only. Host-secret until opened. */
++  readonly reward: string;
++  /** The exact pool unit behind `reward` — audit trail on the opened event. */
++  readonly rollUnit: number;
++  /** The one actor currently holding the capture, or null. */
++  readonly captureActorId: ActorId | null;
++  /** Held ms by `captureActorId`. Reset on candidate change, not accumulated. */
++  readonly captureProgressMs: number;
++  /** True once the first stepped tick announced the landing. Idempotent. */
++  readonly landed: boolean;
++  /**
++   * Set by the step when a hold completes; the RUNTIME admits or refuses the
++   * grant (bank caps) and only then retires the crate as `collected`. A
++   * refused grant resets this — the crate stays claimable.
++   */
++  readonly opened: boolean;
++}
++
++export interface CrateTickContext {
++  readonly now: number;
++  /** The runtime's own actor table with current health — the same list a sentry aims with. */
++  readonly targets: readonly SentryTarget[];
++  /** The host's world, for the line-of-sight half of the old admission rule. */
++  readonly world: WorldQuery;
++}
++
++export interface CrateTick {
++  readonly state: SupplyCrateState;
++  readonly events: readonly GameEvent[];
++}
++
++export type CratePlacement =
++  | { readonly ok: true; readonly x: number; readonly y: number; readonly z: number }
++  | { readonly ok: false; readonly reason: 'out-of-bounds' | 'no-ground' };
++
++/**
++ * Placement is validated BEFORE a charge is consumed (the Rule-5 shape
++ * `validateSentryPlacement` pins): a blocked anchor leaves the earned streak
++ * retryable, exactly, with the same claim.
++ */
++export function validateCratePlacement(x: number, z: number, world: WorldQuery): CratePlacement {
++  if (!Number.isFinite(x) || !Number.isFinite(z)) return { ok: false, reason: 'out-of-bounds' };
++  if (!world.inBounds(x, z)) return { ok: false, reason: 'out-of-bounds' };
++  const y = world.groundY(x, z);
++  if (!Number.isFinite(y)) return { ok: false, reason: 'no-ground' };
++  return { ok: true, x, y, z };
++}
++
++export function createSupplyCrate(
++  instanceId: number,
++  actorId: ActorId,
++  team: TeamId,
++  streakId: string,
++  durationMs: number,
++  anchor: { readonly x: number; readonly y: number; readonly z: number },
++  seed: number,
++  catalog: StreakCatalog<string>,
++): SupplyCrateState {
++  const s = seed >>> 0;
++  const rollUnit = catalog.rewardPool.totalUnits > 0 ? s % catalog.rewardPool.totalUnits : 0;
++  return Object.freeze({
++    kind: 'supply-crate' as const,
++    instanceId,
++    actorId,
++    team,
++    streakId,
++    remainingMs: Math.max(0, durationMs),
++    elapsedMs: 0,
++    durationMs: Math.max(0, durationMs),
++    x: anchor.x,
++    y: anchor.y,
++    z: anchor.z,
++    seed: s,
++    reward: rewardForUnit(catalog, rollUnit),
++    rollUnit,
++    captureActorId: null,
++    captureProgressMs: 0,
++    landed: false,
++    opened: false,
++  });
++}
++
++/**
++ * Deterministic roll exposure for tests and hosts: the SAME seed, ordinal and
++ * id always produce the same reward, because the roll is `seed % totalUnits`
++ * through the catalog's own projection — never a second weight table here.
++ */
++export function crateRewardForSeed(seed: number, catalog: StreakCatalog<string>): { reward: string; rollUnit: number } {
++  const rollUnit = (seed >>> 0) % catalog.rewardPool.totalUnits;
++  return { reward: rewardForUnit(catalog, rollUnit), rollUnit };
++}
++
++/**
++ * Bank caps for a granted charge, as pure data so the RUNTIME stays the only
++ * ledger writer. Mirrors the elimination path's backpressure exactly
++ * (`MAX_BANKED_STREAKS` distinct ids, `MAX_CHARGES_PER_STREAK` per id).
++ */
++export function crateGrantFits(
++  charges: ReadonlyMap<string, number>,
++  rewardId: string,
++  maxBanked: number,
++  maxCharges: number,
++): boolean {
++  const held = charges.get(rewardId) ?? 0;
++  if (held >= maxCharges) return false;
++  return held > 0 || charges.size < maxBanked;
++}
++
++/**
++ * The two admission events, BUILT here but only after the runtime has applied
++ * the grant — an event that names a reward the bank never took is the empty
++ * successful activation this slice refuses to ship. `slot: 0` on the earned
++ * event means "granted, not on a key": the reward may be reward-only or off
++ * the collector's loadout, so no slot number would be honest.
++ */
++export function crateEarnedEvent(
++  collector: { readonly actorId: ActorId; readonly team: TeamId },
++  reward: string,
++  charges: number,
++  now: number,
++): GameEvent {
++  return Object.freeze({ type: 'streak-earned', at: now, actorId: collector.actorId, team: collector.team, streakId: reward, slot: 0, charges });
++}
++
++export function crateOpenedEvent(
++  instanceId: number,
++  crate: SupplyCrateState,
++  collector: { readonly actorId: ActorId; readonly team: TeamId },
++  now: number,
++): GameEvent {
++  return Object.freeze({
++    type: 'crate-opened',
++    at: now,
++    instanceId,
++    actorId: crate.actorId,
++    team: crate.team,
++    streakId: crate.streakId,
++    collectorId: collector.actorId,
++    collectorTeam: collector.team,
++    reward: crate.reward,
++    rollUnit: crate.rollUnit,
++    contested: collector.team !== crate.team,
++  });
++}
++
++/** Nearest eligible holder: alive, inside the radius, with sight to the crate. Distance first, then id — deterministic under ties. */
++function captureCandidate(state: SupplyCrateState, ctx: CrateTickContext): SentryTarget | null {
++  const crate = { x: state.x, y: state.y, z: state.z };
++  let best: SentryTarget | null = null;
++  let bestD = 0;
++  for (const t of ctx.targets) {
++    if (!t.alive) continue;
++    const d = Math.hypot(t.x - crate.x, t.y - crate.y, t.z - crate.z);
++    if (d > CRATE_PICKUP_RADIUS_M) continue;
++    if (!ctx.world.lineOfSight({ x: t.x, y: t.y, z: t.z }, crate)) continue;
++    if (best === null || d < bestD || (d === bestD && t.id < best.id)) { best = t; bestD = d; }
++  }
++  return best;
++}
++
++export function stepSupplyCrate(state: SupplyCrateState, dt: number, ctx: CrateTickContext): CrateTick {
++  const step = dt > 0 ? dt : 0;
++  const elapsedMs = state.elapsedMs + step;
++  const remainingMs = state.remainingMs - step;
++  const events: GameEvent[] = [];
++  let landed = state.landed;
++  // The landing is announced on the FIRST stepped tick, once, like the
++  // mortar's telegraph. Gated on step > 0 so a zero-dt probe stays silent.
++  if (!landed && step > 0) {
++    landed = true;
++    events.push(Object.freeze({
++      type: 'crate-landed',
++      at: ctx.now,
++      instanceId: state.instanceId,
++      actorId: state.actorId,
++      team: state.team,
++      streakId: state.streakId,
++      x: state.x,
++      y: state.y,
++      z: state.z,
++      radius: CRATE_PICKUP_RADIUS_M,
++      expiresAt: ctx.now + Math.max(0, remainingMs),
++    }) as CrateLandedEvent);
++  }
++  let captureActorId = state.captureActorId;
++  let captureProgressMs = state.captureProgressMs;
++  let opened = state.opened;
++  if (opened) {
++    // An opened crate the runtime could not yet grant (full bank) stays
++    // claimable, but only while its holder is still holding: walking away
++    // re-opens the capture and the countdown keeps running toward expiry.
++    const candidate = captureCandidate(state, ctx);
++    if (candidate === null || candidate.id !== state.captureActorId) {
++      opened = false;
++      captureActorId = null;
++      captureProgressMs = 0;
++    }
++  } else {
++    const candidate = captureCandidate(state, ctx);
++    if (candidate === null) {
++      captureActorId = null;
++      captureProgressMs = 0;
++    } else if (candidate.id !== captureActorId) {
++      captureActorId = candidate.id;
++      captureProgressMs = step;
++    } else {
++      captureProgressMs += step;
++    }
++    const requiredMs = candidate !== null && candidate.team !== state.team ? CRATE_CAPTURE_ENEMY_MS : CRATE_CAPTURE_OWN_MS;
++    if (candidate !== null && captureProgressMs >= requiredMs) opened = true;
++  }
++  // `remainingMs` KEEPS COUNTING while a hold is open or completed: an opened
++  // crate the bank could not take yet is still a live box, and an unclaimed
++  // one expires honestly as `expired`. The runtime retires `collected` only
++  // through its own grant admission.
++  return {
++    state: Object.freeze({ ...state, remainingMs, elapsedMs, captureActorId, captureProgressMs, landed, opened }),
++    events,
++  };
++}
+diff --git a/src/weapons/supply-crate-visual.ts b/src/weapons/supply-crate-visual.ts
+new file mode 100644
+index 0000000..f8e2ffe
+--- /dev/null
++++ b/src/weapons/supply-crate-visual.ts
+@@ -0,0 +1,330 @@
++/**
++ * Nuketown 2025 — Supply Crate VISUAL: the scene-side presentation of a
++ * delivered supply crate (the CrateView the crate slice's header names).
++ *
++ * Owns ONLY drawing. The authoritative stepper (`game/killstreaks/effects/
++ * supply-crate.ts`, pending lane `work/supply-crate-agy-0912`) owns every
++ * gameplay truth: pickup holds, the secret roll, expiry, retirement. This
++ * module never grants, never times gameplay, never invents a descent: the
++ * vocabulary admits a crate as ALREADY LANDED (`crate-landed` = "draw the
++ * box NOW", no air-time field), so the box appears at rest and DESCENT
++ * REMAINS OPEN until the vocabulary grows an authoritative air-time.
++ *
++ * Lifecycle (keyed on `instanceId`):
++ *   crate-landed  -> crate appears at (x,y,z), base ON the ground, closed.
++ *                    Idempotent per id; oldest evicted past MAX_ACTIVE.
++ *   crate-opened  -> lid opens on the next update() tick, presentation-local
++ *                    clock (host `at` is never trusted as render time); the
++ *                    instance disposes itself shortly after.
++ *   streak-ended  -> un-opened crate disposes exactly once. An opened crate
++ *                    already owns its exit; the ended notice is absorbed.
++ *                    The runtime ends expiry (an effect never ends itself,
++ *                    `killstreaks/runtime.ts` emits `streak-ended` WITH the
++ *                    crate's `instanceId`), so expiry and early end share
++ *                    this one path.
++ *   clear()       -> generation/respawn reset: everything down, resources
++ *                    stay pooled for the next match.
++ *   dispose()     -> module INERT: pooled GPU resources freed, every method
++ *                    no-ops afterwards (apply() cannot rebuild the pool).
++ *
++ * Budget: <= 4 draw calls per crate (body, lid, stencil = 3), ~110
++ * triangles, MAX_ACTIVE = 4 crates, one shared <= 256 px texture (browser)
++ * or a plain geometry plate fallback (no canvas - headless/CPU), ZERO
++ * allocations per update() (backward-index iteration, no snapshots).
++ * Idle module: no listeners (events are pushed in), no materials, no
++ * geometry, no scene children.
++ */
++
++import * as THREE from 'three';
++import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
++
++// ---------------------------------------------------------------------------
++// Event shapes. The real vocabulary is `work/supply-crate-agy-0912 -> src/
++// game/events-crate.ts` (CrateLandedEvent, CrateOpenedEvent) folded into
++// GameEvent by that lane's `events.ts`; expiry arrives as the runtime's
++// `StreakEndedEvent` (which carries `instanceId`). `apply()` takes the
++// caller's GameEvent union as read-only unknowns and narrows structurally,
++// so this module compiles and tests standalone. The integration pin
++// (`crate-visual-pin.ts`) asserts these mirrors against the real types in
++// the lane tree - drift there is a compile error.
++// ---------------------------------------------------------------------------
++
++export interface CrateLandedShape {
++  readonly type: 'crate-landed';
++  readonly instanceId: number;
++  readonly x: number;
++  readonly y: number;
++  readonly z: number;
++}
++
++export interface CrateOpenedShape {
++  readonly type: 'crate-opened';
++  readonly instanceId: number;
++}
++
++export interface CrateEndedShape {
++  readonly type: 'streak-ended';
++  readonly instanceId: number;
++}
++
++/** Authored look. Palette lives here, named, until core/palette.ts grows a crate row. */
++const OLIVE = 0x55613a;
++const OLIVE_DARK = 0x3f4928;
++const LID_WOOD = 0x8a6b45;
++const STENCIL_WHITE = 0xf2efe6;
++
++/** Body L x H x D in metres - authored, believable supply-box scale; the
++ *  authority defines no crate bounds (only the 2.75 m pickup radius), so this
++ *  stays well inside one placement cell and records that gap. */
++const BODY_L = 0.95;
++const BODY_H = 0.55;
++const BODY_D = 0.62;
++
++/** Concurrent crates cap. Exported so tests pin behaviour, not a copied number. */
++export const SUPPLY_CRATE_MAX_ACTIVE = 4;
++const MAX_ACTIVE = SUPPLY_CRATE_MAX_ACTIVE;
++const OPEN_MS = 450;
++const LINGER_MS = 900;
++const LIFT = 0.24;
++const LID_TILT = -1.15;
++
++/** Shared, built once on first admission: 1 texture, 4 materials, 3 geometries. */
++interface Pool {
++  bodyGeo: THREE.BufferGeometry;
++  lidGeo: THREE.BufferGeometry;
++  stencilGeo: THREE.BufferGeometry;
++  olive: THREE.MeshStandardMaterial;
++  oliveDark: THREE.MeshStandardMaterial;
++  lidWood: THREE.MeshStandardMaterial;
++  stencil: THREE.MeshStandardMaterial;
++  texture: THREE.CanvasTexture | null;
++}
++
++let pool: Pool | null = null;
++
++function box(w: number, h: number, d: number, x: number, y: number, z: number): THREE.BufferGeometry {
++  const g = new THREE.BoxGeometry(w, h, d);
++  g.translate(x, y, z);
++  return g;
++}
++
++function drawStencil(c: CanvasRenderingContext2D, s: number): void {
++  c.clearRect(0, 0, s, s);
++  c.fillStyle = '#f2efe6';
++  c.strokeStyle = '#f2efe6';
++  const m = s * 0.12;
++  c.lineWidth = s * 0.03;
++  c.strokeRect(m, m, s - 2 * m, s - 2 * m);
++  c.font = `bold ${Math.floor(s * 0.17)}px sans-serif`;
++  c.textAlign = 'center';
++  c.textBaseline = 'middle';
++  c.fillText('SUPPLY', s / 2, s / 2);
++}
++
++/** One shared stencil texture; null when no canvas (headless CPU run) - the
++ *  stencil plate then reads as plain painted geometry, which the CPU tests cover. */
++function makeStencilTexture(): THREE.CanvasTexture | null {
++  if (typeof document === 'undefined') return null;
++  const cv = document.createElement('canvas');
++  cv.width = 256;
++  cv.height = 256;
++  const c = cv.getContext('2d');
++  if (!c) return null;
++  drawStencil(c, 256);
++  const t = new THREE.CanvasTexture(cv);
++  t.colorSpace = THREE.SRGBColorSpace;
++  t.anisotropy = 4;
++  return t;
++}
++
++function buildPool(): Pool {
++  const parts: THREE.BufferGeometry[] = [
++    box(BODY_L, BODY_H, BODY_D, 0, BODY_H / 2, 0),
++    box(BODY_L + 0.04, 0.07, BODY_D + 0.04, 0, BODY_H * 0.3, 0),
++    box(BODY_L + 0.04, 0.07, BODY_D + 0.04, 0, BODY_H * 0.72, 0),
++  ];
++  for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
++    parts.push(box(0.07, BODY_H + 0.02, 0.07, sx * (BODY_L / 2 - 0.035), (BODY_H + 0.02) / 2 - 0.01, sz * (BODY_D / 2 - 0.035)));
++  }
++  const bodyGeo = mergeGeometries(parts, false);
++  for (const p of parts) p.dispose();
++
++  const lidGeo = mergeGeometries([
++    box(BODY_L - 0.08, 0.05, BODY_D - 0.08, 0, BODY_H - 0.025, 0),
++    box(0.18, 0.03, 0.05, 0, BODY_H + 0.01, 0),
++  ], false);
++
++  const face = new THREE.PlaneGeometry(0.5, 0.22);
++  const back = face.clone().rotateY(Math.PI);
++  face.translate(0, BODY_H * 0.52, BODY_D / 2 + 0.002);
++  back.translate(0, BODY_H * 0.52, -BODY_D / 2 - 0.002);
++  const stencilGeo = mergeGeometries([face, back], false);
++  face.dispose();
++  back.dispose();
++
++  const texture = makeStencilTexture();
++  const stencil = new THREE.MeshStandardMaterial(
++    texture
++      ? { map: texture, transparent: true, alphaTest: 0.35, roughness: 0.9, metalness: 0 }
++      : { color: STENCIL_WHITE, roughness: 0.9, metalness: 0 },
++  );
++  return {
++    bodyGeo, lidGeo, stencilGeo,
++    olive: new THREE.MeshStandardMaterial({ color: OLIVE, roughness: 0.82, metalness: 0.05 }),
++    oliveDark: new THREE.MeshStandardMaterial({ color: OLIVE_DARK, roughness: 0.85, metalness: 0.05 }),
++    lidWood: new THREE.MeshStandardMaterial({ color: LID_WOOD, roughness: 0.75, metalness: 0 }),
++    stencil,
++    texture,
++  };
++}
++
++/** Deterministic yaw from the instance id - no Math.random, no world variance. */
++function yawFor(id: number): number {
++  return (id * 2.399963229728653) % (Math.PI * 2);
++}
++
++interface Instance {
++  readonly id: number;
++  readonly group: THREE.Group;
++  readonly lid: THREE.Mesh;
++  readonly lidBaseY: number;
++  opened: boolean;
++  /** Local ms the open animation started, null until the next update() after open. */
++  openT0: number | null;
++  disposed: boolean;
++}
++
++export interface SupplyCrateVisualDeps {
++  readonly scene: THREE.Scene;
++}
++
++export interface SupplyCrateVisual {
++  /** Feed admitted game events in. Accepts any event array; unknown types are ignored. */
++  apply(events: readonly unknown[]): void;
++  /** Per-frame tick, presentation-local ms. No allocations. */
++  update(nowMs: number): void;
++  /** Generation/respawn reset: removes every crate, keeps pooled resources. */
++  clear(): void;
++  /** Frees pooled resources; the module is inert afterwards. */
++  dispose(): void;
++  readonly liveCount: number;
++}
++
++export function createSupplyCrateVisual(deps: SupplyCrateVisualDeps): SupplyCrateVisual {
++  const scene = deps.scene;
++  const crates = new Map<number, Instance>();
++  const order: number[] = [];
++  let dead = false;
++
++  function disposeInstance(inst: Instance): void {
++    if (inst.disposed) return;
++    inst.disposed = true;
++    scene.remove(inst.group);
++    crates.delete(inst.id);
++    const i = order.indexOf(inst.id);
++    if (i >= 0) order.splice(i, 1);
++  }
++
++  function admit(ev: CrateLandedShape): void {
++    if (crates.has(ev.instanceId)) return;
++    if (!Number.isFinite(ev.x) || !Number.isFinite(ev.y) || !Number.isFinite(ev.z)) return;
++    if (order.length >= MAX_ACTIVE) {
++      const oldest = order[0];
++      const victim = oldest === undefined ? undefined : crates.get(oldest);
++      if (victim) disposeInstance(victim);
++    }
++    if (!pool) pool = buildPool();
++    const group = new THREE.Group();
++    const body = new THREE.Mesh(pool.bodyGeo, pool.olive);
++    body.name = 'crate-body';
++    const lid = new THREE.Mesh(pool.lidGeo, pool.lidWood);
++    lid.name = 'crate-lid';
++    const stencil = new THREE.Mesh(pool.stencilGeo, pool.stencil);
++    stencil.name = 'crate-stencil';
++    stencil.renderOrder = 1;
++    group.add(body, lid, stencil);
++    group.position.set(ev.x, ev.y, ev.z);
++    group.rotation.y = yawFor(ev.instanceId);
++    group.matrixAutoUpdate = false;
++    group.updateMatrix();
++    scene.add(group);
++    const inst: Instance = {
++      id: ev.instanceId,
++      group, lid,
++      lidBaseY: BODY_H - 0.025,
++      opened: false, openT0: null, disposed: false,
++    };
++    crates.set(ev.instanceId, inst);
++    order.push(ev.instanceId);
++  }
++
++  return {
++    apply(events: readonly unknown[]): void {
++      if (dead) return;
++      for (const raw of events) {
++        if (raw === null || typeof raw !== 'object') continue;
++        const e = raw as { type?: unknown; instanceId?: unknown; x?: unknown; y?: unknown; z?: unknown };
++        if (typeof e.type !== 'string' || typeof e.instanceId !== 'number') continue;
++        if (e.type === 'crate-landed') {
++          admit(e as unknown as CrateLandedShape);
++        } else if (e.type === 'crate-opened') {
++          const inst = crates.get(e.instanceId);
++          if (inst && !inst.opened) { inst.opened = true; inst.openT0 = null; }
++        } else if (e.type === 'streak-ended') {
++          const inst = crates.get(e.instanceId);
++          // An opened crate already owns its exit animation; absorb the notice.
++          if (inst && !inst.opened) disposeInstance(inst);
++        }
++      }
++    },
++
++    update(nowMs: number): void {
++      if (dead || order.length === 0) return;
++      // Backward index walk: disposeInstance splices `order` at i, which cannot
++      // disturb indices below i. No snapshot array, no per-frame allocation.
++      for (let i = order.length - 1; i >= 0; i--) {
++        const inst = crates.get(order[i]);
++        if (!inst) continue;
++        if (!inst.opened) continue;
++        if (inst.openT0 === null) { inst.openT0 = nowMs; continue; } // pin only, lid at rest
++        const t = Math.min(1, (nowMs - inst.openT0) / OPEN_MS);
++        const ease = 1 - (1 - t) * (1 - t);
++        inst.lid.position.y = inst.lidBaseY + LIFT * ease;
++        inst.lid.rotation.x = LID_TILT * ease;
++        if (nowMs - inst.openT0 > OPEN_MS + LINGER_MS) disposeInstance(inst);
++      }
++    },
++
++    clear(): void {
++      if (dead) return;
++      for (let i = order.length - 1; i >= 0; i--) {
++        const inst = crates.get(order[i]);
++        if (inst) disposeInstance(inst);
++      }
++    },
++
++    dispose(): void {
++      if (dead) return;
++      dead = true;
++      for (let i = order.length - 1; i >= 0; i--) {
++        const inst = crates.get(order[i]);
++        if (inst) disposeInstance(inst);
++      }
++      if (pool) {
++        pool.bodyGeo.dispose();
++        pool.lidGeo.dispose();
++        pool.stencilGeo.dispose();
++        pool.olive.dispose();
++        pool.oliveDark.dispose();
++        pool.lidWood.dispose();
++        pool.stencil.dispose();
++        if (pool.texture) pool.texture.dispose();
++        pool = null;
++      }
++    },
++
++    get liveCount(): number {
++      return crates.size;
++    },
++  };
++}
+diff --git a/src/weapons/crate-visual-pin.ts b/src/weapons/crate-visual-pin.ts
+new file mode 100644
+index 0000000..39e2591
+--- /dev/null
++++ b/src/weapons/crate-visual-pin.ts
+@@ -0,0 +1,39 @@
++/**
++ * Integration pin for `supply-crate-visual` against the REAL crate lane
++ * vocabulary. Compile-time only, emits nothing at runtime.
++ *
++ * If `game/events-crate.ts`, `game/events.ts` or the runtime's
++ * `streak-ended` shape drift from the structural mirrors the visual narrows
++ * on, this file stops compiling AT the integration site — the drift can
++ * never silently reach the draw path.
++ */
++import type { CrateLandedEvent, CrateOpenedEvent } from '../game/events-crate';
++import type { GameEvent, StreakEndedEvent } from '../game/events';
++import type { SupplyCrateVisual } from './supply-crate-visual';
++import type {
++  CrateLandedShape,
++  CrateOpenedShape,
++  CrateEndedShape,
++} from './supply-crate-visual';
++
++/** True iff Real carries every field the visual's structural mirror needs. */
++type RealFitsMirror<Real, Mirror> = [Real] extends [Mirror] ? true : false;
++
++/** Feed target: the admitted event union must be accepted by `apply()`. */
++type GameEventFeedsVisual = readonly GameEvent[] extends Parameters<
++  SupplyCrateVisual['apply']
++>[0]
++  ? true
++  : false;
++
++type CrateVisualMirrorsHold = [
++  RealFitsMirror<CrateLandedEvent, CrateLandedShape>,
++  RealFitsMirror<CrateOpenedEvent, CrateOpenedShape>,
++  RealFitsMirror<StreakEndedEvent, CrateEndedShape>,
++  GameEventFeedsVisual,
++];
++
++const crateVisualMirrorsHold: CrateVisualMirrorsHold = [
++  true, true, true, true,
++];
++void crateVisualMirrorsHold;

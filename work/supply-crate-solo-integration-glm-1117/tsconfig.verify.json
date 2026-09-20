@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": [
+      "ES2022",
+      "DOM"
+    ],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": []
+  },
+  "files": [
+    "tree/scripts/assert-ambient.d.ts",
+    "tree/scripts/_verify-supply-crate-solo.scenario.ts",
+    "tree/src/weapons/supply-crate-visual.ts",
+    "tree/src/weapons/crate-visual-pin.ts",
+    "tree/src/game/events-crate.ts",
+    "tree/src/game/killstreaks/effects/supply-crate.ts"
+  ],
+  "include": [
+    "tree/src/**/*.ts"
+  ],
+  "exclude": [
+    "tree/src/main.ts"
+  ]
+}

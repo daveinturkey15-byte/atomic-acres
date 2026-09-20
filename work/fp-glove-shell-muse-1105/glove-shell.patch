@@ -1,0 +1,26 @@
+diff --git a/src/weapons/first-person-hands.ts b/src/weapons/first-person-hands.ts
+--- a/src/weapons/first-person-hands.ts
++++ b/src/weapons/first-person-hands.ts
+@@ -1,7 +1,8 @@
+ import * as THREE from 'three';
+ import type { MaterialLibrary } from '../core/materials';
+ import { PAL } from '../core/palette';
+ import type { FirstPersonHandsRig } from './types';
++import { attachGloveShells } from '../../work/fp-glove-shell-muse-1105/glove-shell';
+
+ /** Static limb fitted between actual joint centres; no disconnected offsets. */
+ function armSegment(
+@@ -189,7 +190,14 @@ export function createFirstPersonHands(
+     supportHand.rotation.set(0, 0, rz);
+   };
+
+   resetReload();
++  // Glove-shell canary (lane work/fp-glove-shell-muse-1105). Gate-closed by
++  // default this adds nothing: no draws, no transforms, no materials.
++  attachGloveShells({ triggerHand, supportHand }, mat, {
++    supportY,
++    supportZ,
++    search: typeof window === 'undefined' ? '' : window.location.search,
++  });
+   return { root, triggerHand, supportHand, supportForearm, updateReload, resetReload };
+ }

@@ -1,0 +1,14 @@
+// Clear-afternoon sky candidate (?sky=afternoon; work/clear-afternoon-sky-glm-1105).
+// Decided and applied HERE, before the first frame: one owned equirect background
+// texture plus the TSL dome ('sky') hidden for this load, both restored exactly by
+// disable()/dispose() (pagehide below). scene.environment - reflections and
+// skylight - is never touched. Default OFF: without the flag nothing here runs and
+// the scene is byte-identical to baseline.
+let afternoonSky: AfternoonSkyHandle | null = null;
+if (isAfternoonSkyEnabled()) {
+  afternoonSky = createAfternoonSky({
+    scene: world.scene,
+    sunDir: world.sun.position.clone().sub(world.sun.target.position).normalize(),
+  });
+  afternoonSky.enable();
+}

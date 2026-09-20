@@ -37,6 +37,15 @@ Root owns browser/GPU validation and promotion. External workers must use the
 recorded provider launcher and assigned file scope; a successful worker process
 is not acceptance of its output.
 
+Provider source binding (September 20): older worker worktrees contain preserved
+dirty source and are not the current integration baseline. New source scopes use
+a root-seeded private `tree/` from an explicit current Git SHA. Record that SHA,
+the artifact working directory and initial source hashes beside the run receipt.
+Author and typecheck inside that seeded tree; never copy the parent worktree's
+`src/` over it. Root requires the patch to apply to the stated baseline and tests
+the actual current APIs. A passing test in an obsolete checkout is not current
+acceptance. Preserve legacy worktrees; do not reset them to solve this mismatch.
+
 ## September 19 visual and gameplay priority correction
 
 Dave's review says visual progress and authoring parallelism are insufficient.

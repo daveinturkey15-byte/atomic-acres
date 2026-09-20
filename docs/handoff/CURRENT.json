@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "VERIFIED scoped operator-only successor accepted4240; inspection4234 and frozen4212 preserved. Four bounded source lanes remain: Muse glove shell and sedan evaluated-export repair1, GLM clear-afternoon sky and crate solo integration. Prior sedan actual export FAILED despite CPU pass, source retained; crate presentation source passes actual unchanged tests but not integrated. Whole-map graphics and60fps OPEN.",
+  "status": "VERIFIED accepted4240 unchanged; no new promotion. Four prior source outputs reviewed: glove current-tree failure, sky missing current wiring, crate obsolete event seam, sedan invalid rear-glass16tri loss. Exact partials retained. Four bounded external repairs now use root-preseeded current6148989 source trees, preserving dirty legacy worktrees. This addresses observed stale-source failures without changing acceptance gates. Graphics whole-map goal OPEN.",
   "owner": "Codex",
   "stop_state": "active: preserve frozen checkpoint and continue private candidates",
   "backup": {
@@ -31,21 +31,23 @@
     "status": "ACTIVE"
   },
   "resource_sample": {
-    "sampled_at": "2026-09-20T11:09:23.8007065+01:00",
-    "free_ram_gib": 29.675357818603516,
-    "free_vram_mib": 3730,
-    "note": "Completed guarded QA with min28.48GiB RAM/3480MiB VRAM, no cancellation. Resample stable launch headroom before another heavy job. After owned QA ended, readings11:13-11:14 were4945-5057MiB freeVRAM/GPU2-3percent and31.57GiB RAM. Guarded CPU Blender1.24s exited9 on actual geometry assertion; no resource breach, peak RSS sampling0 means unmeasured (too brief), not zero usage.",
-    "receipt": ".recovery-runtime/soak-operator-only-1106-guard.json"
+    "sampled_at": "2026-09-20T11:43:31.2621785+01:00",
+    "free_ram_gib": 29.683,
+    "free_vram_mib": 3651,
+    "gpu_percent": 98,
+    "note": "Browser/GPU QA HOLD: freeVRAM meets bare3GiB reserve but not reserve plus measured1.5GiB browser footprint. Owner GPU busy. Cloud source lanes and light CPU review continue; never terminate owner processes."
   },
   "next_actions": [
     "Keep accepted4240 operator-only successor, inspection4234 and frozen4212 immutable. No revalidation of unchanged frozen builds. Preview report docs/handoff/OPERATOR-ACCEPTANCE-2026-09-20-1110.md. Whole-map visual overhaul and60fps remain OPEN.",
-    "Review terminal receipts for four source lanes. Muse glove-shell1105 and GLM sky1105 continue. Muse sedan-evaluated-export-repair1-1117 replaces completed first construction: root actual Blender failed underground geometry despite CPU PASS, no GLB; preserve envelope and prove evaluated world transforms plus <=6 actual primitives. No extra GPU writers.",
-    "GLM crate signed-zero repair1 timed out but its unchanged CPU lifecycle/negative tests and strict tsc now root PASS. Minimal actual SOLO event/reward/presentation integration assigned to glm-crate-solo-integration-1117; guest wiring remains OPEN. Do not count a two-new-files patch as an integrated streak.",
+    "Four new source lanes started11:41BST with preseeded current6148989 tree/ and dependency junction, not stale parent checkout. Read their terminal receipts and review only changed artifacts. Glove repair1 must target actual accepted rifle-canary rig and real MaterialLibrary; sky repair1 must deliver complete minimal current-main wiring and bounded texture validation.",
+    "Sedan finalrepair2 owns rear-grid topology: actual8quads all repeated coordinates caused16tri lost at export. Preserve6primitives/42evaluated centres/numeric envelope and require matching actual exported triangle count, no invalid mesh warning. Afterfinal2failure stop approach. CPU Blender root-only. Crate repair1 must use actual current event subscription seam, preserve existing subscribers, and keep unsupported guest capability unavailable.",
     "World-weapon final2 stays OFF: combined210s renderer-memory gate failed21.23MiB/60percent steps up; operator-only nowPASS2.94MiB/47percent. Cause remains unproven. No third parameter repair. Use actual retention evidence if assigning new approach.",
     "Surface-presence1035 source held: basic CPU precondition checks pass but independent scripts/.verify-presence-lifecycle-1106.mjs FAILS valid retry after rejected install. Not integrated; subtle +/-1.5-3percent macro also has no actual visual acceptance. Preserve failure and best known good.",
     "Mountain-volume mechanically PASS but visible gain insufficient, flagOFF. Old sedan offset-repair approach stopped; new lane uses envelope-first construction, not a third offset/scale tweak. Current operator final2 accepted only garment/rig scope; face/hands still OPEN.",
     "AGY genuine429 cooldown until12:46BSTSeptember20, observed model unknown. Both native Astras remain stopped; root orchestrates/reviews/accepts only. No OpenAI imagegen or implementation agents.",
-    "Next heavy job requires fresh stable headroom >=12GiB RAM and>=3GiB VRAM plus its footprint. Last guard min28.48GiB RAM/3480MiB VRAM passed; that is job reserve, not fresh launch headroom. Never terminate owner processes. Recipes now record actual GLB index offsets, QA-camera release, sequential image binding and cancellation lessons."
+    "Next heavy job requires fresh stable headroom >=12GiB RAM and>=3GiB VRAM plus its footprint. Last guard min28.48GiB RAM/3480MiB VRAM passed; that is job reserve, not fresh launch headroom. Never terminate owner processes. Recipes now record actual GLB index offsets, QA-camera release, sequential image binding and cancellation lessons.",
+    "Read docs/handoff/SOURCE-BASE-CORRECTION-2026-09-20-1142.json for exact failure evidence and seeded working directories. Never copy stale worker src over seeded tree, reset dirty worktrees, or treat obsolete-checkout tsc as current-source acceptance.",
+    "At11:43 ownerGPU98percent and3651MiBfree: browser/GPU QA held pending stable >=4608MiB freeVRAM plus RAM reserve. Earlier5188MiB reading is stale. Optional failed-check temporary tree .gs-check-FVKCYz retained after automatic command policy rejected cleanup batch before execution; no deletion or source change occurred."
   ],
   "interrupted_lanes": [
     {
@@ -1945,6 +1947,94 @@
         "launcher timeout killed its own subprocess tree"
       ],
       "acceptance": "Root CPU lifecycle+negativecontrols and strict tsc PASS. Test scenario unchanged. Source presentation repair only; actual solo integration now assigned."
+    },
+    {
+      "lane": "muse-fp-glove-shell-1105",
+      "run_id": "delegated-omp-muse-fp-glove-shell-1105-266c6d6db4bd4e5183e9a383f3b3d7a8",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-fp-glove-shell-1105-266c6d6db4bd4e5183e9a383f3b3d7a8\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "failed-root-review-preserved",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "attribution": "observed",
+      "accepted": false,
+      "owned_directory": "work/fp-glove-shell-muse-1105",
+      "started_at": "2026-09-20T10:03:39+00:00",
+      "ended_at": "2026-09-20T10:25:40+00:00",
+      "failure_reasons": [
+        "provider process exited 1",
+        "launcher timeout killed its own subprocess tree",
+        "transcript reported a terminal error"
+      ],
+      "acceptance": "Root CPU FAILED on current mat.viewmodel.parkerizedSteel; corrupt patch at line27; proposed old-factory hook bypasses accepted rifle-canary early return. Repair1 assigned against preseeded exact current tree."
+    },
+    {
+      "lane": "muse-sedan-evaluated-export-repair1-1117",
+      "run_id": "delegated-omp-muse-sedan-evaluated-export-repair1-1117-9c515502e193428395b58b09c5e476ac",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-sedan-evaluated-export-repair1-1117-9c515502e193428395b58b09c5e476ac\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "failed-root-review-preserved",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "attribution": "observed",
+      "accepted": false,
+      "owned_directory": "work/sedan-evaluated-export-repair1-muse-1117",
+      "started_at": "2026-09-20T10:17:19+00:00",
+      "ended_at": "2026-09-20T10:26:41+00:00",
+      "failure_reasons": [
+        "transcript reported a terminal error"
+      ],
+      "acceptance": "CPU PASS and guarded Blender1.31s exit0; all42 evaluated cylinder centres correct,6 actual GLB primitives. FAIL: invalid rear glass, source4310 vs decoded4294triangles. Root found repeated coordinates in all8rear_grid quads. Finalrepair2 assigned; not accepted."
+    },
+    {
+      "lane": "glm-clear-afternoon-sky-1105",
+      "run_id": "delegated-omp-glm-clear-afternoon-sky-1105-45f68096c3fb489080e6f8e363efe4ba",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-clear-afternoon-sky-1105-45f68096c3fb489080e6f8e363efe4ba\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "failed-root-review-preserved",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "attribution": "observed",
+      "accepted": false,
+      "owned_directory": "work/clear-afternoon-sky-glm-1105",
+      "started_at": "2026-09-20T10:03:39+00:00",
+      "ended_at": "2026-09-20T10:27:40+00:00",
+      "failure_reasons": [
+        "provider process exited 1",
+        "launcher timeout killed its own subprocess tree"
+      ],
+      "acceptance": "23 moduleCPU assertions PASS, but main wiring absent (note block only) and private main stale; copying it would remove accepted systems. Bounded-size API missing maximum. Repair1/finish assigned against current seed."
+    },
+    {
+      "lane": "glm-crate-solo-integration-1117",
+      "run_id": "delegated-omp-glm-crate-solo-integration-1117-00b3d089436045c2ba2aa19a5c37484d",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-crate-solo-integration-1117-00b3d089436045c2ba2aa19a5c37484d\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "failed-root-review-preserved",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "attribution": "observed",
+      "accepted": false,
+      "owned_directory": "work/supply-crate-solo-integration-glm-1117",
+      "started_at": "2026-09-20T10:17:19+00:00",
+      "ended_at": "2026-09-20T10:35:19+00:00",
+      "failure_reasons": [
+        "provider process exited 1",
+        "launcher timeout killed its own subprocess tree"
+      ],
+      "acceptance": "Private patch/test closure stale; root applycheck FAIL events/runtime/main. Claimed setEventSink absent from actual current source. Preserve mock/old-source success as non-acceptance. Current-source repair1 assigned."
     }
   ],
   "continue_after_inspection": true,
@@ -2058,9 +2148,9 @@
   },
   "active_external_lanes": [
     {
-      "lane": "muse-fp-glove-shell-1105",
-      "run_id": "delegated-omp-muse-fp-glove-shell-1105-266c6d6db4bd4e5183e9a383f3b3d7a8",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-fp-glove-shell-1105-266c6d6db4bd4e5183e9a383f3b3d7a8\\summary.json",
+      "lane": "muse-glove-current-root-repair1-1142",
+      "run_id": "delegated-omp-muse-glove-current-root-repair1-1142-3cb75642d8f5413ba7a5623fbf06d39b",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-glove-current-root-repair1-1142-3cb75642d8f5413ba7a5623fbf06d39b\\summary.json",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
@@ -2068,13 +2158,15 @@
       "observed_models": [],
       "attribution": "pending-observation",
       "accepted": false,
-      "owned_directory": "work/fp-glove-shell-muse-1105",
-      "started_at": "2026-09-20T10:03:39+00:00"
+      "owned_directory": "work/fp-glove-current-root-repair1-muse-1142",
+      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919\\work\\fp-glove-current-root-repair1-muse-1142\\tree",
+      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+      "started_at": "2026-09-20T10:41:22+00:00"
     },
     {
-      "lane": "muse-sedan-evaluated-export-repair1-1117",
-      "run_id": "delegated-omp-muse-sedan-evaluated-export-repair1-1117-9c515502e193428395b58b09c5e476ac",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-sedan-evaluated-export-repair1-1117-9c515502e193428395b58b09c5e476ac\\summary.json",
+      "lane": "muse-sedan-rear-glass-final2-1142",
+      "run_id": "delegated-omp-muse-sedan-rear-glass-final2-1142-8428d7eef20b4ac08046c604fcec2d96",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-sedan-rear-glass-final2-1142-8428d7eef20b4ac08046c604fcec2d96\\summary.json",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
@@ -2082,13 +2174,15 @@
       "observed_models": [],
       "attribution": "pending-observation",
       "accepted": false,
-      "owned_directory": "work/sedan-evaluated-export-repair1-muse-1117",
-      "started_at": "2026-09-20T10:17:19+00:00"
+      "owned_directory": "work/sedan-rear-glass-final2-muse-1142",
+      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919\\work\\sedan-rear-glass-final2-muse-1142\\tree",
+      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+      "started_at": "2026-09-20T10:41:22+00:00"
     },
     {
-      "lane": "glm-clear-afternoon-sky-1105",
-      "run_id": "delegated-omp-glm-clear-afternoon-sky-1105-45f68096c3fb489080e6f8e363efe4ba",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-clear-afternoon-sky-1105-45f68096c3fb489080e6f8e363efe4ba\\summary.json",
+      "lane": "glm-sky-current-root-repair1-1142",
+      "run_id": "delegated-omp-glm-sky-current-root-repair1-1142-e686cd3f5645464481b74b5baafb6a0d",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-sky-current-root-repair1-1142-e686cd3f5645464481b74b5baafb6a0d\\summary.json",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
       "route": "zai/glm-5.3-flash",
       "effort": "max",
@@ -2096,13 +2190,15 @@
       "observed_models": [],
       "attribution": "pending-observation",
       "accepted": false,
-      "owned_directory": "work/clear-afternoon-sky-glm-1105",
-      "started_at": "2026-09-20T10:03:39+00:00"
+      "owned_directory": "work/sky-current-root-repair1-glm-1142",
+      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919\\work\\sky-current-root-repair1-glm-1142\\tree",
+      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+      "started_at": "2026-09-20T10:41:22+00:00"
     },
     {
-      "lane": "glm-crate-solo-integration-1117",
-      "run_id": "delegated-omp-glm-crate-solo-integration-1117-00b3d089436045c2ba2aa19a5c37484d",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-crate-solo-integration-1117-00b3d089436045c2ba2aa19a5c37484d\\summary.json",
+      "lane": "glm-crate-current-root-repair1-1142",
+      "run_id": "delegated-omp-glm-crate-current-root-repair1-1142-cf057cd049a541538ecf01bbc2654c78",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-crate-current-root-repair1-1142-cf057cd049a541538ecf01bbc2654c78\\summary.json",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
       "route": "zai/glm-5.3-flash",
       "effort": "max",
@@ -2110,8 +2206,10 @@
       "observed_models": [],
       "attribution": "pending-observation",
       "accepted": false,
-      "owned_directory": "work/supply-crate-solo-integration-glm-1117",
-      "started_at": "2026-09-20T10:17:19+00:00"
+      "owned_directory": "work/crate-current-root-repair1-glm-1142",
+      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919\\work\\crate-current-root-repair1-glm-1142\\tree",
+      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+      "started_at": "2026-09-20T10:41:22+00:00"
     }
   ],
   "awaiting_root_review": [
@@ -2565,9 +2663,9 @@
     "native_astras": "Both completed before09BST; do not restart.",
     "external": [
       {
-        "lane": "muse-fp-glove-shell-1105",
-        "run_id": "delegated-omp-muse-fp-glove-shell-1105-266c6d6db4bd4e5183e9a383f3b3d7a8",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-fp-glove-shell-1105-266c6d6db4bd4e5183e9a383f3b3d7a8\\summary.json",
+        "lane": "muse-glove-current-root-repair1-1142",
+        "run_id": "delegated-omp-muse-glove-current-root-repair1-1142-3cb75642d8f5413ba7a5623fbf06d39b",
+        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-glove-current-root-repair1-1142-3cb75642d8f5413ba7a5623fbf06d39b\\summary.json",
         "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919",
         "route": "meta-contributor/muse-spark-1.3-contributor",
         "effort": "xhigh",
@@ -2575,13 +2673,15 @@
         "observed_models": [],
         "attribution": "pending-observation",
         "accepted": false,
-        "owned_directory": "work/fp-glove-shell-muse-1105",
-        "started_at": "2026-09-20T10:03:39+00:00"
+        "owned_directory": "work/fp-glove-current-root-repair1-muse-1142",
+        "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919\\work\\fp-glove-current-root-repair1-muse-1142\\tree",
+        "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+        "started_at": "2026-09-20T10:41:22+00:00"
       },
       {
-        "lane": "muse-sedan-evaluated-export-repair1-1117",
-        "run_id": "delegated-omp-muse-sedan-evaluated-export-repair1-1117-9c515502e193428395b58b09c5e476ac",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-sedan-evaluated-export-repair1-1117-9c515502e193428395b58b09c5e476ac\\summary.json",
+        "lane": "muse-sedan-rear-glass-final2-1142",
+        "run_id": "delegated-omp-muse-sedan-rear-glass-final2-1142-8428d7eef20b4ac08046c604fcec2d96",
+        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-sedan-rear-glass-final2-1142-8428d7eef20b4ac08046c604fcec2d96\\summary.json",
         "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
         "route": "meta-contributor/muse-spark-1.3-contributor",
         "effort": "xhigh",
@@ -2589,13 +2689,15 @@
         "observed_models": [],
         "attribution": "pending-observation",
         "accepted": false,
-        "owned_directory": "work/sedan-evaluated-export-repair1-muse-1117",
-        "started_at": "2026-09-20T10:17:19+00:00"
+        "owned_directory": "work/sedan-rear-glass-final2-muse-1142",
+        "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919\\work\\sedan-rear-glass-final2-muse-1142\\tree",
+        "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+        "started_at": "2026-09-20T10:41:22+00:00"
       },
       {
-        "lane": "glm-clear-afternoon-sky-1105",
-        "run_id": "delegated-omp-glm-clear-afternoon-sky-1105-45f68096c3fb489080e6f8e363efe4ba",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-clear-afternoon-sky-1105-45f68096c3fb489080e6f8e363efe4ba\\summary.json",
+        "lane": "glm-sky-current-root-repair1-1142",
+        "run_id": "delegated-omp-glm-sky-current-root-repair1-1142-e686cd3f5645464481b74b5baafb6a0d",
+        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-sky-current-root-repair1-1142-e686cd3f5645464481b74b5baafb6a0d\\summary.json",
         "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
         "route": "zai/glm-5.3-flash",
         "effort": "max",
@@ -2603,13 +2705,15 @@
         "observed_models": [],
         "attribution": "pending-observation",
         "accepted": false,
-        "owned_directory": "work/clear-afternoon-sky-glm-1105",
-        "started_at": "2026-09-20T10:03:39+00:00"
+        "owned_directory": "work/sky-current-root-repair1-glm-1142",
+        "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919\\work\\sky-current-root-repair1-glm-1142\\tree",
+        "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+        "started_at": "2026-09-20T10:41:22+00:00"
       },
       {
-        "lane": "glm-crate-solo-integration-1117",
-        "run_id": "delegated-omp-glm-crate-solo-integration-1117-00b3d089436045c2ba2aa19a5c37484d",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-crate-solo-integration-1117-00b3d089436045c2ba2aa19a5c37484d\\summary.json",
+        "lane": "glm-crate-current-root-repair1-1142",
+        "run_id": "delegated-omp-glm-crate-current-root-repair1-1142-cf057cd049a541538ecf01bbc2654c78",
+        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-crate-current-root-repair1-1142-cf057cd049a541538ecf01bbc2654c78\\summary.json",
         "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
         "route": "zai/glm-5.3-flash",
         "effort": "max",
@@ -2617,8 +2721,10 @@
         "observed_models": [],
         "attribution": "pending-observation",
         "accepted": false,
-        "owned_directory": "work/supply-crate-solo-integration-glm-1117",
-        "started_at": "2026-09-20T10:17:19+00:00"
+        "owned_directory": "work/crate-current-root-repair1-glm-1142",
+        "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919\\work\\crate-current-root-repair1-glm-1142\\tree",
+        "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+        "started_at": "2026-09-20T10:41:22+00:00"
       }
     ]
   },
