@@ -11,6 +11,9 @@
 //  - a real MP5 + Semtex choice persists across reload, prints ONE pair on the
 //    deploy line, and Deploys into an active match whose weaponCmd state reads
 //    MP5 and whose ordnance projection reads Semtex (not a HUD rectangle).
+//    On a Deploy-active timeout it keeps one bounded mode/match/weapon/
+//    ordnance/start-panel snapshot plus a frame, so a missed click stays
+//    distinguishable from a stalled match.
 // Uses the repo's own launcher (scripts/lib/stock-browser.mjs) and served
 // build identity (dist/ over vite preview) like the other live gates.
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -26,7 +29,8 @@ const owned = await stockBrowser('menu-composition');
 const { page } = owned;
 page.on('pageerror', (e) => result.errors.push(String(e)));
 page.on('console', (m) => { if (m.type() === 'error') result.errors.push(m.text()); });
-const ready = () => page.waitForFunction(() => window.__NT?.ready, null, { timeout: 90000 });
+// Strict boolean: the gate must read backend-ready, never a truthy transient.
+const ready = () => page.waitForFunction(() => window.__NT?.ready === true, null, { timeout: 90000 });
 const count = (text, word) => (text.match(new RegExp(word, 'gi')) ?? []).length;
 try {
   await page.goto(url, { waitUntil: 'load', timeout: 90000 });
@@ -102,21 +106,84 @@ try {
   await page.screenshot({ path: join(out, 'solo-mp5-semtex.png') });
   await page.goto(url, { waitUntil: 'load', timeout: 90000 });
   await ready();
-  await page.getByRole('button', { name: 'Play solo', exact: true }).click();
+  // Genuine visible Play Solo after the reload: pin the post-reload menu as
+  // settled before the persistence proof reads it.
+  const playSoloAfterReload = page.getByRole('button', { name: 'Play solo', exact: true });
+  await playSoloAfterReload.waitFor({ state: 'visible', timeout: 30000 });
+  await playSoloAfterReload.click();
   const persisted = await page.evaluate(() => document.querySelector('.aa-loadline')?.textContent ?? '');
   check('MP5+Semtex survives a reload from the store',
     persisted.includes('MP5') && persisted.includes('Semtex'), { persisted });
+  // Selected-path proof, not just line text: the reloaded store must still
+  // press the MP5 + Semtex buttons the next life reads.
+  check('MP5 stays pressed after reload',
+    await page.getByRole('button', { name: /^MP5\b/ }).getAttribute('aria-pressed') === 'true');
+  check('Semtex stays pressed after reload',
+    await page.getByRole('button', { name: /^Semtex\b/ }).getAttribute('aria-pressed') === 'true');
   await page.keyboard.press('Tab');
   check('Keyboard focus stays visible on menu controls',
     await page.evaluate(() => getComputedStyle(document.activeElement).outlineStyle !== 'none'));
-  await page.getByRole('button', { name: /deploy/i }).click();
+  const deployAfterReload = page.getByRole('button', { name: /deploy/i });
+  await deployAfterReload.waitFor({ state: 'visible', timeout: 30000 });
+  await deployAfterReload.click();
   // snapshot() throws '[session] no match yet - call begin() first' until the
   // Deploy constructs the match; a throw here is the expected transient, not a
   // failure, so the poll catches it and keeps waiting for 'active'.
-  await page.waitForFunction(() => {
-    try { return window.__NTGAME.snapshot().match.phase === 'active'; }
-    catch { return false; }
-  }, null, { timeout: 45000 });
+  try {
+    await page.waitForFunction(() => {
+      try { return window.__NTGAME.snapshot().match.phase === 'active'; }
+      catch { return false; }
+    }, null, { timeout: 45000 });
+  } catch (activeTimeout) {
+    // 0117 timed out here with 14 passes and zero errors: missed click vs
+    // stalled match was indistinguishable. Keep one bounded snapshot of
+    // mode/match/weapon/ordnance/start-panel plus a frame, then rethrow.
+    const diag = await page.evaluate(() => {
+      const trunc = (s, n = 300) => (typeof s === 'string' && s.length > n ? s.slice(0, n) + '…[truncated]' : s);
+      const j = (v, n = 800) => {
+        try {
+          const s = JSON.stringify(v);
+          return s && s.length > n ? s.slice(0, n) + '…[truncated]' : JSON.parse(s);
+        } catch { return trunc(String(v), n); }
+      };
+      const snap = (() => {
+        try {
+          const s = window.__NTGAME.snapshot();
+          return { phase: s?.match?.phase ?? null, mode: s?.match?.mode ?? null };
+        } catch (e) { return { error: trunc(String((e && e.message) || e), 200) }; }
+      })();
+      const mode = (() => {
+        try { return window.__NTGAME.mode(); }
+        catch (e) { return trunc(String((e && e.message) || e), 200); }
+      })();
+      const weapon = (() => {
+        try { return j(window.__NT.weaponCmd('state')); }
+        catch (e) { return { error: trunc(String((e && e.message) || e), 200) }; }
+      })();
+      const ord = (() => {
+        try {
+          const o = window.__NT.ordnance();
+          return j({ tacticalId: o?.hand?.tacticalId ?? o?.self?.tacticalId ?? o?.tacticalId ?? null, counts: o?.counts ?? null });
+        } catch (e) { return { error: trunc(String((e && e.message) || e), 200) }; }
+      })();
+      const startEl = document.querySelector('#start');
+      const deployEl = document.querySelector('#start .aa-solo .aa-btn.aa-primary');
+      const dr = deployEl?.getBoundingClientRect();
+      return {
+        snap, mode, weapon, ord,
+        start: {
+          display: startEl ? getComputedStyle(startEl).display : 'missing',
+          soloHidden: document.querySelector('#start .aa-solo')?.classList.contains('aa-hidden') ?? null,
+          deployVisible: deployEl ? dr.width > 0 && dr.height > 0 : false,
+          deployRect: dr ? { top: Math.round(dr.top), bottom: Math.round(dr.bottom) } : null,
+          loadline: trunc(document.querySelector('.aa-loadline')?.textContent ?? '', 200),
+        },
+      };
+    });
+    await page.screenshot({ path: join(out, 'deploy-timeout.png') });
+    check('Deploy reaches active (bounded diag on timeout)', false, diag);
+    throw activeTimeout;
+  }
   const live = await page.evaluate(() => {
     let weapon = null;
     let ord = null;

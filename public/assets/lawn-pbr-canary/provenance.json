@@ -1,0 +1,53 @@
+{
+  "recorded": "2026-09-20",
+  "recordedBy": "OMP lawn-canary lane (dave-gaming-pc)",
+  "source": {
+    "publisher": "ambientCG",
+    "license": "CC0-1.0 (site-wide: all ambientCG assets are published under Creative Commons CC0 1.0; the v2 API response carries no per-asset license field)",
+    "licenseUrl": "https://ambientcg.com/legal",
+    "apiQuery": "https://ambientcg.com/api/v2/full_json?q=Grass001&type=Material (2026-09-20)",
+    "extraction": "One full-zip download (10,710,313 B), three members inflated; no local GPU, imagegen or Blender was used",
+    "authenticityDisclosure": "ambientCG creationMethod = PBRProcedural: maps are ambientCG-authored, not a photo scan. Photo-scanned alternatives were evaluated and rejected on surface character: PolyHaven leafy_grass (lush meadow with plant litter), grass_ground and sparse_grass (dry/soil-dominant - the failure class of the earlier 'Sparse Grass' attempt that read as bare soil). The visual gate owns final acceptance."
+  },
+  "asset": {
+    "id": "Grass001",
+    "displayName": "Grass 001",
+    "kind": "dense short mown lawn",
+    "sourceUrl": "https://ambientcg.com/get?file=Grass001_1K-JPG.zip",
+    "assetPage": "https://ambientcg.com/asset?id=Grass001",
+    "license": "CC0-1.0",
+    "creationMethod": "PBRProcedural",
+    "nativePhysicalTileMetres": 1.4,
+    "physicalSizeSource": "ambientCG v2 API dimensionX/dimensionY = 140x140 cm (q=Grass001 response, 2026-09-20)",
+    "colorMeanSrgb": { "r": 68.2, "g": 91.7, "b": 40.6, "method": "System.Drawing Bitmap.GetPixel stride 8, 16384 samples, CPU-only" },
+    "maps": [
+      { "file": "lawn-1k-color.jpg", "member": "Grass001_1K-JPG_Color.jpg", "colorSpace": "sRGB", "bytes": 1764300, "sha256": "b9b6d61bc3b6137b868a3447eef18737896acd26d58fe2f4b83ce8c0e9d3f8ad" },
+      { "file": "lawn-1k-normal.jpg", "member": "Grass001_1K-JPG_NormalGL.jpg", "colorSpace": "none (linear data, OpenGL tangent)", "bytes": 2338245, "sha256": "eef0b56db5f00a6fcb3d0e0f8463e4e141e88aa85b26527a04d617b75a4ab5d2" },
+      { "file": "lawn-1k-roughness.jpg", "member": "Grass001_1K-JPG_Roughness.jpg", "colorSpace": "none (linear data)", "bytes": 823623, "sha256": "8810effd44756341170d551501b7d0c645dc2395dbce46a8c7f1e61045258a06" }
+    ]
+  },
+  "budgets": {
+    "mapCount": 3,
+    "mapCountLimit": 3,
+    "dimensionPx": 1024,
+    "dimensionLimitPx": 1024,
+    "bytesOnDisk": 4926168,
+    "bytesOnDiskLimit": 6291456,
+    "deliveryPassWireBytes": 10710313,
+    "totalWireBytes": 21420626,
+    "downloadLimitBytes": 31457280,
+    "note": "Delivery pass fetched the zip once (10.71 MB). An earlier delivery attempt re-downloaded the same zip before aborting on a local path error; both passes are counted in totalWireBytes. No other network traffic for this lane."
+  },
+  "uvContract": {
+    "rootConvention": "build/ground.ts bakes world tiling into geometry UVs: UV_LAWN=96.0 m per UV unit; shared textures keep texture.repeat as the ONLY per-texture multiplier.",
+    "repeatFormula": "texture.repeat = uvMetresPerUnit / tilePhysicalMetres, applied once per map by applyGroundPbrCanaryMaps",
+    "lawn": { "uvMetresPerUnit": 96.0, "tilePhysicalMetres": 1.4, "repeat": 68.57142857142857 },
+    "neverDoubleRepeat": "the canary never rescales geometry UVs; ground.ts scaleUV and UV_LAWN keep their existing values"
+  },
+  "calibration": {
+    "albedoTint": "0xffffff (identity)",
+    "rationale": "Photo mean (68.2, 91.7, 40.6) is already darker than the muted baseline target (~87, 121, 59); material.color can only multiply darker, so identity preserves the baseline color state. Darkness vs baseline is a paired-view decision for the root gate: levers are a brighter asset (Grass004) or a gain in the wetness colorNode hook, never an exposure/light change.",
+    "normalScale": 0.4,
+    "normalScaleSource": "materials.ts lawn wetStd normalScale, unchanged"
+  }
+}

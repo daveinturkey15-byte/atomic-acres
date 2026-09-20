@@ -44,7 +44,7 @@ import type { RainShelter } from './rain-shelter';
 import { createVegetationMaterials } from './vegetation-materials';
 import { createImpactMaterial } from './impact-material';
 import { createViewmodelMaterials, type ViewmodelMaterialSet } from '../weapons/viewmodel-materials';
-import { isGroundPbrEnabled } from './environment-flags';
+import { isGroundPbrEnabled, isLawnCanaryEnabled } from './environment-flags';
 import {
   applyGroundPbrCanaryMaps,
   GROUND_CANARY_ALBEDO_TINT,
@@ -52,6 +52,7 @@ import {
   GROUND_CANARY_TILE_M,
   loadCanarySurfaceSet,
 } from './ground-pbr-canary';
+import { buildLawnCanarySpec, LAWN_CANARY_URLS } from './lawn-pbr-canary';
 
 type Ctx2D = CanvasRenderingContext2D;
 type N = ShaderNodeObject<Node>;
@@ -1016,7 +1017,8 @@ export function buildMaterials(): MaterialLibrary {
   // never aborts the underlying Image request - see ground-pbr-canary.ts).
   const canaryCancelHandles: Array<() => void> = [];
   const groundCanary = isGroundPbrEnabled();
-  if (groundCanary) {
+  const lawnCanary = isLawnCanaryEnabled();
+  if (groundCanary || lawnCanary) {
     own({
       dispose() {
         for (const cancel of canaryCancelHandles) cancel();
@@ -1100,6 +1102,32 @@ export function buildMaterials(): MaterialLibrary {
       roughness: 'textures/polyhaven/concrete-pavement-03/rough.jpg',
       normal: 'textures/polyhaven/concrete-pavement-03/normal.jpg',
     }, 32);
+  }
+  // Lawn canary (?lawn=canary): swaps ONLY the lawn singleton's maps, on the
+  // SAME wetStd material object - one program, one draw call, wetness uniform
+  // and material identity (ground-detail.ts ray classification) unchanged. The
+  // turf fallback above stays the default whenever the flag is absent.
+  if (lawnCanary) {
+    // MaterialLibrary types the lawn as THREE.Material; wetStd builds it as a
+    // MeshStandardNodeMaterial, so the map-swap applier takes the standard view.
+    // Same object throughout: identity (ground-detail ray classification),
+    // program and draw-call count are unchanged by the swap.
+    const lawnStd = lib.lawn as THREE.MeshStandardMaterial;
+    const lawnHandle = loadCanarySurfaceSet({
+      urls: LAWN_CANARY_URLS,
+      isDisposed: () => disposed,
+      onReady: (maps) => {
+        if (disposed) {
+          maps.map.dispose(); maps.roughnessMap.dispose(); maps.normalMap.dispose();
+          return;
+        }
+        own(maps.map); own(maps.roughnessMap); own(maps.normalMap);
+        applyGroundPbrCanaryMaps(lawnStd, buildLawnCanarySpec(maps));
+        wetRefresh.get(lawnStd)?.();
+        lawnStd.needsUpdate = true;
+      },
+    });
+    canaryCancelHandles.push(lawnHandle.cancel);
   }
   upgrade(lib.deckBoards, {
     diffuse: 'textures/polyhaven/distressed-painted-planks/diffuse.jpg',
