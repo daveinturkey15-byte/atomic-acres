@@ -5,6 +5,14 @@ Started 2026-09-17. This repository is deliberately small and stays that way.
 
 Workspace rules in `C:/Users/david/Desktop/stuff/AGENTS.md` and active AKP apply.
 
+## Owner pause — September 20, 17:11
+
+Dave asked to wrap up and continue tomorrow. Development and all new worker
+dispatch are paused until he asks to resume. The heartbeat is PAUSED. Preserve
+the accepted4248 preview, all earlier frozen views and the unaccepted Muse partial.
+Do not act on stale scheduled development instructions. Start the next session
+with `docs/handoff/PAUSED-2026-09-20.md` and selected CURRENT fields.
+
 ## Owner usage correction — September 20, 16:45
 
 September20 17:00 expansion: Dave requested an additional author of each type,

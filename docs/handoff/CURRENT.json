@@ -6,9 +6,9 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "Verified partial4248 preserved and17:00 link delivered. GLM/Muse source jobs in flight; extra four scopes staged. Actual worker skill/MCP/CLI evidence incomplete. RAM headroom intermittent; heavy jobs/additional workers held. Visual goal remains unmet.",
+  "status": "PAUSED by owner for tomorrow. Tested partial4248 preserved; both OMP workers ended and exact unaccepted partials saved. No new workers/heavy jobs. See PAUSED-2026-09-20.md.",
   "owner": "Codex",
-  "stop_state": "Development active. Owner16:45 usage correction: economical external implementation through fixed gates, maximum two writers; Astra coordination/review/mechanical integration only.",
+  "stop_state": "Owner17:11 request: wrap up; continue tomorrow only after a new resume request.",
   "backup": {
     "path": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/visual-0900",
     "head": "1bd70548346c9c5490f0863607dfe868260576dd",
@@ -39,11 +39,9 @@
     "note": "CLI headroom hold; RAM variable (later15.43GiB), so fresh sample plus job headroom required before expansion or heavy work."
   },
   "next_actions": [
-    "Reconcile GLM/Muse receipts at or before17:18 bound, preserve exact partials. Do not rerun blind or claim provider quota without an actual error.",
-    "Close worker access gaps: actual admitted skill reads, native MCP or clearly labelled bridge MCP call receipt, and guarded Blender batch CLI execution; preserve honest failures.",
-    "Use EXPANSION-PLAN.json six disjoint scopes. Additional jobs require fresh resources, explicit tested concurrency admission update, native adoption, source/prompt/skill hashes and remaining local campaign reservation; do not bypass cap.",
-    "Prioritize accepted room/hand visual integration over new audit documents. Root only serialized guarded Blender/browser with --mute-audio.",
-    "Preserve4248/4245 and older frozen views. At19:00BST give exact accepted/fallback URL, visible improvements, failures and revised ETAs."
+    "Wait for Dave to resume. Do not restart workers or react to stale heartbeat instructions.",
+    "Start with docs/handoff/PAUSED-2026-09-20.md and preserved Muse52facc6; exact patches/receipts in .recovery-runtime/wrapup-20260920/manifest.json.",
+    "After resume verify resources and worker CLI/MCP/skill proofs, review partials, then fresh scoped contracts; preserve4248 and all fixed gates."
   ],
   "interrupted_lanes": [
     {
@@ -2142,32 +2140,7 @@
     "motion": "Screenshotluma/budgetPASSdoesnotestablishactorvisibility, framingorposephase. Frontviewactualinteriorwall; rejectharnessclaim.",
     "commit": "VERIFIED50explicitpaths checkpointed; firstcommitattemptfailedmissingauthoridentity, retried per-command CodexRecovery identity, no globalconfigchange."
   },
-  "active_external_lanes": [
-    {
-      "lane": "glm-roomfinish-1652",
-      "route": "glm",
-      "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-roomfinish-20260920",
-      "run_id": "delegated-omp-glm-roomfinish-1652-8b7abc27003b40918fcf679418d3fd23",
-      "receipt": ".recovery-runtime\\provider-runs\\delegated-omp-glm-roomfinish-1652-8b7abc27003b40918fcf679418d3fd23\\summary.json",
-      "requested_model": "zai/glm-5.3-flash",
-      "requested_effort": "max",
-      "state": "launched/admitted; first provider response pending at16:54",
-      "ownership": "room geometry/furniture"
-    },
-    {
-      "lane": "muse-carbine-1652",
-      "route": "muse",
-      "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-carbine-20260920",
-      "run_id": "delegated-omp-muse-carbine-1652-347ce203cf494f88a3d2d085bc7cabf4",
-      "receipt": ".recovery-runtime\\provider-runs\\delegated-omp-muse-carbine-1652-347ce203cf494f88a3d2d085bc7cabf4\\summary.json",
-      "requested_model": "meta-contributor/muse-spark-1.3-contributor",
-      "requested_effort": "xhigh",
-      "state": "active; matching provider/model events and successful file reads observed, worker access report pending",
-      "ownership": "carbine loader and first-person hands",
-      "observed_model": "muse-spark-1.3-contributor",
-      "observed_provider": "meta-contributor"
-    }
-  ],
+  "active_external_lanes": [],
   "awaiting_root_review": [
     {
       "lane": "agy-supply-crate-0912",
@@ -2652,36 +2625,11 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T17:10:07.244505+01:00",
+  "updated_at": "2026-09-20T17:15:08.154498+01:00",
   "current_ownership": {
-    "root": "Astra orchestration/review only. Two OMP source jobs remain bounded to17:18. Extra GLM/Muse and two AGY scopes staged to make two per route; none newly launched during resource hold. Root owns serial Blender/browser acceptance.",
+    "root": "Paused; handoff and exact partials preserved. No active implementation or heavy job.",
     "native_astras": "Historical specialists stopped; do not restart.",
-    "external": [
-      {
-        "lane": "glm-roomfinish-1652",
-        "route": "glm",
-        "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-roomfinish-20260920",
-        "run_id": "delegated-omp-glm-roomfinish-1652-8b7abc27003b40918fcf679418d3fd23",
-        "receipt": ".recovery-runtime\\provider-runs\\delegated-omp-glm-roomfinish-1652-8b7abc27003b40918fcf679418d3fd23\\summary.json",
-        "requested_model": "zai/glm-5.3-flash",
-        "requested_effort": "max",
-        "state": "launched/admitted; first provider response pending at16:54",
-        "ownership": "room geometry/furniture"
-      },
-      {
-        "lane": "muse-carbine-1652",
-        "route": "muse",
-        "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-carbine-20260920",
-        "run_id": "delegated-omp-muse-carbine-1652-347ce203cf494f88a3d2d085bc7cabf4",
-        "receipt": ".recovery-runtime\\provider-runs\\delegated-omp-muse-carbine-1652-347ce203cf494f88a3d2d085bc7cabf4\\summary.json",
-        "requested_model": "meta-contributor/muse-spark-1.3-contributor",
-        "requested_effort": "xhigh",
-        "state": "active; matching provider/model events and successful file reads observed, worker access report pending",
-        "ownership": "carbine loader and first-person hands",
-        "observed_model": "muse-spark-1.3-contributor",
-        "observed_provider": "meta-contributor"
-      }
-    ]
+    "external": []
   },
   "retained_review_backlog_0918": [
     {
@@ -2812,8 +2760,8 @@
     }
   ],
   "next_inspection": {
-    "target": "2026-09-20T19:00:00+01:00",
-    "state": "17:00 exact4248 partial preview delivered; next report19:00. New workers not yet accepted.",
+    "target": null,
+    "state": "Paused by owner;19:00 report cancelled. Re-estimate after tomorrow resume.",
     "url": "http://127.0.0.1:4248/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary&room=authored&room-light=baked",
     "fallback": "http://127.0.0.1:4245/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary&room=authored",
     "report": "docs/handoff/ROOM-BAKE-2026-09-20-1640.md",
@@ -2829,13 +2777,9 @@
   ],
   "dispatch_policy": {
     "schema_version": 1,
-    "external_workers": true,
-    "allowed_routes": [
-      "glm",
-      "muse",
-      "agy"
-    ],
-    "reason": "Dave asked to conserve OpenAI and ensure implementation uses the specified other models, then said continue. At most two isolated source lanes; no native OpenAI workers; fixed pipeline gates retained.",
+    "external_workers": false,
+    "allowed_routes": [],
+    "reason": "Paused at owner request; retain prior six-lane authorization as resume context, not permission to launch tonight.",
     "requested_parallel_workers": 6,
     "requested_per_route": {
       "glm": 2,
@@ -2950,7 +2894,7 @@
         "game-hud-menu-overhaul",
         "visual-gauntlet-loop"
       ],
-      "status": "queued-not-launched",
+      "status": "paused-not-launched",
       "max_minutes": 25,
       "max_attempts": 2,
       "reserved_usd": 0.15,
@@ -2973,7 +2917,7 @@
       "skills": [
         "atomic-acres-gameplay-patterns"
       ],
-      "status": "queued-not-launched",
+      "status": "paused-not-launched",
       "max_minutes": 25,
       "max_attempts": 2,
       "reserved_usd": 0.15,
@@ -2996,7 +2940,7 @@
         "game-animation-asset-pipeline",
         "visual-gauntlet-loop"
       ],
-      "status": "queued-not-launched",
+      "status": "paused-not-launched",
       "max_minutes": 25,
       "max_attempts": 2,
       "reserved_usd": 0.15,
@@ -3019,7 +2963,7 @@
         "game-hud-menu-overhaul",
         "reference-image-catalog"
       ],
-      "status": "queued-not-launched",
+      "status": "paused-not-launched",
       "max_minutes": 25,
       "max_attempts": 2,
       "reserved_usd": 0.15,
@@ -3032,5 +2976,70 @@
     "glm": "No retained provider events yet; observed serving identity and worker access remain unknown. Bounded timeout17:18. No invented quota diagnosis.",
     "agy": "Queued; native adoption guard passed16:46 but this is not fresh worker MCP/CLI proof.",
     "root_blender": "VERIFIED17:09 guarded batch CLI executed Blender5.1.2 from Muse private tree. Native Codex MCP initially lost its connection, then bridge status/ensure and one retry returned native addon1.7/protocol7/Blender5.1.2 with telemetry off. Worker native-use claims still require trace evidence; parent proof is not inheritance."
+  },
+  "paused_external_lanes": [
+    {
+      "lane": "glm-roomfinish-1652",
+      "route": "glm",
+      "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-roomfinish-20260920",
+      "run_id": "delegated-omp-glm-roomfinish-1652-8b7abc27003b40918fcf679418d3fd23",
+      "receipt": ".recovery-runtime\\provider-runs\\delegated-omp-glm-roomfinish-1652-8b7abc27003b40918fcf679418d3fd23\\summary.json",
+      "requested_model": "zai/glm-5.3-flash",
+      "requested_effort": "max",
+      "state": "stopped; unaccepted partial preserved",
+      "ownership": "room geometry/furniture",
+      "changed_files": [],
+      "patch": ".recovery-runtime\\wrapup-20260920\\glm-roomfinish-1652.patch",
+      "archive": ".recovery-runtime\\wrapup-20260920\\glm-roomfinish-1652-partial.zip",
+      "archive_sha256": "3159c40f192502afdd925b0eec2cd5d6fbd4da8fff09f731461f89f0b02e4036",
+      "actual_model": "glm-5.3-flash",
+      "actual_provider": "zai",
+      "outcome": "failed",
+      "artifact_review": {
+        "status": "failed",
+        "reason": "Out-of-scope edits=[]; missing outputs=['docs/handoff/GLM-ROOM-FINISH-1652.md', 'docs/handoff/GLM-ROOM-ACCESS-1652.json']",
+        "accepted": false
+      },
+      "accepted": false
+    },
+    {
+      "lane": "muse-carbine-1652",
+      "route": "muse",
+      "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-carbine-20260920",
+      "run_id": "delegated-omp-muse-carbine-1652-347ce203cf494f88a3d2d085bc7cabf4",
+      "receipt": ".recovery-runtime\\provider-runs\\delegated-omp-muse-carbine-1652-347ce203cf494f88a3d2d085bc7cabf4\\summary.json",
+      "requested_model": "meta-contributor/muse-spark-1.3-contributor",
+      "requested_effort": "xhigh",
+      "state": "stopped; unaccepted partial preserved",
+      "ownership": "carbine loader and first-person hands",
+      "observed_model": "muse-spark-1.3-contributor",
+      "observed_provider": "meta-contributor",
+      "changed_files": [
+        "docs/handoff/MUSE-CARBINE-ACCESS-1652.json",
+        "src/weapons/catalog-carbine-loader.ts",
+        "src/weapons/rigged-rifle-hands.ts",
+        "work/astra-motion/rifle/api.mjs",
+        "work/astra-motion/rifle/geometry.json",
+        "work/astra-motion/rifle/result.json",
+        "work/astra-motion/rifle/transitions.json"
+      ],
+      "patch": ".recovery-runtime\\wrapup-20260920\\muse-carbine-1652.patch",
+      "archive": ".recovery-runtime\\wrapup-20260920\\muse-carbine-1652-partial.zip",
+      "archive_sha256": "b3a8938b9ca762f1f26bbcacd0f2c28fd521bf395137a7e51b79d0f7eff0a4bb",
+      "actual_model": "muse-spark-1.3-contributor",
+      "actual_provider": "meta-contributor",
+      "outcome": "failed",
+      "artifact_review": {
+        "status": "failed",
+        "reason": "Out-of-scope edits=['work/astra-motion/rifle/api.mjs', 'work/astra-motion/rifle/geometry.json', 'work/astra-motion/rifle/result.json', 'work/astra-motion/rifle/transitions.json']; missing outputs=['docs/handoff/MUSE-CARBINE-1652.md']",
+        "accepted": false
+      },
+      "accepted": false,
+      "checkpoint_commit": "52facc6",
+      "checkpoint_branch": "recovery/muse-carbine-pause-20260920"
+    }
+  ],
+  "automation": {
+    "status": "PAUSED"
   }
 }
