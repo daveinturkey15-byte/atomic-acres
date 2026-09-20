@@ -1,5 +1,7 @@
 /** Original, bounded weapon gas/debris. No damage, timers, scene lights or shared materials. */
 import * as THREE from 'three';
+import { MeshBasicNodeMaterial } from 'three/webgpu';
+import { mrt, vec4 } from 'three/tsl';
 import { PAL } from '../core/palette';
 
 const STRIDE = 20;
@@ -37,7 +39,7 @@ function mask(kind: number): THREE.DataTexture {
 
 /** One indexed-quad mesh per pool. Vertex alpha avoids per-slot materials/shaders. */
 class ParticleBatch {
-  readonly mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
+  readonly mesh: THREE.Mesh<THREE.BufferGeometry, MeshBasicNodeMaterial>;
   readonly data: Float64Array;
   readonly positions: THREE.BufferAttribute;
   readonly normals: THREE.BufferAttribute;
@@ -73,11 +75,16 @@ class ParticleBatch {
     geometry.setIndex(new THREE.BufferAttribute(index, 1));
     this.texture = mask(kind);
     this.tint = new THREE.Color(color);
-    const material = new THREE.MeshBasicMaterial({
+    const material = new MeshBasicNodeMaterial({
       map: this.texture, vertexColors: true, transparent: true, depthWrite: false,
       side: THREE.DoubleSide, forceSinglePass: true,
       blending: kind === 2 ? THREE.AdditiveBlending : THREE.NormalBlending,
     });
+    // The scene MRT's scalar/vec3 surface outputs otherwise acquire alpha=1,
+    // even where this particle's color/map/vertex alpha is almost transparent.
+    // Zero-alpha auxiliary writes preserve the opaque surface for GTAO/SSR;
+    // the ordinary color output still draws this gas/dust/spark normally.
+    material.mrtNode = mrt({ normal: vec4(0), metalness: vec4(0), roughness: vec4(0) });
     this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.name = `weapon-fx-${kind === 0 ? 'gas' : kind === 1 ? 'dust' : 'sparks'}`;
     this.mesh.frustumCulled = false;

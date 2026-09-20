@@ -96,6 +96,20 @@ check('MRT normal attribute present, unit length and current-camera facing for e
     }
   }
 });
+check('transparent particles preserve all three auxiliary MRT surface buffers', () => {
+  for (const b of batches) {
+    const node = b.mesh.material.mrtNode;
+    assert.ok(node?.isMRTNode);
+    assert.equal(node.has('output'), false, 'ordinary color output must remain inherited');
+    for (const name of ['normal', 'metalness', 'roughness']) {
+      const value = node.get(name).value;
+      assert.deepEqual([value.x, value.y, value.z, value.w], [0, 0, 0, 0], `${name} must write zero color and alpha`);
+      // Both normal and additive color blending preserve the destination with
+      // zero-alpha/zero-color source. This proves the declared node, not GPU output.
+      assert.equal(value.x * value.w + 0.63 * (1 - value.w), 0.63);
+    }
+  }
+});
 check('one admitted flash produces six gas particles; impact uses dust/sparks and legacy decal', () => {
   fx.flashAt(p, q); assert.equal(helper.gas.liveCount(), 6);
   fx.impact(p, n, false); assert.equal(helper.dust.liveCount(), 6); assert.equal(helper.sparks.liveCount(), 5); assert.equal(fx.decalCount(), 1);
