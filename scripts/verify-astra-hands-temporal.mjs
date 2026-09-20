@@ -14,10 +14,11 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const LIMIT = { calls: 1200, triangles: 900_000, captureMs: 20_000, screenshots: 10, samples: 450 };
 const RELOAD_TARGETS = [0, .16, .32, .48, .64, .80];
 const ENTRY_TIMEOUT = 30_000; // Same action budget as the passed 17-pose observer.
+const WEAPON_IDS = ['longhorn', 'rattler', 'coachman', 'deadeye', 'duster'];
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
-function modeUrl(base, mode) {
+function modeUrl(base, mode, variant = 'rigged') {
   const url = new URL(base); url.searchParams.set('motion', 'canary');
-  if (mode === 'rigged') url.searchParams.set('hands', 'rigged'); else url.searchParams.delete('hands');
+  if (mode === 'rigged') url.searchParams.set('hands', variant); else url.searchParams.delete('hands');
   return url.href;
 }
 function withinBudget(s) {
@@ -99,6 +100,7 @@ function selfCheck() {
   const base = 'http://127.0.0.1:4192/?lighting=glm&glazing=foo&hands=old';
   assert.equal(new URL(modeUrl(base, 'motion')).searchParams.get('hands'), null);
   assert.equal(new URL(modeUrl(base, 'rigged')).searchParams.get('hands'), 'rigged');
+  assert.equal(new URL(modeUrl(base, 'rigged', 'rifle-canary')).searchParams.get('hands'), 'rifle-canary');
   for (const mode of ['motion', 'rigged']) {
     const u = new URL(modeUrl(base, mode)); assert.equal(u.searchParams.get('lighting'), 'glm');
     assert.equal(u.searchParams.get('glazing'), 'foo'); assert.equal(u.searchParams.get('motion'), 'canary');
@@ -116,10 +118,10 @@ function selfCheck() {
   console.log('PASS: URL/budget/movement controls and observed-state entry recovery. No browser started.');
 }
 
-async function runMode(base, mode, directory, source) {
+async function runMode(base, mode, directory, source, weaponId = 'duster', variant = 'rigged') {
   const { stockBrowser } = await import('./lib/stock-browser.mjs');
-  const url = modeUrl(base, mode), out = join(directory, mode); mkdirSync(out);
-  const result = { schema: 1, mode, url, source, startedAt: new Date().toISOString(), limits: LIMIT,
+  const url = modeUrl(base, mode, variant), out = join(directory, weaponId === 'duster' ? mode : `${weaponId}-${mode}`); mkdirSync(out);
+  const result = { schema: 1, mode, weaponId, handsVariant: variant, url, source, startedAt: new Date().toISOString(), limits: LIMIT,
     route: 'Play solo -> Deploy -> real game loop', actions: [], frames: [], samples: [], errors: [], checks: [], open: [], bundles: [] };
   const check = (name, pass, detail) => result.checks.push({ name, pass: !!pass, detail });
   let owned, page, captureStart = null;
@@ -162,9 +164,10 @@ async function runMode(base, mode, directory, source) {
       const action = await page.evaluate(({ cmd, arg }) => ({ t: performance.now(), cmd, arg, result: window.__NT.weaponCmd(cmd, arg) }), { cmd, arg });
       result.actions.push(action); return action.result;
     }
-    check('switch duster', await command('switch', 'duster') === true);
-    await waitFor(s => s.state.id === 'duster' && !s.state.reloading, 'duster selected');
+    check(`switch ${weaponId}`, await command('switch', weaponId) === true);
+    await waitFor(s => s.state.id === weaponId && !s.state.reloading, `${weaponId} selected`);
     check('refill admitted', await command('refill') === true);
+    const fullMagazine = (await read()).state.mag;
     await command('ads', false); await waitFor(s => s.state.ads === false, 'hip reset');
     captureStart = performance.now();
     // This observer only reads game state. Sampling is 20Hz, bounded to 20s/450
@@ -202,7 +205,7 @@ async function runMode(base, mode, directory, source) {
       await capture(`reload-${String(Math.round(target * 100)).padStart(2, '0')}`, target);
     }
     const completion = await waitFor(s => !s.state.reloading, 'reload completion', 5000);
-    check('reload completed with refilled magazine', completion.state.mag === 12 && completion.state.id === 'duster', completion);
+    check('reload completed with refilled magazine', Number.isFinite(fullMagazine) && fullMagazine > 0 && completion.state.mag === fullMagazine && completion.state.id === weaponId, completion);
     await stage('settle'); await page.waitForTimeout(400); await capture('reload-settled');
     await stage('sprint');
     result.actions.push({ action: 'W+Shift down', t: (await read()).t });
@@ -264,7 +267,7 @@ async function runMode(base, mode, directory, source) {
     writeFileSync(join(out, 'strip.html'), `<!doctype html><meta charset="utf-8"><title>${mode} actual temporal frames</title><style>body{background:#171b1f;color:#eee;font:14px sans-serif}main{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}figure{margin:0}img{width:100%}figcaption{padding:6px}</style><h1>${mode}: ${result.status}</h1><p>Actual timestamped screenshots; see result.json for source/bundle identity, input and render evidence. Visual acceptance OPEN.</p><main>${cells}</main>`);
     if (owned) await owned.close();
   }
-  console.log(JSON.stringify({ mode, status: result.status, frames: result.frames.length, reloadFrames: result.reloadFrames.length, sprint: result.sprint, out, fatal: result.fatal }));
+  console.log(JSON.stringify({ mode, weaponId, handsVariant: variant, status: result.status, frames: result.frames.length, reloadFrames: result.reloadFrames.length, sprint: result.sprint, out, fatal: result.fatal }));
   return result;
 }
 
@@ -274,15 +277,19 @@ else {
   if (!base) throw new Error('Set RECOVERY_URL to the root-owned verified candidate; no default server is assumed.');
   const mode = process.env.ASTRA_HANDS_MODE || 'both';
   if (!['motion', 'rigged', 'both'].includes(mode)) throw new Error('ASTRA_HANDS_MODE must be motion, rigged or both');
+  const variant = process.env.ASTRA_HANDS_VARIANT || 'rigged';
+  if (!['rigged', 'rifle-canary'].includes(variant)) throw new Error('ASTRA_HANDS_VARIANT must be rigged or rifle-canary');
+  const weapons = (process.env.ASTRA_WEAPONS || 'duster').split(',').map(s => s.trim());
+  if (!weapons.length || weapons.length > 5 || new Set(weapons).size !== weapons.length || !weapons.every(w => WEAPON_IDS.includes(w))) throw new Error(`ASTRA_WEAPONS must be a unique comma-separated subset of ${WEAPON_IDS.join(',')}`);
   const captures = join(ROOT, 'captures'); mkdirSync(captures, { recursive: true });
   const directory = mkdtempSync(join(captures, `astra-hands-temporal-${new Date().toISOString().replace(/[:.]/g, '-')}-`));
   const source = { checkoutSha: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ROOT, encoding: 'utf8', windowsHide: true }).trim(),
     trackedDirtyPaths: execFileSync('git', ['diff', '--name-only', 'HEAD'], { cwd: ROOT, encoding: 'utf8', windowsHide: true }).trim().split('\n').filter(Boolean) };
   const results = [];
-  for (const selected of mode === 'both' ? ['motion', 'rigged'] : [mode]) results.push(await runMode(base, selected, directory, source));
+  for (const weaponId of weapons) for (const selected of mode === 'both' ? ['motion', 'rigged'] : [mode]) results.push(await runMode(base, selected, directory, source, weaponId, variant));
   const hashes = results.map(r => r.identity?.liveEntryBundles?.map(b => b.sha256).sort().join(','));
   const sameLoadedBuild = hashes.every(h => !!h && h === hashes[0]);
-  const summary = { output: directory, source, modes: results.map(r => ({ mode: r.mode, status: r.status, open: r.open })),
+  const summary = { output: directory, source, handsVariant: variant, weapons, modes: results.map(r => ({ mode: r.mode, weaponId: r.weaponId, status: r.status, open: r.open })),
     sameLoadedBuild, pass: results.every(r => r.pass) && (results.length === 1 || sameLoadedBuild) };
   writeFileSync(join(directory, 'summary.json'), JSON.stringify(summary, null, 2) + '\n');
   console.log(JSON.stringify(summary, null, 2)); if (!summary.pass) process.exitCode = 1;
