@@ -62,6 +62,10 @@ assert.equal(pane.material, probe.materials[0]);
 assert.equal(pane.material.transparent, true);
 assert.equal(pane.material.depthWrite, false);
 assert.equal(probe.materials[2].transparent, false);
+for (const material of probe.materials) {
+  assert.equal(material.mrtNode, null, 'material must not override a single-output fallback target');
+  assert.ok(material.outputNode, 'auxiliary properties are set through the output hook');
+}
 assert.equal(vehiclePane.material, probe.materials[3]);
 assert.equal(vehiclePane.material.userData.reflectiveSurfaces.virtualCabin, true);
 const cabin = vehiclePane.userData.reflectiveCabin;

@@ -10,9 +10,9 @@
  */
 import * as THREE from 'three';
 import { MeshBasicNodeMaterial } from 'three/webgpu';
-import { cameraPosition, dot, equirectUV, float, Fn, mix, modelWorldMatrixInverse,
-  mrt, normalLocal, normalView, positionLocal, positionViewDirection, positionWorld,
-  reference, reflectVector, smoothstep, texture, uniform, vec2, vec3, vec4 } from 'three/tsl';
+import { cameraPosition, dot, equirectUV, float, Fn, metalness, mix, modelWorldMatrixInverse,
+  normalLocal, normalView, output, positionLocal, positionViewDirection, positionWorld,
+  reference, reflectVector, roughness, smoothstep, texture, uniform, vec2, vec3, vec4 } from 'three/tsl';
 import type { MaterialLibrary } from './materials';
 import type { Atmosphere, EffectiveState } from './atmosphere';
 import { EAVE_Y, FLOOR_H, FRONT_LAWN_OUTER, GARAGE_DEPTH, GARAGE_H, GARAGE_LEN,
@@ -233,9 +233,14 @@ function glazing(source: Standard, atlas: THREE.DataTexture, opaque: boolean,
   m.depthWrite = opaque;
   m.side = source.side;
   m.fog = source.fog;
-  // The existing four-output MRT remains intact. Basic materials have no PBR
-  // variants, so explicitly initialise its auxiliary channels for the post chain.
-  m.mrtNode = mrt({ roughness: float(source.roughness), metalness: float(0) });
+  // Basic materials have no PBR variants. Initialise the properties consumed by
+  // the existing scene MRT, WITHOUT declaring a material MRT: that would replace
+  // the single-output target on the WebGL2/direct fallback (r180 NodeMaterial).
+  m.outputNode = Fn(() => {
+    roughness.assign(source.roughness);
+    metalness.assign(0);
+    return output;
+  })();
   // Select by world position, so all panes share THREE materials instead of
   // allocating one per window. Architecture itself never crosses these seams.
   const zone = positionWorld.z.lessThan(-HOUSE_BACK + 0.5).select(2,
