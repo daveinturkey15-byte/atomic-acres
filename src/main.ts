@@ -20,6 +20,7 @@ import { initUI } from './ui/index';
 import { wireNetcode } from './net/wire';
 import { createCharacterSystem, type CharacterHandle } from './characters';
 import { isAuthoredOperatorEnabled, preloadAuthoredOperator } from './characters/operator-authored';
+import { disposeWorldWeaponArt } from './characters/world-weapon-art';
 import { ThrowBodyPresentation } from './characters/throw-body';
 import { loadBakedClips } from './characters/kimodo-clips';
 import { createLocalMatch, type LocalMatch, type MatchUi } from './game/session';
@@ -387,6 +388,21 @@ function releaseEnvironmentCanary(): void {
         }
       }
     }
+    // muse-1020 seam: same double-registration pattern for the mountain volume.
+    // The skyline-level userData.dispose above already releases it; this named
+    // lookup collapses to the same idempotent no-op, and covers the subgroup
+    // if the skyline key is ever overwritten. No other target is touched.
+    const volume = target.getObjectByName('mountain_volume_muse_1010');
+    if (volume?.userData && typeof volume.userData === 'object' && 'dispose' in volume.userData) {
+      const release = (volume.userData as { dispose?: unknown }).dispose;
+      if (typeof release === 'function') {
+        try {
+          release();
+        } catch {
+          /* idempotent release */
+        }
+      }
+    }
   }
   // Clones are detached above; now retire the cached master for the rest of
   // the page lifetime. Exactly-once, pending-load safe, coach untouched; a
@@ -400,6 +416,7 @@ function releaseEnvironmentCanary(): void {
 addEventListener('pagehide', () => {
   releaseEnvironmentCanary();
   releaseCoachOwnedCanary();
+  try { disposeWorldWeaponArt({ terminal: true }); } catch { /* teardown must never break pagehide */ }
   weapons.dispose();
   ordnance.dispose();
   combatFeedback.dispose();

@@ -1,0 +1,22 @@
+{
+  // Compile gate for the visual module + scenario. DOM lib is required for
+  // the canvas-typed stencil helpers even though headless runs never build one.
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM"],
+    "strict": true,
+    "noUnusedLocals": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": []
+  },
+  "files": [
+    "tree/src/weapons/supply-crate-visual.ts",
+    "tree/src/weapons/crate-visual-pin.ts",
+    "tree/scripts/assert-ambient.d.ts",
+    "tree/scripts/_verify-supply-crate-visual.scenario.ts"
+  ]
+}

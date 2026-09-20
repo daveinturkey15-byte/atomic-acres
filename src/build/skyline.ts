@@ -28,6 +28,7 @@ import { isDistantMountainsEnabled } from '../core/environment-flags';
 import { createDistantMountainsCanary } from './distant-mountains-canary';
 import { createAuthoredMountains, isAuthoredMountainsOptIn } from './authored-mountains';
 import { createMountainTerrain, isMountainTerrainOptIn } from './mountain-terrain';
+import { createMountainVolume, isMountainVolumeOptIn } from './mountain-volume';
 
 /** half the playable footprint - used only for things that belong TO the map */
 const MAP_R = (BOUND_X_MAX - BOUND_X_MIN) / 2;   // 22.25
@@ -574,7 +575,21 @@ export const buildSkyline: Builder = (ctx) => {
   // Counts are up from 9-10 to 14-18 per ring: at MAP_R*5.3 = 118 m nine massifs closed
   // the circle, at 300 m they leave 100 m gaps between them and the range reads as
   // separate lumps rather than as a range. Two silhouettes per layer, as before.
-  if (isMountainTerrainOptIn()) {
+  if (isMountainVolumeOptIn()) {
+    // muse-1020 seam: true-volume backdrop REPLACES the baseline ridge layers
+    // (and the distant canary) when opted in. A separate BUILDERS entry would
+    // leave the 300..720 m baseline rings in place to occlude the 432 m volumes.
+    // Exclusive priority: volume > distant canary > default. The factory uses
+    // its own fixed seeds and never touches ctx.rand, so sections 1..8 keep
+    // identical transforms, colliders and Builder statistics in every mode.
+    const volume = createMountainVolume(ctx, undefined, { near: PAL.mountain, far: PAL.mountainFar });
+    g.add(volume.group);
+    // Same key the page lifecycle traverses for (see main.ts releaseEnvironmentCanary):
+    // the factory also sets it on its own subgroup, and its release is idempotent,
+    // so the double registration collapses to one disposal. Borrowed ctx.mat
+    // singletons are never disposed - geometry only.
+    g.userData.dispose = volume.dispose;
+  } else if (isMountainTerrainOptIn()) {
     // Connected mountain-terrain panorama (?mountains=terrain). Mounts the
     // GLB clone when resident, else falls back to the procedural canary
     // synchronously — the authored and canary paths below are untouched.

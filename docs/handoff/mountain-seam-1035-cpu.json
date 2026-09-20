@@ -1,0 +1,219 @@
+{
+  "checks": [
+    {
+      "name": "default geometry/instance transforms/shadows byte-identical",
+      "pass": true
+    },
+    {
+      "name": "default RNG calls unchanged",
+      "pass": true
+    },
+    {
+      "name": "default collider parity",
+      "pass": true
+    },
+    {
+      "name": "volume exists exactly once",
+      "pass": true
+    },
+    {
+      "name": "three range meshes",
+      "pass": true
+    },
+    {
+      "name": "replaces eight old ridge buckets",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 0",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 1",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 2",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 3",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 4",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 5",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 6",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 7",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 8",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 9",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 10",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 11",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 12",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 13",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 14",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 15",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 16",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 17",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 18",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 19",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 20",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 21",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 22",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 23",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 24",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 25",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 26",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 27",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 28",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 29",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 30",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 31",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 32",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 33",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 34",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 35",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 36",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 37",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 38",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 39",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 40",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 41",
+      "pass": true
+    },
+    {
+      "name": "unrelated object 42",
+      "pass": true
+    },
+    {
+      "name": "zero collider change",
+      "pass": true
+    },
+    {
+      "name": "owned geometry disposed once",
+      "pass": true
+    },
+    {
+      "name": "borrowed materials retained",
+      "pass": true
+    },
+    {
+      "name": "volume detached",
+      "pass": true
+    }
+  ],
+  "defaultRng": 2020,
+  "volumeRng": 1565,
+  "unrelatedObjects": 43
+}

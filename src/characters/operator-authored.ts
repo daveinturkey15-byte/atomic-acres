@@ -63,7 +63,7 @@ import {
 /** Runtime URL. Root copies the frozen GLB here when this slice is accepted. */
 export const OPERATOR_SAND_URL = '/assets/operators/operator-sand.glb';
 /** Canary URL. Root copies the shape-0800 GLB here ONLY if this slice is accepted. */
-export const OPERATOR_SAND_SHAPE_URL = '/assets/operators/operator-sand-shape-0800.glb';
+export const OPERATOR_SAND_SHAPE_URL = '/assets/operators/operator-sand-export-final2-muse-1030.glb';
 
 /** Bounded preload: a hanging server must never stall startup adoption. */
 export const OPERATOR_LOAD_TIMEOUT_MS = 8000;

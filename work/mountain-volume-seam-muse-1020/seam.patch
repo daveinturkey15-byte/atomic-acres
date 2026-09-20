@@ -1,0 +1,476 @@
+diff --git a/src/build/mountain-volume.ts b/src/build/mountain-volume.ts
+new file mode 100644
+--- /dev/null
++++ b/src/build/mountain-volume.ts
+@@ -0,0 +1,401 @@
++/**
++ * MOUNTAIN VOLUME — true closed heightfield volumes (muse-1010).
++ *
++ * Distinct from every rejected approach: not a ribbon, not a cylindrical ring
++ * extrusion, not disconnected pyramids, not box-scaled massifs, not an open
++ * heightfield sheet with a vertical front cut face. Each range is a continuous
++ * CLOSED 2D terrain volume: one indexed heightfield top, four skirts dropped
++ * from its perimeter to a bottom ring, one bottom fan. Nonzero plan depth AND
++ * nonzero skirt depth. Foot slopes sink to -SINK (below the desert floor) so
++ * the only visible faces are graded slopes; the vertical skirts live entirely
++ * under the terrain and are never exposed.
++ *
++ * Three static far ranges close the three horizons the fidelity stations
++ * actually look at: NORTH (+z, behind the white house, seen in yardWhite),
++ * SOUTH (-z, behind the orange house, seen in yardOrange) and WEST (-x, behind
++ * the pylon/needle, seen in plaza). The west vista keeps a saddle notch on the
++ * road axis so the plaza sightline stays open per skyline.ts. East is already
++ * closed by the third house + pavilion ranks + city band.
++ *
++ * Drainage runs in BOTH axes: major couloirs shear diagonally across (u + k*v)
++ * and fine rills run on the complementary diagonal, both gated to mid-slope so
++ * crest and foot stay stable. Foothill apron is a separate low rolling field
++ * blended on the town side; saddles come from the massif envelope plus the
++ * west road notch.
++ *
++ * Budgets: 3 meshes = 3 draws, ~19.9k tris total (<= 35k). Zero colliders
++ * (backdrop). Own RNG (mulberry32 from fixed seeds): never touches ctx.rand.
++ * Materials are borrowed ctx.mat.painted() singletons only (<= 2 keys), so no
++ * new shader programs and the WebGPU shader cache is untouched. Static:
++ * matrices composed once, no per-frame allocation.
++ *
++ * Palette defaults match PAL.mountain / PAL.mountainFar; the factory takes
++ * them as parameters so this file stays dependency-free (three + erased
++ * kit types only) and CPU-provable under node with no DOM.
++ */
++import * as THREE from 'three';
++import type { Builder, BuildContext } from '../core/kit';
++
++// ---------------------------------------------------------------- constants
++
++/** Opt-in query key. Default OFF: no added geometry unless asked. */
++export const MOUNTAIN_VOLUME_QUERY = 'mountain-volume';
++export const MOUNTAIN_VOLUME_OBJECT = 'mountain_volume_muse_1010';
++
++/** Grid resolution per range: top tris = NX*NZ*2. */
++export const MV_NX = 120;
++export const MV_NZ = 24;
++/** Foot slopes sink this far below the desert floor (y=0). */
++export const MV_SINK = 10;
++/** Skirt bottom depth below the sunk foot: bottom ring at -(SINK+SKIRT_DROP). */
++export const MV_SKIRT_DROP = 18;
++/** Planar UV world scale (borrowed painted materials carry shared detail). */
++export const MV_UV_SCALE = 48;
++
++// PAL.mountain / PAL.mountainFar values, kept as defaults so the geometry
++// kernel imports nothing DOM-touching. The patch seam passes PAL.* explicitly.
++export const MV_COLOR_NEAR = 0xa6b4c4;
++export const MV_COLOR_FAR = 0xc6d0dc;
++
++export interface MountainVolumeRange {
++  name: string;
++  /** world centre */
++  cx: number;
++  cz: number;
++  /** local footprint: width along crest, depth across */
++  w: number;
++  d: number;
++  /** yaw of local frame (0 = crest along x). East/west ranges use PI/2. */
++  yaw: number;
++  /** peak modelling */
++  hMin: number;
++  hSpan: number;
++  /** lobes across the crest; distinct per range so saddles never align */
++  lobes: number;
++  phase: number;
++  /** west road notch depth (0 for N/S) */
++  notch: number;
++  /** far material? */
++  far: boolean;
++}
++
++/**
++ * Map compass from src/core/layout.ts: BOUND_X -19.5..25 (centre +2.75),
++ * BOUND_Z +/-42. City band at CITY_R 175. Ranges sit beyond it with clear air.
++ */
++export const MOUNTAIN_VOLUME_RANGES: MountainVolumeRange[] = [
++  {
++    name: 'north', cx: 2.75, cz: 432, w: 1020, d: 150, yaw: 0,
++    hMin: 26, hSpan: 104, lobes: 3, phase: 0.7, notch: 0, far: false,
++  },
++  {
++    name: 'south', cx: 2.75, cz: -432, w: 1020, d: 150, yaw: 0,
++    hMin: 24, hSpan: 96, lobes: 2, phase: 2.9, notch: 0, far: false,
++  },
++  {
++    name: 'west', cx: -438, cz: 0, w: 920, d: 160, yaw: Math.PI / 2,
++    hMin: 20, hSpan: 78, lobes: 3, phase: 5.1, notch: 0.9, far: true,
++  },
++];
++
++// ---------------------------------------------------------------- RNG/noise
++
++function hashSeed(s: string): number {
++  let h = 1779033703 ^ s.length;
++  for (let i = 0; i < s.length; i++) {
++    h = Math.imul(h ^ s.charCodeAt(i), 3432918353);
++    h = (h << 13) | (h >>> 19);
++  }
++  return h >>> 0;
++}
++
++function mulberry32(seed: number): () => number {
++  let a = seed >>> 0;
++  return () => {
++    a |= 0; a = (a + 0x6d2b79f5) | 0;
++    let t = Math.imul(a ^ (a >>> 15), 1 | a);
++    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
++    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
++  };
++}
++
++/** Deterministic 2D value noise in [0,1]; integer hash, no RNG state. */
++function vnoise(x: number, y: number, seed: number): number {
++  const xi = Math.floor(x), yi = Math.floor(y);
++  const xf = x - xi, yf = y - yi;
++  const h = (ix: number, iy: number): number => {
++    let n = Math.imul(ix, 374761393) + Math.imul(iy, 668265263) + Math.imul(seed, 974634211);
++    n = Math.imul(n ^ (n >>> 13), 1274126177);
++    return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
++  };
++  const u = xf * xf * (3 - 2 * xf), v = yf * yf * (3 - 2 * yf);
++  const a = h(xi, yi), b = h(xi + 1, yi), c = h(xi, yi + 1), d = h(xi + 1, yi + 1);
++  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
++}
++
++function fbm2(x: number, y: number, seed: number): number {
++  let s = 0, amp = 0.5, fx = x, fy = y;
++  for (let o = 0; o < 4; o++) {
++    s += amp * vnoise(fx, fy, seed + o * 101);
++    amp *= 0.5; fx *= 2.03; fy *= 2.11;
++  }
++  return s; // ~[0,1)
++}
++
++const clamp01 = (t: number): number => (t < 0 ? 0 : t > 1 ? 1 : t);
++const smooth = (t: number): number => t * t * (3 - 2 * t);
++
++// ---------------------------------------------------------------- height
++
++export interface MountainVolumeField {
++  seed: number;
++  sharp1: number;
++  sharp2: number;
++  gullyN: number;
++  rillN: number;
++}
++
++export function makeField(rangeName: string): MountainVolumeField {
++  const rng = mulberry32(hashSeed('muse-1010/' + rangeName));
++  return {
++    seed: hashSeed('mv-field/' + rangeName) & 0xffff,
++    sharp1: 4 + rng() * 3,
++    sharp2: 9 + rng() * 5,
++    gullyN: 7 + Math.floor(rng() * 5),
++    rillN: 23 + Math.floor(rng() * 9),
++  };
++}
++
++/**
++ * Closed-form height above baseY (may go to -SINK at the sunk foot).
++ * u along crest [0,1], v across [0,1] (0 = town-side foot, 1 = outer foot).
++ */
++export function mountainVolumeHeight(
++  u: number, v: number, cfg: MountainVolumeRange, f: MountainVolumeField,
++): number {
++  // 1. massif envelope: lobes separated by low saddles (never a level band).
++  const mass = 0.45 + 0.55 * Math.pow(0.5 + 0.5 * Math.sin(u * Math.PI * 2 * cfg.lobes + cfg.phase), 1.5);
++  // 2. ridged crest detail: sharp horns + V-cols, decorrelated per range.
++  const r1 = 1 - Math.abs(2 * vnoise(u * f.sharp1 + cfg.phase, 0.37, f.seed) - 1);
++  const r2 = 1 - Math.abs(2 * vnoise(u * f.sharp2 - cfg.phase, 1.71, f.seed ^ 0x5bd1) - 1);
++  let crest = cfg.hMin + cfg.hSpan * mass * (0.62 + 0.24 * r1 + 0.14 * r2);
++  crest -= cfg.hSpan * 0.16 * Math.pow(Math.abs(Math.sin(u * Math.PI * f.gullyN + cfg.phase * 1.7)), 3);
++  // 3. west road notch: saddle gap on the plaza axis so the vista stays open.
++  if (cfg.notch > 0) {
++    const t = (u - 0.5) / 0.075;
++    crest *= 1 - cfg.notch * Math.exp(-t * t);
++  }
++  // 4. asymmetric cross profile: steep town scarp, long outer back.
++  const vc = 0.38;
++  let p: number;
++  if (v <= vc) {
++    const t = v / vc;
++    p = Math.pow(t, 1.6) * 0.74 + Math.pow(t, 0.65) * 0.26;
++  } else {
++    const t = (1 - v) / (1 - vc);
++    p = Math.pow(t, 1.25);
++  }
++  let h = crest * p;
++  // 5. diagonal drainage in BOTH axes: major couloirs shear (u + 0.35v);
++  // fine rills run the complementary diagonal. Both gated to mid-slope.
++  const mid = Math.sin(Math.PI * clamp01(p));
++  const coul = Math.pow(Math.abs(Math.sin(Math.PI * (u * f.gullyN + 0.35 * v) + cfg.phase)), 1.6);
++  h -= coul * mid * crest * 0.14;
++  const rill = Math.pow(Math.abs(Math.sin(Math.PI * (v * 6 + u * f.rillN * 0.23) - cfg.phase)), 2.4);
++  h -= rill * mid * crest * 0.05;
++  // 6. foothill apron: separate low rolling field on the town side only.
++  if (v < 0.3) {
++    const e = 1 - smooth(v / 0.3);
++    const roll = fbm2(u * 14 + cfg.phase, v * 9, f.seed ^ 0x9e37);
++    h += e * (2.5 + 7.5 * roll) * (0.35 + 0.65 * mass);
++  }
++  // 7. sunk foot: outer rim of the patch dives below the desert floor.
++  const eu = smooth(clamp01((0.07 - Math.min(u, 1 - u)) / 0.07));
++  const ev = smooth(clamp01((0.10 - Math.min(v, 1 - v)) / 0.10));
++  const edge = Math.max(eu, ev);
++  return h * (1 - edge) + (-MV_SINK) * edge;
++}
++
++// ---------------------------------------------------------------- geometry
++
++export interface RangeGeometryStats {
++  vertices: number;
++  triangles: number;
++  topTriangles: number;
++  skirtTriangles: number;
++  bottomTriangles: number;
++}
++
++/**
++ * Builds one CLOSED range volume. Index sharing: top perimeter vertices are
++ * shared with the skirts; the bottom ring is shared with the bottom fan.
++ * Winding is outward everywhere (top +y, skirts radial, bottom -y).
++ */
++export function buildRangeGeometry(cfg: MountainVolumeRange): { geometry: THREE.BufferGeometry; stats: RangeGeometryStats } {
++  const nx = MV_NX, nz = MV_NZ;
++  const f = makeField(cfg.name);
++  const yBottom = -(MV_SINK + MV_SKIRT_DROP);
++  const cosY = Math.cos(cfg.yaw), sinY = Math.sin(cfg.yaw);
++
++  const cols = nx + 1, rows = nz + 1;
++  const topCount = cols * rows;
++  // perimeter loop order: front(+x) -> right(+z) -> back(-x) -> left(-z)
++  const perimTop: number[] = [];
++  for (let i = 0; i <= nx; i++) perimTop.push(i); // j=0
++  for (let j = 1; j <= nz; j++) perimTop.push(j * cols + nx); // i=nx
++  for (let i = nx - 1; i >= 0; i--) perimTop.push(nz * cols + i); // j=nz
++  for (let j = nz - 1; j >= 1; j--) perimTop.push(j * cols); // i=0
++  const P = perimTop.length;
++  const totalVerts = topCount + P + 1; // + bottom ring + centroid
++
++  const positions = new Float32Array(totalVerts * 3);
++  const uvs = new Float32Array(totalVerts * 2);
++
++  const localToWorld = (u: number, v: number, y: number): [number, number, number] => {
++    const lx = (u - 0.5) * cfg.w, lz = (v - 0.5) * cfg.d;
++    return [cfg.cx + lx * cosY - lz * sinY, y, cfg.cz + lx * sinY + lz * cosY];
++  };
++
++  for (let j = 0; j <= nz; j++) {
++    const v = j / nz;
++    for (let i = 0; i <= nx; i++) {
++      const u = i / nx;
++      const y = mountainVolumeHeight(u, v, cfg, f);
++      const [wx, wy, wz] = localToWorld(u, v, y);
++      const k = j * cols + i;
++      positions[k * 3] = wx; positions[k * 3 + 1] = wy; positions[k * 3 + 2] = wz;
++      uvs[k * 2] = wx / MV_UV_SCALE; uvs[k * 2 + 1] = wz / MV_UV_SCALE;
++    }
++  }
++  // bottom ring: same (x,z) as the top perimeter, at yBottom
++  for (let e = 0; e < P; e++) {
++    const t = perimTop[e];
++    const bx = topCount + e;
++    positions[bx * 3] = positions[t * 3];
++    positions[bx * 3 + 1] = yBottom;
++    positions[bx * 3 + 2] = positions[t * 3 + 2];
++    uvs[bx * 2] = positions[bx * 3] / MV_UV_SCALE;
++    uvs[bx * 2 + 1] = positions[bx * 3 + 2] / MV_UV_SCALE;
++  }
++  // centroid
++  const C = topCount + P;
++  {
++    let sx = 0, sz = 0;
++    for (let e = 0; e < P; e++) { sx += positions[(topCount + e) * 3]; sz += positions[(topCount + e) * 3 + 2]; }
++    positions[C * 3] = sx / P; positions[C * 3 + 1] = yBottom; positions[C * 3 + 2] = sz / P;
++    uvs[C * 2] = positions[C * 3] / MV_UV_SCALE; uvs[C * 2 + 1] = positions[C * 3 + 2] / MV_UV_SCALE;
++  }
++
++  const topQuads = nx * nz;
++  const idx = new Uint32Array(topQuads * 6 + P * 6 + P * 3);
++  let o = 0;
++  // top, outward +y
++  for (let j = 0; j < nz; j++) {
++    for (let i = 0; i < nx; i++) {
++      const a = j * cols + i, b = (j + 1) * cols + i;
++      const c = (j + 1) * cols + i + 1, d = j * cols + i + 1;
++      idx[o++] = a; idx[o++] = b; idx[o++] = d;
++      idx[o++] = b; idx[o++] = c; idx[o++] = d;
++    }
++  }
++  // skirts: loop order is front(+x) right(+z) back(-x) left(-z); the first two
++  // sides take (T0,T1,B1)/(T0,B1,B0), the last two the reverse. Outward radial.
++  const RIGHT_END = nx + nz;
++  for (let e = 0; e < P; e++) {
++    const T0 = perimTop[e], T1 = perimTop[(e + 1) % P];
++    const B0 = topCount + e, B1 = topCount + ((e + 1) % P);
++    if (e < RIGHT_END) {
++      idx[o++] = T0; idx[o++] = T1; idx[o++] = B1;
++      idx[o++] = T0; idx[o++] = B1; idx[o++] = B0;
++    } else {
++      idx[o++] = T0; idx[o++] = B1; idx[o++] = T1;
++      idx[o++] = T0; idx[o++] = B0; idx[o++] = B1;
++    }
++  }
++  // bottom fan, outward -y
++  for (let e = 0; e < P; e++) {
++    idx[o++] = C; idx[o++] = topCount + e; idx[o++] = topCount + ((e + 1) % P);
++  }
++
++  const geometry = new THREE.BufferGeometry();
++  geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
++  geometry.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
++  geometry.setIndex(new THREE.BufferAttribute(idx, 1));
++  geometry.computeVertexNormals();
++  geometry.computeBoundingBox();
++  geometry.computeBoundingSphere();
++
++  const stats: RangeGeometryStats = {
++    vertices: totalVerts,
++    triangles: (topQuads * 2) + P * 2 + P,
++    topTriangles: topQuads * 2,
++    skirtTriangles: P * 2,
++    bottomTriangles: P,
++  };
++  return { geometry, stats };
++}
++
++// ---------------------------------------------------------------- factory
++
++/** ?mountain-volume=canary (alias ?mountains=volume). Everything else: off. */
++export function isMountainVolumeOptIn(): boolean {
++  const g = globalThis as { __NT_OVERRIDE_MOUNTAIN_VOLUME__?: boolean };
++  if (typeof g.__NT_OVERRIDE_MOUNTAIN_VOLUME__ === 'boolean') return g.__NT_OVERRIDE_MOUNTAIN_VOLUME__;
++  if (typeof window !== 'undefined' && window.location?.search) {
++    const q = new URLSearchParams(window.location.search);
++    const v = (q.get(MOUNTAIN_VOLUME_QUERY) ?? '').toLowerCase();
++    if (v === 'canary' || v === 'on' || v === '1') return true;
++    const m = (q.get('mountains') ?? '').toLowerCase();
++    if (m === 'volume' || m === 'mountain-volume') return true;
++  }
++  return false;
++}
++
++export interface MountainVolumeResult {
++  group: THREE.Group;
++  drawCalls: number;
++  triangles: number;
++  dispose: () => void;
++}
++
++export function createMountainVolume(
++  ctx: BuildContext,
++  ranges: MountainVolumeRange[] = MOUNTAIN_VOLUME_RANGES,
++  colors: { near: number; far: number } = { near: MV_COLOR_NEAR, far: MV_COLOR_FAR },
++): MountainVolumeResult {
++  const g = new THREE.Group();
++  g.name = MOUNTAIN_VOLUME_OBJECT;
++  let tris = 0;
++  const geos: THREE.BufferGeometry[] = [];
++  ranges.forEach((cfg, i) => {
++    const { geometry, stats } = buildRangeGeometry(cfg);
++    geos.push(geometry);
++    tris += stats.triangles;
++    const mat = ctx.mat.painted(cfg.far ? colors.far : colors.near, 1, 0);
++    const mesh = new THREE.Mesh(geometry, mat);
++    mesh.name = `${MOUNTAIN_VOLUME_OBJECT}_${cfg.name || i}`;
++    mesh.castShadow = false;
++    mesh.receiveShadow = false;
++    mesh.updateMatrix();
++    mesh.matrixAutoUpdate = false;
++    g.add(mesh);
++  });
++  g.traverse((o) => { o.updateMatrix(); o.matrixAutoUpdate = false; });
++  let released = false;
++  const dispose = (): void => {
++    if (released) return;
++    released = true;
++    g.removeFromParent();
++    for (const geo of geos) geo.dispose();
++    g.clear();
++  };
++  g.userData.dispose = dispose;
++  return { group: g, drawCalls: geos.length, triangles: tris, dispose };
++}
++
++/** Builder-contract export: backdrop only, zero colliders, default OFF. */
++export const buildMountainVolume: Builder = (ctx) => {
++  if (!isMountainVolumeOptIn()) return { group: new THREE.Group(), colliders: [] };
++  const result = createMountainVolume(ctx);
++  return { group: result.group, colliders: [] };
++};
+
+diff --git a/src/build/skyline.ts b/src/build/skyline.ts
+--- a/src/build/skyline.ts
++++ b/src/build/skyline.ts
+@@ -26,6 +26,7 @@
+ import { buildRidgeGeometry } from './terrain-ridges';
+ import { isDistantMountainsEnabled } from '../core/environment-flags';
+ import { createDistantMountainsCanary } from './distant-mountains-canary';
++import { createMountainVolume, isMountainVolumeOptIn } from './mountain-volume';
+ 
+ /** half the playable footprint - used only for things that belong TO the map */
+ const MAP_R = (BOUND_X_MAX - BOUND_X_MIN) / 2;   // 22.25
+@@ -572,7 +573,21 @@
+   // Counts are up from 9-10 to 14-18 per ring: at MAP_R*5.3 = 118 m nine massifs closed
+   // the circle, at 300 m they leave 100 m gaps between them and the range reads as
+   // separate lumps rather than as a range. Two silhouettes per layer, as before.
+-  if (isDistantMountainsEnabled()) {
++  if (isMountainVolumeOptIn()) {
++    // muse-1020 seam: true-volume backdrop REPLACES the baseline ridge layers
++    // (and the distant canary) when opted in. A separate BUILDERS entry would
++    // leave the 300..720 m baseline rings in place to occlude the 432 m volumes.
++    // Exclusive priority: volume > distant canary > default. The factory uses
++    // its own fixed seeds and never touches ctx.rand, so sections 1..8 keep
++    // identical transforms, colliders and Builder statistics in every mode.
++    const volume = createMountainVolume(ctx, undefined, { near: PAL.mountain, far: PAL.mountainFar });
++    g.add(volume.group);
++    // Same key the page lifecycle traverses for (see main.ts releaseEnvironmentCanary):
++    // the factory also sets it on its own subgroup, and its release is idempotent,
++    // so the double registration collapses to one disposal. Borrowed ctx.mat
++    // singletons are never disposed - geometry only.
++    g.userData.dispose = volume.dispose;
++  } else if (isDistantMountainsEnabled()) {
+     const canary = createDistantMountainsCanary(ctx);
+     g.add(canary.group);
+     // Same key the page lifecycle traverses for (see main.ts releaseEnvironmentCanary):
+
+diff --git a/src/main.ts b/src/main.ts
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -250,7 +250,7 @@
+ // shot, while retaining browser autoplay rules and persisted volume values.
+ startOverlay.addEventListener('pointerdown', () => weapons.resumeAudio(), { once: true });
+ // Candidate-geometry release. The ONLY thing this touches is owned canary geometry
+-// (distant-mountains canary on the skyline module); shared singleton materials stay
++// (distant-mountains canary or mountain-volume on the skyline module); shared singleton materials stay
+ // live because rendering continues. Idempotent by construction (the factory guards
+ // re-entry), so pagehide and QA can share it. Does not touch arbitrary unrelated
+ // userData disposers on other scene targets.
+@@ -279,6 +279,21 @@
+         }
+       }
+     }
++    // muse-1020 seam: same double-registration pattern for the mountain volume.
++    // The skyline-level userData.dispose above already releases it; this named
++    // lookup collapses to the same idempotent no-op, and covers the subgroup
++    // if the skyline key is ever overwritten. No other target is touched.
++    const volume = target.getObjectByName('mountain_volume_muse_1010');
++    if (volume?.userData && typeof volume.userData === 'object' && 'dispose' in volume.userData) {
++      const release = (volume.userData as { dispose?: unknown }).dispose;
++      if (typeof release === 'function') {
++        try {
++          release();
++        } catch {
++          /* idempotent release */
++        }
++      }
++    }
+   }
+ }
+ addEventListener('pagehide', () => {

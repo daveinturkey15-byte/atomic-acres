@@ -1,0 +1,18 @@
+diff --git a/src/main.ts b/src/main.ts
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -21,5 +21,6 @@
+ import { createCharacterSystem, type CharacterHandle } from './characters';
+ import { isAuthoredOperatorEnabled, preloadAuthoredOperator } from './characters/operator-authored';
++import { disposeWorldWeaponArt } from './characters/world-weapon-art';
+ import { ThrowBodyPresentation } from './characters/throw-body';
+ import { loadBakedClips } from './characters/kimodo-clips';
+ import { createLocalMatch, type LocalMatch, type MatchUi } from './game/session';
+@@ -400,6 +401,7 @@
+ addEventListener('pagehide', () => {
+   releaseEnvironmentCanary();
+   releaseCoachOwnedCanary();
++  try { disposeWorldWeaponArt({ terminal: true }); } catch { /* teardown must never break pagehide */ }
+   weapons.dispose();
+   ordnance.dispose();
+   combatFeedback.dispose();
