@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "approach": "Fixed r1 geometry; physical palm surface, translate outboard before descending and approach magazine underside vertically; no default motion changes",
+  "frozen_at": "2026-09-20T05:45:49.380394+00:00",
+  "source_base": "6a76a9e",
+  "geometry_region_sha256": "58b8e7ae9bbe31e66c35ac1622a41b439d18dba730448735c2a4787258767a45",
+  "verifier_sha256": "ccaf7e0adfeff0e3b5ca038515c68893a1475b731722474ee534fece11054200",
+  "frozen_tests": {
+    "temporal_frames": 241,
+    "grip_panels_penetration_m": 0.002,
+    "other_weapon_solid_penetration_m": 0.001,
+    "physical_palm_seat_error_m": 0.008,
+    "wrist_gap_m": 0.001,
+    "length_drift_m": 0.001
+  },
+  "max_motion_repairs": 2,
+  "source_minutes": 40,
+  "geometry_edits_allowed": false,
+  "browser_gpu_jobs_allowed": 0,
+  "default_gameplay_promotion": "blocked until root actual temporal and matching-pixel acceptance"
+}
