@@ -155,8 +155,26 @@ export function createRiggedPistolHands(parent: THREE.Group, mat: MaterialLibrar
   const support = buildPistolHandSide('support', mat);
   root.add(trigger.hand, support.hand); parent.add(root);
   const bind = PISTOL_HAND_BINDS.support;
-  const reloadDelta: Vec3 = [PISTOL_RELOAD_SEAT[0] - bind.palm[0], PISTOL_RELOAD_SEAT[1] - bind.palm[1], PISTOL_RELOAD_SEAT[2] - bind.palm[2]];
-  const motion = createHandMotion({ triggerHand: trigger.hand, supportHand: support.hand, supportForearm: support.forearm }, trigger.forearm, PISTOL_HAND_BINDS.trigger, bind, reloadDelta);
+  const palmGeometry = support.meshes.find(m => m.name === 'support-palm')!.geometry;
+  const surface = palmGeometry.getAttribute('position');
+  const contact: Vec3 = [surface.getX(0), surface.getY(0), surface.getZ(0)];
+  const delta: Vec3 = [PISTOL_RELOAD_SEAT[0] - contact[0], PISTOL_RELOAD_SEAT[1] - contact[1], PISTOL_RELOAD_SEAT[2] - contact[2]];
+  // The wrapped fingers release left before the wrist descends. Approach and
+  // retreat are vertical below the magazine, so the closed hand never crosses
+  // the grip. All values are presentation-only; reload events stay in controller.
+  const path = [
+    [0, 0, 0, 0, 0, 0, 0],
+    [.12, -.090, 0, 0, 0, 0, 0],
+    [.30, -.090, -.120, 0, -.12, .05, -.05],
+    [.42, delta[0], delta[1] - .060, delta[2], -.10, 0, 0],
+    [.50, delta[0], delta[1], delta[2], -.10, 0, 0],
+    [.62, delta[0], delta[1] + .001, delta[2], -.10, 0, 0],
+    [.72, delta[0], delta[1] - .060, delta[2], -.10, 0, 0],
+    [.84, -.090, -.120, 0, -.12, .05, -.05],
+    [.93, -.090, 0, 0, 0, 0, 0],
+    [1, 0, 0, 0, 0, 0, 0],
+  ] as const;
+  const motion = createHandMotion({ triggerHand: trigger.hand, supportHand: support.hand, supportForearm: support.forearm }, trigger.forearm, PISTOL_HAND_BINDS.trigger, { ...bind, palm: contact }, delta, path);
   motion.resetReload();
   return { root, triggerHand: trigger.hand, supportHand: support.hand, supportForearm: support.forearm, ...motion };
 }

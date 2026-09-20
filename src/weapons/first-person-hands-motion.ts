@@ -4,6 +4,7 @@ import type { FirstPersonHandsRig } from './types';
 
 type Point = readonly [number, number, number];
 interface Bind { elbow: Point; wrist: Point; palm: Point }
+type MotionKey = readonly [number, number, number, number, number, number, number];
 
 /** Maps the existing sleeve between its real joint centres, preserving length. */
 class SleeveAttachment {
@@ -66,6 +67,7 @@ class SleeveAttachment {
 export function createHandMotion(
   rig: Pick<FirstPersonHandsRig, 'triggerHand' | 'supportHand' | 'supportForearm'>,
   triggerForearm: THREE.Group, trigger: Bind, support: Bind, reloadDelta: Point,
+  contactPath?: readonly MotionKey[],
 ): Pick<FirstPersonHandsRig, 'updateReload' | 'resetReload' | 'updatePose'> {
   const triggerSleeve = new SleeveAttachment(rig.triggerHand, triggerForearm, trigger);
   const supportSleeve = new SleeveAttachment(rig.supportHand, rig.supportForearm, support);
@@ -79,7 +81,7 @@ export function createHandMotion(
   let offHand = 0;
   // Time, translation delta, wrist pitch/yaw/roll. Existing five weapon anchors
   // supply the seat position; the path clears the receiver on its outside.
-  const keys = [
+  const keys: readonly MotionKey[] = contactPath ?? [
     [0, 0, 0, 0, 0, 0, 0],
     [0.12, -0.030, -0.015, 0.015, -0.16, -0.08, -0.12],
     [0.34, -0.070, reloadDelta[1] - 0.065, reloadDelta[2] * 0.72, -0.35, -0.16, -0.23],
@@ -89,12 +91,16 @@ export function createHandMotion(
     [1, 0, 0, 0, 0, 0, 0],
   ];
   const apply = (): void => {
+    // New wrapped-hand paths must return along their clear route when an offhand
+    // action takes ownership. A straight pose blend cuts through the weapon.
+    // Legacy rigs retain their established blend and exact timing behaviour.
+    const pathPhase = contactPath ? phase * (1 - offHand) : phase;
     let index = 0;
-    while (index < keys.length - 2 && phase > keys[index + 1][0]) index++;
+    while (index < keys.length - 2 && pathPhase > keys[index + 1][0]) index++;
     const a = keys[index];
     const b = keys[index + 1];
-    const t = poseEase((phase - a[0]) / (b[0] - a[0]));
-    const weight = 1 - offHand;
+    const t = poseEase((pathPhase - a[0]) / (b[0] - a[0]));
+    const weight = contactPath ? 1 : 1 - offHand;
     const x = (a[1] + (b[1] - a[1]) * t) * weight;
     const y = (a[2] + (b[2] - a[2]) * t) * weight;
     const z = (a[3] + (b[3] - a[3]) * t) * weight;
@@ -108,7 +114,7 @@ export function createHandMotion(
     desiredPalm.x += x; desiredPalm.y += y; desiredPalm.z += z;
     rotatedPalm.copy(palm).applyQuaternion(rig.supportHand.quaternion);
     rig.supportHand.position.subVectors(desiredPalm, rotatedPalm);
-    supportSleeve.update(stanceProne, stanceCrouch, Math.sin(phase * Math.PI) * weight);
+    supportSleeve.update(stanceProne, stanceCrouch, Math.sin(pathPhase * Math.PI) * weight);
     triggerSleeve.update(stanceProne, stanceCrouch, 0);
   };
   return {
