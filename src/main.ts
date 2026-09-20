@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { createWorld } from './core/world';
 import { buildMaterials } from './core/materials';
+import { installReflectiveSurfaces } from './core/reflective-surfaces';
 import { makeRng, type AABB, type BuildContext, type Builder } from './core/kit';
 import { Player, type MoveMode } from './core/player';
 import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core/layout';
@@ -49,6 +50,12 @@ import { buildIndustrialBarrels } from './build/industrial-barrels';
 import { preloadIndustrialBarrel } from './props/industrial-barrel';
 import { buildDesertTrees } from './build/desert-trees';
 import { preloadQuiverTree } from './props/quiver-tree';
+import {
+  coachOwnedCanaryReport,
+  isCoachOwnedCanaryOptIn,
+  preloadCoachOwnedCanary,
+  releaseCoachOwnedCanary,
+} from './build/coach-owned-canary';
 import { buildFacadeDetailCanary } from './build/facade-detail-canary';
 
 /** Facade detail canary opt-in: ?facade=canary only. Any absent or other value
@@ -127,6 +134,11 @@ await Promise.all([
     : []),
   preloadIndustrialBarrel().catch((error: unknown) => console.warn('[industrial-barrel] unavailable', error)),
   preloadQuiverTree().catch((error: unknown) => console.warn('[quiver-tree] unavailable', error)),
+  // Owned coach canary (?coach=canary only): opt-in fetch guard like the
+  // mountains above - baseline runs never fetch. The preload resolves
+  // 'ready' or 'fallback' and never rejects, so a missing file or a slow
+  // fetch (8s bound) degrades to the procedural coach inside the same await.
+  ...(isCoachOwnedCanaryOptIn() ? [preloadCoachOwnedCanary()] : []),
 ]);
 
 for (const [name, build] of BUILDERS) {
@@ -152,6 +164,7 @@ for (const [name, build] of BUILDERS) {
     ms: +(performance.now() - t0).toFixed(1),
   };
 }
+installReflectiveSurfaces(world.scene, mat, world.atmosphere);
 player.setColliders(colliders);
 world.atmosphere.setRainShelter(worldTargets);
 
@@ -374,6 +387,7 @@ function releaseEnvironmentCanary(): void {
 }
 addEventListener('pagehide', () => {
   releaseEnvironmentCanary();
+  releaseCoachOwnedCanary();
   weapons.dispose();
   ordnance.dispose();
   combatFeedback.dispose();
@@ -481,6 +495,7 @@ function frame(): void {
       sprinting: speed > 6.5,
       grounded: player.state.grounded,
       crouched: player.getStance() !== 'stand',
+      prone: player.getStance() === 'prone',
     });
     // RENDER PATH. The world goes through the post chain (GTAO / SSR / bloom / vignette),
     // and the viewmodel composites over the finished frame with depth cleared so the
@@ -608,6 +623,11 @@ interface QA {
   ordnance: () => Record<string, unknown>;
   audio: () => ReturnType<WeaponsController['audioStats']>;
   disposeEnvironment?: () => void;
+  /** Owned coach canary actual-adoption status (read-only, real geometry).
+   * ROOT verifies `inScene` + `materials`, not fetch alone: `mounted` is true
+   * while the owned root is live, `inScene` while its marked meshes are still
+   * mounted under vehicles. Baseline (?coach absent) reports opted-out. */
+  coachOwned: () => { optIn: boolean; state: string; mounted: boolean; taken: boolean; meshes: number; materials: number; geometries: number; textures: number; inScene: boolean };
   /** Bounded visual A/B controls; never persisted into player settings. */
   look: (options?: { exposure?: number; environment?: number; glass?: number }) => { exposure: number; environment: number; glass: number };
   remoteBodies: () => Array<{ id: string; x: number; y: number; z: number; crouch: boolean; prone: boolean; locomotion: string }>;
@@ -795,11 +815,27 @@ const qa: QA = {
     }
     return hits;
   },
+  coachOwned() {
+    const r = coachOwnedCanaryReport();
+    // Real-geometry check: marked meshes still mounted under the vehicles
+    // module (fetch alone never sets this). Read-only traversal, no mutation.
+    let inScene = false;
+    for (const t of worldTargets) {
+      if (t.name !== 'vehicles') continue;
+      t.traverse((o) => {
+        if ((o as THREE.Mesh).userData?.coachOwnedCanary) inScene = true;
+      });
+    }
+    return { ...r, inScene };
+  },
   disposeEnvironment() {
     // QA probe for the same release the pagehide lifecycle owns. Geometry only:
     // disposing the shared singleton materials mid-session would tear down live
     // rendering, so mat.dispose() must never happen here.
     releaseEnvironmentCanary();
+    // The owned coach canary root likewise: exclusively-owned GPU copies,
+    // idempotent release, cache untouched (it was never involved).
+    releaseCoachOwnedCanary();
   },
 };
 

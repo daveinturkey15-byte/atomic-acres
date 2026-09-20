@@ -112,6 +112,21 @@ playback evidence before accepting motion derived or authored from them.
 
 ## Independent implementation
 
+### September 20 morning visual priority and temporary model exception
+
+Dave requires a map-wide asset/UV/PBR/lighting overhaul, substantially better
+arms, hands, gun assets and animation, and clear killstreak readiness, progress,
+activation keys and targeting instructions. Art acceptance requires visible gains
+in actual gameplay; mechanical success alone does not meet this request.
+
+Two gpt-6-astra xhigh implementation specialists are explicitly authorized until
+09:00 Europe/London on September 20. They stop by the cutoff; other authorized
+model routes continue. Record exact Astra contributions separately in
+docs/handoff/ASTRA-CONTRIBUTIONS-2026-09-20.md. This temporary exception does not
+authorize OpenAI image generation or further Astra implementation after 09:00.
+The frozen morning inspection artifact is port 4212 / dist-showcase-0500; CURRENT.json
+is authoritative for candidate ports and ownership instead of earlier port notes.
+
 It is a clean restart of a much larger effort. The old project is **reference only**:
 you may read it to recover a measurement or a lesson, and you may not copy an asset,
 a texture, a mesh, a module or a build script out of it.
