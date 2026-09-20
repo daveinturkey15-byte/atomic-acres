@@ -1,3 +1,13 @@
+# Current verified review — 08:58 BST September20
+
+VERIFIED: http://127.0.0.1:4234/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2
+
+VERIFIED source4327d97 / JSaea060fb; 37 HUD checks including375px layout and210.8s resource run55.7fps. Accepted scoped gains: yard foliage, curved lamps, coherent authored coach geometry, rifle hand contact and wood/metal surfaces, readable streak keys/readiness/target instructions. Exact Astra attribution is in ASTRA-CONTRIBUTIONS-2026-09-20.md; both specialists completed before09. GLM/AGY lanes continue.
+
+OPEN: complete map-wide visual goal and60fps. Operator-shape withheld for weak anatomy; optional FX has temporal/disposal evidence gaps. No generated2D counted as deployed3D. Frozen4212 retained. CURRENT.json is authoritative for latest ownership and failures.
+
+## Historical progress below — earlier OPEN rows may be superseded by CURRENT.json
+
 # Visual overhaul â€” September 20
 
 VERIFIED owner priority: a substantial map-wide improvement in assets, UV/PBR surfaces, lighting and first-person arms/weapons. The overnight build remains below this bar. Frozen inspection build stays at http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2 while successors are tested separately.
