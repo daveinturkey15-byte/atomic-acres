@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "created_at": "2026-09-20T06:14:56.013563+00:00",
+  "source_commit": "455befbbdca0eb582aba6e2408da2a26cc9dfc4c",
+  "claim_state": "VERIFIED source comparison, syntax and browser-free controls; OPEN actual entry rerun",
+  "failed_run": "captures/astra-hands-temporal-2026-09-20T06-08-26-124Z-Eo9tNI",
+  "failure": "Both modes timed out at Play solo visibility after5s;0frames; no game art assessed",
+  "preserved_receipts": [
+    "docs/astra-hand-evidence/temporal-entry-r0/motion-fail.json",
+    "docs/astra-hand-evidence/temporal-entry-r0/rigged-fail.json"
+  ],
+  "passed_reference": "root scripts/.recovery-astra-motion-0634.mjs entry: stockBrowser, viewport, listeners, goto, __NT.ready, real Play solo/Deploy; no earlier entry evaluate or keyboard action",
+  "observed_difference": "Passed observer retains30s default action allowance; initial temporal observer used5s globally",
+  "unknown": "The failed run did not save menu lifecycle or screenshot; already-deployed state is unverified",
+  "repair": [
+    "30s visibility/click allowance for entry only",
+    "Read-only menu surface/panel/matchMode and DOM visibility trace",
+    "Recover an observed existing match through normal Escape and visible Leave match, then same real Play solo/Deploy",
+    "Zero-frame entry failure saves one diagnostic JPEG and DOM/button visibility in finally; not art evidence"
+  ],
+  "game_source_changes": false,
+  "synthetic_pose_or_force_click": false,
+  "timing_and_capture_budget_changes": false,
+  "author": {
+    "requested_model": "gpt-6-astra",
+    "requested_effort": "xhigh"
+  },
+  "validation": {
+    "node_check": "PASS",
+    "self_check": "PASS",
+    "browser_gpu_runs_here": 0
+  },
+  "script_sha256_normalized_lf": "9e88376f59359b244d752f0686af7c4bbd258f4b3e0d57ddbd92bafc9921c844"
+}
