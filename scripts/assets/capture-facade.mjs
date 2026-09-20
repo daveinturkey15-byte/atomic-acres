@@ -20,16 +20,26 @@
  *   no draw calls prints MEASURED NOTHING and fails.
  *
  * Asserts per station, both modes:
+ * - real WebGPU renderer + post: window.__NT_BACKEND.actual plus
+ *   window.__NTPOST.backend (renderer.ts actualBackend + post.ts buildPost,
+ *   same proof as scripts/capture-mortar-live.mjs). navigator.gpu alone is
+ *   API existence, not backend proof; the canvas dataset mirror is never read
+ *   (querySelector('canvas') hits the HUD minimap canvas, not the renderer, so
+ *   it reported null on a real WebGPU frame and failed the run pre-capture).
  * - rendered frame (luma >= 40, the playcap dark-frame gate)
  * - draws/triangles measured; absolute budgets <1200 calls / <900k tris
  * - canary-vs-baseline delta is exactly +8 draws / +2208 tris (CPU proof:
  *   node scripts/assets/verify-facade-detail-canary.mjs ->
- *   {draws: 8, instances: 184, triangles: 2208, colliders: 0})
+ *   {draws: 8, instances: 184, triangles: 2208, colliders: 0}).
+ *   NOTE: CPU mesh count is not necessarily the rendered delta (per-station
+ *   frustum/shadow culling); the exact gate stands until the first real frame
+ *   run measures it — document, never silently change it.
  * - colliderSnapshot() byte-identical across modes (canary returns zero colliders)
  * - programs identical across modes (ctx.mat singletons only, no new program)
  * - moduleStats['facade-detail-canary'] absent in baseline, present in canary
  *   (asset adoption status: procedural only — no GLB, no textures, no preload)
- * - exact dist SHA-256 before/after (bundle must not change mid-run)
+ * - served HTML/JS|CSS bytes == explicit --dist bytes (stale server refused),
+ *   plus exact dist SHA-256 before/after (bundle must not change mid-run)
  * - zero console errors, zero page errors
  *
  *   node scripts/assets/capture-facade.mjs
@@ -108,6 +118,40 @@ const bundleBefore = {
 const base = urlOpt.replace(/\/+$/, '');
 console.log(`[facade] target ${base}/ (${distOpt} sha256:${bundleBefore.digest.slice(0, 12)}…)`);
 
+const sha = (b) => createHash('sha256').update(b).digest('hex');
+const expectJsSha = opt('expect-js-sha', '');
+// Served==local parity (same proof as scripts/capture-mortar-live.mjs): the served
+// HTML names the exact JS/CSS set; every served byte must equal the explicit
+// --dist file. Local digest alone cannot catch a stale server photograph.
+const servedHtml = await (await fetch(base + '/')).text();
+const servedRefs = [...servedHtml.matchAll(/(?:src|href)="(?:\.\/)?(\/?assets\/[^"]+\.(?:js|css))"/g)].map((m) => m[1].replace(/^\//, ''));
+if (!servedRefs.length) {
+  console.error('[facade] served HTML names no assets/*.js|css - cannot prove served==local');
+  process.exit(2);
+}
+const servedShas = { 'index.html': sha(Buffer.from(servedHtml, 'utf8')) };
+for (const r of servedRefs) {
+  servedShas[r] = sha(Buffer.from(await (await fetch(new URL(r, base + '/'))).arrayBuffer()));
+}
+{
+  let stale = false;
+  for (const [r, h] of Object.entries(servedShas)) {
+    let local;
+    try { local = sha(readFileSync(join(distDir, r))); }
+    catch { console.error(`[facade] local dist missing served asset: ${r}`); process.exit(2); }
+    if (local !== h) { console.error(`[facade] served!=local: ${r} (stale server photograph refused)`); stale = true; }
+  }
+  if (stale) process.exit(2);
+}
+const servedJsPath = servedRefs.find((r) => r.endsWith('.js')) ?? null;
+if (expectJsSha && servedJsPath) {
+  if (servedShas[servedJsPath] !== expectJsSha) {
+    console.error(`[facade] served JS sha != pinned --expect-js-sha (${servedJsPath})`);
+    process.exit(2);
+  } else console.log(`  served JS ${servedJsPath} sha matches pinned candidate`);
+}
+console.log(`  served==local: ${servedRefs.length} asset(s) + index.html from ${distOpt}`);
+
 const { browser, page, close } = await stockBrowser('facade');
 
 const consoleErrors = [];
@@ -148,6 +192,8 @@ const report = {
   url: base,
   dist: distOpt,
   distDigest: bundleBefore.digest,
+  servedShas,
+  servedJs: servedJsPath,
   viewport: '1600x900',
   cpuProof: { draws: CPU_DRAWS, triangles: CPU_TRIS },
   modes: {},
@@ -176,13 +222,24 @@ try {
       continue;
     }
 
+    // Renderer proof (scripts/capture-mortar-live.mjs): the actual renderer plus the
+    // enabled WebGPU post chain. Never navigator.gpu alone, never the canvas
+    // dataset mirror. world.ts publishes __NTPOST = post (post.ts: backend
+    // 'webgpu' only when the chain built; 'off'/'webgl2' on any fallback).
+    const gpuApi = await page.evaluate(() => typeof navigator.gpu !== 'undefined');
     const backend = await page.evaluate(() => ({
-      report: window.__NT_BACKEND ?? null,
-      canvas: document.querySelector('canvas')?.dataset?.ntBackend ?? null,
+      renderer: window.__NT_BACKEND?.actual ?? null,
+      requested: window.__NT_BACKEND?.requested ?? null,
+      post: window.__NTPOST?.backend ?? null,
+      postEnabled: window.__NTPOST?.enabled ?? null,
     }));
-    console.log(`  backend requested=${backend.report?.requested} actual=${backend.report?.actual} canvas=${backend.canvas}`);
-    if (backend.report?.actual !== 'webgpu' || backend.canvas !== 'webgpu') {
-      fail(`${mode.id}: not on real WebGPU (report=${backend.report?.actual} canvas=${backend.canvas}) — fallback frames are not evidence`);
+    console.log(`  backend requested=${backend.requested} actual=${backend.renderer} post=${backend.post} enabled=${backend.postEnabled} gpuApi=${gpuApi}`);
+    if (!gpuApi) {
+      fail(`${mode.id}: no navigator.gpu API - this is the fallback path, not the player path`);
+      continue;
+    }
+    if (backend.renderer !== 'webgpu' || backend.post !== 'webgpu') {
+      fail(`${mode.id}: not the actual WebGPU renderer+post (got renderer=${backend.renderer} post=${backend.post}) - fallback refused`);
       continue;
     }
 
@@ -239,10 +296,10 @@ try {
         geometries: stats.geometries,
         textures: stats.textures,
         programs: stats.programs,
-        colliders: stats.colliders,
+        colliders: colliders.count,
         luma: +luma.toFixed(1),
       });
-      console.log(`  ${name.padEnd(16)} ${measured ? String(stats.calls).padStart(5) + ' calls ' + String(Math.round(stats.triangles / 1000)).padStart(5) + 'k tris' : 'MEASURED NOTHING'}  luma ${luma.toFixed(1).padStart(6)}  progs ${stats.programs}  colliders ${stats.colliders}  -> ${file}`);
+      console.log(`  ${name.padEnd(16)} ${measured ? String(stats.calls).padStart(5) + ' calls ' + String(Math.round(stats.triangles / 1000)).padStart(5) + 'k tris' : 'MEASURED NOTHING'}  luma ${luma.toFixed(1).padStart(6)}  progs ${stats.programs}  colliders ${colliders.count}  -> ${file}`);
     }
     report.modes[mode.id] = {
       query: mode.query || '(none)',

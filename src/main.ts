@@ -16,6 +16,7 @@ import { OrdnanceScene } from './weapons/ordnance-scene';
 import { initUI } from './ui/index';
 import { wireNetcode } from './net/wire';
 import { createCharacterSystem, type CharacterHandle } from './characters';
+import { isAuthoredOperatorEnabled, preloadAuthoredOperator } from './characters/operator-authored';
 import { ThrowBodyPresentation } from './characters/throw-body';
 import { loadBakedClips } from './characters/kimodo-clips';
 import { createLocalMatch, type LocalMatch, type MatchUi } from './game/session';
@@ -160,6 +161,15 @@ world.atmosphere.setRainShelter(worldTargets);
 // glTF clips, 350 kB, generated locally (public/anim/LICENCES.md). Top-level await
 // is fine here - tsconfig and vite both target es2022.
 await loadBakedClips();
+// Authored sand operator GLB: opt-in only (?operator=authored). Bounded 8s
+// preload BEFORE the first CharacterSystem — dressAuthored adopts the shared
+// cache; a miss resolves null and every figure keeps the procedural dress.
+if (isAuthoredOperatorEnabled()) {
+  await preloadAuthoredOperator().catch((error: unknown) => {
+    console.warn('[operator] authored GLB unavailable, procedural fallback', error);
+    return null;
+  });
+}
 const characters = createCharacterSystem(world.scene, {
   // `material` is the shipped path: ONE ctx.mat singleton for the whole figure,
   // with the dress carried per-vertex by the baked skinned mesh, so a figure is

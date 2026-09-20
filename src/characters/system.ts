@@ -18,6 +18,7 @@ import { buildStandardSkeleton } from './skeleton';
 import { buildClipLibrary, type ClipLibrary, type ClipName } from './clips';
 import { CharacterRig, type RigInput } from './blend';
 import { dressProcedural, type CharacterDress, type CharacterMesh } from './mesh';
+import { dressAuthored, isAuthoredOperatorEnabled } from './operator-authored';
 import { installAnimQA } from './anim-qa';
 
 export interface CharacterHandle {
@@ -44,6 +45,8 @@ export class CharacterSystem {
   readonly library: ClipLibrary;
   readonly characters: CharacterHandle[] = [];
   private frame = 0;
+  /** Alternates team patches across authored-mode spawns (see spawn). */
+  private authoredTeams = 0;
 
   constructor(
     private readonly scene: THREE.Scene,
@@ -85,7 +88,19 @@ export class CharacterSystem {
     const dress = faction !== undefined && all && all.length > 0
       ? { ...this.dress, factions: [all[faction % all.length]] }
       : this.dress;
-    const mesh = dressProcedural(std.root, std.bones, dress);
+    // Authored-operator dress (?operator=authored only). Real bots, remote
+    // players and demo figures all spawn through here, so the authored GLB
+    // dresses the actual game crowd — no hand-pushed special figures in main.
+    // A null dress (asset missing/invalid/cancelled/timeout) falls back to the
+    // procedural dress; the handle reports whichever dress was actually worn.
+    let mesh: CharacterMesh | null = null;
+    let wornFaction: 0 | 1 | null = faction ?? null;
+    if (isAuthoredOperatorEnabled()) {
+      const f = (faction ?? ((this.authoredTeams++ % 2) as 0 | 1)) as 0 | 1;
+      mesh = dressAuthored(std.root, std.bones, dress, f);
+      if (mesh) wornFaction = f;
+    }
+    if (!mesh) mesh = dressProcedural(std.root, std.bones, dress);
     const rig = new CharacterRig(std.root, std.bones, this.library);
     std.root.position.set(x, 0, z);
     std.root.rotation.y = yaw;
@@ -98,7 +113,7 @@ export class CharacterSystem {
       input: { speed: 0, turnRate: 0, crouch: false, prone: false, aimPitch: 0, aimWeight: 0 },
       yaw,
       scale,
-      faction: faction ?? null,
+      faction: wornFaction,
     };
     this.characters.push(handle);
     return handle;
