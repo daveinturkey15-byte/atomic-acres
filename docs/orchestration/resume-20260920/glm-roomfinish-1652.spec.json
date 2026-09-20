@@ -1,0 +1,49 @@
+{
+  "task_id": "orange-room-finishing-20260920",
+  "owner": "Astra lead for Dave",
+  "objective": "Substantially improve the authored orange living room as one composed finished interior with material scale and architectural detail, retaining gameplay geometry and budgets.",
+  "route": "glm",
+  "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-roomfinish-20260920",
+  "inputs": [
+    "AGENTS.md",
+    "package.json",
+    "src/build/orange-house.ts",
+    "src/build/interior-furniture.ts",
+    "src/core/materials.ts",
+    "src/core/room-visibility.ts",
+    "scripts/check-orange-room.mjs",
+    "docs/recipes/orange-room-visibility-bake.md",
+    "captures/single-astra-noon/room-bake-r2-1626/orangeLiving.png"
+  ],
+  "writable_paths": [
+    "src/build/orange-house.ts",
+    "src/build/interior-furniture.ts",
+    "src/build/orange-room-details.ts",
+    "docs/handoff/GLM-ROOM-FINISH-1652.md",
+    "docs/handoff/GLM-ROOM-ACCESS-1652.json"
+  ],
+  "outputs": [
+    "docs/handoff/GLM-ROOM-FINISH-1652.md",
+    "docs/handoff/GLM-ROOM-ACCESS-1652.json"
+  ],
+  "acceptance": [
+    "No out-of-scope edits",
+    "Focused CPU checks and typecheck, unchanged assertions",
+    "Real same-camera visible improvement and unchanged active-game gate required later by root",
+    "Actual native tools/CLI/skills exposure recorded honestly"
+  ],
+  "skills": {
+    "atomic-acres-procedural-art-authoring": {
+      "path": "C:\\Users\\david\\Documents\\desky-bootstrap-clone\\Skills\\game-development\\atomic-acres-procedural-art-authoring\\SKILL.md",
+      "sha256": "19f93b23bdcef5832c246772600c7740631cb3a43b6d424324a58eecfdab9508"
+    },
+    "visual-gauntlet-loop": {
+      "path": "C:\\Users\\david\\Documents\\desky-bootstrap-clone\\Skills\\quality\\visual-gauntlet-loop\\SKILL.md",
+      "sha256": "6b546fc4d1e367ce1f2d892b874521a4d77484921f3c49a216b19c5774b22434"
+    }
+  },
+  "max_attempts": 2,
+  "max_minutes": 25,
+  "billing_class": "subscription",
+  "reserved_usd": 0.4
+}

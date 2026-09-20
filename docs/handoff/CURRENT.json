@@ -2143,7 +2143,32 @@
     "motion": "Screenshotluma/budgetPASSdoesnotestablishactorvisibility, framingorposephase. Frontviewactualinteriorwall; rejectharnessclaim.",
     "commit": "VERIFIED50explicitpaths checkpointed; firstcommitattemptfailedmissingauthoridentity, retried per-command CodexRecovery identity, no globalconfigchange."
   },
-  "active_external_lanes": [],
+  "active_external_lanes": [
+    {
+      "lane": "glm-roomfinish-1652",
+      "route": "glm",
+      "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-roomfinish-20260920",
+      "run_id": "delegated-omp-glm-roomfinish-1652-8b7abc27003b40918fcf679418d3fd23",
+      "receipt": ".recovery-runtime\\provider-runs\\delegated-omp-glm-roomfinish-1652-8b7abc27003b40918fcf679418d3fd23\\summary.json",
+      "requested_model": "zai/glm-5.3-flash",
+      "requested_effort": "max",
+      "state": "launched/admitted; first provider response pending at16:54",
+      "ownership": "room geometry/furniture"
+    },
+    {
+      "lane": "muse-carbine-1652",
+      "route": "muse",
+      "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-carbine-20260920",
+      "run_id": "delegated-omp-muse-carbine-1652-347ce203cf494f88a3d2d085bc7cabf4",
+      "receipt": ".recovery-runtime\\provider-runs\\delegated-omp-muse-carbine-1652-347ce203cf494f88a3d2d085bc7cabf4\\summary.json",
+      "requested_model": "meta-contributor/muse-spark-1.3-contributor",
+      "requested_effort": "xhigh",
+      "state": "active; matching provider/model events and successful file reads observed, worker access report pending",
+      "ownership": "carbine loader and first-person hands",
+      "observed_model": "muse-spark-1.3-contributor",
+      "observed_provider": "meta-contributor"
+    }
+  ],
   "awaiting_root_review": [
     {
       "lane": "agy-supply-crate-0912",
@@ -2628,11 +2653,36 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T16:49:52.732575+01:00",
+  "updated_at": "2026-09-20T16:54:06.356826+01:00",
   "current_ownership": {
-    "root": "Astra orchestration/review only following16:45 usage correction. Preparing two scoped external lanes from current source; root owns serial GPU/Blender/browser acceptance. No native implementation agents.",
+    "root": "Astra coordinates/reviews only. Two25-minute OMP source contracts launched16:53; Gemini HUD/class-menu is queued for a free slot. Root owns serialized acceptance and frozen4248. No native OpenAI implementation agents.",
     "native_astras": "Historical specialists stopped; do not restart.",
-    "external": []
+    "external": [
+      {
+        "lane": "glm-roomfinish-1652",
+        "route": "glm",
+        "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-roomfinish-20260920",
+        "run_id": "delegated-omp-glm-roomfinish-1652-8b7abc27003b40918fcf679418d3fd23",
+        "receipt": ".recovery-runtime\\provider-runs\\delegated-omp-glm-roomfinish-1652-8b7abc27003b40918fcf679418d3fd23\\summary.json",
+        "requested_model": "zai/glm-5.3-flash",
+        "requested_effort": "max",
+        "state": "launched/admitted; first provider response pending at16:54",
+        "ownership": "room geometry/furniture"
+      },
+      {
+        "lane": "muse-carbine-1652",
+        "route": "muse",
+        "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-carbine-20260920",
+        "run_id": "delegated-omp-muse-carbine-1652-347ce203cf494f88a3d2d085bc7cabf4",
+        "receipt": ".recovery-runtime\\provider-runs\\delegated-omp-muse-carbine-1652-347ce203cf494f88a3d2d085bc7cabf4\\summary.json",
+        "requested_model": "meta-contributor/muse-spark-1.3-contributor",
+        "requested_effort": "xhigh",
+        "state": "active; matching provider/model events and successful file reads observed, worker access report pending",
+        "ownership": "carbine loader and first-person hands",
+        "observed_model": "muse-spark-1.3-contributor",
+        "observed_provider": "meta-contributor"
+      }
+    ]
   },
   "retained_review_backlog_0918": [
     {

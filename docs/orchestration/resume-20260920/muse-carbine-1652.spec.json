@@ -1,0 +1,56 @@
+{
+  "task_id": "carbine-hand-contact-20260920",
+  "owner": "Astra lead for Dave",
+  "objective": "Make the retained authored carbine credible in first person with anatomically connected hands and correctly transformed socket contact through aim/recoil/reload.",
+  "route": "muse",
+  "tree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-carbine-20260920",
+  "inputs": [
+    "AGENTS.md",
+    "package.json",
+    "src/weapons/catalog-carbine-loader.ts",
+    "src/weapons/first-person-hands.ts",
+    "src/weapons/first-person-hands-motion.ts",
+    "src/weapons/hand-geometry-canary.ts",
+    "src/weapons/rigged-rifle-hands.ts",
+    "src/weapons/viewmodel.ts",
+    "src/weapons/types.ts",
+    "scripts/verify-carbine-loader.mjs",
+    "public/assets/catalog-carbine/carbine.glb",
+    "captures/single-astra-noon/room-bake-r2-1626/interiorOrange.png"
+  ],
+  "writable_paths": [
+    "src/weapons/catalog-carbine-loader.ts",
+    "src/weapons/first-person-hands.ts",
+    "src/weapons/first-person-hands-motion.ts",
+    "src/weapons/hand-geometry-canary.ts",
+    "src/weapons/rigged-rifle-hands.ts",
+    "src/weapons/viewmodel.ts",
+    "src/weapons/types.ts",
+    "docs/handoff/MUSE-CARBINE-1652.md",
+    "docs/handoff/MUSE-CARBINE-ACCESS-1652.json"
+  ],
+  "outputs": [
+    "docs/handoff/MUSE-CARBINE-1652.md",
+    "docs/handoff/MUSE-CARBINE-ACCESS-1652.json"
+  ],
+  "acceptance": [
+    "No out-of-scope edits",
+    "Focused CPU checks and typecheck, unchanged assertions",
+    "Real same-camera visible improvement and unchanged active-game gate required later by root",
+    "Actual native tools/CLI/skills exposure recorded honestly"
+  ],
+  "skills": {
+    "game-animation-asset-pipeline": {
+      "path": "C:\\Users\\david\\Documents\\desky-bootstrap-clone\\Skills\\game-development\\game-animation-asset-pipeline\\SKILL.md",
+      "sha256": "a6ea379c930ffa69806ac47402ca5a14d40c8cff78d6be591dcfd67db41d1e34"
+    },
+    "visual-gauntlet-loop": {
+      "path": "C:\\Users\\david\\Documents\\desky-bootstrap-clone\\Skills\\quality\\visual-gauntlet-loop\\SKILL.md",
+      "sha256": "6b546fc4d1e367ce1f2d892b874521a4d77484921f3c49a216b19c5774b22434"
+    }
+  },
+  "max_attempts": 2,
+  "max_minutes": 25,
+  "billing_class": "metered",
+  "reserved_usd": 0.4
+}
