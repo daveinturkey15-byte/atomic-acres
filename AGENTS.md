@@ -5,7 +5,24 @@ Started 2026-09-17. This repository is deliberately small and stays that way.
 
 Workspace rules in `C:/Users/david/Desktop/stuff/AGENTS.md` and active AKP apply.
 
-## Owner resumption — September 20, 15:00
+## Owner usage correction — September 20, 16:45
+
+Dave asked to conserve the remaining OpenAI allowance, use the specified OMP/AGY
+models for implementation and then said continue. Resume at most two economical
+external source writers through the existing source-bound pipeline. Routes are OMP
+ZAI GLM5.3Flash max, OMP Meta MuseSpark1.3Contributor xhigh and AGY requested
+Gemini3.8Flash high. No native OpenAI implementation agents. Astra coordinates,
+reviews and mechanically integrates; it must not keep doing bulk implementation.
+This supersedes the earlier single-Astra/no-external-worker direction below.
+
+Use exact private file scopes and fixed acceptance. Keep observed model attribution
+separate from requested identity, especially AGY. Read CURRENT's active lanes and
+receipts rather than restarting completed work. Preflight each worker's actual
+CLI/skill/MCP exposure; saved configuration is not tool inheritance. Root alone
+serializes browser/Blender/GPU acceptance and promotes substantial visible gains.
+Never weaken admission, resource, spend, scope or regression gates to get a launch.
+
+## Historical owner resumption — September 20, 15:00
 
 Dave authorized fixing Blender CLI/MCP across harnesses, then continuing the
 previous work. The connection repair passed eight saved-route handshakes, native

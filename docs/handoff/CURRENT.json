@@ -8,7 +8,7 @@
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
   "status": "Verified partial orange-room baked visibility successor on4248: clearer interior falloff/contact and attached pendant;210s active-game gate passes at53.2fps. Future owned headless QA muted, WebAudio graph preserved. Full room/map visual bar OPEN. Heavy jobs held on low RAM/VRAM sample; source work may continue.",
   "owner": "Codex",
-  "stop_state": "GAME DEVELOPMENT PAUSED by direct owner request; pipeline audit only. Do not resume feature work or worker launches without owner direction.",
+  "stop_state": "Development active. Owner16:45 usage correction: economical external implementation through fixed gates, maximum two writers; Astra coordination/review/mechanical integration only.",
   "backup": {
     "path": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/visual-0900",
     "head": "1bd70548346c9c5490f0863607dfe868260576dd",
@@ -31,18 +31,18 @@
     "status": "PAUSED"
   },
   "resource_sample": {
-    "at": "2026-09-20T16:39:12.3373638+01:00",
-    "free_ram_gib": 10.11075210571289,
-    "free_vram_gib": 2.52734375,
+    "at": "2026-09-20T16:46:00+01:00",
+    "free_ram_gib": 45.11,
+    "free_vram_gib": 14.451171875,
     "reserve_ram_gib": 12,
     "reserve_vram_gib": 3,
-    "note": "Below reserves. No active owned heavy job. Defer browser/Blender/model launch until fresh readings and job headroom pass; do not terminate owner processes."
+    "note": "Headroom recovered; re-sample before a heavy job. Cloud workers source-only; root serializes Blender/browser."
   },
   "next_actions": [
     "Preserve verified baked-room R2 on4248 and previous room4245, plus all frozen checkpoints. Use4248 for17:00 inspection; report53.2fps and full visual bar OPEN.",
     "Finish first-room visual bar before hands/carbine. Baked directional visibility has a visible gain and passing gate; first correction attached pendant and bound source hashes. Analytical aperture approach remains rejected after two repairs. No further parameter tweaks to revive it.",
-    "Heavy work deferred:16:39 sample10.111GiB freeRAM/2588MiB freeVRAM is below reserves. Source work can continue; resample before serialized browser/Blender/model work. QA output must stay muted with audio graph running.",
-    "Carbine retained asset and prior frames inspected only; implement gun/hands after first-room acceptance, then weapon-image classes/menu, combat/streak HUD including noisy incoming-hit stack, and bot motion. Single Astra only.",
+    "Use at most two isolated external authoring lanes through frozen contracts. OMP and AGY native adoption checks pass at16:46. Actual worker CLI/skills/MCP access remains to be recorded. Gemini HUD/class-menu lane queued behind initial art lanes.",
+    "Carbine retained asset and prior frames inspected only; implement gun/hands after first-room acceptance, then weapon-image classes/menu, combat/streak HUD including noisy incoming-hit stack, and bot motion. Economical external authors, Astra review only.",
     "Original noon memory failure remains unresolved; passing scoped successors do not prove its root cause fixed. Keep unchanged gate and all exact failed partials.",
     "At17:00BST then every2h provide exact preview/fallback, visible accepted changes, failures and revised estimates."
   ],
@@ -2628,9 +2628,9 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T15:07:49.608681+01:00",
+  "updated_at": "2026-09-20T16:49:52.732575+01:00",
   "current_ownership": {
-    "root": "Single Astra; room R2 bake/capture/soak complete and partial successor frozen on4248. No active browser/Blender/model job or workers. Silent QA enforced. Source work may continue; new heavy jobs require fresh resource headroom.",
+    "root": "Astra orchestration/review only following16:45 usage correction. Preparing two scoped external lanes from current source; root owns serial GPU/Blender/browser acceptance. No native implementation agents.",
     "native_astras": "Historical specialists stopped; do not restart.",
     "external": []
   },
@@ -2778,9 +2778,13 @@
   ],
   "dispatch_policy": {
     "schema_version": 1,
-    "external_workers": false,
-    "allowed_routes": [],
-    "reason": "Single Astra implementation resumed after Blender repair. External workers remain explicitly disabled; later direct owner authorization required to expand delegation."
+    "external_workers": true,
+    "allowed_routes": [
+      "glm",
+      "muse",
+      "agy"
+    ],
+    "reason": "Dave asked to conserve OpenAI and ensure implementation uses the specified other models, then said continue. At most two isolated source lanes; no native OpenAI workers; fixed pipeline gates retained."
   },
   "pipeline_audit": {
     "report": "docs/handoff/PIPELINE-AUDIT-2026-09-20.md",
@@ -2811,7 +2815,7 @@
     "owner": "single lead",
     "bounded_probes_authorized": true,
     "authorization": "Dave September20: resolve remaining pipeline work and get Jev in the mix before game resumption",
-    "game_workers_authorized": false,
+    "game_workers_authorized": true,
     "scope": [
       "Jev advisory routing",
       "provider synthetic capability and cost probes",
@@ -2837,7 +2841,7 @@
       "Hermes Desktop",
       "Qoder"
     ],
-    "external_workers_authorized": false,
+    "external_workers_authorized": true,
     "open": [
       "Hermes native timeout and stale receipt",
       "Unrelated shared skill drift",
@@ -2845,7 +2849,7 @@
       "Current carbine handoff/model mismatch",
       "Game visual overhaul and failed runtime soak"
     ],
-    "next_action": "Review pipeline report; resume only a single-lead game vertical slice when Dave resumes development. Keep external workers and heartbeat paused.",
+    "next_action": "Two source-bound external writers maximum under current owner usage correction; native tool/skill access must be observed in each run.",
     "shared_commits": {
       "akp": "951db93677d70897b0b90face7e840d94eacaf9c",
       "vault": "98cd8d97a2db62a68af9c685caa0093d96040d11"

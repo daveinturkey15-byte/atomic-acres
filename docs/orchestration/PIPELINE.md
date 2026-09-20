@@ -8,17 +8,18 @@ change Skills Lab's no-OpenRouter policy or the older game's release machinery.
 
 ## Current operating mode
 
-Dave resumed work after the shared Blender repair on September 20 at about15:00
-BST. One Astra lead owns implementation and acceptance. External game workers
-remain disabled in `docs/handoff/CURRENT.json`; no new swarm or engine migration.
+Dave's September20 16:45 usage correction resumes the specified economical
+external implementation routes with at most two independent source writers.
+Astra coordinates, reviews and mechanically integrates. No native OpenAI workers.
+CURRENT records exact authorizations, ownership and requested/observed providers.
 The shared Blender route is `<AKP>/scripts/blender/bridge.py`; read its README,
 preflight resource headroom and keep one writer for the MCP scene. Saved client
 entries and transport checks do not imply native reload, adoption or subagent
 tool inheritance. The repair report is `../handoff/RESUMPTION-2026-09-20-1500.md`.
 
-One lead first completes one real vertical slice, including source, game integration,
-same-camera visual review and focused runtime checks. Only then consider up to two
-independent economical workers, with explicit scopes. They cannot accept their work.
+The lead completed a scoped room furniture and baked-visibility successor with
+same-camera review and the unchanged active-game gate; full visual quality remains
+open. Authoring can proceed in two isolated scopes. Workers cannot accept their work.
 Retain failed candidates and frozen inspection builds. See
 `../handoff/PIPELINE-COMPLETION-2026-09-20.md` for measured results and limitations.
 
