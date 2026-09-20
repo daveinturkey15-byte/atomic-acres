@@ -36,6 +36,8 @@ export interface CharacterHandle {
   scale: number;
   /** Which dress this figure wears, or null when mesh.ts's round-robin chose. */
   faction: 0 | 1 | null;
+  /** False for authoritative bodies; demos may still integrate root motion. */
+  rootMotion?: boolean;
 }
 
 export interface SystemBudget {
@@ -186,14 +188,16 @@ export class CharacterSystem {
     this.frame++;
     for (const c of this.characters) {
       let step = dt;
-      if (camPos) {
+      // Real actors receive already interpolated positions every frame. Skipping
+      // their skeleton update would leave a 20/10 Hz pose on a smooth moving root.
+      if (camPos && c.rootMotion !== false) {
         const d = camPos.distanceTo(c.root.position);
         if (d > 50 && this.frame % 6 !== 0) continue;
         if (d > 25 && this.frame % 3 !== 0) continue;
         if (d > 50) step = dt * 6;
         else if (d > 25) step = dt * 3;
       }
-      if (!c.rig.isDead && Math.abs(c.input.speed) > 0.001) {
+      if (c.rootMotion !== false && !c.rig.isDead && Math.abs(c.input.speed) > 0.001) {
         c.root.position.x += Math.sin(c.yaw) * c.input.speed * step;
         c.root.position.z += Math.cos(c.yaw) * c.input.speed * step;
       }

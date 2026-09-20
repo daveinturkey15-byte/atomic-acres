@@ -37,7 +37,7 @@ export const ACTION_DEFS: readonly ActionDef[] = Object.freeze([
   { id: 'right', label: 'Strafe right', code: 'KeyD', rebindable: true, consumer: 'core/player.ts' },
   { id: 'jump', label: 'Jump', code: 'Space', rebindable: true, consumer: 'core/player.ts' },
   { id: 'sprint', label: 'Sprint', code: 'ShiftLeft', rebindable: true, consumer: 'core/player.ts' },
-  { id: 'crouch', label: 'Crouch (hold)', code: 'ControlLeft', rebindable: true, consumer: 'core/player.ts' },
+  { id: 'crouch', label: 'Crouch (hold)', code: 'KeyC', rebindable: true, consumer: 'core/player.ts' },
   { id: 'prone', label: 'Prone (toggle)', code: 'KeyZ', rebindable: true, consumer: 'core/player.ts' },
   { id: 'fire', label: 'Fire', code: 'Mouse0', rebindable: false, consumer: 'main.ts mousedown' },
   { id: 'ads', label: 'Aim down sights', code: 'Mouse2', rebindable: false, consumer: 'main.ts mousedown' },
@@ -47,7 +47,7 @@ export const ACTION_DEFS: readonly ActionDef[] = Object.freeze([
   { id: 'grenade', label: 'Grenade', code: 'KeyG', rebindable: true, consumer: 'ordnance lane' },
   { id: 'tactical', label: 'Tactical grenade', code: 'KeyQ', rebindable: true, consumer: 'weapons/ordnance-input.ts' },
   { id: 'knife', label: 'Knife', code: 'KeyV', rebindable: true, consumer: 'main.ts keydown (walk only) -> weapons.controller' },
-  { id: 'use', label: 'Use / pick up', code: 'KeyE', rebindable: true, consumer: 'ordnance lane (E is also fly-up in core/player.ts)' },
+  { id: 'use', label: 'Use / pick up', code: 'KeyE', rebindable: true, consumer: 'weapons/ordnance-input.ts' },
   { id: 'scoreboard', label: 'Scoreboard (hold)', code: 'Tab', rebindable: true, consumer: 'ui/hud.ts' },
 ]);
 
@@ -131,7 +131,10 @@ export function remapTable(b: Bindings): ReadonlyMap<string, string> {
   for (const d of ACTION_DEFS) {
     if (!d.rebindable || b[d.id] === d.code) continue;
     m.set(b[d.id], d.code);
-    if (!m.has(d.code)) m.set(d.code, '');
+    // Saved pre-noon defaults used left Ctrl. Keep C available alongside that
+    // legacy default; intentional remaps to other keys still disable the default.
+    const legacyCrouch = d.id === 'crouch' && /^Control(Left|Right)$/.test(b[d.id]);
+    if (!legacyCrouch && !m.has(d.code)) m.set(d.code, '');
   }
   return m;
 }

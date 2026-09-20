@@ -91,7 +91,7 @@ interface RemoteSeat {
  *  `weaponId` is the host's current primary estimate for the actor, copied
  *  from the post-tick snapshot in `step` and read by `main.ts` to spawn and
  *  re-dress the figure's carried weapon. */
-interface Body { id: ActorId; x: number; y: number; z: number; yaw: number; speed: number; alive: boolean; stance: PlayerStance; weaponId: string }
+interface Body { id: ActorId; x: number; y: number; z: number; yaw: number; speed: number; alive: boolean; stance: PlayerStance; weaponId: string; sampleTimeMs?: number }
 
 export type EventSink = (events: readonly GameEvent[], now: number) => void;
 
@@ -144,6 +144,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
   let pending = true;
   let acc = 0;
   let last = 0;
+  let poseSampleAt = 0;
   let inputSeq = 0;
   let endedAt: number | null = null;
   let disposed = false;
@@ -160,6 +161,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
   };
 
   const build = (now: number): void => {
+    poseSampleAt = now;
     // Bank the outgoing director's numbers BEFORE it is dropped. This is the
     // only moment they still exist; after the reassignment below they are gone.
     if (director !== null) instrument.retireDirector(directorNumbers(director));
@@ -240,6 +242,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
   };
 
   const step = (h: GameHost, d: BotDirector, now: number): void => {
+    poseSampleAt = now;
     const dt = TICK_MS / 1000;
     h.updatePose(localId, pose.x, pose.y, pose.z, now, pose.stance, pose.yaw);
     h.submitInput(localId, {
@@ -362,6 +365,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
         for (const r of director.roster) {
           const b = body(r.id);
           b.x = r.x; b.y = r.y; b.z = r.z; b.yaw = r.yaw; b.speed = r.speed; b.alive = r.alive;
+          b.sampleTimeMs = poseSampleAt;
         }
       }
       for (const s of seats.values()) {

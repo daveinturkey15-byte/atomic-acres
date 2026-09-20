@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import type { AABB, Builder } from '../core/kit';
 import { aabb, aabbSlab, box, extrude, group, slab } from '../core/kit';
 import { batchStatic } from '../core/static-batch';
+import { loungeChair } from './lounge-chair';
 import { PAL } from '../core/palette';
 import {
   CANOPY_LEN, CANOPY_OUT, CANOPY_Y, DECK_LEN, DECK_OUT, DECK_Y, EAVE_Y, FLOOR_H,
@@ -613,22 +614,24 @@ export const buildOrangeHouse: Builder = (ctx) => {
   // Living room: olive wall with tan panel strips, orange three-seat sofa against the
   // free-end wall, egg chair, low table, white shag rug, tall closet, TV, starburst
   // clock (g-1icNQzMgLUM-106/-116).
-  g.add(box(0.05, 2.1, Math.abs(Z_SPLIT - IN_FRONT) - 0.4, oliveM, IN_FE - FE * 0.04, 1.35, (IN_FRONT + Z_SPLIT) / 2));
+  // Interior finishes must respect the real end-wall window, not cover its glass.
+  for (const [z0,z1] of subtract(...span(IN_FRONT, Z_SPLIT), [[midZ-WIN.w/2,midZ+WIN.w/2]])) {
+    g.add(box(0.05, 2.1, z1-z0, oliveM, IN_FE-FE*.04,1.35,(z0+z1)/2));
+  }
   for (let p = 0; p < 4; p++) {
-    g.add(box(0.06, 2.1 + 2 * TUCK, 0.34, darkIn, IN_FE - FE * 0.05, 1.35, IN_FRONT + S * (0.9 + p * 1.15)));
+    const pz=IN_FRONT + S * (0.9 + p * 1.15);
+    if (Math.abs(pz-midZ)<WIN.w/2+.17) continue;
+    g.add(box(0.06, 2.1 + 2 * TUCK, 0.34, darkIn, IN_FE - FE * 0.05, 1.35, pz));
   }
   const sofaX = IN_FE - FE * 0.48, sofaZ = (IN_FRONT + Z_SPLIT) / 2;
   put(0.85, 0.42, 2.2, mat.painted(PAL.terracotta, 0.9, 0), sofaX, 0.21, sofaZ, true);
   g.add(box(0.28, 0.45, 2.2, orangeM, IN_FE - FE * 0.2, 0.62, sofaZ));
   g.add(box(0.7, 0.05, 1.5, mat.painted(PAL.capsuleWhite, 0.98, 0), sofaX - FE * 1.4, 0.03, sofaZ));
   const eggAt = (ex: number, ez: number, yBase: number): void => {
-    const shell = new THREE.Mesh(
-      new THREE.SphereGeometry(0.44, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.62),
-      mat.painted(PAL.capsuleWhite, 0.6, 0));
-    shell.position.set(ex, yBase + 0.62, ez); g.add(shell);
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.22, 0.42, 12), darkIn);
-    stem.position.set(ex, yBase + 0.21, ez); g.add(stem);
-    colliders.push(aabbSlab(ex, yBase, ez, 0.8, 0.95, 0.8));
+    const chair=loungeChair(mat.painted(PAL.capsuleWhite,.58,0),orangeM,mat.steel);
+    chair.position.set(ex,yBase,ez); chair.rotation.y=ex>0 ? -Math.PI/2 : Math.PI/2;
+    g.add(chair);
+    colliders.push(aabbSlab(ex, yBase, ez, 0.8, 1.17, 0.8));
   };
   eggAt(sofaX - FE * 2.1, sofaZ - S * 1.4, 0.16);
   put(0.6, FLOOR_H, 1.3, mat.painted(PAL.timber, 0.85, 0), IN_FE - FE * 0.35, FLOOR_H / 2, IN_FRONT + S * 0.7, true);
@@ -753,10 +756,11 @@ export const buildOrangeHouse: Builder = (ctx) => {
     (IN_GE + UP_X) / 2, FLOOR_H + 0.04, frontZ + S * (HOUSE_DEPTH * 0.28)));
   // built-in geometric open shelving - the only waist-high hard cover upstairs (s6.2)
   const shZ = frontZ + S * (HOUSE_DEPTH * 0.59);
-  put(0.45, 2.2, 2.0, mat.painted(PAL.terracottaDk, 0.85, 0), UP_X - GE * 0.3, FLOOR_H + 1.1, shZ, true);
-  for (let r = 0; r < 4; r++) {
-    g.add(box(0.4, 0.05, 1.9, darkIn, UP_X - GE * 0.32, FLOOR_H + 0.35 + r * 0.55, shZ));
-  }
+  const shelfX=UP_X-GE*.3, shelfM=mat.painted(PAL.terracottaDk,.85,0);
+  // An open bookcase: separate cheeks, a thin back and actual horizontal shelves.
+  for(const dz of [-.96,.96]) put(.45,2.2,.08,shelfM,shelfX,FLOOR_H+1.1,shZ+dz,true);
+  put(.055,2.2,1.84,shelfM,shelfX+GE*.1975,FLOOR_H+1.1,shZ,true);
+  for(let r=0;r<5;r++) put(.45,.065,1.84,darkIn,shelfX,FLOOR_H+.06+r*.525,shZ,true);
   // orange chaise + egg chair in the rear sitting room (f-mGpZaLy5_hM-045)
   put(1.9, 0.44, 0.75, orangeM, (IN_GE + UP_X) / 2, FLOOR_H + 0.22,
     frontZ + S * (HOUSE_DEPTH * 0.82), true);
@@ -793,12 +797,16 @@ export const buildOrangeHouse: Builder = (ctx) => {
   g.add(shear(upstand, 0));
 
   // -------------------------------------------------- grey concrete pilaster
-  const pilX = GE * HHL * 0.66;
-  const pilZ = frontZ + OUT * (0.3 - (0.3 + RECESS) / 2);
-  const pilD = 0.3 + RECESS;
+  // Put the pier against solid wall, rather than through the centre of a window.
+  const pierGaps=subtract(-HHL+.15,HHL-.15,holesAround(porchX).map(h=>[h.c-h.w/2-.08,h.c+h.w/2+.08]));
+  const pierGap=pierGaps.filter(([a,b])=>b-a>.4).sort((a,b)=>
+    Math.abs((a[0]+a[1])/2-GE*HHL*.66)-Math.abs((b[0]+b[1])/2-GE*HHL*.66))[0];
+  const pilX = (pierGap[0]+pierGap[1])/2;
+  const pilZ = GND_FRONT + OUT * .08;
+  const pilD = .24;
   const pilTop = roofTopY(pilX, pilZ) - ROOF_T - 0.02;
-  g.add(box(1.15, pilTop, pilD, mat.concrete, pilX, pilTop / 2, pilZ));
-  colliders.push(aabb(pilX, FLOOR_H / 2, pilZ, 1.15, FLOOR_H, pilD));
+  g.add(box(.4, pilTop, pilD, mat.concrete, pilX, pilTop / 2, pilZ));
+  colliders.push(aabb(pilX, pilTop / 2, pilZ, .4, pilTop, pilD));
 
   // -------------------------------------------------- clerestory band, wrapped corner
   // Now that the upper storey is hollow this band is REAL glazing in a real opening,
@@ -894,6 +902,7 @@ export const buildOrangeHouse: Builder = (ctx) => {
         NOROT, sc.set(0.16, head - FLOOR_H, 0.18)));
     }
   }
+  fins.count=fi; // Skipped doorway fins must not leave identity-matrix cubes at origin.
   g.add(fins);
 
   // -------------------------------------------------- solar field on the low sweep

@@ -68,6 +68,8 @@ export interface MatchUi {
  * that rig (AGENTS.md: one character path for players, bots and corpses).
  */
 export interface BotBody {
+  /** Local host sample time; absent when the network already interpolated it. */
+  readonly sampleTimeMs?: number;
   readonly id: ActorId;
   readonly x: number;
   readonly y: number;

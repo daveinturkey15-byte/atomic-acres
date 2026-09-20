@@ -246,8 +246,15 @@ if (INJECT_KB_S > 0) {
   }, INJECT_KB_S);
 }
 
-// Click to play exactly as a person would - the listener lives on the overlay.
-await page.evaluate(() => { const o = document.getElementById('start'); if (o) o.click(); });
+// The modern menu replaced the old start overlay. Opt-in solo acceptance must
+// enter a real match; clicking a hidden legacy div cannot establish gameplay.
+if (argv.includes('--solo')) {
+  await page.getByRole('button', { name: 'Play solo', exact: true }).click();
+  await page.getByRole('button', { name: 'Deploy', exact: true }).click();
+  await page.waitForFunction(() => window.__NTGAME?.snapshot?.().match?.phase === 'active', null, { timeout: 45000 });
+} else {
+  await page.evaluate(() => { const o = document.getElementById('start'); if (o) o.click(); });
+}
 await page.waitForTimeout(1200);
 
 mkdirSync(OUT, { recursive: true });

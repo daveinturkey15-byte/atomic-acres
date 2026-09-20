@@ -11,6 +11,7 @@ import { installArchitecturalMaterials } from './core/architectural-materials';
 import { installReflectiveSurfaces } from './core/reflective-surfaces';
 import { makeRng, type AABB, type BuildContext, type Builder } from './core/kit';
 import { Player, type MoveMode } from './core/player';
+import { presentBody } from './characters/body-presentation';
 import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core/layout';
 import { STATIONS, type Station } from './core/stations';
 import { WeaponsController } from './weapons/controller';
@@ -231,7 +232,9 @@ const characters = createCharacterSystem(world.scene, {
     },
   ],
 });
-for (const [cx, cz, cyaw] of [
+// Inspection figures are not match actors: never populate a live arena with
+// six invulnerable, motionless soldiers that players mistake for enemies.
+if (new URLSearchParams(location.search).get('operator-demo') === '1') for (const [cx, cz, cyaw] of [
   [-6.5, -9.0, 0.6], [6.0, -6.0, -1.2], [-8.0, 6.5, 2.4],
   [5.5, 9.0, 3.0], [0.0, -12.5, 1.5], [-2.0, 12.0, -0.4],
 ] as const) {
@@ -267,10 +270,10 @@ const hudStats = document.createElement('div');
 const hudMode = document.createElement('div');
 const hudHelp = document.createElement('div');
 hudHelp.textContent =
-  'WASD move · SHIFT sprint/boost · SPACE jump/up · E up · Q/X down · ' +
-  'F fly · C noclip · wheel/[ ] speed · H help · Esc free mouse · ' +
+  'WASD move · SHIFT sprint · SPACE jump · ' +
+  'H help · Esc pause · ' +
   'LMB fire · RMB aim · R reload · 1/2 or wheel weapons · ' +
-  'G frag (hold to cook) · Q tactical · V knife · hold E pick up · CTRL crouch · Z prone';
+  'G frag (hold to cook) · Q tactical · V knife · hold E pick up · C / CTRL crouch · Z prone';
 ammoDiv.classList.add('hud-debug');
 hud.append(hudStats, hudMode, hudHelp, ammoDiv);
 // ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
@@ -526,6 +529,49 @@ function frame(): void {
       crouched: player.getStance() !== 'stand',
       prone: player.getStance() === 'prone',
     });
+
+  }
+
+  // Weapon -> HUD. snapshot() is the controller's own read API; pushing from the
+  // loop means neither lane had to know about the other's internals.
+  if (!cameraHeldByQA) {
+    const snap = weapons.snapshot();
+    gameHud.setAmmo(snap.mag, snap.reserve);
+    gameHud.setADS(snap.ads);
+  }
+
+  // ---- Game tick and bodies. Present authoritative samples before animating;
+  // root motion is disabled on these handles so the rig cannot move them twice.
+  if (!cameraHeldByQA && match) {
+    const st = player.state;
+    match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch, player.getStance());
+    ordnance.update(dt, now, st.pos.x, st.pos.y, st.pos.z);
+    for (const b of match.bots()) {
+      let h = botBodies.get(b.id);
+      if (!h) {
+        h = characters.spawn(b.x, b.z, b.yaw, 1, undefined, b.weaponId || undefined);
+        botBodies.set(b.id, h);
+      }
+      // Host-authoritative selected weapon: a pickup swap re-dresses the
+      // figure in place; rearm no-ops while the archetype is unchanged.
+      if (b.weaponId) characters.rearm(h, b.weaponId);
+      presentBody(h, b, now);
+      h.input.speed = b.alive ? b.speed : 0;
+      // Presentation-only hysteresis separates the authoritative 4.8 m/s jog
+      // from 6.6 m/s sprint without changing movement or the network protocol.
+      h.input.sprinting = b.alive && b.stance === 'stand'
+        && b.speed > (h.input.sprinting ? 5.3 : 5.5);
+      h.input.crouch = b.stance === 'crouch';
+      h.input.prone = b.stance === 'prone';
+      if (b.alive && h.rig.isDead) h.rig.revive();
+      else if (!b.alive && !h.rig.isDead) h.rig.playDeath();
+    }
+    characters.update(dt, world.camera.position);
+    throwBodies.update((id) => botBodies.get(id)?.rig ?? null);
+  }
+
+  // Render the freshly simulated and animated pose, not the previous frame.
+  if (!cameraHeldByQA) {
     // RENDER PATH. The world goes through the post chain (GTAO / SSR / bloom / vignette),
     // and the viewmodel composites over the finished frame with depth cleared so the
     // gun can never intersect the map. `?post=off` and `?post=ao` swap the chain's
@@ -544,48 +590,6 @@ function frame(): void {
     world.renderer.autoClear = false;
     world.renderer.render(weapons.overlay, world.camera);
     world.renderer.autoClear = ac;
-  }
-
-  // Weapon -> HUD. snapshot() is the controller's own read API; pushing from the
-  // loop means neither lane had to know about the other's internals.
-  if (!cameraHeldByQA) {
-    const snap = weapons.snapshot();
-    gameHud.setAmmo(snap.mag, snap.reserve);
-    gameHud.setADS(snap.ads);
-  }
-
-  // ---- Game tick and bodies. characters.update() runs FIRST: it integrates
-  // its own root motion, and the authoritative bot pose written just after is
-  // what survives. One rig for players, bots and corpses - a bot is hidden by
-  // nothing and substituted by nothing (AGENTS.md durable gotcha).
-  if (!cameraHeldByQA && match) {
-    characters.update(dt, world.camera.position);
-    const st = player.state;
-    match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch, player.getStance());
-    ordnance.update(dt, now, st.pos.x, st.pos.y, st.pos.z);
-    throwBodies.update((id) => botBodies.get(id)?.rig ?? null);
-    for (const b of match.bots()) {
-      let h = botBodies.get(b.id);
-      if (!h) {
-        h = characters.spawn(b.x, b.z, b.yaw, 1, undefined, b.weaponId || undefined);
-        botBodies.set(b.id, h);
-      }
-      // Host-authoritative selected weapon: a pickup swap re-dresses the
-      // figure in place; rearm no-ops while the archetype is unchanged.
-      if (b.weaponId) characters.rearm(h, b.weaponId);
-      h.root.position.set(b.x, b.y, b.z);
-      h.root.rotation.y = b.yaw;
-      h.yaw = b.yaw;
-      h.input.speed = b.alive ? b.speed : 0;
-      // Presentation-only hysteresis separates the authoritative 4.8 m/s jog
-      // from 6.6 m/s sprint without changing movement or the network protocol.
-      h.input.sprinting = b.alive && b.stance === 'stand'
-        && b.speed > (h.input.sprinting ? 5.3 : 5.5);
-      h.input.crouch = b.stance === 'crouch';
-      h.input.prone = b.stance === 'prone';
-      if (b.alive && h.rig.isDead) h.rig.revive();
-      else if (!b.alive && !h.rig.isDead) h.rig.playDeath();
-    }
   }
 
   frames++;

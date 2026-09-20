@@ -108,13 +108,10 @@ export class Player {
     addEventListener('keydown', (e) => {
       this.keys.add(e.code);
       if (e.code === 'Space') e.preventDefault();
-      // Toggles must ignore auto-repeat: holding F would flicker modes every 30 ms.
+      // Inspection modes are available only to the explicit QA API. Gameplay
+      // keys must never disable gravity or world collision.
       if (e.repeat) return;
-      if (e.code === 'KeyF') this.toggleFly();
-      else if (e.code === 'KeyC') this.toggleNoclip();
-      else if (e.code === 'KeyZ') this.toggleProne();
-      else if (e.code === 'BracketLeft') this.adjustFlySpeed(1 / 1.25);
-      else if (e.code === 'BracketRight') this.adjustFlySpeed(1.25);
+      if (e.code === 'KeyZ') this.toggleProne();
     });
     addEventListener('keyup', (e) => this.keys.delete(e.code));
     addEventListener('blur', () => this.keys.clear());
@@ -156,11 +153,11 @@ export class Player {
   adjustFlySpeed(mult: number): void {
     this.setFlySpeed(this.flySpeed * mult);
   }
-  /** F: walk <-> fly; leaving noclip always lands back in walk. */
+  /** QA only: walk <-> fly; leaving noclip always lands back in walk. */
   toggleFly(): void {
     this.setMode(this.mode === 'walk' ? 'fly' : 'walk');
   }
-  /** C: any colliding mode -> noclip; noclip -> fly (keeps you airborne). */
+  /** QA only: colliding mode -> noclip; noclip -> fly. */
   toggleNoclip(): void {
     this.setMode(this.mode === 'noclip' ? 'fly' : 'noclip');
   }
@@ -252,10 +249,10 @@ export class Player {
     this.eyeHeight += (this.targetEyeHeight() - this.eyeHeight) * k;
   }
 
-  /** Ctrl is held; Z is a separate toggle and therefore takes precedence. */
+  /** C/Ctrl are held; Z is a separate toggle and takes precedence. */
   private updateHeldStance(): void {
     if (this.state.stance === 'prone') return;
-    const crouch = this.keys.has('ControlLeft') || this.keys.has('ControlRight');
+    const crouch = this.keys.has('KeyC') || this.keys.has('ControlLeft') || this.keys.has('ControlRight');
     this.setCrouch(crouch);
   }
 

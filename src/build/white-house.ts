@@ -1074,11 +1074,11 @@ export const buildWhiteHouse: Builder = (ctx) => {
   finish(bPlum, -HOUSE_HALF_LEN, BX - LEAF, VOID_Z, HALL_Z - S * LEAF, 0.02);
   const CPT = 0.02;                                   // carpet; everything in here stands on it
   const unitX = BX - LEAF - 0.16 + BED_SET_X;
-  bWall.add(0.32, 2.0, 0.8, unitX, UY + CPT + 1.0, bedZc);
-  colliders.push(aabbSlab(unitX, UY, bedZc, 0.32, 2.0, 0.8));
-  for (const sy of [1.42, 1.72]) bWood.add(0.24, 0.04, 0.7, unitX - 0.02, UY + sy, bedZc);
-  bDark.add(0.26, 0.3, 0.72, unitX - 0.02, UY + 1.27, bedZc);     // the dark recess behind the shelves
-  bGlow.add(0.12, 0.06, 0.3, unitX - 0.14, UY + 1.18, bedZc);
+  // The relocated bed no longer touches the partition: a two-metre "built-in"
+  // here became a freestanding obelisk across the doorway sightline. Give the bed
+  // a properly proportioned low headboard; leave the circulation lane unchanged.
+  bWood.add(.12,.88,.9,unitX,UY+CPT+.44,bedZc);
+  colliders.push(aabbSlab(unitX,UY,bedZc,.12,.9,.9));
   const bedCx = unitX - 0.16 - 0.95;
   // rug, on the carpet; it stops 20 mm short of the headboard unit and of the hall wall
   bGold.add(2.36, 0.02, 1.6, bedCx - 0.23, UY + CPT + 0.01, bedZc - S * 0.36);
@@ -1218,7 +1218,8 @@ export const buildWhiteHouse: Builder = (ctx) => {
   const batched: [Batch, THREE.Material, string][] = [
     [bWall, ctx.mat.capsuleWhite, 'wh-walls-out'],
     [bWallIn, ctx.mat.interiorWall, 'wh-walls-in'],
-    [bGlaz, ctx.mat.windowDark, 'wh-glazing'],
+    // These are real inhabited rooms. Opaque vehicle glazing sealed every view.
+    [bGlaz, ctx.mat.glass, 'wh-glazing'],
     [bTrim, ctx.mat.painted(PAL.capsuleTrim, 0.5, 0.15), 'wh-trim'],
     [bDark, ctx.mat.painted(PAL.rooftopDrum, 0.6, 0.1), 'wh-recess'],
     [bWood, ctx.mat.deckBoards, 'wh-deck'], [bSteel, ctx.mat.steel, 'wh-balusters'],

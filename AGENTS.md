@@ -5,6 +5,25 @@ Started 2026-09-17. This repository is deliberately small and stays that way.
 
 Workspace rules in `C:/Users/david/Desktop/stuff/AGENTS.md` and active AKP apply.
 
+## Current owner direction — September 20, noon
+
+Dave stopped the external swarm and explicitly authorized this single Astra xhigh
+session to implement, inspect and refine the game. This supersedes the historical
+orchestration-only restriction and temporary two-agent exception below. Do not
+launch native subagents or external model workers. Preserve and reconcile their
+existing artifacts; completion of a worker still does not imply acceptance.
+Image generation is authorized again. Use the existing asset/animation workflows
+where they produce a useful game artifact, with provenance and measured headroom.
+
+Read `docs/handoff/SINGLE-ASTRA-2026-09-20.md` for the current milestones. First
+inspection is 13:00 BST, then every two hours with a tested immutable build and
+updated estimates. Priorities are visible house-geometry cleanup, normal gameplay
+controls (no F-fly/C-noclip shortcuts), smooth correctly-facing bot motion, richer
+weapon-image menus and custom classes, HUD/streak clarity, hands/weapons and
+map-wide materials/lighting. Preserve old accepted builds and regression gates.
+The owner requires one agent, so visual review is now explicitly self-review;
+do not claim an independent critic. The frozen quality criteria stay unchanged.
+
 ## September 19 recovery and continuation
 
 Read `docs/handoff/CURRENT.json` and its checkpoint first. This is the standalone
