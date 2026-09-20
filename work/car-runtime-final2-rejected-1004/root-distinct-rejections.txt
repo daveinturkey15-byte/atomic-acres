@@ -1,0 +1,5 @@
+[car-body-canary] candidate from ./assets/car-body-agy-0923.consolidated.glb rejected: envelope out of bounds: size [20.00, 20.00, 20.00] outside expected bounds
+[car-body-canary] candidate from ./assets/car-body-agy-0923.glb rejected: envelope out of bounds: size [20.00, 20.00, 20.00] outside expected bounds
+[car-body-canary] unavailable, procedural fallback Error: validation failed: envelope out of bounds: size [20.00, 20.00, 20.00] outside expected bounds
+    at file:///C:/Users/david/Desktop/stuff/worktrees/nuketown-muse-vehicle-20260919/work/car-runtime-agy-repair2-1000/.car-body-canary-repair2.fixture.mjs:252:15
+{"result":"fallback","loads":2,"geoms":1,"mats":1,"distinctRoots":true,"expectedEach":2}
