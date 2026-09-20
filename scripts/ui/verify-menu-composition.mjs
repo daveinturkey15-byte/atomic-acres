@@ -111,6 +111,18 @@ try {
   const playSoloAfterReload = page.getByRole('button', { name: 'Play solo', exact: true });
   await playSoloAfterReload.waitFor({ state: 'visible', timeout: 30000 });
   await playSoloAfterReload.click();
+  // Causal pin (0158 seam): a resolved click is not proof the handler ran -
+  // 0155 resolved the Deploy click yet mode stayed idle with the overlay up
+  // and zero errors. Pin the panel switch here so a missed Play Solo click
+  // fails fast instead of poisoning every later check.
+  try {
+    await page.waitForFunction(() => {
+      const solo = document.querySelector('#start .aa-solo');
+      return solo !== null && !solo.classList.contains('aa-hidden');
+    }, null, { timeout: 10000 });
+  } catch {
+    throw new Error('PlaySolo click had no effect: solo panel still hidden 10 s after a resolved click');
+  }
   const persisted = await page.evaluate(() => document.querySelector('.aa-loadline')?.textContent ?? '');
   check('MP5+Semtex survives a reload from the store',
     persisted.includes('MP5') && persisted.includes('Semtex'), { persisted });
@@ -126,6 +138,41 @@ try {
   const deployAfterReload = page.getByRole('button', { name: /deploy/i });
   await deployAfterReload.waitFor({ state: 'visible', timeout: 30000 });
   await deployAfterReload.click();
+  // Causal pin (0158 seam): 0155 resolved this click yet mode stayed idle,
+  // the overlay stayed flex and errors stayed empty, so startSolo() never
+  // ran - the click never reached the Deploy listener. A product begin()
+  // always hides the overlay via match-start/match-ready, and a throw always
+  // surfaces as a pageerror, so idle+flex+silent is a missed click, not a
+  // stalled match. Assert the click HAD an effect within a short bound and
+  // keep pointer-level evidence when it did not. The 45 s active gate below
+  // is untouched.
+  const clickBox = await deployAfterReload.boundingBox();
+  try {
+    await page.waitForFunction(() => {
+      try { return window.__NTGAME.mode() !== 'idle'; }
+      catch { return false; }
+    }, null, { timeout: 5000 });
+  } catch {
+    const miss = await page.evaluate((box) => {
+      const el = document.querySelector('#start .aa-solo .aa-btn.aa-primary');
+      const r = el?.getBoundingClientRect();
+      const cx = box !== null ? box.x + box.width / 2 : (r ? r.left + r.width / 2 : null);
+      const cy = box !== null ? box.y + box.height / 2 : (r ? r.top + r.height / 2 : null);
+      const top = cx !== null && cy !== null ? document.elementFromPoint(cx, cy) : null;
+      const ae = document.activeElement;
+      const label = (n) => n ? ((n.getAttribute('aria-label') ?? n.textContent?.slice(0, 60) ?? n.tagName) + ' <' + n.tagName.toLowerCase() + '>') : null;
+      return {
+        clickCenter: cx !== null && cy !== null ? { x: Math.round(cx), y: Math.round(cy) } : null,
+        elementFromPoint: label(top),
+        deployBox: r ? { top: Math.round(r.top), bottom: Math.round(r.bottom), width: Math.round(r.width), height: Math.round(r.height) } : null,
+        activeElement: label(ae),
+        mode: (() => { try { return window.__NTGAME.mode(); } catch (e) { return String((e && e.message) || e); } })(),
+        overlayDisplay: (() => { const s = document.querySelector('#start'); return s ? getComputedStyle(s).display : 'missing'; })(),
+      };
+    }, clickBox);
+    check('Deploy click reaches its handler (mode leaves idle within 5 s)', false, miss);
+    throw new Error('Deploy click had no effect: mode still idle 5 s after a resolved click');
+  }
   // snapshot() throws '[session] no match yet - call begin() first' until the
   // Deploy constructs the match; a throw here is the expected transient, not a
   // failure, so the poll catches it and keeps waiting for 'active'.
