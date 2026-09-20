@@ -1,0 +1,75 @@
+{
+  "schema": 1,
+  "claim_state": "VERIFIED source and CPU; OPEN runtime visual acceptance",
+  "created_at": "2026-09-20T05:52:35.274138+00:00",
+  "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-astra-motion-20260920",
+  "branch": "art/astra-motion-20260920",
+  "author": {
+    "harness": "Codex",
+    "requested_model": "gpt-6-astra",
+    "requested_effort": "xhigh",
+    "task": "astra_motion",
+    "independently_observed_provider_model": null
+  },
+  "source_commit": "8c0549e5268d213005462e5f33de1f4768f37b15",
+  "required_commits_after_parent_motion": [
+    "b49fc9ab7983fa53fd97c931828d98cb62e7db4f",
+    "6a76a9e",
+    "cb3bed8",
+    "8c0549e5268d213005462e5f33de1f4768f37b15"
+  ],
+  "flags": {
+    "motion": "motion=canary",
+    "new_pistol_geometry": "hands=rigged",
+    "default_enabled": false
+  },
+  "scope": "Pistol-family two-hand geometry and contact-aware support reload; other weapon hand geometry unchanged",
+  "provenance": {
+    "Astra": "New independent hand/forearm geometry, rig contact path, review and CPU harnesses",
+    "Muse": "Rejected0558 staged unchanged C1-C5 failed; no geometry accepted",
+    "generated_h3_video": "Motion/anatomy reference only; no extracted mocap/assets/events"
+  },
+  "geometry": {
+    "triangles": 4836,
+    "meshes": 12,
+    "shared_materials": 3,
+    "new_textures": 0,
+    "digits_per_hand": 4,
+    "thumbs_per_hand": 1,
+    "frozen_region_sha256_normalized_lf": "58b8e7ae9bbe31e66c35ac1622a41b439d18dba730448735c2a4787258767a45"
+  },
+  "frozen_verifier": {
+    "raw_sha256_in_author_worktree": "ccaf7e0adfeff0e3b5ca038515c68893a1475b731722474ee534fece11054200",
+    "sha256_normalized_lf": "ccaf7e0adfeff0e3b5ca038515c68893a1475b731722474ee534fece11054200",
+    "source_unchanged_since_contract": true
+  },
+  "tests": {
+    "frozen_static_reload_contact": "PASS 241 samples",
+    "offhand_reload_contact": "PASS 1205 samples",
+    "level_camera_crouch_prone_ads_offhand": "PASS 980 samples; minimum worldY 0.03498084364003079m >=0.02m",
+    "controller_regression": "PASS 6970 frames and 172 exact claims; 5 rigs/20 profile mappings/17 admitted profiles",
+    "check": "PASS",
+    "build": "PASS",
+    "browser_gpu_jobs_here": 0
+  },
+  "build": {
+    "bundle": "dist/assets/index-D6-0J-w2.js",
+    "sha256": "497a3233e521e23c5c83a5622aafaa816ba39d987dc67a77a2d617fd63728aa1"
+  },
+  "repair_budgets": {
+    "geometry_used": 2,
+    "contact_motion_used": 2,
+    "further_same_approach_repairs_allowed": 0
+  },
+  "residuals": [
+    "Root real temporal recording and matching 17frame visual comparison",
+    "Oversized glove panel and visible cuff seam retained from r1",
+    "Fingers have authored curved static grip shapes, not moving digit joints",
+    "Sampled vertices/triangle centres are not a formal continuous swept-volume proof",
+    "Extreme camera pitch and hand-to-hand intersection not accepted",
+    "Renderer draw/FPS/material/resize/mobile checks remain root-owned"
+  ],
+  "evidence": "docs/astra-hand-evidence",
+  "recording_recipe": "docs/astra-motion-recording-recipe.md",
+  "frozen_4212_233c7d7_untouched": true
+}

@@ -1,0 +1,28 @@
+{
+  "result": "FAIL",
+  "contact": {
+    "frames": 1205,
+    "badFrames": 175,
+    "maxExcessPenetration": 0.01655992702431689,
+    "worst": {
+      "offHand": 0.25,
+      "phase": 0.6166666666666667,
+      "part": "support-thumb",
+      "solid": "grip",
+      "penetration": 0.01655992702431689
+    }
+  },
+  "floor": {
+    "levelCameraOnly": true,
+    "frames": 980,
+    "minimumWorldY": -0.053383112888278406,
+    "threshold": 0.02,
+    "worst": {
+      "prone": true,
+      "ads": 0,
+      "offHand": 1,
+      "phase": 0
+    }
+  },
+  "visualAcceptance": "OPEN"
+}
