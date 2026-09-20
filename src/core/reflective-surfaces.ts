@@ -186,7 +186,13 @@ function cabinRadiance(atlas: THREE.DataTexture, light: ReturnType<typeof unifor
     const localEye = modelWorldMatrixInverse.mul(vec4(cameraPosition, 1)).xyz;
     const ray = positionLocal.sub(localEye).normalize().toVar();
     // Signed nonzero denominator, including exactly axis-parallel views.
-    const safe = ray.greaterThanEqual(0).select(ray.abs().max(0.0001), ray.abs().max(0.0001).negate());
+    // r180 select() lowers its condition to scalar bool; do not use a bvec3
+    // condition here or the first axis would choose the sign of every axis.
+    const safe = vec3(
+      ray.x.greaterThanEqual(0).select(ray.x.abs().max(0.0001), ray.x.abs().max(0.0001).negate()),
+      ray.y.greaterThanEqual(0).select(ray.y.abs().max(0.0001), ray.y.abs().max(0.0001).negate()),
+      ray.z.greaterThanEqual(0).select(ray.z.abs().max(0.0001), ray.z.abs().max(0.0001).negate()),
+    );
     const far = lo.sub(positionLocal).div(safe).max(hi.sub(positionLocal).div(safe)).toVar();
     const distance = far.x.min(far.y).min(far.z).max(0).toVar();
     const extent = hi.sub(lo).max(vec3(0.001)).toVar();
