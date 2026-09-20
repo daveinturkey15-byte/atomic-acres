@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "VERIFIED newoperator actualGLB/texture/posechecks pass; sequentialMusecrouchcritic supports scopedgarment improvement, broadvisualbarOPEN. Combinedoperator/worldweapon/fence210s soak FAILED rendererRSS21.23MiB/60percent up; JSslope -0.118 passes. Worldweapon withheld from10:55preview, samecandidatewithoutworldweapon nowin focusedsoak. Architecturepresence sourceonlyheld, GLMcrateCPU assertionFAIL signedzero; no acceptance. Frozen4212/recommended4234 preserved.",
+  "status": "VERIFIED10:55 inspection uses preservedaccepted4234 (liveHTTPbundleSHAverified). Newoperator model/poses pass but no successor promoted: combinedworldweapon runFAILEDprocessRSSgate, operator-onlyrunwasresource-cancelled at41s afterVRAM763MiB. GuardstoppedownedQAonly. GraphicswholemapgoalOPEN. Candidatesandexternalpartials preserved at3301fb1; postinspection workcontinues.",
   "owner": "Codex",
   "stop_state": "active: preserve frozen checkpoint and continue private candidates",
   "backup": {
@@ -31,14 +31,13 @@
     "status": "ACTIVE"
   },
   "resource_sample": {
-    "sampled_at": "2026-09-20T10:19:09.748305+01:00",
-    "free_ram_gib": 30.685,
-    "free_vram_mib": 5328,
-    "gpu_utilization_percent": 3,
-    "note": "No rootownedGPU/browser running;fourcloudsource jobs. Resamplebeforeheavyacceptance."
+    "sampled_at": "2026-09-20T10:54:22.227938+01:00",
+    "free_ram_gib": null,
+    "free_vram_mib": null,
+    "note": "HeavyQAHELDafterabruptVRAM763MiBat10:49:34; guardkilledonlyownednode12036anddescendants. Laterpointreading4703MiBdoesnotestablishstableheadroom. minRAM29.861GiB. See .recovery-runtime/soak-preview-operator-1048-guard.json."
   },
   "next_actions": [
-    "OWNER10:55BST: finish pending tool session60411 or read .recovery-runtime/soak-preview-operator-1048-guard.json andcaptures/soak-preview-operator-1048.json. Worldweapon OFF is the one changed factor aftercombinedRSSfailure. Onlypromote passingoperator-onlycandidate; otherwiseuse4234 knownacceptedpreview. No thresholds changed. Freeze exactsource/dist/hash and reportbefore10:55.",
+    "10:55 inspection READY ataccepted4234, verifiedlivebundle unchanged. UserrequestedURLreport. Keepitand4212stable. Optionalnewoperator4240 remainsexperimental:41s resourcecancellednotPASS; combinedworldweaponRSSfailremainsOPEN. Do notrerunGPUuntilmeasuredstableheadroom >=3GiBreserve+~1.5GiBQAfootprint; ownerGPUjobsfluctuated suddenly. ResumeCPU/cloud sourcework meanwhile.",
     "Newoperator work/operator-export-final2-muse-1030 actualguardedBlender15.15s/579MBprivate;12520tris21bones2prims3embeddedmaps. BothunchangedGLB/textureguardsPASS. Actual5poseA/B in captures/operator-live-1038 before/after. Independent sequentialMuse paircritic confirmscomparablecrouch andrealgarment/padcontinuitygain; head/hands/toyreadOPEN. Finalrepair2 spent, nofurtherparameterfixes.",
     "Worldweapon final2 CPU63checks andlive5rifleposeframesPASS butcombined210sprocessmemorygate failed21.23MiB/60percentstepsup. Keepoptional world-weapon flag OFF ininspection. Newrunwithoutit isolatescombination; do notclaim leakcauseproven. Fivefamiliescover20ids,not20uniquemeshes.",
     "Mountain-volume CPU53seamchecks+threeclosedvolumes and4actualgameplayA/B passmechanically; actualvisualgaininsufficient, flagOFF. Preserved work/mountain-volume-seam-muse-1020 and4239 artcandidate. No broadoldbaseline revalidation. Surface-presenceMuse1035 sourcecomplete, notintegratedorGPUaccepted; nextcandidateafterfrozeninspection only.",
@@ -2375,6 +2374,21 @@
       "sha256": "78a744ab1977fba7569a587747135d981991358bbea764fb2fa95326a056e717",
       "state": "VERIFIED scoped visual review candidate, NOT a complete map overhaul or replacement of frozen4212; HUD spent observer OPEN",
       "verified_at": "2026-09-20T07:46:47.384026+01:00"
+    },
+    "inspection_1055": {
+      "at": "2026-09-20T10:55:00+01:00",
+      "status": "READY_WITH_ACCEPTED_FALLBACK",
+      "url": "http://127.0.0.1:4234/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2",
+      "source_commit": "4327d9750ba4bfb8f11e8f91528d4bb037d29af8",
+      "dist": "dist-visual-review-0848",
+      "sha256": "aea060fbc2cfa85af31cd2eef4d07863ee3d31ac9c40311c328ff8cb26bea25a",
+      "live_verified_at": "2026-09-20T10:54:22.227668+01:00",
+      "new_candidate_url": "http://127.0.0.1:4240/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary",
+      "new_candidate_state": "OPEN stability; actualbody+fiveposevalidationPASS, excludedfromacceptedpreview untilresource-safe210ssoak passes. worldweaponOFF.",
+      "new_candidate_source": "3301fb12fdc49e6ec4b073e7527e8b5c20c2029e",
+      "new_candidate_dist": "dist-operator-candidate-1038",
+      "new_candidate_sha256": "e5b3d2bb07b4eabf7f0c8334014ae67b3c92c35a1147290f1bea7dbb0a82da58",
+      "separate_copy": "NOT_CREATED automaticcommandpolicyrejectedcopy/launch; saferexistingacceptedartifact reused andHTTPverified."
     }
   },
   "backup_0420": {
@@ -2431,7 +2445,7 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T10:50:08.702215+01:00",
+  "updated_at": "2026-09-20T10:54:22.227948+01:00",
   "current_ownership": {
     "root": "Review, exact integration and serialized GPU/browser acceptance only; no implementation or imagegen.",
     "native_astras": "Both completed before09BST; do not restart.",
@@ -2532,7 +2546,17 @@
   ],
   "inspection_checkpoint": {
     "at": "2026-09-20T10:55:00+01:00",
-    "request": "Prepare a decent preview for owner inspection. Preserve previous4212/4234 artifacts. Freeze tested successor by10:52; continue later candidates separately.",
-    "status": "IN_PROGRESS operator-only (worldweaponOFF) final210ssoak; combinedcandidate failedcorrectly, no gatewaiver. Freeze successor onlyifpasses elseprovide4234 acceptedfallback."
+    "status": "READY_WITH_ACCEPTED_FALLBACK",
+    "url": "http://127.0.0.1:4234/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2",
+    "source_commit": "4327d9750ba4bfb8f11e8f91528d4bb037d29af8",
+    "dist": "dist-visual-review-0848",
+    "sha256": "aea060fbc2cfa85af31cd2eef4d07863ee3d31ac9c40311c328ff8cb26bea25a",
+    "live_verified_at": "2026-09-20T10:54:22.227668+01:00",
+    "new_candidate_url": "http://127.0.0.1:4240/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary",
+    "new_candidate_state": "OPEN stability; actualbody+fiveposevalidationPASS, excludedfromacceptedpreview untilresource-safe210ssoak passes. worldweaponOFF.",
+    "new_candidate_source": "3301fb12fdc49e6ec4b073e7527e8b5c20c2029e",
+    "new_candidate_dist": "dist-operator-candidate-1038",
+    "new_candidate_sha256": "e5b3d2bb07b4eabf7f0c8334014ae67b3c92c35a1147290f1bea7dbb0a82da58",
+    "separate_copy": "NOT_CREATED automaticcommandpolicyrejectedcopy/launch; saferexistingacceptedartifact reused andHTTPverified."
   }
 }
