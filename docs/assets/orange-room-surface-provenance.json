@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "retrieved": "2026-09-20T15:25:29.7983705+01:00",
+  "license": "CC0-1.0",
+  "license_url": "https://polyhaven.com/license",
+  "route": "Poly Haven originals; 1K JPG maps; authored local geometry",
+  "files": [
+    {
+      "asset": "fabric_leather_02",
+      "channel": "Diffuse",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fabric_leather_02/fabric_leather_02_diff_1k.jpg",
+      "path": "public/textures/polyhaven/fabric_leather_02/fabric_leather_02_diff_1k.jpg",
+      "bytes": 663390,
+      "sha256": "97ba9480c7619efc9b8c08202c3e3773d1dd532dacce4dfe97f86e95339cf132",
+      "md5": "35256026fcf2734d558ee2aa8f939c10",
+      "physical_tile_m": 0.5
+    },
+    {
+      "asset": "fabric_leather_02",
+      "channel": "nor_gl",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fabric_leather_02/fabric_leather_02_nor_gl_1k.jpg",
+      "path": "public/textures/polyhaven/fabric_leather_02/fabric_leather_02_nor_gl_1k.jpg",
+      "bytes": 170918,
+      "sha256": "2652ece55bd2780be1e16fb5ebc4171b139da45bcf9839a161b9ae236534e471",
+      "md5": "1600b3fed674702eaa350cd627278a0f",
+      "physical_tile_m": 0.5
+    },
+    {
+      "asset": "fabric_leather_02",
+      "channel": "Rough",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/fabric_leather_02/fabric_leather_02_rough_1k.jpg",
+      "path": "public/textures/polyhaven/fabric_leather_02/fabric_leather_02_rough_1k.jpg",
+      "bytes": 636469,
+      "sha256": "bce3c63ead508ffa0c110c176fdd94e5dbf57b51efdbc6781026a21e217b0edd",
+      "md5": "a1582ea1adc9bd4fa1608f8374ab90b8",
+      "physical_tile_m": 0.5
+    },
+    {
+      "asset": "wood_table_001",
+      "channel": "Diffuse",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_table_001/wood_table_001_diff_1k.jpg",
+      "path": "public/textures/polyhaven/wood_table_001/wood_table_001_diff_1k.jpg",
+      "bytes": 215573,
+      "sha256": "460dd08d240f4a1f02982415048c3c5c200f385db212da18dc7e2df68bf4d0be",
+      "md5": "56652a7339b16a76afad20d3585f66ea",
+      "physical_tile_m": 1.5
+    },
+    {
+      "asset": "wood_table_001",
+      "channel": "nor_gl",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_table_001/wood_table_001_nor_gl_1k.jpg",
+      "path": "public/textures/polyhaven/wood_table_001/wood_table_001_nor_gl_1k.jpg",
+      "bytes": 51927,
+      "sha256": "9bf7ddf5721e225c20290f1772ae37f9bdfd49658f6d458259eb794e2149d3cf",
+      "md5": "6360e09967add8baecaa5ecc55fb5e03",
+      "physical_tile_m": 1.5
+    },
+    {
+      "asset": "wood_table_001",
+      "channel": "Rough",
+      "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/wood_table_001/wood_table_001_rough_1k.jpg",
+      "path": "public/textures/polyhaven/wood_table_001/wood_table_001_rough_1k.jpg",
+      "bytes": 237261,
+      "sha256": "a2ca9ae89dfe7b8e2e5e92f0aa43467845417de8a50205b5852ef0d57c7624f9",
+      "md5": "05b60bd20a1cc4355c5d73a99b245d44",
+      "physical_tile_m": 1.5
+    }
+  ]
+}

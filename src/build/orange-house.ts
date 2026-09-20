@@ -11,6 +11,7 @@ import type { AABB, Builder } from '../core/kit';
 import { aabb, aabbSlab, box, extrude, group, slab } from '../core/kit';
 import { batchStatic } from '../core/static-batch';
 import { loungeChair } from './lounge-chair';
+import { livingSofa, livingCabinet, livingTelevision, metricUVs } from './interior-furniture';
 import { PAL } from '../core/palette';
 import {
   CANOPY_LEN, CANOPY_OUT, CANOPY_Y, DECK_LEN, DECK_OUT, DECK_Y, EAVE_Y, FLOOR_H,
@@ -445,8 +446,10 @@ export const buildOrangeHouse: Builder = (ctx) => {
   // stay clear end to end, and the doorway in the cross partition sits on the line
   // between them so the house is a through-route, not a pair of pockets.
   const darkIn = mat.timberDark, topIn = mat.painted(PAL.concreteDark, 0.6, 0.05);
-  const oliveM = mat.painted(PAL.treeLeaf, 0.94, 0);        // olive living-room wall
-  const carpetM = mat.painted(PAL.interiorTeal, 0.96, 0);   // grey-green carpet
+  const room = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('room') === 'authored'
+    ? mat.interior() : null;
+  const oliveM = room?.plaster ?? mat.painted(PAL.treeLeaf, 0.94, 0);
+  const carpetM = room?.carpet ?? mat.painted(PAL.interiorTeal, 0.96, 0);
   const yellowM = mat.painted(PAL.hazardYellow, 0.72, 0);   // the yellow kitchen
   const orangeM = mat.painted(PAL.terracotta, 0.8, 0);
   const glowM = mat.emissive(PAL.sunColor);
@@ -508,7 +511,9 @@ export const buildOrangeHouse: Builder = (ctx) => {
     // stair head the two shared both side faces
     if (i % 3 === 0) stPost.push([0.12, RAIL_IN + 0.1 + TUCK, 0.12, railX, top + (RAIL_IN + 0.1 - TUCK) / 2, zc, 0]);
   }
-  emit(stTread, carpetM, true);
+  // Step instances scale the unit UVs; keep the old tread material until the
+  // separate stair rebuild supplies metric UVs rather than stretching yarns.
+  emit(stTread, mat.painted(room ? 0x787c6c : PAL.interiorTeal, 0.96, 0), true);
   emit(stNose, yellowM, false);
   emit(stRail, mat.painted(PAL.timber, 0.88, 0), true);
   emit(stPost, darkIn, true);
@@ -624,9 +629,20 @@ export const buildOrangeHouse: Builder = (ctx) => {
     g.add(box(0.06, 2.1 + 2 * TUCK, 0.34, darkIn, IN_FE - FE * 0.05, 1.35, pz));
   }
   const sofaX = IN_FE - FE * 0.48, sofaZ = (IN_FRONT + Z_SPLIT) / 2;
-  put(0.85, 0.42, 2.2, mat.painted(PAL.terracotta, 0.9, 0), sofaX, 0.21, sofaZ, true);
-  g.add(box(0.28, 0.45, 2.2, orangeM, IN_FE - FE * 0.2, 0.62, sofaZ));
-  g.add(box(0.7, 0.05, 1.5, mat.painted(PAL.capsuleWhite, 0.98, 0), sofaX - FE * 1.4, 0.03, sofaZ));
+  if (room) {
+    const sofa = livingSofa(room); sofa.position.set(sofaX, 0, sofaZ); sofa.rotation.y = FE === 1 ? 0 : Math.PI; g.add(sofa);
+    colliders.push(aabb(sofaX, .21, sofaZ, .85, .42, 2.2));
+    // The old rug was below the floor finish. This thin woven runner sits ON it.
+    const rug = box(1.3, .013, 2.1, room.linen, sofaX - FE * 1.4, .174, sofaZ);
+    metricUVs(rug.geometry, .08); g.add(rug);
+    const baseboard = box(.048, .11, Math.abs(IN_FRONT - Z_SPLIT), room.walnut,
+      IN_FE - FE * .068, .218, (IN_FRONT + Z_SPLIT) / 2);
+    metricUVs(baseboard.geometry, 1.5); g.add(baseboard);
+  } else {
+    put(0.85, 0.42, 2.2, mat.painted(PAL.terracotta, 0.9, 0), sofaX, 0.21, sofaZ, true);
+    g.add(box(0.28, 0.45, 2.2, orangeM, IN_FE - FE * 0.2, 0.62, sofaZ));
+    g.add(box(0.7, 0.05, 1.5, mat.painted(PAL.capsuleWhite, 0.98, 0), sofaX - FE * 1.4, 0.03, sofaZ));
+  }
   const eggAt = (ex: number, ez: number, yBase: number): void => {
     const chair=loungeChair(mat.painted(PAL.capsuleWhite,.58,0),orangeM,mat.steel);
     chair.position.set(ex,yBase,ez); chair.rotation.y=ex>0 ? -Math.PI/2 : Math.PI/2;
@@ -634,9 +650,17 @@ export const buildOrangeHouse: Builder = (ctx) => {
     colliders.push(aabbSlab(ex, yBase, ez, 0.8, 1.17, 0.8));
   };
   eggAt(sofaX - FE * 2.1, sofaZ - S * 1.4, 0.16);
-  put(0.6, FLOOR_H, 1.3, mat.painted(PAL.timber, 0.85, 0), IN_FE - FE * 0.35, FLOOR_H / 2, IN_FRONT + S * 0.7, true);
-  put(0.5, 0.55, 1.1, darkIn, sofaX - FE * 3.2, 0.275, IN_FRONT + S * 0.85, true);
-  g.add(box(0.42, 0.42, 0.7, mat.windowDark, sofaX - FE * 3.2, 0.78, IN_FRONT + S * 0.85));
+  if (room) {
+    const cupboard = livingCabinet(room, FLOOR_H); cupboard.position.set(IN_FE - FE * .35, 0, IN_FRONT + S * .7);
+    cupboard.rotation.y = FE === 1 ? 0 : Math.PI; g.add(cupboard);
+    colliders.push(aabb(IN_FE - FE * .35, FLOOR_H / 2, IN_FRONT + S * .7, .6, FLOOR_H, 1.3));
+    const tv = livingTelevision(room, mat.windowDark); tv.position.set(sofaX - FE * 3.2, 0, IN_FRONT + S * .85); g.add(tv);
+    colliders.push(aabb(sofaX - FE * 3.2, .275, IN_FRONT + S * .85, .5, .55, 1.1));
+  } else {
+    put(0.6, FLOOR_H, 1.3, mat.painted(PAL.timber, 0.85, 0), IN_FE - FE * 0.35, FLOOR_H / 2, IN_FRONT + S * 0.7, true);
+    put(0.5, 0.55, 1.1, darkIn, sofaX - FE * 3.2, 0.275, IN_FRONT + S * 0.85, true);
+    g.add(box(0.42, 0.42, 0.7, mat.windowDark, sofaX - FE * 3.2, 0.78, IN_FRONT + S * 0.85));
+  }
   const clock = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 0.05, 16), mat.painted(PAL.hazardYellow, 0.5, 0.2));
   clock.rotation.x = Math.PI / 2; clock.position.set(sofaX - FE * 2.6, 2.15, IN_FRONT - S * 0.04); g.add(clock);
   // Back room: yellow walls, a chair, a wall clock (f-aICKIbuo8zQ-179).
@@ -652,12 +676,19 @@ export const buildOrangeHouse: Builder = (ctx) => {
   }
   for (const [px, pz] of [[tblX, tblZ], [sofaX - FE * 1.4, sofaZ]] as P2[]) {
     g.add(box(0.04, 0.6, 0.04, darkIn, px, FLOOR_H - 0.35, pz));
-    const globe = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 10), glowM);
+    const isLounge = room && px === sofaX - FE * 1.4;
+    const globe = new THREE.Mesh(new THREE.SphereGeometry(0.15, 20, 12), isLounge ? mat.emissive(0xffe2b7, .28) : glowM);
     globe.position.set(px, FLOOR_H - 0.72, pz); g.add(globe);
+    if (isLounge) {
+      const shade = new THREE.Mesh(new THREE.ConeGeometry(.24, .18, 32, 1, true), room.brass);
+      shade.position.set(px, FLOOR_H - .57, pz); shade.castShadow = shade.receiveShadow = true; g.add(shade);
+    }
   }
   const floorAt = (m: THREE.Material, x0: number, x1: number, z0: number, z1: number): void => {
     const [a0, a1] = span(x0, x1), [b0, b1] = span(z0, z1);
-    g.add(slab(a1 - a0 - 0.2, 0.05, b1 - b0 - 0.2, m, (a0 + a1) / 2, 0.115, (b0 + b1) / 2));
+    const floor = slab(a1 - a0 - 0.2, 0.05, b1 - b0 - 0.2, m, (a0 + a1) / 2, 0.115, (b0 + b1) / 2);
+    if (room && m === room.carpet) metricUVs(floor.geometry, .08);
+    g.add(floor);
   };
   floorAt(carpetM, X_SPLIT, IN_FE, IN_FRONT, Z_SPLIT);          // living room
   floorAt(carpetM, VOID_X, IN_FE, Z_SPLIT, IN_BACK);            // stair hall

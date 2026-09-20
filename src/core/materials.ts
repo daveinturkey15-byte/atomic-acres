@@ -54,6 +54,7 @@ import {
 } from './ground-pbr-canary';
 import { buildLawnCanarySpec, LAWN_CANARY_URLS } from './lawn-pbr-canary';
 import { upgradeStreetPbr } from './street-pbr';
+import { createInteriorMaterials, type InteriorMaterials } from './interior-materials';
 
 type Ctx2D = CanvasRenderingContext2D;
 type N = ShaderNodeObject<Node>;
@@ -266,6 +267,8 @@ export interface MaterialLibrary {
   /** Soft radial flash sprite (masked, HDR core) for the weapon-effects flash quads. */
   flashSprite: THREE.Material;
   viewmodel: ViewmodelMaterialSet;
+  /** Lazy: baseline builds neither load nor allocate the authored room maps. */
+  interior: () => InteriorMaterials;
   painted: (color: number, rough?: number, metal?: number) => THREE.Material;
   /**
    * ONE material for a whole character (src/characters/mesh.ts).
@@ -334,6 +337,7 @@ export function buildMaterials(): MaterialLibrary {
   const viewmodel = createViewmodelMaterials();
   own(viewmodel);
   let disposed = false;
+  let interior: InteriorMaterials | null = null;
   const wetRefresh = new Map<THREE.Material, () => void>();
 
   const std = (p: THREE.MeshStandardMaterialParameters): THREE.MeshStandardMaterial => {
@@ -878,6 +882,11 @@ export function buildMaterials(): MaterialLibrary {
     impactDecal: impact.material,
     flashSprite: flashSpriteMat,
     viewmodel,
+    interior() {
+      if (disposed) throw new Error('Cannot build interior materials after disposal');
+      if (!interior) { interior = createInteriorMaterials(); own(interior); }
+      return interior;
+    },
     bark: std({ map: barkTex, roughness: 1, roughnessMap: barkRough, metalness: 0 }),
     chrome: std({ color: PAL.chrome, roughness: 1, roughnessMap: chromeRough, metalness: 0.95, envMapIntensity: 1.25 }),
     steel: std({ color: PAL.steel, roughness: 1, roughnessMap: steelRough, metalness: 0.7 }),
