@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -22,6 +23,9 @@ import time
 import uuid
 from typing import Any
 from dispatch_policy import DispatchHold, require_external_dispatch
+from task_contract import ContractError, load_contract, verify_artifacts
+from run_limits import RunLease
+from adoption_gate import require_native_adoption
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -91,6 +95,7 @@ def _validate_inputs(prompt_file: Path, worktree: Path, lane: str, route: str) -
         raise LaneError("Lane must be 1-64 characters of letters, digits, '.', '_' or '-'.")
     if route not in ROUTES:
         raise LaneError(f"Unsupported route {route!r}; choose glm or muse.")
+    require_native_adoption(route)
     if not prompt_file.is_file():
         raise LaneError(f"PromptFile is not a regular file: {prompt_file}")
     if not worktree.is_dir():
@@ -117,10 +122,11 @@ def _validate_inputs(prompt_file: Path, worktree: Path, lane: str, route: str) -
             "route": route,
             "lane": lane,
             "promptFile": str(prompt_file),
-            "worktree": str(candidate_root),
+            "worktree": str(worktree),
             "projectCommonDir": str(project_common),
         }
     )
+    planned['contract'] = load_contract(REPO_ROOT, lane, route, worktree, prompt_file)
     return planned
 
 
@@ -226,6 +232,14 @@ def _assistant_audit_record(event: dict[str, Any]) -> dict[str, Any] | None:
         scalar = _short_scalar(event.get(key))
         if scalar is not None:
             record[key] = scalar
+    if event_type == 'message_end' and isinstance(message.get('usage'), dict):
+        usage = message['usage']
+        safe = {k: v for k, v in usage.items() if k in {'input', 'output', 'cacheRead', 'cacheWrite', 'totalTokens'}
+                and type(v) in (int, float) and math.isfinite(v) and v >= 0}
+        if isinstance(usage.get('cost'), dict):
+            safe['cost'] = {k: v for k, v in usage['cost'].items() if k in {'input', 'output', 'cacheRead', 'cacheWrite', 'total'}
+                            and type(v) in (int, float) and math.isfinite(v) and v >= 0}
+        record['message']['usage'] = safe
     if message.get("errorMessage") or any(
         isinstance(message.get(key), str) and message[key].lower() in {"error", "failed", "failure", "errored"}
         for key in ("status", "stopReason")
@@ -370,6 +384,8 @@ def _run_omp(plan: dict[str, Any], minutes: int, transcript: Path) -> tuple[int,
         "--cwd",
         plan["worktree"],
     ]
+    admitted_skills = plan['contract']['skills']
+    command += ['--skills=' + ','.join(admitted_skills)] if admitted_skills else ['--no-skills']
     try:
         proc = subprocess.Popen(
             command,
@@ -434,6 +450,7 @@ def _transcript_facts(path: Path) -> dict[str, Any]:
     bytes_seen = 0
     lines_seen = 0
     bounded = False
+    usage_records = []
 
     with path.open("rb") as source:
         while True:
@@ -455,6 +472,8 @@ def _transcript_facts(path: Path) -> dict[str, Any]:
             event_type = value.get("type")
             message = value.get("message")
             if event_type in ASSISTANT_EVENTS and isinstance(message, dict) and message.get("role") == "assistant":
+                if event_type == 'message_end' and message.get('usage'):
+                    usage_records.append(message['usage'])
                 provider = message.get("provider")
                 model = message.get("model")
                 if isinstance(provider, str) and provider.strip():
@@ -483,6 +502,7 @@ def _transcript_facts(path: Path) -> dict[str, Any]:
         "seenLines": lines_seen,
         "seenBytes": bytes_seen,
         "boundedRead": bounded,
+        "usage": usage_records,
     }
 
 
@@ -523,14 +543,21 @@ def main(argv: list[str] | None = None) -> int:
     if not 1 <= args.minutes <= 30:
         parser.error("--minutes must be between 1 and 30")
 
+    lease = None
+    ledger_run_id = None
     try:
         prompt_file = _resolve_path(args.prompt_file)
         worktree = _resolve_path(args.worktree)
         plan = _validate_inputs(prompt_file, worktree, args.lane, args.route)
+        contract = plan['contract']
+        if args.minutes > contract['max_minutes']:
+            raise ContractError('Requested runtime exceeds contract')
         if args.dry_run:
             return _dry_run(plan, args.minutes)
 
         run_id = f"delegated-omp-{args.lane}-{uuid.uuid4().hex}"
+        lease = RunLease(REPO_ROOT/'.recovery-runtime/dispatch-limits.sqlite', run_id, contract)
+        lease.__enter__()
         run_dir = RUNTIME_ROOT / run_id
         run_dir.mkdir(parents=True, exist_ok=False)
         transcript = run_dir / "transcript.jsonl"
@@ -558,7 +585,13 @@ def main(argv: list[str] | None = None) -> int:
         ledger_run_id = _start_ledger(run_id, plan, transcript)
         state["ledgerRunId"] = ledger_run_id
         _write_json(receipt, state)
+        state['contract'] = contract
+        _write_json(receipt, state)
         exit_code, timed_out, audit = _run_omp(plan, args.minutes, transcript)
+        try:
+            state['artifactReview'] = verify_artifacts(contract, worktree)
+        except ContractError as exc:
+            state['artifactReview'] = {'status': 'failed', 'reason': str(exc), 'accepted': False}
         facts = _transcript_facts(transcript)
         facts.update(audit)
         truncated = bool(audit["truncated"])
@@ -569,6 +602,8 @@ def main(argv: list[str] | None = None) -> int:
             plan["provider"] not in actual_providers or not _model_matches(actual_models, plan["model"])
         )
         failure_reasons: list[str] = []
+        if state['artifactReview']['status'] == 'failed':
+            failure_reasons.append('artifact contract failed')
         if exit_code != 0:
             failure_reasons.append(f"provider process exited {exit_code}")
         if timed_out:
@@ -610,10 +645,15 @@ def main(argv: list[str] | None = None) -> int:
                 "truncated": truncated,
             },
             "failureReasons": failure_reasons,
+            "usage": facts['usage'],
+            "costAuthority": "OMP estimates only; not subscription quota or provider invoice",
+            "billingClass": contract['billing_class'],
+            "reservedUsd": contract['reserved_usd'],
             "ledgerStatus": "failed" if failure_reasons else "completed",
         })
         _write_json(receipt, state)
         ledger_finish_exit = _finish_ledger(run_id, exit_code, bool(failure_reasons))
+        ledger_run_id = None
         state["ledgerFinishExit"] = ledger_finish_exit
         if ledger_finish_exit != 0:
             state["failureReasons"].append("delegated-run ledger finish failed")
@@ -629,9 +669,14 @@ def main(argv: list[str] | None = None) -> int:
             "actualModel": state["actualModel"],
         }, ensure_ascii=False, sort_keys=True))
         return 1 if state["failureReasons"] else 0
-    except (LaneError, OSError, subprocess.SubprocessError) as exc:
+    except (LaneError, ContractError, OSError, subprocess.SubprocessError) as exc:
+        if ledger_run_id:
+            _finish_ledger(ledger_run_id, 2, True)
         print(f"provider-lane failed closed: {exc}", file=sys.stderr)
         return 2
+    finally:
+        if lease is not None:
+            lease.finish()
 
 
 if __name__ == "__main__":

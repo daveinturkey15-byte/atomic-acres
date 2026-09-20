@@ -47,6 +47,49 @@
         "sourceImagePath": "C:\\Users\\david\\.codex\\generated_images\\01a0ba59-abea-76e1-9f7d-9034a640fc22\\exec-e5a92cca-93be-4a76-a61b-9127cf4a8291.png",
         "sourceCatalog": "catalog-weapons-a",
         "stage": "reference-generated"
+      },
+      "pipelineEvidence": {
+        "observedAt": "2026-09-20",
+        "authoredModel": {
+          "path": "public/assets/catalog-carbine/carbine.glb",
+          "sha256": "8afb235e2a2bcffc71ae794e973813c53c4f37e094110c8ceb62490e191a8167",
+          "bytes": 1084500
+        },
+        "authoringSource": {
+          "claim_state": "observed candidate source; current GLB reproduction not verified",
+          "files": [
+            {
+              "path": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919\\scripts\\blender\\catalog-carbine\\build_catalog_carbine.py",
+              "sha256": "b8bb3280023fecd9f981b99dcb858f86220b8ce1bfbf5a41f80ad994826ea2f7"
+            },
+            {
+              "path": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919\\scripts\\blender\\catalog-carbine\\explicit_geometry.py",
+              "sha256": "deed57c0522eeb9423b9a727290985bb39ea1cd6db7c1add32c1c385a5e90c3a"
+            }
+          ]
+        },
+        "runtimeAdapter": {
+          "path": "src/weapons/catalog-carbine-loader.ts",
+          "sha256": "6cb38514aa366a4c652a0fd688530d0d6a3b1b2a0ac063e643dfc748ed22b718",
+          "bytes": 24321
+        },
+        "reference": {
+          "path": "docs/reference/production-catalog/weapons/carbine.png",
+          "sha256": "75e0d0cdd561b0e66844432b45f05bbda652d717c641fabae86001dff98bcd70",
+          "bytes": 1995616
+        },
+        "sourceHandoff": {
+          "path": "docs/catalog-carbine-handoff.md",
+          "sha256": "b265a1b9073b2efb51a7ee5547e2cee207da4f868c192e5e264595765cbc863f",
+          "bytes": 6239
+        },
+        "sourceHandoffMatchesCurrentModel": false,
+        "acceptance": "OPEN: prior handoff GLB hash/byte count differs from current model; current full runtime acceptance is not established by catalogue links.",
+        "codeLicense": "project source; provenance review required before redistribution",
+        "modelLicense": "independently authored here according to handoff; original build route recorded separately",
+        "outputLicense": "original owner-generated reference; provider terms separate from modelling code",
+        "stage": "authored-artifact-observed; no promotion",
+        "nextAction": "Run current exported-GLB gate and bind actual runtime frame, motion and lifecycle acceptance to this exact model hash."
       }
     },
     {

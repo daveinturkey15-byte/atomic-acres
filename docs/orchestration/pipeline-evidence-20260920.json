@@ -1,0 +1,291 @@
+{
+  "date": "2026-09-20",
+  "scope": "pipeline only; no game promotion",
+  "focused_tests": 25,
+  "provider_acceptance": [
+    {
+      "route": "glm",
+      "passed": true,
+      "cases": 11,
+      "missingEvidence": "hold",
+      "answer_sha256": "b5868a96e5628792435225ebb79799730a1f1add954a80dc445cc5a152aca80b",
+      "actual_model": "glm-5.3-flash",
+      "scope": "synthetic answer only; not native tooling or game implementation"
+    },
+    {
+      "route": "muse",
+      "passed": true,
+      "cases": 11,
+      "missingEvidence": "hold",
+      "answer_sha256": "07b20a9524906776c99910fd0db70cd37a604251c28160c575562c2281b6f67f",
+      "actual_model": "muse-spark-1.3-contributor",
+      "scope": "synthetic answer only; not native tooling or game implementation"
+    },
+    {
+      "route": "agy",
+      "passed": true,
+      "cases": 11,
+      "missingEvidence": "hold",
+      "answer_sha256": "d0862e424f2b0ef0f9d45ad91ee4ba1fb9c5a9e5df028a4dd464ec7479b6bbd5",
+      "actual_model": null,
+      "scope": "synthetic answer only; not native tooling or game implementation"
+    }
+  ],
+  "skill_evaluation": {
+    "no_skill": {
+      "passed": 18,
+      "total": 18,
+      "failures": []
+    },
+    "description_only": {
+      "passed": 18,
+      "total": 18,
+      "failures": []
+    },
+    "description_plus_body": {
+      "passed": 18,
+      "total": 18,
+      "failures": []
+    },
+    "runtime_fixture_checks": {
+      "blocked_200_rejected": true,
+      "real_page_admitted": true
+    },
+    "interpretation": "18/18 in all conditions is no observed regression and zero demonstrated gain on this small routing/safety set; not production asset validation."
+  },
+  "native_adoption": {
+    "OMP": {
+      "native_receipt_fresh": true,
+      "run_id": "delegated-omp-1271e606-2f62-4bda-9257-1b2dd7b3999c",
+      "receipt_sha256": "d5ea82470890d956574a3f240691aa705e52d189239a402103f7a3b6f01584a3",
+      "served_model": null,
+      "scope": "native gate, not broad runtime parity"
+    },
+    "Claude Code": {
+      "native_receipt_fresh": true,
+      "run_id": "delegated-claude-b05557a6-c830-43ae-b95f-894607a4ab74",
+      "receipt_sha256": "6d544bb59db716393946a81c7d1bb749a91c7562af639ae9da94324091cfea16",
+      "served_model": null,
+      "scope": "native gate, not broad runtime parity"
+    },
+    "Antigravity": {
+      "native_receipt_fresh": true,
+      "run_id": "delegated-agy-ca242b16-24de-44de-a2a3-26a57ab87953",
+      "receipt_sha256": "cc38b6f3f5fa50712040c64e9e8f6adedd0fc161e8ca57eab951194ede98d659",
+      "served_model": null,
+      "scope": "native gate, not broad runtime parity"
+    },
+    "Hermes": {
+      "native_receipt_fresh": false,
+      "run_id": "delegated-hermes-f36972b8-1fa6-4118-9be9-78916604162c",
+      "receipt_sha256": "d1c5332df94789191d162babaa2aa5a00209e0437d2336e9a6b2f60a26f320ee",
+      "served_model": null,
+      "scope": "native gate, not broad runtime parity"
+    },
+    "Codex": {
+      "native_receipt_fresh": true,
+      "proof_sha256": "28ecf4762fac86368630a4cc8b11dc04a483fb1f30eb3fbc8e07efdac63855bf"
+    }
+  },
+  "source_artifacts": [
+    {
+      "path": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\pipeline-completion-20260920\\glm-probe-1\\receipt.json",
+      "sha256": "aaf072bd92118ce2be2882bbfc6b1ad9f4746ee34f95fb3d1d89267026d3c6bc"
+    },
+    {
+      "path": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\pipeline-completion-20260920\\muse-probe-1\\receipt.json",
+      "sha256": "18b725b9edd03a2ea024755de200cea7013d625497af06af49fb4c5b7fd09cf7"
+    },
+    {
+      "path": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\pipeline-completion-20260920\\agy-probe-1\\receipt.json",
+      "sha256": "3d73d389a1b7ff68e30fca19707a7acf572e59e12c2c847c33a1140c122c1f74"
+    },
+    {
+      "path": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\pipeline-completion-20260920\\skills-no-skill\\receipt.json",
+      "sha256": "d64945717da49d812d993838fe6cb748cad7f689010d13e493efe96312d32f54"
+    },
+    {
+      "path": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\pipeline-completion-20260920\\skills-description\\receipt.json",
+      "sha256": "80ef422b26608e4879eb14e8d7e5b8dfae0b69b5e65eac28422e056adb45a798"
+    },
+    {
+      "path": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\pipeline-completion-20260920\\skills-full\\receipt.json",
+      "sha256": "14482fc8a59bfaf82a64d0efcc2c5adf462a5872006b34d128188858748730b4"
+    }
+  ],
+  "probes": [
+    {
+      "run_id": "delegated-omp-15f9ab89-2ca6-40f5-9557-7c3a03754512",
+      "requested_model": "zai/glm-5.3-flash",
+      "requested_effort": "max",
+      "actual_model": "glm-5.3-flash",
+      "actual_provider": "zai",
+      "duration_seconds": 20.573,
+      "billing_class": "subscription",
+      "usage": [
+        {
+          "input": 18602,
+          "output": 611,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "totalTokens": 19213,
+          "reasoningTokens": 515,
+          "cost": {
+            "input": 0.0027903,
+            "output": 0.0003055,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.0030958
+          }
+        }
+      ],
+      "effort_acknowledged": null
+    },
+    {
+      "run_id": "delegated-omp-35f27b5e-92b3-4a75-830b-f9672c064cc2",
+      "requested_model": "meta-contributor/muse-spark-1.3-contributor",
+      "requested_effort": "xhigh",
+      "actual_model": "muse-spark-1.3-contributor",
+      "actual_provider": "meta-contributor",
+      "duration_seconds": 16.09,
+      "billing_class": "metered",
+      "usage": [
+        {
+          "input": 19111,
+          "output": 985,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "totalTokens": 20096,
+          "reasoningTokens": 846,
+          "cost": {
+            "input": 0.0019111000000000002,
+            "output": 0.00019700000000000002,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.0021081000000000003
+          }
+        }
+      ],
+      "effort_acknowledged": null
+    },
+    {
+      "run_id": "delegated-agy-28582b45-746f-4d9c-8183-fe3826ac51d2",
+      "requested_model": "gemini-3.8-flash-high",
+      "requested_effort": "high",
+      "actual_model": null,
+      "actual_provider": null,
+      "duration_seconds": 15.687,
+      "billing_class": "subscription",
+      "usage": [],
+      "effort_acknowledged": null
+    },
+    {
+      "run_id": "delegated-omp-9271eecc-597d-4580-93fd-437f93ef73c0",
+      "requested_model": "meta-contributor/muse-spark-1.3-contributor",
+      "requested_effort": "xhigh",
+      "actual_model": "muse-spark-1.3-contributor",
+      "actual_provider": "meta-contributor",
+      "duration_seconds": 10.91,
+      "billing_class": "metered",
+      "usage": [
+        {
+          "input": 19732,
+          "output": 1049,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "totalTokens": 20781,
+          "reasoningTokens": 878,
+          "cost": {
+            "input": 0.0019732,
+            "output": 0.00020980000000000003,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.002183
+          }
+        }
+      ],
+      "effort_acknowledged": null
+    },
+    {
+      "run_id": "delegated-omp-a78ab582-5076-4398-99a8-388f43b16a1a",
+      "requested_model": "meta-contributor/muse-spark-1.3-contributor",
+      "requested_effort": "xhigh",
+      "actual_model": "muse-spark-1.3-contributor",
+      "actual_provider": "meta-contributor",
+      "duration_seconds": 14.035,
+      "billing_class": "metered",
+      "usage": [
+        {
+          "input": 20079,
+          "output": 1487,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "totalTokens": 21566,
+          "reasoningTokens": 1280,
+          "cost": {
+            "input": 0.0020079,
+            "output": 0.0002974,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.0023053
+          }
+        }
+      ],
+      "effort_acknowledged": null
+    },
+    {
+      "run_id": "delegated-omp-381eb76b-dc65-4545-92db-94a3d636d14c",
+      "requested_model": "meta-contributor/muse-spark-1.3-contributor",
+      "requested_effort": "xhigh",
+      "actual_model": "muse-spark-1.3-contributor",
+      "actual_provider": "meta-contributor",
+      "duration_seconds": 23.046,
+      "billing_class": "metered",
+      "usage": [
+        {
+          "input": 32335,
+          "output": 1542,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "totalTokens": 33877,
+          "reasoningTokens": 1347,
+          "cost": {
+            "input": 0.0032335000000000003,
+            "output": 0.0003084,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 0.0035419
+          }
+        }
+      ],
+      "effort_acknowledged": null
+    }
+  ],
+  "jev": {
+    "observed_model": "typesafe/jev-1.13-20260917",
+    "calls": 4,
+    "reported_total_usd": 0.000108192,
+    "evidence_cases_passed": 3,
+    "advisory_only": true
+  },
+  "open": [
+    "Hermes native timeout and stale receipt",
+    "Unrelated shared skill drift",
+    "End-to-end provider capability and rework comparison",
+    "Current carbine handoff/model mismatch",
+    "Game visual overhaul and failed runtime soak"
+  ],
+  "discovery": {
+    "active_skills": 144,
+    "verified_roots": 7,
+    "broken_junctions_removed": 64,
+    "claude_native_files_preserved": 216,
+    "claude_root": "private per-skill junctions",
+    "existing_sessions_hot_reloaded": false
+  },
+  "global_skill_drift": {
+    "passed": false,
+    "drift_rows": 61,
+    "problems": 85
+  }
+}

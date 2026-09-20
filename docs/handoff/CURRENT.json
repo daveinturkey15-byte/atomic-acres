@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "Owner paused game development for pipeline audit. Bounded audit and two verification/admission repairs complete; shared-skill adoption, cost controls and full visual quality remain OPEN.",
+  "status": "Game development paused. Shared pipeline rules and Jev integrated; 25 focused checks pass. Four local harnesses freshly adopted; Hermes and unrelated skill drift remain excluded/open. No new game build promoted.",
   "owner": "Codex",
   "stop_state": "GAME DEVELOPMENT PAUSED by direct owner request; pipeline audit only. Do not resume feature work or worker launches without owner direction.",
   "backup": {
@@ -2777,5 +2777,55 @@
     "owner": "single Astra",
     "full_scope_estimate": "40-70 focused hours, provisional; first four scoped chunks 8-12 hours",
     "next_chunk": "one complete room/material/daylight example with active-gameplay stability acceptance"
+  },
+  "pipeline_completion": {
+    "status": "scoped controls implemented and verified; restricted adoption gaps remain",
+    "owner": "single lead",
+    "bounded_probes_authorized": true,
+    "authorization": "Dave September20: resolve remaining pipeline work and get Jev in the mix before game resumption",
+    "game_workers_authorized": false,
+    "scope": [
+      "Jev advisory routing",
+      "provider synthetic capability and cost probes",
+      "source/artifact contracts",
+      "six shared-skill evaluations and discovery",
+      "native cross-harness adoption"
+    ],
+    "network_probe_budget_usd": 1.5,
+    "jev_local_call_limit": 20,
+    "notes": "API budgets are local admission estimates, not provider billing caps. No quota purchases.",
+    "completed_at": "2026-09-20T13:25:11.701534+00:00",
+    "report": "docs/handoff/PIPELINE-COMPLETION-2026-09-20.md",
+    "shared_rule": "C:/Users/david/AppData/Local/hermes/.akephalos/rules/evidence-bound-pipeline.md",
+    "focused_tests": 25,
+    "native_fresh": [
+      "Codex",
+      "OMP",
+      "Claude Code",
+      "Antigravity"
+    ],
+    "native_excluded": [
+      "Hermes",
+      "Hermes Desktop",
+      "Qoder"
+    ],
+    "external_workers_authorized": false,
+    "open": [
+      "Hermes native timeout and stale receipt",
+      "Unrelated shared skill drift",
+      "End-to-end provider capability and rework comparison",
+      "Current carbine handoff/model mismatch",
+      "Game visual overhaul and failed runtime soak"
+    ],
+    "next_action": "Review pipeline report; resume only a single-lead game vertical slice when Dave resumes development. Keep external workers and heartbeat paused.",
+    "shared_commits": {
+      "akp": "951db93677d70897b0b90face7e840d94eacaf9c",
+      "vault": "98cd8d97a2db62a68af9c685caa0093d96040d11"
+    },
+    "discovery": {
+      "canonical_skills": 144,
+      "roots_verified": 7,
+      "claude_synced_files_preserved": 216
+    }
   }
 }

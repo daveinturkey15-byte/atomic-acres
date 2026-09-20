@@ -7,6 +7,12 @@ Workspace rules in `C:/Users/david/Desktop/stuff/AGENTS.md` and active AKP apply
 
 ## Owner audit hold — September 20, 13:00
 
+September 20 follow-up: Dave explicitly authorized completing the remaining pipeline
+work and adding Jev. Bounded synthetic provider probes, shared-skill evaluations and
+native harness adoption checks are permitted for that purpose. This does not reopen
+game workers. Follow `docs/orchestration/PIPELINE.md`; the general dispatch switch
+remains off until development is resumed with an explicit scoped operating plan.
+
 Dave has paused game development to review the agent/asset pipeline. This takes
 precedence over the development milestones below. Keep the development heartbeat
 paused and all workers stopped; do not resume game changes or scheduled inspections

@@ -6,6 +6,9 @@ import subprocess
 import sys
 import time
 from dispatch_policy import DispatchHold, require_external_dispatch
+from task_contract import ContractError, load_contract, verify_artifacts, git
+from run_limits import RunLease
+from adoption_gate import require_native_adoption
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 LANE = ROOT.parent / 'nuketown-environment-20260919'
@@ -27,12 +30,16 @@ def main():
         require_external_dispatch(ROOT, 'agy')
     except DispatchHold as exc:
         raise SystemExit(str(exc)) from exc
+    require_native_adoption('agy')
     if not args.attempt.replace('-', '').isalnum():
         raise SystemExit('Attempt must be a simple alphanumeric/hyphen identifier.')
     if args.prompt:
         PROMPT = args.prompt.resolve(strict=True)
     if args.worktree:
         LANE = args.worktree.resolve(strict=True)
+    if pathlib.Path(git(LANE, 'rev-parse', '--git-common-dir')).resolve() != pathlib.Path(git(ROOT, 'rev-parse', '--git-common-dir')).resolve():
+        raise SystemExit('AGY tree is not from this project Git database')
+    contract = load_contract(ROOT, args.attempt, 'agy', LANE, PROMPT)
     RUNTIME = ROOT / '.recovery-runtime' / args.attempt
     RUNTIME.mkdir(parents=True, exist_ok=True)
     receipt = RUNTIME / 'summary.json'
@@ -49,6 +56,7 @@ def main():
     state = dict(run_id=rid, start=time.time(), requested_model='gemini-3.8-flash-high',
                  requested_effort='high', status='running', worktree=str(LANE),
                  actual_model=None, accepted=False, prompt_file=str(PROMPT))
+    state['contract'] = contract
 
     def save():
         tmp = receipt.with_suffix('.tmp')
@@ -57,16 +65,16 @@ def main():
 
     code = 1
     try:
-        with log.open('w', encoding='utf-8') as out:
+        with RunLease(ROOT/'.recovery-runtime/dispatch-limits.sqlite', rid, contract), log.open('w', encoding='utf-8') as out:
             child = subprocess.Popen([
                 str(AGY), '--print', PROMPT.read_text(encoding='utf-8'), '--model',
                 'gemini-3.8-flash-high', '--effort', 'high',
-                '--dangerously-skip-permissions', '--print-timeout', '1500s',
+                '--dangerously-skip-permissions', '--print-timeout', str(contract['max_minutes']*60)+'s',
             ], cwd=LANE, stdout=out, stderr=subprocess.STDOUT, creationflags=FLAGS)
             state['pid'] = child.pid
             save()
             try:
-                code = child.wait(timeout=1530)
+                code = child.wait(timeout=contract['max_minutes']*60+30)
             except subprocess.TimeoutExpired:
                 subprocess.run(['taskkill', '/PID', str(child.pid), '/T', '/F'],
                                creationflags=FLAGS, capture_output=True)
@@ -74,11 +82,13 @@ def main():
     except Exception as exc:
         state['launcher_error_type'] = type(exc).__name__
     finally:
-        artifact = (LANE / 'docs/environment-integration-handoff.md').is_file() or (LANE / 'docs/catalog-carbine-handoff.md').is_file()
-        # These legacy filenames are hints only: unrelated lanes have different
-        # deliverables, and an old file cannot establish current completion.
-        state.update(exit_code=code, end=time.time(), artifact_exists=artifact,
-                     artifact_check='legacy-filename-hint-only',
+        try:
+            state['artifactReview'] = verify_artifacts(contract, LANE)
+        except ContractError as exc:
+            state['artifactReview'] = {'status': 'failed', 'reason': str(exc), 'accepted': False}
+            code = code or 1
+        state.update(exit_code=code, end=time.time(),
+                     artifact_check='source-bound-contract',
                      status='review-required' if code == 0 else 'failed')
         save()
         ledger_finish = subprocess.run([
