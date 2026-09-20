@@ -1,0 +1,62 @@
+{
+  "schema": "nuketown/astra-street-lamps-handoff/1",
+  "status": "CPU_PASS_GPU_OPEN",
+  "flag": "street-lamps=canary",
+  "runtimeFiles": [
+    "src/build/street-lamps-canary.ts",
+    "src/build/yards.ts"
+  ],
+  "integration": "No additional assembly hunk",
+  "baseline": "docs/astra-street-lamps-baseline.json",
+  "baselineSource": "d3dcf6d74b5f8da750430cc20ed59052c2d9a667",
+  "checks": [
+    "node scripts/check-street-lamps-canary.mjs",
+    "npm run check",
+    "npm run build"
+  ],
+  "results": {
+    "status": "CPU_PASS_GPU_OPEN",
+    "lamps": 8,
+    "originalTriangles": 3712,
+    "candidateTriangles": 14720,
+    "addedTriangles": 11008,
+    "drawGroupsBeforeBatch": 3,
+    "beforeBatch": {
+      "meshesBefore": 56,
+      "meshesAfter": 37,
+      "groups": 14,
+      "pruned": 0,
+      "left": {
+        "instanced-too-many": 1,
+        "alone-in-group": 22
+      },
+      "hazards": []
+    },
+    "afterBatch": {
+      "meshesBefore": 56,
+      "meshesAfter": 37,
+      "groups": 14,
+      "pruned": 0,
+      "left": {
+        "instanced-too-many": 1,
+        "alone-in-group": 22
+      },
+      "hazards": []
+    },
+    "addedMaterials": 0,
+    "addedTextures": 0,
+    "addedLights": 0,
+    "colliderHash": "a3c03c81fac3d8d763b87249fb90614c0c64d3f69146ebcb0372e2c0a4d05bf2",
+    "colliderCount": 78,
+    "bounds": "8/8 per-vertex bounds and housing/lens centres preserved; escaped-instance negative control rejected",
+    "unrelatedInputs": "619 non-lamp Batch transforms/materials identical",
+    "geometry": "finite, outward winding, unit normals, smooth tangent joins, monotonic taper, shared across lamps",
+    "ownership": "independent build geometry ownership; 3 mesh/geometry disposal events; 0 borrowed material disposals",
+    "gpu": "OPEN actual same-station pixels, moving camera and runtime resource gate with root"
+  },
+  "repairsUsed": 0,
+  "repairsLimit": 2,
+  "selfStop": "2026-09-20T08:58:00+01:00",
+  "provenance": "Original procedural geometry; existing borrowed materials; zero new assets",
+  "acceptance": "OPEN root actual WebGPU pixels, moving-camera and resource gate"
+}

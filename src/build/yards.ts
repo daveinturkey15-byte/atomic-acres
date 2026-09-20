@@ -48,6 +48,7 @@ import { ORANGE_STAIR_FOOTPRINT } from './orange-house';
 import { WHITE_STAIR_FOOTPRINT } from './white-house';
 import { buildVegetationTrees, type TreeSpec } from './vegetation-tree';
 import { buildFenceCourseBoards, type FenceBoardSeg } from './fence-boards';
+import { buildStreetLampsCanary, isStreetLampsCanaryEnabled, type StreetLampSpec } from './street-lamps-canary';
 
 // ---------------------------------------------------------------- derived frame
 const YARD_W = YARD_X_MAX - YARD_X_MIN;
@@ -546,10 +547,13 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   g.add(buildVegetationTrees({ bark: mat.bark, leaf: mat.leaf, leafCards: mat.leafCards }, treeSpecs).group);
 
   // ---------------------------------------------------------------- street lamps
+  const lampCanary = isStreetLampsCanaryEnabled();
+  const lampSpecs: StreetLampSpec[] = [];
   function lamp(x: number, z: number, dx: number, dz: number): void {
     const ph = 5.0, R = 1.45;
     const n = Math.hypot(dx, dz) || 1;
     dx /= n; dz /= n;
+    if (lampCanary) { lampSpecs.push({ x, z, dx, dz }); return; }
     C.put(mat.steel, 0.38, 0.26, 0.38, x, 0.13, z);
     C.put(mat.steel, 0.17, ph, 0.17, x, ph / 2, z);
     // Two-span 0.21 m arm: the 0.15 m four-span curve aliased into white
@@ -570,6 +574,8 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     const lz = Math.sin(a) * (HEAD_RADIUS + 1.3);
     lamp(lx, lz, HEAD_CENTER_X - lx, -lz);
   }
+  if (lampCanary) g.add(buildStreetLampsCanary({ steel: mat.steel, housing: LAMP,
+    lens: mat.emissive(PAL.sunColor, 0.5) }, lampSpecs));
 
   // ---------------------------------------------------------------- appliance banks
   /** three-unit retro cooker bank on a white cabinet - the front-lawn chirality anchor */
