@@ -61,7 +61,7 @@ const batches = [helper.gas, helper.dust, helper.sparks];
 const meshes = helper.group.children;
 const cam = new THREE.PerspectiveCamera(); cam.position.set(0, 1.6, 0); cam.updateMatrixWorld(true);
 function renderCpu() { for (const mesh of meshes) mesh.onBeforeRender(null, null, cam); }
-function resources() { return batches.flatMap(b => [b.data, b.mesh, b.mesh.geometry, b.mesh.material, b.texture, b.positions, b.positions.array, b.colors, b.colors.array]); }
+function resources() { return batches.flatMap(b => [b.data, b.mesh, b.mesh.geometry, b.mesh.material, b.texture, b.positions, b.positions.array, b.normals, b.normals.array, b.colors, b.colors.array]); }
 const initialResources = resources();
 const bytes = batches.reduce((s, b) => s + b.data.byteLength + b.texture.image.data.byteLength + b.mesh.geometry.index.array.byteLength + Object.values(b.mesh.geometry.attributes).reduce((n, a) => n + a.array.byteLength, 0), 0);
 report.resources = { batches: meshes.length, particles: batches.reduce((s, b) => s + b.capacity, 0), ownedCpuTextureAndBufferBytes: bytes, conservativeCpuPlusGpuBytes: bytes * 2, triangles: meshes.reduce((s, m) => s + m.geometry.index.count / 3, 0) };
@@ -82,6 +82,18 @@ check('original masks have zero border and varied nonzero internal alpha', () =>
       if (!x || !y || x === width - 1 || y === height - 1) assert.equal(a, 0);
     }
     assert.ok(levels.size > 50);
+  }
+});
+check('MRT normal attribute present, unit length and current-camera facing for every quad', () => {
+  cam.rotation.set(0.7, -0.6, 0.1); cam.updateMatrixWorld(true); renderCpu();
+  for (const b of batches) {
+    const normals = b.mesh.geometry.getAttribute('normal');
+    assert.equal(normals.count, b.positions.count);
+    for (let i = 0; i < normals.count; i++) {
+      const x = normals.getX(i), y = normals.getY(i), z = normals.getZ(i);
+      assert.ok(Math.abs(Math.hypot(x, y, z) - 1) < 1e-6);
+      assert.ok(Math.abs(x - cam.matrixWorld.elements[8]) < 1e-6);
+    }
   }
 });
 check('one admitted flash produces six gas particles; impact uses dust/sparks and legacy decal', () => {

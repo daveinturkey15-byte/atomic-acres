@@ -1,0 +1,9 @@
+{
+  "source": "fbc073e4206d635165ba2bb1cb923a1c674f8d26",
+  "status": "REJECTED pending explicit vertex normals",
+  "observation": "src/core/post.ts requests MRT normalView. Installed three r180 src/nodes/accessors/Normal.js logs a warning and returns a fixed up normal when the geometry lacks normal. The initial custom quad geometry had no normal attribute.",
+  "claim_boundary": "CPU tests passed but did not cover MRT normal requirements. No GPU run by this lane. This is a source-derived incompatibility, not a claimed observed browser failure.",
+  "correction": "Repair 1: add one fixed normal buffer per batch, initialize all normals and update them to camera forward with billboard positions; assert unit/current-camera normals. No materials, draws or authority changes.",
+  "repairs_used": 1,
+  "repairs_max": 2
+}

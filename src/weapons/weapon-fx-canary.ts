@@ -40,6 +40,7 @@ class ParticleBatch {
   readonly mesh: THREE.Mesh<THREE.BufferGeometry, THREE.MeshBasicMaterial>;
   readonly data: Float64Array;
   readonly positions: THREE.BufferAttribute;
+  readonly normals: THREE.BufferAttribute;
   readonly colors: THREE.BufferAttribute;
   readonly texture: THREE.DataTexture;
   readonly capacity: number;
@@ -52,6 +53,9 @@ class ParticleBatch {
     this.capacity = capacity;
     this.data = new Float64Array(capacity * STRIDE);
     this.positions = new THREE.BufferAttribute(new Float32Array(capacity * 12), 3).setUsage(THREE.DynamicDrawUsage);
+    // The world MRT requests normalView even for unlit transparent materials.
+    this.normals = new THREE.BufferAttribute(new Float32Array(capacity * 12), 3).setUsage(THREE.DynamicDrawUsage);
+    for (let v = 0; v < capacity * 4; v++) this.normals.setXYZ(v, 0, 0, 1);
     this.colors = new THREE.BufferAttribute(new Float32Array(capacity * 16), 4).setUsage(THREE.DynamicDrawUsage);
     const uv = new Float32Array(capacity * 8), index = new Uint16Array(capacity * 6);
     for (let i = 0; i < capacity; i++) {
@@ -63,6 +67,7 @@ class ParticleBatch {
     }
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', this.positions);
+    geometry.setAttribute('normal', this.normals);
     geometry.setAttribute('color', this.colors);
     geometry.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
     geometry.setIndex(new THREE.BufferAttribute(index, 1));
@@ -122,6 +127,7 @@ class ParticleBatch {
       if (life <= 0) {
         for (let k = 0; k < 4; k++) {
           this.positions.setXYZ(i * 4 + k, 0, 0, 0);
+          this.normals.setXYZ(i * 4 + k, m[8], m[9], m[10]);
           this.colors.setXYZW(i * 4 + k, 0, 0, 0, 0);
         }
         continue;
@@ -153,10 +159,11 @@ class ParticleBatch {
       for (let k = 0; k < 4; k++) {
         const sx = k === 0 || k === 3 ? -1 : 1, sy = k < 2 ? -1 : 1, v = i * 4 + k;
         this.positions.setXYZ(v, px + sx * rx + sy * ux, py + sx * ry + sy * uy, pz + sx * rz + sy * uz);
+        this.normals.setXYZ(v, m[8], m[9], m[10]);
         this.colors.setXYZW(v, this.tint.r * bright, this.tint.g * bright, this.tint.b * bright, alpha);
       }
     }
-    this.positions.needsUpdate = this.colors.needsUpdate = true;
+    this.positions.needsUpdate = this.normals.needsUpdate = this.colors.needsUpdate = true;
   }
 
   liveCount(): number { return this.count; }

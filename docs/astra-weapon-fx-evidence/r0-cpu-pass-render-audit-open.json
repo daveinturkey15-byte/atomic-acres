@@ -1,0 +1,34 @@
+{
+  "claim": "CPU contract only; root WebGPU/pixels/performance OPEN",
+  "base": "5ce4d85",
+  "checks": [
+    "480-frame default exact legacy trace",
+    "480-frame unknown flag exact legacy trace",
+    "480-frame grenade canary trace identical; zero new particles",
+    "three fixed draws and conservative CPU+GPU buffer/texture memory below one MiB",
+    "no lights or shadows, single-pass material, depth test on/write off, RGBA vertex colors",
+    "original masks have zero border and varied nonzero internal alpha",
+    "one admitted flash produces six gas particles; impact uses dust/sparks and legacy decal",
+    "zero negative and NaN dt do not advance state",
+    "saturation reuses all 192 slots; 6000 calls keep resource identities and finite buffers",
+    "large dt including infinity expires all and dead buffers remain finite",
+    "analytic trajectories agree across frame partitions",
+    "surface normals zero/up/down/wall/diagonal stay finite; centers remain outside source plane",
+    "dispose twice releases nine owned resources once, never borrowed library material",
+    "hot methods contain no object/array/new/function allocation syntax"
+  ],
+  "controls": [
+    "fourth draw rejected",
+    "oversized memory rejected",
+    "unexpired positive control is caught",
+    "default-state mismatch is caught"
+  ],
+  "resources": {
+    "batches": 3,
+    "particles": 192,
+    "ownedCpuTextureAndBufferBytes": 109824,
+    "conservativeCpuPlusGpuBytes": 219648,
+    "triangles": 384
+  },
+  "status": "PASS"
+}
