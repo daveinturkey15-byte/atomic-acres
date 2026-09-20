@@ -1,0 +1,20 @@
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -41,6 +41,7 @@
+ import { buildIndustrialBarrels } from './build/industrial-barrels';
+ import { preloadIndustrialBarrel } from './props/industrial-barrel';
+ import { buildDesertTrees } from './build/desert-trees';
+ import { preloadQuiverTree } from './props/quiver-tree';
++import { buildMountainVolume } from './build/mountain-volume';
+ 
+ const BUILDERS: [string, Builder][] = [
+   ['ground', buildGround],
+@@ -57,6 +58,8 @@
+   ['field-cases', buildFieldCases],
+   ['industrial-barrels', buildIndustrialBarrels],
+   ['desert-trees', buildDesertTrees],
++  // muse-1010: opt-in backdrop only; default OFF (?mountain-volume=canary).
++  ['mountain-volume', buildMountainVolume],
+ ];
+ 
+ // The one invariant, asserted rather than commented. From either back yard, facing

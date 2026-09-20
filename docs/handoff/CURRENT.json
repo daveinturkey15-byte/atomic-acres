@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "VERIFIED no new visual promotion this heartbeat. Four recorded external source lanes: AGY interrupted final2 world-gun completion, AGY new closed-clothing operator, Muse new volumetric heightfield mountains, GLM visible supply crate. GLM final2 source preserved aftertimeout; no auth/quota failure. Runtime builds unchanged, nativeAstras stopped. Main visual goal OPEN.",
+  "status": "VERIFIED AGY reached actual quota429; no newAGY until12:46BST. Partials preserved and same scopes transferred to Muse after writersended. Current four source lanes: Muse finalworld-gun completion, coherentoperator topology, mountain-exclusive seam; GLMcratepresentation. Root newvolumegeometryCPU passes, operator topologyholes diagnosed; actualpixels andintegration pending. No runtimepromotion, recommended4234/frozen4212 unchanged. NativeAstras stopped.",
   "owner": "Codex",
   "stop_state": "active: preserve frozen checkpoint and continue private candidates",
   "backup": {
@@ -20,7 +20,7 @@
   },
   "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
   "inspection_time": "2026-09-20T05:45:00+01:00",
-  "lease_updated_at": "2026-09-20T10:12:14.263771+01:00",
+  "lease_updated_at": "2026-09-20T10:19:09.748305+01:00",
   "source_checkpoint": "b4860cc288e3fc94285623d7fac20e1be7d5e4ce",
   "inspection_report": "docs/handoff/SHOWCASE-2026-09-20.md",
   "bundle_sha256": "e8cb3f4fa86437ef164deded998e3613d5220d2115e52335096545af1ab13a91",
@@ -31,21 +31,21 @@
     "status": "ACTIVE"
   },
   "resource_sample": {
-    "sampled_at": "2026-09-20T10:12:14.263771+01:00",
-    "free_ram_gib": 30.507,
-    "free_vram_mib": 5147,
-    "gpu_utilization_percent": 1,
-    "note": "Four source-only external lanes; root GPU idle. Owner VRAM activity observed; resample before QA/bake."
+    "sampled_at": "2026-09-20T10:19:09.748305+01:00",
+    "free_ram_gib": 30.685,
+    "free_vram_mib": 5328,
+    "gpu_utilization_percent": 3,
+    "note": "No rootownedGPU/browser running;fourcloudsource jobs. Resamplebeforeheavyacceptance."
   },
   "next_actions": [
-    "Four current independent source lanes are in current_ownership.external. Read changed terminal receipts before touching owned source. Native Astras remain stopped; no OpenAI implementation/imagegen. Preserve recommended4234/frozen4212 and scoped optionalfence4238.",
-    "AGYworld-weapon-final2-close-1010 is finishing the EXACT interrupted GLM finalrepair2 partial, not newthird design. Root tests geometry/default/contacts/cache pass until stale removedAPI test; main terminalhook missing. Finishborrowedresource proof, boundedweakrefmetadata and real terminalhook, then exact source CPU and actual operator weapon A/B. Five families still not20uniqueguns.",
-    "AGYoperator-closed-surface-1000 owns coherent closed shoulder/torso/pelvis garment topology, existing21bones and atlas. New construction approach after priorparameterrepairsexhausted. Root closedmesh/weights/UV CPU, guardedBlender and actual riggedcrouch/prone/game A/B required; no mocapclaim.",
-    "Muse mountain-volume-1010 owns true2Dheightfield closedvolumes with depth/foothills instead of rejected verticalribbons. <=35ktris/6draws/defaultoff, provenance ifmaps. Read actual source before source-only claims; root rejects flatwall silhouettes or unchanged scalar tweaks. No sourcecollision with operator/guns.",
-    "GLM supply-crate-visual-1012 owns concrete bounded cratepresentation only. Prior authority stepper and events0912 readonly. <=4active/4draws/2500tris percrate, admitted-eventidentity/generation/expiry/disposal. Guestwire and fullcatalogrewardactivation remainOPEN; isolatedvisual must not falsely enableunfinishedstreak.",
-    "Sedan recipe final2 and loader final2 are stopped with failures preserved (actualwidth/ground bounds, independent distinctrejected-scene leak). No morepatching sameapproach or relaxinggates. Keep acceptedproceduralcar; a future newenvelope-first asset/singlevalidatedURL route needed.",
-    "Root serializes GPU/browser/Blender, >=12GiBfreeRAM>=3GiBfreeVRAMplusjobheadroom. RecentownerGPUactivity reduced freeVRAM from12GB to5GB: resample before everyheavyjob; defer if insufficient, never terminate owner. Review ready source first rather than duplicate audits. Keep full20guns11streaks4grenades etc backlog; Semtex18passed.",
-    "Heartbeat prompt shortened after09BST expired Astra permission; schedule ACTIVE every15min and quietnotification intent unchanged. Read selectedCURRENTfields/active lanes rather thanfullhistorical array. Continue after owner inspections."
+    "Honor AGY quota cooldown until12:46BSTSeptember20 (actual429logs). No retries now or credentialchanges. Read current externalreceipts; only after terminalization edit/integrate their privateoutputs. OpenAI orchestration/review only. Keep recommended4234, frozen4212 and modest optionalfence4238 unchanged.",
+    "Museworld-weapon-final2-close1017 finishes exact interruptedGLM finalrepair2, notthirdredesign. Preservepriorpartials inwork/world-weapon-glm-final2-partial-1006. Root alltests passbeforestale removedhelpercall; require actual terminalmainhook, callerresourceproof andboundedweakrefs. Then CPU/check/build andsamecamera realoperator weapon A/B beforeacceptance.",
+    "Museoperator-closed-surface1017 continues AGY57KB newconstruction partial afterquota. Root actualdata weldedtopologydiagnostic retained inwork/operator-closed-surface-agy-1000:shirt272boundaryedges/40zeroarea, broadarmregion40openedges. Mapintended neck/waist/cuffs versusunplannedjoint openings; maintain21bones/weights/UV andclosedbranchjoins. RootguardedBlender andactualposeviews onlyafterstructuralproof. Newapproachfirstcorrection; nooldcapsuleparameterchurn.",
+    "Musemountain-volume-seam1020 is firstintegrationrepair of newtrueheightfieldvolumes; actualgeometryPASS19872tris/3manifolds/~544KiB, no textures. Original source inwork/mountain-volume-muse-1010. Needexclusive skyline branch replacingoldridges ONLYwhenflag, existingownedrelease path and default/nonmountain isolation. No newcolourknobs. Once exactpatch andCPU pass, buildcandidate andreal4station samecamera A/B; geometrycounts notart acceptance.",
+    "GLMsupply-crate-visual1012 owns bounded visiblecrate factory andeventlifecycle againstoldpendingstepper. 4active/4draws/2500tris each, exactadmittedeventidentity, cleanup. Headlesssourceonly; guestwire/rewardactivation stillOPEN. Doesnotenablefull11streaks ordisplaceart.",
+    "Sedan bothrecipe andloader repair2 stopped: originalphysicalenvelopefail andindependent distinctinvalidscene leak; preserve, no thirdsameapproach or relaxedgates. Futureenvelope-first geometry/singlevalidatedasset route mustbe genuinelydifferent. Existingproceduralcar retained.",
+    "CurrentownerGPUusage leavesaround5GiBfreeVRAM; resamplebeforeanyGPU/Blender/browser andrequire3GiBreserveplusmeasuredjobheadroom; RAM>=12GiB. SerializeQA, noownertermination. No fullretests ofunchangedbuilds. Keep20guns11streaks4grenades/backlog; Semtex18checks accepted.",
+    "Automationstill ACTIVE15minquiet; prompt now routes CURRENT selectedfields andexpiredAstra prohibition without giant historicaldump. Continueafterinspections; notifyonlymeaningful acceptedmilestone/blocker, notworkercount/exit."
   ],
   "interrupted_lanes": [
     {
@@ -1753,11 +1753,12 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
       "route": "gemini-3.8-flash-high",
       "effort": "high",
-      "state": "process-completed-awaiting-review",
+      "state": "quota-failed-partial-preserved",
       "observed_models": [],
       "attribution": "unknown",
       "accepted": false,
-      "owned_directory": "work/operator-closed-surface-agy-1000"
+      "owned_directory": "work/operator-closed-surface-agy-1000",
+      "note": "VERIFIED exit3 / HTTP429 RESOURCE_EXHAUSTED Individual quota reached. AGY reset approx12:45:46BST; hold until12:46. Actualservedmodel unknown. Writersended before Muse continuation. Operator57KBsource preserved; weapon close had noartifact."
     },
     {
       "lane": "agy-world-weapon-final2-close-1010",
@@ -1766,11 +1767,12 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
       "route": "gemini-3.8-flash-high",
       "effort": "high",
-      "state": "process-completed-awaiting-review",
+      "state": "quota-failed-no-artifact",
       "observed_models": [],
       "attribution": "unknown",
       "accepted": false,
-      "owned_directory": "work/world-weapon-final2-close-agy-1010"
+      "owned_directory": "work/world-weapon-final2-close-agy-1010",
+      "note": "VERIFIED exit3 / HTTP429 RESOURCE_EXHAUSTED Individual quota reached. AGY reset approx12:45:46BST; hold until12:46. Actualservedmodel unknown. Writersended before Muse continuation. Operator57KBsource preserved; weapon close had noartifact."
     },
     {
       "lane": "muse-mountain-volume-1010",
@@ -1779,11 +1781,53 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
+      "state": "cpu-pass-seam-review-open",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "attribution": "observed",
+      "accepted": false,
+      "owned_directory": "work/mountain-volume-muse-1010",
+      "note": "Root actualgeometryCPU proofPASS:19872tris/3closedmanifolds,~544KiB, depthandunderterrain skirts. Originalseam merely addsfarvolume behind retainedoldmountains and hasno existingreleasehook; newgeometry unchanged, Muse seamrepair1 makesexclusive skyline branch beforefirstpixels. No visualclaim."
+    },
+    {
+      "lane": "muse-world-weapon-final2-close-1017",
+      "run_id": "delegated-omp-muse-world-weapon-final2-close-1017-b11c5b1b019c4ffc969e4dfcabb5f1fa",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-world-weapon-final2-close-1017-b11c5b1b019c4ffc969e4dfcabb5f1fa\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
       "state": "running",
       "observed_models": [],
       "attribution": "unknown",
       "accepted": false,
-      "owned_directory": "work/mountain-volume-muse-1010"
+      "owned_directory": "work/world-weapon-final2-close-muse-1017"
+    },
+    {
+      "lane": "muse-operator-closed-surface-1017",
+      "run_id": "delegated-omp-muse-operator-closed-surface-1017-f6990596531f43a9b17a9c1eca40d686",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-operator-closed-surface-1017-f6990596531f43a9b17a9c1eca40d686\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/operator-closed-surface-muse-1017"
+    },
+    {
+      "lane": "muse-mountain-volume-seam-1020",
+      "run_id": "delegated-omp-muse-mountain-volume-seam-1020-5ec50565c3574ea18367afc3c64b452f",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-mountain-volume-seam-1020-5ec50565c3574ea18367afc3c64b452f\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/mountain-volume-seam-muse-1020"
     },
     {
       "lane": "glm-supply-crate-visual-1012",
@@ -1910,35 +1954,35 @@
   },
   "active_external_lanes": [
     {
-      "lane": "agy-operator-closed-surface-1000",
-      "run_id": "delegated-agy-1e9429e4-77b2-472a-99a0-9962c4259791",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-operator-closed-surface-1000\\summary.json",
-      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
-      "route": "gemini-3.8-flash-high",
-      "effort": "high",
-      "state": "process-completed-awaiting-review",
-      "observed_models": [],
-      "attribution": "unknown",
-      "accepted": false,
-      "owned_directory": "work/operator-closed-surface-agy-1000"
-    },
-    {
-      "lane": "agy-world-weapon-final2-close-1010",
-      "run_id": "delegated-agy-b5fe635e-bd91-47ab-ba31-56c8fd85f575",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-world-weapon-final2-close-1010\\summary.json",
+      "lane": "muse-world-weapon-final2-close-1017",
+      "run_id": "delegated-omp-muse-world-weapon-final2-close-1017-b11c5b1b019c4ffc969e4dfcabb5f1fa",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-world-weapon-final2-close-1017-b11c5b1b019c4ffc969e4dfcabb5f1fa\\summary.json",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
-      "route": "gemini-3.8-flash-high",
-      "effort": "high",
-      "state": "process-completed-awaiting-review",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "running",
       "observed_models": [],
       "attribution": "unknown",
       "accepted": false,
-      "owned_directory": "work/world-weapon-final2-close-agy-1010"
+      "owned_directory": "work/world-weapon-final2-close-muse-1017"
     },
     {
-      "lane": "muse-mountain-volume-1010",
-      "run_id": "delegated-omp-muse-mountain-volume-1010-991657e944a04b8292254a499faa0ade",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-mountain-volume-1010-991657e944a04b8292254a499faa0ade\\summary.json",
+      "lane": "muse-operator-closed-surface-1017",
+      "run_id": "delegated-omp-muse-operator-closed-surface-1017-f6990596531f43a9b17a9c1eca40d686",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-operator-closed-surface-1017-f6990596531f43a9b17a9c1eca40d686\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/operator-closed-surface-muse-1017"
+    },
+    {
+      "lane": "muse-mountain-volume-seam-1020",
+      "run_id": "delegated-omp-muse-mountain-volume-seam-1020-5ec50565c3574ea18367afc3c64b452f",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-mountain-volume-seam-1020-5ec50565c3574ea18367afc3c64b452f\\summary.json",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
@@ -1946,7 +1990,7 @@
       "observed_models": [],
       "attribution": "unknown",
       "accepted": false,
-      "owned_directory": "work/mountain-volume-muse-1010"
+      "owned_directory": "work/mountain-volume-seam-muse-1020"
     },
     {
       "lane": "glm-supply-crate-visual-1012",
@@ -1985,11 +2029,11 @@
   "latest_review": "docs/handoff/REVIEW-2026-09-20-0255.md",
   "provider_cooldowns": {
     "agy": {
-      "until": "2026-09-19T21:47:00+01:00",
-      "reason": "VERIFIED HTTP429 RESOURCE_EXHAUSTED Individual quota reached in three ended jobs. No more AGY attempts before reset.",
+      "until": "2026-09-20T12:46:00+01:00",
+      "state": "active",
+      "reason": "VERIFIED two endedCLI outputs HTTP429 RESOURCE_EXHAUSTED Individual quota reached; reset2h34m16s from10:11:30 and2h33m58s from10:11:48. No further AGY attempts before reset.",
       "actual_model": null,
-      "failover": "carbine to Muse; motion and guest combat proof to GLM after old writers ended",
-      "state": "expired;semtex authoring completed after reset; actualmodelunknown. CSS follow-up failedtask(noartifact), no observednewquota/authfailure."
+      "failover": "Interrupted world-weapon final2 completion and newoperator topology moved to separate Muse directories after old writers ended."
     }
   },
   "semtex_candidate": {
@@ -2366,7 +2410,7 @@
       "state": "VERIFIED both canonical specialists completed and stopped by08:47; collaboration status checked08:51. No native implementation restarts authorized at/after09:00BST. Exact contributions docs/handoff/ASTRA-CONTRIBUTIONS-2026-09-20.md.",
       "tracker": "docs/handoff/ASTRA-CONTRIBUTIONS-2026-09-20.md"
     },
-    "external_model_plan": "Four exact independent external source scopes in current_ownership. Current served models await receipts; last GLM final2 actuallyglm-5.3-flash timedout; last Muse actuallyContributor. AGY observed model unknown. No nativeimplementation.",
+    "external_model_plan": "AGY realquota until12:46BST; actualmodelunknown. Authorizedfailover: three distinctMuseContributorxhigh scopes plusGLM5.3Flashmax cratevisual. Use theirterminalreceipts forservedmodel. Rootonlyreview/integration, noAstras.",
     "checks": "Actual same-camera pixels first, focused touched-contract checks, then integration/resource gates; no repeated full audit of stable artifact.",
     "rejected_trials": [
       "hand-materials-0548",
@@ -2379,41 +2423,41 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T10:12:14.263771+01:00",
+  "updated_at": "2026-09-20T10:19:09.748305+01:00",
   "current_ownership": {
     "root": "Review, exact integration and serialized GPU/browser acceptance only; no implementation or imagegen.",
     "native_astras": "Both completed before09BST; do not restart.",
     "external": [
       {
-        "lane": "agy-operator-closed-surface-1000",
-        "run_id": "delegated-agy-1e9429e4-77b2-472a-99a0-9962c4259791",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-operator-closed-surface-1000\\summary.json",
-        "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
-        "route": "gemini-3.8-flash-high",
-        "effort": "high",
-        "state": "process-completed-awaiting-review",
-        "observed_models": [],
-        "attribution": "unknown",
-        "accepted": false,
-        "owned_directory": "work/operator-closed-surface-agy-1000"
-      },
-      {
-        "lane": "agy-world-weapon-final2-close-1010",
-        "run_id": "delegated-agy-b5fe635e-bd91-47ab-ba31-56c8fd85f575",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-world-weapon-final2-close-1010\\summary.json",
+        "lane": "muse-world-weapon-final2-close-1017",
+        "run_id": "delegated-omp-muse-world-weapon-final2-close-1017-b11c5b1b019c4ffc969e4dfcabb5f1fa",
+        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-world-weapon-final2-close-1017-b11c5b1b019c4ffc969e4dfcabb5f1fa\\summary.json",
         "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
-        "route": "gemini-3.8-flash-high",
-        "effort": "high",
-        "state": "process-completed-awaiting-review",
+        "route": "meta-contributor/muse-spark-1.3-contributor",
+        "effort": "xhigh",
+        "state": "running",
         "observed_models": [],
         "attribution": "unknown",
         "accepted": false,
-        "owned_directory": "work/world-weapon-final2-close-agy-1010"
+        "owned_directory": "work/world-weapon-final2-close-muse-1017"
       },
       {
-        "lane": "muse-mountain-volume-1010",
-        "run_id": "delegated-omp-muse-mountain-volume-1010-991657e944a04b8292254a499faa0ade",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-mountain-volume-1010-991657e944a04b8292254a499faa0ade\\summary.json",
+        "lane": "muse-operator-closed-surface-1017",
+        "run_id": "delegated-omp-muse-operator-closed-surface-1017-f6990596531f43a9b17a9c1eca40d686",
+        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-operator-closed-surface-1017-f6990596531f43a9b17a9c1eca40d686\\summary.json",
+        "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
+        "route": "meta-contributor/muse-spark-1.3-contributor",
+        "effort": "xhigh",
+        "state": "running",
+        "observed_models": [],
+        "attribution": "unknown",
+        "accepted": false,
+        "owned_directory": "work/operator-closed-surface-muse-1017"
+      },
+      {
+        "lane": "muse-mountain-volume-seam-1020",
+        "run_id": "delegated-omp-muse-mountain-volume-seam-1020-5ec50565c3574ea18367afc3c64b452f",
+        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-mountain-volume-seam-1020-5ec50565c3574ea18367afc3c64b452f\\summary.json",
         "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
         "route": "meta-contributor/muse-spark-1.3-contributor",
         "effort": "xhigh",
@@ -2421,7 +2465,7 @@
         "observed_models": [],
         "attribution": "unknown",
         "accepted": false,
-        "owned_directory": "work/mountain-volume-muse-1010"
+        "owned_directory": "work/mountain-volume-seam-muse-1020"
       },
       {
         "lane": "glm-supply-crate-visual-1012",
