@@ -262,6 +262,8 @@ export interface MaterialLibrary {
   chrome: THREE.Material;
   steel: THREE.Material;
   impactDecal: THREE.Material;
+  /** Soft radial flash sprite (masked, HDR core) for the weapon-effects flash quads. */
+  flashSprite: THREE.Material;
   viewmodel: ViewmodelMaterialSet;
   painted: (color: number, rough?: number, metal?: number) => THREE.Material;
   /**
@@ -304,6 +306,30 @@ export function buildMaterials(): MaterialLibrary {
   own(vegetation);
   const impact = createImpactMaterial();
   own(impact);
+  // The weapon-flash sprite: one soft radial ALPHA mask on an unlit material whose
+  // colour sits above 1 in linear radiance. The crossed flash quads in
+  // weapons/effects.ts are stretched to ~3 x 1 m at blast scale; with the old solid
+  // emissive material that read as a hard white card and bloom (threshold 1.0) lit
+  // its whole rectangle. The mask keeps an HDR core that clears the bloom threshold
+  // and fades the edges to nothing, so the flash reads as a bounded star. Built
+  // once here like the impact atlas - never per pop, disposed with the library.
+  const flashMaskTex = new THREE.CanvasTexture(canvas(128, (c, s) => {
+    const g = c.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+    g.addColorStop(0, 'rgba(255,255,255,1)');
+    g.addColorStop(0.2, 'rgba(255,255,255,0.85)');
+    g.addColorStop(0.55, 'rgba(255,255,255,0.26)');
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    c.fillStyle = g;
+    c.fillRect(0, 0, s, s);
+  }));
+  flashMaskTex.wrapS = flashMaskTex.wrapT = THREE.ClampToEdgeWrapping;
+  flashMaskTex.colorSpace = THREE.SRGBColorSpace;
+  own(flashMaskTex);
+  const flashSpriteMat = new MeshBasicNodeMaterial({
+    color: new THREE.Color(PAL.sunColor).multiplyScalar(2.4),
+    map: flashMaskTex, transparent: true, depthWrite: false,
+  });
+  own(flashSpriteMat);
   const viewmodel = createViewmodelMaterials();
   own(viewmodel);
   let disposed = false;
@@ -849,6 +875,7 @@ export function buildMaterials(): MaterialLibrary {
     leaf: std({ map: leafTex, roughness: 1, roughnessMap: leafRough, metalness: 0 }),
     leafCards: vegetation.leafCards,
     impactDecal: impact.material,
+    flashSprite: flashSpriteMat,
     viewmodel,
     bark: std({ map: barkTex, roughness: 1, roughnessMap: barkRough, metalness: 0 }),
     chrome: std({ color: PAL.chrome, roughness: 1, roughnessMap: chromeRough, metalness: 0.95, envMapIntensity: 1.25 }),

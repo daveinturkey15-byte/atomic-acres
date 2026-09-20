@@ -113,7 +113,13 @@ export class WeaponEffects {
     this.group = new THREE.Group();
     this.group.name = 'atomic-acres-weapon-effects';
 
-    this.flashMat = mat.emissive(PAL.sunColor, 2.4);
+    // The flash quads draw the library's masked `flashSprite`, not a solid
+    // emissive: at blast scale (flashAt(..., 8, 0.25)) the crossed planes span
+    // ~3 x 1 m, and a solid emissive card under bloom is the bright white
+    // rectangle the gait-poses captures caught at the fence. The radial mask
+    // keeps the HDR core (still clears the 1.0 bloom threshold) and bounds the
+    // edges, so muzzle pops and blasts read as a star rather than a card.
+    this.flashMat = mat.flashSprite;
     this.tracerMat = mat.emissive(PAL.sunColor, 1.8);
     this.shellMat = mat.painted(PAL.sand, 0.35, 0.8);
     this.sparkMat = mat.emissive(PAL.sunColor, 1.6);
