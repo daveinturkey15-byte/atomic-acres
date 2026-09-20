@@ -8,6 +8,7 @@ import * as THREE from 'three';
 import { createWorld } from './core/world';
 import { buildMaterials } from './core/materials';
 import { installArchitecturalMaterials } from './core/architectural-materials';
+import { installRoomVisibility } from './core/room-visibility';
 import { installReflectiveSurfaces } from './core/reflective-surfaces';
 import { makeRng, type AABB, type BuildContext, type Builder } from './core/kit';
 import { Player, type MoveMode } from './core/player';
@@ -120,6 +121,7 @@ if (!handedness.every(Boolean)) {
 const world = createWorld(document.body);
 const mat = buildMaterials();
 await installArchitecturalMaterials(mat);
+await installRoomVisibility(mat);
 installLawnCanaryQA(mat.lawn);
 const player = new Player(world.camera, world.renderer.domElement);
 

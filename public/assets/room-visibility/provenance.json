@@ -1,0 +1,45 @@
+{
+  "source": "6d7f52f974f30282a6b90f6fa9ec6f6dfa57ecd2",
+  "sourceHashes": {
+    "src/build/orange-house.ts": "48e64521c608dfcd1ff50f559dacd35dd5d8f1638380f59fb7fd8bdd53926974",
+    "src/build/interior-furniture.ts": "5e269c9cafe3b948431a00277c2cb47d37db12b0796acd59de4d51fdcc1a3b15",
+    "src/core/layout.ts": "15f6bff8aa7cb61cdd8e6fa1b4b08a7c23d2c6aafed6fef11fe6f801d662b05d",
+    "src/core/static-batch.ts": "480e72af29863f05a0653ccd0eae5e1026d1be4f228245c5c52776ed634af0d6"
+  },
+  "bounds": {
+    "min": [
+      -1,
+      0,
+      -21.3
+    ],
+    "max": [
+      6.4,
+      6.25,
+      -16
+    ]
+  },
+  "dimensions": [
+    32,
+    28,
+    24
+  ],
+  "directions": 64,
+  "meshes": 58,
+  "occluderSha256": "7306f798c8f89788a2de3ed393685a043abc92588d27a93a7be88d3ff513a4c0",
+  "triangles": 18052,
+  "seconds": 6.9204731000063475,
+  "blender": "5.1.2",
+  "route": "guarded CPU Blender BVH; no GPU/no rendering",
+  "algorithm": "original cosine-lobe visibility with bounded distance-fill approximation; not GI",
+  "files": {
+    "positive.bin": {
+      "bytes": 86016,
+      "sha256": "3a6ed25fe7855156c3e61f0ae3ef84485953941ee7fb3eeda75ae3aa13458041"
+    },
+    "negative.bin": {
+      "bytes": 86016,
+      "sha256": "d12ae36163b7732c5679bb7140a8e57fc29cb4971b4ee7ec8db4e40d87092625"
+    }
+  },
+  "license": "original project data; no external model or asset inputs"
+}
