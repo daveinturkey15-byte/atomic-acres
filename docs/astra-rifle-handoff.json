@@ -1,0 +1,80 @@
+{
+  "schema": 1,
+  "created_at": "2026-09-20T06:43:27.447226+00:00",
+  "claim_state": "VERIFIED source and CPU; OPEN root runtime/art",
+  "author": {
+    "harness": "Codex",
+    "requested_model": "gpt-6-astra",
+    "requested_effort": "xhigh",
+    "task": "astra_motion",
+    "provider_model_independently_observed": null
+  },
+  "source_commit": "02217fc5ab223f6e16b28a012cc6ea9f849fbf0d",
+  "contract_commit": "f95de1d5c9d0a1a9481b742455d3d89fd7e2bbb0",
+  "optional_observer_commit": "15101c7c4fa845974914d812947c769e8097167c",
+  "query": "motion=canary&hands=rifle-canary",
+  "default_enabled": false,
+  "root_required_edits": "None beyond already integrated prior main.ts prone sample",
+  "files": [
+    "src/weapons/rigged-rifle-hands.ts",
+    "src/weapons/first-person-hands.ts",
+    "scripts/verify-rigged-rifle-hands.mjs",
+    "scripts/verify-rigged-rifle-transitions.mjs",
+    "scripts/verify-viewmodel-motion.mjs"
+  ],
+  "pistol_frozen_sources": {
+    "src/weapons/rigged-pistol-hands.ts": "476deaafb3ee41f74f64fa3c3241f061b06afddfbfd74eecde99f9e1f736f76a",
+    "src/weapons/first-person-hands-motion.ts": "8da60e830ef26e0e207ab1e97cf113a99e84a834fff0a2045282a76a3c320aa6"
+  },
+  "geometry": {
+    "meshes": 12,
+    "triangles": 4836,
+    "shared_materials": 3,
+    "new_textures": 0,
+    "moving_digit_joints": false
+  },
+  "tests": {
+    "actual_weapon_solids": 28,
+    "reload_samples": 241,
+    "offhand_samples": 1205,
+    "stance_samples": 980,
+    "both_sleeves": "PASS constant endpoints/length to1mm",
+    "minimum_world_y_m": 0.04096758365400349,
+    "physical_seat_error_m": 0.002236049717694131,
+    "controller_parity_each_flag": {
+      "flags": [
+        "rifle-canary",
+        "rigged"
+      ],
+      "frames": 6970,
+      "exact_claims": 172,
+      "catalogue_mappings": 20,
+      "admitted_profiles": 17,
+      "result": "PASS"
+    },
+    "check": "PASS",
+    "build": "PASS",
+    "observer_syntax_selfcheck": "PASS",
+    "browser_gpu_jobs": 0
+  },
+  "source_repair_budget": {
+    "allowed": 2,
+    "used": 2,
+    "remaining": 0
+  },
+  "diagnostic_configurations": 20,
+  "evidence": "docs/astra-rifle-evidence",
+  "build": {
+    "bundle": "dist/assets/index-CIVRZGrY.js",
+    "sha256": "bc74c9655d0459bf3cbb9b2c23b1ea52c24ee769cf4d4f856a3aecd8c4508fec"
+  },
+  "open": [
+    "Root real rifle matching frames and temporal sequence",
+    "Finger segmentation and cuff visual quality",
+    "Hand-to-hand overlap and extreme camera pitch",
+    "Renderer/FPS/disposal/resize/mobile",
+    "Imported hero/carbine geometry not covered by procedural weapon-solid contract"
+  ],
+  "deadline": "2026-09-20T08:05:00+01:00",
+  "frozen_4212_233c7d7_untouched": true
+}

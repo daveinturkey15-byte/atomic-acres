@@ -1,0 +1,359 @@
+{
+  "role": "Bounded CPU geometric parameter diagnostics during source-r1, before final source repair; no thresholds changed",
+  "configurations": 20,
+  "rows": [
+    {
+      "diagnostic_configuration": "axis--0.3",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 11,
+        "maxTemporalPenetration": 0.011185579134015272,
+        "worst": {
+          "phase": 0.3375,
+          "part": "support-four-fingers",
+          "solid": "magazine",
+          "distance": -0.011185579134015272
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "axis--0.5",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 11,
+        "maxTemporalPenetration": 0.009868711927693119,
+        "worst": {
+          "phase": 0.3375,
+          "part": "support-four-fingers",
+          "solid": "magazineFoot",
+          "distance": -0.009868711927693119
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "axis--0.7",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 32,
+        "maxTemporalPenetration": 0.009940854557119405,
+        "worst": {
+          "phase": 0.3375,
+          "part": "support-four-fingers",
+          "solid": "magazineFoot",
+          "distance": -0.009940854557119405
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "contact-x--0.6",
+      "result": "PASS",
+      "failures": [],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 0,
+        "maxTemporalPenetration": 0,
+        "worst": null
+      }
+    },
+    {
+      "diagnostic_configuration": "final-path--0.6",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 34,
+        "maxTemporalPenetration": 0.0028023292917340736,
+        "worst": {
+          "phase": 0.625,
+          "part": "support-thumb",
+          "solid": "magazineFoot",
+          "distance": -0.0028023292917340736
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "gap-0.035",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 6,
+        "maxTemporalPenetration": 0.008899822615813624,
+        "worst": {
+          "phase": 0.7708333333333334,
+          "part": "support-four-fingers",
+          "solid": "magazineFoot",
+          "distance": -0.008899822615813624
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "gap-0.037",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 5,
+        "maxTemporalPenetration": 0.007675050614373458,
+        "worst": {
+          "phase": 0.7708333333333334,
+          "part": "support-four-fingers",
+          "solid": "magazineFoot",
+          "distance": -0.007675050614373458
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "gap-0.038",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 5,
+        "maxTemporalPenetration": 0.007062664613653402,
+        "worst": {
+          "phase": 0.7708333333333334,
+          "part": "support-four-fingers",
+          "solid": "magazineFoot",
+          "distance": -0.007062664613653402
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "pitch--0.6",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 32,
+        "maxTemporalPenetration": 0.015154224844234593,
+        "worst": {
+          "phase": 0.35,
+          "part": "support-four-fingers",
+          "solid": "magazine",
+          "distance": -0.015154224844234593
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "pitch--0.8",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 40,
+        "maxTemporalPenetration": 0.018643879541009434,
+        "worst": {
+          "phase": 0.35,
+          "part": "support-four-fingers",
+          "solid": "magazine",
+          "distance": -0.018643879541009434
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "pitch--1",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 42,
+        "maxTemporalPenetration": 0.02239629265120753,
+        "worst": {
+          "phase": 0.8125,
+          "part": "support-four-fingers",
+          "solid": "magazine",
+          "distance": -0.02239629265120753
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "solve--0.3",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 14,
+        "maxTemporalPenetration": 0.008071478658689485,
+        "worst": {
+          "phase": 0.35,
+          "part": "support-four-fingers",
+          "solid": "magazineFoot",
+          "distance": -0.008071478658689485
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "solve--0.45",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 25,
+        "maxTemporalPenetration": 0.005107540149594331,
+        "worst": {
+          "phase": 0.3458333333333333,
+          "part": "support-four-fingers",
+          "solid": "magazineFoot",
+          "distance": -0.005107540149594331
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "solve--0.6",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 29,
+        "maxTemporalPenetration": 0.006754033801590981,
+        "worst": {
+          "phase": 0.37916666666666665,
+          "part": "support-thumb",
+          "solid": "magazineFoot",
+          "distance": -0.006754033801590981
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "solve--0.75",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 34,
+        "maxTemporalPenetration": 0.007987770353476479,
+        "worst": {
+          "phase": 0.7916666666666666,
+          "part": "support-thumb",
+          "solid": "magazineFoot",
+          "distance": -0.007987770353476479
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "solve--0.9",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 36,
+        "maxTemporalPenetration": 0.009624352406840564,
+        "worst": {
+          "phase": 0.37916666666666665,
+          "part": "support-thumb",
+          "solid": "magazineFoot",
+          "distance": -0.009624352406840564
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "solve--1.05",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 37,
+        "maxTemporalPenetration": 0.010848600638086684,
+        "worst": {
+          "phase": 0.8083333333333333,
+          "part": "support-thumb",
+          "solid": "magazine",
+          "distance": -0.010848600638086684
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "yaw-roll--0.4",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 14,
+        "maxTemporalPenetration": 0.0026435648218489233,
+        "worst": {
+          "phase": 0.4,
+          "part": "support-thumb",
+          "solid": "magazineFoot",
+          "distance": -0.0026435648218489233
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "yaw-roll--0.6",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 1,
+        "maxTemporalPenetration": 0.002043750882012408,
+        "worst": {
+          "phase": 0.6416666666666667,
+          "part": "support-thumb",
+          "solid": "grip",
+          "distance": -0.002043750882012408
+        }
+      }
+    },
+    {
+      "diagnostic_configuration": "yaw-roll--0.8",
+      "result": "FAIL",
+      "failures": [
+        "temporal-solid-clearance"
+      ],
+      "temporal": {
+        "sampledFrames": 241,
+        "temporalBadFrames": 1,
+        "maxTemporalPenetration": 0.002043750882012408,
+        "worst": {
+          "phase": 0.6416666666666667,
+          "part": "support-thumb",
+          "solid": "grip",
+          "distance": -0.002043750882012408
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,221 @@
+{
+  "baseline": "e8b4b6d",
+  "claim": "CPU geometry/state only; visual acceptance OPEN",
+  "rigs": [
+    {
+      "family": "rifle",
+      "maxSeam": 1.3877787807814457e-16,
+      "maxStretch": 1.6653345369377348e-16,
+      "maxPalmStep": 0.00687381764185591,
+      "seatDistance": 5.594315114139762e-17,
+      "geometryUnchanged": true
+    },
+    {
+      "family": "pistol",
+      "maxSeam": 6.946513017424994e-17,
+      "maxStretch": 1.6653345369377348e-16,
+      "maxPalmStep": 0.005145718426642401,
+      "seatDistance": 1.4304896245381992e-17,
+      "geometryUnchanged": true
+    },
+    {
+      "family": "smg",
+      "maxSeam": 8.886119947416683e-17,
+      "maxStretch": 2.220446049250313e-16,
+      "maxPalmStep": 0.0053326721396888075,
+      "seatDistance": 4.163336342344337e-17,
+      "geometryUnchanged": true
+    },
+    {
+      "family": "shotgun",
+      "maxSeam": 1.3964254612015911e-16,
+      "maxStretch": 2.220446049250313e-16,
+      "maxPalmStep": 0.007606402745844575,
+      "seatDistance": 3.469446951953614e-18,
+      "geometryUnchanged": true
+    },
+    {
+      "family": "sniper",
+      "maxSeam": 1.1443916996305594e-16,
+      "maxStretch": 1.1102230246251565e-16,
+      "maxPalmStep": 0.006051029194226529,
+      "seatDistance": 1.3877787807814457e-17,
+      "geometryUnchanged": true
+    }
+  ],
+  "profiles": [
+    {
+      "id": "longhorn",
+      "family": "rifle",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "rattler",
+      "family": "smg",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "coachman",
+      "family": "shotgun",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "deadeye",
+      "family": "sniper",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "duster",
+      "family": "pistol",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "mp5",
+      "family": "smg",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "mini-uzi",
+      "family": "smg",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "machine-pistol",
+      "family": "smg",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "m4a1",
+      "family": "rifle",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "ak-47",
+      "family": "rifle",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "lmg",
+      "family": "rifle",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "minigun",
+      "family": "rifle",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "m14-ebr",
+      "family": "sniper",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "slug-shotgun",
+      "family": "shotgun",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "magnum",
+      "family": "pistol",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "flashlight-pistol",
+      "family": "pistol",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "railgun",
+      "family": "rifle",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "explosive-crossbow",
+      "family": "rifle",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "flamethrower",
+      "family": "rifle",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    },
+    {
+      "id": "flare-gun",
+      "family": "rifle",
+      "adsEndpoint": "exact",
+      "transitions": "finite"
+    }
+  ],
+  "parity": [
+    {
+      "handsFlag": "rifle-canary",
+      "simulatedFrames": 6970,
+      "exactClaims": 172,
+      "defaultVsFrozen": "PASS",
+      "canaryVsFrozen": "PASS",
+      "compared": "HUD/ammo/reload/cadence/FOV/camera recoil/claim origin+direction+time"
+    }
+  ],
+  "controls": [
+    "20mm detached sleeve rejected",
+    "20mm socket drift rejected",
+    "NaN/overshoot/cancel exact bind",
+    "ordnance suppresses reload reach"
+  ],
+  "floor": [
+    {
+      "family": "rifle",
+      "minimumWorldY": 0.052413913696513104,
+      "levelCameraOnly": true,
+      "threshold": 0.02
+    },
+    {
+      "family": "pistol",
+      "minimumWorldY": 0.020321453112380983,
+      "levelCameraOnly": true,
+      "threshold": 0.02
+    },
+    {
+      "family": "smg",
+      "minimumWorldY": 0.052413913696513104,
+      "levelCameraOnly": true,
+      "threshold": 0.02
+    },
+    {
+      "family": "shotgun",
+      "minimumWorldY": 0.052413913696513104,
+      "levelCameraOnly": true,
+      "threshold": 0.02
+    },
+    {
+      "family": "sniper",
+      "minimumWorldY": 0.052413913696513104,
+      "levelCameraOnly": true,
+      "threshold": 0.02
+    }
+  ],
+  "cost": {
+    "iterations": 50000,
+    "millisecondsPerPose": 0.0011080979999999999,
+    "scope": "CPU transform-only hot loop; no renderer/FPS claim"
+  }
+}

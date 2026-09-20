@@ -110,6 +110,10 @@ const elbow = new THREE.Vector3(...api.RIFLE_HAND_BINDS.support.elbow);
 // Measure the contact on the real palm surface, independently of the rig's metadata.
 const palm = new THREE.Vector3().fromBufferAttribute(rig.hands.supportHand.getObjectByName('support-palm').geometry.attributes.position, 0);
 const length = wrist.distanceTo(elbow);
+const triggerWrist = new THREE.Vector3(...api.RIFLE_HAND_BINDS.trigger.wrist);
+const triggerElbow = new THREE.Vector3(...api.RIFLE_HAND_BINDS.trigger.elbow);
+const triggerLength = triggerWrist.distanceTo(triggerElbow);
+const triggerSleeve = rig.hands.triggerHand.getObjectByName('TriggerForearm');
 // Audit the same actual solid bounds through the authored trajectory. Static
 // clearance cannot prove a wrapped hand clears the grip while releasing it.
 const surfaceSamples = [];
@@ -131,6 +135,10 @@ for (let f = 0; f <= 240; f++) {
   const sw = wrist.clone().applyMatrix4(rig.hands.supportForearm.matrixWorld);
   const se = elbow.clone().applyMatrix4(rig.hands.supportForearm.matrixWorld);
   seam = Math.max(seam, w.distanceTo(sw)); stretch = Math.max(stretch, Math.abs(sw.distanceTo(se) - length));
+  const tw = triggerWrist.clone().applyMatrix4(rig.hands.triggerHand.matrixWorld);
+  const tsw = triggerWrist.clone().applyMatrix4(triggerSleeve.matrixWorld);
+  const tse = triggerElbow.clone().applyMatrix4(triggerSleeve.matrixWorld);
+  seam = Math.max(seam, tw.distanceTo(tsw)); stretch = Math.max(stretch, Math.abs(tsw.distanceTo(tse) - triggerLength));
   let bad = false;
   for (const sample of surfaceSamples) {
     const posed = sample.point.clone().applyMatrix4(rig.hands.supportHand.matrixWorld);
@@ -148,7 +156,7 @@ for (let f = 0; f <= 240; f++) {
   }
   if (bad) temporalBadFrames++;
 }
-check('wrist-and-length', seam <= .001 && stretch <= .001, { seam, stretch });
+check('wrist-and-length', seam <= .001 && stretch <= .001, { bothSleeves: true, seam, stretch });
 check('temporal-solid-clearance', temporalBadFrames === 0, { sampledFrames: 241, temporalBadFrames, maxTemporalPenetration, worst: temporalWorst });
 rig.hands.updateReload(.5); rig.group.updateMatrixWorld(true);
 const seatDistance = palm.clone().applyMatrix4(rig.hands.supportHand.matrixWorld).distanceTo(new THREE.Vector3(...contract.spatial.reloadPalmSurfaceTarget));

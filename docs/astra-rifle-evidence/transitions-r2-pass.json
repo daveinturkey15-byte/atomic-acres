@@ -1,0 +1,22 @@
+{
+  "result": "PASS",
+  "contact": {
+    "frames": 1205,
+    "badFrames": 0,
+    "maxExcessPenetration": 0,
+    "worst": null
+  },
+  "floor": {
+    "levelCameraOnly": true,
+    "frames": 980,
+    "minimumWorldY": 0.04096758365400349,
+    "threshold": 0.02,
+    "worst": {
+      "prone": true,
+      "ads": 0,
+      "offHand": 0.25,
+      "phase": 0.9375
+    }
+  },
+  "visualAcceptance": "OPEN"
+}
