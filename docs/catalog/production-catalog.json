@@ -1122,6 +1122,34 @@
       "verification": null,
       "owner": "Catalog",
       "nextAction": "Bind the pose reference to runtime animation and capture hand-contact, 360-degree yaw, bot-forward, hit-react and network proof."
+    },
+    {
+      "id": "environment-orange-living-noon-reset",
+      "kind": "environment",
+      "displayName": "Orange living room material and daylight target",
+      "referenceSource": "Single Astra reset: original imagegen edit of actual 39884ff precursor gameplay frame",
+      "dependencies": [],
+      "images": [
+        {
+          "path": "docs/reference/production-catalog/environments/orange-living-target-20260920.png",
+          "sha256": "688e4b41f30c87ec840e2f665696b8b7a293744a2161e9dbf5b2464fbf79eb9c",
+          "role": "material-lighting-target",
+          "sourceImagePath": "C:/Users/david/.codex/generated_images/01a0b8d8-dae9-7561-bd64-8fc8e9ac5d60/exec-4c04154b-b92d-4806-81e1-ad5ddca227fa.png",
+          "inputGameplayFrame": "captures/single-astra-noon/noon-houses-after-r1-1227/orangeLiving.png",
+          "tool": "built-in image_gen"
+        }
+      ],
+      "stage": "reference-generated",
+      "model": null,
+      "runtime": null,
+      "verification": null,
+      "owner": "Single Astra",
+      "nextAction": "Preserve real map apertures and collision. Rebuild material response, window light, carpet and walnut surfaces; compare actual same-camera game output. Generated window proportions and outside scenery are not geometric authority.",
+      "artGeneration": {
+        "tool": "built-in image_gen",
+        "stage": "reference-generated",
+        "createdAt": "2026-09-20T11:52:35.731Z"
+      }
     }
   ]
 }

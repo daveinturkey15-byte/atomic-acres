@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "VERIFIED accepted4240 unchanged; no new promotion. Four prior source outputs reviewed: glove current-tree failure, sky missing current wiring, crate obsolete event seam, sedan invalid rear-glass16tri loss. Exact partials retained. Four bounded external repairs now use root-preseeded current6148989 source trees, preserving dirty legacy worktrees. This addresses observed stale-source failures without changing acceptance gates. Graphics whole-map goal OPEN.",
+  "status": "Single Astra first inspection candidate frozen on4242; controls/house cleanup/interpolated bots verified, memory gate OPEN. Stable artifact4240 unchanged; full visual overhaul OPEN.",
   "owner": "Codex",
   "stop_state": "active: preserve frozen checkpoint and continue private candidates",
   "backup": {
@@ -31,23 +31,18 @@
     "status": "ACTIVE"
   },
   "resource_sample": {
-    "sampled_at": "2026-09-20T11:43:31.2621785+01:00",
-    "free_ram_gib": 29.683,
-    "free_vram_mib": 3651,
-    "gpu_percent": 98,
-    "note": "Browser/GPU QA HOLD: freeVRAM meets bare3GiB reserve but not reserve plus measured1.5GiB browser footprint. Owner GPU busy. Cloud source lanes and light CPU review continue; never terminate owner processes."
+    "sampled_at": "2026-09-20T11:56:09.737Z",
+    "free_ram_gib": 31.491,
+    "free_vram_mib": 5351,
+    "gpu_percent": 3,
+    "note": "Owned QA closed. Final capture minima29.892GiB RAM/4132MiB VRAM; owner processes untouched."
   },
   "next_actions": [
-    "Keep accepted4240 operator-only successor, inspection4234 and frozen4212 immutable. No revalidation of unchanged frozen builds. Preview report docs/handoff/OPERATOR-ACCEPTANCE-2026-09-20-1110.md. Whole-map visual overhaul and60fps remain OPEN.",
-    "Four new source lanes started11:41BST with preseeded current6148989 tree/ and dependency junction, not stale parent checkout. Read their terminal receipts and review only changed artifacts. Glove repair1 must target actual accepted rifle-canary rig and real MaterialLibrary; sky repair1 must deliver complete minimal current-main wiring and bounded texture validation.",
-    "Sedan finalrepair2 owns rear-grid topology: actual8quads all repeated coordinates caused16tri lost at export. Preserve6primitives/42evaluated centres/numeric envelope and require matching actual exported triangle count, no invalid mesh warning. Afterfinal2failure stop approach. CPU Blender root-only. Crate repair1 must use actual current event subscription seam, preserve existing subscribers, and keep unsupported guest capability unavailable.",
-    "World-weapon final2 stays OFF: combined210s renderer-memory gate failed21.23MiB/60percent steps up; operator-only nowPASS2.94MiB/47percent. Cause remains unproven. No third parameter repair. Use actual retention evidence if assigning new approach.",
-    "Surface-presence1035 source held: basic CPU precondition checks pass but independent scripts/.verify-presence-lifecycle-1106.mjs FAILS valid retry after rejected install. Not integrated; subtle +/-1.5-3percent macro also has no actual visual acceptance. Preserve failure and best known good.",
-    "Mountain-volume mechanically PASS but visible gain insufficient, flagOFF. Old sedan offset-repair approach stopped; new lane uses envelope-first construction, not a third offset/scale tweak. Current operator final2 accepted only garment/rig scope; face/hands still OPEN.",
-    "AGY genuine429 cooldown until12:46BSTSeptember20, observed model unknown. Both native Astras remain stopped; root orchestrates/reviews/accepts only. No OpenAI imagegen or implementation agents.",
-    "Next heavy job requires fresh stable headroom >=12GiB RAM and>=3GiB VRAM plus its footprint. Last guard min28.48GiB RAM/3480MiB VRAM passed; that is job reserve, not fresh launch headroom. Never terminate owner processes. Recipes now record actual GLB index offsets, QA-camera release, sequential image binding and cancellation lessons.",
-    "Read docs/handoff/SOURCE-BASE-CORRECTION-2026-09-20-1142.json for exact failure evidence and seeded working directories. Never copy stale worker src over seeded tree, reset dirty worktrees, or treat obsolete-checkout tsc as current-source acceptance.",
-    "At11:43 ownerGPU98percent and3651MiBfree: browser/GPU QA held pending stable >=4608MiB freeVRAM plus RAM reserve. Earlier5188MiB reading is stale. Optional failed-check temporary tree .gs-check-FVKCYz retained after automatic command policy rejected cleanup batch before execution; no deletion or source change occurred."
+    "Keep4242 exact13:00 candidate immutable;4212/4234/4240 unchanged. No worker launches.",
+    "Investigate active-gameplay memory: candidate0.700MB/min r2.313 FAIL vs4240 .549 r2.165 PASS. Largest snapshot net growth is compiled code; cause unresolved. Never weaken gates or retry until green.",
+    "15:00: interior wood/carpet/upholstery PBR, window sunlight/shadows, sky and first-person surfaces. Compare original image target with real game. Separate successor artifact/port.",
+    "17:00 weapon-image menus/custom classes/HUD;19:00 further streaks/motion/effects/audio/multiplayer;21:00 consolidation. Estimates revised at each checkpoint.",
+    "Review preserved rifle-glove patch before adoption, credit prior Muse. Existing Kimodo clips and H3 motion references; no new model workers."
   ],
   "interrupted_lanes": [
     {
@@ -706,8 +701,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T03:51:39+00:00",
-      "ended_at": "2026-09-20T03:56:00+00:00",
+      "started_at": "2026-09-20T04:51:39+01:00",
+      "ended_at": "2026-09-20T04:56:00+01:00",
       "state": "process-completed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -721,7 +716,7 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
       "route": "zai/glm-5.3-flash",
       "effort": "max",
-      "started_at": "2026-09-20T04:03:51+00:00",
+      "started_at": "2026-09-20T05:03:51+01:00",
       "ended_at": null,
       "state": "running",
       "observed_models": [],
@@ -734,8 +729,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T04:03:51+00:00",
-      "ended_at": "2026-09-20T04:10:58+00:00",
+      "started_at": "2026-09-20T05:03:51+01:00",
+      "ended_at": "2026-09-20T05:10:58+01:00",
       "state": "process-completed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -749,8 +744,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T04:03:51+00:00",
-      "ended_at": "2026-09-20T04:11:39+00:00",
+      "started_at": "2026-09-20T05:03:51+01:00",
+      "ended_at": "2026-09-20T05:11:39+01:00",
       "state": "process-completed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -764,8 +759,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T03:17:37+00:00",
-      "ended_at": "2026-09-20T03:29:37+00:00",
+      "started_at": "2026-09-20T04:17:37+01:00",
+      "ended_at": "2026-09-20T04:29:37+01:00",
       "state": "failed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -779,8 +774,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T03:23:36+00:00",
-      "ended_at": "2026-09-20T03:27:27+00:00",
+      "started_at": "2026-09-20T04:23:36+01:00",
+      "ended_at": "2026-09-20T04:27:27+01:00",
       "state": "process-completed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -817,8 +812,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
       "route": "zai/glm-5.3-flash",
       "effort": "max",
-      "started_at": "2026-09-20T04:53:18+00:00",
-      "ended_at": "2026-09-20T05:13:19+00:00",
+      "started_at": "2026-09-20T05:53:18+01:00",
+      "ended_at": "2026-09-20T06:13:19+01:00",
       "state": "failed",
       "observed_models": [
         "glm-5.3-flash"
@@ -837,8 +832,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T04:57:38+00:00",
-      "ended_at": "2026-09-20T05:12:18+00:00",
+      "started_at": "2026-09-20T05:57:38+01:00",
+      "ended_at": "2026-09-20T06:12:18+01:00",
       "state": "failed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -856,8 +851,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T04:50:34+00:00",
-      "ended_at": "2026-09-20T04:53:20+00:00",
+      "started_at": "2026-09-20T05:50:34+01:00",
+      "ended_at": "2026-09-20T05:53:20+01:00",
       "state": "process-completed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -873,8 +868,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T04:45:10+00:00",
-      "ended_at": "2026-09-20T04:49:05+00:00",
+      "started_at": "2026-09-20T05:45:10+01:00",
+      "ended_at": "2026-09-20T05:49:05+01:00",
       "state": "process-completed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -890,8 +885,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T04:41:30+00:00",
-      "ended_at": "2026-09-20T04:48:11+00:00",
+      "started_at": "2026-09-20T05:41:30+01:00",
+      "ended_at": "2026-09-20T05:48:11+01:00",
       "state": "process-completed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -907,8 +902,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
       "route": "zai/glm-5.3-flash",
       "effort": "max",
-      "started_at": "2026-09-20T04:41:30+00:00",
-      "ended_at": "2026-09-20T05:06:31+00:00",
+      "started_at": "2026-09-20T05:41:30+01:00",
+      "ended_at": "2026-09-20T06:06:31+01:00",
       "state": "failed",
       "observed_models": [
         "glm-5.3-flash"
@@ -927,8 +922,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
       "route": "zai/glm-5.3-flash",
       "effort": "max",
-      "started_at": "2026-09-20T05:05:47+00:00",
-      "ended_at": "2026-09-20T05:30:48+00:00",
+      "started_at": "2026-09-20T06:05:47+01:00",
+      "ended_at": "2026-09-20T06:30:48+01:00",
       "state": "failed",
       "observed_models": [
         "glm-5.3-flash"
@@ -947,8 +942,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T05:05:47+00:00",
-      "ended_at": "2026-09-20T05:11:43+00:00",
+      "started_at": "2026-09-20T06:05:47+01:00",
+      "ended_at": "2026-09-20T06:11:43+01:00",
       "state": "process-completed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -964,8 +959,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
       "route": "zai/glm-5.3-flash",
       "effort": "max",
-      "started_at": "2026-09-20T05:12:29+00:00",
-      "ended_at": "2026-09-20T05:30:30+00:00",
+      "started_at": "2026-09-20T06:12:29+01:00",
+      "ended_at": "2026-09-20T06:30:30+01:00",
       "state": "failed",
       "observed_models": [
         "glm-5.3-flash"
@@ -984,8 +979,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T05:15:47+00:00",
-      "ended_at": "2026-09-20T05:28:14+00:00",
+      "started_at": "2026-09-20T06:15:47+01:00",
+      "ended_at": "2026-09-20T06:28:14+01:00",
       "state": "failed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -1025,7 +1020,7 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
       "route": "zai/glm-5.3-flash",
       "effort": "max",
-      "started_at": "2026-09-20T05:32:14+00:00",
+      "started_at": "2026-09-20T06:32:14+01:00",
       "ended_at": "2026-09-20T06:50:15+01:00",
       "state": "historical-timeout-reconciled",
       "observed_models": [
@@ -1043,8 +1038,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T05:32:14+00:00",
-      "ended_at": "2026-09-20T05:43:15+00:00",
+      "started_at": "2026-09-20T06:32:14+01:00",
+      "ended_at": "2026-09-20T06:43:15+01:00",
       "state": "process-completed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -1059,8 +1054,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T05:34:01+00:00",
-      "ended_at": "2026-09-20T05:41:11+00:00",
+      "started_at": "2026-09-20T06:34:01+01:00",
+      "ended_at": "2026-09-20T06:41:11+01:00",
       "state": "failed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -1163,8 +1158,8 @@
         "muse-spark-1.3-contributor"
       ],
       "accepted": false,
-      "started_at": "2026-09-20T06:39:58+00:00",
-      "ended_at": "2026-09-20T06:47:56+00:00"
+      "started_at": "2026-09-20T07:39:58+01:00",
+      "ended_at": "2026-09-20T07:47:56+01:00"
     },
     {
       "lane": "muse-crossbow-runtime-0118",
@@ -1342,8 +1337,8 @@
         "glm-5.3-flash"
       ],
       "accepted": false,
-      "started_at": "2026-09-20T06:57:06+00:00",
-      "ended_at": "2026-09-20T07:15:42+00:00",
+      "started_at": "2026-09-20T07:57:06+01:00",
+      "ended_at": "2026-09-20T08:15:42+01:00",
       "failure_reasons": []
     },
     {
@@ -1357,8 +1352,8 @@
         "muse-spark-1.3-contributor"
       ],
       "accepted": false,
-      "started_at": "2026-09-20T06:57:06+00:00",
-      "ended_at": "2026-09-20T07:06:18+00:00",
+      "started_at": "2026-09-20T07:57:06+01:00",
+      "ended_at": "2026-09-20T08:06:18+01:00",
       "failure_reasons": []
     },
     {
@@ -1372,8 +1367,8 @@
         "muse-spark-1.3-contributor"
       ],
       "accepted": false,
-      "started_at": "2026-09-20T07:09:16+00:00",
-      "ended_at": "2026-09-20T07:17:08+00:00",
+      "started_at": "2026-09-20T08:09:16+01:00",
+      "ended_at": "2026-09-20T08:17:08+01:00",
       "failure_reasons": []
     },
     {
@@ -1387,8 +1382,8 @@
         "glm-5.3-flash"
       ],
       "accepted": false,
-      "started_at": "2026-09-20T07:10:50+00:00",
-      "ended_at": "2026-09-20T07:18:51+00:00",
+      "started_at": "2026-09-20T08:10:50+01:00",
+      "ended_at": "2026-09-20T08:18:51+01:00",
       "failure_reasons": [
         "provider process exited 1",
         "launcher timeout killed its own subprocess tree"
@@ -1416,8 +1411,8 @@
         "muse-spark-1.3-contributor"
       ],
       "accepted": false,
-      "started_at": "2026-09-20T07:20:14+00:00",
-      "ended_at": "2026-09-20T07:28:15+00:00",
+      "started_at": "2026-09-20T08:20:14+01:00",
+      "ended_at": "2026-09-20T08:28:15+01:00",
       "failure_reasons": [
         "provider process exited 1",
         "launcher timeout killed its own subprocess tree"
@@ -1434,8 +1429,8 @@
         "glm-5.3-flash"
       ],
       "accepted": false,
-      "started_at": "2026-09-20T07:32:03+00:00",
-      "ended_at": "2026-09-20T07:57:04+00:00",
+      "started_at": "2026-09-20T08:32:03+01:00",
+      "ended_at": "2026-09-20T08:57:04+01:00",
       "failure_reasons": [
         "provider process exited 1",
         "launcher timeout killed its own subprocess tree"
@@ -1452,8 +1447,8 @@
         "muse-spark-1.3-contributor"
       ],
       "accepted": false,
-      "started_at": "2026-09-20T07:32:03+00:00",
-      "ended_at": "2026-09-20T07:47:52+00:00",
+      "started_at": "2026-09-20T08:32:03+01:00",
+      "ended_at": "2026-09-20T08:47:52+01:00",
       "failure_reasons": [
         "transcript reported a terminal error"
       ]
@@ -1469,8 +1464,8 @@
         "glm-5.3-flash"
       ],
       "accepted": true,
-      "started_at": "2026-09-20T07:34:13+00:00",
-      "ended_at": "2026-09-20T07:46:12+00:00",
+      "started_at": "2026-09-20T08:34:13+01:00",
+      "ended_at": "2026-09-20T08:46:12+01:00",
       "failure_reasons": []
     },
     {
@@ -1484,8 +1479,8 @@
         "glm-5.3-flash"
       ],
       "accepted": false,
-      "started_at": "2026-09-20T07:55:24+00:00",
-      "ended_at": "2026-09-20T08:20:25+00:00",
+      "started_at": "2026-09-20T08:55:24+01:00",
+      "ended_at": "2026-09-20T09:20:25+01:00",
       "failure_reasons": [
         "provider process exited 1",
         "launcher timeout killed its own subprocess tree"
@@ -1602,7 +1597,7 @@
       "attribution": "observed",
       "accepted": false,
       "owned_directory": "work/operator-visual-muse-0918",
-      "started_at": "2026-09-20T08:14:08+00:00",
+      "started_at": "2026-09-20T09:14:08+01:00",
       "note": "UV strip collapse corrected; visible cloth pattern restored. Finalrepair2 still toy-like and introduces visibly open/hollow shoulder sleeve in crouch after cap removal. Preserve useful UV finding, withhold completecandidate. Both repairs exhausted; new coherent mesh/retopology approach required, no third same-recipe tweak.",
       "review": "docs/handoff/operator-visual-0935-review.json"
     },
@@ -1620,7 +1615,7 @@
       "attribution": "unknown",
       "accepted": false,
       "owned_directory": "work/world-weapon-glm-0923",
-      "started_at": "2026-09-20T08:21:53+00:00",
+      "started_at": "2026-09-20T09:21:53+01:00",
       "note": "Actual15min timeout09:36:53. TwoTSsourcefiles andCPUtest preserved. Rootrerun passes all but2globalteardown checks (91disposes andsecondcall). AGYrepair10941 now owns continuation; notrootintegrated."
     },
     {
@@ -1919,8 +1914,8 @@
       "attribution": "observed",
       "accepted": false,
       "owned_directory": "work/sedan-envelope-construction-muse-1105",
-      "started_at": "2026-09-20T10:03:39+00:00",
-      "ended_at": "2026-09-20T10:11:38+00:00",
+      "started_at": "2026-09-20T11:03:39+01:00",
+      "ended_at": "2026-09-20T11:11:38+01:00",
       "failure_reasons": [
         "transcript reported a terminal error"
       ],
@@ -1940,8 +1935,8 @@
       "attribution": "observed",
       "accepted": false,
       "owned_directory": "work/supply-crate-signed-zero-repair1-glm-1105",
-      "started_at": "2026-09-20T10:03:39+00:00",
-      "ended_at": "2026-09-20T10:13:40+00:00",
+      "started_at": "2026-09-20T11:03:39+01:00",
+      "ended_at": "2026-09-20T11:13:40+01:00",
       "failure_reasons": [
         "provider process exited 1",
         "launcher timeout killed its own subprocess tree"
@@ -1962,8 +1957,8 @@
       "attribution": "observed",
       "accepted": false,
       "owned_directory": "work/fp-glove-shell-muse-1105",
-      "started_at": "2026-09-20T10:03:39+00:00",
-      "ended_at": "2026-09-20T10:25:40+00:00",
+      "started_at": "2026-09-20T11:03:39+01:00",
+      "ended_at": "2026-09-20T11:25:40+01:00",
       "failure_reasons": [
         "provider process exited 1",
         "launcher timeout killed its own subprocess tree",
@@ -1985,8 +1980,8 @@
       "attribution": "observed",
       "accepted": false,
       "owned_directory": "work/sedan-evaluated-export-repair1-muse-1117",
-      "started_at": "2026-09-20T10:17:19+00:00",
-      "ended_at": "2026-09-20T10:26:41+00:00",
+      "started_at": "2026-09-20T11:17:19+01:00",
+      "ended_at": "2026-09-20T11:26:41+01:00",
       "failure_reasons": [
         "transcript reported a terminal error"
       ],
@@ -2006,8 +2001,8 @@
       "attribution": "observed",
       "accepted": false,
       "owned_directory": "work/clear-afternoon-sky-glm-1105",
-      "started_at": "2026-09-20T10:03:39+00:00",
-      "ended_at": "2026-09-20T10:27:40+00:00",
+      "started_at": "2026-09-20T11:03:39+01:00",
+      "ended_at": "2026-09-20T11:27:40+01:00",
       "failure_reasons": [
         "provider process exited 1",
         "launcher timeout killed its own subprocess tree"
@@ -2028,8 +2023,8 @@
       "attribution": "observed",
       "accepted": false,
       "owned_directory": "work/supply-crate-solo-integration-glm-1117",
-      "started_at": "2026-09-20T10:17:19+00:00",
-      "ended_at": "2026-09-20T10:35:19+00:00",
+      "started_at": "2026-09-20T11:17:19+01:00",
+      "ended_at": "2026-09-20T11:35:19+01:00",
       "failure_reasons": [
         "provider process exited 1",
         "launcher timeout killed its own subprocess tree"
@@ -2046,7 +2041,7 @@
     "js": "index-Cw-8jhAl.js",
     "sha256": "92e691b0393456101a7d59a92420debcfd72fc5f0c1ea35a4746ce7f0c163775",
     "state": "VERIFIED frozen functional inspection checkpoint; visual scorecard and60fps remain OPEN",
-    "frozen_at": "2026-09-20T05:18:23.500680+01:00",
+    "frozen_at": "2026-09-20T05:18:23.50068+01:00",
     "identity_receipt": ".recovery-runtime/consolidation-0445/showcase-identity.json",
     "launcher": "scripts/orchestration/Start-Showcase.ps1"
   },
@@ -2146,72 +2141,7 @@
     "motion": "Screenshotluma/budgetPASSdoesnotestablishactorvisibility, framingorposephase. Frontviewactualinteriorwall; rejectharnessclaim.",
     "commit": "VERIFIED50explicitpaths checkpointed; firstcommitattemptfailedmissingauthoridentity, retried per-command CodexRecovery identity, no globalconfigchange."
   },
-  "active_external_lanes": [
-    {
-      "lane": "muse-glove-current-root-repair1-1142",
-      "run_id": "delegated-omp-muse-glove-current-root-repair1-1142-3cb75642d8f5413ba7a5623fbf06d39b",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-glove-current-root-repair1-1142-3cb75642d8f5413ba7a5623fbf06d39b\\summary.json",
-      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919",
-      "route": "meta-contributor/muse-spark-1.3-contributor",
-      "effort": "xhigh",
-      "state": "running-source-only",
-      "observed_models": [],
-      "attribution": "pending-observation",
-      "accepted": false,
-      "owned_directory": "work/fp-glove-current-root-repair1-muse-1142",
-      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919\\work\\fp-glove-current-root-repair1-muse-1142\\tree",
-      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
-      "started_at": "2026-09-20T10:41:22+00:00"
-    },
-    {
-      "lane": "muse-sedan-rear-glass-final2-1142",
-      "run_id": "delegated-omp-muse-sedan-rear-glass-final2-1142-8428d7eef20b4ac08046c604fcec2d96",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-sedan-rear-glass-final2-1142-8428d7eef20b4ac08046c604fcec2d96\\summary.json",
-      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
-      "route": "meta-contributor/muse-spark-1.3-contributor",
-      "effort": "xhigh",
-      "state": "running-source-only",
-      "observed_models": [],
-      "attribution": "pending-observation",
-      "accepted": false,
-      "owned_directory": "work/sedan-rear-glass-final2-muse-1142",
-      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919\\work\\sedan-rear-glass-final2-muse-1142\\tree",
-      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
-      "started_at": "2026-09-20T10:41:22+00:00"
-    },
-    {
-      "lane": "glm-sky-current-root-repair1-1142",
-      "run_id": "delegated-omp-glm-sky-current-root-repair1-1142-e686cd3f5645464481b74b5baafb6a0d",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-sky-current-root-repair1-1142-e686cd3f5645464481b74b5baafb6a0d\\summary.json",
-      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
-      "route": "zai/glm-5.3-flash",
-      "effort": "max",
-      "state": "running-source-only",
-      "observed_models": [],
-      "attribution": "pending-observation",
-      "accepted": false,
-      "owned_directory": "work/sky-current-root-repair1-glm-1142",
-      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919\\work\\sky-current-root-repair1-glm-1142\\tree",
-      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
-      "started_at": "2026-09-20T10:41:22+00:00"
-    },
-    {
-      "lane": "glm-crate-current-root-repair1-1142",
-      "run_id": "delegated-omp-glm-crate-current-root-repair1-1142-cf057cd049a541538ecf01bbc2654c78",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-crate-current-root-repair1-1142-cf057cd049a541538ecf01bbc2654c78\\summary.json",
-      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
-      "route": "zai/glm-5.3-flash",
-      "effort": "max",
-      "state": "running-source-only",
-      "observed_models": [],
-      "attribution": "pending-observation",
-      "accepted": false,
-      "owned_directory": "work/crate-current-root-repair1-glm-1142",
-      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919\\work\\crate-current-root-repair1-glm-1142\\tree",
-      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
-      "started_at": "2026-09-20T10:41:22+00:00"
-    }
-  ],
+  "active_external_lanes": [],
   "awaiting_root_review": [
     {
       "lane": "agy-supply-crate-0912",
@@ -2530,7 +2460,7 @@
       "sha256": "0bf47465295a31fde500b14bdb56ac846ebf1ab207310e86ecd2dd14bb4a4acb",
       "state": "VERIFIED scoped functional review candidate; default-off crossbow canary optional. Not yet frozen morning showcase; photorealism and60fps unmet."
     },
-    "pending_source": "3301fb12fdc49e6ec4b073e7527e8b5c20c2029e",
+    "pending_source": "39884ffec7fa0442d8d20501967cf3475fee288c",
     "report": "docs/handoff/SHOWCASE-2026-09-20.md",
     "original_frozen": {
       "url": "http://127.0.0.1:4191/",
@@ -2543,7 +2473,7 @@
       "js": "index-Cw-8jhAl.js",
       "sha256": "92e691b0393456101a7d59a92420debcfd72fc5f0c1ea35a4746ce7f0c163775",
       "state": "VERIFIED frozen functional inspection checkpoint; visual scorecard and60fps remain OPEN",
-      "frozen_at": "2026-09-20T05:18:23.500680+01:00",
+      "frozen_at": "2026-09-20T05:18:23.50068+01:00",
       "identity_receipt": ".recovery-runtime/consolidation-0445/showcase-identity.json",
       "launcher": "scripts/orchestration/Start-Showcase.ps1"
     },
@@ -2601,7 +2531,21 @@
         "state": "VERIFIED scoped visual review candidate, NOT a complete map overhaul or replacement of frozen4212; HUD spent observer OPEN",
         "verified_at": "2026-09-20T07:46:47.384026+01:00"
       }
-    ]
+    ],
+    "inspection_1300": {
+      "at": "2026-09-20T13:00:00+01:00",
+      "status": "INSPECTION_CANDIDATE_MEMORY_GATE_OPEN",
+      "url": "http://127.0.0.1:4242/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary",
+      "source_commit": "39884ffec7fa0442d8d20501967cf3475fee288c",
+      "dist": "dist-astra-noon-candidate",
+      "js": "index-DUiBXw9V.js",
+      "sha256": "5b3556df86914c62113b347788cb737ebc867f9c60388a55e82e8e099ce0f628",
+      "live_verified_at": "2026-09-20T11:56:09.736Z",
+      "report": "docs/handoff/INSPECTION-2026-09-20-1300.md",
+      "capture": "captures/single-astra-noon/noon-final-1253/result.json",
+      "soak": "captures/leak/noon-solo-soak-1232-soak.json",
+      "state": "Controls, house traversal/geometry and bot presentation verified. Active-gameplay memory criterion FAILED; not promoted. Full visual quality remains unmet."
+    }
   },
   "backup_0420": {
     "bundle": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/overnight-0420.bundle",
@@ -2659,74 +2603,9 @@
   },
   "updated_at": "2026-09-20T10:54:22.227948+01:00",
   "current_ownership": {
-    "root": "Review, exact integration and serialized GPU/browser acceptance only; no implementation or imagegen.",
-    "native_astras": "Both completed before09BST; do not restart.",
-    "external": [
-      {
-        "lane": "muse-glove-current-root-repair1-1142",
-        "run_id": "delegated-omp-muse-glove-current-root-repair1-1142-3cb75642d8f5413ba7a5623fbf06d39b",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-glove-current-root-repair1-1142-3cb75642d8f5413ba7a5623fbf06d39b\\summary.json",
-        "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919",
-        "route": "meta-contributor/muse-spark-1.3-contributor",
-        "effort": "xhigh",
-        "state": "running-source-only",
-        "observed_models": [],
-        "attribution": "pending-observation",
-        "accepted": false,
-        "owned_directory": "work/fp-glove-current-root-repair1-muse-1142",
-        "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919\\work\\fp-glove-current-root-repair1-muse-1142\\tree",
-        "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
-        "started_at": "2026-09-20T10:41:22+00:00"
-      },
-      {
-        "lane": "muse-sedan-rear-glass-final2-1142",
-        "run_id": "delegated-omp-muse-sedan-rear-glass-final2-1142-8428d7eef20b4ac08046c604fcec2d96",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-sedan-rear-glass-final2-1142-8428d7eef20b4ac08046c604fcec2d96\\summary.json",
-        "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
-        "route": "meta-contributor/muse-spark-1.3-contributor",
-        "effort": "xhigh",
-        "state": "running-source-only",
-        "observed_models": [],
-        "attribution": "pending-observation",
-        "accepted": false,
-        "owned_directory": "work/sedan-rear-glass-final2-muse-1142",
-        "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919\\work\\sedan-rear-glass-final2-muse-1142\\tree",
-        "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
-        "started_at": "2026-09-20T10:41:22+00:00"
-      },
-      {
-        "lane": "glm-sky-current-root-repair1-1142",
-        "run_id": "delegated-omp-glm-sky-current-root-repair1-1142-e686cd3f5645464481b74b5baafb6a0d",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-sky-current-root-repair1-1142-e686cd3f5645464481b74b5baafb6a0d\\summary.json",
-        "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
-        "route": "zai/glm-5.3-flash",
-        "effort": "max",
-        "state": "running-source-only",
-        "observed_models": [],
-        "attribution": "pending-observation",
-        "accepted": false,
-        "owned_directory": "work/sky-current-root-repair1-glm-1142",
-        "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919\\work\\sky-current-root-repair1-glm-1142\\tree",
-        "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
-        "started_at": "2026-09-20T10:41:22+00:00"
-      },
-      {
-        "lane": "glm-crate-current-root-repair1-1142",
-        "run_id": "delegated-omp-glm-crate-current-root-repair1-1142-cf057cd049a541538ecf01bbc2654c78",
-        "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-crate-current-root-repair1-1142-cf057cd049a541538ecf01bbc2654c78\\summary.json",
-        "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
-        "route": "zai/glm-5.3-flash",
-        "effort": "max",
-        "state": "running-source-only",
-        "observed_models": [],
-        "attribution": "pending-observation",
-        "accepted": false,
-        "owned_directory": "work/crate-current-root-repair1-glm-1142",
-        "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919\\work\\crate-current-root-repair1-glm-1142\\tree",
-        "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
-        "started_at": "2026-09-20T10:41:22+00:00"
-      }
-    ]
+    "root": "Single Astra xhigh implements/reviews/integrates under direct owner reset; no delegation.",
+    "native_astras": "Historical specialists stopped; do not restart.",
+    "external": []
   },
   "retained_review_backlog_0918": [
     {
@@ -2736,8 +2615,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T04:03:51+00:00",
-      "ended_at": "2026-09-20T04:10:58+00:00",
+      "started_at": "2026-09-20T05:03:51+01:00",
+      "ended_at": "2026-09-20T05:10:58+01:00",
       "state": "process-completed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -2751,8 +2630,8 @@
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T04:03:51+00:00",
-      "ended_at": "2026-09-20T04:11:39+00:00",
+      "started_at": "2026-09-20T05:03:51+01:00",
+      "ended_at": "2026-09-20T05:11:39+01:00",
       "state": "process-completed",
       "observed_models": [
         "muse-spark-1.3-contributor"
@@ -2761,19 +2640,18 @@
     }
   ],
   "inspection_checkpoint": {
-    "at": "2026-09-20T10:55:00+01:00",
-    "status": "READY_WITH_ACCEPTED_FALLBACK",
-    "url": "http://127.0.0.1:4234/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2",
-    "source_commit": "4327d9750ba4bfb8f11e8f91528d4bb037d29af8",
-    "dist": "dist-visual-review-0848",
-    "sha256": "aea060fbc2cfa85af31cd2eef4d07863ee3d31ac9c40311c328ff8cb26bea25a",
-    "live_verified_at": "2026-09-20T10:54:22.227668+01:00",
-    "new_candidate_url": "http://127.0.0.1:4240/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary",
-    "new_candidate_state": "OPEN stability; actualbody+fiveposevalidationPASS, excludedfromacceptedpreview untilresource-safe210ssoak passes. worldweaponOFF.",
-    "new_candidate_source": "3301fb12fdc49e6ec4b073e7527e8b5c20c2029e",
-    "new_candidate_dist": "dist-operator-candidate-1038",
-    "new_candidate_sha256": "e5b3d2bb07b4eabf7f0c8334014ae67b3c92c35a1147290f1bea7dbb0a82da58",
-    "separate_copy": "NOT_CREATED automaticcommandpolicyrejectedcopy/launch; saferexistingacceptedartifact reused andHTTPverified."
+    "at": "2026-09-20T13:00:00+01:00",
+    "status": "INSPECTION_CANDIDATE_MEMORY_GATE_OPEN",
+    "url": "http://127.0.0.1:4242/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary",
+    "source_commit": "39884ffec7fa0442d8d20501967cf3475fee288c",
+    "dist": "dist-astra-noon-candidate",
+    "js": "index-DUiBXw9V.js",
+    "sha256": "5b3556df86914c62113b347788cb737ebc867f9c60388a55e82e8e099ce0f628",
+    "live_verified_at": "2026-09-20T11:56:09.736Z",
+    "report": "docs/handoff/INSPECTION-2026-09-20-1300.md",
+    "capture": "captures/single-astra-noon/noon-final-1253/result.json",
+    "soak": "captures/leak/noon-solo-soak-1232-soak.json",
+    "state": "Controls, house traversal/geometry and bot presentation verified. Active-gameplay memory criterion FAILED; not promoted. Full visual quality remains unmet."
   },
   "acceptance_in_progress": {
     "tag": "soak-operator-only-1106",
@@ -2782,5 +2660,85 @@
     "state": "accepted-scoped",
     "guard_receipt": ".recovery-runtime/soak-operator-only-1106-guard.json",
     "accepted_at": "2026-09-20T11:11:32.602871+01:00"
+  },
+  "reconciled_external_lanes_noon": [
+    {
+      "lane": "muse-glove-current-root-repair1-1142",
+      "run_id": "delegated-omp-muse-glove-current-root-repair1-1142-3cb75642d8f5413ba7a5623fbf06d39b",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-glove-current-root-repair1-1142-3cb75642d8f5413ba7a5623fbf06d39b\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "terminal-preserved-pending-review",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "attribution": "observed",
+      "accepted": false,
+      "owned_directory": "work/fp-glove-current-root-repair1-muse-1142",
+      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919\\work\\fp-glove-current-root-repair1-muse-1142\\tree",
+      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+      "started_at": "2026-09-20T11:41:22+01:00"
+    },
+    {
+      "lane": "muse-sedan-rear-glass-final2-1142",
+      "run_id": "delegated-omp-muse-sedan-rear-glass-final2-1142-8428d7eef20b4ac08046c604fcec2d96",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-sedan-rear-glass-final2-1142-8428d7eef20b4ac08046c604fcec2d96\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "terminal-preserved-pending-review",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "attribution": "observed",
+      "accepted": false,
+      "owned_directory": "work/sedan-rear-glass-final2-muse-1142",
+      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919\\work\\sedan-rear-glass-final2-muse-1142\\tree",
+      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+      "started_at": "2026-09-20T11:41:22+01:00"
+    },
+    {
+      "lane": "glm-sky-current-root-repair1-1142",
+      "run_id": "delegated-omp-glm-sky-current-root-repair1-1142-e686cd3f5645464481b74b5baafb6a0d",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-sky-current-root-repair1-1142-e686cd3f5645464481b74b5baafb6a0d\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "terminal-preserved-pending-review",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "attribution": "observed",
+      "accepted": false,
+      "owned_directory": "work/sky-current-root-repair1-glm-1142",
+      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919\\work\\sky-current-root-repair1-glm-1142\\tree",
+      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+      "started_at": "2026-09-20T11:41:22+01:00"
+    },
+    {
+      "lane": "glm-crate-current-root-repair1-1142",
+      "run_id": "delegated-omp-glm-crate-current-root-repair1-1142-cf057cd049a541538ecf01bbc2654c78",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-crate-current-root-repair1-1142-cf057cd049a541538ecf01bbc2654c78\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "terminal-preserved-pending-review",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "attribution": "observed",
+      "accepted": false,
+      "owned_directory": "work/crate-current-root-repair1-glm-1142",
+      "artifact_working_directory": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919\\work\\crate-current-root-repair1-glm-1142\\tree",
+      "base_source": "614898916b1dbac1a7a2446d747724acbf5bc9ac",
+      "started_at": "2026-09-20T11:41:22+01:00"
+    }
+  ],
+  "next_inspection": {
+    "at": "2026-09-20T15:00:00+01:00",
+    "status": "in-progress",
+    "cadence_hours": 2,
+    "plan": "docs/handoff/SINGLE-ASTRA-2026-09-20.md"
   }
 }
