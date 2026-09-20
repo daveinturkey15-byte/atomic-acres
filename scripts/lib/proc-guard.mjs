@@ -65,7 +65,17 @@ export function guard(child) {
 
 /** Drop-in replacement for child_process.spawn that cannot leak. */
 export function spawnGuarded(cmd, args = [], opts = {}) {
-  return guard(spawn(cmd, args, opts));
+  return guard(spawn(cmd, quietBrowserArgs(cmd, args), opts));
+}
+
+/** Unattended browser checks must not play through Dave's speakers. Chromium's
+ * output mute keeps the WebAudio graph running, preserving lifecycle/leak tests.
+ * Never alter the owner's browser, a headed session or system audio settings.
+ */
+export function quietBrowserArgs(cmd, args) {
+  const browser = /(?:^|[\\/])(?:chrome|chromium|msedge)(?:\.exe)?$/i.test(String(cmd));
+  const headless = args.some(a => /^--headless(?:=|$)/.test(a));
+  return browser && headless && !args.includes('--mute-audio') ? [...args, '--mute-audio'] : args;
 }
 
 /** Reap every tracked child. Idempotent - safe to call from several handlers. */

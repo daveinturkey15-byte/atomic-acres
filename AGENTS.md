@@ -20,6 +20,12 @@ Preflight real tool availability and scene ownership; never infer subagent MCP
 access from a parent's configuration. Keep the frozen previews and failed memory
 gate unchanged until a successor passes actual gameplay acceptance.
 
+September20 audio courtesy: Dave heard the unattended game tests. All owned
+headless browsers must use `--mute-audio`, enforced by `scripts/lib/proc-guard.mjs`.
+Keep the WebAudio graph running for audio lifecycle/memory checks. Do not mute
+Windows globally, change Dave's normal game volume or suspend its audio graph to
+make a test cheaper. Direct browser launchers must apply the same output mute.
+
 ## Historical owner audit hold — September 20, 13:00
 
 September 20 follow-up: Dave explicitly authorized completing the remaining pipeline

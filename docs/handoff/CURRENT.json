@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "Verified partial orange-room successor on4245: authored furniture, PBR surfaces and cleaned balustrade;210s active-game memory gate passes. Original noon failure preserved, no leak fix claimed. Lighting experiment rejected for negligible gain. Finish the first room before advancing to the hands/carbine implementation; full visual goal unmet.",
+  "status": "Verified partial orange-room baked visibility successor on4248: clearer interior falloff/contact and attached pendant;210s active-game gate passes at53.2fps. Future owned headless QA muted, WebAudio graph preserved. Full room/map visual bar OPEN. Heavy jobs held on low RAM/VRAM sample; source work may continue.",
   "owner": "Codex",
   "stop_state": "GAME DEVELOPMENT PAUSED by direct owner request; pipeline audit only. Do not resume feature work or worker launches without owner direction.",
   "backup": {
@@ -31,19 +31,20 @@
     "status": "PAUSED"
   },
   "resource_sample": {
-    "at": "2026-09-20T15:55:55.4481241+01:00",
-    "free_ram_gib": 31.407283782958984,
-    "free_vram_gib": 12.587890625,
+    "at": "2026-09-20T16:39:12.3373638+01:00",
+    "free_ram_gib": 10.11075210571289,
+    "free_vram_gib": 2.52734375,
     "reserve_ram_gib": 12,
     "reserve_vram_gib": 3,
-    "note": "No active owned browser/Blender job; re-sample with job headroom before starting next."
+    "note": "Below reserves. No active owned heavy job. Defer browser/Blender/model launch until fresh readings and job headroom pass; do not terminate owner processes."
   },
   "next_actions": [
-    "Preserve verified room R2 at4245 and all prior frozen views. Use this exact URL for17:00 inspection if no later candidate passes; report53.4fps and full visual bar OPEN.",
-    "Finish first room before hands/carbine implementation. R3 analytical aperture ambient experiment rejected after two repair slots; no further parameter nudges. Next approach must use a different bounded baked/probe artifact method and actual same-camera evidence; retain R2 if it fails.",
-    "Carbine read-only preparation complete: retained GLB SHA8afb235e2a2bcffc71ae794e973813c53c4f37e094110c8ceb62490e191a8167 and old hip capture inspected. Prior runtime mechanics are not current visual acceptance. Implement hands/gun slice after first-room lighting proof; no workers.",
-    "Then weapon-image menu/classes and combat/streak HUD (including noisy incoming-hit stack), bot motion. Single Astra only.",
-    "Original noon memory failure retained; snapshot diagnostic and both room successors pass but no root-cause repair claimed. Apply unchanged gate to each new meaningful candidate."
+    "Preserve verified baked-room R2 on4248 and previous room4245, plus all frozen checkpoints. Use4248 for17:00 inspection; report53.2fps and full visual bar OPEN.",
+    "Finish first-room visual bar before hands/carbine. Baked directional visibility has a visible gain and passing gate; first correction attached pendant and bound source hashes. Analytical aperture approach remains rejected after two repairs. No further parameter tweaks to revive it.",
+    "Heavy work deferred:16:39 sample10.111GiB freeRAM/2588MiB freeVRAM is below reserves. Source work can continue; resample before serialized browser/Blender/model work. QA output must stay muted with audio graph running.",
+    "Carbine retained asset and prior frames inspected only; implement gun/hands after first-room acceptance, then weapon-image classes/menu, combat/streak HUD including noisy incoming-hit stack, and bot motion. Single Astra only.",
+    "Original noon memory failure remains unresolved; passing scoped successors do not prove its root cause fixed. Keep unchanged gate and all exact failed partials.",
+    "At17:00BST then every2h provide exact preview/fallback, visible accepted changes, failures and revised estimates."
   ],
   "interrupted_lanes": [
     {
@@ -2479,16 +2480,17 @@
       "launcher": "scripts/orchestration/Start-Showcase.ps1"
     },
     "visual_review": {
-      "url": "http://127.0.0.1:4245/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary&room=authored",
-      "source_commit": "2174ae2e9d4e523664e933b79931152140a97b92",
-      "dist": "dist-orange-room-r2",
-      "js": "index-JRkP_N6s.js",
-      "sha256": "e040e81c8577ec8bca3a33fde947b14ea4bf4d00c7088a5549d84085c9f0f6ac",
-      "state": "VERIFIED partial orange-room furniture/PBR/railing successor; actual views and210s active-game gate pass. Finished room lighting, full visual overhaul and60fps remain OPEN. Rejected aperture-lighting experiment is not in this artifact.",
-      "verified_at": "2026-09-20T15:55:55.4434025+01:00",
-      "report": "docs/handoff/ROOM-REVIEW-2026-09-20-1555.md",
-      "soak": "captures/leak/room-r2-soak-1544-soak.json",
-      "capture": "captures/single-astra-noon/room-r2-authored-1543/result.json"
+      "url": "http://127.0.0.1:4248/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary&room=authored&room-light=baked",
+      "source_commit": "ce6e283514d8908854f06922eec59a74b95a9c44",
+      "dist": "dist-room-bake-r2",
+      "js": "index-BFXIsS1J.js",
+      "sha256": "514bf9c16b7e407c99330594480c2c27a6e9fce75f0212d2815d583dc28ebeff",
+      "state": "VERIFIED partial room baked-visibility successor; actual same-camera pixels and210s active-game gate pass. Finished room,60fps and map-wide visual bar remain OPEN.",
+      "verified_at": "2026-09-20T16:40:00+01:00",
+      "report": "docs/handoff/ROOM-BAKE-2026-09-20-1640.md",
+      "soak": "captures/leak/room-bake-r2-soak-1628-soak.json",
+      "capture": "captures/single-astra-noon/room-bake-r2-1626/result.json",
+      "comparison": "captures/room-pairs/room-bake-pair-1622/result.json"
     },
     "visual_pending": {
       "url": "http://127.0.0.1:4238/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary",
@@ -2558,6 +2560,18 @@
       "verified_at": "2026-09-20T11:11:32.602871+01:00",
       "report": "docs/handoff/OPERATOR-ACCEPTANCE-2026-09-20-1110.md",
       "soak": "captures/leak/soak-operator-only-1106-soak.json"
+    },
+    "room_checkpoint": {
+      "url": "http://127.0.0.1:4245/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary&room=authored",
+      "source_commit": "2174ae2e9d4e523664e933b79931152140a97b92",
+      "dist": "dist-orange-room-r2",
+      "js": "index-JRkP_N6s.js",
+      "sha256": "e040e81c8577ec8bca3a33fde947b14ea4bf4d00c7088a5549d84085c9f0f6ac",
+      "state": "VERIFIED partial orange-room furniture/PBR/railing successor; actual views and210s active-game gate pass. Finished room lighting, full visual overhaul and60fps remain OPEN. Rejected aperture-lighting experiment is not in this artifact.",
+      "verified_at": "2026-09-20T15:55:55.4434025+01:00",
+      "report": "docs/handoff/ROOM-REVIEW-2026-09-20-1555.md",
+      "soak": "captures/leak/room-r2-soak-1544-soak.json",
+      "capture": "captures/single-astra-noon/room-r2-authored-1543/result.json"
     }
   },
   "backup_0420": {
@@ -2616,7 +2630,7 @@
   },
   "updated_at": "2026-09-20T15:07:49.608681+01:00",
   "current_ownership": {
-    "root": "Single Astra: room R2 verified and preserved. Next is a different bounded room-light/contact artifact proof; retained carbine inspected read-only for the following slice. No active workers or heavy jobs.",
+    "root": "Single Astra; room R2 bake/capture/soak complete and partial successor frozen on4248. No active browser/Blender/model job or workers. Silent QA enforced. Source work may continue; new heavy jobs require fresh resource headroom.",
     "native_astras": "Historical specialists stopped; do not restart.",
     "external": []
   },
@@ -2750,10 +2764,10 @@
   ],
   "next_inspection": {
     "target": "2026-09-20T17:00:00+01:00",
-    "state": "verified partial room preview ready; no claim of finished-room or map-wide completion",
-    "url": "http://127.0.0.1:4245/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary&room=authored",
-    "fallback": "http://127.0.0.1:4240/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary",
-    "report": "docs/handoff/ROOM-REVIEW-2026-09-20-1555.md"
+    "state": "verified partial baked-room preview ready; full visual bar OPEN",
+    "url": "http://127.0.0.1:4248/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary&room=authored&room-light=baked",
+    "fallback": "http://127.0.0.1:4245/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary&room=authored",
+    "report": "docs/handoff/ROOM-BAKE-2026-09-20-1640.md"
   },
   "deferred_development_next_actions": [
     "Keep4242 exact13:00 candidate immutable;4212/4234/4240 unchanged. No worker launches.",
