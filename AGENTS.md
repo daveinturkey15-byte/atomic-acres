@@ -7,9 +7,18 @@ Workspace rules in `C:/Users/david/Desktop/stuff/AGENTS.md` and active AKP apply
 
 ## Owner usage correction — September 20, 16:45
 
+September20 17:00 expansion: Dave requested an additional author of each type,
+targeting two GLM, two Muse and two AGY source lanes. The tested admission helper
+allows up to six only with explicit CURRENT owner authorization and fresh measured
+headroom of12GiB plus2GiB per admitted source worker, and3GiB freeVRAM. Missing or
+low readings hold new launches. Single-writer, cost/attempt limits and all acceptance
+gates are unchanged. Blender/GPU/browser execution remains one job at a time.
+Six is a conditional maximum, not a claim that six workers are running.
+
 Dave asked to conserve the remaining OpenAI allowance, use the specified OMP/AGY
 models for implementation and then said continue. Resume at most two economical
-external source writers through the existing source-bound pipeline. Routes are OMP
+external source writers initially through the existing source-bound pipeline;
+the later expansion above now governs capacity. Routes are OMP
 ZAI GLM5.3Flash max, OMP Meta MuseSpark1.3Contributor xhigh and AGY requested
 Gemini3.8Flash high. No native OpenAI implementation agents. Astra coordinates,
 reviews and mechanically integrates; it must not keep doing bulk implementation.

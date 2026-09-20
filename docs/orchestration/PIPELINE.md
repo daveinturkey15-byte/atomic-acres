@@ -9,7 +9,10 @@ change Skills Lab's no-OpenRouter policy or the older game's release machinery.
 ## Current operating mode
 
 Dave's September20 16:45 usage correction resumes the specified economical
-external implementation routes with at most two independent source writers.
+external implementation routes, initially with two independent source writers.
+At17:00 he requested two of each route. Explicit CURRENT authorization now permits
+up to six source writers, subject to measured12GiB reserve plus2GiB per total
+admitted worker, and3GiB VRAM reserve. Unknown/low readings hold new launches.
 Astra coordinates, reviews and mechanically integrates. No native OpenAI workers.
 CURRENT records exact authorizations, ownership and requested/observed providers.
 The shared Blender route is `<AKP>/scripts/blender/bridge.py`; read its README,
@@ -37,7 +40,8 @@ The existing OMP and AGY launchers now require, before dispatch:
    SKILL.md hashes. An empty allowlist is explicit. OMP filters discovery to those
    names; AGY does not have a verified equivalent filter, so its author must obey
    the contract and the lead must inspect used skills. Neither route is an OS sandbox.
-7. A local atomic lease: no overlapping tree writers, at most two active launches,
+7. A local atomic lease: no overlapping tree writers, default two active launches
+   (up to six only under the explicit owner expansion and fresh resource gate),
    at most two attempts for the same task ID, 1–30 minutes per worker and positive
    finite reservation of at most $1 per launch. Campaign reservations total $1.50.
 

@@ -1,0 +1,118 @@
+{
+  "created_at": "2026-09-20T17:05:41.976751+01:00",
+  "authorization": "Dave requested an additional worker of each specified type in parallel, with both Blender MCP and CLI access.",
+  "target_total": 6,
+  "target_per_route": {
+    "glm": 2,
+    "muse": 2,
+    "agy": 2
+  },
+  "effective_parallel_cap": 6,
+  "expansion_state": "Explicit six-source capacity tested:10 unchanged contract tests and4 new capacity/resource controls pass. New launches still held until fresh live headroom/adoption/source/skill gates pass.",
+  "constraints": [
+    ">=12GiB freeRAM and>=3GiB freeVRAM plus all job headroom; unknown means hold",
+    "No owner process termination",
+    "Root alone serializes heavy Blender/GPU/browser jobs",
+    "Keep current $1.50 local campaign reservation and two-attempt gates",
+    "Two existing $.40 reservations plus four queued $.15 reservations total $1.40 before actual-cost reconciliation; not provider billing cap",
+    "No native OpenAI implementation agents",
+    "No shared files across six scopes; source snapshots/private trees and fixed acceptance required"
+  ],
+  "queue": [
+    {
+      "id": "agy-hud-streaks",
+      "route": "agy",
+      "requested_model": "gemini-3.8-flash-high",
+      "effort": "high",
+      "scope": "Clear combat and killstreak HUD: ready/progress/activation/targeting; remove incoming-hit notification spam without losing outgoing crit feedback. Existing runtime semantics authoritative; unimplemented streaks unavailable.",
+      "writable_paths": [
+        "src/ui/hud.ts",
+        "src/ui/hud.css",
+        "src/ui/hud-build.ts",
+        "src/ui/hud-match.ts",
+        "src/ui/streak-presentation.ts",
+        "src/ui/combat-feedback.ts",
+        "src/ui/combat-feedback.css",
+        "src/ui/combat-feedback-adapter.ts"
+      ],
+      "skills": [
+        "game-hud-menu-overhaul",
+        "visual-gauntlet-loop"
+      ],
+      "status": "queued-not-launched",
+      "max_minutes": 25,
+      "max_attempts": 2,
+      "reserved_usd": 0.15,
+      "preflight": "Freeze exact current source/private tree only at launch. Read admitted skill names and paths explicitly included in prompt. Actual MCP initialize/list/get_addon_status plus guarded Blender CLI version from worker execution required; saved config/parent receipt insufficient. No GPU/browser/Blender asset job until root grants serial slot."
+    },
+    {
+      "id": "glm-supply-gameplay",
+      "route": "glm",
+      "requested_model": "zai/glm-5.3-flash",
+      "effort": "max",
+      "scope": "Finish one supply-crate killstreak vertical slice and host-authoritative reward/pickup semantics from read-only old-game behavior reference. Preserve existing11-item catalogue, no dishonest selectable implementation. Other missing streaks remain explicit backlog.",
+      "writable_paths": [
+        "src/game/killstreaks/catalog.ts",
+        "src/game/killstreaks/runtime.ts",
+        "src/game/killstreaks/gate.ts",
+        "src/game/killstreaks/effects/supply-crate.ts",
+        "src/game/session-streaks.ts",
+        "src/game/host-streaks.ts"
+      ],
+      "skills": [
+        "atomic-acres-gameplay-patterns"
+      ],
+      "status": "queued-not-launched",
+      "max_minutes": 25,
+      "max_attempts": 2,
+      "reserved_usd": 0.15,
+      "preflight": "Freeze exact current source/private tree only at launch. Read admitted skill names and paths explicitly included in prompt. Actual MCP initialize/list/get_addon_status plus guarded Blender CLI version from worker execution required; saved config/parent receipt insufficient. No GPU/browser/Blender asset job until root grants serial slot."
+    },
+    {
+      "id": "muse-bot-motion",
+      "route": "muse",
+      "requested_model": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "scope": "Smooth correctly facing bot gait/stance animation, feet and body contact using owner H3 reference notes; preserve authoritative positions, damage, navigation and collision. No extracted-mocap claim.",
+      "writable_paths": [
+        "src/characters/blend.ts",
+        "src/characters/clips.ts",
+        "src/characters/body-presentation.ts",
+        "src/characters/system.ts",
+        "src/characters/skeleton.ts"
+      ],
+      "skills": [
+        "game-animation-asset-pipeline",
+        "visual-gauntlet-loop"
+      ],
+      "status": "queued-not-launched",
+      "max_minutes": 25,
+      "max_attempts": 2,
+      "reserved_usd": 0.15,
+      "preflight": "Freeze exact current source/private tree only at launch. Read admitted skill names and paths explicitly included in prompt. Actual MCP initialize/list/get_addon_status plus guarded Blender CLI version from worker execution required; saved config/parent receipt insufficient. No GPU/browser/Blender asset job until root grants serial slot."
+    },
+    {
+      "id": "agy-weapon-classes",
+      "route": "agy",
+      "requested_model": "gemini-3.8-flash-high",
+      "effort": "high",
+      "scope": "Richer weapon-image menu and saved custom classes using existing original catalogue images with honest unavailable state. Keep20-weapon IDs and server loadout validation; no copied old-game code or art.",
+      "writable_paths": [
+        "src/ui/menus.ts",
+        "src/ui/menus.css",
+        "src/ui/menu-views.ts",
+        "src/ui/loadout-panel.ts",
+        "src/game/loadout.ts"
+      ],
+      "skills": [
+        "game-hud-menu-overhaul",
+        "reference-image-catalog"
+      ],
+      "status": "queued-not-launched",
+      "max_minutes": 25,
+      "max_attempts": 2,
+      "reserved_usd": 0.15,
+      "preflight": "Freeze exact current source/private tree only at launch. Read admitted skill names and paths explicitly included in prompt. Actual MCP initialize/list/get_addon_status plus guarded Blender CLI version from worker execution required; saved config/parent receipt insufficient. No GPU/browser/Blender asset job until root grants serial slot."
+    }
+  ]
+}
