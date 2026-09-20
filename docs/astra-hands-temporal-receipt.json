@@ -1,0 +1,43 @@
+{
+  "schema": 1,
+  "created_at": "2026-09-20T06:01:30.235205+00:00",
+  "claim_state": "VERIFIED syntax and CPU observer controls; OPEN root runtime capture",
+  "requested_author": {
+    "harness": "Codex",
+    "model": "gpt-6-astra",
+    "effort": "xhigh"
+  },
+  "script": "scripts/verify-astra-hands-temporal.mjs",
+  "source_commit": "23e09975c496a23096f33691d93e63db7fd4d7ef",
+  "script_sha256_normalized_lf": "3d0dcb22feecdecf786a2816eb93d55b5a420a0b6f8da6fb7ea34e9f3a2b28fd",
+  "validation": {
+    "node_check": "PASS",
+    "self_check": "PASS",
+    "browser_gpu_runs": 0,
+    "full_suite_runs": 0
+  },
+  "modes": [
+    "motion",
+    "rigged",
+    "both"
+  ],
+  "required_env": [
+    "RECOVERY_URL"
+  ],
+  "optional_env": [
+    "ASTRA_HANDS_MODE",
+    "EXPECTED_BUNDLE_SHA256"
+  ],
+  "limits": {
+    "capture_seconds_per_mode": 20,
+    "total_screenshots_per_mode": 10,
+    "reload_screenshots_target": 6,
+    "samples_per_mode_max": 450,
+    "calls": 1200,
+    "triangles": 900000,
+    "console_errors": 0
+  },
+  "scope": "Observer script and receipt only; no third hand repair",
+  "runtime": "OPEN until root runs owned serial browser lease",
+  "source_timing_authority_changes": false
+}
