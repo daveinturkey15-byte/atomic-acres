@@ -6,13 +6,13 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4191/",
-  "status": "VERIFIED menu20 livechecksPASS; authoredoperator now visibly holds gun across10 reviewed frames; current4203 passes24 real2browser netchecks. Crossbow42CPUchecksPASS but replay and payloadshape defects OPEN. Four external lanes active after Museaudio failed and GLM took exactroot seam. K4191 retained.",
+  "status": "VERIFIED c137773 integrated runtime on4207: operator62 CPU+10 actual frames; audio13 real WebAudio checks; strict crossbow86+real2-browser7; lawn live-map adoption;210.7s combined soak PASS. OPEN visual quality; reject scalar lighting and sky-only trials. Root testing private flash/hands candidates; two external repairs active. Frozen4191 retained.",
   "owner": "Codex",
   "stop_state": "OpenAI orchestration/review/acceptance only. Native implementation workers stopped at preserved checkpoints. External lane receipts and resource headroom must be reconciled each cycle.",
   "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z",
   "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
   "inspection_time": "2026-09-20T05:45:00+01:00",
-  "lease_updated_at": "2026-09-20T02:54:46.7762843+01:00",
+  "lease_updated_at": "2026-09-20T04:06:22.1446320+01:00",
   "source_checkpoint": "2139d697434bf97bf38683eb0ed25e554096fd71",
   "inspection_report": "docs/handoff/INSPECTION-2026-09-19.md",
   "bundle_sha256": "e8cb3f4fa86437ef164deded998e3613d5220d2115e52335096545af1ab13a91",
@@ -23,21 +23,24 @@
     "status": "ACTIVE"
   },
   "resource_sample": {
-    "sampled_at": "2026-09-20T02:17:44.9811463+01:00",
-    "free_ram_gib": 34.36,
-    "gpu_used_mib": 3944,
+    "sampled_at": "2026-09-20T04:04:25+01:00",
+    "free_ram_gib": 35.01,
+    "gpu_used_mib": 3937,
     "gpu_total_mib": 16303,
-    "browser_job": "none; all owned QA/Blender jobs ended; review4201PID38648 exec46409",
-    "heavy_job_policy": ">=12GiB RAM and >=3GiB VRAM plus job headroom; CPU Blender2threads2GiB; never kill owner"
+    "gpu_util_percent": 3,
+    "browser_job": "root hand baseline4207, single serialized QA",
+    "heavy_job_policy": ">=12GiB RAM and>=3GiB VRAM plus job headroom; no owner process termination"
   },
   "next_actions": [
-    "Read only latest0255review and changed4 lane receipts. Root4203 identity is f8e37af PLUS uncommitted crossbow patch; do not mistake HEAD alone for liveidentity.",
-    "Finish/inspect operator-weapon-0305 soak currentlyexec48741; then noGPU/browserjob. Ten current gaitframes reviewed and all pass6mechanicalgates; actualweaponselection/contact Muse0244 remainspending.",
-    "Review Musecrossbow replay0254 DELTA; originalstepshalf-speed and no latencycatchup. Root proved validator accepts missing requiredfields and wrongtypes; repair strictshapes before any canaryacceptance. Keep defaultgated/noexplosivesplash claim.",
-    "Review GLMaudio-currentbase0302 after Musefunctional0244 failednoartifact. DO NOTapply0215patch againstoldbaseline or overwritecurrentrecorded/remote/disposal work. EarlierGLM variantbufferkeys mismatched.wav lookup.",
-    "Review GLMlawnadoption0244; preserveoriginal+3texturesfalse-assumptionFAIL and substituteonlysource-grounded newouterloop evidence, notweakerthreshold.",
-    "4203 passed24 realtwo-browserregression120s incldamage/kill/clocksmoke/stances. Menu4202 correctedobservation passed20; UIproductbc7e72d. Rootserialartifacts awaitfinalpromotion.",
-    "At04:45UKconsolidate; targetfrozen testedshowcase/report05:30; continueafter05:45."
+    "At04:45UK consolidate exact tested artifact; by05:30 preserve frozen showcase/report;05:45 checkpoint not stop. Continue after checkpoint.",
+    "Review changed receipts muse-coach-repair-0405 (private bounded repair of undefined window spans and gasket obscuring glass), muse-flash-fixture-0406 (source-only actual VFX acceptance). No worker browsers or ROOT writes authorized.",
+    "Root4207 is committed c137773 functional candidate; current GLM flash-mask is uncommitted trial4209. All scalar/sky trials4205/4206/4208 rejected; original patches, outputs retained and source reversed.",
+    "AGY0348 hands patch separates glove detail material but optional rolledSleeves has no caller. Root reviewing actual5-weapon pose pairs; no geometry/rigging improvement claim and actual AGY model unknown.",
+    "Coach0348 py_compile passes but undefined x0/x1 and full opaque gasket panels make it not runnable/acceptable; exact partial preserved, Muse repair0405 owns private corrected artifact. Only after static review run guarded CPU Blender2threads2GiB180s.",
+    "GLM white-quad0350 timedout with8421B patch. TypeScript/render-site check passed after mechanical apply; still require real cause/lifetime/pool pixels via Muse0406 fixture. Do not count patch or process completion as acceptance.",
+    "Crossbow strict86 and real WebRTC7 on4207 passed positive-control95 damage and sky miss1->1 admitted events. Original bad/failed observers retained. Defaultoff, explosive/hitch/guest visual expiry OPEN.",
+    "Operator selected weapon62CPU+10 actual frames passed; audio13 root actual WebAudio passed with A/B and life/disposal. Subjective audio OPEN; image realism still below requested bar. Lawn3maps actualsingleton/lifecycle passed.",
+    "Archive current source/artifacts/receipts with hash parity before ending turn; do not duplicate all old preview/capture directories."
   ],
   "interrupted_lanes": [
     {
@@ -481,9 +484,11 @@
       "run_id": "delegated-omp-glm-lawn-adoption-0244-920026af604a44808e9f43d36691c34f",
       "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-lawn-adoption-0244-920026af604a44808e9f43d36691c34f\\summary.json",
       "started_at": "2026-09-20T02:42:32+01:00",
-      "ended_at": null,
-      "state": "running source-only",
-      "observed_models": null,
+      "ended_at": "2026-09-20T03:00:33+01:00",
+      "state": "failed",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
       "accepted": false
     },
     {
@@ -503,9 +508,11 @@
       "run_id": "delegated-omp-muse-crossbow-replay-repair-0254-055328e25d904dbcaa3b35de57498244",
       "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-crossbow-replay-repair-0254-055328e25d904dbcaa3b35de57498244\\summary.json",
       "started_at": "2026-09-20T02:45:44+01:00",
-      "ended_at": null,
-      "state": "running source-only",
-      "observed_models": null,
+      "ended_at": "2026-09-20T02:58:14+01:00",
+      "state": "process-completed",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
       "accepted": false
     },
     {
@@ -513,9 +520,11 @@
       "run_id": "delegated-omp-muse-operator-selection-0244-b8bcb536c2df4eaeb143d5e26b35c5b3",
       "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-operator-selection-0244-b8bcb536c2df4eaeb143d5e26b35c5b3\\summary.json",
       "started_at": "2026-09-20T02:42:32+01:00",
-      "ended_at": null,
-      "state": "running source-only",
-      "observed_models": null,
+      "ended_at": "2026-09-20T03:00:33+01:00",
+      "state": "failed",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
       "accepted": false
     },
     {
@@ -523,21 +532,119 @@
       "run_id": "delegated-omp-glm-audio-currentbase-0302-b0b285fba019426299380bfa34799b81",
       "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-audio-currentbase-0302-b0b285fba019426299380bfa34799b81\\summary.json",
       "started_at": "2026-09-20T02:51:15+01:00",
+      "ended_at": "2026-09-20T03:09:16+01:00",
+      "state": "failed",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "accepted": false
+    },
+    {
+      "lane": "glm-operator-finish-partial-0304",
+      "run_id": "delegated-omp-glm-operator-finish-partial-0304-7ff452f3eef44fe189af1d8079c8e09f",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-operator-finish-partial-0304-7ff452f3eef44fe189af1d8079c8e09f\\summary.json",
+      "started_at": "2026-09-20T03:03:08+01:00",
+      "ended_at": "2026-09-20T03:21:09+01:00",
+      "state": "failed",
+      "observed_models": [
+        "glm-5.3-flash"
+      ],
+      "accepted": false
+    },
+    {
+      "lane": "muse-crossbow-wire-contract-0301",
+      "run_id": "delegated-omp-muse-crossbow-wire-contract-0301-57e74dc2bea84ce89bfdcaaf15eae42e",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-crossbow-wire-contract-0301-57e74dc2bea84ce89bfdcaaf15eae42e\\summary.json",
+      "started_at": "2026-09-20T03:01:11+01:00",
+      "ended_at": "2026-09-20T03:17:11+01:00",
+      "state": "failed",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "accepted": false
+    },
+    {
+      "lane": "muse-lawn-adoption-failover-0304",
+      "run_id": "delegated-omp-muse-lawn-adoption-failover-0304-b6e683dfd3814beea45a9ff4fb170e8a",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-lawn-adoption-failover-0304-b6e683dfd3814beea45a9ff4fb170e8a\\summary.json",
+      "started_at": "2026-09-20T03:03:08+01:00",
+      "ended_at": "2026-09-20T03:09:53+01:00",
+      "state": "process-completed",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "accepted": false
+    },
+    {
+      "lane": "muse-terrain-relief-2353",
+      "run_id": "delegated-omp-muse-terrain-relief-2353-f393c704372944ee860304b3566a497f",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-terrain-relief-2353-f393c704372944ee860304b3566a497f\\summary.json",
+      "started_at": "2026-09-19T23:51:55+01:00",
+      "ended_at": "2026-09-19T23:56:43+01:00",
+      "state": "process-completed",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "accepted": false
+    },
+    {
+      "lane": "glm-coach-detail-0325",
+      "run_id": "delegated-omp-glm-coach-detail-0325-ec337c4fa1884d3588a61211f8935dae",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-coach-detail-0325-ec337c4fa1884d3588a61211f8935dae/summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "started_at": "2026-09-20T03:23:46+01:00",
       "ended_at": null,
-      "state": "running source-only",
+      "state": "pending receipt; not accepted",
       "observed_models": null,
+      "accepted": false
+    },
+    {
+      "lane": "muse-audio-browser-fixture-0325",
+      "run_id": "delegated-omp-muse-audio-browser-fixture-0325-2a9059d1e6944a718aee6c4165eb4cf3",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-audio-browser-fixture-0325-2a9059d1e6944a718aee6c4165eb4cf3/summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
+      "started_at": "2026-09-20T03:23:46+01:00",
+      "ended_at": "2026-09-20T03:36:21+01:00",
+      "state": "process-completed",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "accepted": false
+    },
+    {
+      "lane": "muse-lighting-pixels-0342",
+      "run_id": "delegated-omp-muse-lighting-pixels-0342-0e36d064dded49499d6ed60acd9d46ed",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-lighting-pixels-0342-0e36d064dded49499d6ed60acd9d46ed/summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "started_at": "2026-09-20T03:40:54+01:00",
+      "ended_at": null,
+      "state": "pending receipt; not accepted",
+      "observed_models": null,
+      "accepted": false
+    },
+    {
+      "lane": "muse-operator-contract-repair-0330",
+      "run_id": "delegated-omp-muse-operator-contract-repair-0330-1c0842d1ef104128aa85d12578a1668f",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-operator-contract-repair-0330-1c0842d1ef104128aa85d12578a1668f/summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
+      "started_at": "2026-09-20T03:29:27+01:00",
+      "ended_at": "2026-09-20T03:41:04+01:00",
+      "state": "process-completed",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
       "accepted": false
     }
   ],
   "continue_after_inspection": true,
   "showcase_policy": "05:45 is an inspection checkpoint, not a stop. Retain frozen showcase while continuing accepted backlog.",
   "candidate": {
-    "url": "http://127.0.0.1:4200/",
-    "source_commit": "79716f6ecbbbe6318636ff3788c47c8c1a0451b6",
-    "dist": "dist-operator-menu-0116",
-    "js": "index-PCx6yMSa.js",
-    "sha256": "4a6b329bd13289b1cd5b54b3ff981f986df29c15a4f38dd31fdf929b15479240",
-    "state": "Review only. Default solo starts. Compact layout passes viewport checks; custom-loadout proof OPEN. Operator adopts/moves but all-black embedded textures REJECTED. No promotion."
+    "url": "http://127.0.0.1:4207/?operator=authored&lawn=canary&audiobank=2",
+    "source_commit": "c1377731aa409fa7e13693fc0443d9b28d5be062",
+    "dist": "dist-integrated-0346",
+    "js": "index-CWx-eBUa.js",
+    "sha256": "0bf47465295a31fde500b14bdb56ac846ebf1ab207310e86ecd2dd14bb4a4acb",
+    "state": "VERIFIED scoped functional review candidate; default-off crossbow canary optional. Not yet frozen morning showcase; photorealism and60fps unmet."
   },
   "foundation_review_limit": "Root reviewed bounded Muse study20:15. July24 pinned reference only; later history OPEN. Retain host authority/pure damage/shared material ownership. Correct study shorthand: damage imports catalog,health,types; restriction is no UI/renderer effects. No framework rewrite.",
   "refinement_policy": "One evidenced reversible outer-loop improvement; fixed inner-loop gates, at most2 repairs then alternative. Visible integration before broad refactoring; after05:45 continue while retaining showcase.",
@@ -624,7 +731,7 @@
       "source_checkpoint": "a84e70f76e2d356c543953b80bb31d5c46c9dcae"
     }
   ],
-  "source_working_checkpoint": "f8e37afebb3b5ddf13d20f800a2c3aac19eff475 + uncommitted crossbow cumulative canary",
+  "source_working_checkpoint": "c1377731aa409fa7e13693fc0443d9b28d5be062 + unaccepted GLM flash-mask partial applied for4209 only",
   "review_findings_1935": {
     "carbine": {
       "artifact": "C:/Users/david/Desktop/stuff/worktrees/nuketown-prop-20260919/public/assets/catalog-carbine/carbine.glb",
@@ -637,44 +744,16 @@
   },
   "active_external_lanes": [
     {
-      "lane": "glm-audio-currentbase-0302",
-      "run_id": "delegated-omp-glm-audio-currentbase-0302-b0b285fba019426299380bfa34799b81",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-audio-currentbase-0302-b0b285fba019426299380bfa34799b81\\summary.json",
-      "started_at": "2026-09-20T02:51:15+01:00",
-      "ended_at": null,
-      "state": "running source-only",
-      "observed_models": null,
-      "accepted": false
+      "lane": "muse-coach-repair-0405",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-coach-repair-0405-75000ec4ea9a4738a6fbc5381bcb2d02\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "state": "running or pending terminal receipt; not accepted"
     },
     {
-      "lane": "glm-lawn-adoption-0244",
-      "run_id": "delegated-omp-glm-lawn-adoption-0244-920026af604a44808e9f43d36691c34f",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-lawn-adoption-0244-920026af604a44808e9f43d36691c34f\\summary.json",
-      "started_at": "2026-09-20T02:42:32+01:00",
-      "ended_at": null,
-      "state": "running source-only",
-      "observed_models": null,
-      "accepted": false
-    },
-    {
-      "lane": "muse-crossbow-replay-repair-0254",
-      "run_id": "delegated-omp-muse-crossbow-replay-repair-0254-055328e25d904dbcaa3b35de57498244",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-crossbow-replay-repair-0254-055328e25d904dbcaa3b35de57498244\\summary.json",
-      "started_at": "2026-09-20T02:45:44+01:00",
-      "ended_at": null,
-      "state": "running source-only",
-      "observed_models": null,
-      "accepted": false
-    },
-    {
-      "lane": "muse-operator-selection-0244",
-      "run_id": "delegated-omp-muse-operator-selection-0244-b8bcb536c2df4eaeb143d5e26b35c5b3",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-operator-selection-0244-b8bcb536c2df4eaeb143d5e26b35c5b3\\summary.json",
-      "started_at": "2026-09-20T02:42:32+01:00",
-      "ended_at": null,
-      "state": "running source-only",
-      "observed_models": null,
-      "accepted": false
+      "lane": "muse-flash-fixture-0406",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-flash-fixture-0406-767e7c173cb94ae8b3ec8e26dff87596\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "state": "running or pending terminal receipt; not accepted"
     }
   ],
   "awaiting_root_review": [
@@ -746,10 +825,15 @@
     "resume_normal": "Four useful lanes as these finish"
   },
   "latest_soak": {
-    "state": "OPEN regression",
-    "failed": "captures/leak/heroes-2344-soak.json",
-    "control": "captures/leak/heroes-off-control-2353-soak.json",
-    "diagnostic": "VERIFIED captures/leak/heroes-isolated-0019-soak.json PASS300s53.8fps; JS0.105MB/min r2.015; listeners194flat. Renderer+46.48MB nonmonotonic58percent up. Three heap snapshots retained; original combined failure OPEN."
+    "state": "VERIFIED210.7s integrated operator/lawn/audio4207 PASS",
+    "evidence": "captures/leak/integrated-0352-soak.json",
+    "fps": 53.7,
+    "js_mb_per_min": 0.111,
+    "js_r2": 0.004,
+    "renderer_mb_per_min": 1.015,
+    "renderer_r2": 0.008,
+    "listeners": 194,
+    "prior_failure": "captures/leak/heroes-2344-soak.json remains OPEN for that exact older combination; not erased by successor pass"
   },
   "ui_candidate": {
     "url": "http://127.0.0.1:4196/",
@@ -962,7 +1046,7 @@
     "mortar": "captures/mortar-two-peer-0113-json exacttwopeerbackendPASS;0shots0kills; effectadmissionOPEN",
     "facade": "captures/facade/facade-report.json6frameslooked; exactCPUrendersdeltaFAIL; no budget/colliderregression"
   },
-  "source_document_checkpoint": "e628d8107df6fd334e89cc40affde59de31086ab",
+  "source_document_checkpoint": "517bb7306d447f2748c1e805d5a67b8c44858177",
   "operator_texture_repair": {
     "source": "0a183baf320aa1465890f13c6dd8c9f2a0ee430c",
     "url": "http://127.0.0.1:4201/?operator=authored",
@@ -974,7 +1058,7 @@
     "art": "OPEN cylindrical toy appearance and empty hands; no promotion",
     "soak": "PASS210.7s/11376frames avg54fps; JS0.18MB/min r2.015, rendererfitnet+1.44MB nonmonotonic, listeners194flat"
   },
-  "current_review_report": "docs/handoff/REVIEW-2026-09-20-0255.md",
+  "current_review_report": "docs/handoff/REVIEW-2026-09-20-0355.md",
   "review_findings_0215": {
     "lawn": "sixframes rootlooked; 0calls/tris/geometry delta, all3maps loaded; texturecount delta0 versus asserted+3 FAIL retained",
     "menu": "pointerdown755,728 hitsDeploy; pointerup/click samecoords outerroot afterDeploy moves up22px; no session methodcalled",
@@ -990,5 +1074,16 @@
     "file_count": 182,
     "bytes": 106196659,
     "all_hashes_verified": true
+  },
+  "backup_0259": {
+    "bundle": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z\\overnight-0259.bundle",
+    "sha256": "ed680f692fb9428b53db3623febabe6649de1c4b9a0d196c78cd21dfad954653",
+    "head": "517bb7306d447f2748c1e805d5a67b8c44858177",
+    "requires": "e628d8107df6fd334e89cc40affde59de31086ab",
+    "verified": true,
+    "artifacts": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z\\overnight-artifacts-0259",
+    "pendingSource": "27 exact source/QA/doc paths plus cumulative crossbow patch; accepted menu/operator commits in bundle",
+    "artifact_files": 287,
+    "artifact_bytes": 139116893
   }
 }
