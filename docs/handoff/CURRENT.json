@@ -9,7 +9,15 @@
   "status": "VERIFIED 08:58 scoped visual review4234/source4327d97 ready: detailed foliage, curved lamps, repaired Blender coach, rifle-hand contact and weapon finishes, responsive streak HUD. Actual37HUDchecks/fiveviewports pass, fullrecommendedflags210.8s soakPASS55.7fps stablewarmcounts. Whole-map visual bar and60fps remain OPEN. Frozen4212 unchanged. Operator-shape withheld for inadequate anatomy; FX optional with earlycapture/disposal gaps. Both nativeAstra workers completed before09. External fence/anatomy/sedan lanes continue.",
   "owner": "Codex",
   "stop_state": "active: preserve frozen checkpoint and continue private candidates",
-  "backup": "C:\\Users\\david\\Desktop\\stuff\\nuketown-recovery\\20260919T085155Z",
+  "backup": {
+    "path": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/visual-0900",
+    "head": "1bd70548346c9c5490f0863607dfe868260576dd",
+    "bundle_sha256": "68f865ccc37aa26bc8687fc3a0f3ba0c246d2e7bba90d3c8a356eb91f28c69dd",
+    "files": 494,
+    "bytes": 207628677,
+    "verified": true,
+    "note": "Sourcebundle verified; every copied artifact hash read back. Requires visual0748 base ff784669. Frozen and new accepted dist retained."
+  },
   "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
   "inspection_time": "2026-09-20T05:45:00+01:00",
   "lease_updated_at": "2026-09-20T07:46:47.384026+01:00",
@@ -32,7 +40,7 @@
   "next_actions": [
     "Retain frozen4212 and latest accepted scoped4234 unchanged; recommended URL inidentity.visual_review includes coach/lamps/leaf/riflehands/weaponfinish, excludes newoperator-shape/FX. Source4327d97, JSaea060fb. 210.8s55.7fps stablecounts PASS; completevisualbar and60fps OPEN. No broadrevalidation of unchangedbuild.",
     "No Astra implementation after09BST. Both completed08:47 and registryverified08:51, so no running child tointerrupt. Exactcontributionsreport rewritten current. Root only orchestration/review/mechanical integration; nonOpenAIworkers continue.",
-    "GLMfence-art0834 source scope work/fence-art-0834 inpropWT. Read terminalreceipt then exactpatch/CPUtests, samecamera actual fenceviews. Defaultparity and materialdisposal, collider/opening contracts unchanged. No acceptance justbecauseworkerexits.",
+    "GLMfence-art0834 FAILED actual25min timeout08:57, no artifacts at intended output. AGYfence-art0900 now owns work/fence-art-agy-0900 inpropWT, requestedGeminihigh actualUNKNOWN. Sourcefirstwithin10min target, do not restartGLM or overlap writers. Review terminalreceipt then exactpatch/CPUtests and samecamera fenceviews; fixed budgets/default/colliders remain.",
     "Musecar-body0834 FAILED terminaltranscripterror despitewrapperexit0; retain CONTRACT.json and RECIPE.md. GLMcar-body0855 owns newwork/car-body-glm-0855 inMusevehicleWT, same parked-sedan scope, no coach overlap. Needactualrecipe notanother spec; rootCPUBlender2threads2GiB guard once ready.",
     "AGYoperator-anatomy0845 owns work/operator-anatomy-0845 inanimationpolishWT. Prior shape0800 actual14108tris/2mats/21bones and10before-afterposeframes pass, but anatomy still cylindrical/knee seams poor: NOTPROMOTED. Rootloaderseam now wired andtested77CPU; newtask must substantially reshape limbs/body, preserve skeleton/posebudgets, use newassetname and samefiveposeA/B.",
     "WeaponFXfinalrepair2/2 native9202248/rootc935b6a actualWebGPU/shots/cameras PASS and darkcards gone. FloorCDPtemporalcoverage3/5 andliveexpiry/disposal counters OPEN; oldbrightflash inherited. KeepoptionalFX outofrecommendedURL. No thirdsamelooprepair; changeapproachforremainingcapture/legacyflash.",
@@ -1519,6 +1527,17 @@
       "accepted": true,
       "observed_models": [],
       "note": "Acceptance limited to exact runtime seam/layout, not underlying operatorart; workerexit alone not acceptance."
+    },
+    {
+      "lane": "agy-fence-art-0900",
+      "run_id": "delegated-agy-1814449a-0c0b-4694-86a3-43061ac68b52",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-fence-art-0900\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "route": "gemini-3.8-flash-high",
+      "state": "running",
+      "accepted": false,
+      "attribution": "unknown",
+      "observed_models": []
     }
   ],
   "continue_after_inspection": true,
@@ -2051,7 +2070,7 @@
       "state": "VERIFIED both canonical specialists completed and stopped by08:47; collaboration status checked08:51. No native implementation restarts authorized at/after09:00BST. Exact contributions docs/handoff/ASTRA-CONTRIBUTIONS-2026-09-20.md.",
       "tracker": "docs/handoff/ASTRA-CONTRIBUTIONS-2026-09-20.md"
     },
-    "external_model_plan": "GLM fence-art0834 running; AGY operator-anatomy0845 running (requestedGeminihigh actualUNKNOWN); Muse car-body0834 terminalerror despiteexit0 preserved CONTRACT/RECIPE; same scope failed over to GLMcar-body0855. GLMnarrowHUD0839 accepted actual37checks. AGYoperatorseam0834 CPU77checks and liveGLB adoption validated, but newshape art rejected. No extra audit lanes.",
+    "external_model_plan": "GLM fence-art0834 timed out08:57; exact scope AGYfence-art0900 running; AGY operator-anatomy0845 running (requestedGeminihigh actualUNKNOWN); Muse car-body0834 terminalerror despiteexit0 preserved CONTRACT/RECIPE; same scope failed over to GLMcar-body0855. GLMnarrowHUD0839 accepted actual37checks. AGYoperatorseam0834 CPU77checks and liveGLB adoption validated, but newshape art rejected. No extra audit lanes.",
     "checks": "Actual same-camera pixels first, focused touched-contract checks, then integration/resource gates; no repeated full audit of stable artifact.",
     "rejected_trials": [
       "hand-materials-0548",
@@ -2064,13 +2083,13 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T08:57:54.767073+01:00",
+  "updated_at": "2026-09-20T09:00:51.471052+01:00",
   "current_ownership": {
     "root": "GPU/browser acceptance, integration, source/live identity and current tracker",
     "astra_shading": "completed; no restarts",
     "astra_motion": "completed; no restarts",
-    "glm-fence-art-0834": "private prop work/fence-art-0834",
     "glm-car-body-0855": "private Musevehicle work/car-body-glm-0855",
-    "agy-operator-anatomy-0845": "private animationpolish work/operator-anatomy-0845"
+    "agy-operator-anatomy-0845": "private animationpolish work/operator-anatomy-0845",
+    "agy-fence-art-0900": "private prop work/fence-art-agy-0900; exact scope failover after GLM25min timeout"
   }
 }
