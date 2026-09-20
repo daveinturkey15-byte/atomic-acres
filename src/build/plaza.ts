@@ -27,6 +27,7 @@
 import * as THREE from 'three';
 import type { BuildContext, Builder, BuildResult } from '../core/kit';
 import { group, aabbSlab, type AABB } from '../core/kit';
+import { batchStatic } from '../core/static-batch';
 import { PAL } from '../core/palette';
 import { BOUND_X_MIN, BOUND_Z, PAVEMENT_OUTER, ROAD_HALF_WIDTH } from '../core/layout';
 
@@ -451,6 +452,13 @@ export const buildPlaza: Builder = (ctx: BuildContext): BuildResult => {
   C.flush(g, 'plazaCyl');
   S.flush(g, 'plazaSph');
   P.flush(g, 'plazaPennant');
+
+  // Batch the finished, never-animated sub-tree into one mesh per (material,
+  // shadow flags, attribute set) — the same machinery orange-house.ts and
+  // vehicles.ts already run. Merged bounds trade finer culling for fewer draws;
+  // fixed-view acceptance records the resulting triangle-count increase.
+  // Runs BEFORE the freeze traverse so the merged meshes are frozen too.
+  batchStatic(g, 'plaza');
 
   // Outside the boundary AND the shadow camera: no shadows either way, and nothing
   // moves, so compose each matrix once and stop the renderer redoing it per frame.
