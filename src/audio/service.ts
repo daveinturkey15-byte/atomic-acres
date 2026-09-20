@@ -43,6 +43,8 @@ export interface AudioStats {
   dropped: number;
   state: string;
   buffers: number;
+  /** Opt-in modern bank (?audiobank=2) decoded for 3 families; false by default. */
+  variantBank: boolean;
   /** Recorded shots decoded successfully; failed files use the authored bank. */
   recordedShots: number;
   recordedFoley: number;
@@ -62,7 +64,7 @@ export interface AudioStats {
 
 /** Must match BANK_VERSION in src/audio/render-bank.mjs (check-bank enforces). */
 export const AUDIO_BANK_VERSION = 3;
-/** Hard polyphony cap: one pull makes at most 3 voices (shot + impact + tick). */
+/** Hard polyphony cap: one pull makes at most 4 voices (shot + impact + tick + opt-in mech). */
 const MAX_VOICES = 16;
 
 /** Legacy Safari prefix: same-realm DOM object, shape known, no validator needed. */
@@ -136,6 +138,53 @@ const FALLBACK: Record<ShotFamily, { cutoff: number; decay: number; vol: number;
   duster: { cutoff: 2600, decay: 0.09, vol: 0.24, thump: 110 },
 };
 
+/** Opt-in modern bank (?audiobank=2): rifle+SMG+pistol only; coachman/deadeye stay baseline. */
+type ModernFamily = 'longhorn' | 'rattler' | 'duster';
+const MODERN_FAMILIES: readonly ModernFamily[] = ['longhorn', 'rattler', 'duster'];
+/**
+ * Near-distance B takes of the SAME weapon (body/texture alternation), served
+ * from public/audio-variants/. The primary (A) take is the base-bank
+ * recording already decoded under the family key and is never re-fetched.
+ */
+const MODERN_VARIANT_B: Record<ModernFamily, string> = {
+  longhorn: 'rec-shot-longhorn-b.wav',
+  rattler: 'rec-shot-rattler-b.wav',
+  duster: 'rec-shot-duster-b.wav',
+};
+/** Post-shot action layers. Coachman ships none (no clean pump recording). */
+const MODERN_MECH: Record<ModernFamily, string> = {
+  longhorn: 'mech-rifle.wav',
+  rattler: 'mech-smg.wav',
+  duster: 'mech-pistol.wav',
+};
+const MODERN_MECH_DELAY_S = 0.16;
+const MODERN_MECH_GAIN = 0.16;
+let MODERN_QUERY: boolean | null = null;
+/** Read once per page: the opt-in is the URL, not a mutable service flag. */
+function modernBankEnabled(): boolean {
+  if (MODERN_QUERY === null) {
+    try {
+      MODERN_QUERY =
+        typeof window !== 'undefined' &&
+        !!window.location &&
+        new URLSearchParams(window.location.search).get('audiobank') === '2';
+    } catch {
+      MODERN_QUERY = false;
+    }
+  }
+  return MODERN_QUERY;
+}
+/** Opt-in keys and bank-relative paths: B takes + mech only (never a primary). */
+function modernBankEntries(): Array<[string, string]> {
+  const out: Array<[string, string]> = [];
+  for (const f of MODERN_FAMILIES) {
+    out.push([`rec-${f}B`, `audio-variants/${MODERN_VARIANT_B[f]}`]);
+    const mech = MODERN_MECH[f];
+    out.push([mech.replace(/\.wav$/, ''), `audio-variants/${mech}`]);
+  }
+  return out;
+}
+
 /** Pure remote-shot mix rules, shared by the real sink and CPU proof. */
 export function remoteShotGain(distanceM: number, occluded = false): number {
   const distance = Number.isFinite(distanceM) ? Math.max(0, distanceM) : 0;
@@ -155,6 +204,8 @@ export class AudioService {
   private limiter: DynamicsCompressorNode | null = null;
   private noiseBuf: AudioBuffer | null = null;
   private buffers = new Map<string, AudioBuffer>();
+  /** Set in preload() only when the opt-in query is present; cleared on dispose. */
+  private variantBank = false;
   private recordedShots = new Set<string>();
   private recordedFoley = new Set<string>();
   /** Active voices with their steal priority. Bounded by MAX_VOICES. */
@@ -257,6 +308,13 @@ export class AudioService {
         entries.push([STEP_FILES_B[bank][0], STEP_FILES_B[bank][1]]);
       }
       for (const k of Object.keys(AMBIENT_FILES)) entries.push([k, AMBIENT_FILES[k]]);
+      // Opt-in modern bank (?audiobank=2): distinct keys that never overwrite
+      // the base bank. Primaries reuse the base-bank decode (family key), so
+      // only B takes and mech layers are fetched — an existing recording is
+      // never downloaded or decoded twice. A missing file stays undecoded and
+      // play falls through per-key to the base bank, never to silence.
+      const modernEntries = modernBankEnabled() ? modernBankEntries() : [];
+      if (modernEntries.length > 0) this.variantBank = true;
       const signal = this.loadAbort.signal;
       const decode = async (path: string): Promise<AudioBuffer> => {
         const response = await fetch(new URL(path, window.location.href), { signal });
@@ -286,6 +344,16 @@ export class AudioService {
           })
           .catch(() => undefined);
       }
+      for (const [key, path] of modernEntries) {
+        decode(path)
+          .then((buf) => {
+            // Same cancellation/generation guard as the base bank: an
+            // in-flight decode cannot repopulate a disposed/replaced bank.
+            if (this.ctx !== ctx || this.loadGeneration !== generation) return;
+            this.buffers.set(key, buf);
+          })
+          .catch(() => undefined);
+      }
     } catch {
       // Missing bank: the fallback synth covers every cue.
     }
@@ -312,6 +380,7 @@ export class AudioService {
       dropped: this.dropped,
       state: this.ctx ? this.ctx.state : 'none',
       buffers: this.buffers.size,
+      variantBank: this.variantBank,
       recordedShots: this.recordedShots.size,
       recordedFoley: this.recordedFoley.size,
       masterGain: this.master?.gain.value ?? 0,
@@ -333,6 +402,7 @@ export class AudioService {
       this.loadAbort?.abort();
       this.loadAbort = null;
       this.preloadStarted = false;
+      this.variantBank = false;
       for (const bed of [this.windSrc, this.rainSrc]) {
         if (!bed) continue;
         try {
@@ -403,14 +473,49 @@ export class AudioService {
 
   // ---- Game cues (all no-op safe without a context) ----
 
-  /** One trigger pull: buffered shot, else the layered fallback. */
+  /**
+   * One trigger pull: opt-in modern take for 3 families, else buffered shot,
+   * else the layered fallback.
+   */
   shot(family: ShotFamily): void {
     try {
+      if (this.playModernShot(family, 1.0, 2)) return;
       if (this.playBuffer(family, 1.0, 2)) return;
       this.synthShot(family);
     } catch {
       // Garnish, never gameplay.
     }
+  }
+
+  /**
+   * Modern take (opt-in bank only): the LCG alternates the near-distance B
+   * take with the base-bank primary of the SAME weapon (family key — the
+   * primary is never fetched twice), then layers the recorded action mech.
+   * Coachman and deadeye always return false (baseline bank). A missing
+   * variant degrades per-key to the base bank, never to silence.
+   */
+  private playModernShot(family: ShotFamily, gainV: number, priority: number): boolean {
+    if (!this.variantBank) return false;
+    if (family !== 'longhorn' && family !== 'rattler' && family !== 'duster') return false;
+    const bKey = `rec-${family}B`;
+    const hasB = this.buffers.has(bKey);
+    const hasA = this.buffers.has(family);
+    if (!hasA && !hasB) return false;
+    const pick = hasB && (!hasA || this.next() < 0.5) ? bKey : family;
+    const played = this.playBuffer(pick, gainV, priority);
+    if (played) this.playModernMech(family);
+    return played;
+  }
+
+  /**
+   * Post-shot action layer for close local pulls only. Priority 1: it yields
+   * to trigger pulls under the 16-voice cap, and starts MODERN_MECH_DELAY_S
+   * after the body so the transient stays clean.
+   */
+  private playModernMech(family: ModernFamily): void {
+    const file = MODERN_MECH[family];
+    if (!file) return;
+    this.playBuffer(file.replace(/\.wav$/, ''), MODERN_MECH_GAIN, 1, undefined, 1, 0, MODERN_MECH_DELAY_S);
   }
 
   /** Remote firearm presentation: quieter/lower priority, spatial and occlusion-aware. */
@@ -684,6 +789,7 @@ export class AudioService {
     filter?: { type: BiquadFilterType; freq: number },
     rate = 1,
     pan = 0,
+    delayS = 0,
   ): boolean {
     if (!this.unlocked) return false;
     const ctx = this.ensure();
@@ -724,7 +830,7 @@ export class AudioService {
         g.connect(this.fxBus);
       }
       this.adopt(src, priority, nodes);
-      src.start(t);
+      src.start(t + Math.max(0, delayS));
       return true;
     } catch {
       if (src && this.voiceNodes.has(src)) this.retire(src);

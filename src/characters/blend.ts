@@ -19,6 +19,7 @@ import {
   THROW_BODY_HOLD_MAX_S, THROW_BODY_HOLD_S, THROW_BODY_THROWN_ENTRY_S,
   type ClipLibrary, type ClipName, type LocomotionName,
 } from './clips';
+import { authoredGripLocal, type AuthoredWeaponArchetype } from './authored-weapon';
 
 export interface RigInput {
   /** Forward speed in m/s. The rig picks the gait and match its timeScale. */
@@ -320,6 +321,13 @@ export class CharacterRig {
    *  weapon with the throwing hand. */
   private carryRight = 1;
   private carryLeft = 1;
+  /** Support-hand target in RightHand LOCAL space. FORESTOCK_LOCAL until an
+   *  authored archetype is set: the rifle numbers stay this file's, every
+   *  other archetype's grip comes from authored-weapon.ts data. Written only
+   *  at spawn/swap — never per frame. */
+  private carryLocal = FORESTOCK_LOCAL.clone();
+  /** Which archetype carryLocal aims at; null = legacy/procedural rifle. */
+  private carried: AuthoredWeaponArchetype | null = null;
   private sampler: OverlaySampler;
   /** Last sampled aim pose, refreshed while aimWeight > 0. */
   private aimPose: Record<StandardBoneName, THREE.Quaternion> | null = null;
@@ -507,6 +515,27 @@ export class CharacterRig {
   /** Live weapon-carry weight, for the QA surface and the surface audit. */
   get carryWeight(): number {
     return Math.min(this.carryRight, this.carryLeft);
+  }
+
+  /** The archetype the carry solve currently aims the support hand at, or
+   *  null for the legacy rifle forestock (procedural figures). The swap
+   *  short-circuit in CharacterSystem.rearm reads this to skip a rebuild
+   *  whose archetype would not change a vertex. */
+  get carriedArchetype(): AuthoredWeaponArchetype | null {
+    return this.carried;
+  }
+
+  /**
+   * Aim the support-hand solve at `archetype`'s authored grip, or back at the
+   * legacy rifle forestock for null. Spawn/swap-time only — never per frame.
+   * The rifle row is FORESTOCK_LOCAL verbatim, so rifle figures solve exactly
+   * what they always did; the pistol target is its grip wrap, inside the
+   * muzzle, instead of a floating hand beyond the barrel.
+   */
+  setCarriedArchetype(archetype: AuthoredWeaponArchetype | null): void {
+    this.carried = archetype;
+    if (archetype === null) this.carryLocal.copy(FORESTOCK_LOCAL);
+    else this.carryLocal.copy(authoredGripLocal(archetype));
   }
 
   /** Per-side reads: the throw releases the LEFT side while the right keeps the rifle. */
@@ -740,8 +769,9 @@ export class CharacterRig {
     this.bones.RightHand.quaternion.slerp(_cqB, wr);
     this.bones.RightHand.updateWorldMatrix(false, true);
 
-    // ---- left hand: onto the forestock, read out of the rifle's own bone.
-    _cT.copy(FORESTOCK_LOCAL).applyMatrix4(this.bones.RightHand.matrixWorld);
+    // ---- left hand: onto the carried archetype's grip, read out of the
+    // weapon's own bone. The rifle row is FORESTOCK_LOCAL verbatim.
+    _cT.copy(this.carryLocal).applyMatrix4(this.bones.RightHand.matrixWorld);
     _cPole.copy(POLE_LEFT).applyQuaternion(_cChestQ).normalize();
     solveTwoBone(this.bones.LeftArm, this.bones.LeftForeArm, _cT, _cPole, wl);
     // Glove straight on from the wrist - a support hand on a handguard, not a
@@ -750,13 +780,14 @@ export class CharacterRig {
   }
 
   /**
-   * World position of the rifle's forestock, and its barrel axis. The audit
-   * harness reads these instead of re-deriving mesh.ts's offsets, so the
-   * acceptance measures the same point the solver aimed at.
+   * World position of the carried weapon's support point (the archetype grip;
+   * the rifle forestock by default), and its barrel axis. The audit harness
+   * reads these instead of re-deriving the offsets, so the acceptance
+   * measures the same point the solver aimed at.
    */
   weaponProbe(outForestock: THREE.Vector3, outBarrel: THREE.Vector3): void {
     this.bones.RightHand.updateWorldMatrix(true, false);
-    outForestock.copy(FORESTOCK_LOCAL).applyMatrix4(this.bones.RightHand.matrixWorld);
+    outForestock.copy(this.carryLocal).applyMatrix4(this.bones.RightHand.matrixWorld);
     this.bones.RightHand.getWorldQuaternion(_cqA);
     outBarrel.copy(BARREL_LOCAL).applyQuaternion(_cqA).normalize();
   }

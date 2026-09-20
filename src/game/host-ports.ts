@@ -29,6 +29,7 @@ import type { DamageInput, DamageResult } from './damage';
 import type { SpawnContext, SpawnSelection } from './spawns';
 import type { StreakRuntimePort } from './host-streaks';
 import type { OrdnanceSnapshot } from './host-ordnance';
+import type { CrossbowSnapshot } from './host-crossbow';
 import type { PlayerStance } from '../net/room-core';
 
 /**
@@ -61,6 +62,8 @@ export interface HostOptions {
   readonly deps?: HostDeps;
   /** Host RNG seed. Every deterministic choice downstream derives from it. */
   readonly seed?: number;
+  /** Crossbow canary: admit the gated `explosive-crossbow` id as live bolts. Default false (still gated). */
+  readonly crossbowCanary?: boolean;
 }
 
 export interface ShotAdmission {
@@ -119,4 +122,6 @@ export interface HostSnapshot {
   readonly stats: HostStats;
   /** Live grenades, smoke volumes, drops on the ground, and the lane's counters. */
   readonly ordnance: OrdnanceSnapshot;
+  /** Live bolts and the crossbow lane's counters. */
+  readonly crossbow: CrossbowSnapshot;
 }

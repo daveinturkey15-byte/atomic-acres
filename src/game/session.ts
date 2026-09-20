@@ -57,6 +57,11 @@ export interface LocalMatchOptions {
   readonly placeLocal?: (x: number, y: number, z: number, yaw: number) => void;
   /** Current menu primary, or a provider read at match/deploy boundaries. */
   readonly localPrimaryId?: string | (() => string | undefined);
+  /**
+   * Crossbow canary (`?crossbow=canary`): admit the gated id as live bolts.
+   * Default false. Same source the controller reads for its weapon list.
+   */
+  readonly crossbowCanary?: boolean;
 }
 
 export interface LocalMatch extends MatchDriver {
@@ -149,6 +154,7 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
     swap(createSoloDriver({
       world, ui, setup, seed: opts.seed, placeLocal: opts.placeLocal,
       localId: LOCAL_ACTOR_ID, localName: 'YOU', localPrimaryId: primaryForLocal, instrument,
+      crossbowCanary: opts.crossbowCanary === true,
     }), 'solo');
   };
 
@@ -167,6 +173,7 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
         setup: lobby.hostBots() === 0 ? { ...roomSetup, bots: 0 } : roomSetup,
         localId: room.hostId, localName: room.hostName(), localTeam: TEAM_A,
         localPrimaryId: primaryForLocal,
+        crossbowCanary: opts.crossbowCanary === true,
       });
       swap(createHostDriver(room, solo, { world }), 'host');
       return;

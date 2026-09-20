@@ -17,6 +17,7 @@
  */
 import { balanceTeams } from '../game/rules';
 import { isOrdnanceEventType, type GameEvent, type KillEvent, type WorldQuery } from '../game/events';
+import { isCrossbowEventType } from '../game/events-crossbow';
 import type { SoloDriver } from '../game/session-solo';
 import type { BotBody, MatchDriver } from '../game/session-types';
 import type { PlayerStance } from './room-core';
@@ -98,6 +99,8 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
             if (id !== undefined && seats.has(id)) streakTo(id, now);
           } else if (isOrdnanceEventType(e.type)) {
             room.broadcast({ type: 'ordnance', e } as NetMessage);
+          } else if (isCrossbowEventType(e.type)) {
+            room.broadcast({ type: 'crossbow', e } as NetMessage);
           }
       }
     }

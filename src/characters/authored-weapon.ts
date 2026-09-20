@@ -31,10 +31,10 @@
  * hand. Caller materials are kept. No new programs, no new textures, no
  * lighting change, no recolor.
  *
- * OPEN: the carry solver pins the left hand at FORESTOCK_LOCAL (0,-0.055,0.25
- * — the rifle handguard). Short archetypes (pistol muzzle 0.175) leave the
- * left hand floating ahead of the muzzle until the solver goes per-weapon,
- * which is blend.ts scope, not this lane's.
+ * The carry solve is per-archetype through GRIPS/authoredGripLocal: blend.ts
+ * aims the support hand at the archetype's grip (the pistol target inside its
+ * 0.175 muzzle), fed at spawn/swap by CharacterSystem.spawn/rearm and
+ * spawnAuthoredOperator. FORESTOCK_LOCAL remains the rifle row verbatim.
  */
 import * as THREE from 'three';
 import type { StandardBoneName } from './skeleton';
@@ -156,6 +156,29 @@ export function authoredMuzzleLocal(archetype: AuthoredWeaponArchetype): THREE.V
   return new THREE.Vector3(m[0], m[1], m[2]);
 }
 
+/**
+ * Left-hand support grip in RightHand LOCAL space, per archetype. The rifle
+ * row is blend.ts's FORESTOCK_LOCAL verbatim, so the legacy solve point is a
+ * data row, not a special case. Short barrels get SHORT targets: the support
+ * hand wraps the pump (shotgun, its row-4 center z 0.22), the handguard
+ * (smg 0.20, sniper 0.28) or the grip wrap itself (pistol 0.055 — well
+ * inside its 0.175 muzzle, never a floating hand beyond the barrel).
+ */
+const GRIPS: Readonly<Record<AuthoredWeaponArchetype, readonly [number, number, number]>> =
+  Object.freeze({
+    rifle: [0, -0.055, 0.25],
+    smg: [0, -0.06, 0.2],
+    shotgun: [0, -0.062, 0.22],
+    sniper: [0, -0.056, 0.28],
+    pistol: [0, -0.075, 0.055],
+  });
+
+/** Allocate the archetype's support-grip point (spawn/swap cadence only). */
+export function authoredGripLocal(archetype: AuthoredWeaponArchetype): THREE.Vector3 {
+  const g = GRIPS[archetype];
+  return new THREE.Vector3(g[0], g[1], g[2]);
+}
+
 /** Shared per-archetype geometries, frozen like the team-patch geometry. */
 const sharedGeos = new Map<AuthoredWeaponArchetype, THREE.BufferGeometry[]>();
 
@@ -247,10 +270,11 @@ export function setAuthoredWeapon(
 ): AuthoredWeaponArchetype | null {
   const hand = findRightHand(root);
   if (!hand) return null;
-  if (hand.getObjectByName(AUTHORED_WEAPON_NAME) === null) {
+  // three r180 getObjectByName returns undefined on miss (Object3D.js), not
+  // null — strict null checks misread every miss. Falsy covers both.
+  if (!hand.getObjectByName(AUTHORED_WEAPON_NAME)) {
     // No authored socket (procedural figures bake the rifle into the skin).
-    const hasAuthoredSkin = root.getObjectByName('operator-authored') !== null;
-    if (!hasAuthoredSkin) return null;
+    if (!root.getObjectByName('operator-authored')) return null;
   }
   const archetype = resolveAuthoredArchetype(weaponId);
   detachAuthoredWeapon(hand);

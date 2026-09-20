@@ -61,6 +61,7 @@ import { regenStep } from './health';
 import { clearRespawns, dueRespawns } from './respawn';
 import { acceptShot, admitShot, pickTarget, type TargetCandidate } from './host-shot';
 import { HostOrdnance } from './host-ordnance';
+import { CROSSBOW_ID, HostCrossbow } from './host-crossbow';
 import { isOrdnanceId } from './ordnance';
 import { PRIMARY_IDS } from './loadout';
 import { normalizeStance, type PlayerStance } from '../net/room-core';
@@ -78,7 +79,6 @@ function mulberry32(seed: number): () => number {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-
 export class GameHost {
   private readonly world: WorldQuery;
   private readonly deps: HostDeps;
@@ -86,6 +86,10 @@ export class GameHost {
   private readonly life: HostLife;
   /** Grenades, smoke, flash, the knife, drops. Composed like `life`; never published. */
   private readonly ordnance: HostOrdnance;
+  /** Canary bolts in flight. Composed like `ordnance`; never published. */
+  private readonly crossbow: HostCrossbow;
+  /** Admit the gated crossbow id as live bolts. False by default (still gated). */
+  private readonly crossbowCanary: boolean;
   private match: MatchState;
   private clock: number;
   private lastTick: number;
@@ -106,6 +110,8 @@ export class GameHost {
     });
     this.life.phase = this.match.phase;
     this.ordnance = new HostOrdnance(this.life, this.world, this.clock);
+    this.crossbowCanary = opts.crossbowCanary === true;
+    this.crossbow = new HostCrossbow(this.life, this.world, this.clock);
   }
 
   // ---- Roster ----------------------------------------
@@ -134,6 +140,7 @@ export class GameHost {
     this.life.ledger = withoutActor(this.life.ledger, id);
     this.life.respawns = { queue: this.life.respawns.queue.filter((e) => e.actorId !== id) };
     this.ordnance.forget(id);
+    this.crossbow.forget(id);
     this.life.push(this.deps.streaks?.recordDisconnect(id, this.clock));
   }
 
@@ -217,16 +224,22 @@ export class GameHost {
    * the same eight rules and the same exactly-once window first; only the
    * resolution differs, and the ordnance kinds are routed to `HostOrdnance`
    * instead of the hit test. One claim shape on the wire, one admission.
+   * A canary `explosive-crossbow` claim is a fourth kind: admitted through the
+   * same rules (the roster gate reads as `malformed` with the canary off) and
+   * routed to `HostCrossbow` as a live ticked bolt instead of the hit test.
    */
   submitShot(shooterId: ActorId, claim: ShotMsg, receivedAt: number = this.clock): ShotAdmission {
     const a = this.life.actors.get(shooterId) ?? null;
     const ordnance = isOrdnanceId(claim.weaponId);
+    const isCrossbow = claim.weaponId === CROSSBOW_ID;
     // Fail closed: a gated roster prototype (`weapons/roster.ts`) is not a
     // playable weapon, so a forged bullet claim naming one reads `malformed`
     // exactly like an unknown id — hiding it in the menu gates nothing alone.
+    // The canary lifts exactly one id, and only when the host opted in.
     const reason = admitShot(claim, a === null ? null : {
       matchActive: this.match.phase === 'active', life: a.health.life, alive: a.health.alive,
-      diedAt: a.health.diedAt, knownWeapon: ordnance || isPlayableWeapon(claim.weaponId),
+      diedAt: a.health.diedAt,
+      knownWeapon: ordnance || (isCrossbow ? this.crossbowCanary : isPlayableWeapon(claim.weaponId)),
       window: a.window, pose: a.poses.at(claim.firedAt), receivedAt,
     });
     if (reason !== null) {
@@ -240,6 +253,8 @@ export class GameHost {
     // This is the single authoritative presentation edge for firearm shots.
     // It is emitted after exactly-once admission and before hit resolution, so
     // misses are audible while rejected/duplicate claims never reach clients.
+    // Canary bolts share the edge, then fly ticked: the impact (and only the
+    // impact) resolves the damage, against CURRENT poses per tick.
     const muzzle = shooter.poses.at(claim.firedAt);
     if (muzzle !== null) {
       this.life.emit({
@@ -251,6 +266,13 @@ export class GameHost {
       });
     }
     this.life.stats = { ...this.life.stats, shotsAdmitted: this.life.stats.shotsAdmitted + 1 };
+    if (isCrossbow) {
+      // Canary ammo stays client-side like every bullet (the host keeps the
+      // estimate only): the kit ledger ignores the gated id, so canary
+      // corpses keep dropping their baseline primary.
+      this.crossbow.launch(shooter, claim, receivedAt);
+      return ADMITTED;
+    }
     this.ordnance.noteShot(shooter, claim.weaponId);
 
     const candidates: TargetCandidate[] = [];
@@ -300,6 +322,7 @@ export class GameHost {
         this.life.respawns = clearRespawns(this.life.respawns);
         this.life.push(this.deps.streaks?.endMatch(now));
         this.ordnance.endMatch(now);
+        this.crossbow.endMatch(now);
       }
     }
 
@@ -316,9 +339,12 @@ export class GameHost {
     if (this.deps.streaks) {
       this.life.absorb(this.deps.streaks.advance(now, this.world, this.life.streakTargets(now)));
     }
-    // Last, and before the drain: it reads this tick's deaths off `pending`
-    // (a corpse drops its gun) and its own detonations land on the same queue.
+    // Last, and before the drain: ordnance reads this tick's deaths off
+    // `pending` (a corpse drops its gun) and its own detonations land on the
+    // same queue; bolts fly after, against CURRENT poses, and their impacts
+    // land on the same queue too.
     this.ordnance.advance(now);
+    this.crossbow.advance(now);
 
     const out = this.life.pending.slice();
     this.life.pending.length = 0;
@@ -348,7 +374,7 @@ export class GameHost {
         armed: kit.armed, blindUntil: kit.blindUntil, stance: a.stance,
       });
     }
-    return { at: this.clock, match, actors, stats: this.life.stats, ordnance: this.ordnance.snapshot() };
+    return { at: this.clock, match, actors, stats: this.life.stats, ordnance: this.ordnance.snapshot(), crossbow: this.crossbow.snapshot() };
   }
 
   /** The three optional `PlayerSample` fields, added to a sample `room.ts` authored. */

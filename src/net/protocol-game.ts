@@ -31,6 +31,7 @@ import {
   STREAK_DENIAL_REASONS,
   STREAK_END_REASONS,
   TEAMS,
+  type CrossbowEvent,
   type DamageEvent,
   type DeathEvent,
   type KillEvent,
@@ -46,6 +47,7 @@ import {
   type StreakEndedEvent,
   type TeamId,
 } from '../game/events';
+import { isCrossbowEventType } from '../game/events-crossbow';
 import { isOrdnanceEventType } from '../game/events-ordnance';
 import { isMatchMode, type MatchMode } from '../game/rules';
 
@@ -147,12 +149,20 @@ export interface MatchStateMsg {
  * `weaponId` is an ordnance id (`game/ordnance.ts:ORDNANCE_IDS`), admitted by
  * the same eight rules as a bullet.
  *
- * ROUTING: `protocol.ts:isNetMessage` and its `NetMessage` union are the
  * lobby lane's; until that file adds `| OrdnanceMsg` and `case 'ordnance':`
  * this message validates here and is not yet routed there. Named in the
  * ordnance lane's report.
  */
 export interface OrdnanceMsg { type: 'ordnance'; e: OrdnanceEvent }
+
+/**
+ * Host -> all: one crossbow bolt event (CROSSBOW CANARY, additive). Launch
+ * state plus the authoritative terminal point, as the event object itself,
+ * for the same no-mirror reason the kill/damage/ordnance messages do. Guests
+ * never author one; a guest claim naming the crossbow id is a `ShotMsg` the
+ * host admits through the same eight rules as a bullet.
+ */
+export interface CrossbowMsg { type: 'crossbow'; e: CrossbowEvent }
 
 /** Every gameplay discriminant. `protocol.ts` routes these tags to `isGameMessage`. */
 export const GAME_MESSAGE_TYPES = [
@@ -166,9 +176,9 @@ export const GAME_MESSAGE_TYPES = [
   'streak-state',
   'match-state',
   'ordnance',
+  'crossbow',
 ] as const;
 export type GameMessageType = (typeof GAME_MESSAGE_TYPES)[number];
-
 export type GameNetMessage =
   | ShotMsg
   | ShotRejectMsg
@@ -179,7 +189,8 @@ export type GameNetMessage =
   | StreakIntentMsg
   | StreakStateMsg
   | MatchStateMsg
-  | OrdnanceMsg;
+  | OrdnanceMsg
+  | CrossbowMsg;
 
 // ---------------------------------------------------------------------------
 // Validators
@@ -304,6 +315,87 @@ function isOrdnanceEvent(v: unknown): boolean {
 }
 
 /**
+ * Host-authored crossbow bolt event — strict per-type shape, not a scalar sweep.
+ *
+ * Every bound below is justified by the actual host emitter (`game/host-crossbow.ts`):
+ * - `bolt-launched` is `HostCrossbow.launch`: `at`/`expiresAt` are host monotonic
+ *   ms with `expiresAt = at + lifetime * 1000` (tuning `lifetime` 2.5 s, so
+ *   `expiresAt > at` always); `actorId`/`team` are the admitted owner's id and
+ *   side; `boltId` is `nextBoltId++` from 1 (never 0, never fractional);
+ *   `seq` is the admitted claim's exactly-once seq (a non-negative safe integer);
+ *   `x/y/z` and `vx/vy/vz` are the admitted muzzle and launch velocity (finite;
+ *   positions may be negative, so no sign bound there).
+ * - `bolt-impact` is `strike`/`stop`: `boltId` is the launch handle; `actorId` /
+ *   `team` are the owner's or null once the owner has left; `victimId` / `zone`
+ *   are set together on a victim hit and null together on a wall or an expiry,
+ *   and `stopped` names which — one bolt, one conclusion, at most one victim;
+ *   `distance` is accumulated metres, never negative.
+ *
+ * Anything else — a missing field, a wrong scalar, NaN/Infinity, a bad id, team,
+ * zone or stop, a victim/zone/stopped disagreement, or an unknown tag — fails closed.
+ */
+const BOLT_STOPS = ['victim', 'wall', 'expired'] as const;
+
+function isBoltLaunched(v: unknown): boolean {
+  if (!isObj(v) || v['type'] !== 'bolt-launched') return false;
+  const at = v['at'];
+  const actorId = v['actorId'];
+  const team = v['team'];
+  const boltId = v['boltId'];
+  const seq = v['seq'];
+  const x = v['x'];
+  const y = v['y'];
+  const z = v['z'];
+  const vx = v['vx'];
+  const vy = v['vy'];
+  const vz = v['vz'];
+  const expiresAt = v['expiresAt'];
+  if (!isNum(at) || at < 0) return false;
+  if (typeof actorId !== 'string' || actorId.length === 0) return false;
+  if (!isTeamId(team)) return false;
+  if (typeof boltId !== 'number' || !Number.isSafeInteger(boltId) || boltId < 1) return false;
+  if (typeof seq !== 'number' || !Number.isSafeInteger(seq) || seq < 0) return false;
+  if (!isNum(x) || !isNum(y) || !isNum(z)) return false;
+  if (!isNum(vx) || !isNum(vy) || !isNum(vz)) return false;
+  if (!isNum(expiresAt) || expiresAt <= at) return false;
+  return true;
+}
+
+function isBoltImpact(v: unknown): boolean {
+  if (!isObj(v) || v['type'] !== 'bolt-impact') return false;
+  const at = v['at'];
+  const boltId = v['boltId'];
+  const actorId = v['actorId'];
+  const team = v['team'];
+  const victimId = v['victimId'];
+  const zone = v['zone'];
+  const distance = v['distance'];
+  const x = v['x'];
+  const y = v['y'];
+  const z = v['z'];
+  const stopped = v['stopped'];
+  if (!isNum(at) || at < 0) return false;
+  if (typeof boltId !== 'number' || !Number.isSafeInteger(boltId) || boltId < 1) return false;
+  if (!(actorId === null || (typeof actorId === 'string' && actorId.length > 0))) return false;
+  if (!(team === null || isTeamId(team))) return false;
+  if (!(victimId === null || (typeof victimId === 'string' && victimId.length > 0))) return false;
+  if (!(zone === null || inSet(zone, HIT_ZONES))) return false;
+  if (!isNum(distance) || distance < 0) return false;
+  if (!isNum(x) || !isNum(y) || !isNum(z)) return false;
+  if (!inSet(stopped, BOLT_STOPS)) return false;
+  const hasVictim = victimId !== null;
+  if ((zone !== null) !== hasVictim) return false;
+  if ((stopped === 'victim') !== hasVictim) return false;
+  return true;
+}
+
+function isCrossbowEvent(v: unknown): boolean {
+  if (!isObj(v) || !isCrossbowEventType(v['type'])) return false;
+  if (v['type'] === 'bolt-launched') return isBoltLaunched(v);
+  if (v['type'] === 'bolt-impact') return isBoltImpact(v);
+  return false;
+}
+/**
  * Structural check for every gameplay message. Called by `isNetMessage` after
  * it has matched the tag; returns false for any tag it does not own, so a typo
  * in the caller's case list fails closed rather than admitting garbage.
@@ -312,6 +404,8 @@ export function isGameMessage(m: Record<string, unknown>): boolean {
   switch (m['type']) {
     case 'ordnance':
       return isOrdnanceEvent(m['e']);
+    case 'crossbow':
+      return isCrossbowEvent(m['e']);
     case 'shot':
       return (
         Number.isSafeInteger(m['seq']) &&

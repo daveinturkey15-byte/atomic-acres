@@ -36,6 +36,7 @@ import type { WeaponsController } from './controller';
 import { DropFx, nearestDropView } from './drops';
 import { GrenadeFx } from './grenades';
 import { MortarFx } from './mortar-fx';
+import { BoltFx } from './crossbow-fx';
 import { drainMortarAudio } from '../game/killstreaks/effects/mortar-audio';
 
 /** The white-out holds at its peak for this fraction of the flash, then fades linearly. */
@@ -58,6 +59,7 @@ export class OrdnanceScene {
   private readonly world: WorldQuery;
   private readonly grenades: GrenadeFx;
   private readonly mortarFx: MortarFx;
+  private readonly boltFx: BoltFx;
   private readonly drops: DropFx;
   private readonly hud: HudApi;
   private readonly weapons: WeaponsController;
@@ -71,9 +73,11 @@ export class OrdnanceScene {
     this.world = createWorldQuery(opts.colliders);
     this.grenades = new GrenadeFx(opts.mat, this.world);
     this.mortarFx = new MortarFx(opts.mat);
+    this.boltFx = new BoltFx(opts.mat);
     this.drops = new DropFx(opts.mat);
     opts.scene.add(this.grenades.group);
     opts.scene.add(this.mortarFx.group);
+    opts.scene.add(this.boltFx.group);
     opts.scene.add(this.drops.group);
     this.hud = opts.hud;
     this.weapons = opts.weapons;
@@ -96,6 +100,11 @@ export class OrdnanceScene {
     if (client !== null) client.mortar.reset();
     this.mortarFx.reset(client === null ? 0 : client.mortar.impactSeq);
     this.mortarFx.group.visible = client !== null;
+    // Bolts reset with the match, synced the same way: a rematch never
+    // replays the previous match's shafts or flashes.
+    if (client !== null) client.crossbow.reset();
+    this.boltFx.reset(client === null ? 0 : client.crossbow.impactSeq);
+    this.boltFx.group.visible = client !== null;
     this.drops.group.visible = client !== null;
     this.client = client;
     this.tacticalId = OrdnanceScene.tacticalFor();
@@ -118,12 +127,13 @@ export class OrdnanceScene {
   }
 
   /**
-   * Page/game teardown: release the mortar ring geometries. Grenade/drop fx
-   * own no geometries; shared `MaterialLibrary` materials are never touched.
-   * Idempotent; rebind after dispose is a fresh bind, never a replay.
+   * Page/game teardown: release the mortar ring and bolt shaft geometries.
+   * Grenade/drop fx own no geometries; shared `MaterialLibrary` materials are
+   * never touched. Idempotent; rebind after dispose is a fresh bind, never a replay.
    */
   dispose(): void {
     this.mortarFx.release();
+    this.boltFx.release();
   }
 
   /** One frame. `nowMs` is `performance.now()`, the host clock domain; (px, py, pz) the player's feet. */
@@ -141,6 +151,12 @@ export class OrdnanceScene {
     c.mortar.expire(nowMs);
     this.mortarFx.update(nowMs, c.mortar, (x, y, z) => this.weapons.mortarFlash(x, y, z));
     drainMortarAudio(c.mortar, { x: px, y: py, z: pz }, { impact: (d) => this.weapons.mortarThump(d) });
+
+    // Crossbow canary: visible shafts for admitted launches, flash snapped to
+    // the authoritative terminal point. The flash is the existing blast pool
+    // (`weapons.blastAt`); a launch with no impact draws and nothing else.
+    c.crossbow.expire(nowMs);
+    this.boltFx.update(dt, nowMs, c.crossbow, (x, y, z) => this.weapons.blastAt(x, y, z));
 
     const self = v.self;
     // Verdicts the controller must act on, as edges off the projection's counters.
@@ -200,6 +216,16 @@ export class OrdnanceScene {
         impacts: c.mortar.impacts.length,
         impactSeq: c.mortar.impactSeq,
         counts: { ...c.mortar.counts },
+      },
+      // Canary bolt projection, honest partial: live shafts off admitted
+      // launches, terminal points off authoritative impacts, cumulative
+      // counts. An empty pool with zero counts is gated-off, not broken.
+      crossbow: {
+        live: c.crossbow.bolts.map((b) => ({ id: b.boltId, x: b.x, y: b.y, z: b.z })),
+        impacts: c.crossbow.impacts.length,
+        impactSeq: c.crossbow.impactSeq,
+        counts: { ...c.crossbow.counts },
+        lines: c.crossbow.lines.slice(),
       },
       hand: this.weapons.command('ordnance'),
     };

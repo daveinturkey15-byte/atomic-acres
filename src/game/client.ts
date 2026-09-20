@@ -41,7 +41,8 @@ import { BannerArbiter, feedLineForDamage, feedLineForDeath, feedLineForKill, fe
 import { shouldRevealEnemy, type MapBlip } from './minimap';
 import { OrdnanceView, decorateKillLine, isOrdnanceEvent } from './ordnance-view';
 import { MortarView, isMortarEvent } from './killstreaks/effects/mortar-view';
-
+import { BoltView } from './crossbow-view';
+import { isCrossbowEvent } from './events-crossbow';
 // ---------------------------------------------------------------------------
 // The view
 // ---------------------------------------------------------------------------
@@ -142,6 +143,8 @@ export class GameClient {
   readonly ordnance: OrdnanceView;
   /** The mortar projection: host-authoritative warning discs + recent detonations. Read by presentation. Spectators read the same bus. */
   readonly mortar: MortarView;
+  /** The crossbow canary projection: host-authoritative live bolts + recent terminal points. Read by presentation. Spectators read the same bus. */
+  readonly crossbow: BoltView;
 
   private team: TeamId | null = null;
   private health: number | null = null;
@@ -156,6 +159,7 @@ export class GameClient {
   constructor(readonly selfId: ActorId) {
     this.ordnance = new OrdnanceView(selfId);
     this.mortar = new MortarView();
+    this.crossbow = new BoltView();
   }
 
   /** Display names arrive from the roster, which `net/room.ts` owns. */
@@ -202,6 +206,15 @@ export class GameClient {
     if (e.at > this.now) this.now = e.at;
     if (isMortarEvent(e) || e.type === 'streak-ended') {
       this.mortar.apply(e);
+    }
+    if (isCrossbowEvent(e)) {
+      this.crossbow.apply(e);
+      return;
+    }
+    if (e.type === 'match-phase') {
+      // Bolt retirement on match end rides with the match edge; the phase
+      // itself still reaches the switch below. Counts stay cumulative.
+      this.crossbow.apply(e);
     }
     if (isOrdnanceEvent(e)) {
       const l = this.ordnance.apply(e);

@@ -58,6 +58,11 @@ export function localizeGameEvent(event: GameEvent, offset: number): GameEvent {
       // `match-phase.endsAt`: shift it by the same offset so the remaining
       // duration (`endsAt - at`) survives the host->guest boundary.
       return { ...event, at, endsAt: hostTimeToGuest(event.endsAt, offset) };
+    case 'bolt-launched':
+      // The bolt's must-be-dead time is an absolute host time like
+      // `match-phase.endsAt`: shift it by the same offset so the remaining
+      // flight (`expiresAt - at`) survives the host->guest boundary.
+      return { ...event, at, expiresAt: hostTimeToGuest(event.expiresAt, offset) };
     default:
       return { ...event, at };
   }
@@ -103,6 +108,8 @@ export function localizeGameMessage(message: GameNetMessage, offset: number): Ga
         death: localizeEvent(message.death, offset),
       };
     case 'ordnance':
+      return { ...message, e: localizeEvent(message.e, offset) };
+    case 'crossbow':
       return { ...message, e: localizeEvent(message.e, offset) };
     case 'match-state':
       return localizeMatchState(message, offset);

@@ -144,6 +144,19 @@ ok(/WIND_MAX/.test(svc) && /RAIN_MAX/.test(svc), 'ambience has hard gain ceiling
 ok(/ambient-wind\.wav/.test(render) && /ambient-rain\.wav/.test(render), 'renderer owns both weather beds');
 ok(/step-concrete-a\.wav/.test(render) && /step-grass-a\.wav/.test(render) && /step-gravel-a\.wav/.test(render), 'renderer owns all three footfall banks');
 
+console.log('modern opt-in bank (3 families, lane 0302 currentbase):');
+ok(/audiobank/.test(svc) && /'2'/.test(svc), 'modern bank is opt-in via ?audiobank=2');
+ok(/MODERN_FAMILIES/.test(svc) && /MODERN_VARIANT_B/.test(svc) && /MODERN_MECH/.test(svc), 'modern bank tables exist (B take + mech)');
+ok(/longhorn/.test(svc) && /rattler/.test(svc) && /duster/.test(svc), 'modern bank covers rifle+SMG+pistol');
+ok(!/coachmanB/.test(svcCode) && !/deadeyeB/.test(svcCode), 'coachman/deadeye stay on the baseline bank');
+ok(/MODERN_MECH_DELAY_S/.test(svc) && /MODERN_MECH_GAIN/.test(svc), 'mech layer has bounded delay/gain constants');
+ok(/playModernShot/.test(svc) && /playModernMech/.test(svc), 'modern shot/mech path exists');
+ok(/variantBank/.test(svcCode), 'service tracks variantBank with dispose reset');
+ok(/this\.next\(\)\s*<\s*0\.5/.test(svc), 'B-take alternation uses the deterministic LCG, no Math.random');
+const entriesFn = /function modernBankEntries[\s\S]*?\n\}/.exec(svc)?.[0] ?? '';
+ok(entriesFn !== '' && !/audio-recorded/.test(entriesFn), 'opt-in entries fetch variants only (primaries reuse the base decode)');
+ok(/delayS = 0/.test(svc) && /src\.start\(t \+ Math\.max\(0, delayS\)\)/.test(svc), 'playBuffer schedules a bounded optional delay (mech layer)');
+
 if (failures > 0) {
   console.log(`CHECK FAILED: ${failures} violation(s)`);
   process.exit(1);

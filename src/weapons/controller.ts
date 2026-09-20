@@ -37,6 +37,7 @@ import {
 } from './viewmodel';
 import { FAMILY_FALLBACK, FAMILY_VOICE, weaponFamily, type FallbackRig } from './families';
 import { isPlayableWeapon } from './roster';
+import { CROSSBOW_ID, isCrossbowCanaryOptIn } from './crossbow-runtime';
 import { WeaponEffects } from './effects';
 import { OrdnanceInput } from './ordnance-input';
 import { AudioService, type AudioStats, type ShotFamily, type StepSurface, type StepOptions, type EnvironmentKind } from '../audio/service';
@@ -151,6 +152,8 @@ interface WeaponQaSnapshot extends WeaponSnapshot {
   carbine?: CarbineCanaryStatus;
   /** Read-only roster-heroes canary status (?heroes=canary), same honesty contract. */
   heroes?: RosterHeroCanaryStatus;
+  /** Read-only crossbow canary status (?crossbow=canary): requested vs actually listed. */
+  crossbow?: CrossbowCanaryStatus;
 }
 
 /** Minimal read-only canary adoption status for browser QA. */
@@ -161,12 +164,17 @@ export interface CarbineCanaryStatus {
   url: string | null;
   sockets: string[];
 }
-
 /** Read-only roster-heroes canary adoption status for browser QA. */
 export interface RosterHeroCanaryStatus {
   requested: boolean;
   /** GLB-adopted hero id -> url and present anchor sockets. */
   adopted: Record<string, { url: string; sockets: string[] }>;
+}
+
+/** Read-only crossbow canary status for browser QA. */
+export interface CrossbowCanaryStatus {
+  requested: boolean;
+  active: boolean;
 }
 
 /**
@@ -219,6 +227,8 @@ interface ControllerOpts {
   heroesCanary?: boolean;
   /** Test seam for pending hero loads (defaults to the real hero loader). */
   heroesLoader?: (weaponId: string, opts: RosterHeroLoaderOptions) => Promise<RosterHeroRig>;
+  /** Optional explicit opt-in for the crossbow canary (?crossbow=canary). Gated by default. */
+  crossbowCanary?: boolean;
 }
 export class WeaponsController {
   readonly overlay: THREE.Scene;
@@ -236,6 +246,7 @@ export class WeaponsController {
   /** One adopted GLB rig per hero id (bounded to ROSTER_HERO_WEAPON_IDS). */
   private readonly heroRigs = new Map<string, RosterHeroRig>();
   private heroesCanaryRequested = false;
+  private crossbowCanaryRequested = false;
   private disposed = false;
   /** The one rig per shipped builder, shared by every weapon of its family. */
   private readonly rigs = new Map<FallbackRig, ViewmodelRig>();
@@ -303,7 +314,9 @@ export class WeaponsController {
     this.onShot = opts.onShot ?? null;
 
     this.overlay = new THREE.Scene();
-    this.weapons = WEAPONS.filter((def) => isPlayableWeapon(def.id)).map((def) => {
+    const enableCrossbowCanary = opts.crossbowCanary ?? isCrossbowCanaryOptIn(typeof window !== 'undefined' ? window.location.search : undefined);
+    this.crossbowCanaryRequested = enableCrossbowCanary;
+    this.weapons = WEAPONS.filter((def) => isPlayableWeapon(def.id) || (enableCrossbowCanary && def.id === CROSSBOW_ID)).map((def) => {
       const rig = this.sharedRig(FAMILY_FALLBACK[weaponFamily(def.id)], opts.mat);
       return {
         def,
@@ -838,6 +851,10 @@ export class WeaponsController {
       };
     }
     out.heroes = { requested: this.heroesCanaryRequested, adopted };
+    out.crossbow = {
+      requested: this.crossbowCanaryRequested,
+      active: this.weapons.some((w) => w.def.id === CROSSBOW_ID),
+    };
      return out;
    }
 

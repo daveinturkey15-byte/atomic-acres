@@ -168,6 +168,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
       case 'ordnance':
         record(msg.e as GameEvent);
         break;
+      case 'crossbow':
+        record(msg.e);
+        break;
       default:
         break;
     }
@@ -315,7 +318,11 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
         id: r.id, team: r.team, bot: r.id.startsWith('bot-'), hp: hp.get(r.id) ?? 0, alive: alive.get(r.id) ?? true,
         kills: r.kills, deaths: r.deaths, score: r.score,
       }));
-      return { at: performance.now(), match: m, actors, stats: { shotsAdmitted: 0, shotsRejected: 0, hitsLanded: 0, hitsBlocked: 0 } };
+      // Guest bolt projection: what the wire delivered, never authority.
+      // Absent before the first bolt event would fake a zero; the view's
+      // snapshot is always present, so report it exactly.
+      const crossbow = client.crossbow.snapshot();
+      return { at: performance.now(), match: m, actors, stats: { shotsAdmitted: 0, shotsRejected: 0, hitsLanded: 0, hitsBlocked: 0 }, crossbow };
     },
 
     netLine(now): string | null {

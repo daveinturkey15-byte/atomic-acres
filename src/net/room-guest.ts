@@ -66,7 +66,7 @@ export interface SelfAck {
 
 /** Game-tag message tags a guest forwards to its match driver. */
 const GAME_TAGS: ReadonlySet<string> = new Set([
-  'shot-reject', 'shot-fired', 'damage', 'kill', 'spawn', 'streak-state', 'match-state', 'ordnance',
+  'shot-reject', 'shot-fired', 'damage', 'kill', 'spawn', 'streak-state', 'match-state', 'ordnance', 'crossbow',
 ]);
 /** Directional receive allow-list. Guest-authored wire shapes are never host heartbeats. */
 const HOST_MESSAGE_TYPES: ReadonlySet<string> = new Set([

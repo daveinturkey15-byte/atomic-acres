@@ -21,6 +21,7 @@ import { isPlayerStance, type PlayerStance } from './room-core';
 import {
   isGameMessage,
   isTeamId,
+  type CrossbowMsg,
   type DamageMsg,
   type KillMsg,
   type MatchStateMsg,
@@ -296,7 +297,8 @@ export type NetMessage =
   | StreakIntentMsg
   | StreakStateMsg
   | MatchStateMsg
-  | OrdnanceMsg;
+  | OrdnanceMsg
+  | CrossbowMsg;
 
 function isFiniteNum(v: unknown): v is number {
   return typeof v === 'number' && Number.isFinite(v);
@@ -420,6 +422,7 @@ export function isNetMessage(v: unknown): v is NetMessage {
     case 'streak-state':
     case 'match-state':
     case 'ordnance':
+    case 'crossbow':
       return isGameMessage(m);
     case 'ping':
       return isFiniteNum(m['t']);

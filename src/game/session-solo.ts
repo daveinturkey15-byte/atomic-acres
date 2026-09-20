@@ -66,6 +66,12 @@ export interface SoloDriverOptions {
   readonly localPrimaryId?: string | (() => string | undefined);
   /** Shared across drivers so `counters()` stays session-cumulative. */
   readonly instrument: SessionLog;
+  /**
+   * Crossbow canary: admit the gated `explosive-crossbow` id as live bolts.
+   * Default false (still gated). Threaded from `?crossbow=canary` through
+   * `game/session.ts`; the controller reads the same source for its list.
+   */
+  readonly crossbowCanary?: boolean;
 }
 
 /** A remote human's seat: position from the room, everything else from the host. */
@@ -81,8 +87,11 @@ interface RemoteSeat {
   seq: number;
 }
 
-/** Mutable body record reused every frame, so `bots()` allocates nothing. */
-interface Body { id: ActorId; x: number; y: number; z: number; yaw: number; speed: number; alive: boolean; stance: PlayerStance }
+/** Mutable body record reused every frame, so `bots()` allocates nothing.
+ *  `weaponId` is the host's current primary estimate for the actor, copied
+ *  from the post-tick snapshot in `step` and read by `main.ts` to spawn and
+ *  re-dress the figure's carried weapon. */
+interface Body { id: ActorId; x: number; y: number; z: number; yaw: number; speed: number; alive: boolean; stance: PlayerStance; weaponId: string }
 
 export type EventSink = (events: readonly GameEvent[], now: number) => void;
 
@@ -160,6 +169,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     const h = new GameHost({
       world, rules, now, seed: (opts.seed ?? 0x4e554b45) + epoch,
       deps: { streaks: streakPort(runtime, epoch) },
+      crossbowCanary: opts.crossbowCanary === true,
     });
     const d = new BotDirector({ host: h, world, rand: h.rand, maxBots: MAX_PLAYERS - 1, difficulty });
     h.addActor(localId, localTeam, { primaryId: primaryForLocal() });
@@ -175,6 +185,9 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     director = d;
     streaks = runtime;
     pushNames();
+    // A new match rebuilds every kit: stale weapon ids from the previous
+    // epoch must not dress one figure for a tick.
+    bodyById.forEach((b) => { b.weaponId = ''; });
     instrument.newMatch();
     endedAt = null;
     last = now;
@@ -254,6 +267,12 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     h.setPrimary(localId, primaryForLocal());
     route(d, h.tick(now), now);
     const after = h.snapshot();
+    // Host-authoritative primaries (bots and remote seats alike) feed the
+    // third-person weapon carry. String-ref copies; no per-frame allocation.
+    for (const a of after.actors) {
+      const b = bodyById.get(a.id);
+      if (b !== undefined) b.weaponId = a.primaryId;
+    }
     lastMatch = after.match;
     client.applySnapshot({
       at: now, match: after.match,
@@ -265,7 +284,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
   const body = (id: ActorId): Body => {
     let b = bodyById.get(id);
     if (b === undefined) {
-      b = { id, x: 0, y: 0, z: 0, yaw: 0, speed: 0, alive: true, stance: 'stand' };
+      b = { id, x: 0, y: 0, z: 0, yaw: 0, speed: 0, alive: true, stance: 'stand', weaponId: '' };
       bodyById.set(id, b);
       bodies.push(b);
     }

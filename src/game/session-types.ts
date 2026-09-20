@@ -42,6 +42,13 @@ export interface SessionSnapshot {
   readonly match: MatchStateMsg;
   readonly actors: readonly SessionActor[];
   readonly stats: HostStats;
+  /**
+   * Canary bolt projection, when the driver holds one. Host drivers return
+   * the authoritative pool (live + cumulative counts); guests project what
+   * the wire delivered. Absent means no canary projection — never a silent
+   * zero claimed as authority. Honest partial, not a complete picture.
+   */
+  readonly crossbow?: { readonly live: number; readonly counts: Readonly<Record<string, number>> };
 }
 
 /** The UI lane's handle, narrowed to what a match needs from it. */
@@ -70,6 +77,14 @@ export interface BotBody {
   readonly alive: boolean;
   /** Host-authoritative pose stance; old snapshots and bots default to stand. */
   readonly stance?: PlayerStance;
+  /**
+   * The actor's host-authoritative current primary (`host-kit.ts` estimate),
+   * or undefined when this driver cannot know it (a guest projection without
+   * the field). `main.ts` spawns the figure with it and re-dresses the figure
+   * through `CharacterSystem.rearm` whenever it changes; undefined keeps the
+   * default rifle and never swaps.
+   */
+  readonly weaponId?: string;
 }
 
 /** Everything the frame loop needs from whichever match is live. */

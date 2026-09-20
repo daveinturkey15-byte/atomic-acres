@@ -32,8 +32,10 @@
 
 export * from './vocab';
 export * from './events-ordnance';
+export * from './events-crossbow';
 
 import { MORTAR_EVENT_TYPES, ORDNANCE_EVENT_TYPES, type MortarEvent, type OrdnanceEvent } from './events-ordnance';
+import { CROSSBOW_EVENT_TYPES, type CrossbowEvent } from './events-crossbow';
 import type {
   ActorId,
   DamageCause,
@@ -243,14 +245,15 @@ export type GameEvent =
   | StreakEndedEvent
   | MatchPhaseEvent
   | FeedLineEvent
-  // The ordnance lane's shapes (grenades, smoke, flash, knife, drops). Declared
-  // in `./events-ordnance` for the 400-line cap and folded in here, so the
-  // union is still one union and the bus still carries one vocabulary.
   | OrdnanceEvent
   // Mortar telegraph + impact (visible slice 2026-09-19). Declared beside the
   // ordnance shapes but NOT in `OrdnanceEvent`, so `ordnance-view.ts` stays
   // untouched and the mortar projection owns exactly these two.
-  | MortarEvent;
+  | MortarEvent
+  // Crossbow bolt launch + impact (canary, gated). Same shape as the mortar
+  // slice: folded into `GameEvent` but NOT into `OrdnanceEvent`, so the
+  // ordnance projection stays untouched and a future `BoltView` owns these.
+  | CrossbowEvent;
 
 /** Every discriminant, frozen. This IS the list; nothing derives it. */
 export const GAME_EVENT_TYPES = [
@@ -268,6 +271,7 @@ export const GAME_EVENT_TYPES = [
   'feed',
   ...ORDNANCE_EVENT_TYPES,
   ...MORTAR_EVENT_TYPES,
+  ...CROSSBOW_EVENT_TYPES,
 ] as const;
 export type GameEventType = (typeof GAME_EVENT_TYPES)[number];
 

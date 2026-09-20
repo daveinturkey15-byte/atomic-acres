@@ -467,6 +467,9 @@ export function spawnAuthoredOperator(opts: AuthoredSpawn): CharacterHandle | nu
   const mesh = dressAuthored(std.root, std.bones, opts.dress, opts.faction ?? null, opts.weaponId);
   if (!mesh) return null;
   const rig = new CharacterRig(std.root, std.bones, opts.library);
+  // Same carry contract as CharacterSystem.spawn: the support hand aims at
+  // this archetype's authored grip, not the rifle forestock.
+  rig.setCarriedArchetype(resolveAuthoredArchetype(opts.weaponId ?? 'longhorn'));
   std.root.position.set(opts.x, 0, opts.z);
   std.root.rotation.y = opts.yaw ?? 0;
   std.root.scale.setScalar(opts.scale ?? 1);

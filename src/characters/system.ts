@@ -19,6 +19,12 @@ import { buildClipLibrary, type ClipLibrary, type ClipName } from './clips';
 import { CharacterRig, type RigInput } from './blend';
 import { dressProcedural, type CharacterDress, type CharacterMesh } from './mesh';
 import { dressAuthored, isAuthoredOperatorEnabled } from './operator-authored';
+import {
+  authoredWeaponOf,
+  resolveAuthoredArchetype,
+  setAuthoredWeapon,
+  type AuthoredWeaponArchetype,
+} from './authored-weapon';
 import { installAnimQA } from './anim-qa';
 
 export interface CharacterHandle {
@@ -100,13 +106,22 @@ export class CharacterSystem {
     // procedural dress; the handle reports whichever dress was actually worn.
     let mesh: CharacterMesh | null = null;
     let wornFaction: 0 | 1 | null = faction ?? null;
+    let authoredWorn = false;
     if (isAuthoredOperatorEnabled()) {
       const f = (faction ?? ((this.authoredTeams++ % 2) as 0 | 1)) as 0 | 1;
       mesh = dressAuthored(std.root, std.bones, dress, f, weaponId);
-      if (mesh) wornFaction = f;
+      if (mesh) { wornFaction = f; authoredWorn = true; }
     }
     if (!mesh) mesh = dressProcedural(std.root, std.bones, dress);
     const rig = new CharacterRig(std.root, std.bones, this.library);
+    // Authored figures solve their support hand onto the archetype's grip
+    // (the pistol target inside its muzzle); procedural figures keep the
+    // legacy rifle forestock (carriedArchetype null). Spawn-time only,
+    // mirrors dressAuthored's `weaponId ?? 'longhorn'` resolution.
+    // A null dress (asset missing/invalid/cancelled/timeout) falls back to
+    // procedural, so the flag is dressAuthored success, not gate state.
+    if (authoredWorn) rig.setCarriedArchetype(resolveAuthoredArchetype(weaponId ?? 'longhorn'));
+    else rig.setCarriedArchetype(null);
     std.root.position.set(x, 0, z);
     std.root.rotation.y = yaw;
     std.root.scale.setScalar(scale);
@@ -128,6 +143,38 @@ export class CharacterSystem {
     const i = this.characters.indexOf(handle);
     if (i >= 0) this.characters.splice(i, 1);
     handle.mesh.dispose();
+  }
+
+  /** The carried weapon id of an authored figure (`'longhorn'` default), or
+   *  null for a procedural figure. QA/audit read; the swap short-circuit
+   *  itself compares archetypes, which is what a rebuild would change. */
+  weaponOf(handle: CharacterHandle): string | null {
+    return authoredWeaponOf(handle.root)?.weaponId ?? null;
+  }
+
+  /**
+   * Swap an authored figure's carried weapon in place for `weaponId`'s
+   * archetype — the live caller seam for bots and remote bodies picking up a
+   * drop (`main.ts` compares `BotBody.weaponId` through here). Rebuilds the
+   * hand weapon only when the archetype actually changes, re-aims the carry
+   * solve at the new grip, and wears the caller-owned dark material.
+   * Procedural figures are a no-op returning null.
+   */
+  rearm(handle: CharacterHandle, weaponId: string): AuthoredWeaponArchetype | null {
+    const next = resolveAuthoredArchetype(weaponId);
+    const current = authoredWeaponOf(handle.root);
+    if (handle.rig.carriedArchetype === next) {
+      // Same-archetype no-op: keep the identical group object (no rebuild,
+      // no new vertices) but wear the caller's real id, so weaponOf tracks
+      // the actor's current primary. Procedural roots carry no authored
+      // socket and stay null instead of claiming an archetype.
+      if (!current) return null;
+      current.group.userData.weaponId = weaponId;
+      return next;
+    }
+    const worn = setAuthoredWeapon(handle.root, this.dress.dark, weaponId);
+    handle.rig.setCarriedArchetype(worn);
+    return worn;
   }
 
   /**

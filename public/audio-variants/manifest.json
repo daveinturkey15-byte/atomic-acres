@@ -1,0 +1,201 @@
+{
+  "pack": "variant-audio-0152",
+  "opt_in": true,
+  "license": "CC0 1.0 Universal (public domain)",
+  "attribution": "Shot variants: Ben Jaszczak, Brian Nelson, Kevin Heras, Matthew Nanney (The Free Firearm Sound Library). Mech layers: SpringySpringo (recorded airsoft mechanisms, CC0).",
+  "source_page": "https://opengameart.org/content/the-free-firearm-sound-library",
+  "source_archive": "https://opengameart.org/sites/default/files/Prepared%20SFX%20Library.7z",
+  "source_archive_sha256": "cc1ab5a99a0a365105c7c5dd783f4b0b1fe90938114d3ceec53856bfe005f7d6",
+  "mech_source_page": "https://opengameart.org/content/gun-reload-sounds",
+  "mech_source_sha256s": {
+    "gunreload1.wav": "685cac6a184e3cc3ec09a25b6ddb1d6feffd86d469778f339aa423d384035c50",
+    "assaultriflereload1_0.wav": "efb2d724d634eabe6ba8d3065686abca848bb7497d4d43a5e4aed5e5ea23016f"
+  },
+  "transform": "bodies: mono (L+R)/2 -> trim (50ms pre-roll, pinned onsets) -> SoXR 96k>44.1k -> biquad HP 60Hz Q0.7071 -> 2ms attack + 20ms tail raised-cosine -> peak -1 dBFS -> PCM16. mech: native 44.1k mono -> trim (5ms pre-roll) -> biquad HP 80Hz -> ramps -> peak -6 dBFS -> PCM16",
+  "format": "44100Hz mono PCM16 WAV",
+  "budgets": {
+    "each_body_s_max": 1.2,
+    "each_mech_s_max": 0.25,
+    "total_bytes_max": 1048576
+  },
+  "total_bytes": 545428,
+  "audition": {
+    "file": "audition-variants.wav",
+    "bytes": 761210,
+    "order": [
+      "longhorn",
+      "rattler",
+      "coachman",
+      "deadeye",
+      "duster",
+      "mech-rifle",
+      "mech-smg",
+      "mech-pistol"
+    ],
+    "gap_s": 0.35,
+    "spans": {
+      "longhorn": [
+        0.0,
+        1.1
+      ],
+      "rattler": [
+        1.1,
+        2.1
+      ],
+      "coachman": [
+        2.1,
+        3.3
+      ],
+      "deadeye": [
+        3.3,
+        4.5
+      ],
+      "duster": [
+        4.5,
+        5.7
+      ],
+      "mech-rifle": [
+        5.7,
+        5.9
+      ],
+      "mech-smg": [
+        5.9,
+        6.06
+      ],
+      "mech-pistol": [
+        6.06,
+        6.18
+      ]
+    }
+  },
+  "files": {
+    "longhorn": {
+      "file": "rec-shot-longhorn-b.wav",
+      "description": "Winchester Model 1894 lever-action .32WS, near-distance single shot (variant B)",
+      "source_member": "Prepared SFX Library/Model 1894/L_23P.wav",
+      "source_sha256": "e2309b40f71f419e49566d0048001d3907de509accd5b6722eb5d11fa648ef3c",
+      "trim_start_s": 0.522667,
+      "trim_window_s": 1.1,
+      "onset_s": 0.572667,
+      "duration_s": 1.1,
+      "peak_dbfs": -1.0,
+      "rms_dbfs": -28.106,
+      "dc": -2e-08,
+      "saturated_samples": 0,
+      "sha256": "6807b7823747fdb7928c562315146d953400f736a493750446d2178d237b4c83",
+      "bytes": 97064
+    },
+    "rattler": {
+      "file": "rec-shot-rattler-b.wav",
+      "description": "Carl Gustav M45 SMG 9mm, near-distance single shot (variant B)",
+      "source_member": "Prepared SFX Library/Carl Gustav M45/G_31P.wav",
+      "source_sha256": "5982c6c2fa44545b750ba6217ed57797a6a15c02f5c9943ac0e99e5f3ab2b158",
+      "trim_start_s": 0.260281,
+      "trim_window_s": 1.0,
+      "onset_s": 0.310281,
+      "duration_s": 1.0,
+      "peak_dbfs": -1.0,
+      "rms_dbfs": -29.325,
+      "dc": -1e-08,
+      "saturated_samples": 0,
+      "sha256": "235057ae80f1a38ec2c8baa93a7d1f17332a06983341ead59536784966e449a3",
+      "bytes": 88244
+    },
+    "coachman": {
+      "file": "rec-shot-coachman-b.wav",
+      "description": "Winchester Model 12 pump 12ga, near-distance single shot (variant B)",
+      "source_member": "Prepared SFX Library/Model 12/K_22P.wav",
+      "source_sha256": "ea19e9a0be4686054847a58b0a43f6be82fbe65345489f41aa02dbcf166d34d0",
+      "trim_start_s": 0.792125,
+      "trim_window_s": 1.2,
+      "onset_s": 0.842125,
+      "duration_s": 1.2,
+      "peak_dbfs": -1.0,
+      "rms_dbfs": -28.463,
+      "dc": 5e-08,
+      "saturated_samples": 0,
+      "sha256": "9ace65c8748de6cc75fa50ddbe673c33585883c35c55ac01323202b7e01ddd25",
+      "bytes": 105884
+    },
+    "deadeye": {
+      "file": "rec-shot-deadeye-b.wav",
+      "description": "Mosin Nagant bolt 7.62x54R, near-distance single shot (variant B)",
+      "source_member": "Prepared SFX Library/Mosin Nagant/M_21P.wav",
+      "source_sha256": "970ed2322ba61579dc8afaefb4f25e6ae791a3acb1e6e23372ea948cfe2a97b3",
+      "trim_start_s": 0.983781,
+      "trim_window_s": 1.2,
+      "onset_s": 1.033781,
+      "duration_s": 1.2,
+      "peak_dbfs": -1.0,
+      "rms_dbfs": -29.8,
+      "dc": -2e-08,
+      "saturated_samples": 0,
+      "sha256": "6f1ea6770e6fa152d8f6ed483c64baace3339ab86c2e8eafdeff0cc3095839cb",
+      "bytes": 105884
+    },
+    "duster": {
+      "file": "rec-shot-duster-b.wav",
+      "description": "M1911 .45 pistol, near-distance single shot (variant B)",
+      "source_member": "Prepared SFX Library/1911/A_42P.wav",
+      "source_sha256": "8e84438e771c157155a6a1ff47a6a7a7d81b6f39b185d41e426c57337a82254a",
+      "trim_start_s": 0.891458,
+      "trim_window_s": 1.2,
+      "onset_s": 0.941458,
+      "duration_s": 1.2,
+      "peak_dbfs": -1.0,
+      "rms_dbfs": -29.526,
+      "dc": -4e-08,
+      "saturated_samples": 0,
+      "sha256": "60887331475c7697f8edac1cc109aabd48177bbbb275ee635d12607d10230e5f",
+      "bytes": 105884
+    },
+    "mech-rifle": {
+      "file": "mech-rifle.wav",
+      "description": "heavy single mechanism hit, airsoft rifle reload recording (rifle/lever class layer)",
+      "source_file": "work/foley-source/gunreload1.wav",
+      "source_sha256": "685cac6a184e3cc3ec09a25b6ddb1d6feffd86d469778f339aa423d384035c50",
+      "trim_start_s": 0.178005,
+      "trim_window_s": 0.2,
+      "onset_s": 0.183,
+      "duration_s": 0.2,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -29.998,
+      "dc": -2.58e-06,
+      "saturated_samples": 0,
+      "sha256": "f0a8e4b7cb1f4735a90cbd38faf6ddad4c8c4bc140cf229881adc3db06cedb1b",
+      "bytes": 17684
+    },
+    "mech-smg": {
+      "file": "mech-smg.wav",
+      "description": "light single mechanism tick, airsoft rifle reload recording (SMG class layer)",
+      "source_file": "work/foley-source/assaultriflereload1_0.wav",
+      "source_sha256": "efb2d724d634eabe6ba8d3065686abca848bb7497d4d43a5e4aed5e5ea23016f",
+      "trim_start_s": 0.275011,
+      "trim_window_s": 0.16,
+      "onset_s": 0.28,
+      "duration_s": 0.16,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -27.407,
+      "dc": -1.007e-05,
+      "saturated_samples": 0,
+      "sha256": "53f6d82d9fd60b47c2667648c9597fbf1aec1056a3e6d13433e47ead339fcb0f",
+      "bytes": 14156
+    },
+    "mech-pistol": {
+      "file": "mech-pistol.wav",
+      "description": "medium mechanism hit, airsoft rifle reload recording (pistol class layer)",
+      "source_file": "work/foley-source/assaultriflereload1_0.wav",
+      "source_sha256": "efb2d724d634eabe6ba8d3065686abca848bb7497d4d43a5e4aed5e5ea23016f",
+      "trim_start_s": 1.056009,
+      "trim_window_s": 0.12,
+      "onset_s": 1.061,
+      "duration_s": 0.12,
+      "peak_dbfs": -6.0,
+      "rms_dbfs": -27.69,
+      "dc": 1.266e-05,
+      "saturated_samples": 0,
+      "sha256": "7524ec76e0a99e057c6f396fbe7b4dea633a0f2eb088e39b699b74b197ce3692",
+      "bytes": 10628
+    }
+  }
+}

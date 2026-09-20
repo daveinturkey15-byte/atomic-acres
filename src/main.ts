@@ -12,6 +12,7 @@ import { Player, type MoveMode } from './core/player';
 import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core/layout';
 import { STATIONS, type Station } from './core/stations';
 import { WeaponsController } from './weapons/controller';
+import { isCrossbowCanaryOptIn } from './weapons/crossbow-runtime';
 import { OrdnanceScene } from './weapons/ordnance-scene';
 import { initUI } from './ui/index';
 import { wireNetcode } from './net/wire';
@@ -27,6 +28,7 @@ import { createStaticReflectionProbe, type StaticReflectionProbe } from './core/
 import { createCombatFeedbackAdapter } from './ui/combat-feedback-adapter';
 import './ui/combat-feedback.css';
 import { getEnvironmentFlags } from './core/environment-flags';
+import { installLawnCanaryQA } from './core/lawn-canary-qa';
 import { isAuthoredMountainsOptIn } from './build/authored-mountains';
 import { isMountainTerrainOptIn } from './build/mountain-terrain';
 import { preloadAssets, releaseAsset } from './core/assets';
@@ -97,6 +99,7 @@ if (!handedness.every(Boolean)) {
 
 const world = createWorld(document.body);
 const mat = buildMaterials();
+installLawnCanaryQA(mat.lawn);
 const player = new Player(world.camera, world.renderer.domElement);
 
 const colliders: AABB[] = [];
@@ -212,6 +215,10 @@ player.teleport(SPAWN_A.x, 0, SPAWN_A.z, SPAWN_A.yaw);
 const ammoDiv = document.createElement('div');
 // The trigger is a CLAIM, not a verdict: the host resolves damage (IMPORT-PLAN s2).
 let match: LocalMatch | null = null;
+// Crossbow canary, bounded opt-in (`?crossbow=canary` only). Read once here so
+// the controller's weapon list and the session's host flag share one source;
+// absent or any other value keeps the gated id listed nowhere and admitted nowhere.
+const crossbowCanary = isCrossbowCanaryOptIn(typeof window !== 'undefined' ? window.location.search : undefined);
 const weapons = new WeaponsController({
   camera: world.camera,
   scene: world.scene,
@@ -219,6 +226,7 @@ const weapons = new WeaponsController({
   targets: worldTargets,
   onHud: (line) => { ammoDiv.textContent = line; },
   onShot: (claim) => match?.localShot(claim),
+  crossbowCanary,
 });
 // Share the already-baked sky for rough-metal reflections on held weapons.
 // The world owns this texture; the overlay neither allocates nor disposes it.
@@ -294,6 +302,7 @@ match = createLocalMatch({
     player.teleport(x, y, z, yaw);
     player.setStance('stand');
   },
+  crossbowCanary,
 });
 const botBodies = new Map<string, CharacterHandle>();
 
@@ -513,7 +522,13 @@ function frame(): void {
     throwBodies.update((id) => botBodies.get(id)?.rig ?? null);
     for (const b of match.bots()) {
       let h = botBodies.get(b.id);
-      if (!h) { h = characters.spawn(b.x, b.z, b.yaw); botBodies.set(b.id, h); }
+      if (!h) {
+        h = characters.spawn(b.x, b.z, b.yaw, 1, undefined, b.weaponId || undefined);
+        botBodies.set(b.id, h);
+      }
+      // Host-authoritative selected weapon: a pickup swap re-dresses the
+      // figure in place; rearm no-ops while the archetype is unchanged.
+      if (b.weaponId) characters.rearm(h, b.weaponId);
       h.root.position.set(b.x, b.y, b.z);
       h.root.rotation.y = b.yaw;
       h.yaw = b.yaw;
