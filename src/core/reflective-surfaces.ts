@@ -10,8 +10,9 @@
  */
 import * as THREE from 'three';
 import { MeshBasicNodeMaterial } from 'three/webgpu';
-import { dot, equirectUV, float, mix, mrt, normalView, positionViewDirection,
-  positionWorld, reflectVector, texture, vec2, vec3 } from 'three/tsl';
+import { cameraPosition, dot, equirectUV, float, Fn, mix, modelWorldMatrixInverse,
+  mrt, normalLocal, normalView, positionLocal, positionViewDirection, positionWorld,
+  reference, reflectVector, smoothstep, texture, uniform, vec2, vec3, vec4 } from 'three/tsl';
 import type { MaterialLibrary } from './materials';
 import type { Atmosphere, EffectiveState } from './atmosphere';
 import { EAVE_Y, FLOOR_H, FRONT_LAWN_OUTER, GARAGE_DEPTH, GARAGE_H, GARAGE_LEN,
@@ -26,7 +27,7 @@ const CENTRES = [0, -FRONT_LAWN_OUTER + 1, -HOUSE_BACK - 1,
 type SurfaceSet = Pick<MaterialLibrary, 'glass' | 'roofGlazing' | 'windowDark' | 'chrome'>;
 type Standard = THREE.MeshStandardMaterial;
 interface Proxy { min: number[]; max: number[]; colour: THREE.Color; windows: boolean }
-interface Binding { mesh: THREE.Mesh; material: THREE.Material | THREE.Material[] }
+interface Binding { mesh: THREE.Mesh; material: THREE.Material | THREE.Material[]; cabin?: unknown; virtualCabin: boolean }
 export interface ReflectiveSurfaces {
   readonly materials: readonly MeshBasicNodeMaterial[];
   readonly atlas: THREE.DataTexture;
@@ -94,8 +95,10 @@ export function reflectionBoxHit(origin: readonly number[], direction: readonly 
   return out;
 }
 
-function makeTexture(height: number, name: string): THREE.DataTexture {
-  const tex = new THREE.DataTexture(new Uint8Array(WIDTH * height * 4), WIDTH, height);
+function makeTexture(height: number, name: string, hdr: boolean): THREE.DataTexture {
+  const data = hdr ? new Uint16Array(WIDTH * height * 4) : new Uint8Array(WIDTH * height * 4);
+  const tex = new THREE.DataTexture(data, WIDTH, height, THREE.RGBAFormat,
+    hdr ? THREE.HalfFloatType : THREE.UnsignedByteType);
   tex.name = name;
   tex.colorSpace = THREE.LinearSRGBColorSpace;
   tex.magFilter = THREE.LinearFilter;
@@ -110,9 +113,11 @@ function makeTexture(height: number, name: string): THREE.DataTexture {
  * switch cannot leave a noon reflection pasted onto a dusk window. */
 function bake(atlas: THREE.DataTexture, street: THREE.DataTexture,
   source: THREE.DataTexture, light: Readonly<EffectiveState>, boxes: Proxy[]): void {
-  const src = source.image.data as Uint8Array;
+  const src = source.image.data as Uint8Array | Uint16Array;
   const sw = source.image.width, sh = source.image.height;
-  const dst = atlas.image.data as Uint8Array;
+  const dst = atlas.image.data as Uint8Array | Uint16Array;
+  const hdr = source.type === THREE.HalfFloatType;
+  const encode = hdr ? THREE.DataUtils.toHalfFloat : (value: number) => Math.min(255, Math.round(value * 255));
   const origin = [0, PROBE_Y, 0], dir = [0, 0, 0];
   const hit: [number, number] = [-1, 0];
   const sun = light.sunDir;
@@ -152,26 +157,72 @@ function bake(atlas: THREE.DataTexture, street: THREE.DataTexture,
           const ndl = Math.max(0, component * Math.sign(face) / sunLength);
           const direct = light.sunIntensity * ndl / Math.PI;
           const ambient = 0.19 * light.hemiIntensity + 0.12 * light.envIntensity;
-          dst[o] = Math.min(255, Math.round(colour.r * (ambient + direct * light.sunColor.r) * 255));
-          dst[o + 1] = Math.min(255, Math.round(colour.g * (ambient + direct * light.sunColor.g) * 255));
-          dst[o + 2] = Math.min(255, Math.round(colour.b * (ambient + direct * light.sunColor.b) * 255));
+          dst[o] = encode(colour.r * (ambient + direct * light.sunColor.r));
+          dst[o + 1] = encode(colour.g * (ambient + direct * light.sunColor.g));
+          dst[o + 2] = encode(colour.b * (ambient + direct * light.sunColor.b));
         } else {
           const so = (Math.floor((y + 0.5) / HEIGHT * sh) * sw + Math.floor((x + 0.5) / WIDTH * sw)) * 4;
           dst[o] = src[so]; dst[o + 1] = src[so + 1]; dst[o + 2] = src[so + 2];
         }
-        dst[o + 3] = 255;
+        dst[o + 3] = hdr ? 15360 : 255; // binary16 1.0, not byte 255 in an HDR texture
       }
     }
   }
-  (street.image.data as Uint8Array).set(dst.subarray(0, WIDTH * HEIGHT * 4));
+  (street.image.data as Uint8Array | Uint16Array).set(dst.subarray(0, WIDTH * HEIGHT * 4));
   atlas.needsUpdate = true;
   street.needsUpdate = true;
   street.needsPMREMUpdate = true;
 }
 
-function glazing(source: Standard, atlas: THREE.DataTexture, opaque: boolean): MeshBasicNodeMaterial {
+/** Virtual cabin shading for the opaque vehicle covers. The ray exits a box
+ * derived from that mesh's existing glazing bounds, while seats sit halfway
+ * across it: two distinct depths retain camera-motion parallax. This is shading,
+ * not reconstructed interior geometry; vehicle colliders remain solid. */
+function cabinRadiance(atlas: THREE.DataTexture, light: ReturnType<typeof uniform<number>>) {
+  return Fn(() => {
+    const lo = reference('userData.reflectiveCabin.min', 'vec3', null);
+    const hi = reference('userData.reflectiveCabin.max', 'vec3', null);
+    const cells = reference('userData.reflectiveCabin.cells', 'float', null);
+    const localEye = modelWorldMatrixInverse.mul(vec4(cameraPosition, 1)).xyz;
+    const ray = positionLocal.sub(localEye).normalize().toVar();
+    // Signed nonzero denominator, including exactly axis-parallel views.
+    const safe = ray.greaterThanEqual(0).select(ray.abs().max(0.0001), ray.abs().max(0.0001).negate());
+    const far = lo.sub(positionLocal).div(safe).max(hi.sub(positionLocal).div(safe)).toVar();
+    const distance = far.x.min(far.y).min(far.z).max(0).toVar();
+    const extent = hi.sub(lo).max(vec3(0.001)).toVar();
+    const q = positionLocal.add(ray.mul(distance)).sub(lo).div(extent).clamp(0, 1).toVar();
+    const side = normalLocal.z.abs().greaterThan(normalLocal.x.abs());
+    const centre = lo.add(hi).mul(0.5);
+    const seatDistance = side.select(centre.z.sub(positionLocal.z).div(safe.z),
+      centre.x.sub(positionLocal.x).div(safe.x)).clamp(0, distance);
+    const seat = positionLocal.add(ray.mul(seatDistance)).sub(lo).div(extent).clamp(0, 1).toVar();
+    const along = side.select(q.x.mul(cells), q.z.mul(2));
+    const mullion = float(1).sub(smoothstep(0.035, 0.07, along.fract().sub(0.5).abs().oneMinus().sub(0.5)));
+    const windowBand = smoothstep(0.55, 0.62, q.y).mul(float(1).sub(smoothstep(0.93, 0.99, q.y)));
+    const wall = far.y.lessThanEqual(distance.add(0.001)).select(0, 1);
+    const window = windowBand.mul(float(1).sub(mullion)).mul(wall);
+    const through = positionWorld.sub(cameraPosition).normalize();
+    const skyUV = equirectUV(through);
+    // Street probe only: this branch is never used on architecture. Exterior
+    // radiance is attenuated through the shaded cabin and its opposite glass.
+    const exterior = texture(atlas, vec2(skyUV.x, skyUV.y.clamp(0.5 / HEIGHT, 1 - 0.5 / HEIGHT).div(PROBES)))
+      .level(float(2)).rgb;
+    const seatAlong = side.select(seat.x.mul(cells), seat.z.mul(2)).fract().sub(0.5).abs();
+    const back = float(1).sub(smoothstep(0.29, 0.37, seatAlong))
+      .mul(float(1).sub(smoothstep(0.47, 0.57, seat.y)));
+    const head = float(1).sub(smoothstep(0.14, 0.22, seatAlong))
+      .mul(float(1).sub(smoothstep(0.64, 0.72, seat.y)));
+    const seats = back.max(head).mul(smoothstep(0.02, 0.08, seat.y));
+    const dark = vec3(colours.window.r, colours.window.g, colours.window.b).mul(0.11).mul(light);
+    const cabin = mix(dark.mul(0.6), exterior.mul(0.32), window);
+    return mix(cabin, dark.mul(0.38), seats);
+  })();
+}
+
+function glazing(source: Standard, atlas: THREE.DataTexture, opaque: boolean,
+  cabinLight?: ReturnType<typeof uniform<number>>): MeshBasicNodeMaterial {
   const m = new MeshBasicNodeMaterial();
-  m.name = `LocalProbeGlazing:${opaque ? 'dark' : source.opacity > 0.5 ? 'roof' : 'clear'}`;
+  m.name = `LocalProbeGlazing:${cabinLight ? 'vehicle-cabin' : opaque ? 'dark' : source.opacity > 0.5 ? 'roof' : 'clear'}`;
   m.transparent = !opaque;
   m.depthWrite = opaque;
   m.side = source.side;
@@ -195,7 +246,7 @@ function glazing(source: Standard, atlas: THREE.DataTexture, opaque: boolean): M
   const f = float(0.08).add(float(0.92).mul(float(1).sub(facing).pow(5)));
   const tint = vec3(source.color.r, source.color.g, source.color.b);
   if (opaque) {
-    m.colorNode = mix(tint.mul(0.45), reflected, f);
+    m.colorNode = mix(cabinLight ? cabinRadiance(atlas, cabinLight) : tint.mul(0.45), reflected, f);
   } else {
     const absorption = source.opacity * 0.25;
     const alpha = f.add(float(1).sub(f).mul(absorption));
@@ -203,7 +254,8 @@ function glazing(source: Standard, atlas: THREE.DataTexture, opaque: boolean): M
     m.opacityNode = alpha;
   }
   m.userData.reflectiveSurfaces = { approximateStaticProbe: true, sourceRoughness: source.roughness,
-    sourceOpacity: source.opacity, sourceTint: source.color.getHex(), transparent: source.transparent };
+    sourceOpacity: source.opacity, sourceTint: source.color.getHex(), transparent: source.transparent,
+    virtualCabin: !!cabinLight };
   return m;
 }
 
@@ -214,11 +266,14 @@ export function installReflectiveSurfaces(scene: THREE.Scene, surfaces: SurfaceS
   const current = installed.get(scene);
   if (current && !current.disposed) return current;
   const source = scene.environment;
-  if (!(source instanceof THREE.DataTexture) || !(source.image.data instanceof Uint8Array)) {
-    throw new Error('glazing canary requires the existing RGBA8 atmosphere environment');
+  const hdr = source?.type === THREE.HalfFloatType;
+  if (!(source instanceof THREE.DataTexture) || source.format !== THREE.RGBAFormat
+    || !(hdr ? source.image.data instanceof Uint16Array
+      : source.type === THREE.UnsignedByteType && source.image.data instanceof Uint8Array)) {
+    throw new Error('glazing canary requires the in-place RGBA8 or RGBA16F atmosphere environment');
   }
-  const atlas = makeTexture(HEIGHT * PROBES, 'ApproximateLocalReflectionAtlas');
-  const street = makeTexture(HEIGHT, 'ApproximateStreetReflection');
+  const atlas = makeTexture(HEIGHT * PROBES, 'ApproximateLocalReflectionAtlas', hdr);
+  const street = makeTexture(HEIGHT, 'ApproximateStreetReflection', hdr);
   street.mapping = THREE.EquirectangularReflectionMapping;
   const materials = [glazing(surfaces.glass as Standard, atlas, false),
     glazing(surfaces.roofGlazing as Standard, atlas, false), glazing(surfaces.windowDark as Standard, atlas, true)];
@@ -226,13 +281,35 @@ export function installReflectiveSurfaces(scene: THREE.Scene, surfaces: SurfaceS
     [surfaces.glass, materials[0]], [surfaces.roofGlazing, materials[1]], [surfaces.windowDark, materials[2]],
   ]);
   const bindings: Binding[] = [];
+  const cabinLight = uniform(1);
+  let vehicleMaterial: MeshBasicNodeMaterial | undefined;
   scene.traverse((object) => {
     const mesh = object as THREE.Mesh;
     if (!mesh.isMesh) return;
     const original = mesh.material;
-    const next = Array.isArray(original) ? original.map(m => replacements.get(m) ?? m) : replacements.get(original);
+    let next = Array.isArray(original) ? original.map(m => replacements.get(m) ?? m) : replacements.get(original);
     if (!next || (Array.isArray(original) && !(next as THREE.Material[]).some((m, i) => m !== original[i]))) return;
-    bindings.push({ mesh, material: original }); mesh.material = next;
+    let vehicle = false;
+    for (let parent = mesh.parent; parent && parent !== scene; parent = parent.parent) {
+      if (['coach', 'coach-second', 'saloon', 'display-sedan', 'box-truck'].includes(parent.name)) { vehicle = true; break; }
+    }
+    const virtualCabin = vehicle && original === surfaces.windowDark && !(mesh instanceof THREE.InstancedMesh);
+    const cabin = mesh.userData.reflectiveCabin;
+    if (virtualCabin) {
+      // Bounding metadata only; no vertex, normal, UV, index or collider changes.
+      mesh.geometry.computeBoundingBox();
+      const bounds = mesh.geometry.boundingBox!;
+      const floor = bounds.min.clone().addScalar(-0.025);
+      floor.y = Math.max(0.1, bounds.min.y - (bounds.max.y - bounds.min.y) * 1.4);
+      mesh.userData.reflectiveCabin = { min: floor,
+        max: bounds.max.clone().addScalar(0.025), cells: Math.max(2, Math.min(9, Math.round((bounds.max.x - bounds.min.x) / 1.05))) };
+      if (!vehicleMaterial) {
+        vehicleMaterial = glazing(surfaces.windowDark as Standard, atlas, true, cabinLight);
+        materials.push(vehicleMaterial);
+      }
+      next = vehicleMaterial;
+    }
+    bindings.push({ mesh, material: original, cabin, virtualCabin }); mesh.material = next;
   });
   const chrome = surfaces.chrome as Standard, previousEnv = chrome.envMap;
   chrome.envMap = street; chrome.needsUpdate = true;
@@ -245,13 +322,21 @@ export function installReflectiveSurfaces(scene: THREE.Scene, surfaces: SurfaceS
     refresh() {
       if (disposed || version === source.version) return;
       const started = performance.now();
-      bake(atlas, street, source, atmosphere.effective(), boxes);
+      const light = atmosphere.effective();
+      bake(atlas, street, source, light, boxes);
+      cabinLight.value = Math.min(1, 0.15 + light.sunIntensity * 0.18 + light.hemiIntensity * 0.28);
       version = source.version; count++; lastMs = performance.now() - started;
     },
     dispose() {
       if (disposed) return;
       disposed = true;
-      for (const binding of bindings) binding.mesh.material = binding.material;
+      for (const binding of bindings) {
+        binding.mesh.material = binding.material;
+        if (binding.virtualCabin) {
+          if (binding.cabin === undefined) delete binding.mesh.userData.reflectiveCabin;
+          else binding.mesh.userData.reflectiveCabin = binding.cabin;
+        }
+      }
       chrome.envMap = previousEnv; chrome.needsUpdate = true;
       for (const material of materials) material.dispose();
       atlas.dispose(); street.dispose(); bindings.length = 0;

@@ -1,5 +1,19 @@
 # Glazing and local reflection candidate — 2026-09-20
 
+## Current candidate: bounded repair 1
+
+VERIFIED: root's `captures/gauntlet/glazing/round-0628/result.json` records WebGPU on all four paired stations, HTTP/bundle parity and no console errors. I opened its turningHead and interiorOrange before/after images. House window clarity improved; the coach/car covers still read as flat slate glass. Candidate 0 is retained in commit `37badd0`; it is not claimed to meet the visual bar.
+
+VERIFIED: repair 1 retains the transparent house shader and adds one shared vehicle-only opaque glazing variant. Existing vehicle glazing bounds define a virtual cabin box extending below the sill. A view ray intersects that box; opposite window bands and darker seat/back silhouettes occupy two depths, so movement changes their relative projection. It affects windowDark meshes only under the existing coach, coach-second, saloon, display-sedan and box-truck groups. No vertices, indices, draw calls, lights, colliders or vehicle source change. This is **virtual interior shading**, not reconstructed interior geometry. Four materials maximum; per-mesh bounds are allocated at assembly and removed/restored at disposal.
+
+VERIFIED: the incoming GLM lighting source at `nuketown-prop-20260919/work/lighting-overhaul-0605/src/core/{world,atmosphere}.ts` uses RGBA16F half-float sky data. The repaired helper accepts both RGBA8/Uint8 and RGBA16F/Uint16 and creates matching probe textures. Half-float sky texels are copied bit-exact; authored proxy radiance is not clamped to 1.0. Source texture memory is 768 KiB for legacy byte data or 1.5 MiB for HDR, with the same two textures. Contract: preserve the same DataTexture object, update its bytes plus needsUpdate on TOD/weather change, and retain effective()'s sunDir, sunColor, sunIntensity, hemiIntensity and envIntensity fields. No atmosphere/world edits were made here.
+
+VERIFIED: extended CPU checks cover vehicle-only scope, finite preallocated cabin bounds, unchanged vertex data, restoration of metadata/materials, cache stability and HDR positive controls preserving radiance 8.0 then 16.0 across a version update. Existing checks/typecheck/build pass. The last synthetic bake measured about 28.5 ms RGBA8 and 17.3 ms HDR (different warmup, not a performance comparison). The worker build still excludes the unapplied root assembly hook, so its unchanged bundle name is expected and is not a runtime repair claim.
+
+OPEN: root must rebuild its integrated assembly and photograph repair 1. Inspect coach and car windows in fixed and moving views, with both legacy and authored lighting/TOD. Reject virtual interiors that look like painted grids, reverse parallax, leak onto mirrors, shimmer, or dominate the reference. GPU compilation and moving-frame visual/resource acceptance of this repair remain OPEN. One visual repair is spent; at most one further repair remains before changing approach.
+
+## Initial candidate record (superseded where repair 1 says otherwise)
+
 OPEN: this is a source candidate for independent pixel review, not an accepted visual improvement. Frozen 4212 is unchanged. No browser, renderer, Blender or GPU process was started by this lane.
 
 VERIFIED: lane `art/astra-shading-20260920`, based on `e8b4b6d`, owns `src/core/reflective-surfaces.ts` and the two lifecycle hooks in `src/core/post.ts`. Supplemental evidence is `scripts/check-reflective-surfaces.mjs`, this handoff, its JSON twin and the unapplied assembly patch. No main, world, atmosphere, materials library, builder, geometry, collider or multiplayer source was edited.

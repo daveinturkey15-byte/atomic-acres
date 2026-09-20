@@ -41,6 +41,11 @@ const originalMulti = multi.material;
 const unrelated = new THREE.Mesh(geometry, material(0x808080, 1, 0.8));
 const unrelatedMaterial = unrelated.material;
 scene.add(pane, multi, unrelated);
+const vehicle = new THREE.Group(); vehicle.name = 'coach';
+const vehicleGeo = new THREE.BoxGeometry(8.2, 0.9, 2.5); vehicleGeo.translate(0, 2.4, 0);
+const vehiclePane = new THREE.Mesh(vehicleGeo, surfaces.windowDark);
+const vertexBefore = new Float32Array(vehicleGeo.attributes.position.array);
+vehicle.add(vehiclePane); scene.add(vehicle);
 const state = { sunDir: new THREE.Vector3(58, 72, -92).normalize(), sunIntensity: 3.35,
   sunColor: new THREE.Color(0xfff2dc), hemiIntensity: 0.95, envIntensity: 0.9 };
 const atmosphere = { effective: () => state };
@@ -48,8 +53,8 @@ assert.equal(install(scene, surfaces, atmosphere, false), null);
 assert.equal(pane.material, surfaces.glass);
 const probe = install(scene, surfaces, atmosphere, true);
 assert.ok(probe);
-assert.equal(probe.changedMeshes, 2);
-assert.equal(probe.materials.length, 3);
+assert.equal(probe.changedMeshes, 3);
+assert.equal(probe.materials.length, 4);
 assert.equal(probe.bakeCount, 1);
 assert.equal(probe.bytes, 786432);
 assert.equal(unrelated.material, unrelatedMaterial);
@@ -57,6 +62,12 @@ assert.equal(pane.material, probe.materials[0]);
 assert.equal(pane.material.transparent, true);
 assert.equal(pane.material.depthWrite, false);
 assert.equal(probe.materials[2].transparent, false);
+assert.equal(vehiclePane.material, probe.materials[3]);
+assert.equal(vehiclePane.material.userData.reflectiveSurfaces.virtualCabin, true);
+const cabin = vehiclePane.userData.reflectiveCabin;
+assert.equal(cabin.cells, 8);
+assert.ok([...cabin.min.toArray(), ...cabin.max.toArray()].every(Number.isFinite));
+assert.deepEqual(vehicleGeo.attributes.position.array, vertexBefore);
 assert.equal(surfaces.chrome.envMap, probe.street);
 assert.equal(install(scene, surfaces, atmosphere, true), probe);
 const keys = probe.materials.map(m => m.customProgramCacheKey());
@@ -70,6 +81,7 @@ assert.equal(probe.bakeCount, 1);
 assert.equal(probe.atlas.version, textureVersion);
 assert.equal(probe.atlas.image.data, atlasData);
 assert.equal(probe.street.image.data, streetData);
+assert.equal(vehiclePane.userData.reflectiveCabin, cabin);
 assert.deepEqual(probe.materials.map(m => m.customProgramCacheKey()), keys);
 assert.deepEqual(probe.materials.map(m => m.version), versions);
 assert.deepEqual(atlasData, baselineBytes);
@@ -99,13 +111,45 @@ assert.equal(probe.disposed, true);
 assert.equal(pane.material, surfaces.glass);
 assert.equal(multi.material, originalMulti);
 assert.equal(surfaces.chrome.envMap, null);
+assert.equal(vehiclePane.material, surfaces.windowDark);
+assert.equal(vehiclePane.userData.reflectiveCabin, undefined);
 assert.equal(borrowedDisposed, 0);
-assert.deepEqual([...events.values()], [1, 1, 1, 1, 1]);
+assert.deepEqual([...events.values()], [1, 1, 1, 1, 1, 1]);
 assert.equal(probe.bakeCount, 2);
+
+// Half-float compatibility with lighting=authored: preserve radiance above 1,
+// correct half-float alpha, and reuse the HDR storage across TOD transitions.
+const hdrScene = new THREE.Scene();
+const hdrSkyData = new Uint16Array(32 * 16 * 4);
+for (let i = 0; i < hdrSkyData.length; i += 4) {
+  hdrSkyData[i] = THREE.DataUtils.toHalfFloat(8);
+  hdrSkyData[i + 1] = THREE.DataUtils.toHalfFloat(4);
+  hdrSkyData[i + 2] = THREE.DataUtils.toHalfFloat(2);
+  hdrSkyData[i + 3] = THREE.DataUtils.toHalfFloat(1);
+}
+const hdrSky = new THREE.DataTexture(hdrSkyData, 32, 16, THREE.RGBAFormat, THREE.HalfFloatType);
+hdrScene.environment = hdrSky;
+const hdrProbe = install(hdrScene, surfaces, atmosphere, true);
+assert.equal(hdrProbe.bytes, 1572864);
+assert.equal(hdrProbe.atlas.type, THREE.HalfFloatType);
+const hdrBuffer = hdrProbe.atlas.image.data;
+const zenith = (127 * 256 + 128) * 4;
+assert.equal(THREE.DataUtils.fromHalfFloat(hdrBuffer[zenith]), 8);
+assert.equal(THREE.DataUtils.fromHalfFloat(hdrBuffer[zenith + 3]), 1);
+for (let i = 0; i < 1000; i++) update(hdrScene);
+assert.equal(hdrProbe.bakeCount, 1);
+hdrSkyData.fill(THREE.DataUtils.toHalfFloat(16)); hdrSky.needsUpdate = true;
+update(hdrScene);
+assert.equal(hdrProbe.bakeCount, 2);
+assert.equal(hdrProbe.atlas.image.data, hdrBuffer);
+assert.equal(THREE.DataUtils.fromHalfFloat(hdrBuffer[zenith]), 16);
+const hdrBakeMs = hdrProbe.lastBakeMs;
+dispose(hdrScene);
 
 const report = { state: 'CPU_VERIFIED_GPU_OPEN', assertions: 'finite miss/hit, opt-in, identity scope, source ownership, 10000 idle updates, TOD positive control, idempotent disposal',
   bytes: probe.bytes, materials: probe.materials.length, changedMeshes: probe.changedMeshes,
-  bakeCount: probe.bakeCount, lastBakeMs: probe.lastBakeMs, gpu: 'not run; no lease',
+  hdrBytes: hdrProbe.bytes, hdrPeakPreserved: 16, hdrBakeMs,
+  bakeCount: probe.bakeCount, lastBakeMs: probe.lastBakeMs, gpu: 'repair not run; no lease',
   visualAcceptance: 'OPEN; actual same-station captures and movement required' };
 writeFileSync(resolve(out, 'receipt.json'), JSON.stringify(report, null, 2));
 console.log(JSON.stringify(report, null, 2));
