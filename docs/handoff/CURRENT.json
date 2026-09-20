@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "Game development paused. Shared pipeline rules and Jev integrated; 25 focused checks pass. Four local harnesses freshly adopted; Hermes and unrelated skill drift remain excluded/open. No new game build promoted.",
+  "status": "Shared Blender CLI/MCP repair verified across eight saved routes; single Astra game development resumed. Memory diagnosis in progress; heavy acceptance is resource-gated. No visual successor promoted.",
   "owner": "Codex",
   "stop_state": "GAME DEVELOPMENT PAUSED by direct owner request; pipeline audit only. Do not resume feature work or worker launches without owner direction.",
   "backup": {
@@ -31,17 +31,19 @@
     "status": "PAUSED"
   },
   "resource_sample": {
-    "sampled_at": "2026-09-20T11:56:09.737Z",
-    "free_ram_gib": 31.491,
-    "free_vram_mib": 5351,
-    "gpu_percent": 3,
-    "note": "Owned QA closed. Final capture minima29.892GiB RAM/4132MiB VRAM; owner processes untouched."
+    "at": "2026-09-20T15:07:49.608681+01:00",
+    "free_ram_gib": 10.661354064941406,
+    "free_vram_gib": 3.783203125,
+    "reserve_ram_gib": 12,
+    "reserve_vram_gib": 3,
+    "note": "Measured at repair handoff. Re-sample before each heavy job; allow additional job headroom."
   },
   "next_actions": [
-    "Review the bounded pipeline audit and preserve all frozen game builds; game development remains paused.",
-    "Before shared-skill promotion, reconcile the six unadopted/misrouted candidates with their current canonical authors and frozen evaluation records. Do not reset the baseline.",
-    "Before any future authorized delegation, require exact-source admission, accepted-artifact linkage and measured cost/token budgets; current launchers remain disabled.",
-    "When owner resumes game development, choose one visible end-to-end slice and adapt the measured Skills Lab rig/UV method. Re-estimate milestones then."
+    "Diagnose the existing active-match memory failure with bounded heap/retainer comparison when resource headroom permits; preserve the failing receipt and thresholds.",
+    "Build one convincing orange-house room using current assets/UV/PBR/light/contact. Compare actual same-camera gameplay, then freeze a tested successor; target17:00BST, report a slip honestly.",
+    "Use active AKP scripts/blender/README.md and guarded shared CLI/MCP entrypoint. Preflight native tools and scene ownership; no assumption of worker inheritance.",
+    "Continue carbine/hands, weapon-image menus/custom classes and combat/streak HUD, then bot motion; revised ranges in RESUMPTION-2026-09-20-1500.md.",
+    "Keep external game workers stopped; provider/adoption/skill exclusions still apply before any future delegation."
   ],
   "interrupted_lanes": [
     {
@@ -2600,9 +2602,9 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T13:32:20.502637+01:00",
+  "updated_at": "2026-09-20T15:07:49.608681+01:00",
   "current_ownership": {
-    "root": "Single Astra: pipeline audit/reconciliation only. Game development paused by owner.",
+    "root": "Single Astra: shared Blender repair complete; resumed memory diagnosis and first-room visual slice. No delegation.",
     "native_astras": "Historical specialists stopped; do not restart.",
     "external": []
   },
@@ -2735,11 +2737,10 @@
     }
   ],
   "next_inspection": {
-    "at": "2026-09-20T15:00:00+01:00",
-    "status": "paused-by-owner-pipeline-audit; previous estimate withdrawn",
-    "cadence_hours": 2,
-    "plan": "docs/handoff/SINGLE-ASTRA-2026-09-20.md",
-    "reason": "Owner will return to game development later; no automatic 15:00 release or inspection."
+    "target": "2026-09-20T17:00:00+01:00",
+    "state": "estimate; no new build accepted",
+    "fallback": "http://127.0.0.1:4240/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary",
+    "report": "docs/handoff/RESUMPTION-2026-09-20-1500.md"
   },
   "deferred_development_next_actions": [
     "Keep4242 exact13:00 candidate immutable;4212/4234/4240 unchanged. No worker launches.",
@@ -2752,7 +2753,7 @@
     "schema_version": 1,
     "external_workers": false,
     "allowed_routes": [],
-    "reason": "Direct owner stopped worker swarm, requested single Astra and paused game development for pipeline audit. Only a later direct owner instruction may reopen dispatch."
+    "reason": "Single Astra implementation resumed after Blender repair. External workers remain explicitly disabled; later direct owner authorization required to expand delegation."
   },
   "pipeline_audit": {
     "report": "docs/handoff/PIPELINE-AUDIT-2026-09-20.md",
@@ -2827,5 +2828,12 @@
       "roots_verified": 7,
       "claude_synced_files_preserved": 216
     }
+  },
+  "blender_repair": {
+    "status": "VERIFIED CLI/MCP transport, export/import and eight saved routes; existing-session reload and subagent native exposure separate",
+    "report": "docs/handoff/RESUMPTION-2026-09-20-1500.md",
+    "akp_commit": "55de9d69623aa5893dbadd523b756270ed58819a",
+    "vault_commit": "3840a3a",
+    "local_evidence": "C:\\Users\\david\\AppData\\Local\\Akephalos\\blender\\client-verification.json"
   }
 }

@@ -5,7 +5,22 @@ Started 2026-09-17. This repository is deliberately small and stays that way.
 
 Workspace rules in `C:/Users/david/Desktop/stuff/AGENTS.md` and active AKP apply.
 
-## Owner audit hold — September 20, 13:00
+## Owner resumption — September 20, 15:00
+
+Dave authorized fixing Blender CLI/MCP across harnesses, then continuing the
+previous work. The connection repair passed eight saved-route handshakes, native
+Codex/Claude Code/Hermes checks and an MCP-export-to-CLI-import round trip. Resume
+game development with this single Astra lead. External workers and historical
+subagents remain stopped; this does not reopen delegation. The old audit hold
+below is historical. Read `docs/handoff/RESUMPTION-2026-09-20-1500.md` for updated
+estimates, resource holds and exact repair limits.
+
+Use active AKP `scripts/blender/README.md` and its guarded `bridge.py` for Blender.
+Preflight real tool availability and scene ownership; never infer subagent MCP
+access from a parent's configuration. Keep the frozen previews and failed memory
+gate unchanged until a successor passes actual gameplay acceptance.
+
+## Historical owner audit hold — September 20, 13:00
 
 September 20 follow-up: Dave explicitly authorized completing the remaining pipeline
 work and adding Jev. Bounded synthetic provider probes, shared-skill evaluations and

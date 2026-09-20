@@ -11,9 +11,9 @@
     "check": "tsc --noEmit && node scripts/check-render-sites.mjs",
     "traverse": "node scripts/traverse.mjs",
     "verify": "npm run check && npm run playcap && npm run capture && npm run traverse",
-    "asset:coach": "call \"C:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.exe\" --background --python scripts/blender/build_coach.py",
+    "asset:coach": "python \"C:/Users/david/Desktop/stuff/akp-passport/scripts/blender/bridge.py\" cli -- --python scripts/blender/build_coach.py",
     "asset:all": "npm run asset:coach",
-    "asset:render": "call \"C:\\Program Files\\Blender Foundation\\Blender 5.1\\blender.exe\" --background --python scripts/blender/build_coach.py -- --render",
+    "asset:render": "python \"C:/Users/david/Desktop/stuff/akp-passport/scripts/blender/bridge.py\" cli -- --python scripts/blender/build_coach.py -- --render",
     "playcap": "node scripts/playcap.mjs",
     "soak": "node scripts/soak.mjs"
   },
