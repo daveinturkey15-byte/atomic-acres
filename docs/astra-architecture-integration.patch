@@ -1,0 +1,13 @@
+diff --git a/src/main.ts b/src/main.ts
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -7,3 +7,4 @@
+ import { createWorld } from './core/world';
+ import { buildMaterials } from './core/materials';
++import { installArchitecturalMaterials } from './core/architectural-materials';
+ import { makeRng, type AABB, type BuildContext, type Builder } from './core/kit';
+@@ -101,3 +102,4 @@
+ const mat = buildMaterials();
++await installArchitecturalMaterials(mat);
+ installLawnCanaryQA(mat.lawn);
+ const player = new Player(world.camera, world.renderer.domElement);

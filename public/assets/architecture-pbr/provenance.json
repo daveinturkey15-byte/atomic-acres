@@ -1,0 +1,180 @@
+{
+  "license": "CC0-1.0",
+  "licenseSource": "https://polyhaven.com/license",
+  "assetKind": "downloaded scan maps, with separately labelled technical derivations",
+  "acquiredUtc": "2026-09-20T05:56:34.915146+00:00",
+  "sources": [
+    {
+      "id": "white_plaster_rough_01",
+      "sourcePage": "https://polyhaven.com/a/white_plaster_rough_01",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "dimensionsMm": [
+        1000,
+        1000
+      ],
+      "files": [
+        {
+          "channel": "Diffuse",
+          "path": "source-white_plaster_rough_01_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_plaster_rough_01/white_plaster_rough_01_diff_1k.jpg",
+          "bytes": 628421,
+          "sourceMd5": "c0964b0628920619f0364f19f2d9973d",
+          "sha256": "8d3b209ec5bbcee3db7a883c6c2eee982b7c18a268e6f43766ee540c7c28ebcb"
+        },
+        {
+          "channel": "nor_gl",
+          "path": "source-white_plaster_rough_01_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_plaster_rough_01/white_plaster_rough_01_nor_gl_1k.jpg",
+          "bytes": 384190,
+          "sourceMd5": "a45f7354cab5014e5167e63ddbf9c571",
+          "sha256": "f9d15f0adb27a3cbcffe11bea7a14d486d036b0251e01ec24c3ca0ae05aef54b"
+        },
+        {
+          "channel": "Rough",
+          "path": "source-white_plaster_rough_01_rough_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/white_plaster_rough_01/white_plaster_rough_01_rough_1k.jpg",
+          "bytes": 594450,
+          "sourceMd5": "6a4f00696f958e42ad7bf3b1d48794d5",
+          "sha256": "459ab1eec7395a4617b4e043760be51eaac87828aae8816b6bf2c6030907225a"
+        }
+      ]
+    },
+    {
+      "id": "brown_planks_09",
+      "sourcePage": "https://polyhaven.com/a/brown_planks_09",
+      "authors": {
+        "Rob Tuytel": "All"
+      },
+      "dimensionsMm": [
+        1000,
+        1000
+      ],
+      "files": [
+        {
+          "channel": "Diffuse",
+          "path": "source-brown_planks_09_diff_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_planks_09/brown_planks_09_diff_1k.jpg",
+          "bytes": 763538,
+          "sourceMd5": "6bd2fb72d60e81d670107367f5672fb4",
+          "sha256": "6a890d75d48787518ccf32cb44e7557d1695e8a9180e813f79f7bfed075896ed"
+        },
+        {
+          "channel": "nor_gl",
+          "path": "source-brown_planks_09_nor_gl_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_planks_09/brown_planks_09_nor_gl_1k.jpg",
+          "bytes": 730600,
+          "sourceMd5": "4052e8b59ac8d44861d8bdabc42d0a3b",
+          "sha256": "a42c35ecd2104765e1e06e7370be6673c6c7b8527d9abf3f34cf3cd444ea9e16"
+        },
+        {
+          "channel": "Rough",
+          "path": "source-brown_planks_09_rough_1k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/1k/brown_planks_09/brown_planks_09_rough_1k.jpg",
+          "bytes": 286034,
+          "sourceMd5": "dd92c5d06f0ff7d79dcf913af0a29027",
+          "sha256": "48eca07057e5a2ba9a4de92f71f660620bcaa8e142b4c57ed7bf65e6deb5270c"
+        }
+      ]
+    }
+  ],
+  "derivations": [
+    {
+      "path": "plaster-surface.png",
+      "source": "white_plaster_rough_01",
+      "operation": "linear luminance and roughness packing",
+      "sourceCropPixels": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "edgeFeatherPixels": null,
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "physicalTileMeters": [
+        1.0,
+        1.0
+      ],
+      "bytes": 2118545,
+      "sha256": "dd55393d52d1d678452e0da99c84a08a8ddea4c531d4582368127b7aa3ca638d"
+    },
+    {
+      "path": "plaster-normal.png",
+      "source": "white_plaster_rough_01",
+      "operation": "OpenGL normal resize and renormalize",
+      "sourceCropPixels": [
+        0,
+        0,
+        1024,
+        1024
+      ],
+      "edgeFeatherPixels": null,
+      "dimensions": [
+        1024,
+        1024
+      ],
+      "physicalTileMeters": [
+        1.0,
+        1.0
+      ],
+      "bytes": 1299037,
+      "sha256": "80e07f8780aa4a81e545d09726be77d200177c2e7d1cdf1567b58d856f7d7c59"
+    },
+    {
+      "path": "timber-surface.png",
+      "source": "brown_planks_09",
+      "operation": "linear luminance and roughness packing",
+      "sourceCropPixels": [
+        0,
+        82,
+        700,
+        205
+      ],
+      "edgeFeatherPixels": [
+        16,
+        32
+      ],
+      "dimensions": [
+        1024,
+        256
+      ],
+      "physicalTileMeters": [
+        0.68359375,
+        0.1201171875
+      ],
+      "bytes": 257173,
+      "sha256": "c0b257e985c946aabf602be2d15b20335df599f4bbc2c69f1666658f4ef173f5"
+    },
+    {
+      "path": "timber-normal.png",
+      "source": "brown_planks_09",
+      "operation": "OpenGL normal resize and renormalize",
+      "sourceCropPixels": [
+        0,
+        82,
+        700,
+        205
+      ],
+      "edgeFeatherPixels": [
+        16,
+        32
+      ],
+      "dimensions": [
+        1024,
+        256
+      ],
+      "physicalTileMeters": [
+        0.68359375,
+        0.1201171875
+      ],
+      "bytes": 252536,
+      "sha256": "e1180fdb25b26070062e3e5684a541e3859a9fafbf61845efa423f4a19d36f25"
+    }
+  ],
+  "packedRuntimeBytesWithMipmaps": 13981014,
+  "totalAssetBytes": 7314524
+}
