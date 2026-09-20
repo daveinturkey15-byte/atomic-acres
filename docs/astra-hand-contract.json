@@ -1,0 +1,37 @@
+{
+  "schema": 1,
+  "frozen_at": "2026-09-20T06:32:00+01:00",
+  "owner": "Astra first-person specialist; root owns visual acceptance",
+  "scope": "New pistol-only two-hand grip and shaped forearms, optional hands=rigged. Independent replacement design; rejected Muse0558 remains rejected.",
+  "source": "src/weapons/viewmodel.ts buildPistolViewmodel at e8b4b6d; actual canted grip, frame, slide and guard boxes measured in weapon-local metres",
+  "authoritative_axes": "Origin grip/trigger; +X right, +Y up, barrel -Z",
+  "weapon_solids": [
+    { "id": "grip", "center": [0, -0.075, 0], "half": [0.019, 0.055, 0.025], "rx": 0.25 },
+    { "id": "panel-left", "center": [-0.02, -0.075, 0.005], "half": [0.002, 0.045, 0.021], "rx": 0.25 },
+    { "id": "panel-right", "center": [0.02, -0.075, 0.005], "half": [0.002, 0.045, 0.021], "rx": 0.25 },
+    { "id": "slide", "center": [0, 0.02, -0.085], "half": [0.02, 0.0225, 0.095], "rx": 0 },
+    { "id": "frame", "center": [0, -0.01, -0.075], "half": [0.018, 0.015, 0.085], "rx": 0 },
+    { "id": "guard-bottom", "center": [0, -0.055, -0.045], "half": [0.004, 0.004, 0.035], "rx": 0 },
+    { "id": "guard-front", "center": [0, -0.04, -0.08], "half": [0.004, 0.0175, 0.004], "rx": 0 },
+    { "id": "guard-rear", "center": [0, -0.042, -0.012], "half": [0.004, 0.015, 0.004], "rx": 0 }
+  ],
+  "spatial_contract": {
+    "trigger_hand_envelope": { "min": [-0.06, -0.20, -0.09], "max": [0.09, -0.019, 0.12] },
+    "support_hand_envelope": { "min": [-0.105, -0.20, -0.09], "max": [0.045, -0.019, 0.12] },
+    "reason_for_new_envelope": "The former neutral mitten placed digits below the trigger. This design wraps the real grip and puts index inside the actual trigger guard; therefore it is not a 5mm modification of the failed Muse/neutral mitten geometry.",
+    "grip_solid_max_penetration_m": 0.002,
+    "slide_frame_guard_max_penetration_m": 0.001,
+    "finger_or_thumb_surface_contact_max_m": 0.005,
+    "trigger_index_target": [0.0035, -0.035, -0.045],
+    "trigger_index_surface_distance_max_m": 0.009,
+    "wrist_sleeve_gap_max_m": 0.001,
+    "arm_length_drift_max_m": 0.001,
+    "reload_support_palm_target": [0, -0.133, 0],
+    "reload_seat_error_max_m": 0.008
+  },
+  "geometry_contract": { "fingers_per_hand": 4, "thumbs_per_hand": 1, "max_pair_triangles": 6500, "max_pair_meshes": 14, "new_materials_max": 1, "new_textures_max": 0, "geometry_or_material_allocations_per_frame": 0 },
+  "negative_controls": ["Move fingertip 20mm off its contact", "Place one hand vertex 4mm inside actual canted grip", "Sever sleeve/wrist by 20mm", "Delete one finger", "Exceed triangle budget"],
+  "visual_contract": "OPEN until root compares actual matching pistol hip/ADS/reload/crouch/prone frames and recordings at 1600x900. Require recognizable separate fingers, believable wrapped grip, connected cuff and both shaped forearms, visible glove panel contrast, and appreciable silhouette change. No scorecard or frozen pixel acceptance weakened.",
+  "boundaries": "No timing/shot/ammo/host logic, muzzle/grip/trigger sockets, world lighting or camera changes. Generated H3 stills reference anatomy/handling only. No extracted game assets, mocap or photorealism claim.",
+  "budget": { "source_minutes": 35, "local_repair_limit": 2, "browser_or_gpu_jobs": 0, "hard_stop": "2026-09-20T08:58:00+01:00" }
+}
