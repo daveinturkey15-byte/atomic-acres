@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "VERIFIED 08:58 scoped visual review4234/source4327d97 ready: detailed foliage, curved lamps, repaired Blender coach, rifle-hand contact and weapon finishes, responsive streak HUD. Actual37HUDchecks/fiveviewports pass, fullrecommendedflags210.8s soakPASS55.7fps stablewarmcounts. Whole-map visual bar and60fps remain OPEN. Frozen4212 unchanged. Operator-shape withheld for inadequate anatomy; FX optional with earlycapture/disposal gaps. Both nativeAstra workers completed before09. External fence/anatomy/sedan lanes continue.",
+  "status": "VERIFIED09:17 accepted4234 and frozen4212 unchanged. Operator0845 passed10real fiveposeA/B frames but visually rejected as still toy-like; root test URL reverted. Fence source rejected by independent inward-winding guard despite worker CPU pass. Four external source lanes now own sedan(GLMmax), finaloperatorartrepair(Musexhigh), fence-repair1 and supplycrate(AGYhigh actualmodelUNKNOWN). No nativeAstra implementation after09. Whole-map visualgoal OPEN.",
   "owner": "Codex",
   "stop_state": "active: preserve frozen checkpoint and continue private candidates",
   "backup": {
@@ -20,7 +20,7 @@
   },
   "campaign": "docs/handoff/CAMPAIGN-2026-09-19.md",
   "inspection_time": "2026-09-20T05:45:00+01:00",
-  "lease_updated_at": "2026-09-20T07:46:47.384026+01:00",
+  "lease_updated_at": "2026-09-20T09:18:19.389014+01:00",
   "source_checkpoint": "2139d697434bf97bf38683eb0ed25e554096fd71",
   "inspection_report": "docs/handoff/SHOWCASE-2026-09-20.md",
   "bundle_sha256": "e8cb3f4fa86437ef164deded998e3613d5220d2115e52335096545af1ab13a91",
@@ -31,21 +31,20 @@
     "status": "ACTIVE"
   },
   "resource_sample": {
-    "sampled_at": "2026-09-20T08:57:54.767073+01:00",
-    "free_ram_gib": 31.869,
-    "free_vram_mib": 11987,
-    "gpu_utilization_percent": 2,
-    "note": "Post-soak measured. Four exact-owned superseded preview processes4230..4233 stopped after source/command/port verification. Frozen4212,4228,4229 and current4234 retained. No owner processes terminated."
+    "sampled_at": "2026-09-20T09:18:19.0620344+01:00",
+    "free_ram_gib": 35.598,
+    "free_vram_mib": 11953,
+    "gpu_utilization_percent": 4,
+    "note": "No GPU/browser/Blender job active atsample. Four source-only external lanes. NativeAstra implementation completed/stopped."
   },
   "next_actions": [
-    "Retain frozen4212 and latest accepted scoped4234 unchanged; recommended URL inidentity.visual_review includes coach/lamps/leaf/riflehands/weaponfinish, excludes newoperator-shape/FX. Source4327d97, JSaea060fb. 210.8s55.7fps stablecounts PASS; completevisualbar and60fps OPEN. No broadrevalidation of unchangedbuild.",
-    "No Astra implementation after09BST. Both completed08:47 and registryverified08:51, so no running child tointerrupt. Exactcontributionsreport rewritten current. Root only orchestration/review/mechanical integration; nonOpenAIworkers continue.",
-    "GLMfence-art0834 FAILED actual25min timeout08:57, no artifacts at intended output. AGYfence-art0900 now owns work/fence-art-agy-0900 inpropWT, requestedGeminihigh actualUNKNOWN. Sourcefirstwithin10min target, do not restartGLM or overlap writers. Review terminalreceipt then exactpatch/CPUtests and samecamera fenceviews; fixed budgets/default/colliders remain.",
-    "Musecar-body0834 FAILED terminaltranscripterror despitewrapperexit0; retain CONTRACT.json and RECIPE.md. GLMcar-body0855 owns newwork/car-body-glm-0855 inMusevehicleWT, same parked-sedan scope, no coach overlap. Needactualrecipe notanother spec; rootCPUBlender2threads2GiB guard once ready.",
-    "AGYoperator-anatomy0845 owns work/operator-anatomy-0845 inanimationpolishWT. Prior shape0800 actual14108tris/2mats/21bones and10before-afterposeframes pass, but anatomy still cylindrical/knee seams poor: NOTPROMOTED. Rootloaderseam now wired andtested77CPU; newtask must substantially reshape limbs/body, preserve skeleton/posebudgets, use newassetname and samefiveposeA/B.",
-    "WeaponFXfinalrepair2/2 native9202248/rootc935b6a actualWebGPU/shots/cameras PASS and darkcards gone. FloorCDPtemporalcoverage3/5 andliveexpiry/disposal counters OPEN; oldbrightflash inherited. KeepoptionalFX outofrecommendedURL. No thirdsamelooprepair; changeapproachforremainingcapture/legacyflash.",
-    "HUD AGYlayout plusGLMnarrowrepair actual37checks and1600/1280/960/768/375views PASS, fullnames/keys3..6/READY/NEXTCYCLE. READY/SPENT synthetic HUDinputs; realunearnedDigit3hostrefusalverified. Do notclaim earnedcombat kills. Fourfunctionalstreaks only; remaining11catalogworkbacklog.",
-    "Prioritize more substantial map/weapon/operator art and coherent surfaces over tiny scalar edits; preserve scans/licenseprovenance and full20guns/11streaks/4grenades/audio/netcode backlog. Semtex already18livechecksPASS. Root GPUjobsserialized,>=12GiBfreeRAM>=3GiBfreeVRAM+headroom, unknowndefer. Noownerprocesskills."
+    "Retain accepted4234 and frozen4212 unchanged. Candidate4235 is operator-art REJECTED, never advertise as improvement. Exact proof .recovery-runtime/operator-anatomy-0907/review.json. No broad unchangedbuild tests.",
+    "Muse operator-visual-0918 owns finalrepair2 of current procedural approach in animationpolish/work/operator-visual-muse-0918. Require meaningful clothed silhouette/material gain against captures/operator-anatomy-0907. Root guarded bake+samefiveposes. If stilltoy-like, stop sameapproach and change to separately scoped retopology/rigged authored asset method, no thirdrepair.",
+    "AGY fence-repair1-0918 owns prop/work/fence-art-repair1-0918. Root originalhelper guard found80/140plank,180/270bolt triangles reversed. Need actualwinding AND normals fixed, noDoubleSide workaround or testweakening. Re-run independentguard and defaultcontracts then actualsamecamera A/B. Originalprivatefence preserved; no root integration yet.",
+    "GLMcar-body0855 stillrunning; nointendedoutput at09:14 andcanonicaltranscriptbufferempty is not model failure proof. Let exact25minwrapperdeadline09:20:24 terminalize then inspect actualreceipt/partials. On actualfailure same sedan scope may use AGY; do not overlap or restartMusealreadyfailedcar earlier.",
+    "AGYsupply-crate0912 continues preserved0540partial in respawnWT/work/supply-crate-agy-0912. Hostauthority,deterministiceligible rewards,cost/duplicate/reset/pickup/expiry tests; noempty activation. Gameplay must not displace artacceptance. RootGPUonly, no workerbrowsers.",
+    "NativeAstra specialists bothcompleted before09 and no more implementation authorized. Exact contributions retained ASTRA-CONTRIBUTIONS-2026-09-20.md. OpenAIorchestrates/reviews only. AGY actualmodel attributionUNKNOWN; requestedroutes do notprove observed.",
+    "Majority effort substantial map/weapon/operator art; retain full20guns/11streaks/4grenades/audio/netcode backlog. Semtex18livepass. WeaponFXfloorCDPcapture/disposalremainOPEN; keepoffrecommended. Keep>=12GiBfreeRAM>=3GiBVRAMplusjobheadroom; noownerprocesskills."
   ],
   "interrupted_lanes": [
     {
@@ -1478,7 +1477,10 @@
       "accepted": false,
       "started_at": "2026-09-20T07:55:24+00:00",
       "ended_at": null,
-      "failure_reasons": []
+      "failure_reasons": [],
+      "effort": "max",
+      "attribution": "unknown",
+      "owned_directory": "work/car-body-glm-0855"
     },
     {
       "lane": "agy-weapon-enable-0818",
@@ -1510,11 +1512,12 @@
       "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-operator-anatomy-0845\\summary.json",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
       "route": "gemini-3.8-flash-high",
-      "state": "source-review-completed",
+      "state": "mechanically-verified-visually-rejected",
       "attribution": "unknown",
       "accepted": false,
       "observed_models": [],
-      "note": "Acceptance limited to exact runtime seam/layout, not underlying operatorart; workerexit alone not acceptance."
+      "note": "Root guarded bake18.36s/516MiBprivate, actual14572tris/2materials/21bones,10liveWebGPUframes pass; visualgain inadequate. Candidate4235 retained, not promoted. Repair2 Muse now owns new directory. ActualAGYmodel unknown.",
+      "review": ".recovery-runtime/operator-anatomy-0907/review.json"
     },
     {
       "lane": "streak-layout-0807",
@@ -1534,10 +1537,54 @@
       "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-fence-art-0900\\summary.json",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
       "route": "gemini-3.8-flash-high",
-      "state": "running",
+      "state": "source-rejected-winding",
       "accepted": false,
       "attribution": "unknown",
-      "observed_models": []
+      "observed_models": [],
+      "note": "Own CPU suite passed; independent root cross-product check FAILED:80/140plank and180/270bolt triangles inward in one segment. No fence integration. Repair1 delegated. AGY attribution unknown.",
+      "review": ".recovery-runtime/check-fence-winding-0916.mjs"
+    },
+    {
+      "lane": "agy-supply-crate-0912",
+      "run_id": "delegated-agy-4ddef84f-583a-4f5f-ab7e-a27f0f3c750c",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-supply-crate-0912\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/supply-crate-agy-0912",
+      "started_at": 1789891880.5004883
+    },
+    {
+      "lane": "agy-fence-repair1-0918",
+      "run_id": "delegated-agy-bf512cd1-1668-4e43-bc5e-1e7db1fd5a4b",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-fence-repair1-0918\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/fence-art-repair1-0918",
+      "started_at": 1789892047.7630918
+    },
+    {
+      "lane": "muse-operator-visual-0918",
+      "run_id": "delegated-omp-muse-operator-visual-0918-0758a567068f423493b7157a1e808ac3",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-operator-visual-0918-0758a567068f423493b7157a1e808ac3\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/operator-visual-muse-0918",
+      "started_at": "2026-09-20T08:14:08+00:00"
     }
   ],
   "continue_after_inspection": true,
@@ -1651,48 +1698,63 @@
   },
   "active_external_lanes": [
     {
-      "lane": "muse-coach-art-0742",
-      "run_id": "delegated-omp-muse-coach-art-0742-41c26ea68c984d32a3d4a791fa3706d7",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-coach-art-0742-41c26ea68c984d32a3d4a791fa3706d7\\summary.json",
+      "lane": "glm-car-body-0855",
+      "run_id": "delegated-omp-glm-car-body-0855-fead39d92039453d95dcf8e438f91246",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-car-body-0855-fead39d92039453d95dcf8e438f91246\\summary.json",
       "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
-      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
       "state": "running",
       "observed_models": [],
-      "accepted": false
-    }
-  ],
-  "awaiting_root_review": [
-    {
-      "lane": "muse-carbine-surface-0508",
-      "run_id": "delegated-omp-muse-carbine-surface-0508-12990d4a2cbf4dc6baa9168133a1f8a3",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-carbine-surface-0508-12990d4a2cbf4dc6baa9168133a1f8a3\\summary.json",
-      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
-      "route": "meta-contributor/muse-spark-1.3-contributor",
-      "effort": "xhigh",
-      "started_at": "2026-09-20T04:03:51+00:00",
-      "ended_at": "2026-09-20T04:10:58+00:00",
-      "state": "process-completed",
-      "observed_models": [
-        "muse-spark-1.3-contributor"
-      ],
-      "accepted": false
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/car-body-glm-0855",
+      "started_at": "2026-09-20T07:55:24+00:00"
     },
     {
-      "lane": "muse-fp-material-readability-0508",
-      "run_id": "delegated-omp-muse-fp-material-readability-0508-78d3100d349b414eb81e798ed1b35ae0",
-      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-fp-material-readability-0508-78d3100d349b414eb81e798ed1b35ae0\\summary.json",
-      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
+      "lane": "agy-supply-crate-0912",
+      "run_id": "delegated-agy-4ddef84f-583a-4f5f-ab7e-a27f0f3c750c",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-supply-crate-0912\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/supply-crate-agy-0912",
+      "started_at": 1789891880.5004883
+    },
+    {
+      "lane": "agy-fence-repair1-0918",
+      "run_id": "delegated-agy-bf512cd1-1668-4e43-bc5e-1e7db1fd5a4b",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\agy-fence-repair1-0918\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919",
+      "route": "gemini-3.8-flash-high",
+      "effort": "high",
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/fence-art-repair1-0918",
+      "started_at": 1789892047.7630918
+    },
+    {
+      "lane": "muse-operator-visual-0918",
+      "run_id": "delegated-omp-muse-operator-visual-0918-0758a567068f423493b7157a1e808ac3",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-operator-visual-0918-0758a567068f423493b7157a1e808ac3\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919",
       "route": "meta-contributor/muse-spark-1.3-contributor",
       "effort": "xhigh",
-      "started_at": "2026-09-20T04:03:51+00:00",
-      "ended_at": "2026-09-20T04:11:39+00:00",
-      "state": "process-completed",
-      "observed_models": [
-        "muse-spark-1.3-contributor"
-      ],
-      "accepted": false
+      "state": "running",
+      "observed_models": [],
+      "attribution": "unknown",
+      "accepted": false,
+      "owned_directory": "work/operator-visual-muse-0918",
+      "started_at": "2026-09-20T08:14:08+00:00"
     }
   ],
+  "awaiting_root_review": [],
   "checkpoint_bundle": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/overnight-0218.bundle",
   "latest_review": "docs/handoff/REVIEW-2026-09-20-0255.md",
   "provider_cooldowns": {
@@ -1713,9 +1775,9 @@
     "observer_note": "Wait for asynchronously created snapshot.match; unchanged gameplay gates."
   },
   "temporary_parallelism": {
-    "count": 1,
-    "reason": "Disjoint private source lanes, no worker browsers/GPU; root serializes acceptance",
-    "resume_normal": "Normally up to4 useful lanes; avoid spawning before reviewing ready outputs"
+    "count": 4,
+    "reason": "Four independent external source-only lanes; two art repairs, sedan authoring, preserved supply-crate continuation. Native implementation stopped.",
+    "resume_normal": "At most4 useful external lanes; no blind refill/audits"
   },
   "latest_soak": {
     "receipt": "captures/leak/visual-review-0851-soak.json",
@@ -2018,7 +2080,12 @@
       "state": "VERIFIED scoped visual review; whole-map quality and60fps OPEN. Operator-shape and weapon-fx flags withheld. Runtime source committed after unchanged build.",
       "verified_at": "2026-09-20T08:57:54.767073+01:00"
     },
-    "visual_pending": null,
+    "visual_pending": {
+      "url": "http://127.0.0.1:4235/?operator=authored&operator-shape=canary",
+      "dist": "dist-operator-anatomy-0907",
+      "state": "REJECTED visual quality;10mechanicalframesPASS, root source reverted to previousoptionalURL; retainedforrepairreference",
+      "receipt": ".recovery-runtime/operator-anatomy-0907/review.json"
+    },
     "previous_visual_review": {
       "url": "http://127.0.0.1:4228/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&operator=authored&lawn=canary&audiobank=2",
       "source_commit": "4f23513c425eb235f3f9c9993b3ffece9876baa0",
@@ -2083,13 +2150,46 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T09:00:51.471052+01:00",
+  "updated_at": "2026-09-20T09:18:19.389014+01:00",
   "current_ownership": {
-    "root": "GPU/browser acceptance, integration, source/live identity and current tracker",
-    "astra_shading": "completed; no restarts",
-    "astra_motion": "completed; no restarts",
-    "glm-car-body-0855": "private Musevehicle work/car-body-glm-0855",
-    "agy-operator-anatomy-0845": "private animationpolish work/operator-anatomy-0845",
-    "agy-fence-art-0900": "private prop work/fence-art-agy-0900; exact scope failover after GLM25min timeout"
-  }
+    "root": "OpenAI orchestration/review/mechanical integration only; GPU/browser acceptance serialized",
+    "astra_shading": "completed before09BST; prohibited from new implementation",
+    "astra_motion": "completed before09BST; prohibited from new implementation",
+    "glm-car-body-0855": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919\\work\\car-body-glm-0855",
+    "agy-supply-crate-0912": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919\\work\\supply-crate-agy-0912",
+    "agy-fence-repair1-0918": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-prop-20260919\\work\\fence-art-repair1-0918",
+    "muse-operator-visual-0918": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-polish-20260919\\work\\operator-visual-muse-0918"
+  },
+  "retained_review_backlog_0918": [
+    {
+      "lane": "muse-carbine-surface-0508",
+      "run_id": "delegated-omp-muse-carbine-surface-0508-12990d4a2cbf4dc6baa9168133a1f8a3",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-carbine-surface-0508-12990d4a2cbf4dc6baa9168133a1f8a3\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "started_at": "2026-09-20T04:03:51+00:00",
+      "ended_at": "2026-09-20T04:10:58+00:00",
+      "state": "process-completed",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "accepted": false
+    },
+    {
+      "lane": "muse-fp-material-readability-0508",
+      "run_id": "delegated-omp-muse-fp-material-readability-0508-78d3100d349b414eb81e798ed1b35ae0",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-fp-material-readability-0508-78d3100d349b414eb81e798ed1b35ae0\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-audio-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "started_at": "2026-09-20T04:03:51+00:00",
+      "ended_at": "2026-09-20T04:11:39+00:00",
+      "state": "process-completed",
+      "observed_models": [
+        "muse-spark-1.3-contributor"
+      ],
+      "accepted": false
+    }
+  ]
 }
