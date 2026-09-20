@@ -6,12 +6,10 @@ import * as THREE from 'three';
 import type { MeshStandardNodeMaterial } from 'three/webgpu';
 import { float, normalWorldGeometry, positionWorld, smoothstep, texture3D, vec3 } from 'three/tsl';
 import type { MaterialLibrary } from './materials';
+import { ROOM_VISIBILITY_ARTIFACT as artifact } from './room-visibility-artifact';
 
-export const ROOM_VOLUME = { min: [-1, 0, -21.3], max: [6.4, 6.25, -16], dimensions: [32, 28, 24] } as const;
-const FILES = [
-  ['positive.bin', '3a6ed25fe7855156c3e61f0ae3ef84485953941ee7fb3eeda75ae3aa13458041'],
-  ['negative.bin', 'd12ae36163b7732c5679bb7140a8e57fc29cb4971b4ee7ec8db4e40d87092625'],
-] as const;
+export const ROOM_VOLUME = { ...artifact.bounds, dimensions: artifact.dimensions };
+const FILES = ['positive.bin', 'negative.bin'] as const;
 type Surface = THREE.MeshStandardMaterial & Pick<MeshStandardNodeMaterial, 'aoNode'>;
 export interface RoomVisibility { textures: THREE.Data3DTexture[]; bytes: number; dispose(): void }
 const active = new WeakMap<MaterialLibrary, Promise<RoomVisibility | null>>();
@@ -58,11 +56,11 @@ async function install(library: MaterialLibrary, load?: (url: string) => Promise
     const r = await fetch(url); if (!r.ok) throw Error(`Room visibility HTTP ${r.status}`); return r.arrayBuffer();
   });
   try {
-    const data = await Promise.all(FILES.map(async ([name, expected]) => {
+    const data = await Promise.all(FILES.map(async name => {
       const bytes = await fetchBinary(`/assets/room-visibility/${name}`);
       const digest = await crypto.subtle.digest('SHA-256', bytes);
       const hash = Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join('');
-      if (hash !== expected || bytes.byteLength !== 86016) throw Error('Room visibility artifact mismatch');
+      if (hash !== artifact.files[name].sha256 || bytes.byteLength !== 86016) throw Error('Room visibility artifact mismatch');
       return new Uint8Array(bytes);
     }));
     if (disposed) { active.delete(library); return null; }

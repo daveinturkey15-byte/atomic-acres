@@ -700,8 +700,18 @@ export const buildOrangeHouse: Builder = (ctx) => {
     g.add(box(0.6, 0.06, 0.6, glowM, lx, FLOOR_H - 0.2, lz));
   }
   for (const [px, pz] of [[tblX, tblZ], [sofaX - FE * 1.4, sofaZ]] as P2[]) {
-    g.add(box(0.04, 0.6, 0.04, darkIn, px, FLOOR_H - 0.35, pz));
     const isLounge = room && px === sofaX - FE * 1.4;
+    if (isLounge) {
+      // This pendant hangs in the double-height void, not under the first-floor
+      // slab. The former 60cm stem ended in air. Attach to the actual roof soffit.
+      const anchor = roofTopY(px, pz) - ROOF_T - .025;
+      const bottom = FLOOR_H - .48;
+      g.add(box(.014, anchor - bottom, .014, darkIn, px, (anchor + bottom) / 2, pz));
+      const rose = new THREE.Mesh(new THREE.CylinderGeometry(.085, .085, .045, 20), room.brass);
+      rose.position.set(px, anchor, pz); rose.castShadow = rose.receiveShadow = true; g.add(rose);
+    } else {
+      g.add(box(0.04, 0.6, 0.04, darkIn, px, FLOOR_H - 0.35, pz));
+    }
     const globe = new THREE.Mesh(new THREE.SphereGeometry(0.15, 20, 12), isLounge ? mat.emissive(0xffe2b7, .28) : glowM);
     globe.position.set(px, FLOOR_H - 0.72, pz); g.add(globe);
     if (isLounge) {
