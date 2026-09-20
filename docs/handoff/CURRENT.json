@@ -6,7 +6,7 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "Verified partial orange-room successor on4245: authored furniture, PBR surfaces and cleaned balustrade;210s active-game memory gate passes. Original noon failure preserved, no leak fix claimed. Lighting experiment rejected for negligible gain; next hands/carbine scope. Full visual goal unmet.",
+  "status": "Verified partial orange-room successor on4245: authored furniture, PBR surfaces and cleaned balustrade;210s active-game memory gate passes. Original noon failure preserved, no leak fix claimed. Lighting experiment rejected for negligible gain. Finish the first room before advancing to the hands/carbine implementation; full visual goal unmet.",
   "owner": "Codex",
   "stop_state": "GAME DEVELOPMENT PAUSED by direct owner request; pipeline audit only. Do not resume feature work or worker launches without owner direction.",
   "backup": {
@@ -40,8 +40,8 @@
   },
   "next_actions": [
     "Preserve verified room R2 at4245 and all prior frozen views. Use this exact URL for17:00 inspection if no later candidate passes; report53.4fps and full visual bar OPEN.",
-    "First room remains visually incomplete. R3 aperture ambient-lighting experiment rejected; two repair slots consumed. No further parameter nudges: next room-light approach needs a bounded baked/probe artifact proof.",
-    "Inspect retained carbine GLB/current runtime contact, choose a usable guarded Blender/procedural route for first-person gun/hands. Do not relaunch completed workers or assume prior claimed asset acceptance.",
+    "Finish first room before hands/carbine implementation. R3 analytical aperture ambient experiment rejected after two repair slots; no further parameter nudges. Next approach must use a different bounded baked/probe artifact method and actual same-camera evidence; retain R2 if it fails.",
+    "Carbine read-only preparation complete: retained GLB SHA8afb235e2a2bcffc71ae794e973813c53c4f37e094110c8ceb62490e191a8167 and old hip capture inspected. Prior runtime mechanics are not current visual acceptance. Implement hands/gun slice after first-room lighting proof; no workers.",
     "Then weapon-image menu/classes and combat/streak HUD (including noisy incoming-hit stack), bot motion. Single Astra only.",
     "Original noon memory failure retained; snapshot diagnostic and both room successors pass but no root-cause repair claimed. Apply unchanged gate to each new meaningful candidate."
   ],
@@ -2616,7 +2616,7 @@
   },
   "updated_at": "2026-09-20T15:07:49.608681+01:00",
   "current_ownership": {
-    "root": "Single Astra: room R2 verified and preserved; next carbine/hands artifact review. No active workers or GPU jobs.",
+    "root": "Single Astra: room R2 verified and preserved. Next is a different bounded room-light/contact artifact proof; retained carbine inspected read-only for the following slice. No active workers or heavy jobs.",
     "native_astras": "Historical specialists stopped; do not restart.",
     "external": []
   },
