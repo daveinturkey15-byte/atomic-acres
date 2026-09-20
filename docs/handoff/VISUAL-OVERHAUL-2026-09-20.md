@@ -27,3 +27,18 @@ VERIFIED GLM lighting and HUD jobs hit their launcher time bounds with source pa
 VERIFIED 07:16BST: AGY road0558 plusGLM0636 actualcode15checks/negativecontrols acceptedforcandidate; fourpairedframes visiblyimproveaggregate/cracks, unchangedcalls. PolyHavenCC0 scans, noimagegenerationclaim. captures/gauntlet/street/round-0658. 210s combinedlighting/glazing/motion/hands/road soakpassesmemorygate .442MB/min JSfloor,52.6fpsaverage;60fpsOPEN.
 
 VERIFIED GLM0612+AGY0638/0655 HUD now hasactualid/fullnamebinding,34CPUadapterchecks pass. Actualbrowserready/useproofinAGY0712. Musefacadefinal0652 genuinegeometryenvelope/collisionCPU passes; currentGPUreview. MuseBlender mountains0714 failedNamespaceerror,2thread2GiBguard peakprivate211MiB; outputrecipe repair1active.
+
+
+VERIFIED 07:28 update: Muse lighting parity0712 passes actual-source comparison across all 15 legacy time/weather pairs byte-for-byte. Authored half-float environment peaks at 86.25 and all 15 combinations are finite. Root reran the checks. Original F3/F7 art assertions remain OPEN.
+
+VERIFIED: Facade detail passes eight live views, adding six effective render calls and 1,608 triangles per measured view, below the fixed 1,200 / 900,000 budgets. Viewed sill/plinth trim is a modest improvement, not a map overhaul.
+
+VERIFIED: Muse mountain repair 1 exported a real Blender GLB: three meshes, 12,840 triangles, 1,223,252 bytes and three 512-pixel textures. Guarded run took 2.4 seconds, with 248 MiB peak private memory. Integration awaits actual disposal proof and game pixels. It is procedural Blender authoring, not image-to-3D.
+
+VERIFIED: AGY HUD observer output was written into root work/streak-browser-proof-0712, contrary to the requested private worktree. No game source changed, and the bounded output is preserved. Root mechanically corrected its Windows file-URL import before running it. Requested Gemini attribution remains unknown. Its ready-state inputs are hard-coded synthetic data; they do not prove real combat earned the streaks, despite the worker's wording.
+
+VERIFIED 07:46: latest review candidate is source4f23513 at4228 with identity.visual_review flags. Fine architecture, road scans, glazing, reload motion and modest facade trim are visible; full map overhaul remains OPEN. Whole candidate210s soak passes53.1fps, JSfloor slope−0.236MB/min, renderer−0.685MB/min, warmed resources456geometries/136textures, listeners194stable.
+
+VERIFIED mountainmassifs actual8frames0errors/fivefewer calls nevertheless REJECT: skyline resemblesa broad cutwall. Rootremovedall integration andpreservedwork/massifs-0732-rejected.
+
+VERIFIED HUD realmenu/lockedcards andrealDigit3 hostrefusal pass; syntheticreadycards show fullnames/keys3–6 andDEPLOYSATYOU. Remaining spent observer hasincorrectcycle-wrap expectation at8kills; AGYfinalrepair includes bothcycle-wrap andmidcycle states. No claimthat syntheticready provesearnedcombatstreaks.
