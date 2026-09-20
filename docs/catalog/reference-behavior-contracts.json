@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "title": "Nuketown source behavior contracts",
   "generatedAt": "2026-09-19",
+  "scopeNote": "Historical September 19 source inspection, retained as evidence rather than a current completion ledger. Some statements are superseded: Semtex is now in the runtime and has 18 live checks; actor presentation/facing received the noon fixes. Use docs/handoff/CURRENT.json and docs/handoff/REMAINING-WORK-2026-09-20.md for current status. Do not report missing features from this snapshot alone.",
   "claimPolicy": "VERIFIED means directly observed in source; OPEN means runtime/visual acceptance remains unproven. Old-root references are historical evidence only.",
   "oldReferenceInventory": {
     "weapons": "Old exact 20-weapon list remains tracked in the production catalog; omitted here to avoid duplicating the inventory.",
