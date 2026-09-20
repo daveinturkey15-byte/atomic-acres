@@ -13,6 +13,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const LIMIT = { calls: 1200, triangles: 900_000, captureMs: 20_000, screenshots: 10, samples: 450 };
 const RELOAD_TARGETS = [0, .16, .32, .48, .64, .80];
+const ENTRY_TIMEOUT = 30_000; // Same action budget as the passed 17-pose observer.
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 function modeUrl(base, mode) {
   const url = new URL(base); url.searchParams.set('motion', 'canary');
@@ -37,6 +38,63 @@ function sprintEvidence(samples) {
     distanceM: distance, maxHorizontalSpeedMps: maxSpeed,
     note: 'Derived from real playerPose displacement/timestamps while W+Shift held. A blocked spawn route stays OPEN.' };
 }
+function entryRecoveryAction(entry) {
+  if (entry.matchMode && entry.matchMode !== 'idle') {
+    if (entry.surface === 'hidden') return 'pause';
+    if (entry.surface === 'paused-match' || entry.surface === 'match-over') return 'leave';
+  }
+  if (entry.surface === 'pre-match' && entry.panel && entry.panel !== 'main') return 'back';
+  return null;
+}
+async function enterSolo(page, result) {
+  result.entryTrace = [];
+  const inspect = async label => {
+    const entry = await page.evaluate(() => {
+      const overlay = document.getElementById('start');
+      const menu = window.__AA_UI?.menu;
+      return { t: performance.now(), surface: menu?.state?.().surface ?? null,
+        panel: menu?.panel?.() ?? null, matchMode: window.__NTGAME?.mode?.() ?? null,
+        overlay: overlay ? { display: getComputedStyle(overlay).display, visibility: getComputedStyle(overlay).visibility, rects: overlay.getClientRects().length } : null,
+        visibleButtons: [...document.querySelectorAll('#start button')]
+          .filter(b => b.getClientRects().length > 0 && getComputedStyle(b).visibility === 'visible')
+          .map(b => b.textContent?.trim()).filter(Boolean) };
+    });
+    result.entryTrace.push({ label, ...entry }); return entry;
+  };
+  try {
+    // An entry state is observed before choosing any recovery action. Returning
+    // via the real menu preserves the same Play solo -> Deploy route for both modes.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const entry = await inspect(`entry-${attempt}`), action = entryRecoveryAction(entry);
+      if (!action) break;
+      result.actions.push({ action: `entry-${action}`, t: entry.t });
+      if (action === 'leave') {
+        await page.getByRole('button', { name: 'Leave match', exact: true }).click({ timeout: ENTRY_TIMEOUT });
+        await page.waitForFunction(() => window.__NTGAME?.mode?.() === 'idle', null, { timeout: ENTRY_TIMEOUT });
+      } else {
+        await page.keyboard.press('Escape');
+        await page.waitForFunction(previous => {
+          const m = window.__AA_UI?.menu;
+          return m?.state?.().surface !== previous.surface || m?.panel?.() !== previous.panel;
+        }, { surface: entry.surface, panel: entry.panel }, { timeout: ENTRY_TIMEOUT });
+      }
+    }
+    const solo = page.getByRole('button', { name: 'Play solo', exact: true });
+    await solo.waitFor({ state: 'visible', timeout: ENTRY_TIMEOUT });
+    await inspect('before-play-solo'); await solo.click({ timeout: ENTRY_TIMEOUT });
+    const deploy = page.getByRole('button', { name: 'Deploy', exact: true });
+    await deploy.waitFor({ state: 'visible', timeout: ENTRY_TIMEOUT });
+    await inspect('before-deploy'); await deploy.click({ timeout: ENTRY_TIMEOUT });
+    await page.waitForFunction(() => {
+      try { return window.__NTGAME?.snapshot?.().match?.phase === 'active' && window.__NT?.weaponCmd?.('state')?.visible === true; }
+      catch { return false; }
+    }, null, { timeout: 45_000 });
+    await inspect('deployed');
+  } catch (error) {
+    try { await inspect('entry-failed'); } catch { /* Preserve the original entry error. */ }
+    throw error;
+  }
+}
 function selfCheck() {
   const base = 'http://127.0.0.1:4192/?lighting=glm&glazing=foo&hands=old';
   assert.equal(new URL(modeUrl(base, 'motion')).searchParams.get('hands'), null);
@@ -51,7 +109,11 @@ function selfCheck() {
   assert.equal(sprintEvidence([row(0, 0), row(100, .66)]).status, 'PASS');
   assert.equal(sprintEvidence([row(0, 0), row(100, 0)]).status, 'OPEN');
   assert.equal(sprintEvidence([row(0, 0), row(100, .48)]).status, 'OPEN');
-  console.log('PASS: URL flag parity, exact budgets, missing/zero stats, real sprint/walk/blocked controls. No browser started.');
+  assert.equal(entryRecoveryAction({ surface: 'pre-match', panel: 'main', matchMode: 'idle' }), null);
+  assert.equal(entryRecoveryAction({ surface: 'hidden', panel: 'main', matchMode: 'solo' }), 'pause');
+  assert.equal(entryRecoveryAction({ surface: 'paused-match', panel: 'main', matchMode: 'solo' }), 'leave');
+  assert.equal(entryRecoveryAction({ surface: 'pre-match', panel: 'solo', matchMode: 'idle' }), 'back');
+  console.log('PASS: URL/budget/movement controls and observed-state entry recovery. No browser started.');
 }
 
 async function runMode(base, mode, directory, source) {
@@ -75,10 +137,7 @@ async function runMode(base, mode, directory, source) {
     });
     await page.goto(url, { waitUntil: 'load', timeout: 90_000 });
     await page.waitForFunction(() => window.__NT?.ready === true, null, { timeout: 90_000 });
-    await page.getByRole('button', { name: 'Play solo', exact: true }).click();
-    await page.getByRole('button', { name: /deploy/i }).click();
-    await page.waitForFunction(() => window.__NTGAME?.snapshot?.().match?.phase === 'active'
-      && window.__NT?.weaponCmd?.('state')?.visible === true, null, { timeout: 45_000 });
+    await enterSolo(page, result);
     result.entryScripts = await page.evaluate(() => [...document.scripts].filter(s => s.type === 'module' && s.src).map(s => s.src));
     await Promise.all(tasks);
     const entry = result.bundles.filter(b => result.entryScripts.includes(b.url));
@@ -163,6 +222,23 @@ async function runMode(base, mode, directory, source) {
   } catch (e) { result.fatal = String(e); }
   finally {
     if (page) {
+      if (result.fatal && result.frames.length === 0) {
+        // One startup diagnostic, within the ten-image budget. It cannot count
+        // as a gameplay frame or turn the failed capture into an art pass.
+        try {
+          result.entryFailure = await page.evaluate(() => {
+            const overlay = document.getElementById('start');
+            return { t: performance.now(), menu: window.__AA_UI?.menu?.state?.() ?? null,
+              panel: window.__AA_UI?.menu?.panel?.() ?? null, matchMode: window.__NTGAME?.mode?.() ?? null,
+              overlay: overlay ? { display: getComputedStyle(overlay).display, visibility: getComputedStyle(overlay).visibility, width: overlay.getBoundingClientRect().width, height: overlay.getBoundingClientRect().height } : null,
+              buttons: [...document.querySelectorAll('#start button')].map(b => ({ text: b.textContent?.trim(), rects: b.getClientRects().length,
+                display: getComputedStyle(b).display, visibility: getComputedStyle(b).visibility, disabled: b.disabled,
+                view: b.closest('.aa-view')?.getAttribute('aria-label'), viewClass: b.closest('.aa-view')?.className })) };
+          });
+          await page.screenshot({ path: join(out, 'entry-failure.jpg'), type: 'jpeg', quality: 85, timeout: 5000 });
+          result.entryFailure.image = 'entry-failure.jpg'; result.entryFailure.role = 'startup diagnostic, not gameplay/art evidence';
+        } catch (e) { result.entryDiagnosticError = String(e).slice(0, 300); }
+      }
       try { await page.keyboard.up('Shift'); await page.keyboard.up('w'); await page.mouse.up({ button: 'right' }); } catch { /* Closing failed page. */ }
       try { result.samples = await page.evaluate(() => {
         const q = window.__ASTRA_TEMPORAL_QA; if (!q) return [];

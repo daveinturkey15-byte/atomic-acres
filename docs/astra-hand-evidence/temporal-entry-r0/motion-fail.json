@@ -1,0 +1,84 @@
+{
+  "schema": 1,
+  "mode": "motion",
+  "url": "http://127.0.0.1:4223/?lighting=authored&glazing=canary&motion=canary",
+  "source": {
+    "checkoutSha": "d2b62392bed19f7b2d7f6422822e90c7d1bb16e5",
+    "trackedDirtyPaths": [
+      "docs/handoff/CURRENT.json",
+      "docs/handoff/SHOWCASE-2026-09-20.md",
+      "src/core/atmosphere.ts",
+      "src/core/materials.ts",
+      "src/core/world.ts",
+      "src/main.ts",
+      "src/ui/hud-build.ts",
+      "src/ui/hud-match.ts",
+      "src/ui/hud.css"
+    ]
+  },
+  "startedAt": "2026-09-20T06:08:26.416Z",
+  "limits": {
+    "calls": 1200,
+    "triangles": 900000,
+    "captureMs": 20000,
+    "screenshots": 10,
+    "samples": 450
+  },
+  "route": "Play solo -> Deploy -> real game loop",
+  "actions": [],
+  "frames": [],
+  "samples": [],
+  "errors": [],
+  "checks": [
+    {
+      "name": "no console/page/observer errors",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "live screenshot render budgets",
+      "pass": false,
+      "detail": 0
+    },
+    {
+      "name": "sampled live render budgets",
+      "pass": false,
+      "detail": 0
+    },
+    {
+      "name": "bounded sequence and output",
+      "pass": false,
+      "detail": {
+        "captureElapsedMs": null,
+        "frames": 0,
+        "samples": 0
+      }
+    }
+  ],
+  "open": [
+    "Sprint motion proof OPEN: normal input did not establish an unobstructed sprint route.",
+    "Temporal reload image coverage OPEN: 0/6 frames observed during reload; capture latency may have skipped phases."
+  ],
+  "bundles": [
+    {
+      "url": "http://127.0.0.1:4223/assets/index-DFsrBS4s.js",
+      "status": 200,
+      "bytes": 1831434,
+      "sha256": "d10b70a8f6f2b037ac0d79309f4446a0d3e7604238e10fb4177c5a202b25e01e"
+    }
+  ],
+  "fatal": "TimeoutError: locator.click: Timeout 5000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: 'Play solo', exact: true })\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" class=\"aa-btn aa-primary\">Play solo</button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    - waiting for element to be visible, enabled and stable\u001b[22m\n",
+  "captureElapsedMs": null,
+  "sprint": {
+    "status": "OPEN",
+    "samples": 0,
+    "distanceM": 0,
+    "maxHorizontalSpeedMps": 0,
+    "note": "Derived from real playerPose displacement/timestamps while W+Shift held. A blocked spawn route stays OPEN."
+  },
+  "reloadFrames": [],
+  "pass": false,
+  "status": "FAIL",
+  "visualAcceptance": "OPEN: root must inspect actual images and their timestamped sequence.",
+  "finishedAt": "2026-09-20T06:08:33.199Z"
+}
