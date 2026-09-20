@@ -7,7 +7,9 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const out = resolve(root, 'work/astra-motion/cpu');
+const handsFlag = process.env.VIEWMODEL_HANDS_FLAG ?? '';
+assert.ok(['', 'rigged', 'rifle-canary'].includes(handsFlag), 'known optional hand canary');
+const out = resolve(root, `work/astra-motion/cpu${handsFlag ? '-' + handsFlag : ''}`);
 mkdirSync(out, { recursive: true });
 const baseRef = 'e8b4b6d';
 const entry = `
@@ -154,7 +156,7 @@ for (const def of api.WEAPONS) {
 }
 
 function controllerRun(lib, enabled) {
-  globalThis.window = { location: { search: enabled ? '?motion=canary' : '' } };
+  globalThis.window = { location: { search: enabled ? `?motion=canary${handsFlag ? '&hands=' + handsFlag : ''}` : '' } };
   const camera = new lib.THREE.PerspectiveCamera(72, 16 / 9, .05, 160);
   const claims = [], rows = [];
   const ctl = new lib.WeaponsController({ camera, scene: new lib.THREE.Scene(), mat: materials(lib.THREE), targets: [], onHud() {}, onShot(c) { claims.push(structuredClone(c)); }, crossbowCanary: true, carbineCanary: false, heroesCanary: false });
@@ -195,7 +197,7 @@ const candidate = controllerRun(api, true);
 assert.deepEqual(normal, retained, 'default path vs frozen controller gameplay');
 assert.deepEqual(candidate, retained, 'canary vs frozen controller gameplay');
 assert.ok(candidate.claims.length > 100 && candidate.claims.some(c => c.weaponId === 'frag') && candidate.claims.some(c => c.weaponId === 'knife'), 'positive controls actually fired/throw/stabbed');
-report.parity.push({ simulatedFrames: candidate.rows.length, exactClaims: candidate.claims.length, defaultVsFrozen: 'PASS', canaryVsFrozen: 'PASS', compared: 'HUD/ammo/reload/cadence/FOV/camera recoil/claim origin+direction+time' });
+report.parity.push({ handsFlag: handsFlag || null, simulatedFrames: candidate.rows.length, exactClaims: candidate.claims.length, defaultVsFrozen: 'PASS', canaryVsFrozen: 'PASS', compared: 'HUD/ammo/reload/cadence/FOV/camera recoil/claim origin+direction+time' });
 for (const name of ['first-person-hands-motion.ts', 'viewmodel-motion.ts']) {
   const source = readFileSync(resolve(root, 'src/weapons', name), 'utf8');
   assert.ok(!source.includes('requestAnimationFrame') && !source.includes('setInterval'));
