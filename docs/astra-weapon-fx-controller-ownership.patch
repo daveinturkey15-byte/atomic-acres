@@ -1,0 +1,11 @@
+diff --git a/src/weapons/controller.ts b/src/weapons/controller.ts
+--- a/src/weapons/controller.ts
++++ b/src/weapons/controller.ts
+@@ -1323,6 +1323,7 @@
+   dispose(): void {
+     if (this.disposed) return;
+     this.disposed = true;
++    this.effects.dispose();
+     if (this.carbineCanaryRig) {
+       this.carbineCanaryRig.dispose();
+       this.carbineCanaryRig = null;

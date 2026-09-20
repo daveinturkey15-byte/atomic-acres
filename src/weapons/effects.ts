@@ -3,7 +3,7 @@
  *
  * Fully pooled, zero-allocation-after-construction feedback kit: a crossed-quad
  * muzzle flash, tracer slugs, ejected shell cases, impact sparks, dust puffs by
- * surface, and persistent impact decals. Lifetimes advance through
+ * surface, and persistent impact decals. Legacy lifetimes advance through
  * visible/scale/position/quaternion changes only — never opacity, color, or
  * material work. Exhausted pools reuse the oldest slot (round-robin), so
  * sustained fire never throws.
@@ -11,10 +11,13 @@
  * Materials are library singletons resolved once at construction. Decals share
  * one 128px alpha-tested scar texture instead of opaque square paint fragments.
  * The material library owns that texture and releases it at teardown.
+ * Optional weapon-fx=canary owns three additional fixed quad batches, alpha
+ * masks and materials in weapon-fx-canary; its disposer never touches the library.
  */
 import * as THREE from 'three';
 import { PAL } from '../core/palette';
 import type { MaterialLibrary } from '../core/materials';
+import { WeaponFxCanary, weaponFxRequested } from './weapon-fx-canary';
 
 const FLASH_LIFE = 0.05;
 const TRACER_LIFE = 0.07;
@@ -39,6 +42,8 @@ const DECAL_COUNT = 48;
 
 export class WeaponEffects {
   readonly group: THREE.Group;
+  private readonly canary: WeaponFxCanary | null;
+  private inBlast = false;
 
   // Shared geometries — one instance per pool, reused by every slot.
   private readonly flashGeo: THREE.PlaneGeometry;
@@ -112,6 +117,7 @@ export class WeaponEffects {
 
     this.group = new THREE.Group();
     this.group.name = 'atomic-acres-weapon-effects';
+    this.canary = weaponFxRequested() ? new WeaponFxCanary(this.group) : null;
 
     // The flash quads draw the library's masked `flashSprite`, not a solid
     // emissive: at blast scale (flashAt(..., 8, 0.25)) the crossed planes span
@@ -205,6 +211,7 @@ export class WeaponEffects {
    * a deterministic golden-angle roll per pop — no per-shot randomness.
    */
   flashAt(pos: THREE.Vector3, camQuat: THREE.Quaternion, scale = 1, life = FLASH_LIFE): void {
+    if (!this.inBlast && scale === 1 && life === FLASH_LIFE) this.canary?.muzzle(pos, camQuat);
     this.flashTick++;
     const roll = this.flashTick * ROLL_STEP;
     for (let k = 0; k < 2; k++) {
@@ -229,9 +236,11 @@ export class WeaponEffects {
    * here: that is a `smoke-volume` on the bus, drawn by `grenades.ts`.
    */
   blast(point: THREE.Vector3, camQuat: THREE.Quaternion): void {
+    this.inBlast = true;
     this._b.set(0, 1, 0);
     this.flashAt(point, camQuat, 8, 0.25);
     for (let k = 0; k < 3; k++) this.impact(point, this._b, true);
+    this.inBlast = false;
   }
 
   /** Stretch a tracer slug from `from` along `dir` for `len` metres. */
@@ -279,15 +288,17 @@ export class WeaponEffects {
     if (this._b.lengthSq() < 1e-8) this._b.set(0, 1, 0);
     this._b.normalize();
 
-    const q = this.impactNext;
-    this.impactNext = (this.impactNext + 1) % IMPACT_QUAD_COUNT;
-    const qm = this.impactMeshes[q];
-    qm.position.copy(point).addScaledVector(this._b, 0.016);
-    qm.quaternion.setFromUnitVectors(this._zAxis, this._b);
-    qm.rotateZ(q * 1.7);
-    qm.scale.set(0.6, 0.6, 1);
-    qm.visible = true;
-    this.impactLife[q] = IMPACT_LIFE;
+    if (!this.canary || this.inBlast) {
+      const q = this.impactNext;
+      this.impactNext = (this.impactNext + 1) % IMPACT_QUAD_COUNT;
+      const qm = this.impactMeshes[q];
+      qm.position.copy(point).addScaledVector(this._b, 0.016);
+      qm.quaternion.setFromUnitVectors(this._zAxis, this._b);
+      qm.rotateZ(q * 1.7);
+      qm.scale.set(0.6, 0.6, 1);
+      qm.visible = true;
+      this.impactLife[q] = IMPACT_LIFE;
+    }
 
     const d = this.decalNext;
     this.decalNext = (this.decalNext + 1) % DECAL_COUNT;
@@ -299,6 +310,11 @@ export class WeaponEffects {
     dm.scale.set(ds, ds, 1);
     dm.visible = true;
     this.decalAge[d] = 0;
+
+    if (this.canary && !this.inBlast) {
+      this.canary.impact(point, this._b, dusty);
+      return;
+    }
 
     for (let k = 0; k < SPARKS_PER_IMPACT; k++) {
       const i = this.sparkNext;
@@ -351,9 +367,10 @@ export class WeaponEffects {
     for (let i = 0; i < DUST_COUNT; i++) this.dustLife[i] *= mult;
   }
 
-  /** Advance every live slot. Visible/scale/position/quaternion only. */
+  /** Advance every live slot; the optional helper updates fixed vertex buffers at render. */
   update(dt: number): void {
     if (!(dt > 0)) return;
+    this.canary?.update(dt);
 
     if (this.flashA.visible) {
       this.flashLife -= dt;
@@ -470,7 +487,7 @@ export class WeaponEffects {
 
   /** Count of currently visible transient objects (decals excluded). */
   liveCount(): number {
-    let n = 0;
+    let n = this.canary?.liveCount() ?? 0;
     if (this.flashA.visible) n += 2;
     for (let i = 0; i < TRACER_COUNT; i++) if (this.tracerMeshes[i].visible) n++;
     for (let i = 0; i < SHELL_COUNT; i++) if (this.shellMeshes[i].visible) n++;
@@ -486,4 +503,7 @@ export class WeaponEffects {
     for (let i = 0; i < DECAL_COUNT; i++) if (this.decalMeshes[i].visible) n++;
     return n;
   }
+
+  /** Only the optional helper owns these resources; borrowed library materials stay live. */
+  dispose(): void { this.canary?.dispose(); }
 }
