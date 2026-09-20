@@ -63,11 +63,14 @@ import { spawnSync } from 'node:child_process';
 import net from 'node:net';
 import { usePreview } from './lib/preview.mjs';
 import { spawnGuarded, killTree } from './lib/proc-guard.mjs';
+import { soakScenario, enterSoakScenario } from './lib/soak-scenario.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'captures', 'leak');
 
 const argv = process.argv.slice(2);
+// Default is real gameplay. --solo remains a compatible explicit spelling.
+const scenario = soakScenario(argv);
 const opt = (name, dflt = '') => {
   const i = argv.indexOf('--' + name);
   return i >= 0 ? argv[i + 1] : dflt;
@@ -208,6 +211,23 @@ try { await cdp.send('Performance.enable'); } catch { perfDomain = false; }
 let memoryDomain = true;
 try { await cdp.send('Memory.getDOMCounters'); } catch { memoryDomain = false; }
 
+// Admit the scenario before fault injection, so --kill-loop still verifies the
+// liveness falsifier rather than preventing the menu from deploying at all.
+mkdirSync(OUT, { recursive: true });
+let scenarioEvidence;
+try {
+  scenarioEvidence = await enterSoakScenario(page, scenario);
+} catch (error) {
+  writeFileSync(join(OUT, `${tag}-soak.json`), JSON.stringify({
+    url, tag, scenario, gameplayEntered: false,
+    fails: ['SCENARIO NOT ENTERED: ' + String(error)], rows: [],
+  }, null, 2));
+  await browser.close();
+  killTree(chrome.pid);
+  throw error;
+}
+console.log('[soak] scenario ' + scenario + '; gameplay entered: ' + scenarioEvidence.gameplayEntered);
+
 // Our own frame counter. `stats().fps` only updates twice a second and
 // `info.render.calls` is reset every frame, so neither proves the loop ran.
 await page.evaluate((killLoop) => {
@@ -246,15 +266,6 @@ if (INJECT_KB_S > 0) {
   }, INJECT_KB_S);
 }
 
-// The modern menu replaced the old start overlay. Opt-in solo acceptance must
-// enter a real match; clicking a hidden legacy div cannot establish gameplay.
-if (argv.includes('--solo')) {
-  await page.getByRole('button', { name: 'Play solo', exact: true }).click();
-  await page.getByRole('button', { name: 'Deploy', exact: true }).click();
-  await page.waitForFunction(() => window.__NTGAME?.snapshot?.().match?.phase === 'active', null, { timeout: 45000 });
-} else {
-  await page.evaluate(() => { const o = document.getElementById('start'); if (o) o.click(); });
-}
 await page.waitForTimeout(1200);
 
 mkdirSync(OUT, { recursive: true });
@@ -450,6 +461,7 @@ if (errors.length) console.log('[soak] console errors:\n  ' + errors.slice(0, 6)
 
 writeFileSync(join(OUT, `${tag}-soak.json`), JSON.stringify({
   url, tag, seconds: SECONDS, every: EVERY, slopeFrom: SLOPE_FROM,
+  ...scenarioEvidence,
   injectKbPerSecond: INJECT_KB_S, limits: { maxSlopeMBPerMin: MAX_SLOPE, maxExternalMB: MAX_EXTERNAL_MB },
   js, proc, procMono, uaMemoryNote, frames, elapsed, fails, rows,
 }, null, 2));
@@ -461,4 +473,4 @@ if (fails.length) {
   console.log('[soak] FAIL\n  - ' + fails.join('\n  - '));
   process.exit(1);
 }
-console.log('[soak] PASS - JS floor flat and the renderer process did not climb');
+console.log('[soak] PASS (' + scenario + ') - JS floor flat and the renderer process did not climb');

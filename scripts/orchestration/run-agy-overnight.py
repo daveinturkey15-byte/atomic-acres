@@ -5,6 +5,7 @@ import pathlib
 import subprocess
 import sys
 import time
+from dispatch_policy import DispatchHold, require_external_dispatch
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 LANE = ROOT.parent / 'nuketown-environment-20260919'
@@ -22,6 +23,10 @@ def main():
     parser.add_argument('--attempt', default='agy-overnight-environment')
     parser.add_argument('--worktree', type=pathlib.Path)
     args = parser.parse_args()
+    try:
+        require_external_dispatch(ROOT, 'agy')
+    except DispatchHold as exc:
+        raise SystemExit(str(exc)) from exc
     if not args.attempt.replace('-', '').isalnum():
         raise SystemExit('Attempt must be a simple alphanumeric/hyphen identifier.')
     if args.prompt:

@@ -6,9 +6,9 @@
   "branch": "recovery/wave7-20260919",
   "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919",
   "url": "http://127.0.0.1:4212/?operator=authored&lawn=canary&audiobank=2",
-  "status": "Single Astra first inspection candidate frozen on4242; controls/house cleanup/interpolated bots verified, memory gate OPEN. Stable artifact4240 unchanged; full visual overhaul OPEN.",
+  "status": "Owner paused game development for pipeline audit. Bounded audit and two verification/admission repairs complete; shared-skill adoption, cost controls and full visual quality remain OPEN.",
   "owner": "Codex",
-  "stop_state": "active: preserve frozen checkpoint and continue private candidates",
+  "stop_state": "GAME DEVELOPMENT PAUSED by direct owner request; pipeline audit only. Do not resume feature work or worker launches without owner direction.",
   "backup": {
     "path": "C:/Users/david/Desktop/stuff/nuketown-recovery/20260919T085155Z/visual-0900",
     "head": "1bd70548346c9c5490f0863607dfe868260576dd",
@@ -28,7 +28,7 @@
   "heartbeat": {
     "id": "standalone-game-refinement",
     "interval_minutes": 15,
-    "status": "ACTIVE"
+    "status": "PAUSED"
   },
   "resource_sample": {
     "sampled_at": "2026-09-20T11:56:09.737Z",
@@ -38,11 +38,10 @@
     "note": "Owned QA closed. Final capture minima29.892GiB RAM/4132MiB VRAM; owner processes untouched."
   },
   "next_actions": [
-    "Keep4242 exact13:00 candidate immutable;4212/4234/4240 unchanged. No worker launches.",
-    "Investigate active-gameplay memory: candidate0.700MB/min r2.313 FAIL vs4240 .549 r2.165 PASS. Largest snapshot net growth is compiled code; cause unresolved. Never weaken gates or retry until green.",
-    "15:00: interior wood/carpet/upholstery PBR, window sunlight/shadows, sky and first-person surfaces. Compare original image target with real game. Separate successor artifact/port.",
-    "17:00 weapon-image menus/custom classes/HUD;19:00 further streaks/motion/effects/audio/multiplayer;21:00 consolidation. Estimates revised at each checkpoint.",
-    "Review preserved rifle-glove patch before adoption, credit prior Muse. Existing Kimodo clips and H3 motion references; no new model workers."
+    "Review the bounded pipeline audit and preserve all frozen game builds; game development remains paused.",
+    "Before shared-skill promotion, reconcile the six unadopted/misrouted candidates with their current canonical authors and frozen evaluation records. Do not reset the baseline.",
+    "Before any future authorized delegation, require exact-source admission, accepted-artifact linkage and measured cost/token budgets; current launchers remain disabled.",
+    "When owner resumes game development, choose one visible end-to-end slice and adapt the measured Skills Lab rig/UV method. Re-estimate milestones then."
   ],
   "interrupted_lanes": [
     {
@@ -2601,9 +2600,9 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T10:54:22.227948+01:00",
+  "updated_at": "2026-09-20T13:19:49.653916+01:00",
   "current_ownership": {
-    "root": "Single Astra xhigh implements/reviews/integrates under direct owner reset; no delegation.",
+    "root": "Single Astra: pipeline audit/reconciliation only. Game development paused by owner.",
     "native_astras": "Historical specialists stopped; do not restart.",
     "external": []
   },
@@ -2737,8 +2736,37 @@
   ],
   "next_inspection": {
     "at": "2026-09-20T15:00:00+01:00",
-    "status": "in-progress",
+    "status": "paused-by-owner-pipeline-audit; previous estimate withdrawn",
     "cadence_hours": 2,
-    "plan": "docs/handoff/SINGLE-ASTRA-2026-09-20.md"
+    "plan": "docs/handoff/SINGLE-ASTRA-2026-09-20.md",
+    "reason": "Owner will return to game development later; no automatic 15:00 release or inspection."
+  },
+  "deferred_development_next_actions": [
+    "Keep4242 exact13:00 candidate immutable;4212/4234/4240 unchanged. No worker launches.",
+    "Investigate active-gameplay memory: candidate0.700MB/min r2.313 FAIL vs4240 .549 r2.165 PASS. Largest snapshot net growth is compiled code; cause unresolved. Never weaken gates or retry until green.",
+    "15:00: interior wood/carpet/upholstery PBR, window sunlight/shadows, sky and first-person surfaces. Compare original image target with real game. Separate successor artifact/port.",
+    "17:00 weapon-image menus/custom classes/HUD;19:00 further streaks/motion/effects/audio/multiplayer;21:00 consolidation. Estimates revised at each checkpoint.",
+    "Review preserved rifle-glove patch before adoption, credit prior Muse. Existing Kimodo clips and H3 motion references; no new model workers."
+  ],
+  "dispatch_policy": {
+    "schema_version": 1,
+    "external_workers": false,
+    "allowed_routes": [],
+    "reason": "Direct owner stopped worker swarm, requested single Astra and paused game development for pipeline audit. Only a later direct owner instruction may reopen dispatch."
+  },
+  "pipeline_audit": {
+    "report": "docs/handoff/PIPELINE-AUDIT-2026-09-20.md",
+    "evidence": ".recovery-runtime/pipeline-audit-20260920/evidence.json",
+    "status": "bounded audit complete; remediation partial",
+    "changes": [
+      "default soak requires active solo match",
+      "existing OMP and AGY entrypoints reject missing or disabled dispatch policy before provider launch"
+    ],
+    "not_claimed": [
+      "graphical upgrade",
+      "provider quality benchmark",
+      "shared-skill adoption",
+      "global budget enforcement"
+    ]
   }
 }

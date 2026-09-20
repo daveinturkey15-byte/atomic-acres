@@ -21,6 +21,7 @@ import threading
 import time
 import uuid
 from typing import Any
+from dispatch_policy import DispatchHold, require_external_dispatch
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -82,6 +83,10 @@ def _git_value(worktree: Path, *args: str) -> Path:
 
 
 def _validate_inputs(prompt_file: Path, worktree: Path, lane: str, route: str) -> dict[str, Any]:
+    try:
+        require_external_dispatch(REPO_ROOT, route)
+    except DispatchHold as exc:
+        raise LaneError(str(exc)) from exc
     if not LANE_RE.fullmatch(lane):
         raise LaneError("Lane must be 1-64 characters of letters, digits, '.', '_' or '-'.")
     if route not in ROUTES:

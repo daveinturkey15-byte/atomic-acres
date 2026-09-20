@@ -4,6 +4,20 @@
 OMP worker lane. It records process and route evidence for review; a clean
 process exit never accepts the worker's changes.
 
+## Current owner hold
+
+Game development and external workers are paused for the September 20 pipeline
+audit. Both Python launchers and the PowerShell entrypoint now consult
+`CURRENT.json.dispatch_policy`. Missing/malformed policy, disabled workers or an
+unlisted route is rejected before a provider or ledger launch. The PowerShell
+entrypoint checks before accessing the secret helper. Dry runs also respect the
+hold. There is no command-line bypass; do not edit owner policy to make a run pass.
+
+This is local launcher admission, not a machine-wide sandbox or aggregate
+cost/concurrency enforcement. Fresh native-harness inheritance tests remain OPEN.
+Run `python -m unittest discover -s scripts/orchestration -p test_dispatch_policy.py`
+for the offline contract checks. See `docs/handoff/PIPELINE-AUDIT-2026-09-20.md`.
+
 ## Routes
 
 | Route | Provider/model | Effort | Secret handling |

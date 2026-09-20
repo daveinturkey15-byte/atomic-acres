@@ -24,6 +24,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $python = (Get-Command python.exe -ErrorAction Stop).Source
 $launcher = Join-Path $PSScriptRoot 'run-provider-lane.py'
+# Deny held routes before touching the credential helper or creating a run row.
+& $python (Join-Path $PSScriptRoot 'dispatch_policy.py') --route $Route
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 $arguments = @(
     '--prompt-file', $PromptFile,
     '--worktree', $Worktree,

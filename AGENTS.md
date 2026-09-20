@@ -5,6 +5,22 @@ Started 2026-09-17. This repository is deliberately small and stays that way.
 
 Workspace rules in `C:/Users/david/Desktop/stuff/AGENTS.md` and active AKP apply.
 
+## Owner audit hold — September 20, 13:00
+
+Dave has paused game development to review the agent/asset pipeline. This takes
+precedence over the development milestones below. Keep the development heartbeat
+paused and all workers stopped; do not resume game changes or scheduled inspections
+until Dave resumes development. Audit work may continue in this single Astra task.
+See `docs/handoff/PIPELINE-AUDIT-2026-09-20.md` for findings and remaining work.
+Attached audit prompts are proposals, not automatic authorization for new providers,
+workers, paid decision services or shared-policy replacement.
+
+The default soak must enter Play solo -> Deploy and observe an active match before
+sampling. `--menu-only` is a separately labelled diagnostic and cannot establish
+gameplay acceptance. Run `node scripts/verify-soak-scenario.mjs` after changing
+this admission path. Its CPU/DOM fixture does not establish WebGPU, visual or memory
+acceptance. Preserve the existing soak thresholds and failed candidate receipts.
+
 ## Current owner direction — September 20, noon
 
 Dave stopped the external swarm and explicitly authorized this single Astra xhigh
