@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import * as THREE from 'three';
 import StandardNodeLibrary from 'three/src/renderers/webgpu/nodes/StandardNodeLibrary.js';
+import RenderObject from 'three/src/renderers/common/RenderObject.js';
 
 const out = resolve('captures/astra-architecture-cpu');
 mkdirSync(out, { recursive: true });
@@ -44,6 +45,7 @@ const loaders = () => {
 const l = library(), t = loaders();
 const oldDispose = l.lib.dispose, oldColour = l.lib.interiorWall.color.clone();
 const identities = keys.map(key => l.lib[key]);
+const originalProgramKeys = identities.map(m => m.customProgramCacheKey);
 const concrete = l.lib.concrete;
 assert.equal(await install(l.lib, false, t.load), null);
 assert.equal(t.calls(), 0);
@@ -59,6 +61,23 @@ assert.equal(l.lib.concrete, concrete);
 assert.equal(l.lib.concrete.map, l.borrowed);
 assert.equal(l.counts().borrowedDisposals, 0);
 const adapter = new StandardNodeLibrary();
+const cacheGeometry = new THREE.BoxGeometry();
+const rendererMaterialKey = material => RenderObject.prototype.getMaterialCacheKey.call({
+  material, renderer: { backend: { isWebGPUBackend: true } },
+  object: { geometry: cacheGeometry, receiveShadow: true }, geometry: cacheGeometry,
+  clippingContextCacheKey: '', getGeometryCacheKey: RenderObject.prototype.getGeometryCacheKey,
+});
+const repairedKeys = identities.map(rendererMaterialKey);
+assert.equal(new Set(repairedKeys).size, 7, 'each distinct surface graph needs its own r180 pipeline key');
+// Actual r180 negative control: default standard-material keys ignore the node
+// hooks and collide between plaster and timber. Preserve it as a known failure.
+const ownKeys = identities.map(m => Object.getOwnPropertyDescriptor(m, 'customProgramCacheKey'));
+identities.forEach(m => Reflect.deleteProperty(m, 'customProgramCacheKey'));
+assert.equal(rendererMaterialKey(l.lib.stuccoCream), rendererMaterialKey(l.lib.timber),
+  'negative control must reproduce the rejected plaster/timber pipeline collision');
+identities.forEach((m, i) => Object.defineProperty(m, 'customProgramCacheKey', ownKeys[i]));
+assert.deepEqual(identities.map(rendererMaterialKey), repairedKeys);
+cacheGeometry.dispose();
 for (const material of identities) {
   assert.equal(material.map, null);
   const converted = adapter.fromMaterial(material);
@@ -68,6 +87,8 @@ for (const material of identities) {
     assert.equal(converted[field], material[field], `${field} survives r180 renderer adapter`);
   }
   assert.equal(converted.color, material.color);
+  assert.equal(converted.map, null, 'no inherited old-map multiplication');
+  assert.equal(converted.customProgramCacheKey(), material.customProgramCacheKey());
 }
 // Repeated callers neither refetch assets nor allocate new material graphs.
 const graph = l.lib.stuccoCream.normalNode;
@@ -82,11 +103,14 @@ for (const m of identities) {
   assert.equal(m.map, l.borrowed);
   assert.equal(Object.hasOwn(m, 'colorNode'), false);
 }
+assert.deepEqual(identities.map(m => m.customProgramCacheKey), originalProgramKeys);
 assert.equal(l.counts().borrowedDisposals, 0);
 
 // Full library teardown must also release the four owned textures exactly once.
 const teardown = library(), td = loaders();
 const c2 = await install(teardown.lib, true, td.load);
+assert.notEqual(teardown.lib.stuccoCream.customProgramCacheKey(), ownKeys[0].value(),
+  'a new texture owner must not reuse disposed literal texture bindings');
 teardown.lib.dispose(); c2.dispose();
 assert.deepEqual(td.disposals, [1, 1, 1, 1]);
 assert.deepEqual(teardown.counts(), { borrowedDisposals: 1, libraryDisposals: 1 });
@@ -137,6 +161,7 @@ const result = { status: 'PASS', rendererAcceptance: 'OPEN: no GPU/browser lease
   materials: 7, ownedTextures: 4, sourceScans: 2, packagedAssetBytes: total,
   runtimeTextureBytesWithMipmaps: controller.runtimeBytes,
   controls: ['r180 standard-to-node hooks', 'material identity', 'borrowed map ownership',
+    'r180 pipeline key uniqueness and rejected collision negative control',
     '10000 cache hits', 'explicit disposal', 'library teardown', 'partial load failure and retry',
     'teardown while loading', 'source and derived hashes', 'PNG dimensions and budgets'] };
 writeFileSync(resolve(out, 'result.json'), JSON.stringify(result, null, 2)+'\n');

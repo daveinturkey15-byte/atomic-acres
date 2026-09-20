@@ -23,8 +23,10 @@ const PROFILES: readonly Profile[] = [
   { key: 'stuccoCream', palette: PAL.houseCream, normal: 0.95, contrast: 0.42, roughMin: 0.78, roughMax: 0.98 },
   { key: 'stuccoTerracotta', palette: PAL.terracotta, normal: 1.15, contrast: 0.5, roughMin: 0.78, roughMax: 0.98 },
   { key: 'capsuleWhite', palette: PAL.capsuleWhite, normal: 0.4, contrast: 0.24, roughMin: 0.7, roughMax: 0.92 },
-  { key: 'interiorWall', palette: PAL.houseCream, normal: 0.38, contrast: 0.2, roughMin: 0.8, roughMax: 0.96 },
-  { key: 'roofWhite', palette: PAL.roofWhite, normal: 0.36, contrast: 0.22, roughMin: 0.74, roughMax: 0.94 },
+  // Painted partitions/slab soffits and the pale roof have a finer sealed finish
+  // than bare exterior render. The same measured grain scale is retained.
+  { key: 'interiorWall', palette: PAL.houseCream, normal: 0.16, contrast: 0.075, roughMin: 0.8, roughMax: 0.94 },
+  { key: 'roofWhite', palette: PAL.roofWhite, normal: 0.16, contrast: 0.07, roughMin: 0.76, roughMax: 0.91 },
   { key: 'timber', palette: PAL.timber, timber: true, normal: 0.65, contrast: 0.78, roughMin: 0.62, roughMax: 0.94 },
   { key: 'timberDark', palette: PAL.timberDark, timber: true, normal: 0.55, contrast: 0.68, roughMin: 0.64, roughMax: 0.95 },
 ];
@@ -146,7 +148,7 @@ async function install(library: Library, loadTexture?: (url: string) => Promise<
   }
   const saved = materials.map(m => ({ color: m.color.clone(), map: m.map,
     roughnessMap: m.roughnessMap, normalMap: m.normalMap,
-    nodes: ['colorNode', 'roughnessNode', 'normalNode'].map(key => ({
+    nodes: ['colorNode', 'roughnessNode', 'normalNode', 'customProgramCacheKey'].map(key => ({
       key, descriptor: Object.getOwnPropertyDescriptor(m, key),
     })),
   }));
@@ -159,6 +161,14 @@ async function install(library: Library, loadTexture?: (url: string) => Promise<
     m.map = m.roughnessMap = m.normalMap = null;
     const offset = profile.timber ? 2 : 0;
     Object.assign(m, nodes(textures[offset], textures[offset + 1], profile));
+    // r180 RenderObject hashes arbitrary object-valued properties as '{}'. The
+    // borrowed standard material's default key does NOT hash these node hooks,
+    // so plaster and timber otherwise alias one shader despite different nodes.
+    // Cache the complete key once: stable across frames, no per-draw allocation.
+    // Texture identities also prevent a rebuilt library from inheriting a cached
+    // node-builder state whose literal texture bindings belonged to its disposer.
+    const programKey = `${m.customProgramCacheKey()}|architecture-v2/${profile.key}/${textures[offset].uuid}/${textures[offset + 1].uuid}`;
+    m.customProgramCacheKey = () => programKey;
     m.needsUpdate = true;
   }
   controller = {

@@ -54,6 +54,8 @@ Primary implementation sources (installed r180 checked before use):
 - https://github.com/mrdoob/three.js/blob/r180/src/renderers/common/nodes/NodeLibrary.js
 - https://github.com/mrdoob/three.js/blob/r180/src/nodes/utils/TriplanarTextures.js
 - https://github.com/mrdoob/three.js/blob/r180/src/nodes/accessors/Normal.js
+- https://github.com/mrdoob/three.js/blob/r180/src/renderers/common/RenderObject.js
+- https://github.com/mrdoob/three.js/blob/r180/src/materials/nodes/NodeMaterial.js
 - https://polyhaven.com/license
 - https://polyhaven.com/a/white_plaster_rough_01
 - https://polyhaven.com/a/brown_planks_09
@@ -131,3 +133,37 @@ post/chair should show fine directional grain instead of broad muddy clouds.
 InteriorOrange must lose the repeated wet-looking bands while retaining fine
 plaster detail. Root must compare against BOTH original baseline and rejected
 round-0715 pixels. One visual repair remains after this candidate.
+
+## Visual repair 2 — final bounded correction
+
+Root rejected the interior in `captures/gauntlet/architecture/round-r1-0725` after
+another eight-frame GPU pass. Inspected all four before/after spawnA and
+interiorOrange images: the exterior improves, while large vertical bands and a
+rough dark ceiling remain indoors. Repair 1's frequency diagnosis was incomplete.
+
+VERIFIED structural cause: r180 `RenderObject.getMaterialCacheKey()` serializes
+ordinary object-valued material properties as `{}`; the original
+MeshStandardMaterial cache method does not hash the added TSL graph. Consequently
+plaster and timber can share a node-builder state and its literal texture bindings.
+The CPU fixture now calls the ACTUAL r180 RenderObject method and reproduces the
+plaster/timber collision when the fix is removed. The repaired seven profiles have
+seven distinct stable keys, including the owned texture identities so a replacement
+library cannot bind disposed maps. The key is constructed once, with no per-frame
+allocation, and the original method is restored on disposal. This is a cache fix,
+not a renderer migration. Correctly distinct programs may increase shader count;
+draws and textures remain unchanged and shader counts should stabilize after warmup.
+
+The fixture also verifies adapted `map === null`, ruling out multiplication by the
+old procedural map. Builder readback shows the visible perimeter wall uses
+stuccoCream on BOTH faces, while partitions and the ceiling slab use interiorWall;
+simply excluding interiorWall would not have corrected the entire rejected view.
+The painted interior/roof profiles now use a finer sealed response (normal scale
+0.16; colour contrast 0.075/0.07), while exterior plaster, capsule and timber
+profile values and all texture assets remain unchanged from repair 1.
+
+OPEN final acceptance: compare the exact root interiorOrange frames; the wall must
+lose wood-like vertical bands and the slab underside must read as clean painted
+plaster with fine grain. Compare spawnA as well: retain the exterior improvement.
+Root boot/resource validation remains required; CPU cache proof does not establish
+the final appearance. Both rejected rounds and commits remain preserved. Repair
+budget exhausted after this candidate; change approach if it still fails.
