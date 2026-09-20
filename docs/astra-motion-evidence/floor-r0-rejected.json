@@ -1,0 +1,1 @@
+{"trial":"r0","check":"level prone weapon/arm floor during offhand","result":"FAIL","minimumWorldY":-0.2794072968850518,"correction":"use lateral withdrawal at low stance instead of downward weapon drop; preserve all ordnance timing","thresholdWorldY":0.02}

@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "claim_state": "VERIFIED source/CPU; OPEN browser/art",
+  "source_commit": "d4406fdbfb62e8f7424f4378aab2cb8f3803da72",
+  "base_commit": "e8b4b6d75e9e9843e4affe22f393dd07ba2388c6",
+  "worktree": "C:/Users/david/Desktop/stuff/worktrees/nuketown-astra-motion-20260920",
+  "branch": "art/astra-motion-20260920",
+  "requested_author": { "harness": "Codex", "model": "gpt-6-astra", "effort": "xhigh", "task": "astra_motion" },
+  "deadline": "2026-09-20T09:00:00+01:00",
+  "feature_flag": "motion=canary",
+  "root_required_edit": "src/main.ts movement sample: prone: player.getStance() === 'prone'",
+  "source_files": ["src/weapons/viewmodel-motion.ts", "src/weapons/first-person-hands-motion.ts", "src/weapons/controller.ts", "src/weapons/first-person-hands.ts", "src/weapons/types.ts"],
+  "test": "node scripts/verify-viewmodel-motion.mjs",
+  "result": "docs/astra-motion-evidence/cpu-result.json",
+  "build": { "check": "PASS", "build": "PASS", "bundle": "dist/assets/index-CABw0VVM.js", "sha256": "82b42bf27b42a6a71a5a8b4a7aab8fc01a19a695d3ce340ec1730ecbd9225321" },
+  "coverage": { "rigs": 5, "profile_mappings": 20, "admitted_controller_profiles": 17, "simulated_frames": 6970, "exact_action_claims": 172 },
+  "timing_authority": "Existing controller/ordnance; no animation-authored events",
+  "geometry_changes": false,
+  "gpu_or_browser_jobs": 0,
+  "repair_count": 1,
+  "rejected_trials": [
+    { "id": "motion-r0", "reason": "prone offhand floor penetration", "receipt": "docs/astra-motion-evidence/floor-r0-rejected.json", "correction": "lateral low-stance withdrawal; first-frame stance initialization" },
+    { "id": "muse-pistol-0558", "author": "Muse Spark 1.3 Contributor", "applied": false, "proof": "original C1-C5 unchanged", "failed": ["C2-envelope", "C3-grip-contact"], "receipt": "docs/astra-motion-evidence/muse-0558-rejected.txt" }
+  ],
+  "open": ["Root-owned main.ts prone sample", "Actual game visual comparison and recordings", "Extreme camera pitch floor/chest clearance", "Anatomical hand geometry and moving fingers", "Separate magazine extraction", "Grenade-throwing arm geometry", "Renderer/FPS/mobile/resize/soak acceptance"],
+  "frozen_artifact_untouched": "4212 / 233c7d71ea75f3aed30850163a40f8d6074e85f6"
+}
