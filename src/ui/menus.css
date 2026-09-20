@@ -942,3 +942,45 @@
   }
   #start .aa-solo .aa-kits { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+/* --- Menu visible-deploy repair (2026-09-20): measured 1600x900 Deploy top917 bottom957 ---
+ * Respawn sits in .aa-solo-setup again, so only Deploy/Back stays full-width.
+ * The rest is measured card size (kit title/summary/bars, 13 prims in 3 rows,
+ * 9 setup rows + note, 26px title, 14/20px gaps) compacted under .aa-solo only.
+ * No control removed, no display:none for controls, no overflow clipping; the
+ * overlay keeps overflow-y auto so 390x844 still scrolls to Deploy. */
+#start .aa-solo .aa-h2 { font-size: 20px; letter-spacing: 3px; }
+#start .aa-solo-cols { gap: 10px; }
+#start .aa-solo-setup { gap: 8px; }
+#start .aa-solo-setup .aa-setting-row { padding: 2px 0; row-gap: 1px; }
+#start .aa-solo-setup .aa-select { padding: 4px 8px; font-size: 12px; }
+#start .aa-solo-setup .aa-seg-btn { padding: 4px 10px; font-size: 11px; }
+#start .aa-solo .aa-diffnote { font-size: 10px; }
+#start .aa-solo-loadout .aa-loadout { gap: 6px; }
+#start .aa-solo .aa-loadsub { margin-top: 0; font-size: 9px; }
+#start .aa-solo .aa-kits { gap: 6px; }
+#start .aa-solo .aa-kit { padding: 6px 8px; gap: 3px; }
+#start .aa-solo .aa-kit-role { font-size: 9px; }
+#start .aa-solo .aa-kit-title { font-size: 13px; }
+#start .aa-solo .aa-kit-summary { font-size: 10px; }
+#start .aa-solo .aa-kit-weapon { font-size: 11px; }
+#start .aa-solo .aa-kit-wstats { font-size: 10px; }
+#start .aa-solo .aa-kit-grenade { font-size: 9px; }
+#start .aa-solo .aa-prims { gap: 4px; }
+#start .aa-solo .aa-prim { padding: 4px 6px; gap: 1px; }
+#start .aa-solo .aa-prim-name { font-size: 11px; }
+#start .aa-solo .aa-prim-line { font-size: 9px; }
+#start .aa-solo .aa-tac { padding: 4px 8px; }
+#start .aa-solo .aa-loadline { font-size: 10px; }
+#start .aa-solo > .aa-row { margin-top: 0; gap: 10px; }
+#start .aa-solo > .aa-row .aa-btn { padding: 8px 20px; font-size: 12px; }
+@media (min-width: 1024px) {
+  #start .aa-solo-cols { gap: 12px; }
+  #start .aa-solo .aa-kits { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  #start .aa-solo .aa-prims { grid-template-columns: repeat(auto-fit, minmax(84px, 1fr)); }
+}
+@media (max-height: 760px) {
+  #start .aa-solo .aa-h2 { font-size: 18px; }
+  #start .aa-solo-setup { gap: 6px; }
+  #start .aa-solo-setup .aa-setting-row { padding: 1px 0; }
+  #start .aa-solo-loadout .aa-loadout { gap: 5px; }
+}

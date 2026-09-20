@@ -61,6 +61,19 @@ function row(label: string, control: HTMLElement, hint = ''): HTMLElement {
   }
   return r;
 }
+// A grouped control (radiogroup) must not sit inside a <label>: the label
+// element would lend its text to the first labelable descendant, so the
+// Recruit radio read as "Difficulty" instead of "Recruit". A div row keeps
+// the visible caption while the group stays labelled by its own aria-label
+// and every radio keeps its own accessible name.
+function groupRow(label: string, control: HTMLElement): HTMLElement {
+  const r = document.createElement('div');
+  r.className = 'aa-setting aa-setting-row';
+  const name = document.createElement('span');
+  name.textContent = label;
+  r.append(name, control);
+  return r;
+}
 
 function selectOf(label: string, options: readonly { value: string; text: string }[], onPick: (v: string) => void): HTMLSelectElement {
   const sel = document.createElement('select');
@@ -145,6 +158,7 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
     b.type = 'button';
     b.className = 'aa-btn aa-seg-btn';
     b.setAttribute('role', 'radio');
+    b.setAttribute('aria-label', p.label);
     b.textContent = p.label;
     b.title = `reaction ${p.reactionMs} ms · range ${p.fireRangeM} m · aim error ${(p.aimErrorRad * 1000).toFixed(0)} mrad`;
     b.addEventListener('click', (e) => { stop(e); change({ difficulty: id }); });
@@ -157,7 +171,7 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
       b.setAttribute('aria-checked', id === setup.difficulty ? 'true' : 'false');
     }
   });
-  setupCol.append(row('Difficulty', diff));
+  setupCol.append(groupRow('Difficulty', diff));
   const diffNote = document.createElement('div');
   diffNote.className = 'aa-hint aa-diffnote';
   refreshers.push(() => {
@@ -185,7 +199,7 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
 
   const respawnSel = selectOf('Respawn delay', RESPAWN_DELAYS_MS.map((t) => ({ value: String(t), text: (t / 1000).toFixed(1) + ' s' })), (v) => change({ respawnMs: Number(v) }));
   refreshers.push(() => { respawnSel.value = String(setup.respawnMs); });
-  root.append(row('Respawn delay', respawnSel));
+  setupCol.append(row('Respawn delay', respawnSel));
 
   const teamSel = selectOf('Team balance', BOT_TEAM_LAYOUTS.map((t) => ({ value: t, text: TEAM_LABEL[t] })), (v) => change({ teams: v as BotTeamLayout }));
   refreshers.push(() => { teamSel.value = setup.teams; teamSel.disabled = setup.mode === 'ffa'; });
