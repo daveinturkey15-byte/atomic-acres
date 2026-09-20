@@ -1,0 +1,27 @@
+{
+  "at": "2026-09-20T17:10:07.244505+01:00",
+  "kind": "lead-verification-not-worker-native-parity",
+  "cli": {
+    "cwd": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-carbine-20260920",
+    "command": "python C:/Users/david/Desktop/stuff/akp-passport/scripts/blender/bridge.py cli -- --version",
+    "exit_code": 0,
+    "observed_version": "Blender 5.1.2",
+    "earlier_attempt": "held by resource guard"
+  },
+  "mcp": {
+    "harness": "Codex root",
+    "tool": "mcp__blender__get_addon_status",
+    "first_attempt": "connection lost WinError10054, retained as failure",
+    "recovery": "shared bridge status/ensure then one native retry",
+    "final_up_to_date": true,
+    "source": "native",
+    "addon_version": [
+      1,
+      7
+    ],
+    "protocol_version": 7,
+    "blender_version": "5.1.2",
+    "telemetry_consent": false
+  },
+  "worker_limit": "Muse self-report claims native call but retained event names show only read/bash; CLI bridge status confirmed by worker claim, batch version independently verified by lead. No claim of all-worker native parity."
+}

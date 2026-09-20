@@ -2652,7 +2652,7 @@
       "Astraarchitecture r0/r1 actual material bands; corrected r2 accepted narrowly"
     ]
   },
-  "updated_at": "2026-09-20T17:08:40.859876+01:00",
+  "updated_at": "2026-09-20T17:10:07.244505+01:00",
   "current_ownership": {
     "root": "Astra orchestration/review only. Two OMP source jobs remain bounded to17:18. Extra GLM/Muse and two AGY scopes staged to make two per route; none newly launched during resource hold. Root owns serial Blender/browser acceptance.",
     "native_astras": "Historical specialists stopped; do not restart.",
@@ -2844,7 +2844,7 @@
     },
     "effective_parallel_workers": 6,
     "expansion_plan": "docs\\orchestration\\resume-20260920\\EXPANSION-PLAN.json",
-    "expansion_hold": "Fresh resource and native access gates apply; capacity parameter tested without weakening single-writer/attempt/budget checks.",
+    "expansion_hold": "Validated maximum6, but17:08 live third-worker admission refused:15.68GiB freeRAM <18GiB required for3 source workers. Later resource sample12.98GiB; no additional job launched.",
     "expansion_owner_authorized": true,
     "expansion_authorization": "Dave17:00 requested an extra worker of each GLM/Muse/Gemini type; explicit scoped source expansion only."
   },
@@ -3031,6 +3031,6 @@
     "muse": "Worker reports native get_addon_status, but retained tool events only read/bash: claim unverified. CLI status only, no batch execution proof. Admitted skills_read empty: must be corrected in bounded follow-up before acceptance. Preserve source candidate.",
     "glm": "No retained provider events yet; observed serving identity and worker access remain unknown. Bounded timeout17:18. No invented quota diagnosis.",
     "agy": "Queued; native adoption guard passed16:46 but this is not fresh worker MCP/CLI proof.",
-    "root_blender": "Bridge MCP status ready addon1.7/protocol7/Blender5.1.2 at16:50. Batch CLI version attempt17:01 held by resource guard, not a connection failure."
+    "root_blender": "VERIFIED17:09 guarded batch CLI executed Blender5.1.2 from Muse private tree. Native Codex MCP initially lost its connection, then bridge status/ensure and one retry returned native addon1.7/protocol7/Blender5.1.2 with telemetry off. Worker native-use claims still require trace evidence; parent proof is not inheritance."
   }
 }
