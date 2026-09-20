@@ -62,6 +62,7 @@ import { ssr } from 'three/addons/tsl/display/SSRNode.js';
 import { bloom } from 'three/addons/tsl/display/BloomNode.js';
 import type { WorldRenderer } from './renderer';
 import { buildAtmosphereFx, type Atmosphere, type TodName, type WeatherName } from './atmosphere';
+import { updateReflectiveSurfaces, disposeReflectiveSurfaces } from './reflective-surfaces';
 
 /** Which path the chain took. `off` = WebGPU present but a pass failed. */
 export type PostBackend = 'webgpu' | 'webgl2' | 'off';
@@ -137,13 +138,14 @@ export function buildPost(
   return {
     captureMrt: null,
     render: () => {
+      updateReflectiveSurfaces(scene);
       renderer.render(scene, camera);
     },
     setSize: (w, h) => {
       renderer.setSize(w, h);
     },
     dispose: () => {
-      /* nothing held beyond the renderer itself */
+      disposeReflectiveSurfaces(scene);
     },
     enabled: false,
     backend: onWebGPU ? 'off' : 'webgl2',
@@ -603,6 +605,7 @@ function buildChain(
     return {
       captureMrt: sceneMrt,
       render: () => {
+        updateReflectiveSurfaces(scene);
         if (chainBroken) {
           renderer.render(scene, camera);
           return;
@@ -627,6 +630,7 @@ function buildChain(
         fx.setSize(ds.x, ds.y);
       },
       dispose: () => {
+        disposeReflectiveSurfaces(scene);
         material.dispose();
         scenePass.dispose();
         fx.dispose();
