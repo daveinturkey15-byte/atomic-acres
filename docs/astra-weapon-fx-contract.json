@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "frozen_at": "2026-09-20T07:07:00Z",
+  "owner": "Astra xhigh motion lane, explicitly authorized until 09:00 BST",
+  "source_scope": ["src/weapons/effects.ts", "src/weapons/weapon-fx-canary.ts"],
+  "flag": "weapon-fx=canary",
+  "max_source_repairs": 2,
+  "source_handoff_deadline": "2026-09-20T07:28:00Z",
+  "default_and_grenade_contract": "Existing legacy transforms, lifetimes, counters, decals, tracer/shell emissions identical for identical input. Canary receives only existing flashAt/impact calls; blast bypasses canary. No controller, damage, ammunition, cadence or grenade source changes.",
+  "ownership_seam": "Root adds this.effects.dispose() after the idempotence guard in WeaponController.dispose(). Only new helper-owned resources are released; historical legacy pool ownership is outside this slice.",
+  "budgets": {"additional_draw_batches_max": 3, "owned_texture_and_buffer_bytes_max": 1048576, "muzzle_pool": 48, "dust_pool": 80, "spark_pool": 64, "additional_lights": 0, "hot_path_new_objects_arrays_materials_geometries": 0},
+  "visual_bar": [
+    "Brief translucent gas lobes leave the muzzle in firing direction, slow and disperse into softer trailing wisps; retain short existing flash.",
+    "Impacts originate outside the surface, eject a varied normal-directed dust/debris fan, and show brief narrow sparks only on the existing non-dusty surface path.",
+    "No rectangular alpha-card borders, wall-visible-through smoke, uniform marching particles, persistent glowing fog or gameplay obscuration.",
+    "Timestamped actual firing and impact sequences on identical root build/flags; renderer <=1200 calls and <=900000 triangles, zero errors; author does not self-accept pixels."
+  ],
+  "cpu_harness": ["default and unknown flag exact legacy trace", "grenade-only exact legacy trace under canary with zero helper emissions", "one shot/impact positive emissions", "bounded saturated pool and stable resource identities", "zero/negative/NaN dt unchanged", "large dt expires all", "finite coordinates/alpha under varied normals", "time-step partition agreement", "dispose twice emits one release per owned resource and leaves borrowed materials alive", "reconstruct independent resources", "mask transparent edges with internal variation", "negative controls deliberately violate draw/memory/expiry/default invariants"],
+  "provenance": "Original analytic masks and particles authored here. Three r180 installed source and current official docs for BufferAttribute and MeshBasicMaterial. No external game art, shader or gameplay module copied.",
+  "open": ["Actual WebGPU/WebGL compile and pixels are root-only", "Actual frame-time and heap/resource soak are root-only", "No material identity beyond existing dusty boolean is inferred"]
+}
