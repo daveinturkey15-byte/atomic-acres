@@ -1,0 +1,563 @@
+{
+  "schema": 1,
+  "frozen_at": "2026-09-20T06:21:47.351Z",
+  "flag": "hands=rifle-canary",
+  "source": "buildRifleViewmodel at59457e7; actual authored mesh bounds/transforms, no socket changes",
+  "solid_method": "Conservative oriented bounding boxes measured from all28 actual weapon meshes; includes rounded-box corner voids and cylinder corners",
+  "weapon_solids": [
+    {
+      "id": "receiver",
+      "meshIndex": 0,
+      "center": [
+        0,
+        0.02,
+        -0.12
+      ],
+      "half": [
+        0.029999999329447746,
+        0.04500000178813934,
+        0.17000000178813934
+      ],
+      "rx": 0,
+      "geometryType": "RoundedBoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "topRail",
+      "meshIndex": 1,
+      "center": [
+        0,
+        0.071,
+        -0.12
+      ],
+      "half": [
+        0.014999999664723873,
+        0.006000000052154064,
+        0.15000000596046448
+      ],
+      "rx": 0,
+      "geometryType": "RoundedBoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "barrel",
+      "meshIndex": 2,
+      "center": [
+        0,
+        0.035,
+        -0.44
+      ],
+      "half": [
+        0.010999999940395355,
+        0.15000000596046448,
+        0.010999999940395355
+      ],
+      "rx": 1.5707963267948966,
+      "geometryType": "CylinderGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "muzzleDevice",
+      "meshIndex": 3,
+      "center": [
+        0,
+        0.035,
+        -0.585
+      ],
+      "half": [
+        0.01600000075995922,
+        0.02500000037252903,
+        0.01600000075995922
+      ],
+      "rx": 1.5707963267948966,
+      "geometryType": "CylinderGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "handguard",
+      "meshIndex": 4,
+      "center": [
+        0,
+        0.03,
+        -0.36
+      ],
+      "half": [
+        0.03500000014901161,
+        0.03500000014901161,
+        0.12999999523162842
+      ],
+      "rx": 0,
+      "geometryType": "RoundedBoxGeometry",
+      "maxPenetrationM": 0.002
+    },
+    {
+      "id": "handguardRibBack",
+      "meshIndex": 5,
+      "center": [
+        0,
+        0.03,
+        -0.3
+      ],
+      "half": [
+        0.03700000047683716,
+        0.006000000052154064,
+        0.009999999776482582
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.002
+    },
+    {
+      "id": "handguardRibMid",
+      "meshIndex": 6,
+      "center": [
+        0,
+        0.03,
+        -0.36
+      ],
+      "half": [
+        0.03700000047683716,
+        0.006000000052154064,
+        0.009999999776482582
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.002
+    },
+    {
+      "id": "handguardRibFront",
+      "meshIndex": 7,
+      "center": [
+        0,
+        0.03,
+        -0.42
+      ],
+      "half": [
+        0.03700000047683716,
+        0.006000000052154064,
+        0.009999999776482582
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.002
+    },
+    {
+      "id": "sideRailLeft",
+      "meshIndex": 8,
+      "center": [
+        -0.041,
+        0.035,
+        -0.36
+      ],
+      "half": [
+        0.004000000189989805,
+        0.017500000074505806,
+        0.0949999988079071
+      ],
+      "rx": 0,
+      "geometryType": "RoundedBoxGeometry",
+      "maxPenetrationM": 0.002
+    },
+    {
+      "id": "sideRailRight",
+      "meshIndex": 9,
+      "center": [
+        0.041,
+        0.035,
+        -0.36
+      ],
+      "half": [
+        0.004000000189989805,
+        0.017500000074505806,
+        0.0949999988079071
+      ],
+      "rx": 0,
+      "geometryType": "RoundedBoxGeometry",
+      "maxPenetrationM": 0.002
+    },
+    {
+      "id": "collarRear",
+      "meshIndex": 10,
+      "center": [
+        0,
+        0.035,
+        -0.265
+      ],
+      "half": [
+        0.019999999552965164,
+        0.012000000104308128,
+        0.019999999552965164
+      ],
+      "rx": 1.5707963267948966,
+      "geometryType": "CylinderGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "collarFront",
+      "meshIndex": 11,
+      "center": [
+        0,
+        0.035,
+        -0.465
+      ],
+      "half": [
+        0.017999999225139618,
+        0.008999999612569809,
+        0.017999999225139618
+      ],
+      "rx": 1.5707963267948966,
+      "geometryType": "CylinderGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "stock",
+      "meshIndex": 12,
+      "center": [
+        0,
+        0.01,
+        0.16
+      ],
+      "half": [
+        0.027499999850988388,
+        0.054999999701976776,
+        0.10999999940395355
+      ],
+      "rx": 0,
+      "geometryType": "RoundedBoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "buttpad",
+      "meshIndex": 13,
+      "center": [
+        0,
+        0.01,
+        0.28
+      ],
+      "half": [
+        0.029999999329447746,
+        0.06499999761581421,
+        0.014999999664723873
+      ],
+      "rx": 0,
+      "geometryType": "RoundedBoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "grip",
+      "meshIndex": 14,
+      "center": [
+        0,
+        -0.09,
+        0
+      ],
+      "half": [
+        0.02250000089406967,
+        0.06499999761581421,
+        0.027499999850988388
+      ],
+      "rx": 0.35,
+      "geometryType": "RoundedBoxGeometry",
+      "maxPenetrationM": 0.002
+    },
+    {
+      "id": "magazine",
+      "meshIndex": 15,
+      "center": [
+        0,
+        -0.12,
+        -0.13
+      ],
+      "half": [
+        0.02250000089406967,
+        0.07999999821186066,
+        0.03500000014901161
+      ],
+      "rx": -0.3,
+      "geometryType": "RoundedBoxGeometry",
+      "maxPenetrationM": 0.002
+    },
+    {
+      "id": "magazineFoot",
+      "meshIndex": 16,
+      "center": [
+        0,
+        -0.195,
+        -0.105
+      ],
+      "half": [
+        0.024000000208616257,
+        0.009999999776482582,
+        0.0364999994635582
+      ],
+      "rx": -0.3,
+      "geometryType": "RoundedBoxGeometry",
+      "maxPenetrationM": 0.002
+    },
+    {
+      "id": "trigger",
+      "meshIndex": 17,
+      "center": [
+        0,
+        -0.035,
+        -0.045
+      ],
+      "half": [
+        0.004000000189989805,
+        0.014999999664723873,
+        0.004999999888241291
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "guardBottom",
+      "meshIndex": 18,
+      "center": [
+        0,
+        -0.055,
+        -0.035
+      ],
+      "half": [
+        0.003000000026077032,
+        0.003000000026077032,
+        0.03500000014901161
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "guardFront",
+      "meshIndex": 19,
+      "center": [
+        0,
+        -0.04,
+        -0.068
+      ],
+      "half": [
+        0.003000000026077032,
+        0.014999999664723873,
+        0.003000000026077032
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "frontSightBase",
+      "meshIndex": 20,
+      "center": [
+        0,
+        0.075,
+        -0.55
+      ],
+      "half": [
+        0.004999999888241291,
+        0.009999999776482582,
+        0.004999999888241291
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "frontSightPost",
+      "meshIndex": 21,
+      "center": [
+        0,
+        0.095,
+        -0.55
+      ],
+      "half": [
+        0.003000000026077032,
+        0.017500000074505806,
+        0.003000000026077032
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "rearSightBase",
+      "meshIndex": 22,
+      "center": [
+        0,
+        0.082,
+        0.02
+      ],
+      "half": [
+        0.014999999664723873,
+        0.004999999888241291,
+        0.014999999664723873
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "rearSightLeft",
+      "meshIndex": 23,
+      "center": [
+        -0.013,
+        0.095,
+        0.02
+      ],
+      "half": [
+        0.004000000189989805,
+        0.012500000186264515,
+        0.009999999776482582
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "rearSightRight",
+      "meshIndex": 24,
+      "center": [
+        0.013,
+        0.095,
+        0.02
+      ],
+      "half": [
+        0.004000000189989805,
+        0.012500000186264515,
+        0.009999999776482582
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "chargingSpine",
+      "meshIndex": 25,
+      "center": [
+        0,
+        0.06,
+        0.06
+      ],
+      "half": [
+        0.009999999776482582,
+        0.007499999832361937,
+        0.019999999552965164
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "chargingBar",
+      "meshIndex": 26,
+      "center": [
+        0,
+        0.06,
+        0.075
+      ],
+      "half": [
+        0.02500000037252903,
+        0.007499999832361937,
+        0.009999999776482582
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.001
+    },
+    {
+      "id": "ejectionPort",
+      "meshIndex": 27,
+      "center": [
+        0.031,
+        0.03,
+        -0.1
+      ],
+      "half": [
+        0.0020000000949949026,
+        0.014999999664723873,
+        0.04500000178813934
+      ],
+      "rx": 0,
+      "geometryType": "BoxGeometry",
+      "maxPenetrationM": 0.001
+    }
+  ],
+  "spatial": {
+    "triggerEnvelope": {
+      "min": [
+        -0.08,
+        -0.22,
+        -0.105
+      ],
+      "max": [
+        0.105,
+        -0.02,
+        0.145
+      ]
+    },
+    "supportEnvelope": {
+      "min": [
+        -0.1,
+        -0.125,
+        -0.425
+      ],
+      "max": [
+        0.075,
+        0.055,
+        -0.245
+      ]
+    },
+    "gripContactMaxM": 0.005,
+    "foreEndContactMaxM": 0.005,
+    "indexTarget": [
+      0.005,
+      -0.035,
+      -0.045
+    ],
+    "indexSurfaceContactMaxM": 0.009,
+    "reloadPalmSurfaceTarget": [
+      0,
+      -0.20455336467772173,
+      -0.10204479799944051
+    ],
+    "reloadSurfaceErrorMaxM": 0.008,
+    "wristGapMaxM": 0.001,
+    "armLengthDriftMaxM": 0.001,
+    "levelCameraFloorMinM": 0.02
+  },
+  "geometry": {
+    "maxMeshes": 12,
+    "maxTriangles": 4836,
+    "newTextures": 0,
+    "maxSharedMaterials": 3,
+    "perFrameGeometryMaterialAllocations": 0,
+    "digitsPerHand": 4,
+    "thumbsPerHand": 1
+  },
+  "temporal": {
+    "reloadSamples": 241,
+    "offhandSamples": [
+      0,
+      0.25,
+      0.5,
+      0.75,
+      1
+    ],
+    "stanceSamples": [
+      "crouch",
+      "prone"
+    ],
+    "adsSamples": [
+      0,
+      1
+    ]
+  },
+  "frozen_pistol_sources": {
+    "src/weapons/rigged-pistol-hands.ts": "476deaafb3ee41f74f64fa3c3241f061b06afddfbfd74eecde99f9e1f736f76a",
+    "src/weapons/first-person-hands-motion.ts": "8da60e830ef26e0e207ab1e97cf113a99e84a834fff0a2045282a76a3c320aa6"
+  },
+  "repair_budget": 2,
+  "source_deadline": "2026-09-20T08:05:00+01:00",
+  "browser_gpu_jobs": 0,
+  "visual_acceptance": "OPEN root matching real frames and temporal comparison; pistol candidate stays unchanged"
+}
