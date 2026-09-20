@@ -1,0 +1,15 @@
+# Operator preview accepted after the inspection checkpoint
+
+VERIFIED - [Open the newer preview](http://127.0.0.1:4240/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&operator-shape=canary). Choose **Play solo**, then **Deploy**. The 10:55 preview at port 4234 and frozen morning build at 4212 remain unchanged.
+
+VERIFIED - This accepts a scoped operator improvement: continuous shirt and trouser surfaces, fitted kneepads and more coherent cloth across the existing rig. Root compared the actual before/after crouch frames again and retained the five-pose evidence. Faces, hands, anatomical realism and the map-wide visual target remain OPEN. The source was authored by observed Meta Muse Spark 1.3 Contributor xhigh; OpenAI reviewed, integrated and ran acceptance.
+
+VERIFIED - Exact runtime source `3301fb12fdc49e6ec4b073e7527e8b5c20c2029e`, retained `dist-operator-candidate-1038`, served `index-iQaFdY6u.js` SHA256 `e5b3d2bb07b4eabf7f0c8334014ae67b3c92c35a1147290f1bea7dbb0a82da58`. Fresh HTTP bytes matched this hash. Existing GLB and texture guards passed on the actual exported 12,520-triangle, 21-bone, two-primitive model; five staged poses rendered through the normal game loop. These poses do not establish multiplayer correctness.
+
+VERIFIED - The new operator-only soak completed 210.7 seconds, 11,476 frames, 54.5 fps average. JS slope was 0.444 MiB/min; renderer growth was 2.94 MiB with 47% of fitted steps rising. The unchanged stability gate passed. Listeners remained 194; geometry and texture counts settled after initial loading. Minimum free resources were 28.48 GiB RAM and 3,480 MiB VRAM, with no guard cancellation. The 60 fps target remains OPEN.
+
+VERIFIED - Evidence: `captures/leak/soak-operator-only-1106-soak.json`, `.recovery-runtime/soak-operator-only-1106-guard.json`, `captures/operator-live-1038/before/`, `captures/operator-live-1038/after/`, and the corrected sequential critic in `work/pair-binding-muse-1046/`.
+
+OPEN - World-weapon remains disabled after its combined candidate failed the process-memory gate. This passing operator-only run isolates a useful comparison, but does not prove the failed run's cause. Mountain-volume, macro-presence and weapon-fx candidates remain disabled. The presence module also failed an independent rejected-install/retry lifecycle test and is not integrated.
+
+OPEN - Four bounded external source lanes are working separately: Muse first-person glove shells, Muse envelope-first sedan construction, GLM clear-afternoon sky, and GLM supply-crate arithmetic/lifecycle repair. Model attribution for these new runs stays pending until their receipts expose it. AGY is held until its real quota cooldown ends at 12:46 BST. No Astra implementation agents were restarted.

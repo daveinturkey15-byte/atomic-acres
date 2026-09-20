@@ -11,3 +11,11 @@ Shared loader geometry/material/texture identities require deduplicated disposal
 Mechanical green does not establish art. Authored-mountain candidate passed48CPU+28browser checks yet actualframes resembled blank towers and failed the frozenpanorama target. Retain failedreferenceevidence and change representation after bounded repairs; never relax the visualbar or relabel procedural art as image-to-3D.
 
 Evidence: docs/handoff/REVIEW-2026-09-19-2305.md; .recovery-runtime/heroes-build-2300-r1/; .recovery-runtime/mountains-build-2306-r2/; captures/authored-mountains-2309/.
+
+## September 20 export and construction lessons
+
+VERIFIED - The operator CPU recipe counted 12,520 triangles while its first actual GLB contained 11,980. Appended kneepad and lens faces used local indices without the destination vertex offset; Blender discarded invalid geometry. The final external repair corrected those offsets and both unchanged GLB guards passed. Validate the exported triangle, primitive, skin and texture data, not only source arrays. Evidence: `work/operator-export-final2-muse-1030/`, `.recovery-runtime/operator-export-final2-1035/`.
+
+VERIFIED - A cylinder helper placed coordinates in world-space vertices but left object location at zero. Later rotations moved the part around the wrong origin. The repaired sedan then failed its actual width envelope, so that approach stopped after two repairs. New construction must define local coordinates, object transforms and the complete wheel/body envelope before producing vertices; neither scaling the finished asset to pass nor loosening the envelope is acceptance. Evidence: `work/car-bake-muse-repair2-0955/` and its preserved Blender failure.
+
+VERIFIED - Browser QA was cancelled when free VRAM dropped to 763 MiB despite adequate launch headroom. A cancelled run remains incomplete. Require measured launch headroom and live reserve monitoring; cancel only the owned QA tree on resource breach. A later healthy point reading alone is insufficient. Evidence: `.recovery-runtime/soak-preview-operator-1048-guard.json`, `.recovery-runtime/headroom-1105.json`.
