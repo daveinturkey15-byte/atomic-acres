@@ -1,0 +1,80 @@
+{
+  "at": "2026-09-20T11:18:53.200888+01:00",
+  "operator_acceptance": "docs/handoff/OPERATOR-ACCEPTANCE-2026-09-20-1110.md",
+  "sedan": {
+    "run_id": "delegated-omp-muse-sedan-envelope-construction-1105-50b7930dc2454b01b4c0bc828a59ca1b",
+    "provider_terminal_error": "present, exact reason unavailable; not classified as quota/auth",
+    "cpu": "PASS",
+    "blender": "FAIL exit9: actual height[-0.3600000143,1.44500005245]",
+    "receipt": ".recovery-runtime/sedan-envelope-1115/receipt.json",
+    "glb_created": false,
+    "remaining": "Actual draw/primitive budget also unproven; repair1 source lane owns both issues"
+  },
+  "crate": {
+    "run_id": "delegated-omp-glm-crate-signed-zero-repair1-1105-09cefb90c0b44f499b7c51531fca5bb6",
+    "process": "timeout; exact partial preserved",
+    "actual_model": "glm-5.3-flash",
+    "root_cpu": "all lifecycle and negative controls PASS",
+    "root_strict_tsc_exit": 0,
+    "test_scenario": "unchanged from previous failing fixture",
+    "runtime": "not integrated; solo event path delegated"
+  },
+  "source_ownership": [
+    {
+      "lane": "muse-fp-glove-shell-1105",
+      "run_id": "delegated-omp-muse-fp-glove-shell-1105-266c6d6db4bd4e5183e9a383f3b3d7a8",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-fp-glove-shell-1105-266c6d6db4bd4e5183e9a383f3b3d7a8\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-animation-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "running-source-only",
+      "observed_models": [],
+      "attribution": "pending-observation",
+      "accepted": false,
+      "owned_directory": "work/fp-glove-shell-muse-1105",
+      "started_at": "2026-09-20T10:03:39+00:00"
+    },
+    {
+      "lane": "muse-sedan-evaluated-export-repair1-1117",
+      "run_id": "delegated-omp-muse-sedan-evaluated-export-repair1-1117-9c515502e193428395b58b09c5e476ac",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-muse-sedan-evaluated-export-repair1-1117-9c515502e193428395b58b09c5e476ac\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-muse-vehicle-20260919",
+      "route": "meta-contributor/muse-spark-1.3-contributor",
+      "effort": "xhigh",
+      "state": "running-source-only",
+      "observed_models": [],
+      "attribution": "pending-observation",
+      "accepted": false,
+      "owned_directory": "work/sedan-evaluated-export-repair1-muse-1117",
+      "started_at": "2026-09-20T10:17:19+00:00"
+    },
+    {
+      "lane": "glm-clear-afternoon-sky-1105",
+      "run_id": "delegated-omp-glm-clear-afternoon-sky-1105-45f68096c3fb489080e6f8e363efe4ba",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-clear-afternoon-sky-1105-45f68096c3fb489080e6f8e363efe4ba\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-environment-20260919",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "running-source-only",
+      "observed_models": [],
+      "attribution": "pending-observation",
+      "accepted": false,
+      "owned_directory": "work/clear-afternoon-sky-glm-1105",
+      "started_at": "2026-09-20T10:03:39+00:00"
+    },
+    {
+      "lane": "glm-crate-solo-integration-1117",
+      "run_id": "delegated-omp-glm-crate-solo-integration-1117-00b3d089436045c2ba2aa19a5c37484d",
+      "receipt": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-recovery-20260919\\.recovery-runtime\\provider-runs\\delegated-omp-glm-crate-solo-integration-1117-00b3d089436045c2ba2aa19a5c37484d\\summary.json",
+      "worktree": "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-glm-respawn-20260919",
+      "route": "zai/glm-5.3-flash",
+      "effort": "max",
+      "state": "running-source-only",
+      "observed_models": [],
+      "attribution": "pending-observation",
+      "accepted": false,
+      "owned_directory": "work/supply-crate-solo-integration-glm-1117",
+      "started_at": "2026-09-20T10:17:19+00:00"
+    }
+  ]
+}
