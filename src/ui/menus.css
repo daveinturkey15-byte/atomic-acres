@@ -918,11 +918,14 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-#start .aa-kit.aa-selected .aa-kit-summary,
-#start .aa-kit:focus-visible .aa-kit-summary { display: block; }
+/* Layout stability: focus must never change card height. The old
+ * :focus-visible expansion (+summary block, +bars flex) moved Deploy for
+ * keyboard users tabbing through kits. Focus stays visible via the orange
+ * outline; the full text stays in the card's title attribute; selecting
+ * (Enter/Space) still expands via .aa-selected. */
+#start .aa-kit.aa-selected .aa-kit-summary { display: block; }
 #start .aa-kit .aa-kit-bars { display: none; }
-#start .aa-kit.aa-selected .aa-kit-bars,
-#start .aa-kit:focus-visible .aa-kit-bars { display: flex; }
+#start .aa-kit.aa-selected .aa-kit-bars { display: flex; }
 #start .aa-prims {
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
   gap: 6px;
