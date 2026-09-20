@@ -4,6 +4,7 @@ import { PAL } from '../core/palette';
 import type { FirstPersonHandsRig } from './types';
 import { createHandMotion } from './first-person-hands-motion';
 import { isMotionCanaryRequested } from './viewmodel-motion';
+import { createRiggedPistolHands, isRiggedPistolRequested } from './rigged-pistol-hands';
 import {
   buildCanarySideGeometries,
   materializeCanarySide,
@@ -61,6 +62,9 @@ export function createFirstPersonHands(
   reloadTarget: readonly [number, number, number] = [0.014, -0.038, Math.min(0.18, Math.max(0.08, -supportZ * 0.52))],
   motionCanary = isMotionCanaryRequested(),
 ): FirstPersonHandsRig {
+  if (supportZ === -0.08 && supportY === -0.055 && isRiggedPistolRequested()) {
+    return createRiggedPistolHands(parent, mat);
+  }
   const sleeve = mat.viewmodel.sleeve;
   const cuff = mat.painted(PAL.opWebbingDark, 0.99, 0);
   const glove = mat.viewmodel.darkGlove;

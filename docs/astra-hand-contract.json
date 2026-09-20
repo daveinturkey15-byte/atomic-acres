@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "frozen_at": "2026-09-20T06:32:00+01:00",
+  "frozen_at": "2026-09-20T06:29:51+01:00",
   "owner": "Astra first-person specialist; root owns visual acceptance",
   "scope": "New pistol-only two-hand grip and shaped forearms, optional hands=rigged. Independent replacement design; rejected Muse0558 remains rejected.",
   "source": "src/weapons/viewmodel.ts buildPistolViewmodel at e8b4b6d; actual canted grip, frame, slide and guard boxes measured in weapon-local metres",

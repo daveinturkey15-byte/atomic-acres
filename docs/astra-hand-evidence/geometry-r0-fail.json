@@ -1,0 +1,177 @@
+{
+  "result": "FAIL",
+  "failures": [
+    "trigger-solid-clearance",
+    "trigger-normal-finite",
+    "support-normal-finite"
+  ],
+  "checks": [
+    {
+      "name": "budget",
+      "pass": true,
+      "detail": {
+        "meshes": 12,
+        "triangles": 4836
+      }
+    },
+    {
+      "name": "material-ownership",
+      "pass": true,
+      "detail": {
+        "materialCount": 3
+      }
+    },
+    {
+      "name": "trigger-envelope",
+      "pass": true,
+      "detail": {
+        "outside": 0
+      }
+    },
+    {
+      "name": "trigger-solid-clearance",
+      "pass": false,
+      "detail": {
+        "worst": {
+          "part": "trigger-thumb",
+          "solid": "grip",
+          "distance": -0.012177157986465167
+        }
+      }
+    },
+    {
+      "name": "trigger-normal-finite",
+      "pass": false,
+      "detail": {
+        "badNormals": 8
+      }
+    },
+    {
+      "name": "trigger-four-fingers",
+      "pass": true,
+      "detail": 4
+    },
+    {
+      "name": "trigger-finger-or-thumb-contact",
+      "pass": true,
+      "detail": {
+        "trigger-palm": 0.00017312294244766283,
+        "trigger-thumb": 0.00006591552634696574,
+        "trigger-four-fingers": 0.000339250691235065,
+        "trigger-cuff": 0.027308379614613566,
+        "trigger-knuckle-panels": 0.023000001788139338
+      }
+    },
+    {
+      "name": "support-envelope",
+      "pass": true,
+      "detail": {
+        "outside": 0
+      }
+    },
+    {
+      "name": "support-solid-clearance",
+      "pass": true,
+      "detail": {
+        "worst": null
+      }
+    },
+    {
+      "name": "support-normal-finite",
+      "pass": false,
+      "detail": {
+        "badNormals": 8
+      }
+    },
+    {
+      "name": "support-four-fingers",
+      "pass": true,
+      "detail": 4
+    },
+    {
+      "name": "support-finger-or-thumb-contact",
+      "pass": true,
+      "detail": {
+        "support-palm": 0.006307754407080011,
+        "support-thumb": 0.011963570492086737,
+        "support-four-fingers": 0.0030772947455687746,
+        "support-cuff": 0.040067094341889105,
+        "support-knuckle-panels": 0.03659985486462319
+      }
+    },
+    {
+      "name": "index-trigger-contact",
+      "pass": true,
+      "detail": -0.0013765246170201993
+    },
+    {
+      "name": "negative-contact",
+      "pass": true,
+      "detail": true
+    },
+    {
+      "name": "negative-solid-penetration",
+      "pass": true,
+      "detail": -0.004
+    },
+    {
+      "name": "negative-missing-finger",
+      "pass": true,
+      "detail": true
+    },
+    {
+      "name": "negative-over-budget",
+      "pass": true,
+      "detail": true
+    },
+    {
+      "name": "wrist-and-length",
+      "pass": true,
+      "detail": {
+        "seam": 9.020562075079397e-17,
+        "stretch": 2.220446049250313e-16
+      }
+    },
+    {
+      "name": "reload-seat",
+      "pass": true,
+      "detail": 6.938893903907228e-18
+    },
+    {
+      "name": "negative-detached-sleeve",
+      "pass": true,
+      "detail": true
+    }
+  ],
+  "summaries": [
+    {
+      "side": "trigger",
+      "minima": {
+        "trigger-palm": 0.00017312294244766283,
+        "trigger-thumb": 0.00006591552634696574,
+        "trigger-four-fingers": 0.000339250691235065,
+        "trigger-cuff": 0.027308379614613566,
+        "trigger-knuckle-panels": 0.023000001788139338
+      },
+      "outside": 0,
+      "worst": {
+        "part": "trigger-thumb",
+        "solid": "grip",
+        "distance": -0.012177157986465167
+      }
+    },
+    {
+      "side": "support",
+      "minima": {
+        "support-palm": 0.006307754407080011,
+        "support-thumb": 0.011963570492086737,
+        "support-four-fingers": 0.0030772947455687746,
+        "support-cuff": 0.040067094341889105,
+        "support-knuckle-panels": 0.03659985486462319
+      },
+      "outside": 0,
+      "worst": null
+    }
+  ],
+  "visualAcceptance": "OPEN"
+}
