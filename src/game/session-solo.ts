@@ -30,6 +30,7 @@ import { MAX_PLAYERS, type MatchStateMsg, type PlayerSample, type ShotMsg, type 
 import { TICK_HZ } from '../net/snapshot';
 import type { ShotClaim } from '../weapons/controller';
 import { BotDirector, nextBotTeam, type BotActorView } from './bots';
+import { loadLoadout, resolveLoadout } from './loadout';
 import { GameClient } from './client';
 import type { ActorId, GameEvent, TeamId, WorldQuery } from './events';
 import { GameHost } from './host';
@@ -149,7 +150,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       deps: { streaks: streakPort(runtime, epoch) },
     });
     const d = new BotDirector({ host: h, world, rand: h.rand, maxBots: MAX_PLAYERS - 1, difficulty });
-    h.addActor(localId, localTeam);
+    h.addActor(localId, localTeam, { primaryId: resolveLoadout(loadLoadout()).primary });
     for (const s of seats.values()) h.addActor(s.id, s.team);
     const humans = [{ team: localTeam }, ...[...seats.values()].map((s) => ({ team: s.team }))];
     for (let i = 0; i < botCount; i++) {

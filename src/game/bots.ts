@@ -59,7 +59,7 @@ export * from './bot-aim';
 /** What the director submits to. Exactly the host's own public methods — no
  *  wrapper, no adapter, so there is nothing here that can drift from it. */
 export interface BotHost {
-  addActor(id: ActorId, team: TeamId, opts?: { bot?: boolean }): void;
+  addActor(id: ActorId, team: TeamId, opts?: { bot?: boolean; primaryId?: string }): void;
   updatePose(id: ActorId, x: number, y: number, z: number, at?: number): void;
   submitInput(id: ActorId, msg: { type: 'input'; seq: number; mx: number; mz: number; yaw: number; pitch: number; fire: boolean; jump: boolean }): void;
   submitShot(id: ActorId, claim: { type: 'shot'; seq: number; life: number; weaponId: string; firedAt: number; ox: number; oy: number; oz: number; dx: number; dy: number; dz: number }, receivedAt?: number): unknown;
@@ -147,7 +147,7 @@ export class BotDirector {
       streakHoldSlot: null, streakHoldUntil: 0, streakBlocked: false,
     };
     this.bots.push(bot);
-    this.opts.host.addActor(id, team, { bot: true });
+    this.opts.host.addActor(id, team, { bot: true, primaryId: weapon.id });
     return bot;
   }
 
