@@ -1034,7 +1034,7 @@ export const buildWhiteHouse: Builder = (ctx) => {
   // gold diamonds on the plum: a square turned 45 degrees about the wall's normal, the
   // repeat of the paper in g-1icNQzMgLUM-263. Skipped where the headboard unit and the
   // doorways stand.
-  const bedZc = HALL_Z - S * (LEAF + 0.01 + 0.45);   // bed 0.9 wide, 10 mm off the hall wall
+  const bedZc = HALL_Z - S * (LEAF + 0.01 + 0.45);   // storage-unit centre: where the bed's head used to stand
   const unitZ: [number, number] = span(bedZc - S * 0.4, bedZc + S * 0.4);
   const SPK_Z = [bedZc - S * 0.24, bedZc + S * 0.24];  // two round speakers over the unit
   for (let y = UY + 0.45; y < U_TOP - 0.25; y += 0.5) {
@@ -1063,9 +1063,13 @@ export const buildWhiteHouse: Builder = (ctx) => {
   }
 
   // ---- the bedroom: purple carpet, single bed on a yellow rug, built-in cream
-  // headboard unit with shelves and a reading light, two round wall speakers, a side
-  // table with a lamp (g-1icNQzMgLUM-256). The bed's head is on the shared wall at its
-  // hall end, its foot toward the curve, the opening to the green room beside it.
+  // storage unit with shelves and a reading light, two round wall speakers, a side
+  // table with a lamp (g-1icNQzMgLUM-256). The bed stood parallel to the hall wall
+  // across the full width of the hall doorway (bed x -4.69..-2.79 over door -4.45..
+  // -2.85, its hall-side edge 10 mm off the partition): the hall door was a painted
+  // opening a body could not step through, and the room was reachable only through
+  // the green-room corner. The bed now stands head-to-the-face-wall along the curve
+  // end, 0.30 m clear of the hall doorway's west jamb, so both doors walk.
   finish(bPlum, -HOUSE_HALF_LEN, BX - LEAF, VOID_Z, HALL_Z - S * LEAF, 0.02);
   const CPT = 0.02;                                   // carpet; everything in here stands on it
   const unitX = BX - LEAF - 0.16;
@@ -1074,15 +1078,23 @@ export const buildWhiteHouse: Builder = (ctx) => {
   for (const sy of [1.42, 1.72]) bWood.add(0.24, 0.04, 0.7, unitX - 0.02, UY + sy, bedZc);
   bDark.add(0.26, 0.3, 0.72, unitX - 0.02, UY + 1.27, bedZc);     // the dark recess behind the shelves
   bGlow.add(0.12, 0.06, 0.3, unitX - 0.14, UY + 1.18, bedZc);
-  const bedCx = unitX - 0.16 - 0.95;
-  // rug, on the carpet; it stops 20 mm short of the headboard unit and of the hall wall
-  bGold.add(2.36, 0.02, 1.6, bedCx - 0.23, UY + CPT + 0.01, bedZc - S * 0.36);
+  // Rotated bed: 0.9 wide in x, 1.9 long in z. East edge sits 0.30 m west of the hall
+  // doorway's west jamb (eroded: 0.3 m of the 1.6 m opening, three cell centres stand);
+  // north end 0.16 m off the face wall for the headboard; west edge 0.7 m+ off the
+  // curve at every z; the green-room corner opening keeps 2.2 m of x clearance.
+  const bedCxN = hallDoorBed[0] - 0.30 - 0.45;        // -5.2: east edge -4.75
+  const bedNorth = ROOM_Z0 + S * 0.16;                // head end 0.16 m off the face wall
+  const bedZcN = bedNorth + S * 0.95;
+  // rug, on the carpet, under the bed and 0.4 m proud of its east side
+  bGold.add(1.7, 0.02, 2.0, bedCxN + 0.1, UY + CPT + 0.01, bedZcN);
   const bedY = UY + CPT + 0.02;                        // bed on the rug
-  bWall.add(1.9, 0.3, 0.9, bedCx, bedY + 0.15, bedZc);
-  bPlum.add(1.8, 0.16, 0.82, bedCx, bedY + 0.38, bedZc);
-  bWall.add(0.5, 0.1, 0.55, bedCx + 0.62, bedY + 0.51, bedZc);     // pillow
-  colliders.push(aabbSlab(bedCx, UY, bedZc, 1.9, 0.55, 0.9));
-  const tblX = -innerX(VOID_Z + S * 0.45) + 0.55, tblZ = VOID_Z + S * 0.45;   // in the curve, by the window
+  bWall.add(0.9, 0.3, 1.9, bedCxN, bedY + 0.15, bedZcN);
+  bPlum.add(0.82, 0.16, 1.8, bedCxN, bedY + 0.38, bedZcN);
+  bWall.add(0.55, 0.1, 0.5, bedCxN, bedY + 0.51, bedNorth + S * 0.35);   // pillow at the head end
+  bWall.add(0.9, 1.0, 0.12, bedCxN, UY + CPT + 0.5, bedNorth - S * 0.06); // headboard, flush with the bed end
+  colliders.push(aabbSlab(bedCxN, UY, bedZcN, 0.9, 0.55, 1.9));
+  colliders.push(aabbSlab(bedCxN, UY, bedNorth - S * 0.06, 0.9, 1.0, 0.12));
+  const tblX = -3.4, tblZ = ROOM_Z0 + S * 0.45;   // east of the bed, under the face window
   bDark.add(0.34, 0.5, 0.34, tblX, UY + CPT + 0.25, tblZ);
   colliders.push(aabbSlab(tblX, UY, tblZ, 0.34, 0.52, 0.34));
   bSteel.add(0.04, 0.3, 0.04, tblX, UY + CPT + 0.65, tblZ);
@@ -1097,7 +1109,7 @@ export const buildWhiteHouse: Builder = (ctx) => {
       g.add(m);
     }
   }
-  pendant((BX - innerX(bedZc)) / 2 - 0.3, VOID_Z + S * 1.3, 0.9);
+  pendant(bedCxN, VOID_Z + S * 1.3, 0.9);
 
   // ---- the pale-green room: circular-pattern rug on the grey-green floor, a low
   // timber unit under the window, a yellow artwork and the starburst clock

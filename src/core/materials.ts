@@ -5,9 +5,57 @@
  * compiles a small, fixed set of programs.
  */
 import * as THREE from 'three';
+import { MeshBasicNodeMaterial, MeshStandardNodeMaterial } from 'three/webgpu';
+import type { Node } from 'three/webgpu';
+import type { ShaderNodeObject } from 'three/tsl';
+import {
+  abs,
+  cameraPosition,
+  cross,
+  float,
+  floor,
+  hash,
+  instanceIndex,
+  length,
+  materialColor,
+  materialRoughness,
+  normalize,
+  oneMinus,
+  positionLocal,
+  smoothstep,
+  time,
+  uniform,
+  uv,
+  varying,
+  vec3,
+  vec4,
+} from 'three/tsl';
 import { PAL } from './palette';
 
 type Ctx2D = CanvasRenderingContext2D;
+type N = ShaderNodeObject<Node>;
+
+// ---------------------------------------------------------------------------
+// WEATHER SURFACES (atmosphere lane, additive). One global uniform, read by the
+// ground family's factories below: rain lowers roughness and darkens albedo on
+// paving / asphalt / concrete / kerb / lawn / sand through `wetStd`, which is the
+// same singleton-per-surface rule as `std` with two node hooks on top. Nothing is
+// constructed at runtime and no new material appears when the weather changes -
+// `setWetness` writes one float and every wet-aware program reads it next frame.
+// At wetness 0 the hooks multiply by exactly 1, so the default frame is unchanged.
+// ---------------------------------------------------------------------------
+const WETNESS = uniform(0);
+/** 0 = dry (default), 1 = rain-soaked. Clamped. */
+export function setWetness(v: number): void {
+  WETNESS.value = Math.min(1, Math.max(0, v));
+}
+export function getWetness(): number {
+  return WETNESS.value;
+}
+/** Roughness drops by this fraction at full wetness (0.65 asphalt -> ~0.25: a wet sheen, not a mirror). */
+const WET_ROUGHNESS_DROP = 0.62;
+/** Albedo darkens by this fraction at full wetness (wet paving reads ~a third darker). */
+const WET_ALBEDO_DROP = 0.34;
 
 function canvas(size: number, draw: (c: Ctx2D, s: number) => void): HTMLCanvasElement {
   const cv = document.createElement('canvas');
@@ -167,6 +215,11 @@ export interface MaterialLibrary {
    */
   interiorWall: THREE.Material;
   roofGlazing: THREE.Material;
+  // Grenade-smoke placeholder (ordnance lane): unlit, soft alpha, no depth
+  // write, so overlapping puff shells accumulate instead of z-cutting each
+  // other. One shared singleton behind the call - every puff shares it and
+  // therefore one program. Requested by `weapons/grenades.ts`.
+  smoke: () => THREE.Material;
   glass: THREE.Material;
   windowDark: THREE.Material;
   timber: THREE.Material;
@@ -219,6 +272,24 @@ export function buildMaterials(): MaterialLibrary {
     if (p.roughnessMap) owned.push(p.roughnessMap);
     if (p.normalMap) owned.push(p.normalMap);
     if (p.emissiveMap && p.emissiveMap !== p.map) owned.push(p.emissiveMap);
+    return m;
+  };
+  /**
+   * `std` for a surface that gets wet. The renderer turns every MeshStandardMaterial
+   * into a MeshStandardNodeMaterial anyway (NodeLibrary.fromMaterial copies the
+   * properties across); building the node class directly lets roughness and albedo
+   * read the WETNESS uniform. `k` is how strongly this surface responds (asphalt 1,
+   * lawn 0.5). Same maps, same params, same singleton discipline.
+   */
+  const wetStd = (p: THREE.MeshStandardMaterialParameters, k: number): THREE.Material => {
+    const m = new MeshStandardNodeMaterial(p);
+    owned.push(m);
+    if (p.map) owned.push(p.map);
+    if (p.roughnessMap) owned.push(p.roughnessMap);
+    if (p.normalMap) owned.push(p.normalMap);
+    const wet = WETNESS.mul(k);
+    m.roughnessNode = materialRoughness.mul(oneMinus(wet.mul(WET_ROUGHNESS_DROP)));
+    m.colorNode = materialColor.mul(vec4(vec3(oneMinus(wet.mul(WET_ALBEDO_DROP))), 1));
     return m;
   };
 
@@ -659,12 +730,13 @@ export function buildMaterials(): MaterialLibrary {
   const deckSet = boardSet(PAL.deckBoard, PAL.timberDark, 10, 0.78);
 
   const lib: MaterialLibrary = {
-    concrete: std({ map: concreteTex, roughness: 1, roughnessMap: concreteRough, normalMap: concreteNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }),
-    paving: std({ map: pavingTex, roughness: 1, roughnessMap: pavingRough, normalMap: pavingNormal, normalScale: new THREE.Vector2(0.8, 0.8), metalness: 0 }),
-    asphalt: std({ map: asphaltTex, roughness: 1, roughnessMap: asphaltRough, normalMap: asphaltNormal, normalScale: new THREE.Vector2(0.6, 0.6), metalness: 0 }),
-    kerb: std({ color: PAL.kerb, roughness: 1, roughnessMap: kerbRough, normalMap: kerbNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }),
-    lawn: std({ map: lawnTex, roughness: 1, roughnessMap: lawnRough, normalMap: lawnNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }),
-    sand: std({ color: PAL.sand, roughness: 1, roughnessMap: sandRough, normalMap: sandNormal, normalScale: new THREE.Vector2(0.5, 0.5), metalness: 0 }),
+    // The ground family reads the WETNESS uniform (rain): see wetStd above.
+    concrete: wetStd({ map: concreteTex, roughness: 1, roughnessMap: concreteRough, normalMap: concreteNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }, 0.9),
+    paving: wetStd({ map: pavingTex, roughness: 1, roughnessMap: pavingRough, normalMap: pavingNormal, normalScale: new THREE.Vector2(0.8, 0.8), metalness: 0 }, 0.9),
+    asphalt: wetStd({ map: asphaltTex, roughness: 1, roughnessMap: asphaltRough, normalMap: asphaltNormal, normalScale: new THREE.Vector2(0.6, 0.6), metalness: 0 }, 1.0),
+    kerb: wetStd({ color: PAL.kerb, roughness: 1, roughnessMap: kerbRough, normalMap: kerbNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }, 0.8),
+    lawn: wetStd({ map: lawnTex, roughness: 1, roughnessMap: lawnRough, normalMap: lawnNormal, normalScale: new THREE.Vector2(0.4, 0.4), metalness: 0 }, 0.5),
+    sand: wetStd({ color: PAL.sand, roughness: 1, roughnessMap: sandRough, normalMap: sandNormal, normalScale: new THREE.Vector2(0.5, 0.5), metalness: 0 }, 0.6),
     stuccoCream: std({ map: creamSet.map, roughness: 1, roughnessMap: creamSet.roughnessMap, normalMap: creamSet.normalMap, normalScale: new THREE.Vector2(0.5, 0.5), metalness: 0 }),
     stuccoTerracotta: std({ map: terraSet.map, roughness: 1, roughnessMap: terraSet.roughnessMap, normalMap: terraSet.normalMap, normalScale: new THREE.Vector2(0.6, 0.6), metalness: 0 }),
     roofWhite: std({ map: roofTex, roughness: 1, roughnessMap: roofRough, metalness: 0.05 }),
@@ -772,6 +844,16 @@ export function buildMaterials(): MaterialLibrary {
       cache.set(key, m);
       return m;
     },
+    smoke() {
+      const key = 'smoke';
+      let m = cache.get(key);
+      if (!m) {
+        m = new THREE.MeshBasicMaterial({ color: PAL.fog, transparent: true, opacity: 0.55, depthWrite: false });
+        owned.push(m);
+        cache.set(key, m);
+      }
+      return m;
+    },
     emissive(color: number, strength = 1.4) {
       const key = 'e' + color + '_' + strength;
       let m = cache.get(key);
@@ -789,4 +871,72 @@ export function buildMaterials(): MaterialLibrary {
     },
   };
   return lib;
+}
+
+// ---------------------------------------------------------------------------
+// RAIN (atmosphere lane, additive). One unlit node material for one instanced
+// streak sheet around the camera. The whole particle system is in this shader:
+// every instance hashes its own seed from `instanceIndex`, falls under its own
+// speed plus the shared wind, and wraps inside a 24 x 14 x 24 m box centred on
+// the camera, so the CPU never touches a matrix and nothing is allocated per
+// frame. `amount` 0 collapses every quad to a point (no fragments); the owner of
+// the mesh also sets `visible` so an off sheet costs no draw at all.
+// ---------------------------------------------------------------------------
+export interface RainMaterialInputs {
+  /** vec3 uniform: wind velocity, m/s, world space. */
+  wind: Node;
+  /** float uniform 0..1: how hard it rains. */
+  amount: Node;
+  /** color uniform, linear: the streak tint (the horizon sky, lit by the key). */
+  tint: Node;
+}
+/** @types/three's ShaderNodeObject<UniformNode<T>> does not assign to ShaderNodeObject<Node>; widen. */
+const nn = (x: Node): N => x as unknown as N;
+
+/** Instances the rain mesh must carry (`InstancedBufferGeometry.instanceCount`). */
+export const RAIN_STREAKS = 2600;
+const RAIN_BOX = [24, 14, 24] as const;
+
+export function buildRainMaterial(inp: RainMaterialInputs): THREE.Material {
+  const m = new MeshBasicNodeMaterial();
+  m.name = 'rain';
+  m.transparent = true;
+  m.depthWrite = false;
+  m.depthTest = true;
+  m.side = THREE.DoubleSide;
+  m.fog = false;
+
+  const wind = nn(inp.wind);
+  const amount = nn(inp.amount);
+  const box = vec3(RAIN_BOX[0], RAIN_BOX[1], RAIN_BOX[2]);
+  const i4 = instanceIndex.mul(4);
+  const h0 = hash(i4), h1 = hash(i4.add(1)), h2 = hash(i4.add(2)), h3 = hash(i4.add(3));
+  const seed = vec3(h0, h1, h2);
+  const speed = float(9).add(h3.mul(3));                       // 9..12 m/s terminal
+  const vel = vec3(wind.x, speed.negate(), wind.z);
+  // world lattice point, drifting with velocity, wrapped into the box around the camera
+  const rel = seed.mul(box).add(vel.mul(time)).sub(cameraPosition).add(box.mul(0.5));
+  const wrapped = rel.sub(box.mul(floor(rel.div(box))));
+  const centre = cameraPosition.add(wrapped).sub(box.mul(0.5));
+  const toCam = centre.sub(cameraPosition);
+  const dist = length(toCam);
+  const viewDir = toCam.div(dist.max(0.001));
+  const fallDir = normalize(vel);
+  const right = normalize(cross(fallDir, viewDir));
+  const len = float(0.30).add(h1.mul(0.30));
+  // width grows with distance so a far streak still covers ~2 px instead of shimmering
+  const width = float(0.012).add(dist.mul(0.0035));
+  const scale = amount.mul(4).clamp(0, 1);
+  m.positionNode = centre
+    .add(right.mul(positionLocal.x.mul(width).mul(scale)))
+    .add(fallDir.mul(positionLocal.y.mul(len).mul(scale)));
+
+  const distV = varying(dist);
+  const fadeNear = smoothstep(float(0.4), float(1.2), distV);
+  const fadeFar = oneMinus(smoothstep(float(9), float(13), distV));
+  const along = oneMinus(abs(uv().y.mul(2).sub(1)).mul(abs(uv().y.mul(2).sub(1))));
+  const across = oneMinus(abs(uv().x.mul(2).sub(1)));
+  m.opacityNode = amount.mul(0.30).mul(fadeNear).mul(fadeFar).mul(along).mul(across);
+  m.colorNode = nn(inp.tint);
+  return m;
 }

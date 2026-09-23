@@ -14,7 +14,7 @@
  * place (clips.ts).
  */
 import * as THREE from 'three';
-import { buildStandardSkeleton, UPPER_BODY, type StandardBoneName } from './skeleton';
+import { buildStandardSkeleton, REST_OFFSETS, UPPER_BODY, type StandardBoneName } from './skeleton';
 import type { ClipLibrary, ClipName, LocomotionName } from './clips';
 
 export interface RigInput {
@@ -27,6 +27,13 @@ export interface RigInput {
   aimPitch: number;
   /** 0 = arms swing with the gait, 1 = full rifle carry. */
   aimWeight: number;
+  /**
+   * Weapon-carry layer strength, 0..1. Leave undefined for the automatic
+   * value: 1 while the figure is upright and holding its weapon, ramped to 0
+   * through death and hit-react. Set it explicitly only to photograph the raw
+   * clip data with the layer off.
+   */
+  carryWeight?: number;
 }
 
 /** Scratch rig that samples authored clips without touching any live bones. */
@@ -73,6 +80,145 @@ interface Overlay {
 }
 
 const _q = new THREE.Quaternion();
+/** Aim-pitch and recoil twists, rebuilt once per frame rather than per bone. */
+const _qPitch = new THREE.Quaternion();
+const _qRecoil = new THREE.Quaternion();
+const _eScratch = new THREE.Euler();
+
+// ---------------------------------------------------------------------------
+// Weapon-carry layer
+// ---------------------------------------------------------------------------
+//
+// WHY IT EXISTS. The rifle is baked to the RightHand bone inside the figure's
+// single skinned mesh (mesh.ts), so wherever the animation puts the right hand,
+// the rifle goes. The left hand is not attached to anything, and no clip the
+// motion model produced ever brings it to the weapon: across the shipped set the
+// left hand sits by the hip in walk and points off to the side in aim. The
+// figure carries a rifle one-handed in every frame of the game.
+//
+// No re-roll fixes that, because it is not a bad clip - it is a missing
+// constraint. A two-handed carry is a KINEMATIC relationship between the two
+// hands, and the only honest way to hold it is to solve it every frame:
+//
+//   1. place the RIGHT hand (and therefore the rifle) at a carry anchor
+//      expressed in CHEST space, lerped between a chest carry and a shouldered
+//      aim by the existing aim weight, and orient it so the barrel points where
+//      that state wants it;
+//   2. read the rifle's forestock straight out of the RightHand's world matrix
+//      using the offset mesh.ts baked, and solve the LEFT arm onto it.
+//
+// Everything below the Chest is untouched: the layer writes six bone
+// quaternions and nothing else, so the gait, the plant solve and every
+// foot-slide number are exactly what they were.
+//
+// Allocation: none per frame. Every vector, quaternion and matrix here is
+// module scope, and the solver takes bones rather than building descriptors.
+
+/**
+ * The rifle's forestock in RightHand LOCAL space.
+ *
+ * mesh.ts lays the receiver along +z at y -0.046 with its barrel continuing to
+ * z 0.442; 0.25 m out is the handguard, which is where a support hand goes. If
+ * the rifle geometry in mesh.ts ever moves, this moves with it - it is the one
+ * number this file borrows from that module and it is asserted by the in-game
+ * surface audit, not assumed.
+ */
+const FORESTOCK_LOCAL = new THREE.Vector3(0, -0.055, 0.25);
+/** The barrel axis in RightHand LOCAL space (mesh.ts: "a receiver laid along +z"). */
+const BARREL_LOCAL = new THREE.Vector3(0, 0, 1);
+
+/** RightHand bone origin in CHEST space: rifle held across the chest. */
+const CARRY_HAND = new THREE.Vector3(0.10, 0.02, 0.15);
+/** RightHand bone origin in CHEST space: rifle up on the shoulder, aiming. */
+const AIM_HAND = new THREE.Vector3(0.08, 0.26, 0.20);
+/** Barrel direction in CHEST space at rest carry - forward, across, a little up. */
+const CARRY_BARREL = new THREE.Vector3(-0.30, 0.12, 0.95).normalize();
+/** Where each elbow should fall, in CHEST space. Only the direction matters. */
+const POLE_RIGHT = new THREE.Vector3(0.70, -1.0, -0.50).normalize();
+const POLE_LEFT = new THREE.Vector3(-0.70, -1.0, -0.30).normalize();
+
+/** Bone-local axis that points down the limb toward the child. */
+const LIMB_AXIS = new THREE.Vector3(0, -1, 0);
+const UPPER_LEN = Math.abs(REST_OFFSETS.LeftForeArm[1]);
+const FORE_LEN = Math.abs(REST_OFFSETS.LeftHand[1]);
+
+const _cS = new THREE.Vector3();
+const _cT = new THREE.Vector3();
+const _cD = new THREE.Vector3();
+const _cU = new THREE.Vector3();
+const _cAxis = new THREE.Vector3();
+const _cCur = new THREE.Vector3();
+const _cE = new THREE.Vector3();
+const _cPole = new THREE.Vector3();
+const _cUp = new THREE.Vector3();
+const _cDir = new THREE.Vector3();
+const _cDir2 = new THREE.Vector3();
+const _cZero = new THREE.Vector3();
+const _cWorldUp = new THREE.Vector3(0, 1, 0);
+const _cChestQ = new THREE.Quaternion();
+const _cRootQ = new THREE.Quaternion();
+const _cqA = new THREE.Quaternion();
+const _cqB = new THREE.Quaternion();
+const _cqC = new THREE.Quaternion();
+const _cMat = new THREE.Matrix4();
+const _cIdent = new THREE.Quaternion();
+
+/**
+ * Point a bone's limb axis at `dirWorld` while keeping the twist the animation
+ * gave it, and blend the result in by `w`. Writes the bone's LOCAL quaternion,
+ * which is the only thing the mixer will overwrite next frame - so the layer
+ * can never accumulate.
+ */
+function aimBone(bone: THREE.Bone, dirWorld: THREE.Vector3, w: number): void {
+  bone.getWorldQuaternion(_cqA);
+  _cCur.copy(LIMB_AXIS).applyQuaternion(_cqA).normalize();
+  _cqB.setFromUnitVectors(_cCur, dirWorld).multiply(_cqA);
+  if (bone.parent) {
+    (bone.parent as THREE.Bone).getWorldQuaternion(_cqC);
+    _cqB.premultiply(_cqC.invert());
+  }
+  bone.quaternion.slerp(_cqB, w);
+  bone.updateWorldMatrix(false, true);
+}
+
+/**
+ * Analytic two-bone IK. `poleWorld` is a direction, not a point: the elbow is
+ * swung toward it in the plane the shoulder-to-target line defines, which is
+ * what stops the solve from picking a physically possible but grotesque elbow.
+ * Over-reach is clamped rather than failed - a target beyond the arm's length
+ * must straighten the arm, never produce NaN.
+ */
+function solveTwoBone(
+  upper: THREE.Bone,
+  fore: THREE.Bone,
+  targetWorld: THREE.Vector3,
+  poleWorld: THREE.Vector3,
+  w: number,
+): void {
+  upper.updateWorldMatrix(true, false);
+  _cS.setFromMatrixPosition(upper.matrixWorld);
+  _cD.copy(targetWorld).sub(_cS);
+  let len = _cD.length();
+  if (len < 1e-5) return;
+  _cD.divideScalar(len);
+  len = Math.min(Math.max(len, Math.abs(UPPER_LEN - FORE_LEN) + 1e-3), (UPPER_LEN + FORE_LEN) * 0.999);
+  const cos = (UPPER_LEN * UPPER_LEN + len * len - FORE_LEN * FORE_LEN) / (2 * UPPER_LEN * len);
+  const a1 = Math.acos(Math.min(1, Math.max(-1, cos)));
+  _cAxis.copy(_cD).cross(poleWorld);
+  if (_cAxis.lengthSq() < 1e-8) _cAxis.set(1, 0, 0);
+  else _cAxis.normalize();
+  // Rotating d about (d x pole) by +a1 tips d TOWARD the pole, which is where
+  // the elbow has to end up; the sign is the whole difference between an elbow
+  // and a chicken wing.
+  _cU.copy(_cD).applyAxisAngle(_cAxis, a1).normalize();
+  aimBone(upper, _cU, w);
+
+  fore.updateWorldMatrix(true, false);
+  _cE.setFromMatrixPosition(fore.matrixWorld);
+  _cU.subVectors(targetWorld, _cE);
+  if (_cU.lengthSq() < 1e-8) return;
+  aimBone(fore, _cU.normalize(), w);
+}
 
 function pickLocomotion(speed: number, crouch: boolean): LocomotionName {
   if (crouch) return speed < 0.25 ? 'crouch-idle' : 'crouch-walk';
@@ -90,10 +236,13 @@ export class CharacterRig {
   private dead = false;
   private upper: Overlay | null = null;
   private recoil = 0;
+  /** Smoothed weapon-carry weight. Ramped, never stepped: a carry that snaps
+   *  to 0 on death teleports the arms out of the weapon. */
+  private carry = 1;
   private sampler: OverlaySampler;
   /** Last sampled aim pose, refreshed while aimWeight > 0. */
   private aimPose: Record<StandardBoneName, THREE.Quaternion> | null = null;
-  private external: { action: THREE.AnimationAction; speed: number } | null = null;
+  private external: { action: THREE.AnimationAction; speed: number; loop: boolean } | null = null;
   // ---- skate measurement: per-foot stance tracking in world space
   private readonly footPrev = new Map<string, THREE.Vector3>();
   private stanceActive = new Map<string, boolean>();
@@ -177,18 +326,31 @@ export class CharacterRig {
   }
 
   /**
-   * External clip (CMU retarget, glTF import) played looped at a matched
-   * speed instead of the procedural locomotion. Proves the retarget path on
-   * a live character; the overlay, lean, plant solve and skate measurement
-   * all keep running on top.
+   * External clip (CMU retarget, glTF import) played instead of the procedural
+   * locomotion. Proves the retarget path on a live character; the overlay,
+   * lean, plant solve, carry layer and skate measurement all keep running.
+   *
+   * `loop` follows the CLIP, not the caller's convenience. It used to be
+   * hard-wired to LoopRepeat, so `death` - a 3.6 s collapse - restarted from
+   * standing every 3.6 s instead of settling on the ground, and a one-shot
+   * could never be photographed in its final pose.
    */
-  playExternal(clip: THREE.AnimationClip, speed: number): void {
+  playExternal(clip: THREE.AnimationClip, speed: number, loop = true): void {
     this.mixer.stopAllAction();
     const action = this.mixer.clipAction(clip);
     action.reset();
-    action.setLoop(THREE.LoopRepeat, Infinity);
+    action.enabled = true;
+    action.setEffectiveWeight(1);
+    if (loop) {
+      action.setLoop(THREE.LoopRepeat, Infinity);
+      action.clampWhenFinished = false;
+    } else {
+      action.setLoop(THREE.LoopOnce, 1);
+      action.clampWhenFinished = true;
+    }
+    action.timeScale = 1;
     action.play();
-    this.external = { action, speed };
+    this.external = { action, speed, loop };
   }
 
   stopExternal(): void {
@@ -205,15 +367,40 @@ export class CharacterRig {
     this.recoil = 1;
   }
 
+  /** Live weapon-carry weight, for the QA surface and the surface audit. */
+  get carryWeight(): number {
+    return this.carry;
+  }
+
   update(dt: number, input: RigInput): void {
     if (this.dead) {
+      this.carry = Math.max(0, this.carry - dt * 4);
       this.mixer.update(dt);
       return;
     }
     // ---- locomotion select + crossfade + speed match (skipped in external
     // clip mode: the retarget owns the mixer until stopExternal)
     if (this.external) {
-      this.external.action.timeScale = input.speed / this.external.speed;
+      // THE FREEZE, AND WHY IT LOOKED LIKE EVERY CLIP WAS BROKEN.
+      //
+      // This line used to read `timeScale = input.speed / this.external.speed`
+      // with no guard. `RigInput.speed` starts at 0 and the QA surface only sets
+      // it through drive(), so `__NTANIM.external(i, name)` on its own gave
+      // timeScale 0 - on EVERY clip, locomotion and one-shot alike. The action
+      // still evaluated once at t=0, which moved the pose off rest, and then the
+      // mixer advanced it by 0 s per frame forever. Twenty samples over three
+      // seconds came back bit-identical, for `walk` and for `death`, and it read
+      // as "playExternal is broken" rather than "the instrument divided by the
+      // thing it forgot to set".
+      //
+      // A clip's own authored rate is the only sane default: timeScale 1 unless
+      // the caller is deliberately speed-matching a LOCOMOTION clip to a moving
+      // body. Zero is never a rate, it is an off switch, and nothing should be
+      // able to reach it by omission.
+      const ex = this.external;
+      ex.action.timeScale = ex.loop && ex.speed > 0.01 && input.speed > 0.001
+        ? input.speed / ex.speed
+        : 1;
     } else if (this.air) {
       this.air.elapsed += dt;
       const dur = this.library[this.air.clip].clip.duration;
@@ -268,21 +455,25 @@ export class CharacterRig {
     const w = input.aimWeight;
     if (w > 0.001 || this.upper || this.recoil > 0.001) {
       this.aimPose = this.sampler.sample('aim', 0.5);
+      // The pitch and recoil twists are the same for every bone in the frame,
+      // so they are built ONCE here rather than per bone. They used to be four
+      // `new THREE.Quaternion()` / `new THREE.Euler()` inside the loop, which on
+      // eleven aiming figures is ~29,000 objects a second for two values that
+      // never differ between bones. That is the only thing the budget run found
+      // over its line (post-GC floor +0.54 MB/min against a 0.5 budget).
+      const pitchOn = Math.abs(input.aimPitch) > 1e-4;
+      const recoilOn = this.recoil > 0.001;
+      if (pitchOn) _qPitch.setFromEuler(_eScratch.set(input.aimPitch * 0.7, 0, 0));
+      if (recoilOn) _qRecoil.setFromEuler(_eScratch.set(0.22 * this.recoil, 0, 0));
+      const blend = Math.max(w, this.recoil * 0.85);
       for (const [name, bone] of Object.entries(this.bones)) {
         if (UPPER_BODY[name] !== true) continue;
         const target = this.aimPose[name as StandardBoneName];
         _q.copy(target);
-        if (name === 'Chest' || name === 'LeftArm' || name === 'RightArm') {
-          _q.multiply(new THREE.Quaternion().setFromEuler(
-            new THREE.Euler(input.aimPitch * 0.7, 0, 0),
-          ));
-        }
-        if (this.recoil > 0.001 && (name === 'Chest' || name === 'LeftArm' || name === 'RightArm')) {
-          _q.multiply(new THREE.Quaternion().setFromEuler(
-            new THREE.Euler(0.22 * this.recoil, 0, 0),
-          ));
-        }
-        bone.quaternion.slerp(_q, Math.max(w, this.recoil * 0.85));
+        const twisted = name === 'Chest' || name === 'LeftArm' || name === 'RightArm';
+        if (twisted && pitchOn) _q.multiply(_qPitch);
+        if (twisted && recoilOn) _q.multiply(_qRecoil);
+        bone.quaternion.slerp(_q, blend);
       }
       if (this.upper) {
         const dur = this.library[this.upper.clip].clip.duration;
@@ -295,6 +486,85 @@ export class CharacterRig {
         }
       }
     }
+
+    // ---- weapon carry. LAST, because it is a constraint rather than a pose:
+    // whatever the gait and the aim overlay decided, the rifle ends up at the
+    // chest and both hands end up on it.
+    const wantCarry = this.upper?.clip === 'hit-react'
+      ? 0
+      : THREE.MathUtils.clamp(input.carryWeight ?? 1, 0, 1);
+    this.carry += THREE.MathUtils.clamp(wantCarry - this.carry, -dt * 4, dt * 4);
+    if (this.carry > 0.001) this.applyCarry(input, this.carry);
+  }
+
+  /**
+   * Put the rifle at the chest (or on the shoulder, under aim) and both hands
+   * on it. See the block comment above FORESTOCK_LOCAL for why this is a solve
+   * and not a clip.
+   *
+   * Writes six bone quaternions - both arms, both forearms, both hands - and
+   * touches nothing below the Chest, which the Chest is used as the anchor
+   * FRAME for rather than rotated: the locomotion clips' torso motion is what
+   * keeps a figure alive at 20 m, and no acceptance number here needs it.
+   */
+  private applyCarry(input: RigInput, w: number): void {
+    const chest = this.bones.Chest;
+    chest.updateWorldMatrix(true, false);
+    const aim = THREE.MathUtils.clamp(input.aimWeight, 0, 1);
+
+    // ---- right hand: the carry anchor, in CHEST space, lerped by aim weight.
+    _cT.copy(CARRY_HAND).lerp(AIM_HAND, aim).applyMatrix4(chest.matrixWorld);
+    // _cChestQ, not a shared scratch: solveTwoBone clobbers every _cq* it can
+    // reach, and the chest frame has to outlive all three solves below.
+    chest.getWorldQuaternion(_cChestQ);
+    _cPole.copy(POLE_RIGHT).applyQuaternion(_cChestQ).normalize();
+    solveTwoBone(this.bones.RightArm, this.bones.RightForeArm, _cT, _cPole, w);
+
+    // ---- barrel direction.
+    //
+    // Carried, the rifle rides the TORSO: its direction is chest-relative, so a
+    // figure leaning into a run sweeps the muzzle with it, which is what a
+    // carried weapon does.
+    //
+    // Aimed, it must follow the AIM RAY, which is a property of the character
+    // and not of the animation: yaw from the root, pitch from `aimPitch`. The
+    // first cut of this took the aim line off the chest too and measured a
+    // barrel 22.6 degrees below horizontal on a figure aiming at pitch 0 -
+    // because the idle clip under it pitched the chest forward by exactly that
+    // much. A rifle that points where the animation's spine happens to point is
+    // not aiming at anything.
+    const pitch = input.aimPitch * 0.7;
+    this.root.getWorldQuaternion(_cRootQ);
+    _cDir.set(0, Math.sin(pitch), Math.cos(pitch)).applyQuaternion(_cRootQ);
+    _cDir2.copy(CARRY_BARREL).applyQuaternion(_cChestQ);
+    _cDir.lerpVectors(_cDir2, _cDir, aim).normalize();
+    _cUp.set(0, 1, 0).applyQuaternion(_cChestQ).lerp(_cWorldUp, aim).normalize();
+    _cMat.lookAt(_cDir, _cZero, _cUp);        // +Z of the result IS the barrel
+    _cqB.setFromRotationMatrix(_cMat);
+    this.bones.RightForeArm.getWorldQuaternion(_cqC);
+    _cqB.premultiply(_cqC.invert());
+    this.bones.RightHand.quaternion.slerp(_cqB, w);
+    this.bones.RightHand.updateWorldMatrix(false, true);
+
+    // ---- left hand: onto the forestock, read out of the rifle's own bone.
+    _cT.copy(FORESTOCK_LOCAL).applyMatrix4(this.bones.RightHand.matrixWorld);
+    _cPole.copy(POLE_LEFT).applyQuaternion(_cChestQ).normalize();
+    solveTwoBone(this.bones.LeftArm, this.bones.LeftForeArm, _cT, _cPole, w);
+    // Glove straight on from the wrist - a support hand on a handguard, not a
+    // hand that happens to be near one.
+    this.bones.LeftHand.quaternion.slerp(_cIdent, w);
+  }
+
+  /**
+   * World position of the rifle's forestock, and its barrel axis. The audit
+   * harness reads these instead of re-deriving mesh.ts's offsets, so the
+   * acceptance measures the same point the solver aimed at.
+   */
+  weaponProbe(outForestock: THREE.Vector3, outBarrel: THREE.Vector3): void {
+    this.bones.RightHand.updateWorldMatrix(true, false);
+    outForestock.copy(FORESTOCK_LOCAL).applyMatrix4(this.bones.RightHand.matrixWorld);
+    this.bones.RightHand.getWorldQuaternion(_cqA);
+    outBarrel.copy(BARREL_LOCAL).applyQuaternion(_cqA).normalize();
   }
   /** Standing-surface height under the wrapper root. The game sets this. */
   groundY = 0;
@@ -378,7 +648,12 @@ export class CharacterRig {
         this.strideSkate.set(side, 0);
       }
       this.stanceActive.set(side, inStance);
-      this.footPrev.set(side, this.footWorld.clone());
+      // Reuse the stored vector. This runs on the frame loop for the whole of a
+      // skate measurement, so a `.clone()` here was two Vector3s per frame for
+      // the lifetime of the instrument - measuring the heap with the measurement.
+      const slot = this.footPrev.get(side);
+      if (slot) slot.copy(this.footWorld);
+      else this.footPrev.set(side, this.footWorld.clone());
       this.footPrevY.set(side, y);
       this.footPrevT.set(side, now);
     }

@@ -27,6 +27,8 @@ export interface CharacterHandle {
   input: RigInput;
   yaw: number;
   scale: number;
+  /** Which dress this figure wears, or null when mesh.ts's round-robin chose. */
+  faction: 0 | 1 | null;
 }
 
 export interface SystemBudget {
@@ -59,9 +61,31 @@ export class CharacterSystem {
     return Object.keys(this.library) as ClipName[];
   }
 
-  spawn(x: number, z: number, yaw = 0, scale = 1): CharacterHandle {
+  /**
+   * @param faction 0 or 1, indexing `dress.factions`. Omit it and the figure
+   *   takes the next dress in mesh.ts's round-robin, which is exactly what
+   *   every existing caller gets today - passing nothing is byte-for-byte the
+   *   old behaviour, deliberately, so wiring a team in is a caller's choice
+   *   and not a change to anything already shipped.
+   *
+   *   How it threads without touching mesh.ts (which is read-only to this
+   *   lane): mesh.ts picks `factions[n++ % factions.length]`, so handing it a
+   *   dress whose `factions` array holds only the wanted entry pins the choice
+   *   whatever its counter says. The geometry cache is keyed on the dress's
+   *   colours, so a pinned spawn shares the same baked BufferGeometry as a
+   *   round-robin spawn of the same faction - no extra geometry, no extra draw.
+   *
+   *   The one interaction worth knowing: mesh.ts's counter still advances on a
+   *   pinned spawn, so MIXING pinned and unpinned spawns shifts which dress the
+   *   unpinned ones get. Pin all of them or none of them.
+   */
+  spawn(x: number, z: number, yaw = 0, scale = 1, faction?: 0 | 1): CharacterHandle {
     const std = buildStandardSkeleton();
-    const mesh = dressProcedural(std.root, std.bones, this.dress);
+    const all = this.dress.factions;
+    const dress = faction !== undefined && all && all.length > 0
+      ? { ...this.dress, factions: [all[faction % all.length]] }
+      : this.dress;
+    const mesh = dressProcedural(std.root, std.bones, dress);
     const rig = new CharacterRig(std.root, std.bones, this.library);
     std.root.position.set(x, 0, z);
     std.root.rotation.y = yaw;
@@ -74,6 +98,7 @@ export class CharacterSystem {
       input: { speed: 0, turnRate: 0, crouch: false, aimPitch: 0, aimWeight: 0 },
       yaw,
       scale,
+      faction: faction ?? null,
     };
     this.characters.push(handle);
     return handle;

@@ -111,13 +111,12 @@ seam` is the pose distance between the first and last key of a loop.
 
 | clip | seed | keys | duration | speed | foot slide | loop seam | embedding sha256 |
 |---|---|---|---|---|---|---|---|
-| `idle.glb` | 1001 | 49 | 1.60 s | 0.01 m/s | 1.4 cm | 0.147 | `f22c5865482a1e1f` |
 | `walk.glb` | 1102 | 26 | 0.83 s | 1.97 m/s | 3.8 cm | 0.124 | `a55cd27acf3ac3b4` |
 | `run.glb` | 1003 | 18 | 0.57 s | 2.67 m/s | 6.2 cm | 0.126 | `e47dbee53455e1b9` |
-| `sprint.glb` | 1104 | 20 | 0.63 s | 2.74 m/s | 0 cm | 0.268 | `86036f854e1639e2` |
+| `sprint.glb` | **1204** | 40 | 1.30 s | 2.84 m/s | 4.0 cm | 0.132 | `8d1ce4eec7a8b730` |
 | `crouch-idle.glb` | 1105 | 53 | 1.73 s | 0.00 m/s | 0.5 cm | 0.030 | `b9deca0259f834d2` |
 | `crouch-walk.glb` | 1106 | 31 | 1.00 s | 1.40 m/s | 2.4 cm | 0.138 | `5a0b2dbba4761e8b` |
-| `aim.glb` | 1007 | 49 | 1.60 s | 0.00 m/s | 0.5 cm | 0.036 | `ed6f65fb7b97d3fa` |
+| `aim.glb` | **1207** | 51 | 1.67 s | 0.00 m/s | 0.9 cm | 0.040 | `f802c2874ca0fffc` |
 | `aim-rifle-walk.glb` | 1008 | 20 | 0.63 s | 1.95 m/s | 1.4 cm | 0.081 | `5482a68569fe0b3b` |
 | `jump.glb` | 2001 | 75 | 2.47 s | 0.20 m/s | n/a (one-shot) | 0.358 | `e4d55931b19b445b` |
 | `land.glb` | 2002 | 60 | 1.97 s | 0.05 m/s | n/a (one-shot) | 1.479 | `6a7fbe86cdfc633a` |
@@ -128,26 +127,40 @@ seam` is the pose distance between the first and last key of a loop.
 | `hit-react.glb` | 2007 | 60 | 1.97 s | 0.00 m/s | n/a (one-shot) | 0.826 | `a393cd38c9c874f9` |
 | `death.glb` | 2008 | 110 | 3.63 s | 0.07 m/s | n/a (one-shot) | 7.637 | `d18310d9a27567d7` |
 
+`idle` is absent from this table on purpose - see "Rejected clips" below. The game uses the
+authored idle from `src/characters/clips.ts`.
+
+Re-rolled on 2026-09-19, with the sha256 of the shipped bytes:
+
+| file | bytes | sha256 |
+|---|---|---|
+| `aim.glb` (seed 1207, prompt sha `6221157f1887a2d9`) | 24,416 | `5b848b3b0ea0ba4f1b2dec03e79783677f853d1da77994bd7c95fa49e72082f2` |
+| `sprint.glb` (seed 1204, prompt sha `32132894bb532daf`) | 20,580 | `6cf5b5304ed65a3a3c2852c63fb30fbe063065fdc527c4e0a927bce2ab9420ee` |
+
+The embedding cache is now keyed on the prompt TEXT (`bake-motion.mjs` writes a
+`<embedding>.f32.txt` stamp beside each one). Before that it was keyed on the clip id alone,
+which meant a re-rolled prompt silently reused the OLD sentence's embedding and only the seed
+actually changed - the exact failure mode a re-roll exists to avoid.
+
 ### Prompts
 
-- `idle` - seed 1001, 49 keys
-  > a soldier stands still at ease holding a rifle across his chest, weight shifting slightly, small natural sway, breathing
 - `walk` - seed 1102, 26 keys
   > a soldier walks forward slowly and casually at an unhurried stroll, short relaxed steps, arms swinging gently, loopable
   **Second seed.** second seed. The first (1002, 'steady relaxed pace') measured 2.14 m/s at the planted foot - a jog, not a walk, and the blend tree would have played it at half timeScale for a 1.1 m/s character.
 - `run` - seed 1003, 18 keys
   > a soldier jogs forward at a steady pace holding a rifle at the ready, elbows bent, even strides, loopable
-- `sprint` - seed 1104, 20 keys
-  > a soldier sprints flat out at top speed, very long powerful bounding strides, both feet leaving the ground, arms driving hard, body low and forward
-  **Second seed.** second seed. The first (1004) measured 2.90 m/s, inside the blend tree's RUN band (2.3-4.1); a sprint clip must sit above 4.1 to ever be selected on its own terms.
+- `sprint` - **seed 1204**, 40 keys (re-rolled 2026-09-19)
+  > a soldier sprints forward flat out at top speed, long fast strides, tall through the chest with the head up, arms driving straight forward and back close to the sides, elbows in, loopable
+  **Third prompt.** Seed 1104's "body low and forward" gave 53.2 deg of left upper-arm abduction - arms out sideways - and 1.660 m to the top of the helmet. The prompt now asks for the arm PATH (forward and back, elbows in) instead of a body attitude: abduction 53.2 -> 28.3 deg, lean 11.9 -> 7.5 deg. Height is unchanged at 1.63 m and a sprint is allowed to be low; speed 2.74 -> 2.84 m/s, still below the blend tree's 4.1 sprint threshold, so it plays at timeScale 1.4 when selected. Prompt sha256 `32132894bb532daf`.
 - `crouch-idle` - seed 1105, 53 keys
   > a soldier holds a half-kneeling combat crouch with his back straight and chest up, knees bent, rifle shouldered, steady
   **Second seed.** second seed. The first (1005) put the pelvis at 0.288 m - sitting on the heels, head at 0.89 m. A combat crouch keeps the torso upright, so the prompt now says so instead of saying 'low'.
 - `crouch-walk` - seed 1106, 31 keys
   > a soldier advances in a combat crouch, back straight and chest up, knees bent, taking short steady steps, rifle shouldered, loopable
   **Second seed.** second seed. The first (1006, 'torso low') produced a duck-walk: pelvis 0.52 m with the torso near horizontal. Photographed at captures/anim/crouchwalk-side.png before the re-roll.
-- `aim` (prompt id `aim-rifle-idle`) - seed 1007, 49 keys
-  > a soldier stands still aiming a rifle straight ahead with both hands, elbows tucked in, holding steady
+- `aim` (prompt id `aim-rifle-idle`) - **seed 1207**, 51 keys (re-rolled 2026-09-19)
+  > a soldier stands upright with his legs straight and his back vertical, head level, aiming a rifle straight ahead with both hands at shoulder height, elbows tucked in close to his ribs, holding steady, loopable
+  **Second prompt.** Seed 1007 measured 1.719 m to the helmet offline and 15.9 deg of torso lean - the model crouched into the shot, because the prompt named only the weapon and let it choose the stance. Naming the legs, the back and the head separately fixed it: measured in the game through playExternal, 1.804 m, 4.1 deg of lean, 15.6 deg of left abduction. Prompt sha256 `6221157f1887a2d9`.
 - `aim-rifle-walk` - seed 1008, 20 keys
   > a soldier walks forward slowly while aiming a rifle straight ahead with both hands, upper body steady, loopable
 - `jump` - seed 2001, 75 keys
@@ -188,120 +201,111 @@ seam` is the pose distance between the first and last key of a loop.
   0.22 deg (`walk`), 0.11 deg (`crouch-walk`). Anything odd in a pose is therefore the model,
   not the retarget.
 
-### Acceptance (obligation 6)
+### Rejected clips - generated, measured, not shipped
 
-No clip was accepted from Kimodo's web demo preview. `walk` was photographed **in the game**,
-through the game's own frame loop, from four camera views:
+A clip whose two allowed seeds both fail its acceptance is left in
+`scripts/animation/prompt-library.json` with `"ship": false`. The pipeline still generates
+it, still retargets it and still prints its numbers - the rejection has to stay reproducible -
+but `retarget-soma.mjs` writes it to the scratch `_rejected/` directory instead of here and
+keeps it out of `manifest.json`, so `clips.ts` substitutes nothing and the game uses the
+AUTHORED clip of that name from `src/characters/clips.ts`.
 
-- `captures/anim/canary-front.png`
-- `captures/anim/canary-side.png`
-- `captures/anim/canary-threequarter.png`
-- `captures/anim/canary-low.png`
+| clip | seeds spent | measured | verdict |
+|---|---|---|---|
+| `idle` | 1001, 1201, 1202 (two in round 2) | surface top 1.633 m in the game (1001), 1.704 m and 1.706 m offline (1201, 1202) against a 1.858 m rest rig | **not shipped** - procedural |
 
-by `scripts/animation/capture-anim-views.mjs`, which refuses to open the shutter on a rig
-whose hips are not moving (it has fired, on a real frozen rig). In-game foot slide for
-`walk`: 6.78 cm worst stride over 39 strides, against 3.8 cm measured offline.
+The loss is not a lean: seed 1202 measures 5.9 deg of torso lean, well inside the 12 deg
+bar. It is the cervical chain. On every seed the Neck->Head segment measures 0.058-0.097 m
+of its 0.140 m rest length - a 46-65 degree bow - so the figure stands straight and looks at
+its own boots, and the helmet comes down with the head.
 
----
+The retarget is not the cause and that is measured, not assumed:
+`scripts/animation/verify-retarget.mjs` puts the worst directly-mapped bone error on the
+rejected idle at **0.313 deg**, so the pose is the model's.
 
-## 2. CMU Graphics Lab Motion Capture Database - the `.anim.json` fallback set
+The brief's fallback for a clip that spends both seeds is a CMU BVH. The authored clip was
+chosen instead, for a stated reason: CMU has no standing idle at all (the gap that made this
+whole library procedural-first - see the header of `src/characters/clips.ts`), and the
+authored idle measures **1.838 m with 0.2-0.7 deg of lean** in the game, which no seed came
+near. The procedural route is one of the three named in `docs/LICENCES-ANIMATION.md` and
+carries no third-party obligation.
 
-Fetched 2026-09-18 by `scripts/fetch-anim.mjs`, before the Kimodo route existed. These files
-stay on disk as the per-clip fallback the brief requires, and their record is preserved here
-unchanged. They are **not** loaded by the runtime today: `src/characters/kimodo-clips.ts`
-reads `manifest.json` and the `.glb` set. The original CMU manifest is kept beside them as
-`manifest-cmu.json`.
-
-| clip | seed | keys | duration | speed | foot slide | loop seam | embedding sha256 |
-|---|---|---|---|---|---|---|---|
-| `idle.glb` | 1001 | 49 | 1.60 s | 0.01 m/s | 1.4 cm | 0.147 | `f22c5865482a1e1f` |
-| `walk.glb` | 1102 | 26 | 0.83 s | 1.97 m/s | 3.8 cm | 0.124 | `a55cd27acf3ac3b4` |
-| `run.glb` | 1003 | 18 | 0.57 s | 2.67 m/s | 6.2 cm | 0.126 | `e47dbee53455e1b9` |
-| `sprint.glb` | 1104 | 20 | 0.63 s | 2.74 m/s | 0 cm | 0.268 | `86036f854e1639e2` |
-| `crouch-idle.glb` | 1005 | 49 | 1.60 s | 0.00 m/s | 2.2 cm | 0.225 | `ae8a9eb59d82fff0` |
-| `crouch-walk.glb` | 1006 | 31 | 1.00 s | 1.44 m/s | 7.9 cm | 0.131 | `6fcb7975ce1a66a1` |
-| `aim.glb` | 1007 | 49 | 1.60 s | 0.00 m/s | 0.5 cm | 0.036 | `ed6f65fb7b97d3fa` |
-| `aim-rifle-walk.glb` | 1008 | 20 | 0.63 s | 1.95 m/s | 1.4 cm | 0.081 | `5482a68569fe0b3b` |
-| `jump.glb` | 2001 | 75 | 2.47 s | 0.20 m/s | n/a (one-shot) | 0.358 | `e4d55931b19b445b` |
-| `land.glb` | 2002 | 60 | 1.97 s | 0.05 m/s | n/a (one-shot) | 1.479 | `6a7fbe86cdfc633a` |
-| `turn-left.glb` | 2003 | 75 | 2.47 s | 0.01 m/s | n/a (one-shot) | 1.795 | `9811633424e0dbee` |
-| `turn-right.glb` | 2004 | 75 | 2.47 s | 0.00 m/s | n/a (one-shot) | 1.935 | `230111f5332f4453` |
-| `fire.glb` | 2005 | 45 | 1.47 s | 0.00 m/s | n/a (one-shot) | 0.202 | `c44e18755b866a71` |
-| `reload.glb` | 2006 | 100 | 3.30 s | 0.00 m/s | n/a (one-shot) | 0.881 | `25ab0d44ac461cec` |
-| `hit-react.glb` | 2007 | 60 | 1.97 s | 0.00 m/s | n/a (one-shot) | 0.826 | `a393cd38c9c874f9` |
-| `death.glb` | 2008 | 110 | 3.63 s | 0.07 m/s | n/a (one-shot) | 7.637 | `d18310d9a27567d7` |
-
-### Prompts
-
-- `idle` - seed 1001, 49 keys
-  > a soldier stands still at ease holding a rifle across his chest, weight shifting slightly, small natural sway, breathing
-- `walk` - seed 1102, 26 keys
-  > a soldier walks forward slowly and casually at an unhurried stroll, short relaxed steps, arms swinging gently, loopable
-  **Second seed.** second seed. The first (1002, 'steady relaxed pace') measured 2.14 m/s at the planted foot - a jog, not a walk, and the blend tree would have played it at half timeScale for a 1.1 m/s character.
-- `run` - seed 1003, 18 keys
-  > a soldier jogs forward at a steady pace holding a rifle at the ready, elbows bent, even strides, loopable
-- `sprint` - seed 1104, 20 keys
-  > a soldier sprints flat out at top speed, very long powerful bounding strides, both feet leaving the ground, arms driving hard, body low and forward
-  **Second seed.** second seed. The first (1004) measured 2.90 m/s, inside the blend tree's RUN band (2.3-4.1); a sprint clip must sit above 4.1 to ever be selected on its own terms.
-- `crouch-idle` - seed 1005, 49 keys
-  > a soldier crouches down low on bent knees and holds still, torso upright, rifle held ready
-- `crouch-walk` - seed 1006, 31 keys
-  > a soldier moves forward in a low crouch with deeply bent knees, torso low, short careful steps, loopable
-- `aim` (prompt id `aim-rifle-idle`) - seed 1007, 49 keys
-  > a soldier stands still aiming a rifle straight ahead with both hands, elbows tucked in, holding steady
-- `aim-rifle-walk` - seed 1008, 20 keys
-  > a soldier walks forward slowly while aiming a rifle straight ahead with both hands, upper body steady, loopable
-- `jump` - seed 2001, 75 keys
-  > a person crouches and then jumps straight up off both feet, tucking the knees at the top
-- `land` - seed 2002, 60 keys
-  > a person lands from a drop, absorbing the impact by bending both knees deeply, then straightens back up
-- `turn-left` - seed 2003, 75 keys
-  > a person standing still pivots ninety degrees to their left on the spot, feet stepping around
-- `turn-right` - seed 2004, 75 keys
-  > a person standing still pivots ninety degrees to their right on the spot, feet stepping around
-- `fire` (prompt id `fire-recoil`) - seed 2005, 45 keys
-  > a soldier firing a rifle absorbs the recoil, the shoulders and head jolting back sharply and then resettling
-- `reload` - seed 2006, 100 keys
-  > a soldier lowers a rifle slightly, brings his right hand down to his belt and up to the weapon, then raises the rifle again
-- `hit-react` - seed 2007, 60 keys
-  > a person is struck hard in the chest and staggers backward, torso recoiling, arms flinching
-- `death` - seed 2008, 110 keys
-  > a person is shot, buckles at the knees and collapses forward onto the ground, ending face down and motionless
-
-### Calibration recorded with the set
-
-- **Up axis: Y, measured.** The brief assumed Kimodo output was Z-up. It is not: the root
-  band sits at 0.93 m on Y with centimetres of travel while X and Z carry metres. No axis
-  swing is applied, and applying the assumed one would lay every figure on its face.
-- **Handedness: the source is mirrored.** SOMA's rest skeleton puts its Left-labelled joints
-  at +X while the face, jaw and both toes point +Z; in a right-handed Y-up frame that is a
-  mirrored human. The retarget reflects X and keeps the labels. The falsifier is the
-  non-shipped clip `calib-right-arm` ("raises their right arm straight up"): OUR RightHand
-  peaks at 1.992 m while the left hangs at 0.942 m. Evidence:
-  `captures/anim/calib-right-arm.png`.
-- **Leg scale 0.8668** - our pelvis rests 0.857 m above the toe against SOMA's
-  0.9887 m. Only the root is scaled; rotations are dimensionless.
-- **Hip ownership: the CONTROLLER owns root XZ.** It is stripped from every clip and
-  republished as `speed` / `stride` metadata. Root Y is kept as a scaled deviation from rest,
-  then the clip is grounded on the 10th-percentile toe height of OUR rig.
-- **Transfer fidelity.** `scripts/animation/verify-retarget.mjs` compares each baked bone
-  direction against the raw SOMA export, per frame. Worst error on a directly mapped pair:
-  0.22 deg (`walk`), 0.11 deg (`crouch-walk`). Anything odd in a pose is therefore the model,
-  not the retarget.
+**`public/anim/idle.glb` is still on disk, and is dead.** It holds the seed-1001 bytes that
+were committed before the rejection. It is absent from `manifest.json`, so
+`kimodo-clips.ts` never fetches it and `clips.ts` never substitutes it - the file is
+shipped weight and nothing else. It was briefly deleted on 2026-09-19 and the deletion was
+blamed for a 404 every harness was logging; the 404 was **`/favicon.ico`**, in every run
+before and after (`captures/anim/f1-audit.json` -> `missing`, which now records the URL).
+The bytes were restored rather than left deleted because this lane does not commit and a
+stray `D` in someone else's `git status` is a worse artefact than 23 kB. Delete it at
+commit time if you want it gone; nothing loads it either way.
 
 ### Acceptance (obligation 6)
 
-No clip was accepted from Kimodo's web demo preview. `walk` was photographed **in the game**,
-through the game's own frame loop, from four camera views:
+No clip was accepted from Kimodo's web demo preview. Round 1 photographed `walk` in the game
+from four views (`captures/anim/canary-*.png`, by
+`scripts/animation/capture-anim-views.mjs`, which refuses to open the shutter on a rig whose
+hips are not moving). In-game foot slide for `walk`: 6.78 cm worst stride over 39 strides,
+against 3.8 cm measured offline.
 
-- `captures/anim/canary-front.png`
-- `captures/anim/canary-side.png`
-- `captures/anim/canary-threequarter.png`
-- `captures/anim/canary-low.png`
+Round 2 (2026-09-19) measures the same thing from the **skinned surface** rather than the
+bones, because that is where the 20 cm the first round missed was hiding: a helmet is 18 cm
+of a figure's height and no bone carries it.
+`scripts/animation/surface-audit.mjs` pushes every vertex through `applyBoneTransform` in the
+running game and reads the top of the figure, the glove and the rifle off the result;
+`scripts/animation/capture-anim-sheets.mjs` photographs both factions in four states from
+four views. Measured through the real frame loop, carry layer on:
 
-by `scripts/animation/capture-anim-views.mjs`, which refuses to open the shutter on a rig
-whose hips are not moving (it has fired, on a real frozen rig). In-game foot slide for
-`walk`: 6.78 cm worst stride over 39 strides, against 3.8 cm measured offline.
+| state | surface top | torso lean | LeftHand to forestock | barrel vs chest forward |
+|---|---|---|---|---|
+| idle | 1.838 m | 0.5 deg | 4.0 cm | 18.8 deg |
+| walk | 1.802 m | 6.4 deg | 4.0 cm | 18.8 deg |
+| run | 1.755 m | 6.5 deg | 4.0 cm | 18.8 deg |
+| aim | 1.735 m | 6.1 deg | 4.0 cm | 0.0 deg from the aim ray |
+
+Each clip standalone, played whole through `playExternal` with the carry layer OFF: `walk`
+1.816 m / 4.4 deg / 13.3 deg left abduction, `run` 1.776 m / 5.0 deg / 33.2 deg, `aim`
+**1.804 m / 4.1 deg / 15.6 deg**, `sprint` 1.626 m / 7.7 deg / **39.0 deg**.
+
+Two of those numbers are worth stating plainly rather than leaving in a table.
+
+- **`aim` measures 1.804 m as a clip and 1.735 m as a state**, and both are right. The
+  overlay masks `UPPER_BODY`, which starts at the Chest, so the composed figure is the
+  procedural idle's spine carrying the aim clip's chest-and-up. The 7 cm is the head coming
+  down to the sights, and it is visible as that in `captures/anim/f3-f{0,1}-aim.png`. The
+  1.80 m bar was written for the clip; the clip clears it.
+- **`sprint` peaks at 39.0 deg of left abduction in the game**, above the 35 deg the round-2
+  bar set for the standing clips. It is a large improvement on seed 1104's 53.2 deg and it is
+  a peak over a swing cycle rather than a pose, but it is over, and sprint has now spent
+  three seeds (1004, 1104, 1204). Not re-rolled again.
+
+Transfer fidelity of the two re-baked clips, `verify-retarget.mjs` against the raw SOMA
+motion: `aim` worst directly-mapped bone error **0.192 deg**, `sprint` **0.202 deg**. Both
+poses are the model's, not the arithmetic's.
+
+Sheets (two factions x four states x four views, composed in-page):
+`captures/anim/f3-f{0,1}-{idle,walk,run,aim}.png`. Live game frames:
+`captures/anim/f3-live-spawnA.png`, `captures/anim/f3-live-figure.png`. Round-2 numbers and
+the request log: `captures/anim/f1-audit.json`, budget `captures/anim/f2-audit.json`.
+
+### What the weapon-carry layer does to these numbers
+
+`src/characters/blend.ts` now solves both arms onto the weapon every frame: the right hand
+(and therefore the rifle, which `mesh.ts` bakes to the RightHand bone) goes to a carry anchor
+in chest space, and the left arm is solved by two-bone IK onto the rifle's forestock. So the
+ARM data in these clips is overridden in the shipped path, and the abduction figures above
+describe the clip, not the figure. The numbers that show what it is worth: with the layer off,
+the left hand sits **75.9 cm** from the forestock in walk and **44.9 cm** in run, and the
+barrel points **160.4 deg** away from chest-forward in run - the rifle aims backwards over the
+figure's shoulder. With the layer on, 4.0 cm and 18.8 deg in every state.
+
+Nothing below the Chest is touched, and that is measured rather than argued: in-game walk
+foot slide over three interleaved runs per arm is 10.23 cm mean with the layer on against
+9.90 cm with it off - a 0.33 cm difference inside a 0.63 cm within-arm spread
+(`captures/anim/f1-audit.json` -> `skateSummary`; an earlier pair of runs gave 9.85 / 10.29,
+same conclusion with the sign of the difference flipped, which is what "inside the noise"
+means). In-game walk slide runs ~10 cm against 3.8 cm measured offline for the same clip;
+that gap predates this layer and is unchanged by it.
 
 ---
 
@@ -323,22 +327,6 @@ reads `manifest.json` and the `.glb` set. The original CMU manifest is kept besi
 | turn-left | turn-left.anim.json | https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/016/16_41.bvh | CMU Graphics Lab Motion Capture Database - free for all uses, no registration (http://mocap.cs.cmu.edu/) |
 | turn-right | turn-right.anim.json | https://raw.githubusercontent.com/una-dinosauria/cmu-mocap/master/data/016/16_43.bvh | CMU Graphics Lab Motion Capture Database - free for all uses, no registration (http://mocap.cs.cmu.edu/) |
 | pirouette | pirouette.anim.json | https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/models/bvh/pirouette.bvh | three.js example model (mrdoob/three.js, MIT licence) - loader/retarget path proof only |
-
-CMU Graphics Lab Motion Capture Database - free for all uses, no registration
-(http://mocap.cs.cmu.edu/). `pirouette.anim.json` is a three.js example model (MIT), kept as
-a loader-path proof only.
-
-### Where the fallback actually stands
-
-`sprint` is the one clip that spent both of its allowed seeds without reaching its target.
-Kimodo would not produce a gait above ~2.9 m/s at either seed, and `blend.ts` only selects
-`sprint` above 4.1 m/s, so the shipped sprint will play at roughly 1.5x timeScale. The CMU
-replacement (`sprint.anim.json`, CMU 09_05) is on disk and `animJsonToClip` in
-`src/characters/retarget.ts` can load it, but the substitution loop in `clips.ts` reads the
-`.glb` registry only, so the swap is **not wired**. That is the next step for this clip, not
-a claim that it is done.
-
----
 
 CMU Graphics Lab Motion Capture Database - free for all uses, no registration
 (http://mocap.cs.cmu.edu/). `pirouette.anim.json` is a three.js example model (MIT), kept as

@@ -21,6 +21,7 @@
  * same collider array, built here for presentation only.
  */
 import type * as THREE from 'three';
+import type { SmokeVolumeLike } from '../core/atmosphere';
 import type { AABB } from '../core/kit';
 import type { MaterialLibrary } from '../core/materials';
 import type { GameClient } from '../game/client';
@@ -88,6 +89,10 @@ export class OrdnanceScene {
       this.hud.setPrompt(null);
       this.hud.setFlash(0);
     }
+  }
+  /** Live smoke volumes for the volumetric pass (pull route; null client reads empty). */
+  get smokes(): readonly SmokeVolumeLike[] {
+    return this.client?.ordnance.smokes ?? [];
   }
 
   /** One frame. `nowMs` is `performance.now()`, the host clock domain; (px, py, pz) the player's feet. */

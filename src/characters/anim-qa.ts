@@ -20,10 +20,11 @@ import * as THREE from 'three';
 import type { CharacterHandle } from './system';
 import { bakedClip, bakedClipReport, bakedManifest, loadBakedClips } from './kimodo-clips';
 import { buildClipLibrary } from './clips';
+import { BONE_NAMES } from './skeleton';
 
 interface AnimSystem {
   characters: CharacterHandle[];
-  spawn(x: number, z: number, yaw?: number, scale?: number): CharacterHandle;
+  spawn(x: number, z: number, yaw?: number, scale?: number, faction?: 0 | 1): CharacterHandle;
   update(dt: number, camPos: THREE.Vector3 | null): void;
 }
 
@@ -42,11 +43,11 @@ let tickError = '';
 export interface AnimQA {
   ready: boolean;
   count(): number;
-  spawn(x: number, z: number, yaw?: number): number;
+  spawn(x: number, z: number, yaw?: number, faction?: 0 | 1): number;
   report(): Record<string, string>;
   manifest(): unknown;
   load(base?: string): Promise<Record<string, string>>;
-  list(): { i: number; x: number; z: number; yaw: number; speed: number; loco: string }[];
+  list(): { i: number; x: number; z: number; yaw: number; speed: number; loco: string; faction: 0 | 1 | null }[];
   place(i: number, x: number, z: number, yaw?: number): boolean;
   pin(i: number, x: number, z: number, yaw?: number): boolean;
   unpin(): void;
@@ -56,6 +57,8 @@ export interface AnimQA {
   showAll(): number;
   external(i: number, name: string): Promise<boolean>;
   clearExternal(i: number): boolean;
+  carry(i: number, weight: number | null): boolean;
+  surface(i: number): Record<string, number | string>;
   skateStart(i: number): boolean;
   skate(i: number): Record<string, number>;
   skateStop(): void;
@@ -77,8 +80,8 @@ export function installAnimQA(s: AnimSystem): void {
     ready: true,
     count: () => system?.characters.length ?? 0,
     /** Grow the crowd for a budget run. The game spawns six; the budget is twelve. */
-    spawn(x, z, yaw = 0) {
-      system?.spawn(x, z, yaw);
+    spawn(x, z, yaw = 0, faction) {
+      system?.spawn(x, z, yaw, 1, faction);
       return system?.characters.length ?? 0;
     },
     report: () => bakedClipReport(),
@@ -92,6 +95,7 @@ export function installAnimQA(s: AnimSystem): void {
         yaw: +c.yaw.toFixed(3),
         speed: +c.input.speed.toFixed(2),
         loco: c.rig.currentLocomotion,
+        faction: c.faction,
       }));
     },
     place(i, x, z, yaw) {
@@ -178,7 +182,10 @@ export function installAnimQA(s: AnimSystem): void {
       await loadBakedClips();
       const spec = bakedClip(name as never);
       if (!spec) return false;
-      c.rig.playExternal(spec.clip, Math.max(0.01, spec.speed));
+      // `spec.loop` travels with the clip out of the glb's extras, so a
+      // one-shot plays once and holds its last pose instead of restarting the
+      // collapse from standing every 3.6 s.
+      c.rig.playExternal(spec.clip, Math.max(0.01, spec.speed), spec.loop);
       return true;
     },
     clearExternal(i) {
@@ -186,6 +193,132 @@ export function installAnimQA(s: AnimSystem): void {
       if (!c) return false;
       c.rig.stopExternal();
       return true;
+    },
+    /**
+     * Force the weapon-carry layer's weight, or hand it back to the rig.
+     *
+     * The layer owns both arms, so a measurement OF THE CLIP DATA - upper-arm
+     * abduction, the arm swing a seed produced - has to be taken with it off,
+     * and a measurement of what the PLAYER sees has to be taken with it on.
+     * Reporting one and calling it the other is how a lane claims a clip is
+     * fixed when a solver is covering for it.
+     */
+    carry(i, weight) {
+      const c = pick(i);
+      if (!c) return false;
+      if (weight === null) delete c.input.carryWeight;
+      else c.input.carryWeight = Math.max(0, Math.min(1, weight));
+      return true;
+    },
+    /**
+     * THE ACCEPTANCE MEASUREMENT: read off the SKINNED SURFACE, not the bones.
+     *
+     * Bones are where the rig thinks it is; the surface is what the player
+     * sees, and the two differ by the whole of the dressing - a helmet is 18 cm
+     * of it. Every vertex is pushed through `applyBoneTransform`, which is the
+     * same arithmetic the skinning shader runs, and then into world space.
+     *
+     *   surfaceTop     highest vertex of the figure, metres
+     *   leftHandPt     centroid of the vertices skinned to LeftHand (the glove)
+     *   forestockBone  where the solver aimed, from RightHand's world matrix
+     *   forestockSurf  centroid of the RIFLE vertices in the handguard band -
+     *                  an independent read of the same point, so a wrong offset
+     *                  in blend.ts cannot agree with itself
+     *   handToStock    the acceptance number, centimetres
+     *   barrelVsChest  angle between the barrel axis and chest forward, degrees
+     */
+    surface(i): Record<string, number | string> {
+      const c = pick(i);
+      if (!c) return { error: 'no such figure' };
+      const rig = c.rig;
+      let mesh: THREE.SkinnedMesh | null = null;
+      c.root.traverse((o) => { if (!mesh && (o as THREE.SkinnedMesh).isSkinnedMesh) mesh = o as THREE.SkinnedMesh; });
+      if (!mesh) return { error: 'no SkinnedMesh under the root' };
+      const sm = mesh as THREE.SkinnedMesh;
+      c.root.updateMatrixWorld(true);
+      const pos = sm.geometry.getAttribute('position');
+      const skin = sm.geometry.getAttribute('skinIndex');
+      const iLeftHand = BONE_NAMES.indexOf('LeftHand');
+      const iRightHand = BONE_NAMES.indexOf('RightHand');
+      const invRight = sm.skeleton.boneInverses[iRightHand];
+      const v = new THREE.Vector3();
+      const local = new THREE.Vector3();
+      const hand = new THREE.Vector3();
+      const stock = new THREE.Vector3();
+      let top = -Infinity, nHand = 0, nStock = 0;
+      for (let k = 0; k < pos.count; k++) {
+        v.fromBufferAttribute(pos, k);
+        const bone = skin.getX(k);
+        if (bone === iRightHand) {
+          // Bind-space position in the RightHand's own rest frame - exactly the
+          // coordinates mesh.ts authored the rifle in. The handguard band is
+          // 0.20..0.30 m down the receiver.
+          local.copy(v).applyMatrix4(invRight);
+          if (local.z > 0.20 && local.z < 0.30) {
+            const w = v.clone();
+            sm.applyBoneTransform(k, w);
+            sm.localToWorld(w);
+            stock.add(w); nStock++;
+          }
+        }
+        sm.applyBoneTransform(k, v);
+        sm.localToWorld(v);
+        if (v.y > top) top = v.y;
+        if (bone === iLeftHand) { hand.add(v); nHand++; }
+      }
+      if (nHand) hand.divideScalar(nHand);
+      if (nStock) stock.divideScalar(nStock);
+
+      const fore = new THREE.Vector3();
+      const barrel = new THREE.Vector3();
+      rig.weaponProbe(fore, barrel);
+
+      // lean and abduction are joint angles by definition, so they come off the
+      // bones - the surface has no shoulder.
+      const ls = new THREE.Vector3(), rs = new THREE.Vector3(), hips = new THREE.Vector3();
+      rig.bones.LeftShoulder.getWorldPosition(ls);
+      rig.bones.RightShoulder.getWorldPosition(rs);
+      rig.bones.Hips.getWorldPosition(hips);
+      const spine = ls.clone().add(rs).multiplyScalar(0.5).sub(hips);
+      const lean = THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(spine.y / (spine.length() || 1), -1, 1)));
+      const chestQ = new THREE.Quaternion();
+      rig.bones.Chest.getWorldQuaternion(chestQ);
+      const chestFwd = new THREE.Vector3(0, 0, 1).applyQuaternion(chestQ);
+      const chestRight = new THREE.Vector3(1, 0, 0).applyQuaternion(chestQ);
+      const chestUp = new THREE.Vector3(0, 1, 0).applyQuaternion(chestQ);
+      const abd = (side: 'Left' | 'Right'): number => {
+        const a = new THREE.Vector3(), b = new THREE.Vector3();
+        rig.bones[`${side}Arm`].getWorldPosition(a);
+        rig.bones[`${side}ForeArm`].getWorldPosition(b);
+        const u = b.sub(a).normalize();
+        const lat = u.dot(chestRight) * (side === 'Left' ? -1 : 1);
+        return THREE.MathUtils.radToDeg(Math.atan2(lat, -u.dot(chestUp)));
+      };
+      return {
+        loco: rig.currentLocomotion,
+        faction: c.faction === null ? 'round-robin' : c.faction,
+        surfaceTop: +top.toFixed(4),
+        rootY: +c.root.position.y.toFixed(4),
+        leanDeg: +lean.toFixed(2),
+        abdLeftDeg: +abd('Left').toFixed(2),
+        abdRightDeg: +abd('Right').toFixed(2),
+        carry: +rig.carryWeight.toFixed(3),
+        aimWeight: +c.input.aimWeight.toFixed(2),
+        handToStockCm: nHand ? +(hand.distanceTo(fore) * 100).toFixed(1) : -1,
+        handToStockSurfCm: nHand && nStock ? +(hand.distanceTo(stock) * 100).toFixed(1) : -1,
+        stockBoneVsSurfCm: nStock ? +(stock.distanceTo(fore) * 100).toFixed(1) : -1,
+        barrelVsChestDeg: +THREE.MathUtils.radToDeg(Math.acos(
+          THREE.MathUtils.clamp(barrel.dot(chestFwd), -1, 1))).toFixed(1),
+        // The aim ray as the character defines it: root yaw, aimPitch * 0.7.
+        // Independent of whatever the animation did to the spine.
+        barrelVsAimDeg: +THREE.MathUtils.radToDeg(Math.acos(THREE.MathUtils.clamp(
+          barrel.dot(new THREE.Vector3(
+            0, Math.sin(c.input.aimPitch * 0.7), Math.cos(c.input.aimPitch * 0.7),
+          ).applyQuaternion(c.root.getWorldQuaternion(new THREE.Quaternion()))), -1, 1))).toFixed(1),
+        barrelPitchDeg: +THREE.MathUtils.radToDeg(Math.asin(
+          THREE.MathUtils.clamp(barrel.y, -1, 1))).toFixed(1),
+        vertices: pos.count,
+      };
     },
     /**
      * Start the per-frame skate accumulation. measureSkate() is incremental, so

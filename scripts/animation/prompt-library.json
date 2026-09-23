@@ -32,9 +32,11 @@
     {
       "id": "idle",
       "frames": 120,
-      "seed": 1001,
+      "seed": 1202,
       "loop": true,
-      "text": "a soldier stands still at ease holding a rifle across his chest, weight shifting slightly, small natural sway, breathing"
+      "text": "a soldier stands at full height with both knees locked straight and his spine vertical, shoulders level, chin up looking straight ahead, both hands holding a rifle in front of his chest, he does not crouch or bend, only a small breathing sway, loopable",
+      "note": "REJECTED, both seeds (2026-09-19); the game keeps the AUTHORED idle from clips.ts. Measured from the skinned surface in the game, a helmeted figure on this rig reaches 1.858 m at rest. Seed 1001 ('stands still at ease') gave 1.633 m; seed 1201 ('stands upright and tall') 1.704 m offline; seed 1202 ('both knees locked straight ... does not crouch or bend') 1.706 m offline. The loss is not the lean - 5.9 deg at seed 1202 - it is the cervical chain: the Neck->Head segment measures 0.058 m of its 0.140 m rest length, a 65 deg bow, on every seed. The model will not hold a head up in a standing idle and two seeds is the cap. The brief's fallback is a CMU BVH; the project's own third route - procedural clips authored in code, already licensed and already the library's floor (docs/LICENCES-ANIMATION.md) - is better here, because CMU has no standing idle at all and the authored one stands at 1.838 m with the weapon-carry layer giving it both hands. Left in the library with ship:false so the rejection stays reproducible and measurable.",
+      "ship": false
     },
     {
       "id": "walk",
@@ -54,10 +56,10 @@
     {
       "id": "sprint",
       "frames": 100,
-      "seed": 1104,
+      "seed": 1204,
       "loop": true,
-      "text": "a soldier sprints flat out at top speed, very long powerful bounding strides, both feet leaving the ground, arms driving hard, body low and forward",
-      "note": "second seed. The first (1004) measured 2.90 m/s, inside the blend tree's RUN band (2.3-4.1); a sprint clip must sit above 4.1 to ever be selected on its own terms."
+      "text": "a soldier sprints forward flat out at top speed, long fast strides, tall through the chest with the head up, arms driving straight forward and back close to the sides, elbows in, loopable",
+      "note": "third prompt (2026-09-19). Seed 1104's 'body low and forward' gave 53.2 deg of left-arm abduction - arms out sideways like a scarecrow - and 1.660 m to the helmet. 'body low' was doing the damage, so the prompt now asks for the arm PATH (forward and back, elbows in) instead of a body attitude."
     },
     {
       "id": "crouch-idle",
@@ -78,9 +80,10 @@
     {
       "id": "aim-rifle-idle",
       "frames": 120,
-      "seed": 1007,
+      "seed": 1207,
       "loop": true,
-      "text": "a soldier stands still aiming a rifle straight ahead with both hands, elbows tucked in, holding steady"
+      "text": "a soldier stands upright with his legs straight and his back vertical, head level, aiming a rifle straight ahead with both hands at shoulder height, elbows tucked in close to his ribs, holding steady, loopable",
+      "note": "second prompt (2026-09-19). Seed 1007 measured 1.719 m to the helmet and 15.9 deg of torso lean - the model crouched into the shot. Legs, back and head are now named separately from the weapon, because naming only the weapon lets the model choose the stance."
     },
     {
       "id": "aim-rifle-walk",

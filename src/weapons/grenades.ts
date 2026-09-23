@@ -25,12 +25,8 @@ import * as THREE from 'three';
 import type { MaterialLibrary } from '../core/materials';
 import { PAL } from '../core/palette';
 import type { WorldQuery } from '../game/events';
-import { BLAST_RING, FLIGHT_POOL, SMOKE_POOL, type OrdnanceView } from '../game/ordnance-view';
+import { BLAST_RING, FLIGHT_POOL, type OrdnanceView } from '../game/ordnance-view';
 import { stepBallistic } from '../game/ordnance-physics';
-import { SMOKE_DISSOLVE_MS, SMOKE_FILL_MS } from '../game/world-query';
-
-/** Puffs per smoke volume. Twelve overlapping spheres read as one cloud. */
-export const PUFFS_PER_SMOKE = 12;
 /** How long the blast sphere is visible, and how big it gets, in metres. */
 export const BLAST_FLASH_S = 0.35;
 export const BLAST_FLASH_RADIUS = 2.4;
@@ -39,18 +35,10 @@ const FLIGHT_STEP_S = 1 / 60;
 const ZERO = new THREE.Vector3(0, 0, 0);
 const ONE = new THREE.Vector3(1, 1, 1);
 
-/** Deterministic jitter per (volume, puff): the same cloud on every peer. */
-function hash(a: number, b: number): number {
-  let h = (a * 374761393 + b * 668265263) | 0;
-  h = Math.imul(h ^ (h >>> 13), 1274126177);
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-}
-
 export class GrenadeFx {
   readonly group: THREE.Group;
   private readonly casings: THREE.InstancedMesh;
   private readonly flashes: THREE.InstancedMesh;
-  private readonly puffs: THREE.InstancedMesh;
   private readonly blastAt: number[] = [];
   private readonly blastPos: THREE.Vector3[] = [];
   private lastBlastSeq = 0;
@@ -69,8 +57,7 @@ export class GrenadeFx {
     // The same olive as the held grenade in `viewmodel.ts`, so they match.
     this.casings = new THREE.InstancedMesh(new THREE.SphereGeometry(0.085, 10, 8), mat.painted(PAL.hedge, 0.75, 0.25), FLIGHT_POOL);
     this.flashes = new THREE.InstancedMesh(new THREE.SphereGeometry(1, 14, 10), mat.emissive(PAL.sunColor, 6), BLAST_RING);
-    this.puffs = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), mat.glass, SMOKE_POOL * PUFFS_PER_SMOKE);
-    for (const im of [this.casings, this.flashes, this.puffs]) {
+    for (const im of [this.casings, this.flashes]) {
       // Instances travel the whole map; the geometry's own bounding sphere
       // would cull them the moment the group origin left the frustum.
       im.frustumCulled = false;
@@ -137,36 +124,8 @@ export class GrenadeFx {
       this.flashes.setMatrixAt(i, this.m.compose(this.blastPos[i], this.q.identity(), this.s));
     }
     this.flashes.instanceMatrix.needsUpdate = true;
-
-    // ---- smoke: the placeholder puffballs ------------------------------------
-    let k = 0;
-    for (let si = 0; si < SMOKE_POOL; si++) {
-      const v = si < view.smokes.length ? view.smokes[si] : null;
-      for (let j = 0; j < PUFFS_PER_SMOKE; j++, k++) {
-        if (v === null || nowMs >= v.diesAt) {
-          this.puffs.setMatrixAt(k, this.m.compose(ZERO, this.q.identity(), ZERO));
-          continue;
-        }
-        const fill = Math.min(1, Math.max(0, (nowMs - v.bornAt) / SMOKE_FILL_MS));
-        const fade = Math.min(1, Math.max(0, (v.diesAt - nowMs) / SMOKE_DISSOLVE_MS));
-        const grow = Math.sqrt(fill) * fade;
-        const u = hash(v.id, j * 3 + 1) * 2 - 1;
-        const w = hash(v.id, j * 3 + 2) * 2 - 1;
-        const h = hash(v.id, j * 3 + 3);
-        // Spread the puffs through the sphere, biased upward, drifting up with age.
-        const drift = (nowMs - v.bornAt) / 1000 * 0.12;
-        this.p.set(
-          v.x + u * v.radius * 0.55 * grow,
-          v.y + (0.15 + h * 0.6) * v.radius * grow + drift * grow,
-          v.z + w * v.radius * 0.55 * grow,
-        );
-        const r = v.radius * (0.32 + h * 0.22) * grow;
-        this.s.set(r, r * 0.85, r);
-        this.e.set(0, h * 6.28, 0);
-        this.puffs.setMatrixAt(k, this.m.compose(this.p, this.q.setFromEuler(this.e), this.s));
-      }
-    }
-    this.puffs.instanceMatrix.needsUpdate = true;
+    // Smoke renders in the volumetric pass (atmosphere smoke volumes, fed by
+    // OrdnanceScene.smokes); the placeholder puffballs are retired.
   }
 
   /** Live counts for the QA surface. */

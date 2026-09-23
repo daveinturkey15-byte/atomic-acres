@@ -94,7 +94,7 @@ player.setColliders(colliders);
 // program is not. Placed on open ground the traverse routes already prove walkable,
 // so a figure cannot spawn inside a wall.
 // Baked Kimodo clips must be resident BEFORE the first CharacterSystem is built:
-// CharacterRig creates one AnimationAction per clip in its constructor. Sixteen
+// CharacterRig creates one AnimationAction per clip in its constructor. Fifteen
 // glTF clips, 350 kB, generated locally (public/anim/LICENCES.md). Top-level await
 // is fine here - tsconfig and vite both target es2022.
 await loadBakedClips();
@@ -176,6 +176,9 @@ void netcode;
 // forwarded through it before it reaches the UI - the one seam the session
 // offers, and it fires again on every rematch.
 const ordnance = new OrdnanceScene({ scene: world.scene, mat, colliders, hud: gameHud, weapons });
+// Live smoke feed: game smoke events drive the volumetric pass (pull route,
+// zero alloc, no light-set change). Null client reads as empty.
+world.atmosphere.smoke.bind(() => ordnance.smokes);
 const matchUi: MatchUi = {
   bindClient: (c) => { ordnance.bind(c); ui.bindClient(c); },
   setNames: (n) => ui.setNames(n),

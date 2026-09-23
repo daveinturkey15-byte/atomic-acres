@@ -200,8 +200,24 @@ function ourForwardKinematics(localQ, hipsPos, frames) {
 }
 const percentile = (arr, q) => { const s = [...arr].sort((a, b) => a - b); return s[Math.min(s.length - 1, Math.max(0, Math.floor(q * (s.length - 1))))]; };
 
+/**
+ * Prompt id -> the ClipName `src/characters/clips.ts` substitutes on.
+ *
+ * The prompt library names clips for the MODEL ("aim-rifle-idle" tells it what
+ * body to produce); the game names them for the BLEND TREE. The two sets are
+ * almost the same and diverge on exactly two entries, which is the worst case:
+ * a re-run of this script without the mapping writes `aim-rifle-idle.glb` and
+ * `fire-recoil.glb`, `clips.ts` looks up `aim` and `fire`, finds nothing, and
+ * silently ships the procedural aim and fire while every other clip is baked.
+ * Nothing fails, nothing logs, and the aim pose the whole upper-body overlay
+ * samples is quietly the authored one. The shipped manifest carried this
+ * mapping and the script did not; it does now.
+ */
+const CLIP_NAME = { 'aim-rifle-idle': 'aim', 'fire-recoil': 'fire' };
+
 // ---------------------------------------------------------------- one clip
 function retargetClip(entry) {
+  const clipName = CLIP_NAME[entry.id] ?? entry.id;
   const dir = join(rawRoot, entry.id);
   const asF = (p) => { const b = readFileSync(p); return new Float32Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)); };
   const rootRaw = asF(join(dir, 'root_positions.f32'));
@@ -447,10 +463,20 @@ function retargetClip(entry) {
     translation: STD.offsets[n],
   }));
 
-  mkdirSync(outDir, { recursive: true });
-  const file = join(outDir, `${entry.id}.glb`);
+  // A clip the library marks `"ship": false` is still generated, retargeted and
+  // MEASURED - the rejection has to stay falsifiable, and a number nobody can
+  // reproduce is not evidence - but it is written to a scratch file and kept out
+  // of the manifest, so `clips.ts` never substitutes it and the game keeps the
+  // authored clip for that name. This is how a clip gets rejected without being
+  // quietly deleted.
+  const shipped = entry.ship !== false;
+  // A rejected clip is written beside the RAW motion, never into outDir: the
+  // evidence stays on the machine and public/anim keeps only what ships.
+  const writeDir = shipped ? outDir : join(rawRoot, '..', '_rejected');
+  mkdirSync(writeDir, { recursive: true });
+  const file = join(writeDir, `${clipName}.glb`);
   const bytes = writeClipGlb(file, {
-    name: entry.id, bones, times, rotations, translations,
+    name: clipName, bones, times, rotations, translations,
     extras: { source: 'kimodo-soma-rp-v1.1', seed: entry.seed, fps: FPS, speed, stride: strideRaw, loop: !!entry.loopHint },
   });
 
@@ -460,7 +486,8 @@ function retargetClip(entry) {
   const slideMeaningful = !!entry.loopHint;
 
   return {
-    id: entry.id, file: `${entry.id}.glb`, bytes,
+    id: clipName, promptId: entry.id, prompt: entry.text, seedNote: entry.note ?? null,
+    ship: shipped, file: shipped ? `${clipName}.glb` : null, bytes,
     frames: keyCount, duration: +duration.toFixed(3), fps: FPS,
     trimmed: entry.loopHint ? [s0, e0] : null,
     loop: !!entry.loopHint,
@@ -496,8 +523,27 @@ for (const r of out) {
   console.log(pad(r.id, 17) + rp(r.frames, 6) + rp(r.duration.toFixed(2), 7) + rp(r.speed.toFixed(2), 7)
     + rp(r.stride.toFixed(2), 8) + rp(r.footSlideCm === null ? 'n/a' : r.footSlideCm.toFixed(1), 10) + rp(r.loopSeam.toFixed(3), 8) + rp((r.bytes / 1024).toFixed(0), 7));
 }
+// MERGE with whatever is already shipped in outDir. `--only idle` used to write
+// a manifest holding idle alone; kimodo-clips.ts loads exactly what the manifest
+// lists, so a one-clip re-roll would have silently un-shipped the other fifteen
+// baked clips and the game would have fallen back to procedural for all of them
+// with nothing but a console line to say so.
 mkdirSync(outDir, { recursive: true });
-writeFileSync(join(outDir, 'manifest.json'), JSON.stringify({
+const outManifest = join(outDir, 'manifest.json');
+let priorOut = { clips: [] };
+if (existsSync(outManifest)) {
+  try { priorOut = JSON.parse(readFileSync(outManifest, 'utf8')); } catch { priorOut = { clips: [] }; }
+}
+const replaced = new Set(out.filter((r) => !r.error).map((r) => r.id));
+const mergedClips = [...(priorOut.clips ?? []).filter((c) => !replaced.has(c.id)),
+  ...out.filter((r) => !r.error && r.ship !== false)];
+const rejected = out.filter((r) => !r.error && r.ship === false).map((r) => r.id);
+if (rejected.length) console.log(`NOT SHIPPED (library says ship:false): ${rejected.join(', ')} - the game keeps the authored clip for those names`);
+writeFileSync(outManifest, JSON.stringify({
+  // Spread the prior manifest first so any key a later pass added (`renamed`,
+  // `dropped`, an owner note) survives a one-clip re-roll.
+  ...priorOut,
+  dropped: [...new Set([...(priorOut.dropped ?? []), ...rejected])],
   baked: bake.baked, generator: bake.generator, provenance: bake.provenance,
   calibration: {
     upAxis: 'y (measured, not assumed - see inspect-motion.mjs)',
@@ -509,6 +555,6 @@ writeFileSync(join(outDir, 'manifest.json'), JSON.stringify({
     rootXZ: 'stripped - the controller owns it; speed/stride published instead',
     rootY: 'kept, scaled deviation from rest, then grounded on the 10th-percentile toe height',
   },
-  clips: out,
+  clips: mergedClips,
 }, null, 2));
 console.log(`\nwrote ${out.filter((r) => !r.error).length} clip(s) to ${outDir}`);

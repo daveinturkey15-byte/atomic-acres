@@ -88,6 +88,37 @@ export const PAL = {
   saucerSoffit:  0x7a6783,   // mauve underside with recessed downlights
   hazardYellow:  0xd8b23a,   // mailbox, markings, DO NOT STACK crates
 
+  // --- ATMOSPHERE (src/core/atmosphere.ts): time-of-day and weather families.
+  // Noon keeps skyTop / skyHorizon / sunColor / bounce / fog above, untouched; these
+  // are the OTHER rows of the preset table. Same rule as everything else here: picks
+  // within a family, sRGB hex, not calibrated. Weather rows are what the clear rows
+  // slide toward (a lerp weight per weather), so overcast/rain need no per-tod entry.
+  sunMorning:         0xffd6a4,  // low warm sun, still yellow not orange
+  skyMorningTop:      0x5a8dc0,  // cooler, deeper zenith while the air is clear
+  skyMorningHorizon:  0xd8dee2,  // pale, faintly warm
+  fogMorning:         0xd3d9dc,  // mist pooling low: a touch cooler than PAL.fog
+  sunGolden:          0xffb46a,  // golden hour key
+  sunGoldenGlow:      0xffc48a,  // the dome/env glow around it, paler than the key
+  skyGoldenTop:       0x5a86b6,
+  skyGoldenHorizon:   0xe8c8a2,  // warm band the sun sits in
+  bounceGolden:       0xb09a78,  // ground bounce warms with the key
+  fogGolden:          0xdcc6a8,
+  sunDusk:            0xff9658,  // sun under 10 deg: orange, dim
+  sunDuskGlow:        0xff8a62,  // magenta-orange glow at the horizon
+  skyDuskTop:         0x22386a,  // deep blue zenith
+  skyDuskHorizon:     0xe08c74,  // magenta-orange horizon band
+  skyDuskFill:        0x56668f,  // what the hemisphere still gives: dim blue
+  bounceDusk:         0x6a5a56,
+  fogDusk:            0xa8889a,
+  sunOvercast:        0xdfe3e6,  // a sun you cannot see: near-neutral, weak
+  sunOvercastGlow:    0xe8ebee,
+  skyOvercastTop:     0x9ea8b0,  // flat grey lid
+  skyOvercastHorizon: 0xc3c9ce,
+  bounceOvercast:     0x8f8f8a,
+  fogOvercast:        0xbfc5c9,
+  skyRainTop:         0x7c868e,  // darker lid still, when it is actually raining
+  skyRainHorizon:     0xa9b0b6,
+
   // --- moved in from inline literals (same values, now palette-owned per contract)
   windowDark:    0x66808e,   // shaded glazing that still reflects sky, not black
   deckBoard:     0xc08a50,   // warm mid-timber deck boards

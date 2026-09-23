@@ -59,6 +59,12 @@ const T_STEP = T_LAWN + 0.030;        // stepping stones, patio ring, court apro
 const T_SAND = T_LAWN + 0.045;        // sand pit fill
 const T_SURF = T_LAWN + 0.060;        // patio disc, court bed
 const T_MARK = T_LAWN + 0.085;        // court markings
+/**
+ * Two parts built on one plane tie in the depth buffer and dither. Where a dressed
+ * part used to share a face with the part it meets, it now stands TUCK off it; meshes
+ * only, every collider keeps its box (scripts/coplanar.mjs lists the pairs).
+ */
+const TUCK = 0.005;
 
 /**
  * East boundary fence, closing the map beyond the eastern fringe dressing.
@@ -331,8 +337,14 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
   const PLINTH = mat.painted(PAL.rubbleStone, 0.95, 0);
   const COPING = mat.painted(PAL.rubbleMortar, 0.95, 0);
 
-  /** tall horizontal-board fence on a rubble plinth, holes punched clean through */
-  function fence(ax: number, az: number, bx: number, bz: number, holes: Hole[]): void {
+  /**
+   * Tall horizontal-board fence on a rubble plinth, holes punched clean through.
+   * `cornerAtA`: this run starts on the corner of another run, which already carries
+   * the post there - it is not built again (the same 0.16 m post twice is every face
+   * on every face). The plinths and copings still meet in the corner square; they are
+   * one flat colour and shade identically, so that tie is not seen.
+   */
+  function fence(ax: number, az: number, bx: number, bz: number, holes: Hole[], cornerAtA = false): void {
     const L = Math.hypot(bx - ax, bz - az);
     const ux = (bx - ax) / L, uz = (bz - az) / L;
     const ry = Math.atan2(ux, uz);
@@ -354,7 +366,9 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
       const len = s1 - s0;
       const [cx, cz] = at((s0 + s1) / 2);
       B.put(PLINTH, 0.28, PLINTH_H, len, cx, PLINTH_H / 2, cz, ry);
-      B.put(COPING, 0.36, COPING_H, len, cx, PLINTH_H + COPING_H / 2, cz, ry);
+      // a return run's coping is TUCK taller both ways, so where it meets the back run's
+      // coping in the corner square neither the tops nor the overhanging soffits tie
+      B.put(COPING, 0.36, COPING_H + (cornerAtA ? 2 * TUCK : 0), len, cx, PLINTH_H + COPING_H / 2, cz, ry);
       for (let c = 0; c < 5; c++) {   // 5 stacked courses, 0.25 boards + 0.02 gaps
         const y = y0 + 0.125 + c * 0.27;
         B.put(mat.timber, 0.06, 0.25, len, cx, y, cz, ry);
@@ -368,7 +382,7 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
         Math.abs(uz) * len + Math.abs(ux) * 0.36));
     }
     const np = Math.max(2, Math.round(L / 2.0));   // square posts ~2 m, proud of the cap
-    for (let j = 0; j <= np; j++) {
+    for (let j = cornerAtA ? 1 : 0; j <= np; j++) {
       const d = (j / np) * L;
       if (holed(d, 0.2)) continue;
       const [x, z] = at(d);
@@ -382,8 +396,8 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
       ? [{ t: 0.30, w: 1.6 }, { t: 0.74, w: 1.35 }]
       : [{ t: 0.21, w: 1.5 }, { t: 0.57, w: 1.35 }, { t: 0.86, w: 1.6 }];
     fence(YARD_X_MIN, zf, YARD_X_MAX, zf, holes);
-    fence(YARD_X_MIN, zf, YARD_X_MIN, h.side * HOUSE_BACK, []);   // side returns
-    fence(YARD_X_MAX, zf, YARD_X_MAX, h.side * HOUSE_BACK, []);
+    fence(YARD_X_MIN, zf, YARD_X_MIN, h.side * HOUSE_BACK, [], true);   // side returns
+    fence(YARD_X_MAX, zf, YARD_X_MAX, h.side * HOUSE_BACK, [], true);
   }
   fence(BOUNDARY_X, -BOUND_Z, BOUNDARY_X, BOUND_Z, []);           // cul-de-sac boundary
   /** Fence runs meet at the yard corners on purpose; the prop overlap check skips them. */
@@ -401,7 +415,10 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
       const len = s1 - s0, hh = hgt * rr(0.92, 1.08), body = hh - w / 2;
       const cx = ax + ux * (s0 + s1) / 2, cz = az + uz * (s0 + s1) / 2;
       B.put(mat.hedge, w, body, len, cx, body / 2, cz, ry);
-      C.span(mat.hedge, w / 2, ax + ux * s0, body, az + uz * s0, ax + ux * s1, body, az + uz * s1);
+      // the rounded top runs TUCK short of the box at both ends: its flat caps were
+      // the box's own end faces (hedge on hedge, different UVs, at every block joint)
+      C.span(mat.hedge, w / 2, ax + ux * (s0 + TUCK), body, az + uz * (s0 + TUCK),
+        ax + ux * (s1 - TUCK), body, az + uz * (s1 - TUCK));
       colliders.push(aabbSlab(cx, 0, cz, Math.abs(ux) * len + Math.abs(uz) * w, hh,
         Math.abs(uz) * len + Math.abs(ux) * w));
     }
@@ -539,12 +556,18 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     h.side > 0 ? Math.PI : 0, h.side === ORANGE.side ? PAL.applianceRed : PAL.applianceBlue);
 
   // ---------------------------------------------------------------- stepping stones
-  /** a run of n stones along f(u); instanced, never collided, sits on T_STEP */
-  function stones(n: number, f: (u: number) => [number, number]): void {
+  /**
+   * A run of n stones along f(u); instanced, never collided, sits on T_STEP. `skip`
+   * drops a stone whose centre lands on another T_STEP feature (the court apron): a
+   * stone laid flush INTO a slab is two colours on one plane. The rng is drawn either
+   * way so the rest of the yard does not move.
+   */
+  function stones(n: number, f: (u: number) => [number, number], skip?: (x: number, z: number) => boolean): void {
     for (let i = 0; i < n; i++) {
       const [sx, sz] = f(i / (n - 1));
-      C.put(STONE, rr(0.44, 0.52), T_STEP, rr(0.40, 0.47), sx, T_STEP / 2, sz,
-        rr(-0.15, 0.15));
+      const w = rr(0.44, 0.52), d = rr(0.40, 0.47), ry = rr(-0.15, 0.15);
+      if (skip && skip(sx, sz)) continue;
+      C.put(STONE, w, T_STEP, d, sx, T_STEP / 2, sz, ry);
     }
   }
 
@@ -567,12 +590,16 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     const gxx = yx(0.13), gzz = yz(H, 0.68), gw = 3.5, gd = 2.7, gwall = 1.75, grise = 1.0;
     const GBASE = 0.5, FRAME = WHITEP;
     const gh = gwall - GBASE;
+    // the x walls butt inside the z walls (both used to run through the corner);
+    // the corner posts are 2 * TUCK wider than the 0.12 walls they stand on so their
+    // faces are proud of the wall faces rather than on them
     for (const s of [-1, 1]) {
-      B.put(SLAB, gw + 0.12, GBASE, 0.12, gxx, GBASE / 2, gzz + s * (gd / 2));
+      B.put(SLAB, gw, GBASE, 0.12, gxx, GBASE / 2, gzz + s * (gd / 2));
       B.put(SLAB, 0.12, GBASE, gd + 0.12, gxx + s * (gw / 2), GBASE / 2, gzz);
     }
+    const POST = 0.12 + 2 * TUCK;
     for (const sx of [-1, 1]) for (const sz of [-1, 1])
-      B.put(FRAME, 0.12, gwall + grise, 0.12, gxx + sx * gw / 2, (gwall + grise) / 2, gzz + sz * gd / 2);
+      B.put(FRAME, POST, gwall + grise, POST, gxx + sx * gw / 2, (gwall + grise) / 2, gzz + sz * gd / 2);
     for (const s of [-1, 1]) {
       B.put(FRAME, gw + 0.12, 0.1, 0.1, gxx, gwall + 0.05, gzz + s * gd / 2);
       B.put(FRAME, 0.1, 0.1, gd + 0.12, gxx + s * gw / 2, gwall + 0.05, gzz);
@@ -586,7 +613,7 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     }
     for (const s of [-1, 1]) {
       B.put(mat.glass, 0.05, 0.55, gd * 0.62, gxx + s * gw / 2, gwall + 0.27, gzz);
-      B.put(mat.glass, 0.05, 0.5, gd * 0.30, gxx + s * gw / 2, gwall + 0.72, gzz);
+      B.put(mat.glass, 0.05, 0.45, gd * 0.30, gxx + s * gw / 2, gwall + 0.775, gzz);   // above the lower pane, not over it
       B.put(FRAME, 0.07, 0.07, gd * 0.62 + 0.1, gxx + s * gw / 2, gwall + 0.55, gzz);
     }
     const slope = Math.atan2(grise, gd / 2), plen = Math.hypot(grise, gd / 2);
@@ -655,8 +682,9 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     const cxx = clearOfHouse(H, yx(0.38), czz, cu * 1.1);
     for (const [ox, oy, oz] of [[-0.5, 0, -0.5], [0.5, 0, -0.5], [-0.5, 0, 0.5], [0.5, 0, 0.5],
                                 [-0.44, 1, 0.04], [0.47, 1, 0.16]]) {
-      B.put(oy === 1 ? mat.timber : mat.timberDark, cu, cu, cu, cxx + ox * cu,
-        oy * cu + cu / 2, czz + oz * cu, rr(-0.13, 0.13));
+      const up = oy === 1 && ox > 0 ? TUCK : 0;   // the two top crates share neither lid nor foot
+      B.put(oy === 1 ? mat.timber : mat.timberDark, cu, cu + up, cu, cxx + ox * cu,
+        oy * cu + (cu + up) / 2 + up, czz + oz * cu, rr(-0.13, 0.13));
     }
     colliders.push(aabbSlab(cxx, 0, czz, cu * 2.2, cu * 2, cu * 2.2));
 
@@ -756,11 +784,13 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     // corridor between court apron and pit kerb is only 0.57 m. So it goes the other way.
     const ax = H.deckX - DECK_LEN * 0.15, az = yz(H, (DECK_OUT + 0.9) / YARD_D);
     const bx = yx(0.21), bz = yz(H, 0.94);
+    const onApron = (x: number, z: number): boolean =>
+      Math.abs(x - qx) < (qL + 0.7) / 2 + 0.3 && Math.abs(z - qz) < (qW + 0.7) / 2 + 0.3;
     stones(11, (u) => {
       const mx = yx(0.30), mz = yz(H, 0.79);                       // bezier control
       const k = (1 - u) * (1 - u), j = 2 * (1 - u) * u, i2 = u * u;
       return [k * ax + j * mx + i2 * bx, k * az + j * mz + i2 * bz];
-    });
+    }, onApron);
     // ---- lived-in detail, all founded on the T_* ladder, all instanced
     const wlz = yz(H, 0.30);                                         // washing line
     for (const wx of [yx(0.70), yx(0.80)]) {
@@ -943,7 +973,7 @@ export const buildYards: Builder = (ctx: BuildContext): BuildResult => {
     domeBin(mat.hedge, yx(0.80), yz(H, 0.86));                    // olive ...
     domeBin(WHITEP, yx(0.86), yz(H, 0.83));                       // ... and pale
     padDisc(STONE, 0.7, yx(0.125), yz(H, 0.28), T_STEP);          // pod approach discs
-    padDisc(STONE, 0.7, yx(0.1475), yz(H, 0.28), T_STEP);
+    padDisc(STONE, 0.7, yx(0.16), yz(H, 0.28), T_STEP);           // clear of the first (they overlapped)
   }
 
   // ---------------------------------------------------------------- front lawns
