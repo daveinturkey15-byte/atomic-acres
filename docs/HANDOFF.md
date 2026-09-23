@@ -650,3 +650,13 @@ pass-through (`host-ordnance.ts`), stale-body despawn on rematch (`main.ts`),
 favicon 404 fixed. Gates: check green, playcap 4/4 zero errors, traverse 5/5,
 capture 10/10. OPEN: primaryId threading, HUD overlap, bindMatch question,
 frame-policy N/A here; vision quota back 21:50Z for pixel-judged gauntlets.
+
+**Day-4 cont. (23 Sep).** Kit primaryId threaded: bots declare arsenal weapon
+(`bots.ts` + `BotHost` interface widened to match host drift), human declares
+loadout primary (`session-solo.ts`) — corpses now drop the right gun.
+Sprint re-roll seed 1211 landed (2.98 m/s, 0.0 cm slide; was 2.84/4 cm):
+still below the 4.1 blend threshold (~1.38x), SOMA will not sprint faster —
+a true 1.0x needs a game-speed decision. Seed-2 baking for comparison.
+Seed 1225 baked for comparison (3.32 m/s, slide 2.1 cm, seam 0.220) but NOT
+landed: faster than 1211 yet pops the loop; 1211 stays shipped. True fix
+needs a game-speed decision (sprint threshold 4.1 vs model ceiling ~3.3).
