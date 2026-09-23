@@ -113,7 +113,7 @@ seam` is the pose distance between the first and last key of a loop.
 |---|---|---|---|---|---|---|---|
 | `walk.glb` | 1102 | 26 | 0.83 s | 1.97 m/s | 3.8 cm | 0.124 | `a55cd27acf3ac3b4` |
 | `run.glb` | 1003 | 18 | 0.57 s | 2.67 m/s | 6.2 cm | 0.126 | `e47dbee53455e1b9` |
-| `sprint.glb` | **1204** | 40 | 1.30 s | 2.84 m/s | 4.0 cm | 0.132 | `8d1ce4eec7a8b730` |
+| `sprint.glb` | **1211** | 16 | 0.50 s | 2.98 m/s | 0.0 cm | 0.144 | `d6800cdfa0a79497` |
 | `crouch-idle.glb` | 1105 | 53 | 1.73 s | 0.00 m/s | 0.5 cm | 0.030 | `b9deca0259f834d2` |
 | `crouch-walk.glb` | 1106 | 31 | 1.00 s | 1.40 m/s | 2.4 cm | 0.138 | `5a0b2dbba4761e8b` |
 | `aim.glb` | **1207** | 51 | 1.67 s | 0.00 m/s | 0.9 cm | 0.040 | `f802c2874ca0fffc` |
@@ -135,7 +135,7 @@ Re-rolled on 2026-09-19, with the sha256 of the shipped bytes:
 | file | bytes | sha256 |
 |---|---|---|
 | `aim.glb` (seed 1207, prompt sha `6221157f1887a2d9`) | 24,416 | `5b848b3b0ea0ba4f1b2dec03e79783677f853d1da77994bd7c95fa49e72082f2` |
-| `sprint.glb` (seed 1204, prompt sha `32132894bb532daf`) | 20,580 | `6cf5b5304ed65a3a3c2852c63fb30fbe063065fdc527c4e0a927bce2ab9420ee` |
+| `sprint.glb` (seed 1211, prompt sha `32132894bb532daf`) | 12,104 | `d6800cdfa0a79497ba68ec6adbdc59c4a61ec1b42bbc3d9ed139dc3a69b91d09` |
 
 The embedding cache is now keyed on the prompt TEXT (`bake-motion.mjs` writes a
 `<embedding>.f32.txt` stamp beside each one). Before that it was keyed on the clip id alone,
@@ -149,9 +149,9 @@ actually changed - the exact failure mode a re-roll exists to avoid.
   **Second seed.** second seed. The first (1002, 'steady relaxed pace') measured 2.14 m/s at the planted foot - a jog, not a walk, and the blend tree would have played it at half timeScale for a 1.1 m/s character.
 - `run` - seed 1003, 18 keys
   > a soldier jogs forward at a steady pace holding a rifle at the ready, elbows bent, even strides, loopable
-- `sprint` - **seed 1204**, 40 keys (re-rolled 2026-09-19)
+- `sprint` - **seed 1211**, 16 keys (re-rolled 2026-09-23)
   > a soldier sprints forward flat out at top speed, long fast strides, tall through the chest with the head up, arms driving straight forward and back close to the sides, elbows in, loopable
-  **Third prompt.** Seed 1104's "body low and forward" gave 53.2 deg of left upper-arm abduction - arms out sideways - and 1.660 m to the top of the helmet. The prompt now asks for the arm PATH (forward and back, elbows in) instead of a body attitude: abduction 53.2 -> 28.3 deg, lean 11.9 -> 7.5 deg. Height is unchanged at 1.63 m and a sprint is allowed to be low; speed 2.74 -> 2.84 m/s, still below the blend tree's 4.1 sprint threshold, so it plays at timeScale 1.4 when selected. Prompt sha256 `32132894bb532daf`.
+  **Third prompt.** Seed 1104's "body low and forward" gave 53.2 deg of left upper-arm abduction - arms out sideways - and 1.660 m to the top of the helmet. The prompt now asks for the arm PATH (forward and back, elbows in) instead of a body attitude: abduction 53.2 -> 28.3 deg, lean 11.9 -> 7.5 deg. Height is unchanged at 1.63 m and a sprint is allowed to be low; speed 2.74 -> 2.84 m/s, still below the blend tree's 4.1 sprint threshold, so it plays at timeScale 1.4 when selected. Seed 1211 (2026-09-23): 2.98 m/s, slide 0.0 cm (was 4.0), seam 0.144 — still below 4.1, plays ~1.38x; the SOMA model will not sprint faster, so a true 1.0x needs a game-speed decision, not another seed. Prompt sha256 `32132894bb532daf`.
 - `crouch-idle` - seed 1105, 53 keys
   > a soldier holds a half-kneeling combat crouch with his back straight and chest up, knees bent, rifle shouldered, steady
   **Second seed.** second seed. The first (1005) put the pelvis at 0.288 m - sitting on the heels, head at 0.89 m. A combat crouch keeps the torso upright, so the prompt now says so instead of saying 'low'.

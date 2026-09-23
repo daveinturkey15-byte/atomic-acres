@@ -453,32 +453,33 @@
       "id": "sprint",
       "promptId": "sprint",
       "prompt": "a soldier sprints forward flat out at top speed, long fast strides, tall through the chest with the head up, arms driving straight forward and back close to the sides, elbows in, loopable",
-      "seedNote": null,
+      "seedNote": "third prompt (2026-09-19). Seed 1104's 'body low and forward' gave 53.2 deg of left-arm abduction - arms out sideways like a scarecrow - and 1.660 m to the helmet. 'body low' was doing the damage, so the prompt now asks for the arm PATH (forward and back, elbows in) instead of a body attitude.",
+      "ship": true,
       "file": "sprint.glb",
-      "bytes": 20580,
-      "frames": 40,
-      "duration": 1.3,
+      "bytes": 12104,
+      "frames": 16,
+      "duration": 0.5,
       "fps": 30,
       "trimmed": [
-        42,
-        81
+        40,
+        55
       ],
       "loop": true,
-      "loopSeam": 0.1321,
-      "speed": 2.84,
-      "speedRoot": 2.75,
-      "speedFeet": 2.84,
-      "cycleFrames": 39,
-      "stride": 3.692,
-      "footSlideCm": 4,
+      "loopSeam": 0.1435,
+      "speed": 2.98,
+      "speedRoot": 3.449,
+      "speedFeet": 2.98,
+      "cycleFrames": 15,
+      "stride": 1.49,
+      "footSlideCm": 0,
       "footTravelCm": null,
-      "strides": 5,
+      "strides": 0,
       "hipYRange": [
-        0.809,
-        0.861
+        0.795,
+        0.835
       ],
-      "headingDeg": -5.2,
-      "seed": 1204
+      "headingDeg": 4.9,
+      "seed": 1211
     }
   ],
   "renamed": {
