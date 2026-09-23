@@ -638,3 +638,15 @@ animation r2 resume (`wf_8fbe1e7c-385`). Photoreal targets deferred (GPU + the f
 slot). Still to apply once the tree settles: ui.bindMatch(match) + stale-body hide in
 main.ts, session-solo primaryId, bots.ts primaryId, knife team check, world-owned blast
 FF rule, grenade-counter HUD overlap, mat.smoke() - one polish lane.
+
+**Day-4 (23 Sep, OMP lead).** Resumed the four dead lanes to verdicts (see
+`docs/HANDOFF-ANIM-R2.md`, `docs/HANDOFF-WORLD-R2.md`): animation r2 DONE (3
+residuals), bedroom-door fix DONE + proven, z-fight VERIFY holds (1411->922),
+atmosphere volumetric smoke WORKS in game. Live smoke proven in the march
+(`scripts/_live-proof.mjs` PASS, id=1 blast, max 105, 0 errors) → placeholder
+puffs retired from `grenades.ts`. Smoke feed seam: `OrdnanceScene.smokes` +
+`world.atmosphere.smoke.bind` in main.ts. Lead polish: knife friendly
+pass-through (`host-ordnance.ts`), stale-body despawn on rematch (`main.ts`),
+favicon 404 fixed. Gates: check green, playcap 4/4 zero errors, traverse 5/5,
+capture 10/10. OPEN: primaryId threading, HUD overlap, bindMatch question,
+frame-policy N/A here; vision quota back 21:50Z for pixel-judged gauntlets.

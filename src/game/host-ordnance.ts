@@ -175,6 +175,7 @@ export class HostOrdnance {
     let bestD = KNIFE_REACH_M;
     for (const v of this.life.actors.values()) {
       if (v === a || !v.health.alive) continue;
+      if (v.team === a.team) continue; // friendly pass-through: never spend the swing on a teammate
       const p = v.poses.at(msg.firedAt);
       if (p === null) continue;
       const flat = Math.hypot(p.x - msg.ox, p.z - msg.oz);

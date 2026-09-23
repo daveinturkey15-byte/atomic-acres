@@ -336,6 +336,11 @@ function frame(): void {
       if (b.alive && h.rig.isDead) h.rig.revive();
       else if (!b.alive && !h.rig.isDead) h.rig.playDeath();
     }
+    // Rematch may field a different roster: despawn rigs whose bots are gone
+    // so stale bodies never stand around the new match.
+    for (const [id, h] of botBodies) {
+      if (!match.bots().some((b) => b.id === id)) { characters.despawn(h); botBodies.delete(id); }
+    }
   }
 
   frames++;
