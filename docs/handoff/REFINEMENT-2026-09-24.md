@@ -16,7 +16,8 @@ copied into this repository.
   early candidates per peer until remote SDP is set. It also preserves an
   already-connected game channel when the signalling EventSource reconnects,
   closes a replaced peer, and reports HTTP signalling refusal accurately.
-  With SDP held 500 ms by the relay's QA mode, the two-browser match passed.
+  With SDP held 500 ms by the relay's QA mode, the two-browser match passed;
+  the relay measured six ICE candidates delivered before SDP.
 - Pure network proof: the Node entrypoint was stale under extensionless
   TypeScript imports. `scripts/_verify-net-proof.mjs` bundles it as the game
   build does. Its 120 s virtual loss/jitter proof passed, including authority,
@@ -38,8 +39,10 @@ The current roster has seven playable gun definitions against the old game's
 copy proprietary names or meshes. Projectile, flame, pickup, and specialist
 archetypes need their own authority, presentation, and balance checks. The
 current streak catalog has ten rows, of which five have arena effects; the
-remaining rows must gain honest in-world behaviors or be removed from player
-selection. Tracker Dart has pure host logic but no minimap blip consumer.
+  remaining rows must gain honest in-world behaviors or be removed from player
+  selection. Tracker Dart has pure host logic but no minimap blip consumer;
+  that consumer needs a host-to-client reveal field so solo and LAN guests
+  share the same rule.
 
 The current menu already ships solo rules, room hosting/joining, options and
 credits. It does not yet offer a weapon and streak loadout picker comparable
