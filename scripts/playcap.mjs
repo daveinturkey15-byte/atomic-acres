@@ -26,6 +26,7 @@ import { tmpdir } from 'node:os';
 import net from 'node:net';
 import { usePreview } from './lib/preview.mjs';
 import { spawnGuarded, killTree } from './lib/proc-guard.mjs';
+import { startSolo } from './lib/start-solo.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'captures');
@@ -103,7 +104,7 @@ await page.goto(url, { waitUntil: 'load', timeout: 90000 });
 await page.waitForFunction(() => window.__NT && window.__NT.ready === true, null, { timeout: 180000 });
 
 // Click to play exactly as a person would - the listener lives on the overlay.
-await page.evaluate(() => { const o = document.getElementById('start'); if (o) o.click(); });
+await startSolo(page);
 await page.waitForTimeout(1500);
 
 // Hide the DOM HUD so we measure the CANVAS, then let the loop run.

@@ -65,6 +65,9 @@ export function guard(child) {
 
 /** Drop-in replacement for child_process.spawn that cannot leak. */
 export function spawnGuarded(cmd, args = [], opts = {}) {
+  // Headless QA must keep WebAudio running without playing through Dave's speakers.
+  if (args.some((arg) => arg === '--headless' || arg.startsWith('--headless='))
+      && !args.includes('--mute-audio')) args = [...args, '--mute-audio'];
   return guard(spawn(cmd, args, opts));
 }
 

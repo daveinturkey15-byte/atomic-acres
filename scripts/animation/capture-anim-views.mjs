@@ -30,6 +30,7 @@ import { tmpdir } from 'node:os';
 import net from 'node:net';
 import { usePreview } from '../lib/preview.mjs';
 import { spawnGuarded, killTree } from '../lib/proc-guard.mjs';
+import { startSolo } from '../lib/start-solo.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const OUT = join(ROOT, 'captures', 'anim');
@@ -107,7 +108,7 @@ page.on('pageerror', (e) => errors.push('PAGEERROR ' + String(e).slice(0, 300)))
 console.log('[anim] ' + url + '   clip=' + clipName);
 await page.goto(url, { waitUntil: 'load', timeout: 90000 });
 await page.waitForFunction(() => window.__NT && window.__NT.ready === true, null, { timeout: 180000 });
-await page.evaluate(() => { const o = document.getElementById('start'); if (o) o.click(); });
+await startSolo(page);
 await page.waitForTimeout(1500);
 await page.waitForFunction(() => window.__NTANIM && window.__NTANIM.ready === true, null, { timeout: 30000 });
 await page.addStyleTag({ content: '#hud,#crosshair{display:none !important}' });
@@ -168,23 +169,36 @@ SUBJECT = await page.evaluate(([base, d]) => {
 }, [SUBJECT, D]);
 console.log(`[anim] stage (${SUBJECT.x}, ${SUBJECT.z})  clutter score ${SUBJECT.clutter} (0 = nothing within the frame)`);
 
-// Subject: one figure, on the mark, driven at the clip's own speed so the blend
-// tree picks this clip and sets timeScale to exactly 1.
+// Subject: one figure, on the mark, driven at the clip's own speed through the
+// SHIPPED library, so the blend tree picks this clip at timeScale exactly 1.
 mkdirSync(OUT, { recursive: true });
-const armed = await page.evaluate(async ([s, speed, name]) => {
-  // main.ts does not call characters.update() on this branch, so nothing ticks
-  // the rigs; the harness drives them until that line lands. See the report.
-  window.__NTANIM.selfTick(true);
+const armed = await page.evaluate(async ([s, speed, name, baked]) => {
+  // main.ts ticks the character system itself (game-driven since Wave 3), so
+  // selfTick stays OFF - a second driver double-steps every rig. The library
+  // already substitutes the baked clip (proven BAKED above: main.ts awaits
+  // loadBakedClips() before the first rig is built), so no playExternal is
+  // needed; driving at spec.speed plays the baked bytes and proves the wiring.
+  // Carry OFF: the layer would hold both arms and mask the clip under test.
   window.__NTANIM.solo(0);
   window.__NTANIM.place(0, s.x, s.z, s.yaw);
   window.__NTANIM.drive(0, speed);
-  // The BAKED clip, from the bakery registry - not rig.library, which was built
-  // before the fetch resolved and still holds the procedural set.
-  const ok = await window.__NTANIM.external(0, name);
+  window.__NTANIM.aim(0, 0, 0);
+  window.__NTANIM.carry(0, 0);
   window.__NTANIM.pin(0, s.x, s.z, s.yaw);
-  return ok;
-}, [SUBJECT, Math.max(0.01, spec.speed), clipName]);
-if (!armed) { console.error(`[anim] ${clipName} is not in the loaded bakery registry - refusing to photograph the procedural clip and call it the canary`); await browser.close(); killTree(chrome.pid); process.exit(2); }
+  return baked.includes(name);
+}, [SUBJECT, Math.max(0.01, spec.speed), clipName, bakedNames]);
+if (!armed) { console.error(`[anim] ${clipName} is not BAKED in the shipped library - refusing to photograph the procedural clip and call it the canary`); await browser.close(); killTree(chrome.pid); process.exit(2); }
+// The subject only moves while the match ticks the world. Match start races
+// page load under a loaded GPU, so wait boundedly for a bot to show speed
+// rather than photographing rest and calling it a clip.
+const matchLive = await page.evaluate(async () => {
+  for (let k = 0; k < 40; k++) {
+    if (window.__NTANIM.list().some((f) => f.i !== 0 && f.speed > 0.1)) return true;
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  return false;
+});
+if (!matchLive) { console.error('[anim] match never started (no bot showed speed in 20 s) - rerun rather than photograph a frozen rig'); await browser.close(); killTree(chrome.pid); process.exit(3); }
 await page.waitForTimeout(1500);
 // Prove the rig is actually MOVING before any shutter opens. A frozen rest pose
 // photographs beautifully and means nothing.
