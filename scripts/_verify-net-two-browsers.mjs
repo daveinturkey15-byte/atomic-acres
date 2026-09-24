@@ -263,6 +263,11 @@ try {
     say(`t=${String(s.t).padStart(3)}s ${conn ? 'connected' : 'DISCONNECT'} | A ${s.a} | B ${s.b}`);
   }
   step(`${SECONDS} s from Start without a disconnect`, disconnects === 0, `${report.samples.length} samples, ${disconnects} bad`);
+  if (DELAY_SDP_MS > 0) {
+    const health = await (await fetch(SIGNAL_URL + '/health')).json();
+    report.qaEarlyIce = health.qaEarlyIce;
+    step('ICE reached the relay target before SDP', health.qaEarlyIce > 0, `${health.qaEarlyIce} early candidates`);
+  }
 } catch (e) {
   say('EXCEPTION ' + String(e).slice(0, 400));
   code = 1;

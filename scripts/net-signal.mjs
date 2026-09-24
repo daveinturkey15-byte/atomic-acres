@@ -47,6 +47,9 @@ const PEER_RE = /^[A-Za-z0-9_-]{1,32}$/;
 const rooms = new Map();
 let forwarded = 0;
 let rejected = 0;
+let qaEarlyIce = 0;
+/** QA-only delivery order, scoped to live rooms. */
+const qaDeliveredSdp = new Map();
 
 function cors(res, extra = {}) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -88,7 +91,10 @@ function subscribe(req, res, url) {
   req.on('close', () => {
     clearInterval(keep);
     if (room.get(peer) === res) room.delete(peer);
-    if (room.size === 0) rooms.delete(code);
+    if (room.size === 0) {
+      rooms.delete(code);
+      qaDeliveredSdp.delete(code);
+    }
   });
 }
 
@@ -126,6 +132,13 @@ async function signal(req, res) {
   try {
     target.write('data: ' + JSON.stringify({ from, payload: body.payload }) + '\n\n');
     forwarded++;
+    if (DELAY_SDP_MS > 0) {
+      const route = from + '>' + to;
+      let seen = qaDeliveredSdp.get(code);
+      if (!seen) { seen = new Set(); qaDeliveredSdp.set(code, seen); }
+      if (body.payload.kind === 'ice' && !seen.has(route)) qaEarlyIce++;
+      if (body.payload.kind === 'offer' || body.payload.kind === 'answer') seen.add(route);
+    }
   } catch {
     rejected++;
     return json(res, 410, { ok: false, reason: 'peer-gone' });
@@ -141,7 +154,7 @@ const server = http.createServer((req, res) => {
   if (req.method === 'GET' && url.pathname === '/health') {
     let peers = 0;
     for (const r of rooms.values()) peers += r.size;
-    return json(res, 200, { ok: true, rooms: rooms.size, peers, forwarded, rejected });
+    return json(res, 200, { ok: true, rooms: rooms.size, peers, forwarded, rejected, qaEarlyIce });
   }
   return json(res, 404, { ok: false, reason: 'not-found' });
 });
