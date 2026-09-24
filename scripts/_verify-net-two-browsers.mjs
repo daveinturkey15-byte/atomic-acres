@@ -17,6 +17,7 @@
  *   120 s from Start without a disconnect, sampled every 10 s
  *
  *   node scripts/_verify-net-two-browsers.mjs [--seconds 120] [--signal-port 4310]
+ *     [--delay-sdp-ms 500]  # exercise candidates arriving before SDP
  */
 import { chromium } from 'playwright';
 import { join, dirname } from 'node:path';
@@ -32,6 +33,7 @@ const argv = process.argv.slice(2);
 const opt = (n, d) => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1] : d; };
 const SECONDS = Number(opt('seconds', '120'));
 const SIGNAL_PORT = Number(opt('signal-port', '4310'));
+const DELAY_SDP_MS = Number(opt('delay-sdp-ms', '0'));
 const SIGNAL_URL = 'http://127.0.0.1:' + SIGNAL_PORT;
 const log = [];
 const say = (s) => { const line = '[net2] ' + s; console.log(line); log.push(line); };
@@ -98,14 +100,14 @@ async function signalUp() {
 }
 
 const { url } = await usePreview();
-const signal = spawnGuarded(process.execPath, [join(ROOT, 'scripts', 'net-signal.mjs'), '--port', String(SIGNAL_PORT)], { stdio: 'ignore', windowsHide: true });
+const signal = spawnGuarded(process.execPath, [join(ROOT, 'scripts', 'net-signal.mjs'), '--port', String(SIGNAL_PORT), '--delay-sdp-ms', String(DELAY_SDP_MS)], { stdio: 'ignore', windowsHide: true });
 if (!await signalUp()) { killTree(signal.pid); console.error('[net2] signal relay never came up'); process.exit(2); }
 say('signal relay up at ' + SIGNAL_URL);
 
 const A = await launch('A');
 const B = await launch('B');
 let code = 0;
-const report = { url, signalUrl: SIGNAL_URL, seconds: SECONDS, steps: [], samples: [], errors: {} };
+const report = { url, signalUrl: SIGNAL_URL, seconds: SECONDS, delaySdpMs: DELAY_SDP_MS, steps: [], samples: [], errors: {} };
 const step = (name, ok, detail) => { report.steps.push({ name, ok, detail }); say((ok ? 'OK   ' : 'FAIL ') + name + (detail ? '  ' + detail : '')); if (!ok) code = 1; };
 
 async function openMultiplayer(P, callsign) {

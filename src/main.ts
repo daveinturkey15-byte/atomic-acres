@@ -137,7 +137,6 @@ for (const [cx, cz, cyaw] of [
   characters.spawn(cx, cz, cyaw);
 }
 player.teleport(SPAWN_A.x, 0, SPAWN_A.z, SPAWN_A.yaw);
-const ammoDiv = document.createElement('div');
 // The trigger is a CLAIM, not a verdict: the host resolves damage (IMPORT-PLAN s2).
 let match: LocalMatch | null = null;
 const weapons = new WeaponsController({
@@ -145,7 +144,9 @@ const weapons = new WeaponsController({
   scene: world.scene,
   mat,
   targets: worldTargets,
-  onHud: (line) => { ammoDiv.textContent = line; },
+  // The game HUD reads the controller snapshot below; a second ammo line here
+  // duplicated it over the minimap.
+  onHud: () => undefined,
   onShot: (claim) => match?.localShot(claim),
 });
 
@@ -162,7 +163,7 @@ hudHelp.textContent =
   'F fly · C noclip · wheel/[ ] speed · H help · Esc free mouse · ' +
   'LMB fire · RMB aim · R reload · 1/2 or wheel weapons · ' +
   'G frag (hold to cook) · Q tactical · V knife · hold E pick up';
-hud.append(hudStats, hudMode, hudHelp, ammoDiv);
+hud.append(hudStats, hudMode, hudHelp);
 // ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
 // initUI owns everything inside #hud and #start, so the capture harness still
 const ui = initUI({ player, world });

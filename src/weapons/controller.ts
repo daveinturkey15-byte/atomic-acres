@@ -2,7 +2,7 @@
  * Atomic Acres — first-person weapon lane controller (fan project inspired by
  * BO2-era arcade shooters, not a clone or port).
  *
- * Owns five viewmodel rigs (built by ./viewmodel from ./catalog), one transient
+ * Owns one viewmodel rig per catalog gun, one transient
  * pool (./effects), and a private overlay scene rendered on top of the world.
  * After construction only visible flags, transforms, FOV, and preallocated
  * pool slots change: no new materials/geometries/lights, no scene add/remove.
@@ -34,6 +34,7 @@ import {
   buildPistolViewmodel,
   type ViewmodelRig,
 } from './viewmodel';
+import { buildLmgViewmodel, buildMarksmanViewmodel } from './viewmodel-specialists';
 import { WeaponEffects } from './effects';
 import { OrdnanceInput } from './ordnance-input';
 
@@ -191,6 +192,8 @@ export class WeaponsController {
       else if (def.id === 'coachman') rig = buildShotgunViewmodel(opts.mat);
       else if (def.id === 'deadeye') rig = buildSniperViewmodel(opts.mat);
       else if (def.id === 'duster') rig = buildPistolViewmodel(opts.mat);
+      else if (def.id === 'stampede') rig = buildLmgViewmodel(opts.mat);
+      else if (def.id === 'varmint') rig = buildMarksmanViewmodel(opts.mat);
       else rig = buildRifleViewmodel(opts.mat);
       return {
         def,

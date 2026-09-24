@@ -14,12 +14,13 @@
  */
 
 import { FEED_DAMAGE_LIMIT, FEED_EVENT_LIMIT } from '../game/feed';
+import { SLOT_COUNT } from '../game/killstreaks/catalog';
 import type { FeedDestination } from '../game/events';
 import { MAX_PLAYERS } from '../net/protocol';
 import { MAP_PX } from './layout';
 
-/** Five slots, as the old `KillstreakLoadoutV1`. Lane C owns their contents. */
-export const STREAK_SLOTS = 5;
+/** The HUD follows the current loadout contract, not the old game's slot count. */
+export const STREAK_SLOTS = SLOT_COUNT;
 
 export interface FeedPool {
   readonly rows: readonly HTMLElement[];

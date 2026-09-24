@@ -4,7 +4,7 @@ import { PAL } from '../core/palette';
 import type { ViewmodelRig } from './types';
 export type { ViewmodelRig } from './types';
 
-function box(
+export function box(
   w: number,
   h: number,
   d: number,
@@ -22,7 +22,7 @@ function box(
   return mesh;
 }
 
-function tube(
+export function tube(
   radius: number,
   length: number,
   material: THREE.Material,

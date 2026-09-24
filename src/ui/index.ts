@@ -32,6 +32,7 @@ import { initNetOverlay } from './net-overlay';
 import type { ClientEdge, ClientView, GameClient } from '../game/client';
 import type { MatchMode } from '../game/rules';
 import type { LocalMatch } from '../game/session';
+import { streakById } from '../game/killstreaks/catalog';
 import { formatClock } from '../game/match';
 
 /** Speed above which the crosshair counts the player as moving. */
@@ -139,9 +140,7 @@ export function pushView(hud: HudApi, v: ClientView, names: ReadonlyMap<string, 
 
   const streak: StreakHudView = {
     kills: v.streak.kills,
-    // Short labels are a placeholder until lane C's streak catalog ships one;
-    // the id is truncated rather than a second roster of names being authored.
-    slots: v.streak.slots.map((s) => ({ label: s.streakId.slice(0, 3).toUpperCase(), charges: s.charges })),
+    slots: v.streak.slots.map((s) => ({ label: streakById(s.streakId)?.displayName ?? s.streakId, charges: s.charges })),
   };
   hud.setStreak(v.streak.slots.length === 0 ? null : streak);
 }

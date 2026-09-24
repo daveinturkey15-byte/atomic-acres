@@ -35,6 +35,8 @@ const opt = (name, dflt) => {
 };
 const PORT = Number(opt('port', process.env.AA_SIGNAL_PORT || '4310'));
 const HOST = opt('host', '127.0.0.1');
+/** QA fault injection: force ICE to race ahead of SDP through the relay. */
+const DELAY_SDP_MS = Math.min(2_000, Math.max(0, Number(opt('delay-sdp-ms', '0')) || 0));
 const MAX_ROOMS = 64;
 const MAX_PEERS = 16;
 const MAX_BODY = 64 * 1024;
@@ -117,6 +119,10 @@ async function signal(req, res) {
   const room = rooms.get(code);
   const target = room?.get(to);
   if (!target) { rejected++; return json(res, 404, { ok: false, reason: 'no-such-peer' }); }
+  if (DELAY_SDP_MS > 0 && (body.payload.kind === 'offer' || body.payload.kind === 'answer')) {
+    await new Promise((resolve) => setTimeout(resolve, DELAY_SDP_MS));
+    if (room.get(to) !== target) { rejected++; return json(res, 410, { ok: false, reason: 'peer-gone' }); }
+  }
   try {
     target.write('data: ' + JSON.stringify({ from, payload: body.payload }) + '\n\n');
     forwarded++;

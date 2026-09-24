@@ -53,6 +53,8 @@ export interface RtcTransport extends Transport {
 const FAST_TYPES: ReadonlySet<string> = new Set(['input', 'state']);
 /** Queued sends per peer before its channel opens; oldest dropped past it. */
 const QUEUE_CAP = 256;
+/** Trickle ICE may beat the offer or answer through separate HTTP requests. */
+const ICE_QUEUE_CAP = 64;
 
 interface Peer {
   pc: RTCPeerConnection;
@@ -75,6 +77,7 @@ export function createRtcTransport(opts: RtcOptions): RtcTransport {
   if (!rtcAvailable()) throw new Error('[net] WebRTC or EventSource unavailable in this runtime');
   const base = opts.signalUrl.replace(/\/+$/, '');
   const peers = new Map<PeerId, Peer>();
+  const pendingIce = new Map<PeerId, RTCIceCandidateInit[]>();
   const handlers = new Set<TransportHandler>();
   const stats: RtcStats = { sent: 0, received: 0, dropped: 0, bad: 0, peers: 0, signalOk: false };
   let closed = false;
@@ -85,7 +88,7 @@ export function createRtcTransport(opts: RtcOptions): RtcTransport {
     void fetch(base + '/signal', {
       method: 'POST',
       body: JSON.stringify({ code: opts.code, from: opts.localId, to, payload }),
-    }).then(() => { stats.signalOk = true; }).catch(() => { stats.signalOk = false; });
+    }).then((r) => { stats.signalOk = r.ok; }).catch(() => { stats.signalOk = false; });
   };
 
   const deliver = (from: PeerId, raw: string): void => {
@@ -130,6 +133,7 @@ export function createRtcTransport(opts: RtcOptions): RtcTransport {
   };
 
   const newPeer = (id: PeerId): Peer => {
+    peers.get(id)?.pc.close();
     const pc = new RTCPeerConnection({ iceServers: [] });
     const p: Peer = { pc, ctl: null, fast: null, queue: [] };
     peers.set(id, p);
@@ -144,8 +148,26 @@ export function createRtcTransport(opts: RtcOptions): RtcTransport {
     return p;
   };
 
+  const addIce = async (p: Peer, candidate: RTCIceCandidateInit): Promise<void> => {
+    try {
+      await p.pc.addIceCandidate(candidate);
+    } catch {
+      // A late candidate for an earlier negotiation cannot change this peer.
+    }
+  };
+
+  const flushIce = async (id: PeerId, p: Peer): Promise<void> => {
+    const queued = pendingIce.get(id);
+    pendingIce.delete(id);
+    if (queued === undefined) return;
+    for (const candidate of queued) await addIce(p, candidate);
+  };
+
   /** Guest side: build the channels and offer to the host. */
   const offer = async (): Promise<void> => {
+    const existing = peers.get('host');
+    // An SSE reconnect must not replace a healthy game data channel.
+    if (existing?.pc.connectionState === 'connected') return;
     const p = newPeer('host');
     attach('host', p, p.pc.createDataChannel('ctl', { ordered: true }));
     attach('host', p, p.pc.createDataChannel('fast', { ordered: false, maxRetransmits: 0 }));
@@ -160,24 +182,28 @@ export function createRtcTransport(opts: RtcOptions): RtcTransport {
     const pl = s.payload;
     if (pl.kind === 'offer') {
       if (opts.role !== 'host') return;
-      const old = peers.get(from);
-      if (old !== undefined) old.pc.close();
       const p = newPeer(from);
       await p.pc.setRemoteDescription({ type: 'offer', sdp: pl.sdp });
+      await flushIce(from, p);
       const answer = await p.pc.createAnswer();
       await p.pc.setLocalDescription(answer);
       post(from, { kind: 'answer', sdp: answer.sdp ?? '' });
       return;
     }
-    const p = peers.get(from);
-    if (p === undefined) return;
     if (pl.kind === 'answer') {
+      const p = peers.get(from);
+      if (p === undefined) return;
       await p.pc.setRemoteDescription({ type: 'answer', sdp: pl.sdp });
+      await flushIce(from, p);
     } else if (pl.kind === 'ice' && pl.candidate !== null) {
-      try {
-        await p.pc.addIceCandidate(pl.candidate);
-      } catch {
-        /* a candidate for a description that already settled; harmless. */
+      const p = peers.get(from);
+      if (p?.pc.remoteDescription) {
+        await addIce(p, pl.candidate);
+      } else {
+        const queued = pendingIce.get(from) ?? [];
+        if (queued.length >= ICE_QUEUE_CAP) queued.shift();
+        queued.push(pl.candidate);
+        pendingIce.set(from, queued);
       }
     }
   };
@@ -246,6 +272,7 @@ export function createRtcTransport(opts: RtcOptions): RtcTransport {
         p.pc.close();
       }
       peers.clear();
+      pendingIce.clear();
       stats.peers = 0;
     },
     stats: () => stats,

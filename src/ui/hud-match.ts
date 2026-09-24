@@ -132,7 +132,9 @@ export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
         }
         el.classList.remove('hud-hidden');
         el.classList.toggle('hud-streak-ready', s.charges > 0);
-        el.textContent = s.charges > 1 ? s.label + ' x' + s.charges : s.label;
+        const key = String(i + 3);
+        el.textContent = key + ' ' + s.label + (s.charges > 1 ? ' x' + s.charges : '');
+        el.title = `Press ${key}: ${s.label}${s.charges > 0 ? ` (${s.charges} ready)` : ''}`;
       }
     },
 
