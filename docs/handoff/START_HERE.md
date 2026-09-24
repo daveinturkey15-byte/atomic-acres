@@ -1,5 +1,21 @@
 # Nuketown 2025 — handoff
 
+## Current entry — 2026-09-24
+
+**Current game: Atomic Acres / Nuketown, restarted 2026-09-17.** Repository:
+`daveinturkey15-byte/atomic-acres`; checkout `C:/Users/david/Desktop/stuff/nuketown`;
+development branch `layout-boii-proportions` (September23 continuation).
+Read [CURRENT.json](CURRENT.json) and [the reconciliation](RECONCILIATION-2026-09-24.md)
+before the historical snapshot below. Preview: **http://localhost:4188/**.
+
+The older `Desktop/stuff/atomic-acres` / `atomic-acres-browser-arena` repository
+is reference-only. The September20 recovery worktree is a preserved divergent
+branch of this NEW repository. Neither may silently replace the selected source.
+There ARE registered worktrees now; use fresh `git worktree list --porcelain`.
+Older state, ownership, performance and build claims below are historical only.
+
+## Original September17 snapshot (retained history)
+
 **Project:** from-scratch, code-only Three.js recreation of Black Ops 2 `Nuketown 2025`.
 **Started:** 2026-09-17, dave-gaming-pc, Claude Code (Opus 5).
 **Root:** `C:/Users/david/Desktop/stuff/nuketown`

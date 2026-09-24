@@ -1,4 +1,23 @@
-# Atomic Acres
+# Atomic Acres — September 2026 restart
+
+This is Dave's current Atomic Acres / Nuketown project, started **17 September 2026**.
+The older `atomic-acres-browser-arena` repository is reference material only.
+
+Start with [the current handoff](docs/handoff/START_HERE.md),
+[CURRENT.json](docs/handoff/CURRENT.json) and [AGENTS.md](AGENTS.md).
+The current local checkout is `C:/Users/david/Desktop/stuff/nuketown`, branch
+`layout-boii-proportions`. `master` and public Pages are older builds.
+
+Local preview: **http://localhost:4188/**. Use `Play solo`, then `Deploy`.
+The served `preview-identity.json` identifies the exact source and script hash.
+Run `npm run check`, `npm run build` and `node scripts/stamp-preview.mjs` before
+previewing changed, committed source. The stamp identifies bytes; run the gameplay
+checks as well before describing them as verified.
+The September20 recovery branch is preserved separately; see CURRENT for its path.
+
+This is work in progress. A working preview is not full feature/art acceptance.
+
+## Project background
 
 A from-scratch, code-only fan project inspired by **Black Ops 2 `Nuketown 2025`**
 in Three.js. It starts close to BO2's Nuketown 2025 and diverges from there —
@@ -8,7 +27,7 @@ is carried over from any previous project.
 
 Unofficial fan project — not affiliated with Activision or Treyarch.
 
-Play it live at `https://daveinturkey15-byte.github.io/atomic-acres/`.
+Historical public build: `https://daveinturkey15-byte.github.io/atomic-acres/`. It does not track the current development preview.
 
 ## Play it
 
@@ -17,7 +36,7 @@ npm install
 npm run dev
 ```
 
-Open the URL it prints, click to lock the pointer, then **WASD** to move, **mouse** to
+Open the URL it prints, choose **Play solo**, then **Deploy**. Use **WASD** to move, **mouse** to
 look, **shift** to sprint, **space** to jump. The debug line top-left shows fps, draw
 calls, triangles and your position.
 
@@ -32,8 +51,8 @@ npm run capture    # headless captures of every camera station
 npm run traverse   # walks the real player controller along required routes
 ```
 
-`capture` starts its **own** dev server on a port it picks, so it can never photograph a
-stale preview someone else left running. It writes to `captures/` and fails on any page
+`capture` shares the built preview on port **4188**. Rebuild first and verify the served
+source identity rather than trusting an already-listening server. It writes to `captures/` and fails on any page
 error. `traverse` drives the actual movement code — collision, step-up, gravity — along
 routes a player must be able to take, and scans each house wall to *find* the doors
 rather than assuming where they are.

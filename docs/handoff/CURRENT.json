@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "project": "atomic-acres",
+  "aliases": [
+    "Atomic Acres",
+    "Nuketown",
+    "Nuketown 2025"
+  ],
+  "started": "2026-09-17",
+  "repository": "daveinturkey15-byte/atomic-acres",
+  "worktree": "C:/Users/david/Desktop/stuff/nuketown",
+  "branch": "layout-boii-proportions",
+  "owner": "codex / 2026-09-24 bounded preview and commit reconciliation",
+  "checkpoint": "RECONCILIATION-2026-09-24.md",
+  "preview": {
+    "url": "http://localhost:4188/",
+    "identity": "preview-identity.json",
+    "acceptance": "VERIFIED local gameplay preview; production and full feature/art acceptance remain OPEN"
+  },
+  "predecessor": {
+    "repository": "daveinturkey15-byte/atomic-acres-browser-arena",
+    "role": "reference-only",
+    "worktree": "C:/Users/david/Desktop/stuff/atomic-acres"
+  },
+  "alternate": {
+    "branch": "recovery/wave7-20260919",
+    "worktree": "C:/Users/david/Desktop/stuff/worktrees/nuketown-recovery-20260919",
+    "role": "preserved September20 alternate of the new project; not integrated"
+  },
+  "workers": "stopped; no autonomous feature campaign or heartbeat resumed",
+  "production": "unchanged; master/Pages is not this preview",
+  "sourceSha": "2d8c83415e5d6f18aa67c81ae943c1b6f274d90d",
+  "verification": {
+    "typecheck": "PASS",
+    "renderSites": "PASS",
+    "weapons": 60,
+    "mortar": 34,
+    "dart": 14,
+    "streakRejection": "PASS after stale import fix",
+    "gameplayViews": "4/4; Play solo -> Deploy; inspected circle pixels",
+    "traversal": "5/5 routes; 4/4 house faces enterable",
+    "soak": {
+      "seconds": 210,
+      "samples": 22,
+      "jsSlopeMBPerMin": 0.219,
+      "maxJsSlopeMBPerMin": 0.5,
+      "rendererNetMB": -2.24,
+      "status": "PASS"
+    },
+    "animationCapture": "PASS 4/4 sprint views, inspected threequarter image; in-game worst skate 5.9 cm, art acceptance OPEN"
+  }
+}

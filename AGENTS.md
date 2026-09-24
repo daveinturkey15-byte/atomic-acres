@@ -1,5 +1,19 @@
 # Nuketown 2025 — agent contract
 
+## Current project entry (owner reconciliation 2026-09-24)
+
+This is the current **Atomic Acres** restart, remote `daveinturkey15-byte/atomic-acres`.
+Read `docs/handoff/START_HERE.md` and `CURRENT.json` first. The current development
+checkout is `C:/Users/david/Desktop/stuff/nuketown`, branch `layout-boii-proportions`.
+The old `atomic-acres-browser-arena` routing record/Pass workflow governs only the
+reference project and must not select a working directory for this restart.
+The September20 `nuketown-recovery-20260919` branch is a preserved alternate of THIS
+repository, not the predecessor and not automatically merged into the current line.
+Verify branch, dirty state and writer ownership before work. Do not infer current
+source from public Pages, `master`, a port, or a stale handoff date.
+All unattended headless browser QA is muted at process output (`--mute-audio`);
+WebAudio remains running for verification. No new worker campaign was resumed.
+
 A from-scratch, code-only recreation of **Black Ops 2 `Nuketown 2025`** in Three.js.
 Started 2026-09-17. This repository is deliberately small and stays that way.
 
