@@ -46,6 +46,8 @@ import { evaluateActivation, rejectedOutcome, type ActivationContext, type Strea
 import { createRecon, reconRevealsTo, stepRecon, type ReconState } from './effects/recon';
 import { createCounterRecon, jamsTeam, stepCounterRecon, type CounterReconState } from './effects/counter-recon';
 import { createSentry, stepSentry, validateSentryPlacement, type SentryState, type SentryTarget } from './effects/sentry';
+import { createMortar, stepMortar, type MortarState } from './effects/mortar';
+import { createDart, dartPaints, stepDart, type DartState } from './effects/dart';
 
 export { STREAK_CLAIM_REJECTS, STREAK_CLAIM_REJECT_LABELS, type ActivationContext, type StreakClaimReject } from './gate';
 
@@ -67,16 +69,19 @@ export const ADVANCE_DT_CAP_MS = 250;
 export const MAX_LADDER_KILLS = 100_000;
 
 /** The wiring table: the only place a streak id meets a stepper. */
-const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry'>> = Object.freeze({
+const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar' | 'dart'>> = Object.freeze({
   'recon-sweep': 'recon',
   'signal-jam': 'counter-recon',
   'sentry-post': 'sentry',
+  'blast-mortar': 'mortar',
+  'tracker-dart': 'dart',
 });
 
 /** Derived, never authored: what this build can bring into the world. */
 export const WIRED_STREAK_IDS: readonly string[] = Object.freeze(Object.keys(EFFECT_KIND));
 
-export type LiveInstance = ReconState | CounterReconState | SentryState;
+export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState | DartState;
+
 /** What the host must know about an actor for a sentry to shoot it. */
 export type StreakTarget = SentryTarget;
 
@@ -288,12 +293,11 @@ export class StreakRuntime {
     }
 
     if (this.live.size >= MAX_LIVE_INSTANCES) return reject('instance-cap', streakId);
-
     // Rule 5: everything that can fail resolves BEFORE a charge moves.
     const kind = EFFECT_KIND[streakId];
     const anchor = intent.anchor ?? intent.origin;
     let placed: { x: number; y: number; z: number } | null = null;
-    if (kind === 'sentry') {
+    if (kind === 'sentry' || kind === 'mortar' || kind === 'dart') {
       const p = validateSentryPlacement(anchor.x, anchor.z, world);
       if (!p.ok) return reject('no-placement', streakId);
       placed = { x: p.x, y: p.y, z: p.z };
@@ -311,7 +315,11 @@ export class StreakRuntime {
       ? createRecon(instanceId, a.actorId, a.team, streakId, def.durationMs, seed)
       : kind === 'counter-recon'
         ? createCounterRecon(instanceId, a.actorId, a.team, streakId, def.durationMs)
-        : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
+        : kind === 'mortar'
+          ? createMortar(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
+          : kind === 'dart'
+            ? createDart(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
+            : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
 
     const e: StreakActivatedEvent = Object.freeze({ type: 'streak-activated', at: now, actorId: a.actorId, team: a.team, streakId, slot: intent.slot, chargesLeft, instanceId });
     a.cause = e;
@@ -333,11 +341,16 @@ export class StreakRuntime {
     const health = new Map<ActorId, number>(targets.map((t) => [t.id, t.health]));
     const events: GameEvent[] = [];
     for (const [id, instance] of [...this.live]) {
+      const aimed = targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health }));
       const tick = instance.kind === 'recon'
         ? stepRecon(instance, dt, { now })
         : instance.kind === 'counter-recon'
           ? stepCounterRecon(instance, dt, { now })
-          : stepSentry(instance, dt, { now, world, targets: targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health })) });
+          : instance.kind === 'mortar'
+            ? stepMortar(instance, dt, { now, targets: aimed })
+            : instance.kind === 'dart'
+              ? stepDart(instance, dt, { now, world, targets: aimed })
+              : stepSentry(instance, dt, { now, world, targets: aimed });
       for (const e of tick.events) {
         if (e.type === 'damage') health.set((e as DamageEvent).victimId, (e as DamageEvent).healthAfter);
         events.push(e);
@@ -366,6 +379,21 @@ export class StreakRuntime {
     for (const i of this.live.values()) if (i.kind === 'counter-recon' && jamsTeam(i, team)) return false;
     for (const i of this.live.values()) if (i.kind === 'recon' && reconRevealsTo(i, team)) return true;
     return false;
+  }
+
+  /**
+   * Every target id a live dart paints right now, sorted. The minimap's
+   * future blip reader; until it exists, the tests are the consumer — the
+   * same status recon's `revealedFor` shipped with.
+   */
+  paintedTargetIds(): readonly ActorId[] {
+    const out: ActorId[] = [];
+    for (const i of this.live.values()) {
+      if (i.kind !== 'dart') continue;
+      for (const id of i.painted) if (dartPaints(i, id) && !out.includes(id)) out.push(id);
+    }
+    out.sort();
+    return Object.freeze(out);
   }
 
   /** The bank, one row per slot. Empty for an unknown actor, which is what `host.ts` puts in an `ActorSnapshot`. */

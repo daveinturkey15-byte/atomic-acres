@@ -1,7 +1,9 @@
 /**
  * Weapons lane — the weapon table. One object per weapon, in one file, so
- * adding a sixth is one entry here plus one viewmodel builder.
- *
+ * adding an eighth is one entry here plus one viewmodel builder. `stampede`
+ * and `varmint` are long guns, so until their builders exist they ride the
+ * controller's rifle-viewmodel fallback (the same fallback every unknown id
+ * already gets) with the generic shot report.
  * All angles are radians. Damage is per pellet (the shotgun fires 8).
  * rpm is expressed as seconds between shots (`interval`) because that is
  * what the controller's timer consumes — rpm is in the comment.
@@ -160,6 +162,40 @@ export const WEAPONS: readonly WeaponDef[] = [
     adsMoveScale: 0.8,
     spread: { hip: 1.2 * DEG, ads: 0.35 * DEG, move: 0.8 * DEG, bloom: 0.2 * DEG, bloomMax: 1.0 * DEG, crouchMult: 0.75 },
     recoil: { pitch: 0.5 * DEG, yawRandom: 0.12 * DEG, patternAmp: 0.25, patternLen: 6, recovery: 6.5 },
+  },
+  {
+    id: 'stampede',
+    name: 'Stampede',
+    auto: true, // LMG: hold the trigger, own the lane; the belt is the reload
+    interval: 0.0833, // 720 rpm
+    pellets: 1,
+    damage: { base: 27, fall: 17, nearRange: 25, farRange: 55 },
+    magSize: 60,
+    startReserve: 180,
+    reloadTime: 3.4,
+    emptyReloadTime: 3.9,
+    adsTime: 0.3,
+    adsFov: 55,
+    adsMoveScale: 0.6,
+    spread: { hip: 2.2 * DEG, ads: 0.5 * DEG, move: 1.4 * DEG, bloom: 0.1 * DEG, bloomMax: 1.2 * DEG, crouchMult: 0.7 },
+    recoil: { pitch: 0.42 * DEG, yawRandom: 0.1 * DEG, patternAmp: 0.3, patternLen: 8, recovery: 5 },
+  },
+  {
+    id: 'varmint',
+    name: 'Varmint',
+    auto: false, // semi marksman: every pull is one aimed round, fast follow-up
+    interval: 0.4, // ~150 rpm
+    pellets: 1,
+    damage: { base: 45, fall: 28, nearRange: 30, farRange: 70 },
+    magSize: 10,
+    startReserve: 40,
+    reloadTime: 2.2,
+    emptyReloadTime: 2.7,
+    adsTime: 0.26,
+    adsFov: 32,
+    adsMoveScale: 0.62,
+    spread: { hip: 3.0 * DEG, ads: 0.08 * DEG, move: 1.6 * DEG, bloom: 0.6 * DEG, bloomMax: 1.6 * DEG, crouchMult: 0.65 },
+    recoil: { pitch: 0.9 * DEG, yawRandom: 0.1 * DEG, patternAmp: 0.15, patternLen: 4, recovery: 4 },
   },
 ];
 
