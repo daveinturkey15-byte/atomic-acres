@@ -5,7 +5,8 @@
 **Current game: Atomic Acres / Nuketown, restarted 2026-09-17.** Repository:
 `daveinturkey15-byte/atomic-acres`; checkout `C:/Users/david/Desktop/stuff/nuketown`;
 development branch `layout-boii-proportions` (September23 continuation).
-Read [CURRENT.json](CURRENT.json) and [the reconciliation](RECONCILIATION-2026-09-24.md)
+Read [CURRENT.json](CURRENT.json), [the reconciliation](RECONCILIATION-2026-09-24.md),
+and [the active refinement plan](REFINEMENT-2026-09-24.md)
 before the historical snapshot below. Preview: **http://localhost:4188/**.
 
 The older `Desktop/stuff/atomic-acres` / `atomic-acres-browser-arena` repository

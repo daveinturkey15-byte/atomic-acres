@@ -10,8 +10,9 @@
   "repository": "daveinturkey15-byte/atomic-acres",
   "worktree": "C:/Users/david/Desktop/stuff/nuketown",
   "branch": "layout-boii-proportions",
-  "owner": "codex / 2026-09-24 bounded preview and commit reconciliation",
-  "checkpoint": "RECONCILIATION-2026-09-24.md",
+  "owner": "codex / 2026-09-24 restart refinement",
+  "checkpoint": "REFINEMENT-2026-09-24.md",
+  "reconciliation": "RECONCILIATION-2026-09-24.md",
   "preview": {
     "url": "http://localhost:4188/",
     "identity": "preview-identity.json",
@@ -29,7 +30,18 @@
   },
   "workers": "stopped; no autonomous feature campaign or heartbeat resumed",
   "production": "unchanged; master/Pages is not this preview",
-  "sourceSha": "2d8c83415e5d6f18aa67c81ae943c1b6f274d90d",
+  "sourceSha": "d3e97fbba0254a1b962e4be26fb7258f21df5c50",
+  "sourceShaRole": "tested runtime code; documentation-only handoff commit follows",
+  "priorVerificationSourceSha": "2d8c83415e5d6f18aa67c81ae943c1b6f274d90d",
+  "refinementVerification": {
+    "typecheckAndRenderSites": "PASS",
+    "build": "PASS",
+    "virtualNetworkProof": "PASS 120 s",
+    "twoBrowserLan": "PASS 120 s; 500 ms delayed-SDP fault pass at 30 s",
+    "menuScreens": "PASS 18/18",
+    "gameplayViews": "PASS 4/4",
+    "artAcceptance": "OPEN; Trellis.2/Pixal3D generation not run"
+  },
   "verification": {
     "typecheck": "PASS",
     "renderSites": "PASS",
