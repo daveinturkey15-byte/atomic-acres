@@ -36,7 +36,7 @@ const ENTRY = `
 
   function hostAuthority() {
     const host = new GameHost({ world, rules, now: 0, seed: 7 });
-    host.addActor('shooter', 0);
+    host.addActor('shooter', 0, { primaryId: 'deadeye' });
     host.addActor('victim', 1);
     const first = host.tick(5000);
     need(host.snapshot().match.phase === 'active', 'host did not enter active phase');
@@ -129,8 +129,21 @@ const ENTRY = `
       type: 'welcome', playerId: 'p1', hostNow: 0, roster: [], token: 'resume-token-123',
       resume: { phase: 'playing', startTick: 0, lastSeq: 4, life: 1, shotSeq: 9 },
     });
-    const driver = createGuestDriver(guest, { ui, instrument: createSessionLog('p1') });
+    let placed = null;
+    const driver = createGuestDriver(guest, { ui, instrument: createSessionLog('p1'),
+      placeLocal: (x, y, z, yaw, stance) => { placed = { x, y, z, yaw, stance }; },
+    });
     const fire = (seq) => driver.localShot({ seq, weaponId: 'longhorn', time: 0, origin: { x: 0, y: 1.5, z: 0 }, direction: { x: 0, y: 0, z: 1 } });
+    fire(0);
+    need(!sent.some((x) => x.msg.type === 'shot'), 'resumed driver fired before authoritative placement');
+    const poseHost = new GameHost({ world, rules, now: 0, seed: 23 });
+    poseHost.addActor('p1', 0); poseHost.tick(5000);
+    poseHost.updatePose('p1', 0, 0, 0, 5000, 'stand', 0);
+    receive('host', { type: 'state', tick: 1, hostNow: 0,
+      players: [poseHost.stampSample({ id: 'p1', x: 0, y: 0, z: 0, yaw: 0, ack: 4 })],
+    });
+    need(placed?.x === 0 && placed.y === 0 && placed.z === 0 && placed.stance === 'stand',
+      'resumed driver did not apply the host placement');
     fire(0);
     let shots = sent.filter((x) => x.msg.type === 'shot').map((x) => ({ seq: x.msg.seq, life: x.msg.life }));
     need(shots.length === 1 && shots[0].seq === 10 && shots[0].life === 1, 'resumed driver did not preserve shot base');

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { stockBrowser } from './lib/stock-browser.mjs';
 import { usePreview } from './lib/preview.mjs';
+import { waitForRenderedPage } from './lib/render-ready.mjs';
 const {url}=await usePreview();
 const query=process.env.AA_ART_QUERY || '';
 const owned=await stockBrowser('salvage-menu');
@@ -13,7 +14,7 @@ mkdirSync('captures',{recursive:true});
 const report={url:url+(query?'?'+query:''),screens:[],checks:[]};
 try {
   await page.goto(report.url,{waitUntil:'load',timeout:90000});
-  await page.waitForFunction(()=>window.__NT?.ready===true,null,{timeout:180000});
+  await waitForRenderedPage(page,180000);
   await page.screenshot({path:'captures/salvage-menu-home.png'});report.screens.push('salvage-menu-home.png');
   await page.getByRole('button',{name:'Play solo',exact:true}).click();
   const primary=page.getByRole('group',{name:'Primary weapon',exact:true}).getByRole('button',{name:/^MP5\b/});

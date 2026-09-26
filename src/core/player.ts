@@ -109,14 +109,14 @@ export class Player {
     this.probeWish = x === null ? null : { x, z };
   }
 
-  teleport(x: number, y: number, z: number, yaw = 0, pitch = 0): void {
+  teleport(x: number, y: number, z: number, yaw = 0, pitch = 0, stance: PlayerStance = 'stand'): void {
     this.state.pos.set(x, y, z);
     this.state.vel.set(0, 0, 0);
     this.state.yaw = yaw;
     this.state.pitch = pitch;
-    this.state.stance = 'stand';
-    this.bodyHeight = BODY_H;
-    this.eyeHeight = EYE_HEIGHT;
+    this.state.stance = stance;
+    this.bodyHeight = this.targetBodyHeight();
+    this.eyeHeight = this.targetEyeHeight();
     this.syncCamera();
   }
 

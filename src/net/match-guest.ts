@@ -32,7 +32,7 @@ import type { BotBody, MatchDriver, MatchUi, SessionActor, SessionSnapshot } fro
 import type { ShotClaim } from '../weapons/controller';
 import type { GameNetMessage, MatchStateMsg, PlayerSample } from './protocol';
 import type { GuestClient } from './room';
-import { createPose, intentFromVelocity, type Pose } from './room-core';
+import { createPose, intentFromVelocity, isPlayerStance, type Pose } from './room-core';
 import type { PlayerStance } from './room-core';
 import { INTERP_DELAY_MS, TICK_HZ } from './snapshot';
 import { localizeGameMessage } from './event-clock';
@@ -52,7 +52,7 @@ interface Body {
 export interface GuestDriverOptions {
   readonly ui: MatchUi;
   readonly instrument: SessionLog;
-  readonly placeLocal?: (x: number, y: number, z: number, yaw: number) => void;
+  readonly placeLocal?: (x: number, y: number, z: number, yaw: number, stance?: PlayerStance) => void;
   readonly localPrimaryId?: string | (() => string | undefined);
 }
 
@@ -95,6 +95,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   // seen, no shots until the first one arrives.
   let lives = resumed?.life ?? 0;
   let shotSeqBase = resumed === null || resumed.shotSeq < 0 ? 0 : resumed.shotSeq + 1;
+  let resumePlacementPending = resumed !== null;
   let matches = 0;
   let snaps = 0;
   let lastMatch: MatchStateMsg | null = null;
@@ -107,6 +108,22 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   let frame = 0;
   const primaryForLocal = (): string | undefined =>
     typeof opts.localPrimaryId === 'function' ? opts.localPrimaryId() : opts.localPrimaryId;
+
+  // A resumed life has no spawn event. Wait for its real host pose before
+  // forwarding input or shots from the new page's otherwise unrelated camera.
+  const placeResume = (players: readonly PlayerSample[]): void => {
+    if (!resumePlacementPending) return;
+    const p = players.find(s => s.id === selfId);
+    if (!p || ![p.x, p.y, p.z, p.yaw].every(Number.isFinite) ||
+      !Number.isSafeInteger(p.ack) || p.ack < (resumed?.lastSeq ?? -1) ||
+      (p.stance !== undefined && !isPlayerStance(p.stance))) return;
+    const stance = p.stance ?? 'stand';
+    opts.placeLocal?.(p.x, p.y, p.z, p.yaw, stance);
+    Object.assign(pose, { x: p.x, y: p.y, z: p.z, yaw: p.yaw, pitch: 0, stance });
+    histHead = 0; histCount = 0; lastPose.valid = false;
+    acc = 0; last = 0; lastAckSeen = p.ack;
+    resumePlacementPending = false;
+  };
 
   const pushNames = (): void => {
     const names: [string, string][] = [];
@@ -147,6 +164,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
           // host's per-life ShotWindow.
           lives = msg.e.reason === 'initial' ? 1 : Math.max(1, lives + 1);
           shotSeqBase = 0;
+          resumePlacementPending = false;
           opts.placeLocal?.(msg.e.x, msg.e.y, msg.e.z, msg.e.yaw);
           // The body just teleported: forget its history and skip one velocity
           // sample, or the jump would be sent as a sprint in some direction.
@@ -191,12 +209,14 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   };
 
   const onState = (players: readonly PlayerSample[]): void => {
+    placeResume(players);
     client.applySnapshot({ at: performance.now(), players });
     for (const p of players) if (!named.has(p.id)) { pushNames(); break; }
   };
 
   guest.onGame(onGame);
   guest.onState(onState);
+  placeResume(guest.latestPlayers());
   pushNames();
 
   const body = (id: ActorId): Body => {
@@ -265,7 +285,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     ended: () => lastMatch !== null && lastMatch.phase === 'ended',
     rematchNow: () => undefined,
     localShot(claim: ShotClaim): void {
-      if (lives === 0) return;
+      if (lives === 0 || resumePlacementPending) return;
       guest.sendGame({
         // On a resumed page the controller's seq restarted at 0; the base
         // lifts the claim back above the host's retained window (first shot
@@ -292,6 +312,11 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
       if (disposed) return;
       pose.x = x; pose.y = y; pose.z = z; pose.yaw = yaw; pose.pitch = pitch; pose.stance = stance;
       frame += 1;
+      if (resumePlacementPending) {
+        last = now; acc = 0;
+        client.tick(now);
+        return;
+      }
       if (last === 0) last = now;
       acc += Math.max(0, now - last);
       last = now;

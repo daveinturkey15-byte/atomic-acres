@@ -56,7 +56,7 @@ export interface LocalMatchOptions {
   readonly bots?: number;
   readonly seed?: number;
   /** Put the human where the host deployed them. `core/player.ts` owns position. */
-  readonly placeLocal?: (x: number, y: number, z: number, yaw: number) => void;
+  readonly placeLocal?: (x: number, y: number, z: number, yaw: number, stance?: PlayerStance) => void;
   /** Current menu primary, or a provider read at match/deploy boundaries. */
   readonly localPrimaryId?: string | (() => string | undefined);
   readonly localLoadout?: () => Loadout;

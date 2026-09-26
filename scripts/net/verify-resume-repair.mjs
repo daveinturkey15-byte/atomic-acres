@@ -78,6 +78,8 @@ const ENTRY = [
   "    setEventSink(s) { sink = s; },",
   "    resumeFacts(id) { const w = windows.get(id); return { life: livesSeen.get(id) ?? 1, shotSeq: w?.seqHigh ?? -1 }; },",
   "    matchState: () => null, streakStateFor: () => null,",
+  "    effectsState: (at) => ({ type: 'streak-effects', at, effects: [] }), radarStateFor: () => null,",
+  "    movementState: () => ({ suspended: false, speedMultiplier: 1 }),",
   "    stampSample: (s) => s, botSamples() {},",
   "    log: () => [], counters: () => ({}), ended: () => false, rematchNow() {},",
   "    bots: () => [], snapshot: () => null, localShot() {}, pressStreak() {}, tick() {},",
@@ -131,7 +133,8 @@ const ENTRY = [
   "  need(rs !== null && rs.lastSeq === 9, 'resume-carries-host-lastSeq');",
   "  need(rs !== null && rs.life === 1, 'resume-carries-life-epoch');",
   "  need(rs !== null && rs.shotSeq === 2, 'resume-carries-shot-high-water');",
-  "  const d2 = createGuestDriver(g2, { ui: noUI, instrument: createSessionLog(seatId) });",
+  "  let resumedPlacement = null;",
+  "  const d2 = createGuestDriver(g2, { ui: noUI, instrument: createSessionLog(seatId), placeLocal: (x, y, z, yaw, stance) => { resumedPlacement = { x, y, z, yaw, stance }; } });",
   "  need(d2.counters().lives === 1, 'resumed-driver-not-pre-life');",
   // -- immediate movement after resume -------------------------------------
   "  const moveSeq = g2.sendMove(0, 1, 0, 0, false, false, 'stand');",
@@ -142,6 +145,7 @@ const ENTRY = [
   "  const movedPost = Math.hypot(p2.x - p1.x, p2.z - p1.z);",
   "  need(movedPost > 0.5, 'resumed-move-integrates');",
   "  need(g2.selfAck().seq >= 10, 'resumed-move-acked');",
+  "  need(resumedPlacement !== null && Number.isFinite(resumedPlacement.y), 'resumed-host-state-placed-local-body');",
   // -- replay protections survive the resume -------------------------------
   "  const rej0 = host.diag.snapshot(now).inputsRejected;",
   "  pair.b.send('peer-a', { type: 'input', seq: 0, mx: 0, mz: 1, yaw: 0, pitch: 0, fire: false, jump: false });",

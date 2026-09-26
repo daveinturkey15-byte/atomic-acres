@@ -379,9 +379,8 @@ match = createLocalMatch({
   colliders, ui: matchUi,
   localLoadout: () => selectedLoadout,
   localStreakLoadout: () => selectedStreakLoadout,
-  placeLocal: (x, y, z, yaw) => {
-    player.teleport(x, y, z, yaw);
-    player.setStance('stand');
+  placeLocal: (x, y, z, yaw, stance = 'stand') => {
+    player.teleport(x, y, z, yaw, 0, stance);
   },
   crossbowCanary,
 });
