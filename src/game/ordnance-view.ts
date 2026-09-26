@@ -78,6 +78,9 @@ export interface SelfOrdnance {
   tacticalId: string | null;
   sidearmId: string | null;
   sidearmRounds: number;
+  speedMultiplier: number;
+  rewardWeaponRemainingMs: number;
+  rewardWeaponId: 'crimson-flamethrower' | null;
   rounds: number;
   /** Grenade in hand with the pin out, as the host sees it. */
   armed: string | null;
@@ -119,6 +122,7 @@ export class OrdnanceView {
   blastSeq = 0;
   readonly self: SelfOrdnance = {
     lethal: 0, tactical: 0, primaryId: null, tacticalId: null, sidearmId: null, sidearmRounds: 0, rounds: 0, armed: null,
+    speedMultiplier: 1, rewardWeaponRemainingMs: 0, rewardWeaponId: null,
     flashAt: -Infinity, flashMs: 0, flashPeak: 0,
     spawnSeq: 0, pickupSeq: 0, lastPickupKind: null, lastPickupWeaponId: null, lastPickupRounds: 0, meleeSeq: 0,
   };
@@ -295,6 +299,9 @@ export class OrdnanceView {
         this.self.tacticalId = e.tacticalId ?? null;
         this.self.sidearmId = e.sidearmId ?? null;
         this.self.sidearmRounds = e.sidearmRounds ?? 0;
+        this.self.speedMultiplier = e.speedMultiplier ?? 1;
+        this.self.rewardWeaponRemainingMs = e.rewardWeaponRemainingMs ?? 0;
+        this.self.rewardWeaponId = e.rewardWeaponId ?? null;
         return null;
       case 'ordnance-rejected':
         this.counts.rejected++;

@@ -2,7 +2,8 @@
  * Atomic Acres — first-person weapon lane controller (fan project inspired by
  * BO2-era arcade shooters, not a clone or port).
  *
- * Owns one SHARED viewmodel rig per shipped builder — nine total, selected by
+ * Owns one SHARED viewmodel rig per shipped builder — nine silhouettes plus a
+ * Crimson reward finish, selected by
  * `./families` — one transient pool (./effects), and a
  * private overlay scene rendered on top of the world. After construction only
  * visible flags, transforms, FOV, and preallocated pool slots change: no new
@@ -26,7 +27,7 @@ import { PAL } from '../core/palette';
 import type { MaterialLibrary } from '../core/materials';
 import type { GunsHudState, MoveSample, WeaponSnapshot } from './types';
 export type { GunsHudState, MoveSample, WeaponSnapshot } from './types';
-import { WEAPONS, damageAt, patternMult, type WeaponDef } from './catalog';
+import { ALL_WEAPONS, isRewardWeapon, damageAt, patternMult, type WeaponDef } from './catalog';
 import { behaviorFor } from './behavior';
 import { defaultLoadoutStore, resolveLoadout, SIDEARM_IDS, sidearmForPrimary, type Loadout } from '../game/loadout';
 import {
@@ -39,6 +40,7 @@ import {
   buildCrossbowViewmodel,
   buildFlamethrowerViewmodel,
   buildFlareGunViewmodel,
+  buildCrimsonFlamethrowerViewmodel,
   type ViewmodelRig,
 } from './viewmodel';
 import { FAMILY_FALLBACK, FAMILY_VOICE, weaponFamily, viewmodelForWeapon, type WeaponRigId } from './families';
@@ -73,7 +75,7 @@ const DEG = Math.PI / 180;
 
 // Roster20: nine builders run ONCE each. The four special silhouettes have
 // native rigs; eleven conventional variants still share their family rig.
-// 20 weapons ⇒ 9 rig graphs, with no duplicate graph/disposal burden.
+// The separate Crimson reward adds one flame-rig finish to those nine graphs.
 // Mount transform, reload pose and visibility are per-ACTIVE-weapon state
 // driven every frame, so a shared group is indistinguishable from a private
 // one; `switchTo` resets the reload pose on the way out, and the canary swap
@@ -88,6 +90,7 @@ const VIEWMODEL_BUILDERS: Record<WeaponRigId, (mat: MaterialLibrary) => Viewmode
   crossbow: buildCrossbowViewmodel,
   flamethrower: buildFlamethrowerViewmodel,
   flaregun: buildFlareGunViewmodel,
+  'crimson-flamethrower': buildCrimsonFlamethrowerViewmodel,
 };
 const BASE_FOV = 72;
 const MISS_DISTANCE = 120;
@@ -337,7 +340,7 @@ export class WeaponsController {
     this.overlay = new THREE.Scene();
     const enableCrossbowCanary = opts.crossbowCanary ?? isCrossbowCanaryOptIn(typeof window !== 'undefined' ? window.location.search : undefined);
     this.crossbowCanaryRequested = enableCrossbowCanary;
-    this.weapons = WEAPONS.filter((def) => isPlayableWeapon(def.id) || (enableCrossbowCanary && def.id === CROSSBOW_ID)).map((def) => {
+    this.weapons = ALL_WEAPONS.filter((def) => isPlayableWeapon(def.id) || isRewardWeapon(def.id) || (enableCrossbowCanary && def.id === CROSSBOW_ID)).map((def) => {
       const rig = this.sharedRig(viewmodelForWeapon(def.id), opts.mat);
       return {
         def,
@@ -494,7 +497,7 @@ export class WeaponsController {
   /**
    * The one rig per shipped builder: created on first reference, added to the
    * overlay exactly once, shared by every weapon using that builder. Nine
-   * of these exist for the full playable roster.
+   * silhouettes and the Crimson reward finish cover the runtime catalog.
    */
   private sharedRig(key: WeaponRigId, mat: MaterialLibrary): ViewmodelRig {
     let rig = this.rigs.get(key);
@@ -1232,10 +1235,12 @@ export class WeaponsController {
     }
 
     this.effects.flashAt(this.tmpMuzzle, this.camera.quaternion);
-    cur.rig.eject.getWorldPosition(this.tmpMuzzle);
-    this.tmpDir.set(1, 0, 0).applyQuaternion(this.camera.quaternion);
-    this.tmpEnd.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
-    this.effects.shell(this.tmpMuzzle, this.tmpDir, this.tmpEnd);
+    if (delivery === 'hitscan' || delivery === 'piercing') {
+      cur.rig.eject.getWorldPosition(this.tmpMuzzle);
+      this.tmpDir.set(1, 0, 0).applyQuaternion(this.camera.quaternion);
+      this.tmpEnd.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
+      this.effects.shell(this.tmpMuzzle, this.tmpDir, this.tmpEnd);
+    }
 
     // Two-part recoil: deterministic climb pattern in pitch, bounded random
     // yaw. Most of each shot lands as fast kick; a fraction accumulates as

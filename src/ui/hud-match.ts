@@ -13,6 +13,7 @@
 
 import type { TeamId } from '../game/events';
 import { respawnText } from '../game/match';
+import { SLOT_COUNT } from '../game/killstreaks/catalog';
 import type { HudNodes } from './hud-build';
 import {
   projectStreakStrip,
@@ -152,6 +153,7 @@ export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
       if (sig === cStreak) return;
       cStreak = sig;
       n.streak.classList.remove('hud-hidden');
+      n.streak.classList.toggle('hud-streak-has-reward', v.slots.length > SLOT_COUNT);
       n.streakKills.textContent = String(v.kills);
       const cards = projectStreakStrip(v.slots, v.kills);
       for (let i = 0; i < n.streakSlots.length; i++) {

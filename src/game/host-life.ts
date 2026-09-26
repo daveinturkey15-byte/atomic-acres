@@ -25,7 +25,7 @@
  */
 
 import { EYE_HEIGHT } from '../core/layout';
-import { WEAPONS, type WeaponDef } from '../weapons/catalog';
+import { ALL_WEAPONS, isRewardWeapon, type WeaponDef } from '../weapons/catalog';
 import { isPlayableWeapon } from '../weapons/roster';
 import type { GrenadeId } from './loadout';
 import type {
@@ -47,7 +47,7 @@ import type { PlayerStance } from '../net/room-core';
  * id → definition, DERIVED from the authored list (§5.5). A second roster
  * written out by hand would be a defect even while it agreed.
  */
-const WEAPON_BY_ID: ReadonlyMap<string, WeaponDef> = new Map(WEAPONS.map((w) => [w.id, w]));
+const WEAPON_BY_ID: ReadonlyMap<string, WeaponDef> = new Map(ALL_WEAPONS.map((w) => [w.id, w]));
 
 /** Retained for `spawns.ts`: death points for its map-trap penalty, uses for its
  *  recent-use avoidance. Both of its horizons are `RECENT_USE_AVOIDANCE_MS`. */
@@ -198,7 +198,7 @@ export class HostLife {
   ): void {
     // Second layer behind admission (`host.ts:submitShot`): a gated prototype
     // resolves no damage — exactly like an unknown id, never like a gun.
-    const def = isPlayableWeapon(weaponId) ? WEAPON_BY_ID.get(weaponId) : undefined;
+    const def = isPlayableWeapon(weaponId) || isRewardWeapon(weaponId) ? WEAPON_BY_ID.get(weaponId) : undefined;
     if (def === undefined && preResolved === undefined) return;
     // Your own grenade hurts you. `areHostile` answers false for a === b so a
     // bullet can never self-hit, but a blast has no such geometry, and a frag
@@ -270,7 +270,7 @@ export class HostLife {
       });
       // A team kill earns nothing: the ladder advances only on a kill the
       // scoreboard credited, decided by the same flag `applyKill` used.
-      if (!friendly) this.push(this.ctx.deps.streaks?.recordElimination(killer.id, killerStreak, now));
+      if (!friendly) this.push(this.ctx.deps.streaks?.recordElimination(killer.id, killerStreak, now, cause));
     }
     this.ledger = applyDeath(this.ledger, { victim: victim.id, killer: credited ? killer.id : null });
     this.emit({

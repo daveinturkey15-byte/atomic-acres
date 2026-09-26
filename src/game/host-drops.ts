@@ -126,6 +126,7 @@ export class HostDrops {
   /** Apply a walk-over. Returns whether anything was granted. */
   private takeFrom(a: HostActor, d: Drop, kind: 'scavenge', now: number): boolean {
     const kit = this.kits.kitOf(a);
+    if (kit.reward !== null) return false;
     const taken = scavenge(d, kit, LETHAL_PER_LIFE, TACTICAL_PER_LIFE);
     if (taken.rounds === 0 && taken.lethal === 0 && taken.tactical === 0) return false;
     kit.rounds += taken.rounds;
@@ -148,6 +149,7 @@ export class HostDrops {
    * lifetime. Each refusal names why (§5.4).
    */
   claim(a: HostActor, msg: ShotMsg, now: number): ShotAdmission {
+    if (this.kits.kitOf(a).reward !== null) return this.refuse(a, msg, 'reward-active', now);
     const p = a.poses.at(msg.firedAt) ?? a.poses.at(now);
     if (p === null) return this.refuse(a, msg, 'no-drop', now);
     const d = nearestDrop(this.drops, p.x, p.y, p.z, DROP_SWAP_RANGE_M);

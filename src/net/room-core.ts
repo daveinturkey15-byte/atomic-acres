@@ -72,13 +72,17 @@ export function createPose(x = 0, y = 0, z = 0, yaw = 0): Pose {
 export function integrateInput(
   pose: Pose, mx: number, mz: number, yaw: number, sprint: boolean, dt: number,
   stance: PlayerStance = pose.stance ?? 'stand',
+  speedMultiplier = 1,
 ): void {
-  const cx = Math.max(-1, Math.min(1, mx));
-  const cz = Math.max(-1, Math.min(1, mz));
+  let cx = Math.max(-1, Math.min(1, mx));
+  let cz = Math.max(-1, Math.min(1, mz));
+  const wishLength = Math.hypot(cx, cz);
+  if (wishLength > 1) { cx /= wishLength; cz /= wishLength; }
   if (!Number.isFinite(yaw) || !Number.isFinite(dt) || dt <= 0) return;
   // Sprint is never a second speed multiplier: a crouched or prone actor is
   // always clamped to that stance's authored walk speed.
-  const speed = stance === 'stand' && sprint ? SPRINT_SPEED : stanceSpeed(stance);
+  const multiplier = Number.isFinite(speedMultiplier) ? Math.max(1, Math.min(1.25, speedMultiplier)) : 1;
+  const speed = (stance === 'stand' && sprint ? SPRINT_SPEED : stanceSpeed(stance)) * multiplier;
   const fx = -Math.sin(yaw);
   const fz = -Math.cos(yaw);
   const rx = Math.cos(yaw);
@@ -107,15 +111,17 @@ export function intentFromVelocity(
   vx: number, vz: number, yaw: number,
   out: { mx: number; mz: number; sprint: boolean },
   stance: PlayerStance = 'stand',
+  speedMultiplier = 1,
 ): void {
   const speed = Math.hypot(vx, vz);
   if (speed < 1e-3) {
     out.mx = 0; out.mz = 0; out.sprint = false;
     return;
   }
-  const base = stanceSpeed(stance);
-  const sprint = stance === 'stand' && speed > WALK_SPEED + 0.05;
-  const scale = 1 / (sprint ? SPRINT_SPEED : base);
+  const multiplier = Number.isFinite(speedMultiplier) ? Math.max(1, Math.min(1.25, speedMultiplier)) : 1;
+  const base = stanceSpeed(stance) * multiplier;
+  const sprint = stance === 'stand' && speed > WALK_SPEED * multiplier + 0.05;
+  const scale = 1 / (sprint ? SPRINT_SPEED * multiplier : base);
   const fx = -Math.sin(yaw);
   const fz = -Math.cos(yaw);
   const rx = Math.cos(yaw);

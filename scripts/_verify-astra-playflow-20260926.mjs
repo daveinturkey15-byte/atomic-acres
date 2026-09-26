@@ -16,6 +16,10 @@ await build({ stdin: { resolveDir: root, contents: `
   export * from './src/game/loadout';
   export { WEAPONS } from './src/weapons/catalog';
   export { WeaponsController } from './src/weapons/controller';
+  export { PilotControlView, controlledPilotView } from './src/core/pilot-controls';
+  export { projectStreakStrip } from './src/ui/streak-presentation';
+  export { OrdnanceScene } from './src/weapons/ordnance-scene';
+  export { GameClient } from './src/game/client';
   export * as THREE from 'three';
 ` }, outfile: output, bundle: true, platform: 'node', format: 'esm', logLevel: 'warning' });
 
@@ -30,6 +34,7 @@ function element(tag) {
     addEventListener(type, fn) { (this.listeners[type] ??= []).push(fn); },
     dispatch(type) { for (const fn of this.listeners[type] ?? []) fn({ stopPropagation() {}, target: this }); },
     click() { if (!this.disabled) this.dispatch('click'); },
+    remove() { this.removed = true; },
   };
   const classes = new Set();
   node.classList = {
@@ -190,9 +195,87 @@ try {
     if (!bullet) assert.equal(controller.lastDamage, 0, `${id} does not predict immediate damage`);
   }
   controller.dispose();
+  const drone = { kind: 'aircraft', variant: 'piloted-drone', instanceId: 12, actorId: 'you', team: 0,
+    streakId: 'piloted-drone', x: 40, y: 10, z: -2, yaw: 0, pitch: 0, health: 100, controlled: true, remainingMs: 10000 };
+  assert.equal(api.controlledPilotView([drone], 'other', true, 1000, 1000), null, 'cannot possess another actor platform');
+  assert.equal(api.controlledPilotView([drone], 'you', false, 1000, 1000), null, 'dead actor cannot retain pilot view');
+  assert.equal(api.controlledPilotView([drone], 'you', true, 1000, 1751), null, 'stale link releases pilot view');
+  assert.equal(api.controlledPilotView([{ ...drone, remainingMs: 400 }], 'you', true, 1000, 1400), null, 'expired aircraft releases camera');
+  const eventBus = new EventTarget();
+  const documentBus = new EventTarget();
+  const canvas = element('canvas');
+  globalThis.addEventListener = eventBus.addEventListener.bind(eventBus);
+  globalThis.removeEventListener = eventBus.removeEventListener.bind(eventBus);
+  globalThis.document = { createElement: element, pointerLockElement: canvas,
+    addEventListener: documentBus.addEventListener.bind(documentBus), removeEventListener: documentBus.removeEventListener.bind(documentBus) };
+  const inputs = [], transitions = [], slots = [];
+  let exits = 0;
+  const pilotCamera = new THREE.PerspectiveCamera(80);
+  const pilot = new api.PilotControlView({ camera: pilotCamera, canvas, hud: element('div'),
+    send: input => inputs.push(input), exit: () => exits++, streak: slot => slots.push(slot),
+    transition: active => transitions.push(active), lookSettings: () => ({ sensitivity: 2, invertY: true }) });
+  const dispatch = (type, fields) => {
+    const event = new Event(type, { cancelable: true });
+    for (const [key, value] of Object.entries(fields)) Object.defineProperty(event, key, { value });
+    eventBus.dispatchEvent(event);
+  };
+  pilot.sync([drone], 'you', true, 1000, 1000);
+  dispatch('keydown', { code: 'KeyW' }); dispatch('keydown', { code: 'KeyE' });
+  dispatch('mousemove', { movementX: 10, movementY: 5 });
+  dispatch('mousedown', { target: canvas, button: 0 });
+  pilot.update(1000); pilot.update(1025); pilot.update(1050);
+  assert.equal(inputs.length, 2, 'pilot input is bounded to 20Hz');
+  assert.equal(inputs[0].forward, 1); assert.equal(inputs[0].ascend, 1); assert.equal(inputs[0].fire, true);
+  assert(Math.abs(inputs[0].yaw + .044) < 1e-8 && Math.abs(inputs[0].pitch - .022) < 1e-8, 'pilot look honors sensitivity/inversion');
+  assert.equal(pilotCamera.position.y, 10.22, 'camera derives from authoritative aircraft position');
+  dispatch('keydown', { code: 'Digit7', repeat: false });
+  assert.deepEqual(slots, [5], 'conditional crate slot remains callable during possession');
+  dispatch('keydown', { code: 'Escape' }); dispatch('keydown', { code: 'Escape' });
+  assert.equal(exits, 1, 'escape sends one exit request, not repeated toggles');
+  pilot.update(1100);
+  assert.equal(inputs.at(-1).forward, 0); assert.equal(inputs.at(-1).ascend, 0); assert.equal(inputs.at(-1).fire, false);
+  pilot.sync([{ ...drone, controlled: false }], 'you', true, 1150, 1150);
+  assert.equal(pilot.active(), false); assert.equal(pilotCamera.fov, 80, 'camera projection restores after authority releases control');
+  assert.deepEqual(transitions, [true, false], 'player/weapon input has one suspend and one restore');
+  pilot.sync([drone], 'you', true, 1200, 1200);
+  pilot.sync([drone], 'you', true, 1200, 2000);
+  assert.equal(pilot.active(), false, 'stale snapshot also restores body controls');
+  pilot.dispose();
+  const chosenCards = ['recon-sweep', 'piloted-drone', 'blast-mortar', 'strike-relay'].map(id => ({ id, charges: 0 }));
+  assert.equal(api.projectStreakStrip(chosenCards, 0).length, 4, 'no invented fifth chosen class slot');
+  const withReward = api.projectStreakStrip([...chosenCards, { id: 'adrenaline', charges: 1 }], 0);
+  assert.equal(withReward[4].key, '7'); assert.equal(withReward[4].state, 'ready');
+  assert.match(withReward[4].stateText, /CRATE REWARD/, 'host banked bonus is visibly distinguished');
+  // Exercise the real inventory consumer with inert presentation pools. A
+  // reward changes the held primary without manufacturing a pickup event.
+  const inventoryClient = new api.GameClient('you');
+  const adopted = [], spawned = [];
+  const inventoryScene = Object.assign(Object.create(api.OrdnanceScene.prototype), {
+    client: inventoryClient, localLoadout: () => deployed, volumetricSmoke: () => false,
+    adoptedPrimaryId: 'mp5', lastSpawnSeq: 0, lastPickupSeq: 0,
+    grenades: { update() {} }, drops: { update() {} }, mortarFx: { update() {} }, boltFx: { update() {} },
+    weapons: { adoptWeapon: (...args) => adopted.push(args), onSelfSpawn: (...args) => spawned.push(args), setOrdnance() {} },
+    hud: { setGrenades() {}, setFlash() {}, setPrompt() {} },
+  });
+  Object.assign(inventoryClient.ordnance.self, { primaryId: 'crimson-flamethrower', rounds: 150,
+    sidearmId: 'magnum', sidearmRounds: 3, tacticalId: 'smoke' });
+  inventoryScene.update(.05, 1000, 0, 0, 0);
+  assert.deepEqual(adopted, [['crimson-flamethrower', 150, 'magnum', 3]], 'host reward inventory equips actual temporary gun');
+  inventoryClient.ordnance.self.rounds = 149;
+  inventoryScene.update(.05, 1050, 0, 0, 0);
+  assert.equal(adopted.length, 1, 'recurring inventory cannot refill the local magazine');
+  Object.assign(inventoryClient.ordnance.self, { primaryId: 'mp5', rounds: 20 });
+  inventoryScene.update(.05, 1100, 0, 0, 0);
+  assert.deepEqual(adopted[1], ['mp5', 20, 'magnum', 3], 'host expiry restores previous gun and remaining rounds');
+  Object.assign(inventoryClient.ordnance.self, { primaryId: 'rattler', rounds: 15, pickupSeq: 1,
+    lastPickupKind: 'swap', lastPickupWeaponId: 'rattler', lastPickupRounds: 15 });
+  inventoryScene.update(.05, 1150, 0, 0, 0);
+  assert.equal(adopted.length, 3, 'one pickup with inventory and event equips only once');
   console.log(JSON.stringify({ ok: true, checks: ['menu selection', 'saved class retention', 'prejoin editing', 'room class lock',
     'storage refusal continuity', 'four streak choices', 'primary and sidearm keys', 'bounded weapon wheel',
-    'pickup slot replacement', 'automatic fire cadence', 'authoritative special weapon presentation'], claims: claims.length }));
+    'pickup slot replacement', 'automatic fire cadence', 'authoritative special weapon presentation',
+    'pilot ownership and freshness', 'pilot controls and restoration', 'conditional crate reward',
+    'reward grant and expiry inventory'], claims: claims.length }));
 } finally {
   await rm(scratch, { recursive: true, force: true });
 }

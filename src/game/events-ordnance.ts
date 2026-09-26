@@ -64,6 +64,7 @@ export const ORDNANCE_REJECT_REASONS = [
   'no-drop',
   'too-far',
   'drop-empty',
+  'reward-active',
 ] as const;
 export type OrdnanceRejectReason = (typeof ORDNANCE_REJECT_REASONS)[number];
 
@@ -74,6 +75,7 @@ export const ORDNANCE_REJECT_LABELS: Readonly<Record<OrdnanceRejectReason, strin
   'no-drop': 'NOTHING TO PICK UP',
   'too-far': 'TOO FAR FROM THE WEAPON',
   'drop-empty': 'THAT WEAPON IS EMPTY',
+  'reward-active': 'REWARD WEAPON ACTIVE',
 });
 
 // ---------------------------------------------------------------------------
@@ -305,6 +307,9 @@ export interface PickupEvent {
 
 /** An actor's ordnance ledger, whenever it moves. The HUD renders this level. */
 export interface OrdnanceInventoryEvent {
+  readonly speedMultiplier?: 1 | 1.25;
+  readonly rewardWeaponId?: 'crimson-flamethrower' | null;
+  readonly rewardWeaponRemainingMs?: number;
   readonly tacticalId?: string;
   readonly sidearmId?: string;
   readonly sidearmRounds?: number;

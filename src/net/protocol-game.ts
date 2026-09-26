@@ -22,6 +22,8 @@
  */
 
 import { isPresentationMessage, type PresentationMessage } from './protocol-effects';
+import { isPilotInput, type PilotInputMsg } from './protocol-pilot';
+export * from './protocol-pilot';
 export * from './protocol-effects';
 import {
   DAMAGE_CAUSES,
@@ -177,6 +179,7 @@ export const GAME_MESSAGE_TYPES = [
   'kill',
   'spawn',
   'streak-intent',
+  'pilot-input',
   'streak-state',
   'match-state',
   'ordnance',
@@ -185,6 +188,7 @@ export const GAME_MESSAGE_TYPES = [
 ] as const;
 export type GameMessageType = (typeof GAME_MESSAGE_TYPES)[number];
 export type GameNetMessage =
+  | PilotInputMsg
   | PresentationMessage
   | ShotMsg
   | ShotRejectMsg
@@ -311,6 +315,11 @@ function isScoreRow(v: unknown): boolean {
  */
 function isOrdnanceEvent(v: unknown): boolean {
   if (!isObj(v) || !isOrdnanceEventType(v['type']) || !isNum(v['at'])) return false;
+  if (v.type === 'ordnance-inventory' && (
+    (v.speedMultiplier !== undefined && v.speedMultiplier !== 1 && v.speedMultiplier !== 1.25) ||
+    (v.rewardWeaponId !== undefined && v.rewardWeaponId !== null && v.rewardWeaponId !== 'crimson-flamethrower') ||
+    (v.rewardWeaponRemainingMs !== undefined && (!isNum(v.rewardWeaponRemainingMs) || v.rewardWeaponRemainingMs < 0 || v.rewardWeaponRemainingMs > 45000))
+  )) return false;
   for (const key in v) {
     const f = v[key];
     if (f === null || typeof f === 'string' || typeof f === 'boolean') continue;
@@ -452,6 +461,8 @@ export function isGameMessage(m: Record<string, unknown>): boolean {
     case 'streak-intent':
       return Number.isSafeInteger(m['slot']) && typeof m['toggle'] === 'boolean' &&
         Number.isSafeInteger(m['seq']) && (m['seq'] as number) >= 0;
+    case 'pilot-input':
+      return isPilotInput(m);
     case 'streak-state':
       return (
         (m['causeId'] === undefined || m['causeId'] === null || (typeof m['causeId'] === 'string' && m['causeId'].length <= 1024)) &&

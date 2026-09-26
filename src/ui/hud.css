@@ -301,6 +301,14 @@
   transition: opacity 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
+#hud .hud-streak-reward {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+}
+#hud .hud-streak-reward:focus-visible { outline: 2px solid #ff9c4a; outline-offset: 3px; }
+
 #hud .hud-streak-key {
   flex: none;
   width: 22px;
@@ -781,6 +789,11 @@
   #hud .hud-streak-card:nth-child(3) { grid-area: card2; }
   #hud .hud-streak-card:nth-child(4) { grid-area: card3; }
   #hud .hud-streak-card:nth-child(5) { grid-area: card4; }
+  #hud .hud-streak-card:nth-child(6) { grid-area: reward; }
+  #hud .hud-streak.hud-streak-has-reward {
+    grid-template-areas: "ladder card1 card2" "ladder card3 card4" "ladder reward reward";
+    grid-template-rows: repeat(3, auto);
+  }
 }
 
 @media (max-width: 960px) {

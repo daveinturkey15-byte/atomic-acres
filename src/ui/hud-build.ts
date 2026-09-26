@@ -19,11 +19,8 @@ import { SLOT_COUNT } from '../game/killstreaks/catalog';
 import { MAX_PLAYERS } from '../net/protocol';
 import { MAP_PX } from './layout';
 
-/** Four slots: `SLOT_COUNT` in `game/killstreaks/catalog.ts` (SLOT_TIERS) and the
- * wire's `StreakSlotState[]` (loadout order) agree. The old 5 here was the
- * retired KillstreakLoadoutV1 shape, which nothing pushes; slot 5 was built and
- * then hidden forever. */
-export const STREAK_SLOTS = SLOT_COUNT;
+/** Four chosen streaks plus one conditional host-awarded crate reward. */
+export const STREAK_SLOTS = SLOT_COUNT + 1;
 
 export interface FeedPool {
   readonly rows: readonly HTMLElement[];
@@ -199,8 +196,10 @@ export function buildHud(root: HTMLElement, crosshair: HTMLElement | null): HudN
   streak.appendChild(ladder);
   const streakSlots: StreakCardNodes[] = [];
   for (let i = 0; i < STREAK_SLOTS; i++) {
-    const card = el('div', 'hud-streak-card hud-hidden');
-    card.setAttribute('role', 'listitem');
+    const bonus = i === SLOT_COUNT;
+    const card = el(bonus ? 'button' : 'div', 'hud-streak-card hud-hidden' + (bonus ? ' hud-streak-reward' : ''));
+    card.setAttribute('role', bonus ? 'button' : 'listitem');
+    if (bonus) card.setAttribute('type', 'button');
     const key = span('hud-streak-key');
     const body = el('span', 'hud-streak-body');
     const name = span('hud-streak-name');

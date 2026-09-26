@@ -1,5 +1,5 @@
 /** Host-only firearm admission, pellets and bounded rail penetration. */
-import { WEAPONS, damageAt, type WeaponDef } from '../weapons/catalog';
+import { ALL_WEAPONS, damageAt, type WeaponDef } from '../weapons/catalog';
 import { behaviorFor } from '../weapons/behavior';
 import type { ShotMsg } from '../net/protocol';
 import type { ActorId, ShotRejectReason, Vec3, WorldQuery } from './events';
@@ -8,8 +8,10 @@ import type { HostOrdnance } from './host-ordnance';
 import { BOT_DAMAGE_MULTIPLIER, admitted, zoneMultiplier } from './damage';
 import { pickTarget, type TargetCandidate, type TargetHit } from './host-shot';
 import { HostWeaponEffects } from './host-weapon-effects';
+import type { StreakRuntimePort } from './host-streaks';
+import { nearestAircraft } from './host-aircraft';
 
-const DEFINITIONS = new Map(WEAPONS.map((def) => [def.id, def]));
+const DEFINITIONS = new Map(ALL_WEAPONS.map((def) => [def.id, def]));
 type FireHistory = { life: number; shots: { at: number; weaponId: string }[] };
 
 /** Segment entry/exit distance; solids stay data on the existing world port. */
@@ -31,11 +33,11 @@ export class HostFirearms {
   private nextEffect = 1;
 
   constructor(private readonly life: HostLife, private readonly world: WorldQuery,
-    private readonly ordnance: HostOrdnance, now: number) {
+    private readonly ordnance: HostOrdnance, now: number, private readonly streaks?: StreakRuntimePort) {
     this.effects = new HostWeaponEffects(life, world, now);
   }
 
-  admit(a: HostActor, c: ShotMsg): ShotRejectReason | null {
+  admit(a: HostActor, c: ShotMsg, now: number): ShotRejectReason | null {
     const def = DEFINITIONS.get(c.weaponId);
     if (def === undefined) return 'malformed';
     let history = this.histories.get(a.id);
@@ -53,7 +55,7 @@ export class HostFirearms {
     const inWindow = history.shots.filter((old) => old.weaponId === c.weaponId &&
       old.at > c.firedAt - 1000 && old.at <= c.firedAt).length;
     if (inWindow >= Math.ceil(1000 / interval) + 1) return 'shot-cooldown';
-    const reason = this.ordnance.spendShot(a, c.weaponId);
+    const reason = this.ordnance.spendShot(a, c.weaponId, now);
     if (reason !== null) return reason;
     history.shots.push({ at: c.firedAt, weaponId: c.weaponId });
     if (history.shots.length > 64) history.shots.shift();
@@ -88,6 +90,7 @@ export class HostFirearms {
       const len = Math.hypot(dx, dy, dz);
       const ray = { ...c, dx: dx / len, dy: dy / len, dz: dz / len };
       const hit = pickTarget(ray, candidates);
+      if (this.hitAircraft(a, ray, def, hit?.distance ?? 120, now)) continue;
       if (hit !== null && this.world.lineOfSight({ x: c.ox, y: c.oy, z: c.oz }, hit)) {
         const victim = this.life.actors.get(hit.id);
         if (victim?.health.alive) this.life.hit(victim, a, hit.zone, hit.distance, def.id, 'bullet', now, c.ox, c.oz);
@@ -117,7 +120,8 @@ export class HostFirearms {
       if (hit && hit.distance <= range) hits.push(hit);
     }
     hits.sort((x, y) => x.distance - y.distance);
-    for (const hit of hits) {
+    const aircraft = this.hitAircraft(a, c, def, hits[0]?.distance ?? range, now);
+    for (const hit of aircraft ? [] : hits) {
       const cover = merged.filter(([near]) => near < hit.distance).length;
       if (cover > profile.maxPenetrations!) continue;
       // A synthetic port lacking solid data must fail closed through opaque cover.
@@ -132,6 +136,19 @@ export class HostFirearms {
     this.life.emit({ type: 'weapon-effect', effect: 'rail', at: now, actorId: a.id, team: a.team,
       id: this.nextEffect++, weaponId: def.id, x: c.ox, y: c.oy, z: c.oz,
       dx: c.dx, dy: c.dy, dz: c.dz, radius: range, durationMs: 180 });
+  }
+
+  private hitAircraft(a: HostActor, ray: ShotMsg, def: WeaponDef, limit: number, now: number): boolean {
+    if (!this.streaks?.aircraftTargets || !this.streaks.damageAircraft) return false;
+    const targets = this.streaks.aircraftTargets().filter((target) =>
+      this.life.areHostile(a, { id: target.actorId, team: target.team }));
+    const hit = nearestAircraft(ray, targets, limit);
+    if (!hit) return false;
+    const point = { x: ray.ox + ray.dx * hit.distance, y: ray.oy + ray.dy * hit.distance, z: ray.oz + ray.dz * hit.distance };
+    if (!this.world.lineOfSight({ x: ray.ox, y: ray.oy, z: ray.oz }, point)) return false;
+    this.life.absorb(this.streaks.damageAircraft(hit.target.instanceId, a.id, a.team,
+      damageAt(def, hit.distance), now));
+    return true;
   }
 
   advance(now: number): void { this.effects.advance(now); }

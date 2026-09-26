@@ -79,6 +79,9 @@ export interface ShotAdmission {
 
 /** One actor as the host knows it. No coordinates: `net/room.ts` owns position. */
 export interface ActorSnapshot {
+  readonly speedMultiplier?: 1 | 1.25;
+  readonly rewardWeaponId?: 'crimson-flamethrower' | null;
+  readonly rewardWeaponRemainingMs?: number;
   readonly id: ActorId;
   readonly team: TeamId;
   readonly bot: boolean;

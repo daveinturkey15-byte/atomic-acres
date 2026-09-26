@@ -9,7 +9,8 @@ export type PresentationMessage = RadarStateMsg | StreakEffectsMsg | EffectMsg;
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const obj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object';
 const point = (v: Record<string, unknown>) => finite(v.x) && finite(v.y) && finite(v.z);
-const kinds = ['sentry','dart','fallout-screen','strike-relay','supply-crate','mortar'];
+const kinds = ['sentry','dart','fallout-screen','strike-relay','supply-crate','mortar','aircraft','carpet-bomber'];
+const aircraft = ['yardhawk','piloted-drone','hunter-swarm','chopper','drone-swarm'];
 
 export function isPresentationMessage(v: Record<string, unknown>): boolean {
   if (v.type === 'radar-state') return finite(v.at) && typeof v.actorId === 'string' &&
@@ -20,7 +21,13 @@ export function isPresentationMessage(v: Record<string, unknown>): boolean {
     v.effects.every(e => obj(e) && kinds.includes(e.kind as string) && Number.isSafeInteger(e.instanceId) &&
       typeof e.actorId === 'string' && typeof e.streakId === 'string' && (e.team === 0 || e.team === 1) && point(e) &&
       finite(e.remainingMs) && ['yaw','aimYaw','shots','pulses','elapsedMs','fired','captureProgressMs'].every(k => e[k] === undefined || finite(e[k])) &&
-      (e.opened === undefined || typeof e.opened === 'boolean'));
+      (e.opened === undefined || typeof e.opened === 'boolean') &&
+      (e.impacts === undefined || (e.kind === 'carpet-bomber' && Array.isArray(e.impacts) && e.impacts.length <= 20 && e.impacts.every(p => obj(p) && point(p)))) &&
+      (e.kind !== 'aircraft' || (aircraft.includes(e.variant as string) &&
+        Number.isSafeInteger(e.units) && (e.units as number) >= 1 && (e.units as number) <= 5 &&
+        finite(e.health) && e.health >= 0 && e.health <= 100 && finite(e.pitch) && Math.abs(e.pitch) <= Math.PI / 2 &&
+        typeof e.controlled === 'boolean' &&
+        (e.craft === undefined || (Array.isArray(e.craft) && e.craft.length <= 5 && e.craft.every(c => obj(c) && point(c) && finite(c.yaw) && finite(c.pitch) && Math.abs(c.pitch) <= Math.PI / 2))))));
   if (v.type !== 'effect' || !obj(v.e) || !finite(v.e.at)) return false;
   const e = v.e;
   if (e.type === 'weapon-effect') return ['flame','flare-launch','flare-impact','crossbow-blast','rail'].includes(e.effect as string) &&

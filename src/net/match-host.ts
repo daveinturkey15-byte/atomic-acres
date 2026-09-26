@@ -112,11 +112,13 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
   const onGame = (playerId: string, msg: GameNetMessage): void => {
     if (msg.type === 'shot') solo.remoteShot(playerId, msg, performance.now());
     else if (msg.type === 'streak-intent') solo.remoteStreak(playerId, msg.slot, msg.toggle);
+    else if (msg.type === 'pilot-input') solo.remotePilot(playerId, msg, performance.now());
   };
 
   solo.setEventSink(sink);
   room.onGame(onGame);
   room.setStamp((s) => solo.stampSample(s));
+  room.setMovementState((id) => solo.movementState(id));
   room.setExtraSamples((into) => solo.botSamples(into));
   // Resume data is read from the current GameHost through SoloDriver. This
   // matters at both respawn and rematch: the host owns the live life epoch and
@@ -134,6 +136,8 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
     snapshot: () => solo.snapshot(),
     localShot: (claim: ShotClaim) => solo.localShot(claim),
     pressStreak: (slot) => solo.pressStreak(slot),
+    pilotInput: (controls) => solo.pilotInput(controls),
+    exitPilot: () => solo.exitPilot(),
     netLine(now): string | null {
       const s = room.diag.snapshot(now);
       const rtt = s.rttMs === null ? '--' : s.rttMs.toFixed(0);
@@ -176,6 +180,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
       solo.setEventSink(null);
       room.onGame(null);
       room.setStamp(null);
+      room.setMovementState(null);
       room.setExtraSamples(null);
       solo.dispose();
       void opts;

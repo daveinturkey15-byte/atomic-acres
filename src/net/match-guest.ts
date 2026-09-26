@@ -70,6 +70,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     if (resumed.sidearmId !== undefined) client.ordnance.self.sidearmId = resumed.sidearmId;
     if (resumed.sidearmRounds !== undefined) client.ordnance.self.sidearmRounds = resumed.sidearmRounds;
     if (resumed.tacticalId !== undefined) client.ordnance.self.tacticalId = resumed.tacticalId;
+    client.ordnance.self.speedMultiplier = resumed.speedMultiplier ?? 1;
+    client.ordnance.self.rewardWeaponRemainingMs = resumed.rewardWeaponRemainingMs ?? 0;
+    client.ordnance.self.rewardWeaponId = resumed.rewardWeaponId ?? null;
     if (resumed.lethal !== undefined) client.ordnance.self.lethal = resumed.lethal;
     if (resumed.tactical !== undefined) client.ordnance.self.tactical = resumed.tactical;
     if (resumed.armed !== undefined) client.ordnance.self.armed = resumed.armed;
@@ -215,7 +218,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     }
     const dt = Math.max(1e-3, (now - lastPose.at) / 1000);
     intentFromVelocity(
-      (pose.x - lastPose.x) / dt, (pose.z - lastPose.z) / dt, pose.yaw, intent, pose.stance,
+      (pose.x - lastPose.x) / dt, (pose.z - lastPose.z) / dt, pose.yaw, intent, pose.stance, client.ordnance.self.speedMultiplier,
     );
     lastPose.x = pose.x; lastPose.z = pose.z; lastPose.at = now;
     const seq = guest.sendMoveAt(
@@ -275,7 +278,14 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
       });
     },
     pressStreak(slot): void {
-      guest.sendGame({ type: 'streak-intent', slot, toggle: false });
+      const pilot = client.streakEffects.some(s => s.kind === 'aircraft' && s.variant === 'piloted-drone' && s.actorId === selfId && s.remainingMs > Math.max(0, performance.now() - client.streakEffectsAt));
+      const chosen = client.view().streak.slots.find(s => s.slot === slot);
+      guest.sendGame({ type: 'streak-intent', slot, toggle: pilot && (chosen?.streakId === 'piloted-drone' || slot === 5) });
+    },
+    pilotInput: (controls) => guest.sendPilot(controls),
+    exitPilot(): void {
+      const slot = client.view().streak.slots.find(s => s.streakId === 'piloted-drone')?.slot ?? 5;
+      guest.sendGame({ type: 'streak-intent', slot, toggle: true });
     },
 
     tick(now, x, y, z, yaw, pitch, stance: PlayerStance = 'stand'): void {

@@ -450,6 +450,18 @@ export const WEAPONS: readonly WeaponDef[] = [
   },
 ];
 
+/** Earned equipment is deliberately absent from the twenty authored loadout choices. */
+export const CRIMSON_FLAMETHROWER_ID = 'crimson-flamethrower';
+const flameDefinition = WEAPONS.find((weapon) => weapon.id === 'flamethrower')!;
+export const REWARD_WEAPONS: readonly WeaponDef[] = Object.freeze([Object.freeze({
+  ...flameDefinition, id: CRIMSON_FLAMETHROWER_ID, name: 'Crimson Flamethrower',
+  damage: { base: 16, fall: 4, nearRange: 11, farRange: 21 },
+  // One continuous pressure charge lasts beyond the 45-second reward window.
+  magSize: 1100, startReserve: 0,
+})]);
+export const ALL_WEAPONS: readonly WeaponDef[] = Object.freeze([...WEAPONS, ...REWARD_WEAPONS]);
+export function isRewardWeapon(id: string): boolean { return id === CRIMSON_FLAMETHROWER_ID; }
+
 /** Linear damage falloff between nearRange and farRange. Pure, no allocation. */
 export function damageAt(def: WeaponDef, dist: number): number {
   const d = def.damage;

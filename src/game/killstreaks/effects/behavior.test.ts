@@ -48,7 +48,7 @@ function target(overrides: Partial<StreakTarget> = {}): StreakTarget {
 
 // All selectable rows are backed by a real stepper or an explicit runtime
 // reward adapter. This catches a catalog row being added without wiring it.
-check('all eight selectable rows are wired', WIRED_STREAK_IDS.length === 8
+check('all sixteen selectable rows are wired', WIRED_STREAK_IDS.length === 16
   && STREAK_CATALOG.definitions.filter((entry) => entry.availability === 'selectable')
     .every((entry) => WIRED_STREAK_IDS.includes(entry.id)));
 

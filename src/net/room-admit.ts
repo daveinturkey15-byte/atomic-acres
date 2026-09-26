@@ -57,6 +57,7 @@ export interface HostMember {
   lastSeq: number;
   /** Streak intent replay fence. Survives silence and authenticated rejoin. */
   lastStreakSeq: number;
+  lastPilotSeq: number;
   pingAt: number;
   lastHeardAt: number;
   disconnectedAt: number;
@@ -79,6 +80,7 @@ export function newMember(
     lastInput: { mx: 0, mz: 0, yaw: slot.yaw, sprint: false, stance: 'stand' },
     lastSeq: -1,
     lastStreakSeq: -1,
+    lastPilotSeq: -1,
     pingAt: 0,
     lastHeardAt: now,
     disconnectedAt: 0,

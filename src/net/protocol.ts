@@ -29,6 +29,7 @@ import {
   type KillMsg,
   type MatchStateMsg,
   type OrdnanceMsg,
+  type PilotInputMsg,
   type ShotMsg,
   type ShotFiredMsg,
   type ShotRejectMsg,
@@ -119,6 +120,7 @@ export interface ResumeState {
   lastSeq: number;
   /** Highest accepted streak intent; guests continue above it after rejoin. */
   lastStreakSeq?: number;
+  lastPilotSeq?: number;
   /** The seat's current life epoch (game host's count of its own spawns). */
   life: number;
   /** Highest shot seq the host admitted this life; -1 before the first. */
@@ -129,6 +131,9 @@ export interface ResumeState {
   sidearmId?: string;
   sidearmRounds?: number;
   tacticalId?: string;
+  speedMultiplier?: number;
+  rewardWeaponRemainingMs?: number;
+  rewardWeaponId?: 'crimson-flamethrower' | null;
   /** Current host-owned grenade counts and selected tactical item. */
   lethal?: number;
   tactical?: number;
@@ -310,6 +315,7 @@ export type NetMessage =
   | KillMsg
   | SpawnMsg
   | StreakIntentMsg
+  | PilotInputMsg
   | StreakStateMsg
   | MatchStateMsg
   | OrdnanceMsg
@@ -333,6 +339,7 @@ function isResumeState(v: unknown): v is ResumeState {
     Number.isSafeInteger(r['startTick']) &&
     Number.isSafeInteger(r['lastSeq']) &&
     (r['lastStreakSeq'] === undefined || (Number.isSafeInteger(r['lastStreakSeq']) && (r['lastStreakSeq'] as number) >= -1)) &&
+    (r['lastPilotSeq'] === undefined || (Number.isSafeInteger(r['lastPilotSeq']) && (r['lastPilotSeq'] as number) >= -1)) &&
     Number.isSafeInteger(r['life']) && (r['life'] as number) >= 1 &&
     Number.isSafeInteger(r['shotSeq']) && (r['shotSeq'] as number) >= -1 &&
     (r['primaryId'] === undefined || typeof r['primaryId'] === 'string') &&
@@ -340,6 +347,9 @@ function isResumeState(v: unknown): v is ResumeState {
     (r['sidearmId'] === undefined || typeof r['sidearmId'] === 'string') &&
     (r['sidearmRounds'] === undefined || (Number.isSafeInteger(r['sidearmRounds']) && (r['sidearmRounds'] as number) >= 0)) &&
     (r['tacticalId'] === undefined || typeof r['tacticalId'] === 'string') &&
+    (r['speedMultiplier'] === undefined || r['speedMultiplier'] === 1 || r['speedMultiplier'] === 1.25) &&
+    (r['rewardWeaponRemainingMs'] === undefined || (isFiniteNum(r['rewardWeaponRemainingMs']) && r['rewardWeaponRemainingMs'] >= 0 && r['rewardWeaponRemainingMs'] <= 45000)) &&
+    (r['rewardWeaponId'] === undefined || r['rewardWeaponId'] === null || r['rewardWeaponId'] === 'crimson-flamethrower') &&
     (r['lethal'] === undefined || (Number.isSafeInteger(r['lethal']) && (r['lethal'] as number) >= 0)) &&
     (r['tactical'] === undefined || (Number.isSafeInteger(r['tactical']) && (r['tactical'] as number) >= 0)) &&
     (r['armed'] === undefined || r['armed'] === null || typeof r['armed'] === 'string')
@@ -439,6 +449,7 @@ export function isNetMessage(v: unknown): v is NetMessage {
     case 'kill':
     case 'spawn':
     case 'streak-intent':
+    case 'pilot-input':
     case 'streak-state':
     case 'match-state':
     case 'ordnance':

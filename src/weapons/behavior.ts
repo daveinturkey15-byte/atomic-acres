@@ -11,7 +11,7 @@
  * path. They are shared by host integration, browser QA and menu projections.
  */
 
-import { WEAPONS } from './catalog';
+import { ALL_WEAPONS } from './catalog';
 
 export type WeaponBehaviorKind = 'hitscan' | 'piercing' | 'projectile' | 'cone';
 
@@ -56,6 +56,9 @@ export const SPECIAL_WEAPON_BEHAVIORS: Readonly<Record<string, WeaponBehaviorPro
   flamethrower: Object.freeze({
     kind: 'cone', range: 17, halfAngle: 5 * DEG, tickInterval: 0.045, burnDuration: 1.25,
   }),
+  'crimson-flamethrower': Object.freeze({
+    kind: 'cone', range: 21, halfAngle: 6 * DEG, tickInterval: 0.045, burnDuration: 1.75,
+  }),
   'flare-gun': Object.freeze({
     kind: 'projectile', range: 60, speed: 24, gravity: 9.81, lifetime: 2.0,
   }),
@@ -69,7 +72,7 @@ const HITSCAN: WeaponBehaviorProfile = Object.freeze({ kind: 'hitscan' });
 export function behaviorFor(id: string): WeaponBehaviorProfile {
   const special = SPECIAL_WEAPON_BEHAVIORS[id];
   if (special !== undefined) return special;
-  const known = WEAPONS.some((w) => w.id === id);
+  const known = ALL_WEAPONS.some((w) => w.id === id);
   if (!known) throw new Error(`weapon behavior: unknown catalog id '${id}'`);
   return HITSCAN;
 }
@@ -157,5 +160,5 @@ export function traceRailgun(
 // Fail loudly if the special table drifts from the catalog. This keeps the
 // host seam closed: an unprofiled special cannot quietly become a hitscan gun.
 for (const id of SPECIAL_IDS) {
-  if (!WEAPONS.some((w) => w.id === id)) throw new Error(`weapon behavior: special '${id}' is not in catalog.ts`);
+  if (!ALL_WEAPONS.some((w) => w.id === id)) throw new Error(`weapon behavior: special '${id}' is not in catalog.ts`);
 }

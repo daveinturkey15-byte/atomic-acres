@@ -13,6 +13,7 @@ import { installRoomVisibility } from './core/room-visibility';
 import { installReflectiveSurfaces } from './core/reflective-surfaces';
 import { makeRng, type AABB, type BuildContext, type Builder } from './core/kit';
 import { Player, type MoveMode } from './core/player';
+import { PilotControlView } from './core/pilot-controls';
 import { presentBody } from './characters/body-presentation';
 import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core/layout';
 import { STATIONS, type Station } from './core/stations';
@@ -287,8 +288,32 @@ hudHelp.textContent =
   'WASD move · SHIFT sprint · SPACE jump · ' +
   'H help · Esc pause · ' +
   'LMB fire · RMB aim · R reload · 1/2 or wheel weapons · ' +
-  'G frag (hold to cook) · Q tactical · V knife · hold E pick up · C / CTRL crouch · Z prone · 3–6 streaks';
+  'G frag (hold to cook) · Q tactical · V knife · hold E pick up · C / CTRL crouch · Z prone · 3–6 streaks · 7 crate reward';
 hud.append(hudStats, hudMode, hudHelp);
+const pilot = new PilotControlView({
+  camera: world.camera, canvas: world.renderer.domElement, hud,
+  send: (input) => match?.pilotInput(input),
+  exit: () => match?.exitPilot(),
+  streak: (slot) => match?.pressStreak(slot),
+  lookSettings: () => ui.menu.settings(),
+  transition: (active) => {
+    weapons.pointerUp(0); weapons.pointerUp(2);
+    player.setInputSuspended(active);
+    weapons.setVisible(!active);
+    if (!active) player.update(0);
+  },
+});
+const rewardHint = document.createElement('div');
+rewardHint.className = 'hud-reward';
+Object.assign(rewardHint.style, { position: 'absolute', right: '22px', top: '27%', color: '#ffd9a8',
+  fontSize: '12px', fontWeight: '700', letterSpacing: '1px', textAlign: 'right', whiteSpace: 'pre-line', pointerEvents: 'none' });
+hud.append(rewardHint);
+hud.addEventListener('click', (event) => {
+  if ((event.target as Element | null)?.closest('.hud-streak-reward') && ui.menu.state().surface === 'hidden') {
+    match?.pressStreak(5);
+  }
+});
+let lastRewardHint = '';
 // ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
 // initUI owns everything inside #hud and #start, so the capture harness still
 const ui = initUI({ player, world,
@@ -330,6 +355,8 @@ let presentedClient: GameClient | null = null;
 world.scene.add(weaponEffects.group, streakEffects.group);
 const matchUi: MatchUi = {
   bindClient: (c) => {
+    pilot.reset();
+    player.setSpeedMultiplier(1);
     combatFeedback.reset();
     weaponEffects.reset();
     streakEffects.reset();
@@ -344,7 +371,7 @@ const matchUi: MatchUi = {
   },
   setNames: (n) => ui.setNames(n),
   onEvent: (e) => { combatFeedback.onEvent(e); weaponEffects.onEvent(e); },
-  resetPresentation: () => { combatFeedback.reset(); weaponEffects.reset(); streakEffects.reset(); },
+  resetPresentation: () => { pilot.reset(); combatFeedback.reset(); weaponEffects.reset(); streakEffects.reset(); },
 };
 // ---- The match. Host + local player + bots, started by the same click that
 // dismisses the lobby overlay, so nothing runs before a player asks for it.
@@ -452,6 +479,7 @@ addEventListener('pagehide', () => {
   combatFeedback.dispose();
   weaponEffects.dispose();
   streakEffects.dispose();
+  pilot.dispose();
 });
 // The first click lands on the overlay (it covers the canvas), so dismiss and lock
 // here; later clicks hit the canvas and re-lock via Player. Esc releases (browser
@@ -480,6 +508,7 @@ addEventListener('keydown', (e) => {
 // requestPointerLock) so capture-harness probes never trip on missing APIs.
 const canvas = world.renderer.domElement;
 canvas.addEventListener('mousedown', (e) => {
+  if (pilot.active()) return;
   try {
     if (e.button === 0 || e.button === 2) weapons.pointerDown(e.button);
   } catch { /* headless: no pointer, no weapon input */ }
@@ -491,7 +520,7 @@ addEventListener('mouseup', (e) => {
 });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 addEventListener('keydown', (e) => {
-  if (e.repeat || ui.menu.state().surface !== 'hidden') return;
+  if (e.repeat || pilot.active() || ui.menu.state().surface !== 'hidden') return;
   if (e.code === 'KeyR' || e.code === 'Digit1' || e.code === 'Digit2') {
     try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
   }
@@ -500,16 +529,17 @@ addEventListener('keydown', (e) => {
   if ((e.code === 'KeyG' || e.code === 'KeyQ' || e.code === 'KeyV' || e.code === 'KeyE') && player.getMode() === 'walk') {
     try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
   }
-  // 3-6 are the four killstreak slots. A press always answers, even when it
+  // 3-6 are the four chosen streaks; 7 activates a banked crate reward.
+  // A press always answers, even when it
   // is refused - a dead key is the defect IMPORT-PLAN s5.4 is written about.
-  const slot = ['Digit3', 'Digit4', 'Digit5', 'Digit6'].indexOf(e.code);
+  const slot = ['Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7'].indexOf(e.code);
   if (slot >= 0) match?.pressStreak(slot + 1);
 });
 addEventListener('keyup', (e) => {
   try { weapons.keyUp(e.code); } catch { /* headless-safe */ }
 });
 canvas.addEventListener('wheel', (e) => {
-  if (player.getMode() !== 'walk' || ui.menu.state().surface !== 'hidden') return;
+  if (pilot.active() || player.getMode() !== 'walk' || ui.menu.state().surface !== 'hidden') return;
   try { weapons.wheel(e.deltaY); } catch { /* headless-safe */ }
 }, { passive: true });
 
@@ -550,6 +580,10 @@ function frame(): void {
   world.renderer.info.reset();
 
   if (!cameraHeldByQA) {
+    const pilotView = presentedClient?.view();
+    pilot.sync(presentedClient?.streakEffects ?? [], presentedClient?.selfId ?? null,
+      pilotView?.alive === true && pilotView.match.phase === 'active', presentedClient?.streakEffectsAt ?? 0, now);
+    player.setSpeedMultiplier(presentedClient?.ordnance.self.speedMultiplier ?? 1);
     player.update(dt);
     const speed = Math.hypot(player.state.vel.x, player.state.vel.z);
     worldAudio.update(player.state, player.getStance(), player.getMode() === 'walk' && !!match && match.mode() !== 'idle', world.atmosphere.weather());
@@ -577,6 +611,16 @@ function frame(): void {
     const st = player.state;
     match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch, player.getStance());
     ordnance.update(dt, now, st.pos.x, st.pos.y, st.pos.z);
+    const pilotView = presentedClient?.view();
+    pilot.sync(presentedClient?.streakEffects ?? [], presentedClient?.selfId ?? null,
+      pilotView?.alive === true && pilotView.match.phase === 'active', presentedClient?.streakEffectsAt ?? 0, now);
+    pilot.update(now);
+    const inventory = presentedClient?.ordnance.self;
+    let rewardLine = (inventory?.speedMultiplier ?? 1) > 1 ? 'ADRENALINE · +25% SPEED' : '';
+    if (inventory?.rewardWeaponId === 'crimson-flamethrower') {
+      rewardLine += (rewardLine ? '\n' : '') + `CRIMSON FLAMETHROWER · ${Math.ceil(inventory.rewardWeaponRemainingMs / 1000)} s`;
+    }
+    if (rewardLine !== lastRewardHint) { lastRewardHint = rewardLine; rewardHint.textContent = rewardLine; }
     weaponEffects.update(now);
     if (presentedClient) streakEffects.update(now, presentedClient.streakEffects, presentedClient.streakEffectsAt);
     liveBodyIds.clear();
@@ -697,6 +741,7 @@ interface QA {
   /** Ordnance lane: the client projection's log, counts and pools. Read-only. */
   ordnance: () => Record<string, unknown>;
   specialEffects: () => { weapons: ReturnType<typeof weaponEffects.counts>; streaks: ReturnType<typeof streakEffects.counts> };
+  pilot: () => ReturnType<PilotControlView['snapshot']>;
   audio: () => ReturnType<WeaponsController['audioStats']>;
   disposeEnvironment?: () => void;
   /** Owned coach canary actual-adoption status (read-only, real geometry).
@@ -788,6 +833,7 @@ const qa: QA = {
   specialEffects() {
     return { weapons: weaponEffects.counts(), streaks: streakEffects.counts() };
   },
+  pilot() { return pilot.snapshot(); },
   audio() {
     return weapons.audioStats();
   },

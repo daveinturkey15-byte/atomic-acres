@@ -18,9 +18,11 @@ export { WEAPONS } from '${src('src/weapons/catalog.ts')}';
 export { SIDEARM_IDS } from '${src('src/game/loadout.ts')}';
 export { isPlayableWeapon } from '${src('src/weapons/roster.ts')}';
 export { BotDirector, botIntent } from '${src('src/game/bots.ts')}';
+export { StreakRuntime } from '${src('src/game/killstreaks/runtime.ts')}';
+export { streakPort } from '${src('src/game/session-streaks.ts')}';
 `);
 await build({ entryPoints: [entry], outfile: bundle, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent' });
-const { GameHost, createWorldQuery, WEAPONS, SIDEARM_IDS, isPlayableWeapon, BotDirector, botIntent } = await import(pathToFileURL(bundle).href);
+const { GameHost, createWorldQuery, WEAPONS, SIDEARM_IDS, isPlayableWeapon, BotDirector, botIntent, StreakRuntime, streakPort } = await import(pathToFileURL(bundle).href);
 let cases = 0;
 const test = (name, fn) => { fn(); cases++; process.stdout.write(`PASS ${name}\n`); };
 const def = (id) => WEAPONS.find((w) => w.id === id);
@@ -264,4 +266,153 @@ test('new lives reject stale-life claims and forged muzzle origins', () => {
   assert.equal(f.shot({ ox: 50 }).reason, 'bad-origin');
 });
 
-process.stdout.write(`VERIFIED ${cases} host combat scenarios; 20 real weapon paths. Rendering/network-device acceptance is separate.\n`);
+function rewardFixture(rules) {
+  const pending = [];
+  const streaks = { registerActor() {}, recordElimination: () => [], recordDeath: () => [],
+    recordDisconnect: () => [], activate: () => [], advance: () => [], endMatch: () => [],
+    snapshotFor: () => [], drainRewardGrants: () => pending.splice(0) };
+  const f = fixture('longhorn', undefined, [], { deps: { streaks }, ...(rules ? { rules } : {}) });
+  return { ...f, pending };
+}
+
+test('Crimson is earned, damages through its own cone and restores exact suspended ammo', () => {
+  const f = rewardFixture();
+  assert.equal(f.shot({ weaponId: 'crimson-flamethrower' }).accepted, false);
+  f.shot(); f.drain(); const saved = f.host.loadoutOf('shooter').rounds;
+  f.pending.push({ actorId: 'shooter', team: 0, reward: 'crimson-flamethrower', instanceId: 90, at: f.now(), durationMs: 45000 });
+  f.advance();
+  assert.equal(f.host.loadoutOf('shooter').primaryId, 'crimson-flamethrower');
+  assert.equal(f.host.loadoutOf('shooter').rewardWeaponRemainingMs, 44980);
+  assert.equal(f.shot({ weaponId: 'crimson-flamethrower' }).accepted, true);
+  assert(f.drain().some((e) => e.type === 'damage' && e.weaponId === 'crimson-flamethrower'));
+  assert.equal(f.shot({ weaponId: 'pickup' }).reason, 'reward-active');
+  const rewardRounds = f.host.loadoutOf('shooter').rounds;
+  f.pending.push({ actorId: 'shooter', team: 0, reward: 'crimson-flamethrower', instanceId: 90, at: f.now(), durationMs: 45000 });
+  f.advance(); assert.equal(f.host.loadoutOf('shooter').rounds, rewardRounds, 'duplicate grant cannot refill reward');
+  f.advance(45000);
+  assert.equal(f.host.loadoutOf('shooter').primaryId, 'longhorn');
+  assert.equal(f.host.loadoutOf('shooter').rounds, saved);
+  assert.equal(f.host.loadoutOf('shooter').rewardWeaponId, null);
+  assert.equal(f.shot({ weaponId: 'crimson-flamethrower' }).accepted, false);
+  const forgedKit = fixture('crimson-flamethrower');
+  assert.notEqual(forgedKit.host.loadoutOf('shooter').primaryId, 'crimson-flamethrower');
+});
+
+test('adrenaline is capped at 1.25, expires on host time and grants do not renew twice', () => {
+  const f = rewardFixture(); const at = f.now();
+  f.pending.push({ actorId: 'shooter', team: 0, reward: 'adrenaline', instanceId: 91, at, durationMs: 99000 });
+  f.advance(); assert.equal(f.host.loadoutOf('shooter').speedMultiplier, 1.25);
+  f.advance(10000);
+  f.pending.push({ actorId: 'shooter', team: 0, reward: 'adrenaline', instanceId: 91, at: f.now(), durationMs: 15000 });
+  f.advance(); f.advance(5000);
+  assert.equal(f.host.loadoutOf('shooter').speedMultiplier, 1);
+});
+
+test('death retires buffs before corpse drop and respawn never inherits Crimson', () => {
+  const f = rewardFixture();
+  for (const [instanceId, reward] of [[92, 'adrenaline'], [93, 'crimson-flamethrower']]) {
+    f.pending.push({ actorId: 'shooter', team: 0, reward, instanceId, at: f.now() });
+  }
+  f.advance(); const events = [];
+  for (let seq = 1; seq <= 3; seq++) {
+    f.host.submitShot('target', { type: 'shot', weaponId: 'longhorn', seq, life: f.host.lifeOf('target'),
+      firedAt: f.now(), ox: 0, oy: 1.2, oz: 5, dx: 0, dy: 0, dz: -1 }, f.now());
+    events.push(...f.advance(110));
+  }
+  assert.equal(f.actor('shooter').alive, false);
+  assert.equal(f.host.loadoutOf('shooter').speedMultiplier, 1);
+  assert.equal(f.host.loadoutOf('shooter').rewardWeaponRemainingMs, 0);
+  assert(events.some((e) => e.type === 'drop-spawned' && e.ownerId === 'shooter' && e.weaponId === 'longhorn'));
+  assert(!events.some((e) => e.type === 'drop-spawned' && e.weaponId === 'crimson-flamethrower'));
+  f.advance(5000); assert.equal(f.host.loadoutOf('shooter').primaryId, 'longhorn');
+  assert.equal(f.host.loadoutOf('shooter').speedMultiplier, 1);
+});
+
+test('match end and disconnect retire temporary reward state', () => {
+  const f = rewardFixture({ mode: 'tdm', scoreLimit: null, durationMs: 4000, friendlyFire: false });
+  for (const [instanceId, reward] of [[94, 'adrenaline'], [95, 'crimson-flamethrower']]) {
+    f.pending.push({ actorId: 'shooter', team: 0, reward, instanceId, at: f.now() });
+  }
+  f.advance(); f.advance(4100);
+  assert.equal(f.host.matchState.phase, 'ended');
+  assert.equal(f.host.loadoutOf('shooter').primaryId, 'longhorn');
+  assert.equal(f.host.loadoutOf('shooter').speedMultiplier, 1);
+  f.host.removeActor('shooter'); assert.equal(f.host.loadoutOf('shooter'), null);
+  f.host.addActor('shooter', 0); assert.equal(f.host.loadoutOf('shooter').rewardWeaponId, null);
+});
+
+test('host aircraft hits obey actual nearest actor, world cover and hostility', () => {
+  const calls = []; let health = 100;
+  const target = { instanceId: 4, actorId: 'air-owner', team: 1, x: 0, y: 1.2, z: 10, radius: 2, health };
+  const streaks = { registerActor() {}, recordElimination: () => [], recordDeath: () => [],
+    recordDisconnect: () => [], activate: () => [], advance: () => [], endMatch: () => [], snapshotFor: () => [],
+    aircraftTargets: () => health > 0 ? [{ ...target, health }] : [],
+    damageAircraft: (id, actorId, team, amount) => { calls.push({ id, actorId, team, amount }); health -= amount; return []; } };
+  const f = fixture('longhorn', [{ id: 'target', x: 0, z: 15, team: 1 }], [], { deps: { streaks } });
+  for (let i = 0; i < 3; i++) { f.shot(); f.advance(110); }
+  assert(health <= 0); assert.equal(calls.length, 3); assert.equal(f.actor().hp, 100, 'aircraft intercepted bullets before body');
+  f.shot(); f.drain(); assert(f.actor().hp < 100, 'destroyed aircraft no longer intercepts');
+  calls.length = 0; health = 100;
+  const blocked = fixture('longhorn', [], [wall(2)], { deps: { streaks } }); blocked.shot(); blocked.drain();
+  assert.equal(calls.length, 0, 'wall blocks aircraft fire');
+  const bodyFirst = fixture('longhorn', undefined, [], { deps: { streaks } }); bodyFirst.shot(); bodyFirst.drain();
+  assert.equal(calls.length, 0, 'nearer body blocks aircraft fire');
+  target.team = 0;
+  const friendly = fixture('longhorn', [], [], { deps: { streaks } }); friendly.shot(); friendly.drain();
+  assert.equal(calls.length, 0, 'friendly aircraft takes no bullet damage');
+  const ffa = fixture('longhorn', [], [], { deps: { streaks }, rules: { mode: 'ffa', durationMs: null, scoreLimit: null, friendlyFire: false } });
+  ffa.shot(); ffa.drain(); assert.equal(calls.length, 1, 'same team numbers do not block FFA aircraft fire');
+});
+
+test('actual owned pilot blocks body guns and ordnance, admits controls and releases body fire on exit', () => {
+  const rt = new StreakRuntime({ matchEpoch: 72 });
+  const f = fixture('longhorn', undefined, [], { deps: { streaks: streakPort(rt, 72) } });
+  rt.registerActor('shooter', 0, ['recon-sweep', 'signal-jam', 'piloted-drone', 'blast-mortar']);
+  for (let i = 1; i <= 5; i++) rt.recordElimination('shooter', i, f.now());
+  assert.equal(f.host.submitStreakIntent('shooter', { type: 'streak-intent', slot: 3, toggle: false }), null);
+  assert(rt.pilotFor('shooter'));
+  f.drain(); const held = f.host.loadoutOf('shooter');
+  assert.equal(f.shot().reason, 'possessing');
+  assert.equal(f.shot({ weaponId: 'frag' }).reason, 'possessing');
+  assert.equal(f.shot({ weaponId: 'knife' }).reason, 'possessing');
+  assert.equal(f.shot({ weaponId: 'pickup' }).reason, 'possessing');
+  const rejected = f.drain();
+  assert.equal(rejected.filter((e) => e.type === 'shot-rejected' && e.reason === 'possessing').length, 4);
+  assert(!rejected.some((e) => ['shot-fired', 'grenade-armed', 'melee', 'damage'].includes(e.type)));
+  assert.deepEqual(f.host.loadoutOf('shooter'), held, 'rejected body actions never alter kit');
+  const before = rt.aircraftTargets()[0];
+  assert.equal(rt.submitPilotInput('shooter', { seq: 1, forward: 1, strafe: 0, ascend: 0,
+    yaw: 0, pitch: 0, fire: false }, f.now(), createWorldQuery([])), true);
+  f.advance(50); const after = rt.aircraftTargets()[0];
+  assert(Math.hypot(after.x - before.x, after.z - before.z) > 0, 'actual aircraft continues moving');
+  assert.equal(f.host.submitStreakIntent('shooter', { type: 'streak-intent', slot: 3, toggle: true }), null);
+  assert.equal(rt.pilotFor('shooter'), null);
+  assert.equal(f.shot({ seq: 1 }).reason, 'duplicate', 'blocked pilot shot cannot replay after exit');
+  assert.equal(f.shot().accepted, true);
+  assert(f.drain().some((e) => e.type === 'damage' && e.attackerId === 'shooter' && e.cause === 'bullet'));
+});
+
+test('real host credits support kills without farming another ladder charge', () => {
+  const rt = new StreakRuntime({ matchEpoch: 73 }); const queue = [];
+  const port = streakPort(rt, 73), advanceRuntime = port.advance;
+  port.advance = (...args) => [...advanceRuntime(...args), ...queue.splice(0)];
+  const f = fixture('longhorn', [0, 1, 2, 3].map((i) => ({ id: `victim-${i}`, team: 1, x: i, z: 5 })), [], { deps: { streaks: port } });
+  for (let i = 0; i < 4; i++) queue.push({ type: 'damage', at: f.now(), attackerId: 'shooter', attackerTeam: 0,
+    victimId: `victim-${i}`, victimTeam: 1, amount: 100, cause: 'streak', zone: 'body', weaponId: '',
+    distance: 5, healthAfter: 0, sourceX: 0, sourceZ: 0 });
+  const events = f.advance();
+  assert.equal(events.filter((e) => e.type === 'kill' && e.killerId === 'shooter' && e.cause === 'streak').length, 4);
+  assert.equal(f.actor('shooter').kills, 4, 'scoreboard still credits legitimate kills');
+  assert.equal(f.actor('shooter').streak, 4, 'consecutive kill statistic remains truthful');
+  assert.equal(rt.snapshotFor('shooter').find((s) => s.streakId === 'recon-sweep').charges, 0);
+  assert.equal(events.filter((e) => e.type === 'streak-earned').length, 0);
+  // A following gun kill advances exactly once, rather than catching the ladder up to the scoreboard.
+  f.host.addActor('body-target', 1); f.advance(3000);
+  for (let i = 0; i < 3; i++) {
+    f.host.updatePose('body-target', 0, 0, 4, f.now()); f.shot(); f.advance(110);
+  }
+  assert.equal(f.actor('shooter').kills, 5);
+  assert.equal(rt.snapshotFor('shooter').find((s) => s.streakId === 'recon-sweep').charges, 0);
+});
+
+process.stdout.write(`VERIFIED ${cases} host combat scenarios; loadout/rewards, aircraft, possession and streak credit. Rendering/network-device acceptance is separate.\n`);

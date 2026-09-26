@@ -7,8 +7,11 @@ import type { StreakEffectView } from '../game/killstreaks/effect-view';
 import { FALLOUT_RADIUS_M } from '../game/killstreaks/effects/fallout';
 import { DART_RADIUS_M, DART_PULSE_MS } from '../game/killstreaks/effects/dart';
 import { STRIKE_RELAY_PASSES, STRIKE_RELAY_RADIUS_M, STRIKE_RELAY_SPACING_M } from '../game/killstreaks/effects/strike-relay';
+import { drawAircraftParts, type AircraftPose, type AircraftPartWriter } from './streak-aircraft-parts';
+import { CARPET_FIRST_MS, CARPET_INTERVAL_MS, CARPET_BOMBS, CARPET_RADIUS_M } from '../game/killstreaks/effects/carpet';
 
 export const STREAK_SCENE_CAPACITY = 16;
+export const STREAK_CRAFT_CAPACITY = STREAK_SCENE_CAPACITY * 5;
 const TAU = Math.PI * 2;
 type Batch = { mesh: THREE.InstancedMesh; used: number; capacity: number };
 type Edge = { id: number; shots: number; fired: number; flashUntil: number };
@@ -33,6 +36,9 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
   const edges: Edge[] = Array.from({ length: STREAK_SCENE_CAPACITY }, () => ({ id: -1, shots: 0, fired: 0, flashUntil: 0 }));
   let disposed = false;
   let shown = 0;
+  let shownCraft = 0;
+  let dropped = 0;
+  const bomberPose = { x: 0, y: 0, z: 0, pitch: 0 };
 
   function batch(name: string, geometry: THREE.BufferGeometry, material: THREE.Material, capacity: number, shadow = false): Batch {
     const mesh = new THREE.InstancedMesh(geometry, material, capacity);
@@ -42,20 +48,22 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
     group.add(mesh);
     return { mesh, used: 0, capacity };
   }
-  const armor = batch('olive-equipment-casings', box, mat.painted(PAL.opHelmetOlive, 0.66, 0.3), 192, true);
-  const dark = batch('equipment-rubber-and-recesses', box, mat.painted(PAL.opBoot, 0.9, 0.1), 192, true);
-  const metal = batch('equipment-machined-fittings', cylinder, mat.steel, 128, true);
-  const markings = batch('equipment-id-and-warning-strips', box, mat.painted(PAL.hazardYellow, 0.65, 0.2), 96);
+  // Worst case is sixteen five-craft swarms. Capacities also exceed sixteen
+  // helicopters, crates or twenty-point carpet corridors without truncation.
+  const armor = batch('olive-equipment-casings', box, mat.painted(PAL.opHelmetOlive, 0.66, 0.3), STREAK_CRAFT_CAPACITY * 6, true);
+  const dark = batch('equipment-rubber-and-recesses', box, mat.painted(PAL.opBoot, 0.9, 0.1), STREAK_CRAFT_CAPACITY * 14, true);
+  const metal = batch('equipment-machined-fittings', cylinder, mat.steel, STREAK_CRAFT_CAPACITY * 10, true);
+  const markings = batch('equipment-id-and-warning-strips', box, mat.painted(PAL.hazardYellow, 0.65, 0.2), STREAK_SCENE_CAPACITY * (CARPET_BOMBS * 2 + 3));
   // instanceColor tints the diffuse term, not MeshStandard's emissive term.
   // Team-coloured registry materials preserve teal/red even under bloom.
   const signalTeams = [
-    batch('teal-equipment-lenses', sphere, mat.emissive(PAL.signTeal, 2.2), 64),
-    batch('red-equipment-lenses', sphere, mat.emissive(PAL.applianceRed, 2.2), 64),
+    batch('teal-equipment-lenses', sphere, mat.emissive(PAL.signTeal, 2.2), STREAK_CRAFT_CAPACITY * 3),
+    batch('red-equipment-lenses', sphere, mat.emissive(PAL.applianceRed, 2.2), STREAK_CRAFT_CAPACITY * 3),
   ];
-  const muzzle = batch('sentry-muzzle-pops', sphere, mat.emissive(PAL.sunColor, 3), 16);
+  const muzzle = batch('sentry-muzzle-pops', sphere, mat.emissive(PAL.sunColor, 3), STREAK_CRAFT_CAPACITY);
   const fieldTeams = [
-    batch('teal-streak-field-boundaries', ring, mat.emissive(PAL.signTeal, 0.85), 64),
-    batch('red-streak-field-boundaries', ring, mat.emissive(PAL.applianceRed, 0.85), 64),
+    batch('teal-streak-field-boundaries', ring, mat.emissive(PAL.signTeal, 0.85), STREAK_SCENE_CAPACITY * CARPET_BOMBS),
+    batch('red-streak-field-boundaries', ring, mat.emissive(PAL.applianceRed, 0.85), STREAK_SCENE_CAPACITY * CARPET_BOMBS),
   ];
   const batches = [armor, dark, metal, markings, ...signalTeams, muzzle, ...fieldTeams];
   const teamColors = [new THREE.Color(PAL.signTeal), new THREE.Color(PAL.applianceRed)];
@@ -65,13 +73,14 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
     for (let i = 0; i < b.capacity; i++) b.mesh.setColorAt(i, muzzleColor);
   }
 
-  function part(b: Batch, s: StreakEffectView, yaw: number, x: number, y: number, z: number,
-    sx: number, sy: number, sz: number, rx = 0, rz = 0, tint?: THREE.Color): void {
-    if (b.used >= b.capacity) return;
-    const sin = Math.sin(yaw), cos = Math.cos(yaw);
-    position.set(s.x + x * cos + z * sin, s.y + y, s.z - x * sin + z * cos);
-    yawRotation.setFromAxisAngle(THREE.Object3D.DEFAULT_UP, yaw);
-    euler.set(rx, 0, rz);
+  function part(b: Batch, s: AircraftPose, yaw: number, x: number, y: number, z: number,
+    sx: number, sy: number, sz: number, rx = 0, rz = 0, tint?: THREE.Color, ry = 0): void {
+    if (b.used >= b.capacity) { dropped++; return; }
+    euler.set(s.pitch ?? 0, yaw, 0, 'YXZ');
+    yawRotation.setFromEuler(euler);
+    position.set(x, y, z).applyQuaternion(yawRotation);
+    position.x += s.x; position.y += s.y; position.z += s.z;
+    euler.set(rx, ry, rz, 'XYZ');
     localRotation.setFromEuler(euler);
     rotation.copy(yawRotation).multiply(localRotation);
     scale.set(sx, sy, sz);
@@ -80,6 +89,13 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
     if (tint) b.mesh.setColorAt(b.used, tint);
     b.used++;
   }
+  let aircraftTeam: 0 | 1 = 0;
+  const airBatches = { armor, dark, metal, markings, muzzle };
+  const aircraftPart: AircraftPartWriter = (material, pose, yaw, x, y, z, sx, sy, sz, rx = 0, ry = 0, rz = 0) => {
+    const b = material === 'signal' ? signalTeams[aircraftTeam] : airBatches[material];
+    part(b, pose, yaw, x, y, z, sx, sy, sz, rx, rz,
+      material === 'signal' ? teamColors[aircraftTeam] : material === 'muzzle' ? muzzleColor : undefined, ry);
+  };
   function field(s: StreakEffectView, radius: number, tint: THREE.Color, x = 0, z = 0, yaw = 0): void {
     part(fieldTeams[s.team], s, yaw, x, 0.07, z, radius, 1, radius, 0, 0, tint);
   }
@@ -93,13 +109,14 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
     }
   }
   function update(nowMs: number, rows: readonly StreakEffectView[], snapshotAt = nowMs): void {
-    if (disposed || !Number.isFinite(nowMs)) return;
+    if (disposed || !Number.isFinite(nowMs) || !Number.isFinite(snapshotAt)) return;
     for (const b of batches) b.used = 0;
-    shown = 0;
+    shown = 0; shownCraft = 0; dropped = 0;
     for (let index = 0; index < Math.min(rows.length, STREAK_SCENE_CAPACITY); index++) {
       const s = rows[index];
-      if (!(s.remainingMs > 0) || nowMs >= snapshotAt + s.remainingMs
-        || !Number.isFinite(s.x) || !Number.isFinite(s.y) || !Number.isFinite(s.z)) continue;
+      if (!(s.remainingMs > 0) || !Number.isFinite(s.remainingMs) || nowMs >= snapshotAt + s.remainingMs
+        || (s.team !== 0 && s.team !== 1) || !Number.isFinite(s.x) || !Number.isFinite(s.y) || !Number.isFinite(s.z)
+        || !Number.isFinite(s.yaw ?? 0) || !Number.isFinite(s.aimYaw ?? 0) || !Number.isFinite(s.pitch ?? 0)) continue;
       shown++;
       const tint = teamColors[s.team];
       const signals = signalTeams[s.team];
@@ -111,7 +128,41 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
       if ((s.shots ?? 0) > edge.shots) edge.flashUntil = nowMs + 85;
       edge.shots = s.shots ?? 0;
       const yaw = s.yaw ?? s.aimYaw ?? 0;
-      if (s.kind === 'sentry') {
+      if (s.kind === 'aircraft') {
+        aircraftTeam = s.team;
+        if (s.variant !== 'yardhawk' && s.variant !== 'piloted-drone' && s.variant !== 'hunter-swarm' && s.variant !== 'chopper' && s.variant !== 'drone-swarm') continue;
+        if (!s.craft || !Number.isInteger(s.units) || (s.units ?? 0) < 1) continue;
+        for (let n = 0; n < Math.min(s.craft.length, s.units!, 5); n++) {
+          const craft = s.craft[n];
+          if (!Number.isFinite(craft.x) || !Number.isFinite(craft.y) || !Number.isFinite(craft.z)
+            || !Number.isFinite(craft.yaw) || !Number.isFinite(craft.pitch)) continue;
+          drawAircraftParts(aircraftPart, craft, craft.yaw, s.variant, nowMs + n * 23, edge.flashUntil > nowMs);
+          shownCraft++;
+        }
+      } else if (s.kind === 'carpet-bomber') {
+        const impacts = s.impacts;
+        if (!impacts?.length) continue;
+        for (let n = Math.max(0, s.fired ?? 0); n < Math.min(impacts.length, CARPET_BOMBS); n++) {
+          const point = impacts[n];
+          if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || !Number.isFinite(point.z)) continue;
+          part(fieldTeams[s.team], point, 0, 0, .07, 0, CARPET_RADIUS_M, 1, CARPET_RADIUS_M, 0, 0, tint);
+          part(markings, point, yaw, 0, .09, 0, .45, .025, .07);
+          part(markings, point, yaw, 0, .09, 0, .07, .025, .45);
+        }
+        const elapsed = (s.elapsedMs ?? 0) + Math.max(0, nowMs - snapshotAt);
+        if (impacts.length === CARPET_BOMBS && elapsed < CARPET_FIRST_MS + CARPET_BOMBS * CARPET_INTERVAL_MS + 1600) {
+          const first = impacts[0], firstRight = impacts[3], last = impacts[16], lastRight = impacts[19];
+          const progress = (elapsed - CARPET_FIRST_MS) / ((CARPET_BOMBS - 1) * CARPET_INTERVAL_MS);
+          const startX = (first.x + firstRight.x) / 2, startZ = (first.z + firstRight.z) / 2;
+          const endX = (last.x + lastRight.x) / 2, endZ = (last.z + lastRight.z) / 2;
+          bomberPose.x = startX + (endX - startX) * progress;
+          bomberPose.z = startZ + (endZ - startZ) * progress;
+          bomberPose.y = Math.max(first.y, firstRight.y, last.y, lastRight.y) + 16;
+          if (!Number.isFinite(bomberPose.x) || !Number.isFinite(bomberPose.y) || !Number.isFinite(bomberPose.z)) continue;
+          aircraftTeam = s.team;
+          drawAircraftParts(aircraftPart, bomberPose, Math.atan2(startX - endX, startZ - endZ), 'carpet-bomber', nowMs, false);
+        }
+      } else if (s.kind === 'sentry') {
         base(s, 0.7);
         part(dark, s, yaw, 0, 0.73, 0, 0.5, 0.12, 0.4);
         part(armor, s, yaw, 0, 0.87, 0, 0.39, 0.25, 0.51);
@@ -177,7 +228,7 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
     }
   }
   function reset(): void {
-    shown = 0;
+    shown = 0; shownCraft = 0; dropped = 0;
     for (const b of batches) { b.mesh.count = 0; b.used = 0; }
     for (const e of edges) { e.id = -1; e.flashUntil = 0; }
   }
@@ -189,6 +240,6 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
     group.removeFromParent();
   }
   return { group, update, reset, dispose, counts: () => ({
-    shown, instances: batches.reduce((n, b) => n + b.used, 0), capacity: STREAK_SCENE_CAPACITY,
+    shown, craft: shownCraft, dropped, instances: batches.reduce((n, b) => n + b.used, 0), capacity: STREAK_SCENE_CAPACITY,
   }) };
 }

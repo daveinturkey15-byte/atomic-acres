@@ -146,10 +146,10 @@ export function buildCrossbowViewmodel(mat: MaterialLibrary): ViewmodelRig {
 }
 
 /** Self-contained pressure cylinders and a broad burner shroud, using the same two-hand grip. */
-export function buildFlamethrowerViewmodel(mat: MaterialLibrary): ViewmodelRig {
-  const { group, gun } = begin('flamethrower');
+export function buildFlamethrowerViewmodel(mat: MaterialLibrary, crimson = false): ViewmodelRig {
+  const { group, gun } = begin(crimson ? 'crimson-flamethrower' : 'flamethrower');
   const steel = mat.viewmodel.parkerizedSteel, metal = mat.chrome;
-  const yellow = mat.painted(PAL.hazardYellow, .52, .35);
+  const yellow = mat.painted(crimson ? PAL.applianceRed : PAL.hazardYellow, .52, .35);
   const red = mat.painted(PAL.applianceRed, .45, .35);
   const rubber = mat.viewmodel.darkGlove;
   rifleGrip(gun, mat);
@@ -177,6 +177,11 @@ export function buildFlamethrowerViewmodel(mat: MaterialLibrary): ViewmodelRig {
   link(gun, 'PilotLine', [-.019, .02, -.44], [-.019, .02, -.595], .004, metal);
   sights(gun, mat, -.50);
   return finish(group, mat, [0, .049, -.596]);
+}
+
+/** Reward finish on the same flame rig; it is not advertised as another unique silhouette. */
+export function buildCrimsonFlamethrowerViewmodel(mat: MaterialLibrary): ViewmodelRig {
+  return buildFlamethrowerViewmodel(mat, true);
 }
 
 /** Short break-action signal pistol with a brass barrel and a warm enamel receiver. */

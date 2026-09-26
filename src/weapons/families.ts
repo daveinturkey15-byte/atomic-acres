@@ -13,7 +13,7 @@
  * Per-weapon overrides belong in SPECIAL_RIG; family motion/audio stay separate.
  */
 
-import { WEAPONS } from './catalog';
+import { ALL_WEAPONS } from './catalog';
 
 /** Coarse behaviour family. Drives audio voice and the temporary viewmodel. */
 export type WeaponFamily =
@@ -29,13 +29,14 @@ export type WeaponFamily =
 
 /** One of the five shipped `viewmodel.ts` rigs, by builder name. */
 export type FallbackRig = 'rifle' | 'smg' | 'shotgun' | 'sniper' | 'pistol';
-export type WeaponRigId = FallbackRig | 'railgun' | 'crossbow' | 'flamethrower' | 'flaregun';
+export type WeaponRigId = FallbackRig | 'railgun' | 'crossbow' | 'flamethrower' | 'flaregun' | 'crimson-flamethrower';
 
 const SPECIAL_RIG: Readonly<Partial<Record<string, WeaponRigId>>> = Object.freeze({
   railgun: 'railgun',
   'explosive-crossbow': 'crossbow',
   flamethrower: 'flamethrower',
   'flare-gun': 'flaregun',
+  'crimson-flamethrower': 'crimson-flamethrower',
 });
 
 /**
@@ -65,6 +66,7 @@ export const WEAPON_FAMILY: Readonly<Record<string, WeaponFamily>> = Object.free
   'explosive-crossbow': 'special',
   flamethrower: 'special',
   'flare-gun': 'special',
+  'crimson-flamethrower': 'special',
 });
 
 /**
@@ -100,7 +102,7 @@ export const RIG_OWNER: Readonly<Record<FallbackRig, string>> = Object.freeze({
 /** True when `id` renders with the rig originally built for it — no borrowed silhouette. */
 export function isNativeRig(id: string): boolean {
   const family = weaponFamily(id);
-  return SPECIAL_RIG[id] !== undefined || RIG_OWNER[FAMILY_FALLBACK[family]] === id;
+  return (SPECIAL_RIG[id] !== undefined && id !== 'crimson-flamethrower') || RIG_OWNER[FAMILY_FALLBACK[family]] === id;
 }
 
 /** The actual builder key; distinct from the coarse animation/audio family. */
@@ -126,12 +128,12 @@ export const FAMILY_VOICE: Readonly<Record<WeaponFamily, AudioVoice>> = Object.f
 });
 
 // Fail loud at load rather than shipping a weapon no family covers.
-for (const w of WEAPONS) {
+for (const w of ALL_WEAPONS) {
   if (!(w.id in WEAPON_FAMILY)) {
     throw new Error(`families: catalog weapon '${w.id}' has no WEAPON_FAMILY row`);
   }
 }
-const EXTRA = Object.keys(WEAPON_FAMILY).filter((id) => !WEAPONS.some((w) => w.id === id));
+const EXTRA = Object.keys(WEAPON_FAMILY).filter((id) => !ALL_WEAPONS.some((w) => w.id === id));
 if (EXTRA.length > 0) {
   throw new Error(`families: WEAPON_FAMILY names ids the catalog does not define: ${EXTRA.join(', ')}`);
 }

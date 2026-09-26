@@ -252,6 +252,8 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
 
     localShot(claim: ShotClaim): void { driver?.localShot(claim); },
     pressStreak(slot): void { driver?.pressStreak(slot); },
+    pilotInput(controls): void { driver?.pilotInput(controls); },
+    exitPilot(): void { driver?.exitPilot(); },
     bots(): readonly BotBody[] { return driver === null ? NO_BODIES : driver.bots(); },
     snapshot(): SessionSnapshot {
       if (driver === null) throw new Error('[session] no match yet - call begin() first');

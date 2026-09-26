@@ -32,7 +32,7 @@
  * which is where the two lanes are actually wired together.
  */
 
-import type { ActorId, DamageEvent, GameEvent, MatchPhaseName, TeamId, Vec3, WorldQuery } from './events';
+import type { ActorId, DamageCause, DamageEvent, GameEvent, MatchPhaseName, TeamId, Vec3, WorldQuery } from './events';
 import type { StreakSlotState } from '../net/protocol';
 import type { StreakTarget } from './killstreaks/runtime';
 import type { StreakLoadout } from './killstreaks/catalog';
@@ -70,9 +70,12 @@ export interface StreakPress {
  * never swallowed (§5.4).
  */
 export interface StreakRuntimePort {
+  isPiloting?(actorId: ActorId): boolean;
+  aircraftTargets?(): readonly import('./killstreaks/pilot-types').AircraftTarget[];
+  damageAircraft?(instanceId: number, attackerId: ActorId, attackerTeam: TeamId, amount: number, now: number): readonly GameEvent[];
   registerActor(actorId: ActorId, team: TeamId, loadout?: StreakLoadout): void;
   /** Called only for a kill the scoreboard CREDITED — never for a team kill. */
-  recordElimination(actorId: ActorId, streak: number, now: number): GameEvent[];
+  recordElimination(actorId: ActorId, streak: number, now: number, cause?: DamageCause): GameEvent[];
   recordDeath(actorId: ActorId, now: number): GameEvent[];
   recordDisconnect(actorId: ActorId, now: number): GameEvent[];
   activate(press: StreakPress, now: number, world: WorldQuery): GameEvent[];

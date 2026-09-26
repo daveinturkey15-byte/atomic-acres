@@ -1,40 +1,15 @@
-/**
- * Nuketown 2025 — HOST authority for killstreaks, and for nothing else.
- *
- * It owns the earn / bank / spend ledger and the live entities that ledger
- * pays for. Health, score, kills, deaths, spawns and the match clock belong to
- * `host.ts`: this is called by the host, returns events, and decides nothing
- * else. Hard cap 400 lines (AGENTS.md); it was written to a self-imposed 380
- * and left no headroom, so the SHAPES of a refusal now live in `gate.ts`
- * beside the vocabulary they belong to, and further growth belongs in
- * `effects/`.
- *
- * The five rules IMPORT-PLAN §1.1 says the old 3,511-line runtime paid for:
- *  1. **Per-life continuity.** Death clears the ladder and the per-cycle
- *     unlock set; it does NOT clear banked charges.
- *  2. **Bounded bank with BACKPRESSURE, not silent discard.** At the cap the
- *     ladder stops advancing: the kill counts, the rung is kept, and a spend
- *     resumes it. Nothing earned is thrown away.
- *  3. **Exactly-once activation**, in a bounded de-dup memory that forgets the
- *     OLDEST claim — one that drops the newest admits the replay it just saw.
- *  4. **Forged and stale claims rejected** on match epoch, life epoch and a
- *     per-actor monotonic sequence, each read from the host's own ledger and
- *     never from what the claim asserts about itself.
- *  5. **Validate before consuming**: a blocked activation retries exactly.
- *
- * Player-facing refusals are the nine frozen `StreakDenialReason`s, emitted as
- * `StreakDeniedEvent`; a FORGED claim gets `gate.ts`'s host-internal
- * `StreakClaimReject` and no event — bar the two WORLD-STATE rejects an honest
- * press can hit, which `gate.ts:rejectedOutcome` maps back to a denial (a press
- * that answers nothing is a dead key, and this one livelocked the bot backoff).
- * Determinism is seed-only: `advance` reads the clock only for its step, and an
- * effect seed hashes the match epoch, the activation ordinal and the streak id.
+/** Host-only earn/spend ledger. Effects and read-only projections live in sibling modules.
+ * Death clears the ladder but retains the bank; full banks apply backpressure.
+ * Match/life epochs, monotonic sequence and bounded claim IDs reject replay.
+ * All placement/capacity checks precede payment. Streak damage cannot farm the ladder.
+ * Effects are seeded, capped to12 live instances and stepped at most250ms per call.
+ * The host alone writes health/score; this module emits admitted events.
  */
 
 import {
   STREAK_DENIAL_LABELS,
   type ActorId, type DamageCause, type DamageEvent, type GameEvent,
-  type StreakActivatedEvent, type StreakDeniedEvent, type StreakDenialReason, type StreakEarnedEvent,
+  type StreakActivatedEvent, type StreakDeniedEvent, type StreakDenialReason,
   type StreakEndReason, type StreakEndedEvent, type TeamId, type Vec3, type WorldQuery,
 } from '../events';
 import type { StreakSlotState, StreakStateMsg } from '../../net/protocol';
@@ -43,32 +18,23 @@ import {
   type StreakCatalog, type StreakLoadout,
 } from './catalog';
 import { evaluateActivation, rejectedOutcome, type ActivationContext, type StreakClaimReject } from './gate';
-import { createRecon, reconBlipVisible, reconRevealsTo, RECON_BLIP_HOLD_MS, stepRecon, type ReconState } from './effects/recon';
-import { createCounterRecon, jamsTeam, stepCounterRecon, type CounterReconState } from './effects/counter-recon';
-import { createSentry, stepSentry, validateSentryPlacement, type SentryState, type SentryTarget } from './effects/sentry';
-import { createMortar, stepMortar, validateMortarPlacement, type MortarState } from './effects/mortar';
-import { createDart, stepDart, type DartState } from './effects/dart';
-import { createFallout, falloutHides, stepFallout, type FalloutState } from './effects/fallout';
-import { createStrikeRelay, stepStrikeRelay, type StrikeRelayState } from './effects/strike-relay';
-import {
-  createSupplyCrate, crateGrantFits, stepSupplyCrate, validateCratePlacement, type SupplyCrateState,
-} from './effects/supply-crate';
+import { validateSentryPlacement, type SentryTarget } from './effects/sentry';
+import { validateMortarPlacement } from './effects/mortar';
+import { crateGrantFits } from './effects/supply-crate';
 import { lastResortEvents, type RewardGrant } from './effects/rewards';
-import { DART_PULSE_MS } from './effects/dart';
-import type { RadarSample, RevealSample } from './effects/reveal';
+import type { RadarSample } from './effects/reveal';
+import type { StreakEffectView } from './effect-view';
+import { effectSnapshot, revealedFor, radarFor } from './projections';
+import { earnElimination, type ActorLedger } from './earning';
+import { createEffect, effectKind, stepEffect, type LiveInstance } from './behaviors';
+import { acceptPilotInput, releaseAircraftControl, toggleAircraftControl, type AircraftState } from './effects/aircraft';
+import { carpetCorridor } from './effects/carpet';
+import type { PilotInput, AircraftTarget } from './pilot-types';
+export { WIRED_STREAK_IDS, type LiveInstance } from './behaviors';
 
 export { STREAK_CLAIM_REJECTS, STREAK_CLAIM_REJECT_LABELS, type ActivationContext, type StreakClaimReject } from './gate';
 
-/**
- * Bounds, with the old project's value beside each (§5.9). Banked streaks 8 =
- * its `MAX_RETAINED_CARE_REWARDS`, also the strict recipient-snapshot bound;
- * charges 255 = what a byte on the wire carries; seen claims 512 = its
- * checkpoint bound; ladder ceiling = its replication bound. Live instances
- * BEFORE 32 for five aircraft — three ground effects need a third. The dt cap
- * exists because a backgrounded tab returns with a 30 s step and an uncapped
- * sentry would empty its magazine into one frame; the excess is LOST, so a
- * stall lengthens a live window rather than compressing it into one frame.
- */
+/** Bank8, claims512, live12; stalled frames lose excess time rather than banking bursts. */
 export const MAX_BANKED_STREAKS = 8;
 export const MAX_CHARGES_PER_STREAK = 255;
 export const MAX_SEEN_CLAIMS = 512;
@@ -76,23 +42,6 @@ export const MAX_LIVE_INSTANCES = 12;
 export const ADVANCE_DT_CAP_MS = 250;
 export const MAX_LADDER_KILLS = 100_000;
 
-/** The wiring table: the only place a streak id meets a stepper. */
-const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar' | 'dart' | 'fallout' | 'strike-relay' | 'supply-crate'>> = Object.freeze({
-  'recon-sweep': 'recon',
-  'signal-jam': 'counter-recon',
-  'sentry-post': 'sentry',
-  'blast-mortar': 'mortar',
-  'tracker-dart': 'dart',
-  'fallout-screen': 'fallout',
-  'strike-relay': 'strike-relay',
-  'supply-crate': 'supply-crate',
-});
-
-/** Derived, never authored: what this build can bring into the world. */
-export const WIRED_STREAK_IDS: readonly string[] = Object.freeze(Object.keys(EFFECT_KIND));
-
-export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState | DartState | FalloutState | StrikeRelayState | SupplyCrateState;
-/** What the host must know about an actor for a sentry to shoot it. */
 export type StreakTarget = SentryTarget;
 
 /**
@@ -119,21 +68,6 @@ export type ActivationOutcome =
   | { readonly accepted: false; readonly outcome: 'denied'; readonly reason: StreakDenialReason; readonly label: string; readonly events: readonly GameEvent[] }
   | { readonly accepted: false; readonly outcome: 'rejected'; readonly reason: StreakClaimReject; readonly label: string; readonly events: readonly GameEvent[] };
 
-/** `kills` is the HUD ladder position; `cycle` is progress through the CURRENT ladder cycle and resets at the top rung. */
-interface ActorLedger {
-  readonly actorId: ActorId;
-  team: TeamId;
-  loadout: StreakLoadout;
-  life: number;
-  kills: number;
-  cycle: number;
-  earned: Set<string>;
-  charges: Map<string, number>;
-  lastSeq: number;
-  cause: StreakStateMsg['cause'];
-  at: number;
-}
-
 function hash32(seed: number, ordinal: number, text: string): number {
   let h = Math.imul((seed ^ 0x9e3779b9) >>> 0 ^ ordinal, 0x85ebca6b) >>> 0;
   for (let i = 0; i < text.length; i++) h = Math.imul(h ^ text.charCodeAt(i), 0xc2b2ae35) >>> 0;
@@ -141,24 +75,11 @@ function hash32(seed: number, ordinal: number, text: string): number {
 }
 
 export class StreakRuntime {
-  /** Only the bounded spatial presentation fields leave the authoritative runtime. */
-  effectSnapshot(): readonly import('./effect-view').StreakEffectView[] {
-    return [...this.live.values()].filter((i) => 'x' in i).map((i) => {
-      const s = i as Exclude<LiveInstance, ReconState | CounterReconState>;
-      return Object.freeze({
-        kind: s.kind, instanceId: s.instanceId, actorId: s.actorId, team: s.team,
-        streakId: s.streakId, x: s.x, y: s.y, z: s.z, remainingMs: s.remainingMs,
-        ...('yaw' in s ? { yaw: s.yaw } : {}), ...('aimYaw' in s ? { aimYaw: s.aimYaw } : {}),
-        ...('shots' in s ? { shots: s.shots } : {}), ...('pulses' in s ? { pulses: s.pulses } : {}),
-        ...('elapsedMs' in s ? { elapsedMs: s.elapsedMs } : {}), ...('fired' in s ? { fired: s.fired } : {}),
-        ...('captureProgressMs' in s ? { captureProgressMs: s.captureProgressMs } : {}),
-        ...('opened' in s ? { opened: s.opened } : {}),
-      });
-    });
-  }
+  effectSnapshot(): readonly StreakEffectView[] { return effectSnapshot(this.liveInstances()); }
   private readonly catalog: StreakCatalog<string>;
   private readonly seed: number;
   private readonly matchEpoch: number;
+  private readonly freeForAll: boolean;
   private readonly actors = new Map<ActorId, ActorLedger>();
   private readonly live = new Map<number, LiveInstance>();
   private readonly seenClaims = new Set<string>();
@@ -169,17 +90,14 @@ export class StreakRuntime {
   private nowMs = 0;
   private readonly pendingRewards: RewardGrant[] = [];
 
-  constructor(opts: { seed?: number; matchEpoch?: number; catalog?: StreakCatalog<string> } = {}) {
+  constructor(opts: { seed?: number; matchEpoch?: number; catalog?: StreakCatalog<string>; mode?: 'tdm' | 'ffa' | 'domination' } = {}) {
     this.catalog = opts.catalog ?? STREAK_CATALOG;
     this.seed = (opts.seed ?? 1) >>> 0;
     this.matchEpoch = opts.matchEpoch ?? 0;
+    this.freeForAll = opts.mode === 'ffa';
   }
 
-  /**
-   * An existing actor is a REJOIN: team, loadout and life refresh, the sequence
-   * domain restarts, the bank survives. An invalid loadout throws with every
-   * error — a substituted default would hide a menu bug.
-   */
+  /** Rejoin refreshes identity/sequence while preserving earned bank; invalid classes fail explicitly. */
   registerActor(actorId: ActorId, team: TeamId, loadout: StreakLoadout = DEFAULT_STREAK_LOADOUT, life = 0): void {
     const check = validateStreakLoadout(loadout, this.catalog);
     if (!check.valid) throw new Error(`streak loadout for ${actorId}: ${check.errors.join('; ')}`);
@@ -195,48 +113,13 @@ export class StreakRuntime {
     });
   }
 
-  /**
-   * One credited elimination. `streak` is the killer's consecutive-kill count
-   * as `game/scoring.ts` computed it, and it is STORED, not recounted: that
-   * ledger owns the number (§5.6) and this needs it only for the snapshot.
-   * The LADDER below is a different quantity — it resets at the top rung, and
-   * a kill BY a streak does not advance it, or a sentry ladders its owner up
-   * while they stand still.
-   */
+  /** HUD total comes from scoring; the separate per-cycle ladder ignores streak-caused kills. */
   recordElimination(actorId: ActorId, streak: number, at: number, cause: DamageCause = 'bullet'): GameEvent[] {
     const a = this.actors.get(actorId);
     if (!a) return [];
     this.nowMs = at;
-    a.at = at;
-    a.kills = Number.isFinite(streak) ? Math.max(0, Math.min(MAX_LADDER_KILLS, Math.floor(streak))) : a.kills;
-    if (cause === 'streak') return [];
-    const next = a.cycle + 1;
-    const unlocks: { id: string; slot: number }[] = [];
-    a.loadout.forEach((id, i) => {
-      const def = streakById(id, this.catalog);
-      if (def && !a.earned.has(id) && next >= def.cost) unlocks.push({ id, slot: i + 1 });
-    });
-    // Rule 2. If any rung about to unlock cannot be banked, the ladder does not
-    // advance at all: the kill counts, the rung is kept, and the next
-    // elimination after a spend earns it. Nothing is discarded.
-    const wouldOverflow = unlocks.some(({ id }) => {
-      const held = a.charges.get(id) ?? 0;
-      return held >= MAX_CHARGES_PER_STREAK || (held === 0 && a.charges.size >= MAX_BANKED_STREAKS);
-    });
-    if (wouldOverflow) return [];
-    a.cycle = next;
-    const events: StreakEarnedEvent[] = [];
-    for (const { id, slot } of unlocks) {
-      a.earned.add(id);
-      const charges = (a.charges.get(id) ?? 0) + 1;
-      a.charges.set(id, charges);
-      const e: StreakEarnedEvent = Object.freeze({ type: 'streak-earned', at, actorId, team: a.team, streakId: id, slot, charges });
-      events.push(e);
-      a.cause = e;
-    }
-    const top = Math.max(...a.loadout.map((id) => streakById(id, this.catalog)?.cost ?? 0));
-    if (top > 0 && a.cycle >= top) { a.cycle = 0; a.earned.clear(); }
-    return events;
+    return earnElimination(a, streak, at, cause, this.catalog,
+      { ladder: MAX_LADDER_KILLS, bank: MAX_BANKED_STREAKS, charges: MAX_CHARGES_PER_STREAK });
   }
 
   /** Rule 1. Ladder and cycle reset; the BANK does not, and entities already paid for keep running. Returns [] so a host can splice it into one event list. */
@@ -246,6 +129,9 @@ export class StreakRuntime {
     this.nowMs = a.at = at;
     a.kills = a.cycle = 0;
     a.life += 1; a.lastSeq = -1; a.earned.clear();
+    this.releasePilot(actorId);
+    for (const [id, instance] of this.live) if (instance.actorId === actorId && instance.kind === 'timed-support') this.live.delete(id);
+    for (let i = this.pendingRewards.length - 1; i >= 0; i--) if (this.pendingRewards[i].actorId === actorId) this.pendingRewards.splice(i, 1);
     return [];
   }
 
@@ -253,6 +139,7 @@ export class StreakRuntime {
   recordDisconnect(actorId: ActorId, _at?: number): GameEvent[] {
     const a = this.actors.get(actorId);
     if (a) a.lastSeq = -1;
+    this.releasePilot(actorId);
     return [];
   }
 
@@ -264,6 +151,43 @@ export class StreakRuntime {
   /** Charges banked. The gate's `earned` is read from here, never from a claim. */
   chargesOf(actorId: ActorId, streakId: string): number {
     return this.actors.get(actorId)?.charges.get(streakId) ?? 0;
+  }
+
+  /** The fifth HUD row is the oldest unslotted crate reward, never saved as a class slot. */
+  private bonusFor(a: ActorLedger): string | null {
+    for (const [id, charges] of a.charges) if (charges > 0 && !a.loadout.includes(id as StreakLoadout[number])) return id;
+    return null;
+  }
+
+  pilotFor(actorId: ActorId): AircraftState | null {
+    for (const s of this.live.values()) if (s.kind === 'aircraft' && s.variant === 'piloted-drone'
+      && s.actorId === actorId && s.controlled && s.remainingMs > 0 && s.health > 0) return s;
+    return null;
+  }
+  private releasePilot(actorId: ActorId): void {
+    for (const [id, s] of this.live) if (s.kind === 'aircraft' && s.actorId === actorId && s.controlled) this.live.set(id, releaseAircraftControl(s));
+  }
+  submitPilotInput(actorId: ActorId, input: PilotInput, now: number, _world: WorldQuery): boolean {
+    const state = this.pilotFor(actorId);
+    const next = state && acceptPilotInput(state, input, now);
+    if (!next) return false;
+    this.live.set(next.instanceId, next); return true;
+  }
+  aircraftTargets(): readonly AircraftTarget[] {
+    const out: AircraftTarget[] = [];
+    for (const s of this.live.values()) if (s.kind === 'aircraft' && s.remainingMs > 0 && s.health > 0) {
+      for (const d of s.drones) if (d.alive) out.push(Object.freeze({ instanceId: s.instanceId, actorId: s.actorId,
+        team: s.team, x: d.x, y: d.y, z: d.z, radius: s.variant === 'chopper' ? 2.1 : .85, health: s.health }));
+    }
+    return Object.freeze(out);
+  }
+  damageAircraft(instanceId: number, attackerId: ActorId, attackerTeam: TeamId, amount: number, now: number): GameEvent[] {
+    const s = this.live.get(instanceId);
+    if (!s || s.kind !== 'aircraft' || s.actorId === attackerId || (!this.freeForAll && s.team === attackerTeam)
+      || !Number.isFinite(amount) || amount <= 0 || !Number.isFinite(now)) return [];
+    const health = Math.max(0, s.health - Math.min(100, amount));
+    if (health <= 0) return [this.retire(instanceId, s, now, 'destroyed')];
+    this.live.set(instanceId, Object.freeze({ ...s, health })); return [];
   }
 
   private rememberClaim(claimId: string): void {
@@ -284,7 +208,7 @@ export class StreakRuntime {
     const a = this.actors.get(intent.actorId);
     if (!a) return reject('unknown-actor');
     if (!Number.isFinite(now)) return reject('malformed-claim');
-    if (!Number.isSafeInteger(intent.slot) || intent.slot < 1 || intent.slot > a.loadout.length) return reject('malformed-claim');
+    if (!Number.isSafeInteger(intent.slot) || intent.slot < 1 || intent.slot > a.loadout.length + 1) return reject('malformed-claim');
     if (typeof intent.claimId !== 'string' || !/^[A-Za-z0-9_:-]{4,80}$/.test(intent.claimId)) return reject('malformed-claim');
     if (!Number.isSafeInteger(intent.seq)) return reject('malformed-claim');
     if (intent.matchEpoch !== this.matchEpoch) return reject('match-epoch');
@@ -293,23 +217,23 @@ export class StreakRuntime {
     if (this.seenClaims.has(intent.claimId)) return reject('duplicate-claim');
 
     this.nowMs = now;
-    const streakId = a.loadout[intent.slot - 1];
+    const bonusPilot = intent.toggle && [...this.live.values()].find((i) => i.kind === 'aircraft' && i.actorId === a.actorId
+      && i.variant === 'piloted-drone' && !a.loadout.includes('piloted-drone'));
+    const streakId = intent.slot === a.loadout.length + 1 ? (bonusPilot ? 'piloted-drone' : this.bonusFor(a)) : a.loadout[intent.slot - 1];
+    if (!streakId) return reject('malformed-claim');
     const def = streakById(streakId, this.catalog);
     if (!def) return reject('malformed-claim');
 
-    // The gate decides everything a player may see a label for. `earned` and
-    // `hasAuthoritySnapshot` come from the LEDGER: a claim asserting its own
-    // eligibility is the forgery this exists to stop. `arenaSupported` folds
-    // in whether the streak has a stepper, so declared content with no effect
-    // refuses with SUPPORT OFFLINE IN THIS ARENA rather than doing nothing.
+    // Eligibility comes from the ledger, never from claim assertions.
     const verdict = evaluateActivation({
       ...intent.context,
       streakId,
       slot: intent.slot,
-      arenaSupported: intent.context.arenaSupported && EFFECT_KIND[streakId] !== undefined,
+      arenaSupported: intent.context.arenaSupported && effectKind(streakId) !== undefined,
       hasAuthoritySnapshot: true,
       earned: (a.charges.get(streakId) ?? 0) >= 1,
-      controlToggle: intent.toggle,
+      controlToggle: intent.toggle && [...this.live.values()].some((i) => i.kind === 'aircraft' && i.variant === 'piloted-drone' && i.actorId === a.actorId && i.streakId === streakId),
+      possessionActive: this.pilotFor(a.actorId) !== null,
     });
     if (!verdict.allowed) {
       const e: StreakDeniedEvent = Object.freeze({ type: 'streak-denied', at: now, actorId: intent.actorId, streakId, slot: intent.slot, reason: verdict.reason });
@@ -318,13 +242,22 @@ export class StreakRuntime {
       return Object.freeze({ accepted: false as const, outcome: 'denied' as const, reason: verdict.reason, label: STREAK_DENIAL_LABELS[verdict.reason], events: Object.freeze([e as GameEvent]) });
     }
 
-    if (this.live.size >= MAX_LIVE_INSTANCES) return reject('instance-cap', streakId);
+    const existingPilot = [...this.live.values()].find((i): i is AircraftState => i.kind === 'aircraft' && i.variant === 'piloted-drone' && i.actorId === a.actorId && i.streakId === streakId);
+    if (intent.toggle && existingPilot) {
+      this.live.set(existingPilot.instanceId, toggleAircraftControl(existingPilot));
+      a.lastSeq = intent.seq; this.rememberClaim(intent.claimId);
+      return Object.freeze({ accepted: true, streakId, instanceId: existingPilot.instanceId, chargesLeft: a.charges.get(streakId) ?? 0, events: Object.freeze([]) });
+    }
+    if (intent.toggle) return reject('malformed-claim', streakId);
+    if (this.live.size >= MAX_LIVE_INSTANCES || (streakId === 'adrenaline' && this.pendingRewards.length >= 16)) return reject('instance-cap', streakId);
 
     // Rule 5: everything that can fail resolves BEFORE a charge moves.
-    const kind = EFFECT_KIND[streakId];
+    const kind = effectKind(streakId);
     const anchor = intent.anchor ?? intent.origin;
     let placed: { x: number; y: number; z: number } | null = null;
-    if (kind === 'sentry' || kind === 'dart' || kind === 'fallout' || kind === 'strike-relay' || kind === 'supply-crate') {
+    let corridor: readonly Vec3[] | null = null;
+    if (!Number.isFinite(intent.aimYaw)) return reject('malformed-claim', streakId);
+    if (kind === 'sentry' || kind === 'dart' || kind === 'fallout' || kind === 'strike-relay' || kind === 'supply-crate' || kind === 'aircraft' || kind === 'carpet-bomber') {
       const p = validateSentryPlacement(anchor.x, anchor.z, world);
       if (!p.ok) return reject('no-placement', streakId);
       placed = { x: p.x, y: p.y, z: p.z };
@@ -333,6 +266,7 @@ export class StreakRuntime {
       if (!p.ok) return reject('no-placement', streakId);
       placed = { x: p.x, y: p.y, z: p.z };
     }
+    if (kind === 'carpet-bomber') { corridor = carpetCorridor(placed!, intent.aimYaw, world); if (!corridor) return reject('no-placement', streakId); }
 
     const instanceId = ++this.instances;
     const seed = hash32(this.seed, this.matchEpoch * 1_000_003 + ++this.activations, streakId);
@@ -342,21 +276,9 @@ export class StreakRuntime {
     a.lastSeq = intent.seq;
     this.rememberClaim(intent.claimId);
 
-    this.live.set(instanceId, kind === 'recon'
-      ? createRecon(instanceId, a.actorId, a.team, streakId, def.durationMs, seed)
-      : kind === 'counter-recon'
-        ? createCounterRecon(instanceId, a.actorId, a.team, streakId, def.durationMs)
-      : kind === 'mortar'
-          ? createMortar(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
-          : kind === 'dart'
-            ? createDart(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
-            : kind === 'fallout'
-              ? createFallout(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!)
-              : kind === 'strike-relay'
-                ? createStrikeRelay(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw)
-                : kind === 'supply-crate'
-                  ? createSupplyCrate(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed, this.catalog)
-                  : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
+    this.live.set(instanceId, createEffect({ instanceId, actorId: a.actorId, team: a.team, streakId,
+      durationMs: def.durationMs, seed, anchor: placed ?? intent.origin, aimYaw: intent.aimYaw, catalog: this.catalog, corridor }));
+    if (streakId === 'adrenaline') this.pendingRewards.push(Object.freeze({ actorId: a.actorId, team: a.team, reward: 'adrenaline', durationMs: def.durationMs, instanceId, at: now }));
 
     const e: StreakActivatedEvent = Object.freeze({ type: 'streak-activated', at: now, actorId: a.actorId, team: a.team, streakId, slot: intent.slot, chargesLeft, instanceId });
     a.cause = e;
@@ -364,12 +286,7 @@ export class StreakRuntime {
     return Object.freeze({ accepted: true as const, streakId, instanceId, chargesLeft, events: Object.freeze([e as GameEvent]) });
   }
 
-  /**
-   * Steps every live entity. `targets` is the host's own actor list with
-   * CURRENT health; the working copy below is decremented as damage is
-   * emitted, so two sentries hitting one victim in one tick produce two
-   * correct `healthAfter` values instead of two copies of the same one.
-   */
+  /** Working health is decremented between effects, so simultaneous damage composes correctly. */
   advance(now: number, world: WorldQuery, targets: readonly StreakTarget[] = []): GameEvent[] {
     const dt = Math.min(ADVANCE_DT_CAP_MS, Math.max(0, now - (this.lastAdvanceAt ?? now)));
     this.lastAdvanceAt = now;
@@ -378,23 +295,11 @@ export class StreakRuntime {
     const health = new Map<ActorId, number>(targets.map((t) => [t.id, t.health]));
     const events: GameEvent[] = [];
     for (const [id, instance] of [...this.live]) {
-      const aimed = targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health }));
-      const tick = instance.kind === 'recon'
-        ? stepRecon(instance, dt, { now, targets: aimed })
-        : instance.kind === 'counter-recon'
-          ? stepCounterRecon(instance, dt, { now })
-          : instance.kind === 'mortar'
-            ? stepMortar(instance, dt, { now, targets: aimed })
-            : instance.kind === 'dart'
-              ? stepDart(instance, dt, { now, world, targets: aimed })
-              : instance.kind === 'fallout-screen'
-                ? stepFallout(instance, dt)
-                : instance.kind === 'strike-relay'
-                  ? stepStrikeRelay(instance, dt, { now, targets: aimed })
-                  : instance.kind === 'supply-crate'
-                    ? stepSupplyCrate(instance, dt, { now, world, targets: aimed })
-                    : stepSentry(instance, dt, { now, world, targets: aimed });
-      for (const e of tick.events) {
+      const aimed = targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health,
+        team: this.freeForAll && t.id !== instance.actorId ? (1 - instance.team) as TeamId : t.team }));
+      const tick = stepEffect(instance, dt, { now, world, targets: aimed, freeForAll: this.freeForAll });
+      for (const original of tick.events) {
+        const e = original.type === 'damage' && this.freeForAll ? { ...original, victimTeam: targets.find((t) => t.id === original.victimId)!.team } : original;
         if (e.type === 'damage') health.set((e as DamageEvent).victimId, (e as DamageEvent).healthAfter);
         events.push(e);
       }
@@ -403,21 +308,24 @@ export class StreakRuntime {
         const crate = tick.state;
         const collector = targets.find((target) => target.id === crate.captureActorId && target.alive && target.health > 0);
         const owner = collector === undefined ? undefined : this.actors.get(collector.id);
-        const special = crate.reward === 'field-repair' || crate.reward === 'last-resort';
+        const special = crate.reward === 'field-repair' || crate.reward === 'last-resort' || crate.reward === 'crimson-flamethrower';
         const canGrant = collector !== undefined && owner !== undefined
-          && (special ? (crate.reward !== 'field-repair' || this.pendingRewards.length < 16) : crateGrantFits(owner.charges, crate.reward, MAX_BANKED_STREAKS, MAX_CHARGES_PER_STREAK));
+          && (special ? (crate.reward === 'last-resort' || this.pendingRewards.length < 16) : crateGrantFits(owner.charges, crate.reward, MAX_BANKED_STREAKS, MAX_CHARGES_PER_STREAK));
         if (canGrant && collector !== undefined && owner !== undefined) {
-          if (crate.reward === 'field-repair') {
-            this.pendingRewards.push(Object.freeze({ actorId: collector.id, team: collector.team, reward: crate.reward, instanceId: crate.instanceId, at: now }));
+          if (crate.reward === 'field-repair' || crate.reward === 'crimson-flamethrower') {
+            this.pendingRewards.push(Object.freeze({ actorId: collector.id, team: collector.team, reward: crate.reward, durationMs: streakById(crate.reward, this.catalog)?.durationMs ?? 0, instanceId: crate.instanceId, at: now }));
           } else if (crate.reward === 'last-resort') {
-            for (const event of lastResortEvents(collector.id, collector.team, now, targets.map((target) => ({ ...target, health: health.get(target.id) ?? target.health })))) {
+            for (const raw of lastResortEvents(collector.id, collector.team, now, targets.map((target) => ({ ...target, health: health.get(target.id) ?? target.health,
+              team: this.freeForAll && target.id !== collector.id ? (1 - collector.team) as TeamId : target.team })))) {
+              const event = this.freeForAll ? { ...raw, victimTeam: targets.find((t) => t.id === raw.victimId)!.team } : raw;
               health.set(event.victimId, event.healthAfter);
               events.push(event);
             }
           } else {
             const charges = (owner.charges.get(crate.reward) ?? 0) + 1;
             owner.charges.set(crate.reward, charges);
-            events.push(Object.freeze({ type: 'streak-earned', at: now, actorId: collector.id, team: collector.team, streakId: crate.reward, slot: 0, charges }));
+            const selected = owner.loadout.indexOf(crate.reward as StreakLoadout[number]);
+            events.push(Object.freeze({ type: 'streak-earned', at: now, actorId: collector.id, team: collector.team, streakId: crate.reward, slot: selected < 0 ? owner.loadout.length + 1 : selected + 1, charges }));
           }
           events.push(this.retire(id, tick.state, now, 'destroyed'));
           continue;
@@ -445,74 +353,16 @@ export class StreakRuntime {
     return [...this.live.values()];
   }
 
-  /** The ONE place recon and counter-recon combine; checking one alone is half the pair. */
-  revealedFor(team: TeamId): boolean {
-    for (const i of this.live.values()) if (i.kind === 'counter-recon' && jamsTeam(i, team)) return false;
-    for (const i of this.live.values()) {
-      if (i.kind === 'recon' && reconRevealsTo(i, team) && reconBlipVisible(i)) return true;
-      if (i.kind === 'dart' && i.team === team && i.remainingMs > 0 && i.samples.length > 0) return true;
-    }
-    return false;
-  }
-
-  /**
-   * Return enemy ids visible to one observing team.  The caller supplies the
-   * host's current target table; positions and team ownership never cross this
-   * boundary as a global list. Signal Jam is checked for both recon and dart,
-   * while Fallout Screen hides only protected actors inside its radius.
-   */
+  revealedFor(team: TeamId): boolean { return revealedFor(this.liveInstances(), team); }
   revealedTargetIds(team: TeamId, targets: readonly StreakTarget[]): readonly ActorId[] {
-    return Object.freeze(this.radarFor(team, targets).map((sample) => sample.id).filter((id, i, all) => i === all.indexOf(id)));
+    return Object.freeze(this.radarFor(team, targets).map((s) => s.id).filter((id, i, all) => i === all.indexOf(id)));
   }
-
-  /** Dart-only projection for minimap consumers that render sensor paint separately. */
   paintedTargetIds(team: TeamId, targets: readonly StreakTarget[]): readonly ActorId[] {
-    const out = this.radarFor(team, targets)
-      .filter((sample) => sample.source === 'dart')
-      .map((sample) => sample.id)
-      .filter((id, i, all) => i === all.indexOf(id));
-    out.sort();
-    return Object.freeze(out);
+    return Object.freeze(this.radarFor(team, targets).filter((s) => s.source === 'dart').map((s) => s.id)
+      .filter((id, i, all) => i === all.indexOf(id)).sort());
   }
-
-  /**
-   * Team-scoped, pulse-latched sensor samples for the minimap/HUD adapter.
-   *
-   * Recon and darts only contribute samples captured by their last pulse. The
-   * target table is consulted again solely to reject dead/friendly actors and
-   * to apply a currently active Fallout Screen; sample coordinates themselves
-   * remain frozen until the next pulse. Signal Jam suppresses every sample for
-   * the observing team, so this method cannot become a global wallhack by
-   * accident.
-   */
-  radarFor(team: TeamId, targets: readonly StreakTarget[]): readonly RadarSample[] {
-    if ([...this.live.values()].some((instance) => instance.kind === 'counter-recon' && jamsTeam(instance, team))) {
-      return Object.freeze([]);
-    }
-    const current = new Map(targets.map((target) => [target.id, target]));
-    const fallout = [...this.live.values()].filter((instance): instance is FalloutState => instance.kind === 'fallout-screen');
-    const visible = (sample: RevealSample): StreakTarget | null => {
-      const target = current.get(sample.id);
-      if (target === undefined || !target.alive || target.health <= 0 || target.team === team) return null;
-      if (fallout.some((screen) => falloutHides(screen, team, target.team, target.x, target.z))) return null;
-      return target;
-    };
-    const out: RadarSample[] = [];
-    for (const instance of this.live.values()) {
-      if (instance.kind === 'recon' && reconRevealsTo(instance, team) && reconBlipVisible(instance)) {
-        const expiresAt = this.nowMs + Math.max(0, RECON_BLIP_HOLD_MS - instance.sweepMs);
-        for (const sample of instance.latched) {
-          if (visible(sample) !== null) out.push(Object.freeze({ ...sample, source: 'recon', pulse: instance.pulses, expiresAt }));
-        }
-      } else if (instance.kind === 'dart' && instance.team === team && instance.remainingMs > 0 && instance.samples.length > 0) {
-        const expiresAt = this.nowMs + Math.max(0, DART_PULSE_MS - instance.pulseMs);
-        for (const sample of instance.samples) {
-          if (visible(sample) !== null) out.push(Object.freeze({ ...sample, source: 'dart', pulse: instance.pulses, expiresAt }));
-        }
-      }
-    }
-    out.sort((a, b) => a.id.localeCompare(b.id) || a.source.localeCompare(b.source) || a.expiresAt - b.expiresAt);
-    return Object.freeze(out);
+  radarFor(team: TeamId, targets: readonly StreakTarget[], observerId?: ActorId): readonly RadarSample[] {
+    return radarFor(this.liveInstances(), this.nowMs, team, targets, this.freeForAll, observerId);
   }
 
   /** Reward-only health adjustments are deliberately explicit for host integration. */
@@ -525,7 +375,11 @@ export class StreakRuntime {
   /** The bank, one row per slot. Empty for an unknown actor, which is what `host.ts` puts in an `ActorSnapshot`. */
   snapshotFor(actorId: ActorId): StreakSlotState[] {
     const a = this.actors.get(actorId);
-    return a ? a.loadout.map((streakId, i) => ({ streakId, slot: i + 1, charges: a.charges.get(streakId) ?? 0 })) : [];
+    if (!a) return [];
+    const rows = a.loadout.map((streakId, i) => ({ streakId: streakId as string, slot: i + 1, charges: a.charges.get(streakId) ?? 0 }));
+    const bonus = this.bonusFor(a);
+    if (bonus) rows.push({ streakId: bonus, slot: a.loadout.length + 1, charges: a.charges.get(bonus) ?? 0 });
+    return rows;
   }
 
   /** Level plus edge, the whole shape `StreakStateMsg` documents. Null for an unknown actor. */
@@ -540,6 +394,7 @@ export class StreakRuntime {
     this.nowMs = at;
     const events: GameEvent[] = [];
     for (const [id, instance] of [...this.live]) events.push(this.retire(id, instance, at, 'match-end'));
+    this.pendingRewards.length = 0;
     return events;
   }
 }

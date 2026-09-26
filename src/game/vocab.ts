@@ -141,6 +141,7 @@ export const SHOT_REJECT_REASONS = [
   'bad-origin',
   'empty-magazine',
   'shot-cooldown',
+  'possessing',
 ] as const;
 export type ShotRejectReason = (typeof SHOT_REJECT_REASONS)[number];
 
@@ -156,6 +157,7 @@ export const SHOT_REJECT_LABELS: Readonly<Record<ShotRejectReason, string>> = Ob
   'bad-origin': 'MUZZLE MISMATCH',
   'empty-magazine': 'MAGAZINE EMPTY',
   'shot-cooldown': 'WEAPON CYCLING',
+  possessing: 'EXIT SUPPORT CONTROL FIRST',
 });
 
 // ---------------------------------------------------------------------------

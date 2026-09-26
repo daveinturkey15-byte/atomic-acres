@@ -67,6 +67,8 @@ export class Player {
   private flySpeed = FLY_DEFAULT;
   private bodyHeight = BODY_H;
   private eyeHeight = EYE_HEIGHT;
+  private inputSuspended = false;
+  private speedMultiplier = 1;
 
   constructor(private camera: THREE.PerspectiveCamera, private dom: HTMLElement) {
     this.state = {
@@ -82,6 +84,20 @@ export class Player {
 
   setColliders(list: AABB[]): void {
     this.colliders = list;
+  }
+
+  /** Possession parks the real body; the pilot owns only the review camera. */
+  setInputSuspended(suspended: boolean): void {
+    if (suspended === this.inputSuspended) return;
+    this.inputSuspended = suspended;
+    this.keys.clear();
+    this.probeWish = null;
+    this.state.vel.set(0, 0, 0);
+  }
+
+  /** Read from the host's inventory projection, never from keyboard intent. */
+  setSpeedMultiplier(value: number): void {
+    this.speedMultiplier = Number.isFinite(value) ? Math.max(1, Math.min(1.25, value)) : 1;
   }
 
   /**
@@ -106,6 +122,7 @@ export class Player {
 
   private bind(): void {
     addEventListener('keydown', (e) => {
+      if (this.inputSuspended) return;
       this.keys.add(e.code);
       if (e.code === 'Space') e.preventDefault();
       // Inspection modes are available only to the explicit QA API. Gameplay
@@ -126,7 +143,7 @@ export class Player {
       if (!this.locked) this.keys.clear();
     });
     addEventListener('mousemove', (e) => {
-      if (!this.locked) return;
+      if (!this.locked || this.inputSuspended) return;
       const s = 0.0022;
       this.state.yaw -= e.movementX * s;
       this.state.pitch -= e.movementY * s;
@@ -296,6 +313,7 @@ export class Player {
 
   update(dtRaw: number): void {
     const dt = Math.min(dtRaw, MAX_DT);
+    if (this.inputSuspended) { this.state.vel.set(0, 0, 0); this.syncCamera(); return; }
     if (this.mode === 'walk') this.updateWalk(dt);
     else this.updateFly(dt);
     if (this.state.pos.y < -12) this.teleport(SPAWN_A.x, 0, SPAWN_A.z, SPAWN_A.yaw);
@@ -382,9 +400,9 @@ export class Player {
     // Low stances are deliberately speed-gated: Shift never turns a prone or
     // crouched player into a sprint, which keeps the stance animation and root
     // movement in the same speed family.
-    const speed = st.stance === 'prone' ? PRONE_SPEED
+    const speed = (st.stance === 'prone' ? PRONE_SPEED
       : st.stance === 'crouch' ? CROUCH_SPEED
-        : sprintHeld ? SPRINT : WALK;
+        : sprintHeld ? SPRINT : WALK) * this.speedMultiplier;
 
     // ---- horizontal accelerate / friction
     if (moving) {

@@ -12,7 +12,8 @@ export const DEFAULT_MAX_HEALTH = 100;
 export interface RewardGrant {
   readonly actorId: ActorId;
   readonly team: TeamId;
-  readonly reward: 'field-repair';
+  readonly reward: 'field-repair' | 'adrenaline' | 'crimson-flamethrower';
+  readonly durationMs?: number;
   readonly instanceId: number;
   readonly at: number;
 }

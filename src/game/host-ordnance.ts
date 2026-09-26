@@ -8,35 +8,14 @@
  * constructor and `ordnance` is private there, so authoritative state still
  * has one writer.
  *
- * ## How claims arrive
+ * Throws, swings and pickups share the shot admission window, life epoch,
+ * muzzle and clock checks. Grenades take two claims: arm, then release.
+ * The host clock owns cooking; semtex starts its fuse on surface contact,
+ * with SEMTEX_MAX_FLIGHT_MS bounding unlanded throws.
  *
- * A throw, a swing and a pickup reach are `ShotMsg` claims whose `weaponId`
- * is an `ORDNANCE_IDS` member. `GameHost.submitShot` runs the SAME eight
- * admission rules on them (`host-shot.ts`: exactly-once window, life epoch,
- * pre-death trade, fire age, muzzle) and hands the admitted ones here. That
- * is deliberate: a replayed knife is refused `duplicate` by the same code
- * that refuses a replayed bullet, and a grenade authored after death is
- * `shooter-dead` for the same reason a bullet is.
- *
- * A grenade is TWO claims: the first with a grenade id ARMS it (pin out — a
- * frag's fuse starts here, which is the cook), the second with the same id
- * RELEASES it along the claim's direction. Holding it past the fuse detonates
- * it in the hand. Nothing in a claim says how long it was cooked; the host's
- * own clock does.
- *
- * A semtex rides the same two claims. Its fuse is NOT running while it flies:
- * the release arms only the `SEMTEX_MAX_FLIGHT_MS` ceiling, and the real fuse
- * (`fuseMs` from the stick) starts when the casing's first surface contact
- * sticks it — `ordnance-physics.ts` reports that as `StepResult.stuck`.
- *
- * ## What the world sees
- *
- * Every state change is an event: armed, thrown, detonated, flash-hit,
- * smoke-volume / smoke-volume-end (THE SMOKE CONTRACT — see `README.md`),
- * melee, drop-*, pickup, ordnance-inventory, ordnance-rejected. Damage is a
- * `DamageEvent` through `HostLife.hit`, so a grenade kill scores, feeds and
- * respawns exactly like a bullet kill. Bots go blind through the
- * `SightField` on the world, which `bot-sense.ts` reads.
+ * Inventory includes timed reward equipment and buffs. Every transition is
+ * an event, damage flows through HostLife.hit, and smoke always has a paired
+ * smoke-volume-end event. Bots read the same SightField as the world.
  */
 
 import { BOT_DAMAGE_MULTIPLIER } from './damage';
@@ -44,7 +23,8 @@ import type { ActorId, DeathEvent, OrdnanceAction, OrdnanceRejectReason, ShotRej
 import { ORDNANCE_REJECT_LABELS } from './events';
 import type { ShotMsg } from '../net/protocol';
 import { HostDrops, type DropSnapshot } from './host-drops';
-import { KitLedger } from './host-kit';
+import { KitLedger, type RewardReadout } from './host-kit';
+import type { RewardGrant } from './killstreaks/effects/rewards';
 import type { HostActor, HostLife } from './host-life';
 import type { ShotAdmission } from './host-ports';
 import {
@@ -115,6 +95,7 @@ export class HostOrdnance {
 
   /** An admitted claim with an ordnance id. The shot window has already accepted its seq. */
   claim(a: HostActor, msg: ShotMsg, now: number): ShotAdmission {
+    this.refreshRewards(a, now);
     if (isGrenadeId(msg.weaponId)) return this.grenadeClaim(a, msg, now);
     if (msg.weaponId === KNIFE_ID) return this.meleeClaim(a, msg, now);
     if (msg.weaponId === PICKUP_ID) return this.drops.claim(a, msg, now);
@@ -122,8 +103,18 @@ export class HostOrdnance {
   }
 
   /** Spend one carried firearm round. Reload timing stays local; total issue is authoritative. */
-  spendShot(a: HostActor, weaponId: string): ShotRejectReason | null {
+  spendShot(a: HostActor, weaponId: string, now: number): ShotRejectReason | null {
+    this.refreshRewards(a, now);
     return this.kits.spendShot(a, weaponId);
+  }
+
+  grantReward(a: HostActor, grant: RewardGrant, now: number): void {
+    this.refreshRewards(a, now);
+    if (this.kits.grantReward(a, grant, now)) this.life.emit(this.kits.inventoryEvent(a, now));
+  }
+
+  private refreshRewards(a: HostActor, now: number, end = false): void {
+    if (this.kits.refreshRewards(a, now, end)) this.life.emit(this.kits.inventoryEvent(a, now));
   }
 
   private refuse(a: HostActor, msg: ShotMsg, action: OrdnanceAction, reason: OrdnanceRejectReason, at: number): ShotAdmission {
@@ -215,6 +206,7 @@ export class HostOrdnance {
     for (const id of this.ended) this.life.emit({ type: 'smoke-volume-end', at: now, id });
 
     for (const a of this.life.actors.values()) {
+      this.refreshRewards(a, now);
       const kit = this.kits.peek(a.id);
       if (kit === null || kit.armed === null || kit.armed.fuseAt === null || now < kit.armed.fuseAt) continue;
       const p = a.poses.at(now);
@@ -262,6 +254,8 @@ export class HostOrdnance {
   }
 
   private onDeath(e: DeathEvent, now: number): void {
+    const actor = this.life.actors.get(e.victimId);
+    if (actor) this.refreshRewards(actor, now);
     this.drops.onDeath(e, now);
     const victim = this.life.actors.get(e.victimId);
     const kit = victim === undefined ? null : this.kits.peek(victim.id);
@@ -366,11 +360,11 @@ export class HostOrdnance {
   // ---- Readouts and lifecycle ----------------------------------------------
 
   /** The kit fields the actor snapshot carries. */
-  kitOf(a: HostActor): { lethal: number; tactical: number; tacticalId: string; sidearmId: string; sidearmRounds: number; primaryId: string; rounds: number; armed: string | null; blindUntil: number } {
+  kitOf(a: HostActor, now = this.lastAdvance): RewardReadout & { lethal: number; tactical: number; tacticalId: string; sidearmId: string; sidearmRounds: number; primaryId: string; rounds: number; armed: string | null; blindUntil: number } {
     const k = this.kits.kitOf(a);
     return { lethal: k.lethal, tactical: k.tactical, tacticalId: k.tacticalId,
       sidearmId: k.sidearmId, sidearmRounds: k.sidearmRounds, primaryId: k.primaryId, rounds: k.rounds,
-      armed: k.armed === null ? null : k.armed.grenadeId, blindUntil: this.sight.blindUntil(a.id) };
+      armed: k.armed === null ? null : k.armed.grenadeId, blindUntil: this.sight.blindUntil(a.id), ...this.kits.rewardReadout(a, now) };
   }
 
   forget(id: ActorId): void {
@@ -386,6 +380,7 @@ export class HostOrdnance {
    * the next match's bots to spheres nobody is drawing.
    */
   endMatch(now: number): void {
+    for (const a of this.life.actors.values()) this.refreshRewards(a, now, true);
     this.drops.endMatch(now);
     for (const g of this.pool) g.live = false;
     for (const v of this.sight.activeSmokeVolumes()) this.life.emit({ type: 'smoke-volume-end', at: now, id: v.id });

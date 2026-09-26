@@ -107,6 +107,7 @@ export class HostRoom {
   private rev = 0;
   private gameHandler: ((playerId: string, msg: GameNetMessage) => void) | null = null;
   private stamp: ((s: PlayerSample) => PlayerSample) | null = null;
+  private movementState: ((id: string) => { suspended: boolean; speedMultiplier: number }) | null = null;
   private extraSamples: ((into: PlayerSample[]) => void) | null = null;
   /**
    * The game host's per-seat resume facts (life epoch, highest admitted shot
@@ -226,6 +227,7 @@ export class HostRoom {
   onGame(handler: ((playerId: string, msg: GameNetMessage) => void) | null): void { this.gameHandler = handler; }
   /** Adds hp/team/alive to the samples the room authors. The game host owns those. */
   setStamp(fn: ((s: PlayerSample) => PlayerSample) | null): void { this.stamp = fn; }
+  setMovementState(fn: ((id: string) => { suspended: boolean; speedMultiplier: number }) | null): void { this.movementState = fn; }
   /** Extra samples (bots) appended to every state broadcast. */
   setExtraSamples(fn: ((into: PlayerSample[]) => void) | null): void { this.extraSamples = fn; }
   /** The game host's per-seat resume source for live welcomes. */
@@ -378,6 +380,12 @@ export class HostRoom {
           this.gameHandler(m.entry.id, msg);
         }
         break;
+      case 'pilot-input':
+        if (m && m.entry.connected && this.phase === 'playing' && this.gameHandler !== null && msg.seq > m.lastPilotSeq) {
+          m.lastPilotSeq = msg.seq;
+          this.gameHandler(m.entry.id, msg);
+        }
+        break;
       default:
         break;
     }
@@ -414,6 +422,7 @@ export class HostRoom {
         startTick: this.startTick,
         lastSeq: back.lastSeq,
         lastStreakSeq: back.lastStreakSeq,
+        lastPilotSeq: back.lastPilotSeq,
         ...(this.resumeFacts === null ? { life: 1, shotSeq: -1 } : this.resumeFacts(back.entry.id)),
       };
       this.transport.send(from, { type: 'welcome', playerId: back.entry.id, hostNow: this.now(), roster: this.roster(), token: back.token, resume });
@@ -462,6 +471,10 @@ export class HostRoom {
     this.diag.recordInput(true);
     m.lastSeq = msg.seq;
     m.inputsThisTick += 1;
+    // Body input cannot move a possessor's unattended body. We still advance
+    // the ack/rate fence so held pre-possession packets never replay on exit.
+    const movement = this.movementState?.(m.entry.id);
+    if (movement?.suspended) return;
     // Sprint is intent, not speed: the host picks the speed. The explicit
     // flag wins; absent, the first wire's fire-and-forward reading applies.
     const sprint = msg.sprint ?? (msg.fire && msg.mz > 0.1);
@@ -469,7 +482,7 @@ export class HostRoom {
     m.lastInput.sprint = sprint; m.lastInput.stance = stance;
     const dt = msg.dt === undefined ? TICK_DT : Math.max(0, Math.min(INPUT_DT_CAP, msg.dt));
     const y = msg.y === undefined ? m.pose.y : Math.max(0, Math.min(INPUT_Y_MAX, msg.y));
-    integrateInput(m.pose, msg.mx, msg.mz, msg.yaw, sprint, dt, stance);
+    integrateInput(m.pose, msg.mx, msg.mz, msg.yaw, sprint, dt, stance, movement?.speedMultiplier ?? 1);
     m.pose.y = y;
   }
 }

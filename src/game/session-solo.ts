@@ -30,6 +30,7 @@ import { MAX_PLAYERS, type MatchStateMsg, type PlayerSample, type ShotMsg, type 
 import { TICK_HZ } from '../net/snapshot';
 import type { PlayerStance } from '../net/room-core';
 import type { ShotClaim } from '../weapons/controller';
+import type { PilotInput } from './killstreaks/pilot-types';
 import { BotDirector, nextBotTeam, type BotActorView } from './bots';
 import { GameClient } from './client';
 import type { ActorId, GameEvent, TeamId, WorldQuery } from './events';
@@ -107,6 +108,8 @@ export interface SoloDriver extends MatchDriver {
   remotePose(id: ActorId, x: number, y: number, z: number, yaw: number, stance?: PlayerStance, primaryId?: string): void;
   remoteShot(id: ActorId, claim: ShotMsg, receivedAt: number): ShotAdmission | null;
   remoteStreak(id: ActorId, slot: number, toggle: boolean): void;
+  remotePilot(id: ActorId, input: PilotInput, now: number): void;
+  movementState(id: ActorId): { suspended: boolean; speedMultiplier: number };
   /** Live host-owned resume facts for a seat; null means no current actor. */
   resumeFacts(id: ActorId): {
     life: number; shotSeq: number; primaryId?: string; rounds?: number;
@@ -153,6 +156,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
   let last = 0;
   let poseSampleAt = 0;
   let inputSeq = 0;
+  let pilotSeq = 0;
   let endedAt: number | null = null;
   let disposed = false;
   const pose = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, stance: 'stand' as PlayerStance };
@@ -174,7 +178,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     if (director !== null) instrument.retireDirector(directorNumbers(director));
     ui.resetPresentation?.();
     epoch++;
-    const runtime = new StreakRuntime({ seed: (opts.seed ?? 1) + epoch, matchEpoch: epoch });
+    const runtime = new StreakRuntime({ seed: (opts.seed ?? 1) + epoch, matchEpoch: epoch, mode: rules.mode === 'ffa' ? 'ffa' : 'tdm' });
     const h = new GameHost({
       world, rules, now, seed: (opts.seed ?? 0x4e554b45) + epoch,
       deps: { streaks: streakPort(runtime, epoch) },
@@ -303,7 +307,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     const targets = players.filter(p => p.team !== undefined).map(p => ({
       id: p.id, team: p.team!, x: p.x, y: p.y, z: p.z, alive: p.alive === true, health: p.hp ?? 0,
     }));
-    return { type: 'radar-state', at: now, actorId: id, samples: streaks.radarFor(observer.team, targets) };
+    return { type: 'radar-state', at: now, actorId: id, samples: streaks.radarFor(observer.team, targets, id) };
   };
 
   const body = (id: ActorId): Body => {
@@ -379,7 +383,19 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     },
 
     pressStreak(slot): void {
-      if (host !== null) host.submitStreakIntent(localId, { type: 'streak-intent', slot, toggle: false });
+      const pilot = streaks?.liveInstances().find(s => s.kind === 'aircraft' && s.variant === 'piloted-drone' && s.actorId === localId && s.remainingMs > 0);
+      const chosen = streaks?.snapshotFor(localId).find(s => s.slot === slot);
+      const toggle = !!pilot && (chosen?.streakId === pilot.streakId || slot === 5);
+      if (host !== null) host.submitStreakIntent(localId, { type: 'streak-intent', slot, toggle });
+    },
+    pilotInput(controls): void {
+      if (host !== null && streaks !== null && host.snapshot().match.phase === 'active')
+        streaks.submitPilotInput(localId, { ...controls, seq: ++pilotSeq }, performance.now(), world);
+    },
+    exitPilot(): void {
+      const pilot = streaks?.pilotFor(localId);
+      const slot = pilot ? (streaks?.snapshotFor(localId).find(s => s.streakId === pilot.streakId)?.slot ?? 5) : null;
+      if (host !== null && slot) host.submitStreakIntent(localId, { type: 'streak-intent', slot, toggle: true });
     },
 
     bots(): readonly BotBody[] {
@@ -466,6 +482,12 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
 
     remoteStreak(id, slot, toggle): void {
       if (host !== null && seats.has(id)) host.submitStreakIntent(id, { type: 'streak-intent', slot, toggle });
+    },
+    remotePilot(id, input, now): void {
+      if (host !== null && seats.has(id) && host.snapshot().match.phase === 'active') streaks?.submitPilotInput(id, input, now, world);
+    },
+    movementState(id) {
+      return { suspended: !!streaks?.pilotFor(id), speedMultiplier: host?.loadoutOf(id)?.speedMultiplier ?? 1 };
     },
 
     setEventSink(s): void { sink = s; },

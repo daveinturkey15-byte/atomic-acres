@@ -57,6 +57,7 @@ const WEAPON_NAME: ReadonlyMap<string, string> = new Map(WEAPONS.map((w) => [w.i
 
 export class OrdnanceScene {
   private client: GameClient | null = null;
+  private adoptedPrimaryId: string | null = null;
   private readonly world: WorldQuery;
   private readonly grenades: GrenadeFx;
   private readonly mortarFx: MortarFx;
@@ -113,6 +114,7 @@ export class OrdnanceScene {
     this.tacticalId = this.tacticalFor();
     this.lastPickupSeq = client === null ? 0 : client.ordnance.self.pickupSeq;
     this.lastSpawnSeq = client === null ? 0 : client.ordnance.self.spawnSeq;
+    this.adoptedPrimaryId = client?.ordnance.self.primaryId ?? null;
     if (client !== null && client.ordnance.self.primaryId !== null) {
       // Resume inventory is a level, not a synthetic spawn edge. Preserve the
       // host's current rounds/life/window while restoring the refreshed HUD gun.
@@ -168,11 +170,20 @@ export class OrdnanceScene {
     if (self.spawnSeq !== this.lastSpawnSeq) {
       this.lastSpawnSeq = self.spawnSeq;
       this.weapons.onSelfSpawn(self.primaryId, self.rounds, self.sidearmId, self.sidearmRounds);
+      this.adoptedPrimaryId = self.primaryId;
+    } else if (self.primaryId !== null && self.primaryId !== this.adoptedPrimaryId) {
+      // Reward issue/expiry changes inventory without a pickup or spawn edge.
+      // Adopt once on identity change; recurring inventory never refills a mag.
+      this.weapons.adoptWeapon(self.primaryId, self.rounds, self.sidearmId, self.sidearmRounds);
+      this.adoptedPrimaryId = self.primaryId;
     }
     if (self.pickupSeq !== this.lastPickupSeq) {
       this.lastPickupSeq = self.pickupSeq;
       if (self.lastPickupKind === 'swap' && self.lastPickupWeaponId !== null) {
-        this.weapons.adoptWeapon(self.lastPickupWeaponId, self.lastPickupRounds);
+        if (self.lastPickupWeaponId !== this.adoptedPrimaryId) {
+          this.weapons.adoptWeapon(self.lastPickupWeaponId, self.lastPickupRounds);
+          this.adoptedPrimaryId = self.lastPickupWeaponId;
+        }
       } else if (self.lastPickupKind === 'scavenge' && self.lastPickupWeaponId !== null && self.lastPickupRounds > 0) {
         this.weapons.grantRounds(self.lastPickupWeaponId, self.lastPickupRounds);
       }

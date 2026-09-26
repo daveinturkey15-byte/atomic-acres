@@ -37,13 +37,13 @@
  * order, 1-based, so index i presses `STREAK_SLOT_CODES[i]`.
  */
 
-import { streakById } from '../game/killstreaks/catalog';
+import { SLOT_COUNT, streakById } from '../game/killstreaks/catalog';
 import { WIRED_STREAK_IDS } from '../game/killstreaks/runtime';
 import { codeLabel } from './bindings';
 
-/** Activation codes per slot index, mirroring main.ts keydown (Digit3–Digit6 → slots 1–4). */
+/** Four chosen slots use 3–6; the conditional crate reward uses 7. */
 export const STREAK_SLOT_CODES: readonly string[] = Object.freeze([
-  'Digit3', 'Digit4', 'Digit5', 'Digit6',
+  'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7',
 ]);
 
 /** One pushed slot. `id` arrives once the ui/index.ts pushView hunk is applied; `label` is the roster name. */
@@ -79,7 +79,7 @@ export interface StreakCardProjection {
  */
 function ladderTop(slots: readonly StreakSlotInput[]): number {
   let top = 0;
-  for (const s of slots) {
+  for (const s of slots.slice(0, SLOT_COUNT)) {
     if (s.id === undefined) continue;
     const def = streakById(s.id);
     if (def !== null && def.availability === 'selectable' && def.cost > top) top = def.cost;
@@ -94,8 +94,8 @@ export function ladderCycle(kills: number, top: number): number {
 }
 
 function activationHint(activation: string, key: string): string {
-  // `target-line` and `possession` have no wired effect in this build; if one
-  // ever ships, its hint must be authored rather than inherited from here.
+  if (activation === 'possession') return 'PRESS ' + key + ' · PILOT';
+  if (activation === 'target-line') return 'PRESS ' + key + ' · STRIKE AHEAD';
   if (activation === 'target-point') return 'PRESS ' + key + ' \u00b7 DEPLOYS AT YOU';
   return 'PRESS ' + key;
 }
@@ -105,6 +105,7 @@ export function projectStreakStrip(slots: readonly StreakSlotInput[], kills: num
   const top = ladderTop(slots);
   const cycle = ladderCycle(kills, top);
   return slots.map((slot, i) => {
+    const bonus = i === SLOT_COUNT;
     const key = i < STREAK_SLOT_CODES.length ? codeLabel(STREAK_SLOT_CODES[i]) : '?';
     const def = slot.id === undefined ? null : streakById(slot.id);
     const name = def?.displayName ?? (slot.label && slot.label.length > 0 ? slot.label : (slot.id ?? 'STREAK'));
@@ -114,7 +115,7 @@ export function projectStreakStrip(slots: readonly StreakSlotInput[], kills: num
     let hint: string | null = null;
     let progress = -1;
 
-    if (def !== null && def.availability !== 'selectable') {
+    if (def !== null && (def.availability === 'retired' || def.availability === 'reward-only' && !bonus)) {
       // Reserved or pool-only rows cannot be pressed into a loadout honestly.
       state = 'unavailable';
       stateText = def.availability === 'reward-only' ? 'REWARD DROP ONLY' : 'RETIRED';
@@ -127,6 +128,7 @@ export function projectStreakStrip(slots: readonly StreakSlotInput[], kills: num
       state = 'ready';
       stateText = slot.charges > 1 ? 'READY \u00d7' + slot.charges : 'READY';
       hint = def === null ? 'PRESS ' + key : activationHint(def.activation, key);
+      if (bonus) stateText = 'CRATE REWARD · ' + stateText;
     } else if (def === null || def.cost <= 0) {
       // Degraded mode (no id on the push): charges alone are honest; cost is not knowable.
       state = 'locked';

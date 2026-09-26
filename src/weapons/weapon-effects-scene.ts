@@ -183,10 +183,18 @@ export function createWeaponEffectsScene(mat: MaterialLibrary): WeaponEffectsSce
           emit(j === 0 ? hot : warm, x, y, z, size);
         }
       } else if (s.effect === 'rail') {
-        orientation.setFromUnitVectors(Y_AXIS, s.dir);
+        // Start at the visible barrel and converge on the admitted endpoint.
+        // A trace beginning at the eye lies exactly on its viewing axis.
+        side.crossVectors(s.dir, Y_AXIS);
+        if (side.lengthSq() < 1e-6) side.set(1, 0, 0);
+        side.normalize();
+        const mx = p.x + side.x * 0.25, my = p.y - 0.23, mz = p.z + side.z * 0.25;
+        up.set(p.x + s.dir.x * s.radius - mx, p.y + s.dir.y * s.radius - my, p.z + s.dir.z * s.radius - mz);
+        const length = up.length();
+        orientation.setFromUnitVectors(Y_AXIS, up.normalize());
         const width = 0.026 * (1 - t) + 0.005;
-        emit(rail, p.x + s.dir.x * s.radius / 2, p.y + s.dir.y * s.radius / 2,
-          p.z + s.dir.z * s.radius / 2, width, s.radius, width, orientation);
+        emit(rail, (mx + p.x + s.dir.x * s.radius) / 2, (my + p.y + s.dir.y * s.radius) / 2,
+          (mz + p.z + s.dir.z * s.radius) / 2, width, length, width, orientation);
         for (let j = 1; j <= 5; j++) {
           const d = Math.min(s.radius, j * 3.5), angle = j * GOLDEN + age * 0.017;
           emit(hot, p.x + s.dir.x * d + Math.sin(angle) * 0.1,

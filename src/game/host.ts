@@ -13,6 +13,8 @@ export * from './host-ports';
 export * from './host-streaks';
 
 import { isPlayableWeapon } from '../weapons/roster';
+import { isRewardWeapon } from '../weapons/catalog';
+import type { RewardReadout } from './host-kit';
 import {
   SHOT_REJECT_LABELS,
   type ActorId, type GameEvent, type StreakDenialReason, type TeamId, type WorldQuery,
@@ -81,7 +83,7 @@ export class GameHost {
     });
     this.life.phase = this.match.phase;
     this.ordnance = new HostOrdnance(this.life, this.world, this.clock);
-    this.firearms = new HostFirearms(this.life, this.world, this.ordnance, this.clock);
+    this.firearms = new HostFirearms(this.life, this.world, this.ordnance, this.clock, this.deps.streaks);
     this.crossbowCanary = opts.crossbowCanary === true;
     this.crossbow = new HostCrossbow(this.life, this.world, this.clock);
   }
@@ -216,10 +218,12 @@ export class GameHost {
     const reason = admitShot(claim, a === null ? null : {
       matchActive: this.match.phase === 'active', life: a.health.life, alive: a.health.alive,
       diedAt: a.health.diedAt,
-      knownWeapon: ordnance || isPlayableWeapon(claim.weaponId) || (isCrossbow && this.crossbowCanary),
+      knownWeapon: ordnance || isPlayableWeapon(claim.weaponId) || isRewardWeapon(claim.weaponId) || (isCrossbow && this.crossbowCanary),
       window: a.window, pose: a.poses.at(claim.firedAt), receivedAt,
-    });
+    }) ?? (this.deps.streaks?.isPiloting?.(shooterId) ? 'possessing' : null);
     if (reason !== null) {
+      // Spend refused possession sequences so they cannot replay on exit.
+      if (reason === 'possessing' && a) acceptShot(a.window, claim.seq);
       this.life.stats = { ...this.life.stats, shotsRejected: this.life.stats.shotsRejected + 1 };
       this.life.emit({ type: 'shot-rejected', at: receivedAt, shooterId, seq: claim.seq, reason });
       return { accepted: false, reason, label: SHOT_REJECT_LABELS[reason] };
@@ -227,7 +231,7 @@ export class GameHost {
     const shooter = a as HostActor;
     acceptShot(shooter.window, claim.seq);
     if (ordnance) return this.ordnance.claim(shooter, claim, receivedAt);
-    const firearmRejection = this.firearms.admit(shooter, claim);
+    const firearmRejection = this.firearms.admit(shooter, claim, receivedAt);
     if (firearmRejection !== null) {
       this.life.stats = { ...this.life.stats, shotsRejected: this.life.stats.shotsRejected + 1 };
       this.life.emit({ type: 'shot-rejected', at: receivedAt, shooterId, seq: claim.seq, reason: firearmRejection });
@@ -308,7 +312,7 @@ export class GameHost {
         const actor = this.life.actors.get(grant.actorId);
         if (grant.reward === 'field-repair' && actor?.health.alive && actor.team === grant.team) {
           actor.health = { ...actor.health, hp: fieldRepairHealth(actor.health.hp) };
-        }
+        } else if (actor && this.match.phase === 'active') this.ordnance.grantReward(actor, grant, now);
       }
     }
     // Resolve firearm deaths before ordnance scans the queue for corpse drops.
@@ -342,6 +346,7 @@ export class GameHost {
         slots: this.deps.streaks?.snapshotFor(a.id) ?? [],
         lethal: kit.lethal, tactical: kit.tactical, primaryId: kit.primaryId, rounds: kit.rounds,
         sidearmId: kit.sidearmId, sidearmRounds: kit.sidearmRounds, tacticalId: kit.tacticalId,
+        speedMultiplier: kit.speedMultiplier, rewardWeaponId: kit.rewardWeaponId, rewardWeaponRemainingMs: kit.rewardWeaponRemainingMs,
         armed: kit.armed, blindUntil: kit.blindUntil, stance: a.stance,
       });
     }
@@ -375,19 +380,20 @@ export class GameHost {
    * is the existing total-rounds readout and does not claim magazine/reserve
    * decomposition; the grenade counts are exact host kit values.
    */
-  loadoutOf(id: ActorId): {
+  loadoutOf(id: ActorId): RewardReadout & {
     primaryId: string; rounds: number; sidearmId: string; sidearmRounds: number;
     lethal: number; tactical: number; tacticalId: string; armed: string | null;
   } | null {
     const actor = this.life.actors.get(id);
     if (actor === undefined) return null;
-    const kit = this.ordnance.kitOf(actor);
+    const kit = this.ordnance.kitOf(actor, this.clock);
     return {
       primaryId: kit.primaryId, rounds: kit.rounds,
       sidearmId: kit.sidearmId, sidearmRounds: kit.sidearmRounds,
       lethal: kit.lethal, tactical: kit.tactical,
       tacticalId: kit.tacticalId,
       armed: kit.armed,
+      speedMultiplier: kit.speedMultiplier, rewardWeaponId: kit.rewardWeaponId, rewardWeaponRemainingMs: kit.rewardWeaponRemainingMs,
     };
   }
 }

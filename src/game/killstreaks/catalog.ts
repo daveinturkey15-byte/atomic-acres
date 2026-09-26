@@ -26,9 +26,9 @@
  * `baseWeightTotal * 100` by construction and every fixed reward lands on its
  * stated percentage exactly, in integer arithmetic, with no rounding.
  *
- * The roster is ours; no name is taken from any shipped game. The eight
- * selectable rows have live runtime behavior; `field-repair` and `last-resort`
- * stay reward-only and are admitted by the crate adapter. A selectable row
+ * The native roster has sixteen selectable behaviors. Field Repair and Crimson
+ * Flamethrower are immediate crate rewards; Last Resort is also selectable.
+ * Existing IDs and saved four-slot classes remain valid. A selectable row
  * without a stepper must be refused by `runtime.ts` with an enumerated,
  * labelled reason rather than becoming a silent no-op (§5.4).
  */
@@ -116,13 +116,14 @@ export const REWARD_SOURCE_ID = 'supply-crate';
 export const FIXED_REWARD_PERCENTS: Readonly<Record<string, number>> = Object.freeze({
   'field-repair': 10,
   'last-resort': 1,
+  'crimson-flamethrower': 10,
 });
 
 /**
  * Loadout shape: four slots, by tier. This array is the ONLY place the slot
  * count and the slot→tier mapping exist; `SLOT_COUNT` and `SLOT_FAMILIES` are
- * both read off it. Slots 3 and 4 share the `high` family on purpose, so the
- * duplicate rule in `validateStreakLoadout` has something to bite on.
+ * both read off it. The final high slot also accepts top-tier streaks; two
+ * low slots preserve the original loadout shape and duplicate constraint.
  */
 export const SLOT_TIERS: readonly StreakTier[] = Object.freeze(['low', 'low', 'mid', 'high'] as const);
 export const SLOT_COUNT = SLOT_TIERS.length;
@@ -137,14 +138,9 @@ export const MUTUAL_EXCLUSIONS: readonly (readonly [string, string, string])[] =
 ]);
 
 /**
- * THE ROSTER. Ten rows. Base weights are relative shares, chosen so the
- * weighted total is 100 — which is not required by the arithmetic but makes
- * every projected percentage a terminating decimal, so a review can read the
- * pool without a calculator.
- *
- * Costs are a ladder a player can finish inside one good life on a map this
- * small: 3 / 4 / 4 / 5 / 5 / 7 / 8 / 9. The old project's ladder was 3–15 on a
- * map with aircraft; 15 here would never be reached.
+ * THE ROSTER. Relative weights and fixed percentages are authored independently.
+ * Existing ground/support costs remain unchanged; the restored aircraft ladder
+ * reaches fifteen kills for persistent drone support and Last Resort.
  */
 export const STREAKS = Object.freeze([
   { id: 'recon-sweep', displayName: 'Recon Sweep', cost: 3, tier: 'low', availability: 'selectable', activation: 'instant', durationMs: 30_000, repeatable: false, baseWeightUnits: 28 },
@@ -155,8 +151,16 @@ export const STREAKS = Object.freeze([
   { id: 'fallout-screen', displayName: 'Fallout Screen', cost: 7, tier: 'high', availability: 'selectable', activation: 'target-point', durationMs: 20_000, repeatable: false, baseWeightUnits: 9 },
   { id: 'blast-mortar', displayName: 'Blast Mortar', cost: 8, tier: 'high', availability: 'selectable', activation: 'target-point', durationMs: 15_000, repeatable: false, baseWeightUnits: 5 },
   { id: 'strike-relay', displayName: 'Strike Relay', cost: 9, tier: 'high', availability: 'selectable', activation: 'target-line', durationMs: 18_000, repeatable: false, baseWeightUnits: 2 },
+  { id: 'adrenaline', displayName: 'Adrenaline Boost', cost: 3, tier: 'low', availability: 'selectable', activation: 'instant', durationMs: 15_000, repeatable: false, baseWeightUnits: 20 },
+  { id: 'yardhawk', displayName: 'Yardhawk', cost: 5, tier: 'mid', availability: 'selectable', activation: 'instant', durationMs: 15_000, repeatable: false, baseWeightUnits: 16 },
+  { id: 'piloted-drone', displayName: 'Piloted Drone', cost: 5, tier: 'mid', availability: 'selectable', activation: 'possession', durationMs: 30_000, repeatable: false, baseWeightUnits: 16 },
+  { id: 'carpet-bomber', displayName: 'Carpet Bomber', cost: 7, tier: 'high', availability: 'selectable', activation: 'target-point', durationMs: 12_000, repeatable: false, baseWeightUnits: 12 },
+  { id: 'hunter-swarm', displayName: 'Hunter Swarm', cost: 8, tier: 'high', availability: 'selectable', activation: 'instant', durationMs: 20_000, repeatable: false, baseWeightUnits: 9 },
+  { id: 'chopper', displayName: 'Chopper Gunner', cost: 8, tier: 'high', availability: 'selectable', activation: 'instant', durationMs: 30_000, repeatable: false, baseWeightUnits: 9 },
+  { id: 'drone-swarm', displayName: 'Drone Swarm', cost: 15, tier: 'top', availability: 'selectable', activation: 'instant', durationMs: 40_000, repeatable: false, baseWeightUnits: 1 },
+  { id: 'crimson-flamethrower', displayName: 'Crimson Flamethrower', cost: 0, tier: 'mid', availability: 'reward-only', activation: 'instant', durationMs: 45_000, repeatable: true, baseWeightUnits: 0 },
   { id: 'field-repair', displayName: 'Field Repair', cost: 0, tier: 'mid', availability: 'reward-only', activation: 'instant', durationMs: 0, repeatable: true, baseWeightUnits: 0 },
-  { id: 'last-resort', displayName: 'Last Resort', cost: 0, tier: 'top', availability: 'reward-only', activation: 'instant', durationMs: 0, repeatable: false, baseWeightUnits: 0 },
+  { id: 'last-resort', displayName: 'Last Resort', cost: 15, tier: 'top', availability: 'selectable', activation: 'instant', durationMs: 0, repeatable: false, baseWeightUnits: 0 },
 ] as const satisfies readonly StreakSource[]);
 
 export type StreakId = (typeof STREAKS)[number]['id'];
@@ -294,7 +298,7 @@ export function createStreakCatalog<const Id extends string>(
 
   const slotFamilies = Object.freeze(slotTiers.map((tier) => {
     const family = Object.freeze(
-      definitions.filter((d) => d.availability === 'selectable' && d.tier === tier).map((d) => d.id),
+      definitions.filter((d) => d.availability === 'selectable' && (d.tier === tier || (tier === 'high' && d.tier === 'top'))).map((d) => d.id),
     );
     if (family.length === 0) throw new Error(`slot tier ${tier} has no selectable streak`);
     return family;

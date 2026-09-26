@@ -96,6 +96,66 @@ check('every spatial equipment family draws from authoritative snapshots', () =>
     assert.equal(streaks.counts().shown, 1); assert(streaks.counts().instances > 0); finiteMatrices(streaks.group);
   }
 });
+const variants = ['yardhawk', 'piloted-drone', 'hunter-swarm', 'chopper', 'drone-swarm'];
+const airRow = (variant, id, units = variant === 'hunter-swarm' ? 3 : variant === 'drone-swarm' ? 5 : 1) => ({
+  ...row('aircraft', id), variant, units, health: 100, controlled: variant === 'piloted-drone',
+  craft: Array.from({ length: units }, (_, n) => ({ x: id * 4 + n * 3, y: 8 + n, z: -id * 2 + n, yaw: .4 + n, pitch: .15 })),
+});
+check('five aircraft silhouettes use exact host craft anchors and pitch without invented formation offsets', () => {
+  const matrix = new THREE.Matrix4(), actual = new THREE.Vector3();
+  const silhouettes = new Set();
+  for (const variant of variants) {
+    const s = airRow(variant, 1);
+    streaks.reset(); streaks.update(1050, [s], 1000);
+    assert.equal(streaks.counts().craft, s.units); assert.equal(streaks.counts().dropped, 0);
+    const armor = streaks.group.children.find(m => m.name === 'olive-equipment-casings');
+    // Every airframe's first armor primitive is centred on its admitted pose.
+    const firsts = variant === 'yardhawk' ? 6 : variant === 'chopper' ? 5 : 1;
+    for (let n = 0; n < s.units; n++) {
+      armor.getMatrixAt(n * firsts, matrix); actual.setFromMatrixPosition(matrix);
+      assert(actual.distanceTo(new THREE.Vector3(s.craft[n].x, s.craft[n].y, s.craft[n].z)) < 1e-5);
+    }
+    silhouettes.add(JSON.stringify(streaks.group.children.map(m => Array.from(m.instanceMatrix.array.subarray(0, m.count * 16)))));
+    finiteMatrices(streaks.group);
+  }
+  assert.equal(silhouettes.size, 5);
+});
+check('sixteen maximum-size aircraft rows fit every fixed batch without dropping parts or allocating resources', () => {
+  for (const variant of variants) {
+    const rows = Array.from({ length: 40 }, (_, i) => airRow(variant, i, 5));
+    streaks.update(1100, rows, 1000); finiteMatrices(streaks.group);
+    assert.equal(streaks.counts().shown, 16); assert.equal(streaks.counts().craft, 80); assert.equal(streaks.counts().dropped, 0, variant);
+    assert.equal(registry.size, frozenMaterialCount);
+    assert.equal(weapons.group.children.length + streaks.group.children.length, nodeCount);
+  }
+  assert.equal(streaks.group.children.length, 9);
+  const bufferBytes = streaks.group.children.reduce((n, m) => n + m.instanceMatrix.array.byteLength + (m.instanceColor?.array.byteLength ?? 0), 0);
+  assert(bufferBytes < 320 * 1024, String(bufferBytes));
+});
+const carpetRow = id => ({ ...row('carpet-bomber', id), elapsedMs: 500,
+  impacts: Array.from({ length: 20 }, (_, n) => ({ x: id * 3 + (n % 4 - 1.5) * 2.7, y: n / 10, z: -3 + (2 - Math.floor(n / 4)) * 5 })) });
+check('carpet warning rings use all actual impact elevations and retire fired points', () => {
+  const s = carpetRow(1), matrix = new THREE.Matrix4(), actual = new THREE.Vector3();
+  streaks.update(1050, [s], 1000);
+  const field = streaks.group.children.find(m => m.name === 'red-streak-field-boundaries');
+  assert.equal(field.count, 20);
+  for (let n = 0; n < 20; n++) {
+    field.getMatrixAt(n, matrix); actual.setFromMatrixPosition(matrix);
+    assert(actual.distanceTo(new THREE.Vector3(s.impacts[n].x, s.impacts[n].y + .07, s.impacts[n].z)) < 1e-5);
+  }
+  streaks.update(1100, [{ ...s, fired: 7 }], 1000); assert.equal(field.count, 13);
+  streaks.update(1100, Array.from({ length: 16 }, (_, i) => carpetRow(i)), 1000);
+  assert.equal(streaks.counts().dropped, 0); finiteMatrices(streaks.group);
+});
+check('invalid craft transforms are ignored, removed craft vanish and stale aircraft expire', () => {
+  const s = airRow('drone-swarm', 1);
+  streaks.update(1050, [{ ...s, craft: s.craft.map(c => ({ ...c, pitch: NaN })) }], 1000);
+  assert.equal(streaks.counts().craft, 0); finiteMatrices(streaks.group);
+  streaks.update(1100, [s], 1000); assert.equal(streaks.counts().craft, 5);
+  streaks.update(1200, [{ ...s, units: 2, craft: s.craft.slice(0, 2) }], 1000); assert.equal(streaks.counts().craft, 2);
+  streaks.update(2000, [s], 1000); assert.equal(streaks.counts().instances, 0);
+  streaks.update(2001, [], 2001); assert.equal(streaks.counts().craft, 0);
+});
 check('streak pools cap hostile overlength input and expire stale replicated state', () => {
   const rows = Array.from({ length: 64 }, (_, i) => row('sentry', i));
   streaks.update(1100, rows, 1000); assert.equal(streaks.counts().shown, STREAK_SCENE_CAPACITY);

@@ -19,6 +19,8 @@ import type { ShotClaim } from '../weapons/controller';
 import type { GameClient } from './client';
 import type { ActorId, GameEvent, TeamId } from './events';
 import type { HostStats } from './host-ports';
+import type { PilotControls } from './killstreaks/pilot-types';
+export type { PilotControls } from './killstreaks/pilot-types';
 
 /**
  * What a QA hook reads off a match. A host driver returns its full
@@ -97,6 +99,8 @@ export interface MatchDriver {
   localShot(claim: ShotClaim): void;
   /** A streak key press from the human. */
   pressStreak(slot: number): void;
+  pilotInput(controls: PilotControls): void;
+  exitPilot(): void;
   bots(): readonly BotBody[];
   /** The authoritative snapshot (host drivers) or the guest's projection of it. */
   snapshot(): SessionSnapshot;

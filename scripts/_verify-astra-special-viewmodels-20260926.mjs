@@ -104,6 +104,13 @@ assert(sizes.get('flare-gun').z < .34, 'signal pistol remains compact');
 assert.equal(api.rosterProjection().filter((w) => w.fallbackArt).length, 11, 'eleven conventional variants retain visible art-debt status');
 assert.equal(api.rosterProjection().filter((w) => !w.fallbackArt).length, 9, 'exactly nine native rigs');
 assert.throws(() => api.viewmodelForWeapon('unregistered-gun'));
+const crimson = api.buildCrimsonFlamethrowerViewmodel(mat), flame = api.buildFlamethrowerViewmodel(mat);
+assert.equal(crimson.group.userData.nativeWeaponId, 'crimson-flamethrower');
+assert.equal(api.viewmodelForWeapon('crimson-flamethrower'), 'crimson-flamethrower');
+assert.equal(api.isNativeRig('crimson-flamethrower'), false, 'reward finish does not claim a unique silhouette');
+assert.notEqual(crimson.group.getObjectByName('PressureCylinder1').material,
+  flame.group.getObjectByName('PressureCylinder1').material, 'reward has a distinct red finish');
+api.disposeOwnedGeometries(crimson.group); api.disposeOwnedGeometries(flame.group);
 // Exercise the existing optional articulated rifle hand path against actual new solids.
 globalThis.window = { location: { search: '?hands=rifle-canary' } };
 const canary = api.buildRailgunViewmodel(mat);

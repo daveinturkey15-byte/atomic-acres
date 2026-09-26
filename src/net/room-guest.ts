@@ -95,6 +95,7 @@ export class GuestClient {
   private startTick = -1;
   private seq = 0;
   private streakSeq = 0;
+  private pilotSeq = 0;
   private lastAck = -1;
   /** Divergence of the last accepted ack: the true prediction error. */
   private ackError = 0;
@@ -295,6 +296,11 @@ export class GuestClient {
     this.transport.send(this.hostPeer, msg.type === 'streak-intent' ? { ...msg, seq: this.streakSeq++ } : msg);
   }
 
+  sendPilot(controls: import('../game/killstreaks/pilot-types').PilotControls): void {
+    if (this.state !== 'playing') return;
+    this.transport.send(this.hostPeer, { type: 'pilot-input', ...controls, seq: this.pilotSeq++ });
+  }
+
   /**
    * Manual liveness ping (auto interval calls this every 2 s). This is also
    * the inbound-host watchdog's only heartbeat: if no VALID host word has
@@ -431,6 +437,7 @@ export class GuestClient {
           this.startTick = msg.resume.startTick;
           this.seq = msg.resume.lastSeq + 1;
           this.streakSeq = (msg.resume.lastStreakSeq ?? -1) + 1;
+          this.pilotSeq = (msg.resume.lastPilotSeq ?? -1) + 1;
           this.resumeEpoch = msg.resume;
           this.state = msg.resume.phase;
         } else {

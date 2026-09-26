@@ -1,5 +1,5 @@
 /** Bounded host simulation for flame cones, afterburn and arced flare fires. */
-import { WEAPONS, damageAt } from '../weapons/catalog';
+import { ALL_WEAPONS, damageAt } from '../weapons/catalog';
 import { behaviorFor, coneDamageAt, insideCone } from '../weapons/behavior';
 import type { ShotMsg } from '../net/protocol';
 import type { ActorId, Vec3, WeaponEffectEvent, WorldQuery } from './events';
@@ -15,8 +15,8 @@ const MAX_FIRES = 16;
 const FIRE_RADIUS = 3;
 const FIRE_LIFETIME_MS = 4000;
 const BURN_TICK_MS = 250;
-const FLAME = WEAPONS.find((w) => w.id === 'flamethrower')!;
-const FLARE = WEAPONS.find((w) => w.id === 'flare-gun')!;
+const FLARE = ALL_WEAPONS.find((w) => w.id === 'flare-gun')!;
+const WEAPON_BY_ID = new Map(ALL_WEAPONS.map((weapon) => [weapon.id, weapon]));
 
 export class HostWeaponEffects {
   private readonly burns = new Map<ActorId, Burn>();
@@ -33,7 +33,8 @@ export class HostWeaponEffects {
   }
 
   flame(a: HostActor, c: ShotMsg, now: number): void {
-    const profile = behaviorFor(FLAME.id);
+    const def = WEAPON_BY_ID.get(c.weaponId)!;
+    const profile = behaviorFor(def.id);
     const origin = { x: c.ox, y: c.oy, z: c.oz };
     this.emit(a, c, now, 'flame', this.nextId++, profile.range!, 130);
     for (const victim of this.life.actors.values()) {
@@ -45,12 +46,12 @@ export class HostWeaponEffects {
       if (!insideCone(c.ox, c.oy, c.oz, c.dx, c.dy, c.dz, target.x, target.y, target.z, profile)) continue;
       if (!this.world.lineOfSight(origin, target)) continue;
       const distance = Math.hypot(target.x - c.ox, target.y - c.oy, target.z - c.oz);
-      const amount = coneDamageAt(distance, FLAME.damage.base, FLAME.damage.fall, profile.range!);
-      this.hurt(victim, a, FLAME.id, amount, distance, now, c.ox, c.oz);
+      const amount = coneDamageAt(distance, def.damage.base, def.damage.fall, profile.range!);
+      this.hurt(victim, a, def.id, amount, distance, now, c.ox, c.oz);
       // Protection or a refused hit must never seed a delayed hurt after protection expires.
       if (victim.health.alive && victim.health.invulnerableUntil <= now) {
         const previous = this.burns.get(victim.id);
-        this.burns.set(victim.id, { victim: victim.id, life: victim.health.life, owner: a.id, weapon: FLAME.id,
+        this.burns.set(victim.id, { victim: victim.id, life: victim.health.life, owner: a.id, weapon: def.id,
           expires: now + profile.burnDuration! * 1000, next: previous?.next ?? now + BURN_TICK_MS, x: c.ox, z: c.oz });
       }
     }

@@ -10,6 +10,7 @@ export {
   buildCrossbowViewmodel,
   buildFlamethrowerViewmodel,
   buildFlareGunViewmodel,
+  buildCrimsonFlamethrowerViewmodel,
 } from './special-viewmodels';
 export {
   loadCatalogCarbineRig,
