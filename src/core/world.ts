@@ -151,7 +151,14 @@ function makeSky(u: AtmosphereUniforms): THREE.Mesh {
 export function createWorld(canvasParent: HTMLElement): World {
   const boot = bootRenderer();
   const renderer = boot.renderer;
-  const shadowMaterialCanary = installShadowMaterialCanary(renderer);
+  // The candidate's WebGPU path keeps opaque/cutout shadow cache identities
+  // separate. An explicit shadow-material=off retains the native control path;
+  // forced WebGL and the helper's standalone default remain unchanged.
+  const shadowParams = new URLSearchParams(globalThis.location?.search ?? '');
+  if (boot.requested === 'webgpu' && !shadowParams.has('shadow-material')) {
+    shadowParams.set('shadow-material', 'canary');
+  }
+  const shadowMaterialCanary = installShadowMaterialCanary(renderer, shadowParams.toString());
   canvasParent.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
