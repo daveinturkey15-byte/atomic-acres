@@ -261,6 +261,9 @@ let selectedStreakLoadout = loadStreakLoadout().selected;
 // the controller's weapon list and the session's host flag share one source;
 // absent or any other value keeps the gated id listed nowhere and admitted nowhere.
 const crossbowCanary = isCrossbowCanaryOptIn(typeof window !== 'undefined' ? window.location.search : undefined);
+let qaLastWeaponShotSeq = -1;
+let qaLastWeaponShotAt = -Infinity;
+let qaLastWeaponShotId = '';
 const weapons = new WeaponsController({
   camera: world.camera,
   scene: world.scene,
@@ -268,7 +271,13 @@ const weapons = new WeaponsController({
   targets: worldTargets,
   // The combat HUD reads the controller snapshot; no duplicate debug ammo line.
   onHud: () => undefined,
-  onShot: (claim) => match?.localShot(claim),
+  onShot: (claim) => {
+    qaLastWeaponShotSeq = claim.seq;
+    qaLastWeaponShotAt = claim.time;
+    qaLastWeaponShotId = claim.weaponId;
+    match?.localShot(claim);
+  },
+  onWeaponIntent: (input) => match?.weaponIntent(input) ?? null,
   localLoadout: () => selectedLoadout,
   crossbowCanary,
 });
@@ -305,8 +314,9 @@ const pilot = new PilotControlView({
 });
 const rewardHint = document.createElement('div');
 rewardHint.className = 'hud-reward';
-Object.assign(rewardHint.style, { position: 'absolute', right: '22px', top: '27%', color: '#ffd9a8',
-  fontSize: '12px', fontWeight: '700', letterSpacing: '1px', textAlign: 'right', whiteSpace: 'pre-line', pointerEvents: 'none' });
+Object.assign(rewardHint.style, { position: 'fixed', right: '22px', top: '27vh', color: '#ffd9a8',
+  maxWidth: 'calc(100vw - 44px)', fontSize: '12px', fontWeight: '700', letterSpacing: '1px',
+  textAlign: 'right', whiteSpace: 'pre-line', pointerEvents: 'none' });
 hud.append(rewardHint);
 hud.addEventListener('click', (event) => {
   if ((event.target as Element | null)?.closest('.hud-streak-reward') && ui.menu.state().surface === 'hidden') {
@@ -361,6 +371,7 @@ const matchUi: MatchUi = {
     weaponEffects.reset();
     streakEffects.reset();
     presentedClient = c;
+    weapons.clearWeaponState();
     // Client projection is the common solo/host/guest boundary. Rebinding also
     // releases the previous match's smoke list; no bus subscription can leak.
     world.atmosphere.smoke.bind(c ? () => c.ordnance.smokes : null);
@@ -470,6 +481,8 @@ function releaseEnvironmentCanary(): void {
   releaseAsset('mountain-terrain');
 }
 addEventListener('pagehide', () => {
+  removeEventListener('blur', cancelWeaponInput);
+  document.removeEventListener('pointerlockchange', cancelUnlockedWeaponInput);
   releaseEnvironmentCanary();
   releaseCoachOwnedCanary();
   try { disposeWorldWeaponArt({ terminal: true }); } catch { /* teardown must never break pagehide */ }
@@ -506,8 +519,20 @@ addEventListener('keydown', (e) => {
 // Weapon input. Every handler is headless-safe (try/catch, no direct
 // requestPointerLock) so capture-harness probes never trip on missing APIs.
 const canvas = world.renderer.domElement;
+function footWeaponInputAllowed(requireNativeLock = true): boolean {
+  const view = presentedClient?.view();
+  return ui.menu.state().surface === 'hidden' && view?.alive === true
+    && view.match.phase === 'active' && document.hasFocus() && !pilot.active()
+    && (!requireNativeLock || document.pointerLockElement === canvas);
+}
+function cancelWeaponInput(): void { weapons.cancelWeaponAction(); }
+function cancelUnlockedWeaponInput(): void {
+  if (document.pointerLockElement !== canvas) cancelWeaponInput();
+}
+addEventListener('blur', cancelWeaponInput);
+document.addEventListener('pointerlockchange', cancelUnlockedWeaponInput);
 canvas.addEventListener('mousedown', (e) => {
-  if (pilot.active()) return;
+  if (!footWeaponInputAllowed()) return;
   try {
     if (e.button === 0 || e.button === 2) weapons.pointerDown(e.button, performance.now());
   } catch { /* headless: no pointer, no weapon input */ }
@@ -520,12 +545,14 @@ addEventListener('mouseup', (e) => {
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 addEventListener('keydown', (e) => {
   if (e.repeat || pilot.active() || ui.menu.state().surface !== 'hidden') return;
-  if (e.code === 'KeyR' || e.code === 'Digit1' || e.code === 'Digit2') {
+  if ((e.code === 'KeyR' && footWeaponInputAllowed()) ||
+      ((e.code === 'Digit1' || e.code === 'Digit2') && footWeaponInputAllowed(false))) {
     try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
   }
   // G/Q grenades, V knife, E use - on foot only: E and Q are fly-mode
   // up/down in core/player.ts, and a knife thrown from noclip is not a game.
-  if ((e.code === 'KeyG' || e.code === 'KeyQ' || e.code === 'KeyV' || e.code === 'KeyE') && player.getMode() === 'walk') {
+  if ((e.code === 'KeyG' || e.code === 'KeyQ' || e.code === 'KeyV' || e.code === 'KeyE')
+      && footWeaponInputAllowed() && player.getMode() === 'walk') {
     try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
   }
   // 3-6 are the four chosen streaks; 7 activates a banked crate reward.
@@ -538,7 +565,7 @@ addEventListener('keyup', (e) => {
   try { weapons.keyUp(e.code); } catch { /* headless-safe */ }
 });
 canvas.addEventListener('wheel', (e) => {
-  if (pilot.active() || player.getMode() !== 'walk' || ui.menu.state().surface !== 'hidden') return;
+  if (!footWeaponInputAllowed(false) || player.getMode() !== 'walk') return;
   try { weapons.wheel(e.deltaY); } catch { /* headless-safe */ }
 }, { passive: true });
 
@@ -560,6 +587,7 @@ let lastSpeed = -1;
 let cameraHeldByQA = false;
 let reflectionCaptureBusy = false;
 let reflectionProbe: StaticReflectionProbe | null = null;
+let weaponInputWasAllowed = false;
 
 function frame(): void {
   if (reflectionCaptureBusy) { last = performance.now(); requestAnimationFrame(frame); return; }
@@ -580,6 +608,9 @@ function frame(): void {
 
   if (!cameraHeldByQA) {
     const pilotView = presentedClient?.view();
+    const weaponInputAllowed = footWeaponInputAllowed();
+    if (weaponInputWasAllowed && !weaponInputAllowed) weapons.cancelWeaponAction();
+    weaponInputWasAllowed = weaponInputAllowed;
     pilot.sync(presentedClient?.streakEffects ?? [], presentedClient?.selfId ?? null,
       pilotView?.alive === true && pilotView.match.phase === 'active', presentedClient?.streakEffectsAt ?? 0, now);
     player.setSpeedMultiplier(presentedClient?.ordnance.self.speedMultiplier ?? 1);
@@ -610,6 +641,10 @@ function frame(): void {
     const st = player.state;
     match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch, player.getStance());
     ordnance.update(dt, now, st.pos.x, st.pos.y, st.pos.z);
+    // Reconcile after spawn/pickup presentation so a remaining-total update
+    // cannot reconstruct a fresh magazine or skip an authoritative reload.
+    if (presentedClient?.weaponState) weapons.applyWeaponState(presentedClient.weaponState, now);
+    gameHud.setWeaponAction(weapons.hud);
     const pilotView = presentedClient?.view();
     pilot.sync(presentedClient?.streakEffects ?? [], presentedClient?.selfId ?? null,
       pilotView?.alive === true && pilotView.match.phase === 'active', presentedClient?.streakEffectsAt ?? 0, now);
@@ -738,6 +773,8 @@ interface QA {
   teleport: (x: number, y: number, z: number, yaw?: number, pitch?: number) => void;
   setFlySpeed: (v: number) => void;
   weaponCmd: (cmd: string, arg?: string | number | boolean) => unknown;
+  /** Read-only original claim timing; admission is established by host ammo/ack. */
+  lastWeaponShot: () => { seq: number; at: number; weaponId: string };
   /** Ordnance lane: the client projection's log, counts and pools. Read-only. */
   ordnance: () => Record<string, unknown>;
   specialEffects: () => { weapons: ReturnType<typeof weaponEffects.counts>; streaks: ReturnType<typeof streakEffects.counts> };
@@ -834,6 +871,7 @@ const qa: QA = {
     return { weapons: weaponEffects.counts(), streaks: streakEffects.counts() };
   },
   pilot() { return pilot.snapshot(); },
+  lastWeaponShot() { return { seq: qaLastWeaponShotSeq, at: qaLastWeaponShotAt, weaponId: qaLastWeaponShotId }; },
   audio() {
     return weapons.audioStats();
   },

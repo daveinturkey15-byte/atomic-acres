@@ -17,26 +17,9 @@
  * re-exported here so `./bots` stays the one import target. Navigation is
  * `./bot-nav`, the aim line and its error cone `./bot-aim`.
  *
- * ## Difficulty (lobby lane, 2026-09-19)
- *
- * `BotDifficultyPreset` from `rules.ts` moves three numbers: the reaction
- * delay, the fire range and an aim-error cone. `regular` is the play-tested
- * pair `bot-sense.ts` has always used with the perfect aim it has always had,
- * so a match with no preset chosen is the match every harness already knows.
- * The preset is applied HERE, over `botIntent`'s answer, because
- * `bot-sense.ts` is another lane's file: the reducer keeps reading its own
- * constants for the movement decision, and the trigger decision is re-taken
- * against the preset's numbers before anything is submitted.
- *
- * ## Ordnance (wired against the ordnance lane's README contract)
- *
- * `botIntent` already forms the three intents when it is told what the bot
- * carries (`BotSupply`, off the host's own `ActorSnapshot`) and what lies on
- * the ground (`HostSnapshot.ordnance.drops`). A knife or a grenade is
- * submitted exactly where a bullet is, as a `ShotMsg` whose `weaponId` is the
- * ordnance id; a grenade is TWO claims (arm, then release along the lob) per
- * `src/game/README.md`. Scavenging needs no claim at all: the host applies the
- * walk-over itself, so a bot out of rounds simply walks to the drop.
+ * Difficulty adjusts reaction, range and aim here without rewriting movement.
+ * ActorSnapshot supplies the kit; bots use the same weapon intents and shot
+ * claims as humans. Grenades arm then release. The host scavenges ground ammo.
  */
 
 import type { ActorId, StreakDenialReason, TeamId, Vec3, WorldQuery } from './events';
@@ -51,9 +34,10 @@ import {
 import { aimVector, scatter, type Dir } from './bot-aim';
 import { pickGoal, stepBot, updateSide } from './bot-nav';
 import { KNIFE_ID, KNIFE_RECOVERY_MS } from './ordnance';
-import { WEAPONS, type WeaponDef } from '../weapons/catalog';
+import { ALL_WEAPONS, type WeaponDef } from '../weapons/catalog';
 import { sidearmForPrimary, type Loadout } from './loadout';
 import { botTacticalFor } from './bot-ordnance';
+import type { WeaponIntent, WeaponIntentAction, WeaponIntentResult, WeaponState } from './host-weapon-state';
 
 export * from './bot-sense';
 export * from './bot-nav';
@@ -66,6 +50,8 @@ export interface BotHost {
   updatePose(id: ActorId, x: number, y: number, z: number, at?: number): void;
   submitInput(id: ActorId, msg: { type: 'input'; seq: number; mx: number; mz: number; yaw: number; pitch: number; fire: boolean; jump: boolean }): void;
   submitShot(id: ActorId, claim: { type: 'shot'; seq: number; life: number; weaponId: string; firedAt: number; ox: number; oy: number; oz: number; dx: number; dy: number; dz: number }, receivedAt?: number): unknown;
+  submitWeaponIntent(id: ActorId, intent: WeaponIntent, receivedAt?: number): WeaponIntentResult;
+  weaponStateOf(id: ActorId, now?: number): WeaponState | null;
   /** The refusal, or `null` when the press was admitted. See the backoff in `tick`. */
   submitStreakIntent(id: ActorId, msg: { type: 'streak-intent'; slot: number; toggle: boolean }): StreakDenialReason | null;
 }
@@ -260,7 +246,7 @@ export class BotDirector {
       k.primaryId = s.primaryId; k.armed = s.armed;
       if (s.tacticalId === 'flash' || s.tacticalId === 'smoke' || s.tacticalId === 'semtex') b.tacticalId = s.tacticalId;
       const heldId = s.rounds > 0 ? s.primaryId : (s.sidearmRounds ?? 0) > 0 ? s.sidearmId : null;
-      const heldWeapon = heldId === null ? undefined : WEAPONS.find((w) => w.id === heldId);
+      const heldWeapon = heldId === null ? undefined : ALL_WEAPONS.find((w) => w.id === heldId);
       const intent = botIntent(b, sense, now, s.hp, ready, k as BotSupply, drops);
       b.yaw = intent.yaw;
       b.pitch = intent.pitch;
@@ -271,8 +257,29 @@ export class BotDirector {
       // reaction. `regular` reproduces the reducer's answer exactly. A knife
       // or a grenade this tick replaces the bullet, as the reducer decided.
       const d = this.difficulty;
-      const fire = heldWeapon !== undefined && !intent.knife && intent.grenade === null && sense.visible && sense.distance <= d.fireRangeM &&
+      let fire = heldWeapon !== undefined && !intent.knife && intent.grenade === null && sense.visible && sense.distance <= d.fireRangeM &&
         now - b.targetSince >= d.reactionMs && b.cooldown <= 0;
+
+      // Bots use the same host controls as humans. A total-round allowance is
+      // not a loaded magazine, and a Railgun is not an instant rifle.
+      let weaponState = this.opts.host.weaponStateOf(b.id, now);
+      if (weaponState && heldId) {
+        const control = (action: WeaponIntentAction): void => {
+          this.opts.host.submitWeaponIntent(b.id, { action, weaponId: heldId, life: b.life,
+            seq: weaponState!.lastIntentSeq + 1 }, now);
+          weaponState = this.opts.host.weaponStateOf(b.id, now);
+        };
+        if (weaponState.activeWeaponId !== heldId) control('equip');
+        let ammo = weaponState?.primary.weaponId === heldId ? weaponState.primary : weaponState?.sidearm;
+        if (ammo && ammo.mag === 0 && ammo.reserve > 0 && ammo.reloadRemainingMs === 0) control('reload');
+        ammo = weaponState?.primary.weaponId === heldId ? weaponState.primary : weaponState?.sidearm;
+        if (!ammo || ammo.mag === 0 || ammo.reloadRemainingMs > 0) fire = false;
+        if (ammo?.chargeRequiredMs) {
+          if (fire && ammo.chargeElapsedMs === null) control('charge-start');
+          else if (!fire && ammo.chargeElapsedMs !== null && (!sense.visible || intent.knife || intent.grenade !== null)) control('cancel');
+          if (ammo.chargeElapsedMs === null || ammo.chargeElapsedMs < ammo.chargeRequiredMs) fire = false;
+        }
+      }
 
       this.opts.host.updatePose(b.id, b.x, b.y, b.z, now);
       this.opts.host.submitInput(b.id, {

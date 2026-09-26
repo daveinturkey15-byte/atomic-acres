@@ -55,8 +55,13 @@ export function fullRounds(weaponId: string): number {
 export interface Drop {
   readonly id: number;
   readonly ownerId: string;
+  /** Host death provenance. Legacy/pure drops have no open trade settlement. */
+  ownerLife: number | null;
+  settlesAt: number;
   weaponId: string;
   rounds: number;
+  /** Exact rounds already seated in this dropped gun; scavenging drains reserve first. */
+  mag: number;
   grenades: number;
   x: number; y: number; z: number;
   readonly bornAt: number;
@@ -65,12 +70,14 @@ export interface Drop {
 
 export function createDrop(
   id: number, ownerId: string, weaponId: string, rounds: number,
-  x: number, y: number, z: number, now: number,
+  x: number, y: number, z: number, now: number, mag = 0,
 ): Drop {
   const cap = fullRounds(weaponId);
+  const total = Math.max(0, Math.min(cap, Math.floor(Number.isFinite(rounds) ? rounds : 0)));
   return {
-    id, ownerId, weaponId,
-    rounds: Math.max(0, Math.min(cap, Math.floor(Number.isFinite(rounds) ? rounds : 0))),
+    id, ownerId, weaponId, ownerLife: null, settlesAt: -Infinity,
+    rounds: total,
+    mag: Math.max(0, Math.min(WEAPON_BY_ID.get(weaponId)?.magSize ?? 0, total, Math.floor(Number.isFinite(mag) ? mag : 0))),
     grenades: DROP_GRENADE_POUCHES,
     x: Number.isFinite(x) ? x : 0, y: Number.isFinite(y) ? y : 0, z: Number.isFinite(z) ? z : 0,
     bornAt: now, diesAt: now + DROP_LIFETIME_MS,
@@ -117,6 +124,7 @@ export function inScavengeReach(d: Drop, x: number, y: number, z: number): boole
 export interface Carry {
   readonly primaryId: string | null;
   readonly rounds: number;
+  readonly mag?: number;
   readonly lethal: number;
   readonly tactical: number;
 }
@@ -144,6 +152,7 @@ export function scavenge(d: Drop, carry: Carry, lethalCap: number, tacticalCap: 
     const room = Math.max(0, fullRounds(carry.primaryId) - carry.rounds);
     rounds = Math.min(room, d.rounds);
     d.rounds -= rounds;
+    d.mag = Math.min(d.mag, d.rounds);
   }
   let lethal = 0;
   let tactical = 0;
@@ -160,6 +169,7 @@ export interface Swapped {
   /** What the carrier now holds. */
   readonly weaponId: string;
   readonly rounds: number;
+  readonly mag: number;
   /** What went into the drop in its place. */
   readonly leftWeaponId: string;
 }
@@ -173,9 +183,11 @@ export interface Swapped {
  */
 export function swap(d: Drop, carry: Carry, feetX: number, feetY: number, feetZ: number, now: number): Swapped | null {
   if (carry.primaryId === null) return null;
-  const taken: Swapped = { weaponId: d.weaponId, rounds: d.rounds, leftWeaponId: carry.primaryId };
+  const taken: Swapped = { weaponId: d.weaponId, rounds: d.rounds, mag: d.mag, leftWeaponId: carry.primaryId };
   d.weaponId = carry.primaryId;
+  d.ownerLife = null;
   d.rounds = Math.max(0, Math.min(fullRounds(carry.primaryId), Math.floor(carry.rounds)));
+  d.mag = Math.max(0, Math.min(WEAPON_BY_ID.get(carry.primaryId)?.magSize ?? 0, d.rounds, carry.mag ?? 0));
   d.x = feetX; d.y = feetY; d.z = feetZ;
   d.diesAt = now + DROP_LIFETIME_MS;
   return taken;

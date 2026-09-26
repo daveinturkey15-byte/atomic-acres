@@ -64,6 +64,7 @@ export const ORDNANCE_REJECT_REASONS = [
   'no-drop',
   'too-far',
   'drop-empty',
+  'drop-settling',
   'reward-active',
 ] as const;
 export type OrdnanceRejectReason = (typeof ORDNANCE_REJECT_REASONS)[number];
@@ -75,6 +76,7 @@ export const ORDNANCE_REJECT_LABELS: Readonly<Record<OrdnanceRejectReason, strin
   'no-drop': 'NOTHING TO PICK UP',
   'too-far': 'TOO FAR FROM THE WEAPON',
   'drop-empty': 'THAT WEAPON IS EMPTY',
+  'drop-settling': 'PICKUP READY IN A MOMENT',
   'reward-active': 'REWARD WEAPON ACTIVE',
 });
 

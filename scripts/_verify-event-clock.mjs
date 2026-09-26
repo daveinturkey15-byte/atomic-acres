@@ -39,7 +39,7 @@ const ENTRY = `
     };
     const guest = new GuestClient(transport, 'host', 'ABC123', 'guest', { now: () => now, joinTimeoutMs: 5000 });
     assert(sent.length === 1 && sent[0].msg.type === 'hello', 'join sent hello');
-    receive('host', { type: 'welcome', playerId: 'p1', hostNow: 500000, roster: [], token: 'token-123456789' });
+    receive('host', { type: 'welcome', weaponStateProtocol: 1, playerId: 'p1', hostNow: 500000, roster: [], token: 'token-123456789' });
     same(guest.hostClockOffset(), 499900, 'welcome seeds host offset');
     // start refreshes the short initial estimate while NTP is still absent.
     now = 200;

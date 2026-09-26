@@ -24,6 +24,7 @@ import type { ShotAdmission } from './host-ports';
 import type { KitLedger } from './host-kit';
 import type { WorldQuery } from './events';
 import { LETHAL_PER_LIFE, TACTICAL_PER_LIFE } from './ordnance';
+import { MAX_FIRE_AGE_MS, CLOCK_ALLOWANCE_MS } from './host-shot';
 import {
   DROP_MAX_LIVE, DROP_PROMPT_RANGE_M, DROP_SWAP_RANGE_M, createDrop, dropExpired,
   inScavengeReach, nearestDrop, oldestDrop, scavenge, swap, type Drop,
@@ -77,8 +78,8 @@ export class HostDrops {
   }
 
   /**
-   * A body hit the ground: its primary, with the rounds the host estimates it
-   * had, and one grenade pouch. Placed at the victim's pose at the moment of
+   * A body hit the ground: its primary, exact magazine/reserve, and one
+   * grenade pouch. Placed at the victim's pose at the moment of
    * death, on the standable surface under it. Past the cap the OLDEST goes,
    * so the newest corpse always leaves something.
    */
@@ -94,13 +95,26 @@ export class HostDrops {
       this.remove(this.drops.indexOf(old), 'culled', now);
       this.counts.culled++;
     }
-    const d = createDrop(this.nextId++, victim.id, kit.primaryId, kit.rounds, p.x, this.world.groundY(p.x, p.z), p.z, now);
+    const d = createDrop(this.nextId++, victim.id, kit.primaryId, kit.rounds, p.x, this.world.groundY(p.x, p.z), p.z, now, kit.weapons.primary.mag);
+    d.ownerLife = victim.health.life;
+    d.settlesAt = e.at + MAX_FIRE_AGE_MS + CLOCK_ALLOWANCE_MS;
     this.drops.push(d);
     this.counts.spawned++;
     this.life.emit({
       type: 'drop-spawned', at: now, id: d.id, ownerId: d.ownerId, weaponId: d.weaponId, rounds: d.rounds,
       grenades: d.grenades, x: d.x, y: d.y, z: d.z, diesAt: d.diesAt,
     });
+  }
+
+  /** The drop is visible immediately, but cannot transfer while an already-fired
+   * pre-death bullet can still spend this exact corpse's primary magazine. */
+  settleTrade(a: HostActor, weaponId: string, now: number): void {
+    if (a.health.alive) return;
+    const d = this.drops.find(row => row.ownerId === a.id && row.ownerLife === a.health.life
+      && row.weaponId === weaponId && row.settlesAt === a.health.diedAt! + MAX_FIRE_AGE_MS + CLOCK_ALLOWANCE_MS
+      && now <= row.settlesAt);
+    if (!d || d.mag <= 0 || d.rounds <= 0) return;
+    d.mag--; d.rounds--; this.changed(d, now);
   }
 
   /** Expiry, then the walk-over for every live actor. Once per host tick. */
@@ -117,6 +131,7 @@ export class HostDrops {
       const p = a.poses.at(now);
       if (p === null) continue;
       for (const d of this.drops) {
+        if (now <= d.settlesAt) continue;
         if (!inScavengeReach(d, p.x, p.y, p.z)) continue;
         this.takeFrom(a, d, 'scavenge', now);
       }
@@ -129,7 +144,7 @@ export class HostDrops {
     if (kit.reward !== null) return false;
     const taken = scavenge(d, kit, LETHAL_PER_LIFE, TACTICAL_PER_LIFE);
     if (taken.rounds === 0 && taken.lethal === 0 && taken.tactical === 0) return false;
-    kit.rounds += taken.rounds;
+    kit.weapons.grantReserve(taken.rounds);
     kit.lethal += taken.lethal;
     kit.tactical += taken.tactical;
     this.counts.scavenges++;
@@ -157,14 +172,14 @@ export class HostDrops {
       const near = nearestDrop(this.drops, p.x, p.y, p.z, DROP_PROMPT_RANGE_M);
       return this.refuse(a, msg, near === null ? 'no-drop' : 'too-far', now);
     }
+    if (now <= d.settlesAt) return this.refuse(a, msg, 'drop-settling', now);
     const kit = this.kits.kitOf(a);
     if (d.weaponId === kit.primaryId) {
       return this.takeFrom(a, d, 'scavenge', now) ? ADMITTED : this.refuse(a, msg, 'drop-empty', now);
     }
-    const sw = swap(d, kit, p.x, this.world.groundY(p.x, p.z), p.z, now);
+    const sw = swap(d, { ...kit, mag: kit.weapons.primary.mag }, p.x, this.world.groundY(p.x, p.z), p.z, now);
     if (sw === null) return this.refuse(a, msg, 'no-drop', now);
-    kit.primaryId = sw.weaponId;
-    kit.rounds = sw.rounds;
+    kit.weapons.replacePrimary({ weaponId: sw.weaponId, mag: sw.mag, reserve: sw.rounds - sw.mag }, now);
     this.counts.swaps++;
     this.life.emit({
       type: 'pickup', at: now, actorId: a.id, dropId: d.id, kind: 'swap', weaponId: sw.weaponId,

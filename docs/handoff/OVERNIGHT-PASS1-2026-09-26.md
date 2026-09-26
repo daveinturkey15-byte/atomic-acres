@@ -17,8 +17,8 @@ views do not prove temporal stability, gameplay throughput or owner approval.
 The candidate now enables the r180 optimization on its requested WebGPU path
 by default. `?shadow-material=off` retains the native control path. Forced
 WebGL stays off by default; the standalone helper's opt-in contract is unchanged.
-OPEN: this default integration must pass fresh built-page acceptance before
-the owner preview changes. No light, shadow resolution, post quality or
+VERIFIED: this default integration passed fresh built-page local acceptance on
+runtime `2a2e22babdeca8311f0b6533b83551520791ffdd`. No light, shadow resolution, post quality or
 animation cadence was reduced.
 
 VERIFIED: five real kills on runtime278 earned a drone in the final unchanged
@@ -32,7 +32,10 @@ candidate anchors that card to the viewport and gives it a bounded responsive
 width. A separate actual-component DOM fixture passes35 checks at1600×900 and
 390×844, including containment, readable lines, reset/staleness and disposal.
 Its exact previous-source negative control fails the layout requirements.
-OPEN: a fresh earned-drone run must verify the candidate's real-game panel.
+VERIFIED: the candidate's real earned-drone run passed on the exact compiled
+2a2e22b artifact, and the original controlled gameplay frame shows the card
+contained and readable. Five real kills, native controls, Escape, same-craft
+re-entry, natural expiry and return to normal firing passed without errors.
 
 VERIFIED: Minigun visible repair1 changes the support thumb and reload arc,
 preserves the original gun and right-hand geometry, and passes strengthened
@@ -51,7 +54,21 @@ image reference and bounded workbench brief remain ready. The project recipe
 requires asking before starting the owner service; that request is pending.
 OPEN: local model inventory, new mesh/export/runtime and owner art acceptance.
 
-OPEN: fresh candidate menu/deploy/gameplay frames, traversal, focused authority
-checks, two-browser delayed-SDP/rejoin and the unchanged210-second soak are
-required before preview promotion. Evidence and cumulative active work are
-recorded in CURRENT.json; no production branch or Pages publish is authorized.
+VERIFIED: exact compiled2a2e22b passed menu/deploy/gameplay frames, five traversal
+routes, four house faces, garage invariant, four lighting positions, focused
+authority checks, real two-browser120s delayed-SDP with six early ICE candidates,
+six-step actual document rejoin and the unchanged210-second gameplay soak.
+The soak retained22 samples: JS floor slope0.294MB/min, renderer net7.78MiB;
+its late actual game readings were44–53FPS. Page RAF58.6FPS is a different count.
+
+VERIFIED: the178-file/98,320,397-byte compiled artifact was copied to the local
+`captures/builds/overnight-graphics-2a2e22b` fallback and every file hash compared
+with dist-next. Entry SHA256 is
+`893032aef3b849801b41cfe96daf86b3f1aa2be52760850f919f840e11e9ff9f`.
+The owner4348 runtime278 remains preserved until the coherent weapon-state
+successor passes fresh acceptance. No production branch or Pages publish occurred.
+
+OPEN: physical LAN/WAN, sustained60FPS and the frozen visual bar remain open.
+The separately admitted host magazine/reload/held-Rail-charge source pass needs
+its own native-input and real-network proof; 2a2's former instant-Rail behavior
+does not prove that successor. Evidence and cumulative active work are in CURRENT.json.

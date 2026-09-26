@@ -47,9 +47,18 @@ function fixture(weapon, targets = [{ id: 'target', x: 0, z: 5, team: 1 }], boxe
   const shot = (changes = {}) => host.submitShot('shooter', { type: 'shot', life: host.lifeOf('shooter'),
     seq: ++seq, weaponId: weapon, firedAt: now, ox: 0, oy: 1.2, oz: 0, dx: 0, dy: 0, dz: 1, ...changes }, now);
   const advance = (ms = 20) => { now += ms; pose(); return host.tick(now); };
+  const intent = (action) => {
+    const state = host.weaponStateOf('shooter', now);
+    return host.submitWeaponIntent('shooter', { action, weaponId: weapon,
+      life: state.life, seq: state.lastIntentSeq + 1 }, now);
+  };
+  // The stronger host contract requires real equip/hold/reload admission.
+  // The combat and conservation assertions below remain the same.
+  if (SIDEARM_IDS.includes(weapon)) assert.equal(intent('equip').accepted, true);
+  if (weapon === 'railgun') { assert.equal(intent('charge-start').accepted, true); advance(750); }
   const drain = () => host.tick(now);
   const actor = (id = 'target') => host.snapshot().actors.find((a) => a.id === id);
-  return { host, targets, shot, advance, drain, actor, now: () => now };
+  return { host, targets, shot, advance, drain, actor, intent, now: () => now };
 }
 
 test('all 20 roster guns admit one carried shot and deal real damage', () => {
@@ -157,6 +166,12 @@ test('primary and selected sidearm cannot exceed total issued ammunition', () =>
   for (const weapon of ['explosive-crossbow', 'magnum']) {
     const f = fixture(weapon, []); const w = def(weapon);
     for (let i = 0; i < w.magSize + w.startReserve; i++) {
+      const state = f.host.weaponStateOf('shooter', f.now());
+      const row = state.primary.weaponId === weapon ? state.primary : state.sidearm;
+      if (row.mag === 0 && row.reserve > 0) {
+        assert.equal(f.intent('reload').accepted, true);
+        f.advance(w.emptyReloadTime * 1000);
+      }
       assert.equal(f.shot().accepted, true, `${weapon} round ${i}`); f.advance(w.interval * 1000 + 10);
     }
     assert.equal(f.shot().reason, 'empty-magazine');
@@ -379,7 +394,11 @@ test('actual owned pilot blocks body guns and ordnance, admits controls and rele
   const rejected = f.drain();
   assert.equal(rejected.filter((e) => e.type === 'shot-rejected' && e.reason === 'possessing').length, 4);
   assert(!rejected.some((e) => ['shot-fired', 'grenade-armed', 'melee', 'damage'].includes(e.type)));
-  assert.deepEqual(f.host.loadoutOf('shooter'), held, 'rejected body actions never alter kit');
+  const { weaponState: afterAck, ...afterKit } = f.host.loadoutOf('shooter');
+  const { weaponState: beforeAck, ...beforeKit } = held;
+  assert.deepEqual(afterKit, beforeKit, 'rejected body actions never alter kit');
+  assert.deepEqual(afterAck.primary, beforeAck.primary); assert.deepEqual(afterAck.sidearm, beforeAck.sidearm);
+  assert.equal(afterAck.resolvedShotSeqs.length, beforeAck.resolvedShotSeqs.length + 1, 'refused gun acknowledged without spending');
   const before = rt.aircraftTargets()[0];
   assert.equal(rt.submitPilotInput('shooter', { seq: 1, forward: 1, strafe: 0, ascend: 0,
     yaw: 0, pitch: 0, fire: false }, f.now(), createWorldQuery([])), true);

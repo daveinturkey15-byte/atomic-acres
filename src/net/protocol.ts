@@ -20,6 +20,8 @@ import type { TeamId } from '../game/events';
 import type { Loadout } from '../game/loadout';
 import type { StreakLoadout } from '../game/killstreaks/catalog';
 import type { PresentationMessage } from './protocol-effects';
+import { isWeaponState, type WeaponNetMessage } from './protocol-weapons';
+import type { WeaponState } from '../game/host-weapon-state';
 import { isPlayerStance, type PlayerStance } from './room-core';
 import {
   isGameMessage,
@@ -90,6 +92,8 @@ export interface ResumeClaim {
 /** Guest -> host: request admission. */
 export interface HelloMsg {
   type: 'hello';
+  /** Kept opaque at the legacy-shape parser so admission can explain a mismatch. */
+  weaponStateProtocol?: unknown;
   code: string;
   name: string;
   /** Client nonce so a stale retry is not mistaken for a second player. */
@@ -113,6 +117,8 @@ export interface HelloMsg {
  * lobby welcome; old peers ignore it and old hosts never send it.
  */
 export interface ResumeState {
+  /** Current private magazine/reload/charge state; retained through document replacement. */
+  weaponState?: WeaponState;
   phase: Exclude<LobbyPhase, 'lobby'>;
   /** The tick the countdown ends at; only meaningful while phase is `starting`. */
   startTick: number;
@@ -143,6 +149,8 @@ export interface ResumeState {
 /** Host -> guest: admission granted. Carries the guest's authoritative id. */
 export interface WelcomeMsg {
   type: 'welcome';
+  /** Admission requires exactly the current protocol; missing legacy values are refused. */
+  weaponStateProtocol?: unknown;
   playerId: string;
   hostNow: number;
   roster: RosterEntry[];
@@ -153,7 +161,7 @@ export interface WelcomeMsg {
 }
 
 /** Every reason a host can refuse a hello, frozen; the labels beside it are the UI's. */
-export const REJECT_REASONS = ['bad-code', 'room-full', 'already-started', 'duplicate-name'] as const;
+export const REJECT_REASONS = ['bad-code', 'room-full', 'already-started', 'duplicate-name', 'incompatible-build'] as const;
 export type RejectReason = (typeof REJECT_REASONS)[number];
 
 export const REJECT_LABELS: Readonly<Record<RejectReason, string>> = Object.freeze({
@@ -161,6 +169,7 @@ export const REJECT_LABELS: Readonly<Record<RejectReason, string>> = Object.free
   'room-full': 'ROOM IS FULL',
   'already-started': 'MATCH ALREADY STARTED',
   'duplicate-name': 'THAT NAME IS TAKEN',
+  'incompatible-build': 'GAME VERSIONS DIFFER — REFRESH BOTH GAMES',
 });
 
 /** Host -> guest: admission refused. Terminal for this join attempt. */
@@ -296,6 +305,7 @@ export interface ByeMsg {
 }
 
 export type NetMessage =
+  | WeaponNetMessage
   | PresentationMessage
   | HelloMsg
   | WelcomeMsg
@@ -342,6 +352,7 @@ function isResumeState(v: unknown): v is ResumeState {
     (r['lastPilotSeq'] === undefined || (Number.isSafeInteger(r['lastPilotSeq']) && (r['lastPilotSeq'] as number) >= -1)) &&
     Number.isSafeInteger(r['life']) && (r['life'] as number) >= 1 &&
     Number.isSafeInteger(r['shotSeq']) && (r['shotSeq'] as number) >= -1 &&
+    (r['weaponState'] === undefined || (isWeaponState(r['weaponState']) && r['weaponState'].life === r['life'])) &&
     (r['primaryId'] === undefined || typeof r['primaryId'] === 'string') &&
     (r['rounds'] === undefined || (Number.isSafeInteger(r['rounds']) && (r['rounds'] as number) >= 0)) &&
     (r['sidearmId'] === undefined || typeof r['sidearmId'] === 'string') &&
@@ -443,6 +454,7 @@ export function isNetMessage(v: unknown): v is NetMessage {
     // file stays inside the 400-line cap. `isGameMessage` fails closed on any
     // tag it does not own, so this list cannot admit an unchecked message.
     case 'shot':
+    case 'weapon-intent': case 'weapon-state':
     case 'shot-reject':
     case 'shot-fired':
     case 'damage':

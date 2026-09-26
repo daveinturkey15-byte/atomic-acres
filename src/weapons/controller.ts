@@ -50,6 +50,8 @@ import { CROSSBOW_ID, isCrossbowCanaryOptIn } from './crossbow-runtime';
 import { WeaponEffects } from './effects';
 import { OrdnanceInput } from './ordnance-input';
 import { isMotionCanaryRequested, ViewmodelMotion } from './viewmodel-motion';
+import type { WeaponIntent, WeaponState as HostWeaponState } from '../game/host-weapon-state';
+import { WeaponStateClient } from './weapon-state-client';
 import { AudioService, type AudioStats, type ShotFamily, type StepSurface, type StepOptions, type EnvironmentKind } from '../audio/service';
 import {
   loadCatalogCarbineRig,
@@ -236,6 +238,8 @@ interface ControllerOpts {
   onHud: (line: string) => void;
   /** Optional: absent means nobody is listening, and the gun is a toy again. */
   onShot?: (claim: ShotClaim) => void;
+  /** Driver assigns the intent sequence/life and returns its sequence. */
+  onWeaponIntent?: (intent: Omit<WeaponIntent, 'seq' | 'life'>) => number | null;
   /** Pre-match preview only; admitted spawn/pickup events replace these ids. */
   localLoadout?: () => Loadout;
   /** Optional explicit opt-in for catalog carbine canary (?carbine=canary) */
@@ -309,6 +313,11 @@ export class WeaponsController {
   private recoilTotal = 0;
 
   private onShot: ((claim: ShotClaim) => void) | null = null;
+  private readonly weaponAuthority = new WeaponStateClient();
+  private readonly onWeaponIntent: ControllerOpts['onWeaponIntent'];
+  private pendingWeaponIntent: { seq: number; action: WeaponIntent['action']; weaponId: string } | null = null;
+  private chargePressSeq: number | null = null;
+  private chargeFired = false;
   /** Monotonic claim sequence, and the clock the claim is stamped with. */
   private shotSeq = 0;
   private nowMs = 0;
@@ -340,6 +349,7 @@ export class WeaponsController {
     this.targets = opts.targets;
     this.onHud = opts.onHud;
     this.onShot = opts.onShot ?? null;
+    this.onWeaponIntent = opts.onWeaponIntent;
     const loadout = opts.localLoadout?.() ?? resolveLoadout(defaultLoadoutStore());
     this.carriedPrimary = loadout.primary;
     this.carriedSidearm = SIDEARM_IDS.includes(loadout.sidearm) ? loadout.sidearm : sidearmForPrimary(loadout.primary);
@@ -390,6 +400,10 @@ export class WeaponsController {
       reserve: this.weapons[0].reserve,
       magSize: this.weapons[0].def.magSize,
       reloading: false,
+      charging: false,
+      chargeProgress: 0,
+      reloadRemainingMs: 0,
+      actionPending: false,
       ads: false,
       adsT: 0,
       moveScale: 1,
@@ -554,6 +568,7 @@ export class WeaponsController {
     // The stamp every shot claim this frame carries. `time` arrives in seconds
     // (main.ts passes `performance.now() / 1000`); the wire is milliseconds.
     this.nowMs = time * 1000;
+    this.refreshWeaponAuthority();
     const cur = this.weapons[this.active];
     const def = cur.def;
     this.speed = move.speed;
@@ -601,6 +616,20 @@ export class WeaponsController {
     const bobTarget = move.grounded && move.speed > 0.5 ? Math.min(1, move.speed / 4) : 0;
     this.bobScale += (bobTarget - this.bobScale) * Math.min(1, dt * 6);
 
+    // The host admits the start and measures the charge. A retained host
+    // charge cannot fire after resume/release without a fresh local press.
+    if (this.onWeaponIntent && def.id === 'railgun' && this.triggerHeld && this.chargePressSeq !== null && !this.chargeFired) {
+      const host = this.weaponAuthority.state;
+      const charge = host?.primary.weaponId === def.id ? host.primary : host?.sidearm.weaponId === def.id ? host.sidearm : null;
+      // The bar may interpolate; only an acknowledged host-ready level may
+      // discharge. A changed clock estimate cannot consume this held press.
+      if (host && host.lastIntentSeq === this.chargePressSeq && host.lastIntentReason === null && charge
+        && charge.chargeElapsedMs !== null && charge.chargeElapsedMs >= charge.chargeRequiredMs
+        && this.weaponAuthority.fresh(this.nowMs)) {
+        if (this.tryFire(false, undefined, true)) this.chargeFired = true;
+      }
+    }
+
     // Auto fire while the trigger is held.
     if (this.triggerHeld && def.auto && !cur.reloading) {
       let elapsed = dt;
@@ -622,12 +651,12 @@ export class WeaponsController {
     let reloadDip = 0;
     let reloadPoseProgress = 0;
     if (cur.reloading) {
-      cur.reloadT -= dt;
+      if (!this.onWeaponIntent || this.pendingWeaponIntent?.action === 'reload') cur.reloadT -= dt;
       const progress = 1 - Math.max(0, cur.reloadT) / cur.reloadDur;
       reloadPoseProgress = progress;
       cur.rig.hands?.updateReload(progress);
       reloadDip = Math.sin(Math.min(1, Math.max(0, progress)) * Math.PI);
-      if (cur.reloadT <= 0) {
+      if (cur.reloadT <= 0 && !this.onWeaponIntent) {
         cur.rig.hands?.resetReload();
         cur.reloading = false;
         const need = def.magSize - cur.mag;
@@ -718,9 +747,16 @@ export class WeaponsController {
     this.audioSvc.resume();
     if (!this.visible) return;
     if (button === 0) {
+      if (this.triggerHeld) return;
       this.triggerHeld = true;
       const cur = this.weapons[this.active];
       if (cur.reloading) return;
+      if (this.onWeaponIntent && cur.def.id === 'railgun') {
+        this.chargeFired = false;
+        if (this.weaponAuthority.canPredict(cur.def.id, this.nowMs) && !this.ord.busy)
+          this.chargePressSeq = this.sendWeaponIntent('charge-start', cur.def.id);
+        this.syncHudState(); this.pushHud(true); return;
+      }
       if (this.tryFire(false, inputAtMs) && cur.def.auto) {
         this.autoTimer = cur.def.interval;
         this.autoInputAtMs = typeof inputAtMs === 'number' && Number.isFinite(inputAtMs) && inputAtMs > this.nowMs
@@ -737,6 +773,7 @@ export class WeaponsController {
 
   pointerUp(button: number): void {
     if (button === 0) {
+      if (this.chargePressSeq !== null) this.cancelWeaponAction();
       this.triggerHeld = false;
       this.autoTimer = 0;
       this.autoInputAtMs = null;
@@ -764,6 +801,7 @@ export class WeaponsController {
     // G / Q / V / E: the off hand. A swing cancels a reload, as in BO2.
     if (this.visible && this.ord.keyDown(code, this.nowMs)) {
       if (this.ord.busy) {
+        this.cancelWeaponAction();
         const cur = this.weapons[this.active];
         cur.reloading = false;
         cur.reloadT = 0;
@@ -777,6 +815,82 @@ export class WeaponsController {
   /** Key releases: a held grenade is thrown when G/Q comes up; E stops the use-hold. */
   keyUp(code: string): boolean {
     return this.visible && this.ord.keyUp(code);
+  }
+
+  /** Private self state already localized by the network clock adapter. */
+  applyWeaponState(state: HostWeaponState, nowMs: number): boolean {
+    const oldLife = this.weaponAuthority.state?.life;
+    if (!this.weaponAuthority.apply(state)) return false;
+    this.nowMs = Math.max(this.nowMs, nowMs);
+    if (oldLife !== state.life) {
+      this.triggerHeld = false; this.chargePressSeq = null; this.chargeFired = false;
+      this.pendingWeaponIntent = null;
+    }
+    this.carriedPrimary = state.primary.weaponId;
+    this.carriedSidearm = state.sidearm.weaponId;
+    if (this.pendingWeaponIntent && state.lastIntentSeq >= this.pendingWeaponIntent.seq) this.pendingWeaponIntent = null;
+    if (this.chargePressSeq === state.lastIntentSeq && state.lastIntentReason !== null) {
+      this.triggerHeld = false; this.chargePressSeq = null; this.chargeFired = false;
+    }
+    if (this.pendingWeaponIntent?.action !== 'equip') {
+      const active = this.weapons.findIndex(w => w.def.id === state.activeWeaponId);
+      if (active >= 0) this.switchTo(active, false);
+    }
+    this.refreshWeaponAuthority();
+    // Rejoin may retain a paid host charge, but cannot recreate a held native
+    // gesture. Explicitly cancel that retained action without firing it.
+    const row = this.weaponAuthority.project(state.activeWeaponId, this.nowMs);
+    if (row?.chargeElapsedMs !== null && row && this.chargePressSeq === null && this.pendingWeaponIntent?.action !== 'cancel')
+      this.sendWeaponIntent('cancel', state.activeWeaponId);
+    this.syncHudState(); this.pushHud(true);
+    return true;
+  }
+
+  clearWeaponState(): void {
+    this.cancelWeaponAction();
+    this.weaponAuthority.clear(); this.pendingWeaponIntent = null;
+    this.syncHudState();
+  }
+
+  /** Menu, death, possession, loss of focus/lock and teardown share one cancel. */
+  cancelWeaponAction(): void {
+    const cur = this.weapons[this.active];
+    const row = this.weaponAuthority.project(cur.def.id, this.nowMs);
+    const busy = cur.reloading || this.chargePressSeq !== null || row?.reloading || (row && row.chargeElapsedMs !== null);
+    this.triggerHeld = false; this.chargePressSeq = null; this.chargeFired = false;
+    this.autoTimer = 0; this.autoInputAtMs = null;
+    if (busy && this.pendingWeaponIntent?.action !== 'cancel') this.sendWeaponIntent('cancel', cur.def.id);
+    cur.reloading = false; cur.reloadT = 0; cur.rig.hands?.resetReload();
+    this.syncHudState();
+  }
+
+  private sendWeaponIntent(action: WeaponIntent['action'], weaponId: string): number | null {
+    if (!this.onWeaponIntent) return null;
+    const seq = this.onWeaponIntent({ action, weaponId });
+    if (seq === null || !Number.isSafeInteger(seq) || seq < 0) return null;
+    this.pendingWeaponIntent = { seq, action, weaponId };
+    return seq;
+  }
+
+  private refreshWeaponAuthority(): void {
+    const host = this.weaponAuthority.state;
+    if (!this.onWeaponIntent || !host) return;
+    for (const id of [host.primary.weaponId, host.sidearm.weaponId]) {
+      const weapon = this.weapons.find(w => w.def.id === id);
+      const row = this.weaponAuthority.project(id, this.nowMs);
+      if (!weapon || !row) continue;
+      weapon.mag = row.mag; weapon.reserve = row.reserve;
+      const waiting = this.pendingWeaponIntent?.weaponId === id && host.lastIntentSeq < this.pendingWeaponIntent.seq;
+      if (waiting && this.pendingWeaponIntent?.action === 'reload') continue;
+      const wasReloading = weapon.reloading;
+      weapon.reloading = waiting && this.pendingWeaponIntent?.action === 'cancel' ? false : row.reloading;
+      weapon.reloadDur = Math.max(.001, row.reloadDurationMs / 1000);
+      weapon.reloadT = weapon.reloading ? row.reloadRemainingMs / 1000 : 0;
+      if (wasReloading && !weapon.reloading) {
+        weapon.rig.hands?.resetReload();
+        if (!waiting && weapon === this.weapons[this.active]) this.audioSvc.reloadEnd();
+      }
+    }
   }
 
   // ---- Ordnance lane: the host's level and its verdicts, pushed by `ordnance-scene.ts` ----
@@ -811,7 +925,7 @@ export class WeaponsController {
     this.carriedPrimary = weaponId;
     if (sidearmId && SIDEARM_IDS.includes(sidearmId)) this.carriedSidearm = sidearmId;
     else if (!this.carriedSidearm || this.carriedSidearm === weaponId) this.carriedSidearm = sidearmForPrimary(weaponId);
-    if (sidearmRounds !== undefined) {
+    if (!this.onWeaponIntent && sidearmRounds !== undefined) {
       const sidearm = this.weapons.find((entry) => entry.def.id === this.carriedSidearm);
       if (sidearm) {
         const total = Math.max(0, Math.floor(sidearmRounds));
@@ -821,12 +935,14 @@ export class WeaponsController {
     }
     const w = this.weapons[idx];
     const total = Math.max(0, Math.floor(rounds));
-    w.mag = Math.min(w.def.magSize, total);
-    w.reserve = total - w.mag;
+    if (!this.onWeaponIntent) {
+      w.mag = Math.min(w.def.magSize, total);
+      w.reserve = total - w.mag;
+    }
     w.reloading = false;
     w.reloadT = 0;
     w.rig.hands?.resetReload();
-    this.switchTo(idx);
+    this.switchTo(idx, false);
     this.syncHudState();
     this.pushHud(true);
     return true;
@@ -834,6 +950,7 @@ export class WeaponsController {
 
   /** Scavenged ammo for a gun we carry. */
   grantRounds(weaponId: string, rounds: number): boolean {
+    if (this.onWeaponIntent) return false; // Host magazine/reserve level owns this grant.
     const w = this.weapons.find((v) => v.def.id === weaponId);
     if (w === undefined || !(rounds > 0)) return false;
     w.reserve += Math.floor(rounds);
@@ -844,6 +961,7 @@ export class WeaponsController {
 
   /** A new life: whatever the hand was doing is over. */
   onSelfSpawn(primaryId?: string | null, rounds = 0, sidearmId?: string | null, sidearmRounds?: number): void {
+    this.cancelWeaponAction();
     this.coolInputAtMs = null;
     this.ord.cancel();
     for (const w of this.weapons) {
@@ -854,7 +972,7 @@ export class WeaponsController {
     if (primaryId) {
       this.adoptWeapon(primaryId, rounds, sidearmId ?? sidearmForPrimary(primaryId), sidearmRounds);
       const sidearm = this.weapons.find((w) => w.def.id === this.carriedSidearm);
-      if (sidearm) {
+      if (sidearm && !this.onWeaponIntent) {
         const issued = sidearmRounds ?? sidearm.def.magSize + sidearm.def.startReserve;
         sidearm.mag = Math.min(sidearm.def.magSize, Math.max(0, Math.floor(issued)));
         sidearm.reserve = Math.max(0, Math.floor(issued)) - sidearm.mag;
@@ -879,6 +997,7 @@ export class WeaponsController {
   }
 
   setVisible(v: boolean): void {
+    if (!v && this.visible) this.cancelWeaponAction();
     this.visible = v;
     this.overlay.visible = v;
     this.ord.setVisible(v);
@@ -927,6 +1046,10 @@ export class WeaponsController {
       shotsFired: cur.shotsFired,
       cool: +Math.max(0, cur.cool).toFixed(3),
       reloadProgress: +reloadProgress.toFixed(4),
+      charging: this.hud.charging,
+      chargeProgress: this.hud.chargeProgress,
+      reloadRemainingMs: this.hud.reloadRemainingMs,
+      actionPending: this.hud.actionPending,
     };
     if (includeHands) {
       const hands = cur.rig.hands;
@@ -1148,8 +1271,10 @@ export class WeaponsController {
     }
   }
 
-  private switchTo(index: number): boolean {
+  private switchTo(index: number, notifyHost = true): boolean {
     if (index < 0 || index >= this.weapons.length || index === this.active) return index === this.active;
+    if (notifyHost && this.onWeaponIntent && ![this.carriedPrimary, this.carriedSidearm].includes(this.weapons[index].def.id)) return false;
+    if (notifyHost) this.cancelWeaponAction();
     const prev = this.weapons[this.active];
     this.motion.reset();
     prev.reloading = false;
@@ -1157,6 +1282,7 @@ export class WeaponsController {
     prev.rig.hands?.resetReload();
     prev.rig.group.visible = false;
     this.active = index;
+    if (notifyHost && this.onWeaponIntent) this.sendWeaponIntent('equip', this.weapons[index].def.id);
     this.weapons[this.active].rig.group.visible = this.visible;
     this.adsOn = false;
     this.adsT = 0;
@@ -1178,6 +1304,8 @@ export class WeaponsController {
     if (!this.visible) return false;
     const cur = this.weapons[this.active];
     if (cur.reloading || cur.mag >= cur.def.magSize || cur.reserve <= 0) return false;
+    this.cancelWeaponAction();
+    if (this.onWeaponIntent && this.sendWeaponIntent('reload', cur.def.id) === null) return false;
     cur.reloading = true;
     // A dry gun costs the empty reload; a tactical reload keeps the chambered
     // round's head start.
@@ -1193,24 +1321,28 @@ export class WeaponsController {
    * a pickup reach are all "an action at the eye along the aim at a time",
    * and the host tells them apart by `weaponId`. One author, one sequence.
    */
-  private claim(weaponId: string, firedAt = this.nowMs): void {
+  private claim(weaponId: string, firedAt = this.nowMs, predictAmmo = false): void {
     if (this.onShot === null) return;
     this.tmpDir.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
     const c = this.camera.position;
+    const seq = ++this.shotSeq;
+    if (predictAmmo) this.weaponAuthority.predictShot(seq, weaponId);
     this.onShot({
       origin: { x: c.x, y: c.y, z: c.z },
       direction: { x: this.tmpDir.x, y: this.tmpDir.y, z: this.tmpDir.z },
-      seq: ++this.shotSeq,
+      seq,
       weaponId,
       time: firedAt,
     });
   }
 
-  private tryFire(fromAuto: boolean, inputAtMs?: number): boolean {
+  private tryFire(fromAuto: boolean, inputAtMs?: number, charged = false): boolean {
     const cur = this.weapons[this.active];
     const def = cur.def;
     // The trigger waits for the off hand: no bullet mid-throw, mid-stab or mid-reach.
     if (!this.visible || cur.reloading || this.ord.busy) return false;
+    if (this.onWeaponIntent && (!this.onShot || !this.weaponAuthority.canPredict(def.id, this.nowMs)
+      || this.pendingWeaponIntent?.action === 'equip' || def.id === 'railgun' && !charged)) return false;
     if (!fromAuto || !def.auto) {
       if (cur.cool > 0) return false;
       cur.cool = def.interval;
@@ -1233,7 +1365,7 @@ export class WeaponsController {
     const manualAt = typeof inputAtMs === 'number' && Number.isFinite(inputAtMs)
       ? Math.max(this.nowMs, inputAtMs) : this.nowMs;
     if (!fromAuto && manualAt > this.nowMs) this.coolInputAtMs = manualAt;
-    this.claim(def.id, fromAuto ? this.nowMs + Math.min(0, this.autoTimer) * 1000 : manualAt);
+    this.claim(def.id, fromAuto ? this.nowMs + Math.min(0, this.autoTimer) * 1000 : manualAt, !!this.onWeaponIntent);
 
     // Spread cone: base (hip<->ADS) + movement + accumulated bloom, crouch bonus.
     cur.bloom = Math.min(def.spread.bloomMax, cur.bloom + def.spread.bloom);
@@ -1346,6 +1478,13 @@ export class WeaponsController {
     h.reserve = cur.reserve;
     h.magSize = cur.def.magSize;
     h.reloading = cur.reloading;
+    const charge = this.weaponAuthority.project(cur.def.id, this.nowMs);
+    h.charging = cur.def.id === 'railgun' && this.triggerHeld && this.chargePressSeq !== null && !this.chargeFired;
+    h.chargeProgress = h.charging && this.weaponAuthority.state && this.weaponAuthority.state.lastIntentSeq === this.chargePressSeq
+      && this.weaponAuthority.state.lastIntentReason === null
+      ? charge?.chargeProgress ?? 0 : 0;
+    h.reloadRemainingMs = cur.reloading ? Math.max(0, cur.reloadT * 1000) : 0;
+    h.actionPending = this.pendingWeaponIntent !== null;
     h.ads = this.adsOn;
     h.adsT = +this.adsT.toFixed(3);
     h.moveScale = +(1 + (cur.def.adsMoveScale - 1) * this.adsT).toFixed(3);
@@ -1435,6 +1574,7 @@ export class WeaponsController {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
+    this.cancelWeaponAction();
     this.effects.dispose();
     if (this.carbineCanaryRig) {
       this.carbineCanaryRig.dispose();

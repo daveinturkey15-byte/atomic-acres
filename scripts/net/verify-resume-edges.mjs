@@ -131,7 +131,7 @@ const ENTRY = `
     stance: 'stand', sprint: false, dt: 0.05, y: 0,
   });
   const rawHello = (name: string, resume?: { playerId: string; token: string }) => ({
-    type: 'hello', code: CODE, name, nonce: 'n-' + name, ...(resume === undefined ? {} : { resume }),
+    type: 'hello', weaponStateProtocol: 1, code: CODE, name, nonce: 'n-' + name, ...(resume === undefined ? {} : { resume }),
   });
   const startPlaying = (t: Clock, hub: Hub, room: HostRoom, guest: GuestClient): number => {
     room.setReady(true);
@@ -342,7 +342,8 @@ const ENTRY = `
         Math.abs(from.x) < 0.25 && Math.abs(to.x) < 0.5 && to.z > 1,
       groundY: () => 0, inBounds: () => true,
     };
-    const solo = createSoloDriver({ world: rematchWorld, ui, setup, seed, localId: 'host', localName: 'host', instrument: createSessionLog('host') });
+    const solo = createSoloDriver({ world: rematchWorld, ui, setup, seed, localId: 'host', localName: 'host',
+      localPrimaryId: 'deadeye', instrument: createSessionLog('host') });
     const driver = createHostDriver(room, solo, { world: rematchWorld });
     const a = joinGuest(t, hub, 'guest-a', 'ann', null);
     room.setReady(true); a.guest.setReady(true);
@@ -356,6 +357,15 @@ const ENTRY = `
     // score limit. The target respawns between claims; the narrow LoS stub
     // prevents the one bot from racing the deterministic host claims.
     for (let seq = 0; seq < 10 && !solo.ended(); seq++) {
+      // This fixture must carry the gun it fires and obey its actual magazine.
+      // The new host authority cannot infer an equip/reload from a shot claim.
+      if (solo.weaponStateFor('host', t.now)?.primary.mag === 0) {
+        need(solo.weaponIntent({ action: 'reload', weaponId: 'deadeye' }) !== null,
+          'authored Deadeye reload was not submitted');
+        for (let i = 0; i < 200 && solo.weaponStateFor('host', t.now)?.primary.reloadRemainingMs; i++) runFrame();
+        need((solo.weaponStateFor('host', t.now)?.primary.mag ?? 0) > 0,
+          'host did not complete the real Deadeye reload');
+      }
       room.placeSeat('p1', 0, 5, Math.PI);
       runFrame();
       solo.localShot({

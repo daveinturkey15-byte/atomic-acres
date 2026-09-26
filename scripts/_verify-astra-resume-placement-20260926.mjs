@@ -69,7 +69,7 @@ function fixture(api, { cached = true, stance = 'stand', queuedSpawn = false } =
   };
   const guest = new api.GuestClient(transport, 'host', 'ABC123', 'guest', { now: () => now, joinTimeoutMs: 3600000 });
   const deliver = msg => receive('host', msg);
-  deliver({ type: 'welcome', playerId: 'p1', hostNow: now, roster: [], token: 'resume-token-123', resume: {
+  deliver({ type: 'welcome', weaponStateProtocol: 1, playerId: 'p1', hostNow: now, roster: [], token: 'resume-token-123', resume: {
     phase: 'playing', startTick: 68, lastSeq: 84, lastStreakSeq: 0, lastPilotSeq: -1,
     life: host.lifeOf('p1'), shotSeq: host.shotSeqOf('p1'), ...inventory,
   }});

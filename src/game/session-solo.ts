@@ -31,6 +31,7 @@ import { TICK_HZ } from '../net/snapshot';
 import type { PlayerStance } from '../net/room-core';
 import type { ShotClaim } from '../weapons/controller';
 import type { PilotInput } from './killstreaks/pilot-types';
+import type { WeaponIntent, WeaponIntentResult, WeaponState } from './host-weapon-state';
 import { BotDirector, nextBotTeam, type BotActorView } from './bots';
 import { GameClient } from './client';
 import type { ActorId, GameEvent, TeamId, WorldQuery } from './events';
@@ -107,11 +108,15 @@ export interface SoloDriver extends MatchDriver {
   /** The room integrated this seat to here. Called once per room tick. */
   remotePose(id: ActorId, x: number, y: number, z: number, yaw: number, stance?: PlayerStance, primaryId?: string): void;
   remoteShot(id: ActorId, claim: ShotMsg, receivedAt: number): ShotAdmission | null;
+  remoteWeaponIntent(id: ActorId, intent: WeaponIntent, receivedAt: number): WeaponIntentResult | null;
+  weaponStateFor(id: ActorId, now: number): WeaponState | null;
+  cancelRemoteWeaponCharge(id: ActorId, now: number): void;
   remoteStreak(id: ActorId, slot: number, toggle: boolean): void;
   remotePilot(id: ActorId, input: PilotInput, now: number): void;
   movementState(id: ActorId): { suspended: boolean; speedMultiplier: number };
   /** Live host-owned resume facts for a seat; null means no current actor. */
   resumeFacts(id: ActorId): {
+    weaponState?: WeaponState;
     life: number; shotSeq: number; primaryId?: string; rounds?: number;
     lethal?: number; tactical?: number; armed?: string | null;
   } | null;
@@ -157,6 +162,8 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
   let poseSampleAt = 0;
   let inputSeq = 0;
   let pilotSeq = 0;
+  let weaponIntentSeq = 0;
+  let weaponIntentLife = 0;
   let endedAt: number | null = null;
   let disposed = false;
   const pose = { x: 0, y: 0, z: 0, yaw: 0, pitch: 0, stance: 'stand' as PlayerStance };
@@ -178,6 +185,9 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     if (director !== null) instrument.retireDirector(directorNumbers(director));
     ui.resetPresentation?.();
     epoch++;
+    weaponIntentSeq = 0;
+    weaponIntentLife = 0;
+    client.applySnapshot({ at: now, weaponState: null });
     const runtime = new StreakRuntime({ seed: (opts.seed ?? 1) + epoch, matchEpoch: epoch, mode: rules.mode === 'ffa' ? 'ffa' : 'tdm' });
     const h = new GameHost({
       world, rules, now, seed: (opts.seed ?? 0x4e554b45) + epoch,
@@ -287,7 +297,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     // third-person weapon carry. String-ref copies; no per-frame allocation.
     for (const a of after.actors) {
       const b = bodyById.get(a.id);
-      if (b !== undefined) b.weaponId = a.primaryId;
+      if (b !== undefined) b.weaponId = a.weaponState.activeWeaponId;
     }
     lastMatch = after.match;
     client.applySnapshot({
@@ -296,6 +306,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       players: samples(h, d),
       radar: radarStateFor(localId, now)?.samples ?? [],
       effects: streaks?.effectSnapshot() ?? [],
+      weaponState: h.weaponStateOf(localId, now),
     });
   };
 
@@ -380,6 +391,21 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
         ox: claim.origin.x, oy: claim.origin.y, oz: claim.origin.z,
         dx: claim.direction.x, dy: claim.direction.y, dz: claim.direction.z,
       }, performance.now());
+      client.applySnapshot({ at: performance.now(), weaponState: h.weaponStateOf(localId, performance.now()) });
+    },
+
+    weaponIntent(input): number | null {
+      const h = host, life = h?.lifeOf(localId);
+      if (disposed || h === null || life === null || life === undefined) return null;
+      const state = h.weaponStateOf(localId, performance.now());
+      // Each host life starts a fresh intent window. Preserve the local/host
+      // high-water within a life, but never carry it into a respawn's window.
+      if (weaponIntentLife !== life) { weaponIntentLife = life; weaponIntentSeq = 0; }
+      const seq = Math.max(weaponIntentSeq, (state?.lastIntentSeq ?? -1) + 1);
+      weaponIntentSeq = seq + 1;
+      h.submitWeaponIntent(localId, { seq, life, action: input.action, weaponId: input.weaponId }, performance.now());
+      client.applySnapshot({ at: performance.now(), weaponState: h.weaponStateOf(localId, performance.now()) });
+      return seq;
     },
 
     pressStreak(slot): void {
@@ -413,9 +439,9 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       return bodies;
     },
 
-    snapshot(): HostSnapshot {
+    snapshot(): HostSnapshot & { weaponState: WeaponState | null } {
       if (host === null) throw new Error('[session] no match yet - call begin() first');
-      return host.snapshot();
+      return { ...host.snapshot(), weaponState: client.weaponState };
     },
 
     // ---- remote seats (the room host binding) --------------------------------
@@ -469,7 +495,16 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       return host.submitShot(id, claim, receivedAt);
     },
 
+    remoteWeaponIntent(id, intent, receivedAt): WeaponIntentResult | null {
+      return host !== null && seats.has(id) ? host.submitWeaponIntent(id, intent, receivedAt) : null;
+    },
+    weaponStateFor: (id, now) => host?.weaponStateOf(id, now) ?? null,
+    cancelRemoteWeaponCharge(id, now): void {
+      if (seats.has(id)) host?.cancelWeaponCharge(id, now);
+    },
+
     resumeFacts(id): {
+      weaponState?: WeaponState;
       life: number; shotSeq: number; primaryId?: string; rounds?: number;
       lethal?: number; tactical?: number; armed?: string | null;
     } | null {
@@ -477,7 +512,9 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       const life = host.lifeOf(id);
       const shotSeq = host.shotSeqOf(id);
       const loadout = host.loadoutOf(id);
-      return life === null || shotSeq === null || loadout === null ? null : { life, shotSeq, ...loadout };
+      const weaponState = host.weaponStateOf(id, performance.now());
+      return life === null || shotSeq === null || loadout === null ? null : { life, shotSeq, ...loadout,
+        ...(weaponState === null ? {} : { weaponState }) };
     },
 
     remoteStreak(id, slot, toggle): void {

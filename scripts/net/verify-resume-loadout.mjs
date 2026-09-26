@@ -41,7 +41,7 @@ const ENTRY = `
     };
   };
   const welcome = (primaryId, rounds, inventory) => ({
-    type: 'welcome', playerId: 'p1', hostNow: 0, roster: [], token: 'resume-token-123',
+    type: 'welcome', weaponStateProtocol: 1, playerId: 'p1', hostNow: 0, roster: [], token: 'resume-token-123',
     resume: {
       phase: 'playing', startTick: 0, lastSeq: 8, life: 1, shotSeq: 3,
       primaryId, rounds, lethal: inventory.lethal, tactical: inventory.tactical, armed: inventory.armed,

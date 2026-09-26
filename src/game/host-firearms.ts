@@ -55,7 +55,7 @@ export class HostFirearms {
     const inWindow = history.shots.filter((old) => old.weaponId === c.weaponId &&
       old.at > c.firedAt - 1000 && old.at <= c.firedAt).length;
     if (inWindow >= Math.ceil(1000 / interval) + 1) return 'shot-cooldown';
-    const reason = this.ordnance.spendShot(a, c.weaponId, now);
+    const reason = this.ordnance.spendShot(a, c.weaponId, c.firedAt, now);
     if (reason !== null) return reason;
     history.shots.push({ at: c.firedAt, weaponId: c.weaponId });
     if (history.shots.length > 64) history.shots.shift();

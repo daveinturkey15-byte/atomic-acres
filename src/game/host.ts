@@ -15,6 +15,7 @@ export * from './host-streaks';
 import { isPlayableWeapon } from '../weapons/roster';
 import { isRewardWeapon } from '../weapons/catalog';
 import type { RewardReadout } from './host-kit';
+import type { WeaponIntent, WeaponIntentResult, WeaponState } from './host-weapon-state';
 import {
   SHOT_REJECT_LABELS,
   type ActorId, type GameEvent, type StreakDenialReason, type TeamId, type WorldQuery,
@@ -88,8 +89,6 @@ export class GameHost {
     this.crossbow = new HostCrossbow(this.life, this.world, this.clock);
   }
 
-  // ---- Roster ----------------------------------------
-
   /** Admit an actor and deploy it. Re-adding a live id only moves its team.
    *  `primaryId` is the weapon it carries, so a corpse that never fired still
    *  drops the right gun; absent, the host assumes the default kit's. */
@@ -160,25 +159,11 @@ export class GameHost {
     if (Number.isFinite(msg.yaw)) a.yaw = msg.yaw;
     const stance = normalizeStance(msg.stance);
     if (stance !== null) a.stance = stance;
-    // A guest's loadout is admitted before Start and supplied to addActor.
-    // Input is intent only; accepting a later primary declaration here would
-    // let a client rewrite the next-life hint after the lobby fence.
+    // Input cannot rewrite the loadout admitted before Start.
   }
 
-  /**
-   * A streak press. The host supplies everything only it can know — the life
-   * epoch, the monotonic sequence, the claim id, whether the presser is alive
-   * and whether the match is running — because a claim that asserts its own
-   * eligibility is the forgery lane C's admission exists to refuse.
-   *
-   * RETURNS THE REFUSAL, or null when the press was admitted. The events are
-   * still emitted; this is the answer the PRESSER gets, and an automated
-   * presser needs it. `game/bots.ts` backs off on a refusal instead of
-   * re-pressing the same slot at the tick rate — without a return value its
-   * only way to learn it had been refused was the event bus it does not read,
-   * so it re-pressed at 20 Hz and filled the feed (§5.4 in reverse: a refusal
-   * nobody can hear is as bad as one nobody is given).
-   */
+  /** Host stamps life/sequence/eligibility. Return the refusal as well as
+   * emitting it, so bots can back off instead of re-pressing at tick rate. */
   submitStreakIntent(id: ActorId, msg: Pick<StreakIntentMsg, 'type' | 'slot' | 'toggle'>): StreakDenialReason | null {
     const a = this.life.actors.get(id);
     if (!a) return null;
@@ -198,23 +183,36 @@ export class GameHost {
       ? streakUnsupported(press, this.clock)
       : streaks.activate(press, this.clock, this.world);
     this.life.absorb(events);
+    if (this.deps.streaks?.isPiloting?.(id)) this.ordnance.cancelWeapons(a, this.clock);
     for (const e of events) {
       if (e.type === 'streak-denied' && e.actorId === id) return e.reason;
     }
     return null;
   }
 
-  // ---- Shots ----------------------------------------
+  submitWeaponIntent(id: ActorId, intent: WeaponIntent, receivedAt = this.clock): WeaponIntentResult {
+    const a = this.life.actors.get(id);
+    if (!a) return { accepted: false, reason: 'unknown-shooter' };
+    return this.ordnance.weaponIntent(a, intent, receivedAt, this.match.phase === 'active', this.deps.streaks?.isPiloting?.(id) === true);
+  }
+  /** Trusted seat disconnect/resume boundary; ammunition and reload survive. */
+  cancelWeaponCharge(id: ActorId, _now = this.clock): void {
+    const a = this.life.actors.get(id);
+    if (a) this.ordnance.cancelWeaponCharge(a);
+  }
+  weaponStateOf(id: ActorId, now = this.clock): WeaponState | null {
+    const a = this.life.actors.get(id);
+    if (!a) return null;
+    if (this.deps.streaks?.isPiloting?.(id)) this.ordnance.cancelWeapons(a, now);
+    return this.ordnance.weaponState(a, now);
+  }
 
   /** Every weapon shares life, sequence, clock and muzzle admission before its own delivery path. */
   submitShot(shooterId: ActorId, claim: ShotMsg, receivedAt: number = this.clock): ShotAdmission {
     const a = this.life.actors.get(shooterId) ?? null;
     const ordnance = isOrdnanceId(claim.weaponId);
     const isCrossbow = claim.weaponId === CROSSBOW_ID;
-    // Fail closed: a gated roster prototype (`weapons/roster.ts`) is not a
-    // playable weapon, so a forged bullet claim naming one reads `malformed`
-    // exactly like an unknown id — hiding it in the menu gates nothing alone.
-    // The canary lifts exactly one id, and only when the host opted in.
+    // Unknown/prototype claims fail closed before their delivery path.
     const reason = admitShot(claim, a === null ? null : {
       matchActive: this.match.phase === 'active', life: a.health.life, alive: a.health.alive,
       diedAt: a.health.diedAt,
@@ -224,6 +222,7 @@ export class GameHost {
     if (reason !== null) {
       // Spend refused possession sequences so they cannot replay on exit.
       if (reason === 'possessing' && a) acceptShot(a.window, claim.seq);
+      if (a && !ordnance && claim.life === a.health.life && reason !== 'malformed') this.ordnance.acknowledgeWeaponShot(a, claim.seq);
       this.life.stats = { ...this.life.stats, shotsRejected: this.life.stats.shotsRejected + 1 };
       this.life.emit({ type: 'shot-rejected', at: receivedAt, shooterId, seq: claim.seq, reason });
       return { accepted: false, reason, label: SHOT_REJECT_LABELS[reason] };
@@ -231,17 +230,15 @@ export class GameHost {
     const shooter = a as HostActor;
     acceptShot(shooter.window, claim.seq);
     if (ordnance) return this.ordnance.claim(shooter, claim, receivedAt);
+    this.ordnance.acknowledgeWeaponShot(shooter, claim.seq);
     const firearmRejection = this.firearms.admit(shooter, claim, receivedAt);
     if (firearmRejection !== null) {
       this.life.stats = { ...this.life.stats, shotsRejected: this.life.stats.shotsRejected + 1 };
       this.life.emit({ type: 'shot-rejected', at: receivedAt, shooterId, seq: claim.seq, reason: firearmRejection });
       return { accepted: false, reason: firearmRejection, label: SHOT_REJECT_LABELS[firearmRejection] };
     }
-    // This is the single authoritative presentation edge for firearm shots.
-    // It is emitted after exactly-once admission and before hit resolution, so
-    // misses are audible while rejected/duplicate claims never reach clients.
-    // Canary bolts share the edge, then fly ticked: the impact (and only the
-    // impact) resolves the damage, against CURRENT poses per tick.
+    // Publish accepted fire before hit resolution. Bolts then fly against
+    // current poses; rejected claims produce no presentation edge.
     const muzzle = shooter.poses.at(claim.firedAt);
     if (muzzle !== null) {
       this.life.emit({
@@ -266,8 +263,6 @@ export class GameHost {
     return this.life.areHostile(a, b);
   }
 
-  // ---- Tick ----------------------------------------
-
   /** Advances the match, redeploys the due, regenerates health, drains events. */
   tick(now: number): GameEvent[] {
     const dtSeconds = Math.max(0, now - this.lastTick) / 1000;
@@ -280,8 +275,7 @@ export class GameHost {
         ? advanceFfa(prev, now, leaderboard(this.life.ledger), this.rules)
         : advanceMatch(prev, now, teamTotals(this.life.ledger), this.rules);
     this.life.phase = this.match.phase;
-    // Identity is the change signal: `match.ts` returns the same object when
-    // nothing moved, so this emits once per transition and never per tick.
+    // Match identity changes only at transitions.
     if (this.match !== prev) {
       this.life.emit({
         type: 'match-phase', at: now, phase: this.match.phase, endsAt: this.match.endsAt,
@@ -305,7 +299,10 @@ export class GameHost {
       }
     }
 
-    for (const a of this.life.actors.values()) a.health = regenStep(a.health, dtSeconds, now);
+    for (const a of this.life.actors.values()) {
+      a.health = regenStep(a.health, dtSeconds, now);
+      if (this.deps.streaks?.isPiloting?.(a.id)) this.ordnance.cancelWeapons(a, now);
+    }
     if (this.deps.streaks) {
       this.life.absorb(this.deps.streaks.advance(now, this.world, this.life.streakTargets(now)));
       for (const grant of this.deps.streaks.drainRewardGrants?.() ?? []) {
@@ -324,8 +321,6 @@ export class GameHost {
     this.life.pending.length = 0;
     return out;
   }
-
-  // ---- Readouts ----------------------------------------
 
   snapshot(): HostSnapshot {
     const match: MatchStateMsg = {
@@ -348,6 +343,7 @@ export class GameHost {
         sidearmId: kit.sidearmId, sidearmRounds: kit.sidearmRounds, tacticalId: kit.tacticalId,
         speedMultiplier: kit.speedMultiplier, rewardWeaponId: kit.rewardWeaponId, rewardWeaponRemainingMs: kit.rewardWeaponRemainingMs,
         armed: kit.armed, blindUntil: kit.blindUntil, stance: a.stance,
+        weaponState: this.ordnance.weaponState(a, this.clock),
       });
     }
     return { at: this.clock, match, actors, stats: this.life.stats, ordnance: this.ordnance.snapshot(), crossbow: this.crossbow.snapshot() };
@@ -358,7 +354,7 @@ export class GameHost {
     const a = this.life.actors.get(sample.id);
     return a ? {
       ...sample, hp: a.health.hp, team: a.team, alive: a.health.alive, stance: a.stance,
-      weaponId: this.ordnance.kitOf(a).primaryId,
+      weaponId: this.ordnance.weaponState(a, this.clock).activeWeaponId,
     } : sample;
   }
 
@@ -377,12 +373,12 @@ export class GameHost {
 
   /**
    * Current host-owned kit for a live resume; no spawn or ammo reset. `rounds`
-   * is the existing total-rounds readout and does not claim magazine/reserve
-   * decomposition; the grenade counts are exact host kit values.
+   * retains its legacy total meaning; weaponState carries the exact split and timers.
    */
   loadoutOf(id: ActorId): RewardReadout & {
     primaryId: string; rounds: number; sidearmId: string; sidearmRounds: number;
     lethal: number; tactical: number; tacticalId: string; armed: string | null;
+    weaponState: WeaponState;
   } | null {
     const actor = this.life.actors.get(id);
     if (actor === undefined) return null;
@@ -393,6 +389,7 @@ export class GameHost {
       lethal: kit.lethal, tactical: kit.tactical,
       tacticalId: kit.tacticalId,
       armed: kit.armed,
+      weaponState: this.ordnance.weaponState(actor, this.clock),
       speedMultiplier: kit.speedMultiplier, rewardWeaponId: kit.rewardWeaponId, rewardWeaponRemainingMs: kit.rewardWeaponRemainingMs,
     };
   }

@@ -31,6 +31,7 @@ import type { StreakRuntimePort } from './host-streaks';
 import type { OrdnanceSnapshot } from './host-ordnance';
 import type { CrossbowSnapshot } from './host-crossbow';
 import type { PlayerStance } from '../net/room-core';
+import type { WeaponState } from './host-weapon-state';
 
 /**
  * `StreakRuntimePort` MOVED to `./host-streaks` by the integration lane, and
@@ -79,6 +80,7 @@ export interface ShotAdmission {
 
 /** One actor as the host knows it. No coordinates: `net/room.ts` owns position. */
 export interface ActorSnapshot {
+  readonly weaponState: WeaponState;
   readonly speedMultiplier?: 1 | 1.25;
   readonly rewardWeaponId?: 'crimson-flamethrower' | null;
   readonly rewardWeaponRemainingMs?: number;
@@ -100,7 +102,7 @@ export interface ActorSnapshot {
   /** Ordnance lane: grenade charges held this life. Authoritative. */
   readonly lethal: number;
   readonly tactical: number;
-  /** The host's ESTIMATE of the primary and its rounds (`host-kit.ts` says why). */
+  /** Exact carried primary and total issued rounds; weaponState retains the split. */
   readonly primaryId: string;
   readonly rounds: number;
   readonly sidearmId: string;

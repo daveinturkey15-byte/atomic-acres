@@ -31,6 +31,7 @@ import { buildHud, type HudNodes } from './hud-build';
 import { bindMatchSurfaces, type ScoreView, type StreakHudView } from './hud-match';
 import { createMapPainter, type MapPainter } from './hud-map';
 import type { Accessibility } from './settings';
+import type { GunsHudState } from '../weapons/types';
 import {
   ASSUMED_MAG,
   DMGDIR_MS,
@@ -65,6 +66,7 @@ export type { ScoreRowView, ScoreView, StreakHudView, StreakSlotView } from './h
 export interface HudApi {
   setAmmo(mag: number, reserve: number): void;
   setWeapon(name: string, reloading?: boolean): void;
+  setWeaponAction(state: Pick<GunsHudState, 'charging' | 'chargeProgress' | 'reloading' | 'reloadRemainingMs' | 'actionPending'>): void;
   setHealth(hp: number): void;
   /** Match bar + scoreboard. `null` hides both (no match in progress). */
   setScore(s: ScoreView | null): void;
@@ -118,6 +120,7 @@ function noopApi(): HudApi {
   return {
     setAmmo: noop,
     setWeapon: noop,
+    setWeaponAction: noop,
     setHealth: noop,
     setScore: noop,
     setStreak: noop,
@@ -171,6 +174,7 @@ export function initHud(): HudApi {
   let cLowAmmo = false;
   let cWeapon = '';
   let cReloading = false;
+  let cWeaponAction: string | null = null;
   let cHp = -1;
   let cLowHp = false;
   let cAds = false;
@@ -240,7 +244,18 @@ export function initHud(): HudApi {
       cWeapon = name;
       cReloading = reloading;
       n.weaponName.textContent = name;
-      n.reload.classList.toggle('hud-reload-hidden', !reloading);
+      if (cWeaponAction === null) n.reload.classList.toggle('hud-reload-hidden', !reloading);
+    },
+
+    setWeaponAction(state): void {
+      const text = state.charging
+        ? state.actionPending ? 'CHARGE REQUESTED' : `CHARGING ${Math.round(Math.max(0, Math.min(1, state.chargeProgress)) * 100)}%`
+        : state.reloading ? state.reloadRemainingMs > 0 ? `RELOADING ${(state.reloadRemainingMs / 1000).toFixed(1)}s` : 'RELOADING…'
+          : state.actionPending ? 'SYNCING WEAPON' : '';
+      if (text === cWeaponAction) return;
+      cWeaponAction = text;
+      n.reload.textContent = text;
+      n.reload.classList.toggle('hud-reload-hidden', !text);
     },
 
     setHealth(hp: number): void {

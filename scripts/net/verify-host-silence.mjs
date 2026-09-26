@@ -109,7 +109,7 @@ const sentCount = (s, type) => s.sent.filter((f) => f.msg.type === type).length;
 
 function deliverWelcome(s, playerId = 'g1') {
   s.t.deliver(HOST_PEER, {
-    type: 'welcome', playerId, hostNow: hostStamp(),
+    type: 'welcome', weaponStateProtocol: 1, playerId, hostNow: hostStamp(),
     roster: [rosterEntry(playerId, 'scout', false), rosterEntry(HOST_PEER, 'host', true)],
   });
 }

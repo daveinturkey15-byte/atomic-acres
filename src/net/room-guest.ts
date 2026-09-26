@@ -43,6 +43,7 @@ import {
 import { SnapshotRing, TICK_DT, reconcileSelf } from './snapshot';
 import type { PeerId, Transport } from './transport';
 import type { Loadout } from '../game/loadout';
+import { WEAPON_STATE_PROTOCOL } from './protocol-weapons';
 import type { StreakLoadout } from '../game/killstreaks/catalog';
 
 export type GuestState = 'joining' | 'lobby' | 'starting' | 'playing' | 'rejected' | 'closed';
@@ -70,6 +71,7 @@ export interface SelfAck {
 
 /** Game-tag message tags a guest forwards to its match driver. */
 const GAME_TAGS: ReadonlySet<string> = new Set([
+  'weapon-state',
   'shot-reject', 'shot-fired', 'damage', 'kill', 'spawn', 'streak-state', 'match-state', 'ordnance', 'crossbow',
   'radar-state', 'streak-effects', 'effect',
 ]);
@@ -184,6 +186,7 @@ export class GuestClient {
     const primaryId = typeof this.localPrimaryId === 'function' ? this.localPrimaryId() : this.localPrimaryId;
     this.transport.send(this.hostPeer, {
       type: 'hello', code: this.joinCode, name: this.joinName, nonce: this.joinNonce,
+      weaponStateProtocol: WEAPON_STATE_PROTOCOL,
       ...(primaryId === undefined ? {} : { primaryId }),
       loadout: this.localLoadout?.(), streakLoadout: this.localStreakLoadout?.(),
       ...(this.resume === null ? {} : { resume: this.resume }),
@@ -291,7 +294,7 @@ export class GuestClient {
   }
 
   /** A shot claim or a streak press, to the host. */
-  sendGame(msg: ShotMsg | Omit<StreakIntentMsg, 'seq'>): void {
+  sendGame(msg: ShotMsg | import('./protocol-weapons').WeaponIntentMsg | Omit<StreakIntentMsg, 'seq'>): void {
     if (this.state !== 'playing' && this.state !== 'starting') return;
     this.transport.send(this.hostPeer, msg.type === 'streak-intent' ? { ...msg, seq: this.streakSeq++ } : msg);
   }
@@ -413,6 +416,10 @@ export class GuestClient {
     }
     switch (msg.type) {
       case 'welcome':
+        if (msg.weaponStateProtocol !== WEAPON_STATE_PROTOCOL) {
+          if (this.state === 'joining') this.closeTerminal('rejected', 'incompatible-build', false);
+          break;
+        }
         if (this.state !== 'joining') {
           const sameSeat = msg.playerId === this.playerId &&
             (msg.token === undefined || (this.token !== null && msg.token === this.token));

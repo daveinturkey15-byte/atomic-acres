@@ -64,6 +64,11 @@ export interface WeaponSnapshot {
   shotsFired: number;
   /** seconds until the next pull can fire (semi/pump/bolt cadence gate) */
   cool: number;
+  /** Host-derived action state; progress never grants ammunition or damage. */
+  charging?: boolean;
+  chargeProgress?: number;
+  reloadRemainingMs?: number;
+  actionPending?: boolean;
 }
 
 /**
@@ -91,6 +96,10 @@ export interface GunsHudState {
   reserve: number;
   magSize: number;
   reloading: boolean;
+  charging: boolean;
+  chargeProgress: number;
+  reloadRemainingMs: number;
+  actionPending: boolean;
   ads: boolean;
   adsT: number;
   moveScale: number;

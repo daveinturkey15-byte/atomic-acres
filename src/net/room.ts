@@ -42,6 +42,8 @@
  */
 import { BOUND_X_MAX, BOUND_X_MIN, BOUND_Z } from '../core/layout';
 import { LOBBY_MAX_PLAYERS, isLobbyCapacity, lobbyStartRefusal, type LobbyStartRefusal } from '../game/rules';
+import type { WeaponState } from '../game/host-weapon-state';
+import { WEAPON_STATE_PROTOCOL } from './protocol-weapons';
 import { NetDiagnostics } from './diagnostics';
 import {
   createJoinCode, isJoinCode, isNetMessage,
@@ -117,6 +119,7 @@ export class HostRoom {
    * the life the game would have given a first spawn.
    */
   private resumeFacts: ((playerId: string) => {
+    weaponState?: WeaponState;
     life: number; shotSeq: number; primaryId?: string; rounds?: number;
     lethal?: number; tactical?: number; armed?: string | null;
   }) | null = null;
@@ -232,6 +235,7 @@ export class HostRoom {
   setExtraSamples(fn: ((into: PlayerSample[]) => void) | null): void { this.extraSamples = fn; }
   /** The game host's per-seat resume source for live welcomes. */
   setResumeFacts(fn: ((playerId: string) => {
+    weaponState?: WeaponState;
     life: number; shotSeq: number; primaryId?: string; rounds?: number;
     lethal?: number; tactical?: number; armed?: string | null;
   }) | null): void {
@@ -374,6 +378,11 @@ export class HostRoom {
       case 'shot':
         if (m && m.entry.connected && this.gameHandler !== null) this.gameHandler(m.entry.id, msg);
         break;
+      case 'weapon-intent':
+        // Identity belongs to the connected seat. Life/replay/active-weapon
+        // fences remain in GameHost, which also acknowledges refused intents.
+        if (m && m.entry.connected && this.phase === 'playing' && this.gameHandler !== null) this.gameHandler(m.entry.id, msg);
+        break;
       case 'streak-intent':
         if (m && m.entry.connected && this.phase === 'playing' && this.gameHandler !== null && msg.seq > m.lastStreakSeq) {
           m.lastStreakSeq = msg.seq;
@@ -392,6 +401,10 @@ export class HostRoom {
   }
 
   private admit(from: PeerId, hello: HelloMsg): void {
+    if (hello.weaponStateProtocol !== WEAPON_STATE_PROTOCOL) {
+      this.transport.send(from, { type: 'reject', reason: 'incompatible-build' });
+      return;
+    }
     const back = hello.code === this.code ? resumeSeat(this.members, this.peerToId, from, hello) : undefined;
     if (back !== undefined) {
       if (back.peerId !== from) {
@@ -425,7 +438,7 @@ export class HostRoom {
         lastPilotSeq: back.lastPilotSeq,
         ...(this.resumeFacts === null ? { life: 1, shotSeq: -1 } : this.resumeFacts(back.entry.id)),
       };
-      this.transport.send(from, { type: 'welcome', playerId: back.entry.id, hostNow: this.now(), roster: this.roster(), token: back.token, resume });
+      this.transport.send(from, { type: 'welcome', weaponStateProtocol: WEAPON_STATE_PROTOCOL, playerId: back.entry.id, hostNow: this.now(), roster: this.roster(), token: back.token, resume });
       this.broadcastRoster();
       return;
     }
@@ -442,7 +455,7 @@ export class HostRoom {
     m.streakLoadout = validStreakLoadout(hello.streakLoadout);
     this.members.set(id, m);
     this.peerToId.set(from, id);
-    this.transport.send(from, { type: 'welcome', playerId: id, hostNow: this.now(), roster: this.roster(), token: m.token });
+    this.transport.send(from, { type: 'welcome', weaponStateProtocol: WEAPON_STATE_PROTOCOL, playerId: id, hostNow: this.now(), roster: this.roster(), token: m.token });
     this.broadcastRoster();
   }
 

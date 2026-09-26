@@ -1,27 +1,14 @@
-/**
- * Nuketown 2025 — ordnance authority: grenades in hand and in flight,
- * detonation, flash, smoke, the knife, and the drops a death leaves.
- *
- * Part of the host module (`host.ts` composes it, the way it composes
- * `HostLife`), split for the 400-line cap into this file, `host-kit.ts` (what
- * each actor carries) and `host-drops.ts` (the ground). `GameHost` is its only
- * constructor and `ordnance` is private there, so authoritative state still
- * has one writer.
- *
- * Throws, swings and pickups share the shot admission window, life epoch,
- * muzzle and clock checks. Grenades take two claims: arm, then release.
- * The host clock owns cooking; semtex starts its fuse on surface contact,
- * with SEMTEX_MAX_FLIGHT_MS bounding unlanded throws.
- *
- * Inventory includes timed reward equipment and buffs. Every transition is
- * an event, damage flows through HostLife.hit, and smoke always has a paired
- * smoke-volume-end event. Bots read the same SightField as the world.
- */
+/** Host-composed equipment and ordnance authority. KitLedger owns each life;
+ * HostDrops owns ground inventory. All claims share life/sequence/clock/muzzle
+ * admission. Grenades arm then release; host time owns cooking and semtex
+ * starts its fuse on contact with a flight ceiling. Damage flows through
+ * HostLife; smoke start/end events share the world's SightField. */
 
 import { BOT_DAMAGE_MULTIPLIER } from './damage';
 import type { ActorId, DeathEvent, OrdnanceAction, OrdnanceRejectReason, ShotRejectReason, TeamId, Vec3, WorldQuery } from './events';
 import { ORDNANCE_REJECT_LABELS } from './events';
 import type { ShotMsg } from '../net/protocol';
+import type { WeaponIntent, WeaponIntentResult, WeaponState } from './host-weapon-state';
 import { HostDrops, type DropSnapshot } from './host-drops';
 import { KitLedger, type RewardReadout } from './host-kit';
 import type { RewardGrant } from './killstreaks/effects/rewards';
@@ -96,17 +83,36 @@ export class HostOrdnance {
   /** An admitted claim with an ordnance id. The shot window has already accepted its seq. */
   claim(a: HostActor, msg: ShotMsg, now: number): ShotAdmission {
     this.refreshRewards(a, now);
+    this.kits.kitOf(a).weapons.cancelActions(now);
     if (isGrenadeId(msg.weaponId)) return this.grenadeClaim(a, msg, now);
     if (msg.weaponId === KNIFE_ID) return this.meleeClaim(a, msg, now);
     if (msg.weaponId === PICKUP_ID) return this.drops.claim(a, msg, now);
     return this.refuse(a, msg, 'arm', 'no-grenade', now);
   }
 
-  /** Spend one carried firearm round. Reload timing stays local; total issue is authoritative. */
-  spendShot(a: HostActor, weaponId: string, now: number): ShotRejectReason | null {
+  /** Spend one round through magazine, reload and held-charge authority. */
+  spendShot(a: HostActor, weaponId: string, firedAt: number, now: number): ShotRejectReason | null {
     this.refreshRewards(a, now);
-    return this.kits.spendShot(a, weaponId);
+    const reason = this.kits.spendShot(a, weaponId, firedAt, now);
+    if (reason === null) this.drops.settleTrade(a, weaponId, now);
+    return reason;
   }
+
+  weaponIntent(a: HostActor, intent: WeaponIntent, now: number, active: boolean, possessing: boolean): WeaponIntentResult {
+    this.refreshRewards(a, now);
+    const kit = this.kits.kitOf(a);
+    return kit.weapons.intent(intent, now, { active, possessing, alive: a.health.alive, busy: kit.armed !== null });
+  }
+  weaponState(a: HostActor, now: number): WeaponState {
+    this.refreshRewards(a, now);
+    return this.kits.kitOf(a).weapons.snapshot(now);
+  }
+  cancelWeapons(a: HostActor, now: number): void {
+    const state = this.kits.kitOf(a).weapons;
+    state.cancelActions(now); state.cancelCharge();
+  }
+  cancelWeaponCharge(a: HostActor): void { this.kits.kitOf(a).weapons.cancelCharge(); }
+  acknowledgeWeaponShot(a: HostActor, seq: number): void { this.kits.kitOf(a).weapons.acknowledgeShot(seq); }
 
   grantReward(a: HostActor, grant: RewardGrant, now: number): void {
     this.refreshRewards(a, now);
@@ -233,15 +239,8 @@ export class HostOrdnance {
       }
     }
 
-    // Deaths since the last drain: a corpse drops its primary, and a grenade
-    // it was holding goes on cooking at its feet. AFTER the detonations above,
-    // not before: `GameHost.tick` empties `pending` right after this returns,
-    // so a death a grenade caused this tick is only ever visible here, now.
-    // Scanned first, a frag kill left no drop and the proof said so.
-    // Spawns likewise: a new life's kit is issued lazily by `kitOf`, and the
-    // client only learns its counts from an `ordnance-inventory` event - so
-    // one goes out per deploy, or the HUD reads "FRAG 0" until the first
-    // throw and the hand refuses to raise on a grenade the host would admit.
+    // Scan AFTER detonations so same-tick grenade deaths drop their kit before
+    // GameHost drains events. Each deploy publishes its freshly issued counts.
     for (const e of this.life.pending) {
       if (e.type === 'death') this.onDeath(e, now);
       else if (e.type === 'spawn') {
@@ -361,6 +360,7 @@ export class HostOrdnance {
 
   /** The kit fields the actor snapshot carries. */
   kitOf(a: HostActor, now = this.lastAdvance): RewardReadout & { lethal: number; tactical: number; tacticalId: string; sidearmId: string; sidearmRounds: number; primaryId: string; rounds: number; armed: string | null; blindUntil: number } {
+    this.refreshRewards(a, now);
     const k = this.kits.kitOf(a);
     return { lethal: k.lethal, tactical: k.tactical, tacticalId: k.tacticalId,
       sidearmId: k.sidearmId, sidearmRounds: k.sidearmRounds, primaryId: k.primaryId, rounds: k.rounds,

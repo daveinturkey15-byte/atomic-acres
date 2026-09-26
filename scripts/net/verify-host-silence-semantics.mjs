@@ -125,7 +125,7 @@ const baseline = M.liveRoomCount();
   const s = await playing('phase-guards');
   const id = s.guest.getPlayerId();
   const identity = s.guest.identity();
-  hostToGuest(s, { type: 'welcome', playerId: id, token: identity?.token, hostNow: s.now(), roster: s.host.roster() });
+  hostToGuest(s, { type: 'welcome', weaponStateProtocol: 1, playerId: id, token: identity?.token, hostNow: s.now(), roster: s.host.roster() });
   check('W4', 'duplicate welcome preserves the current playing phase', s.guest.getState() === 'playing', `state=${s.guest.getState()}`);
   hostToGuest(s, { type: 'start', startTick: 0, hostNow: s.now() });
   check('W5', 'out-of-order start cannot demote the current playing phase', s.guest.getState() === 'playing', `state=${s.guest.getState()}`);
@@ -167,7 +167,7 @@ const baseline = M.liveRoomCount();
   s.guest.ping(s.now());
   const afterSilence = M.liveRoomCount();
   s.guest.dispose();
-  hostToGuest(s, { type: 'welcome', playerId: s.guest.getPlayerId(), hostNow: s.now(), roster: s.host.roster() });
+  hostToGuest(s, { type: 'welcome', weaponStateProtocol: 1, playerId: s.guest.getPlayerId(), hostNow: s.now(), roster: s.host.roster() });
   check('W8', 'host silence closes exactly once and releases one room',
     afterSilence === before - 1 && changes === changesBeforeSilence + 1 && s.guest.getState() === 'closed',
     `live=${before}->${afterSilence} changes=${changesBeforeSilence}->${changes} state=${s.guest.getState()}`);

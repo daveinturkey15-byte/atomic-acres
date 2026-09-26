@@ -13,11 +13,24 @@
  * same offset.
  */
 import type { GameEvent } from '../game/events';
+import type { WeaponState } from '../game/host-weapon-state';
 import type { GameNetMessage, MatchStateMsg, StreakStateMsg } from './protocol';
 
 /** Convert one absolute timestamp. Invalid offsets fail safe to the source. */
 export function hostTimeToGuest(hostTime: number, offset: number): number {
   return Number.isFinite(offset) ? hostTime - offset : hostTime;
+}
+
+/** Only `at` is absolute. Magazine counts, charge and reload spans stay intact. */
+export function localizeWeaponState(state: WeaponState, offset: number): WeaponState {
+  return { ...state, at: hostTimeToGuest(state.at, offset) };
+}
+
+/** A replacement controller starts its own shot counter at zero. Acks from
+ * before that document have no corresponding prediction and must not retire one. */
+export function rebaseWeaponShotAcks(state: WeaponState, shotSeqBase: number): WeaponState {
+  return { ...state, lastShotSeq: Math.max(-1, state.lastShotSeq - shotSeqBase),
+    resolvedShotSeqs: state.resolvedShotSeqs.filter(seq => seq >= shotSeqBase).map(seq => seq - shotSeqBase) };
 }
 
 function optionalHostTime(value: number | null, offset: number): number | null {
@@ -93,6 +106,8 @@ export function localizeStreakState(message: StreakStateMsg, offset: number): St
  */
 export function localizeGameMessage(message: GameNetMessage, offset: number): GameNetMessage {
   switch (message.type) {
+    case 'weapon-state':
+      return { ...message, state: localizeWeaponState(message.state, offset) };
     case 'damage':
       return { ...message, e: localizeEvent(message.e, offset) };
     case 'spawn':

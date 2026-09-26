@@ -99,7 +99,7 @@ const ENTRY = `
     const guest = new GuestClient(transport, 'host', 'ABC123', 'guest', { now: () => 0, joinTimeoutMs: 3600000 });
     need(typeof receive === 'function', 'guest transport did not install receive handler');
     receive('host', {
-      type: 'welcome', playerId: 'p1', hostNow: 0, roster: [], token: 'resume-token-123',
+      type: 'welcome', weaponStateProtocol: 1, playerId: 'p1', hostNow: 0, roster: [], token: 'resume-token-123',
       resume: { phase: 'playing', startTick: 0, lastSeq: 4, life: 2, shotSeq: 9 },
     });
     receive('host', {
@@ -126,7 +126,7 @@ const ENTRY = `
     const guest = new GuestClient(transport, 'host', 'ABC123', 'guest', { now: () => 0, joinTimeoutMs: 3600000 });
     const ui = { bindClient: () => undefined, setNames: () => undefined };
     receive('host', {
-      type: 'welcome', playerId: 'p1', hostNow: 0, roster: [], token: 'resume-token-123',
+      type: 'welcome', weaponStateProtocol: 1, playerId: 'p1', hostNow: 0, roster: [], token: 'resume-token-123',
       resume: { phase: 'playing', startTick: 0, lastSeq: 4, life: 1, shotSeq: 9 },
     });
     let placed = null;

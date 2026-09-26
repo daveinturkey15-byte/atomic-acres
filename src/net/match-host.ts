@@ -33,11 +33,13 @@ const STREAK_TYPES: ReadonlySet<string> = new Set(['streak-earned', 'streak-acti
 
 export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world: WorldQuery }): MatchDriver {
   const seats = new Set<string>();
+  const disconnectedSeats = new Set<string>();
   const kills = new Map<string, KillEvent>();
   let rev = -1;
   let lastMatchAt = -Infinity;
   let lastStreakAt = -Infinity;
   let lastEffectsAt = -Infinity;
+  let lastWeaponAt = -Infinity;
   let phaseEdge = false;
   let disposed = false;
   const syncRoster = (): void => {
@@ -49,6 +51,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
     // for the periodic two-second broadcast; no spawn or ledger reset occurs.
     lastStreakAt = -Infinity;
     lastMatchAt = -Infinity;
+    lastWeaponAt = -Infinity;
     const roster = room.roster();
     const ids = [room.hostId];
     for (const e of roster) if (!e.isHost) ids.push(e.id);
@@ -63,6 +66,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
     for (const id of seats) {
       if (!seen.has(id)) {
         seats.delete(id);
+        disconnectedSeats.delete(id);
         solo.removeRemote(id);
       }
     }
@@ -71,6 +75,12 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
   const streakTo = (id: string, now: number): void => {
     const m = solo.streakStateFor(id, now);
     if (m !== null) room.sendToPlayer(id, m);
+  };
+  const weaponTo = (id: string, now: number): void => {
+    if (!seats.has(id)) return;
+    // Legacy diagnostic ports may expose no firearm authority at all.
+    const state = solo.weaponStateFor?.(id, now) ?? null;
+    if (state !== null) room.sendToPlayer(id, { type: 'weapon-state', actorId: id, state });
   };
 
   const sink = (events: readonly GameEvent[], now: number): void => {
@@ -85,9 +95,11 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
           break;
         case 'death':
           room.broadcast({ type: 'kill', kill: kills.get(e.victimId) ?? null, death: e });
+          weaponTo(e.victimId, now);
           break;
         case 'spawn':
           room.broadcast({ type: 'spawn', e });
+          weaponTo(e.actorId, now);
           if (seats.has(e.actorId)) room.placeSeat(e.actorId, e.x, e.z, e.yaw);
           break;
         case 'shot-rejected':
@@ -98,6 +110,9 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
           break;
         case 'match-phase':
           phaseEdge = true;
+          break;
+        case 'ordnance-inventory':
+          if (seats.has(e.actorId)) room.sendToPlayer(e.actorId, { type: 'ordnance', e });
           break;
         default:
           if (STREAK_TYPES.has(e.type)) {
@@ -115,7 +130,13 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
   };
 
   const onGame = (playerId: string, msg: GameNetMessage): void => {
-    if (msg.type === 'shot') solo.remoteShot(playerId, msg, performance.now());
+    if (msg.type === 'shot') {
+      solo.remoteShot(playerId, msg, performance.now());
+      weaponTo(playerId, performance.now());
+    } else if (msg.type === 'weapon-intent') {
+      solo.remoteWeaponIntent(playerId, msg, performance.now());
+      weaponTo(playerId, performance.now());
+    }
     else if (msg.type === 'streak-intent') solo.remoteStreak(playerId, msg.slot, msg.toggle);
     else if (msg.type === 'pilot-input') solo.remotePilot(playerId, msg, performance.now());
   };
@@ -128,7 +149,12 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
   // Resume data is read from the current GameHost through SoloDriver. This
   // matters at both respawn and rematch: the host owns the live life epoch and
   // the live ShotWindow, while the room owns only the seat/token boundary.
-  room.setResumeFacts((id) => solo.resumeFacts(id) ?? { life: 1, shotSeq: -1 });
+  room.setResumeFacts((id) => {
+    // Authenticated replacement document: preserve magazines/reload, revoke
+    // every previous native hold without fabricating a client intent sequence.
+    solo.cancelRemoteWeaponCharge?.(id, performance.now());
+    return solo.resumeFacts(id) ?? { life: 1, shotSeq: -1 };
+  });
   syncRoster();
 
   return {
@@ -140,6 +166,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
     bots: (): readonly BotBody[] => solo.bots(),
     snapshot: () => solo.snapshot(),
     localShot: (claim: ShotClaim) => solo.localShot(claim),
+    weaponIntent: (input) => solo.weaponIntent(input),
     pressStreak: (slot) => solo.pressStreak(slot),
     pilotInput: (controls) => solo.pilotInput(controls),
     exitPilot: () => solo.exitPilot(),
@@ -154,9 +181,19 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
       syncRoster();
       room.driveHostSeat(x, y, z, yaw, stance);
       room.forEachGuestPose((id, p, connected) => {
-        if (connected) solo.remotePose(id, p.x, p.y, p.z, p.yaw, p.stance ?? 'stand');
+        if (connected) {
+          disconnectedSeats.delete(id);
+          solo.remotePose(id, p.x, p.y, p.z, p.yaw, p.stance ?? 'stand');
+        } else if (!disconnectedSeats.has(id)) {
+          disconnectedSeats.add(id);
+          solo.cancelRemoteWeaponCharge?.(id, now);
+        }
       });
       solo.tick(now, x, y, z, yaw, pitch, stance);
+      if (now - lastWeaponAt >= MATCH_STATE_MS) {
+        lastWeaponAt = now;
+        for (const id of seats) weaponTo(id, now);
+      }
       if (phaseEdge || now - lastMatchAt >= MATCH_STATE_MS) {
         const m = solo.matchState();
         if (m !== null) {

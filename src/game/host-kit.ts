@@ -1,8 +1,7 @@
 /**
  * Host-owned equipment for each life. Primary and sidearm total ammunition,
  * grenade counts and the selected tactical are authoritative. The local
- * controller owns magazine/reserve split and reload timing because the wire
- * carries no reload intent. A firearm claim never changes the held weapon;
+ * host also owns magazine/reserve split and reload/charge timing. A firearm claim never changes the held weapon;
  * only an explicit admitted pickup can swap it. Respawn issues the authored
  * next-life hints and a fresh ammo allowance. Current-life hints are immutable.
  */
@@ -12,8 +11,8 @@ import type { ActorId, OrdnanceInventoryEvent, ShotRejectReason } from './events
 import { DEFAULT_FIELD_KIT, fieldKitById, sidearmForPrimary } from './loadout';
 import type { HostActor } from './host-life';
 import { LETHAL_PER_LIFE, TACTICAL_PER_LIFE } from './ordnance';
-import { fullRounds } from './pickups';
 import type { RewardGrant } from './killstreaks/effects/rewards';
+import { HostWeaponState, type MagazineContents } from './host-weapon-state';
 
 export interface RewardReadout {
   speedMultiplier: 1 | 1.25;
@@ -41,16 +40,17 @@ export interface Kit {
   life: number;
   lethal: number;
   tactical: number;
-  primaryId: string;
-  rounds: number;
-  sidearmId: string;
-  sidearmRounds: number;
+  readonly weapons: HostWeaponState;
+  readonly primaryId: string;
+  readonly rounds: number;
+  readonly sidearmId: string;
+  readonly sidearmRounds: number;
   tacticalId: string;
   armed: Armed | null;
   /** Host time the next knife swing is admitted. */
   meleeReadyAt: number;
   adrenalineUntil: number;
-  reward: { until: number; primaryId: string; rounds: number } | null;
+  reward: { until: number; primary: MagazineContents } | null;
   /** Bounded per-life dedupe for host-owned grants; never a client supplied id. */
   rewardInstances: number[];
 }
@@ -72,11 +72,16 @@ export class KitLedger {
   kitOf(a: HostActor): Kit {
     const cur = this.kits.get(a.id);
     if (cur !== undefined && cur.life === a.health.life) return cur;
-    const primaryId = a.primaryHint ?? cur?.reward?.primaryId ?? cur?.primaryId ?? ASSUMED_PRIMARY_ID;
+    const primaryId = a.primaryHint ?? cur?.reward?.primary.weaponId ?? cur?.primaryId ?? ASSUMED_PRIMARY_ID;
     const sidearmId = a.sidearmHint ?? sidearmForPrimary(primaryId);
+    const weapons = new HostWeaponState(a.health.life, primaryId, sidearmId);
     const fresh: Kit = {
       life: a.health.life, lethal: LETHAL_PER_LIFE, tactical: TACTICAL_PER_LIFE,
-      primaryId, rounds: fullRounds(primaryId), sidearmId, sidearmRounds: fullRounds(sidearmId),
+      weapons,
+      get primaryId() { return weapons.primary.weaponId; },
+      get rounds() { return weapons.primary.mag + weapons.primary.reserve; },
+      get sidearmId() { return weapons.sidearm.weaponId; },
+      get sidearmRounds() { return weapons.sidearm.mag + weapons.sidearm.reserve; },
       tacticalId: a.tacticalHint ?? 'flash', armed: null, meleeReadyAt: 0,
       adrenalineUntil: 0, reward: null, rewardInstances: [],
     };
@@ -96,12 +101,14 @@ export class KitLedger {
   /** Expiry/death restores exactly the suspended gun and ammunition, never a fresh issue. */
   refreshRewards(a: HostActor, now: number, end = false): boolean {
     const kit = this.kitOf(a);
+    if (end || !a.health.alive) kit.weapons.cancelActions(a.health.diedAt ?? now);
+    else kit.weapons.advance(now);
     let changed = false;
     if (kit.adrenalineUntil && (end || !a.health.alive || now >= kit.adrenalineUntil)) {
       kit.adrenalineUntil = 0; changed = true;
     }
     if (kit.reward && (end || !a.health.alive || now >= kit.reward.until)) {
-      kit.primaryId = kit.reward.primaryId; kit.rounds = kit.reward.rounds;
+      kit.weapons.replacePrimary(kit.reward.primary, now);
       kit.reward = null; changed = true;
     }
     return changed;
@@ -121,10 +128,13 @@ export class KitLedger {
     if (grant.reward === 'adrenaline') kit.adrenalineUntil = Math.max(kit.adrenalineUntil, until);
     else {
       // Another earned crate extends the charge but never nests/restocks the saved primary.
-      if (kit.reward === null) kit.reward = { until, primaryId: kit.primaryId, rounds: kit.rounds };
+      if (kit.reward === null) {
+        const { weaponId, mag, reserve } = kit.weapons.primary;
+        kit.reward = { until, primary: { weaponId, mag, reserve } };
+      }
       else kit.reward.until = Math.max(kit.reward.until, until);
       const def = REWARD_WEAPONS.find((weapon) => weapon.id === CRIMSON_FLAMETHROWER_ID)!;
-      kit.primaryId = CRIMSON_FLAMETHROWER_ID; kit.rounds = def.magSize + def.startReserve;
+      kit.weapons.replacePrimary({ weaponId: CRIMSON_FLAMETHROWER_ID, mag: def.magSize, reserve: def.startReserve }, now);
     }
     return true;
   }
@@ -136,14 +146,9 @@ export class KitLedger {
       rewardWeaponId: remaining > 0 ? CRIMSON_FLAMETHROWER_ID : null, rewardWeaponRemainingMs: remaining };
   }
 
-  /** Validate the carried id and spend exactly one total round per trigger pull. */
-  spendShot(a: HostActor, weaponId: string): ShotRejectReason | null {
-    const kit = this.kitOf(a);
-    if (weaponId !== kit.primaryId && weaponId !== kit.sidearmId) return 'malformed';
-    const key = weaponId === kit.primaryId ? 'rounds' : 'sidearmRounds';
-    if (kit[key] <= 0) return 'empty-magazine';
-    kit[key]--;
-    return null;
+  /** Exactly one round from the admitted magazine, never a reserve shortcut. */
+  spendShot(a: HostActor, weaponId: string, firedAt: number, now: number): ShotRejectReason | null {
+    return this.kitOf(a).weapons.spend(weaponId, firedAt, now);
   }
 
   /** The ledger row as the wire carries it. */

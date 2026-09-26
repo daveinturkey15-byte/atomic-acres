@@ -23,6 +23,8 @@
 
 import { isPresentationMessage, type PresentationMessage } from './protocol-effects';
 import { isPilotInput, type PilotInputMsg } from './protocol-pilot';
+import { isWeaponMessage, type WeaponNetMessage } from './protocol-weapons';
+export * from './protocol-weapons';
 export * from './protocol-pilot';
 export * from './protocol-effects';
 import {
@@ -172,6 +174,7 @@ export interface CrossbowMsg { type: 'crossbow'; e: CrossbowEvent }
 
 /** Every gameplay discriminant. `protocol.ts` routes these tags to `isGameMessage`. */
 export const GAME_MESSAGE_TYPES = [
+  'weapon-intent', 'weapon-state',
   'shot',
   'shot-reject',
   'shot-fired',
@@ -188,6 +191,7 @@ export const GAME_MESSAGE_TYPES = [
 ] as const;
 export type GameMessageType = (typeof GAME_MESSAGE_TYPES)[number];
 export type GameNetMessage =
+  | WeaponNetMessage
   | PilotInputMsg
   | PresentationMessage
   | ShotMsg
@@ -417,6 +421,8 @@ function isCrossbowEvent(v: unknown): boolean {
  */
 export function isGameMessage(m: Record<string, unknown>): boolean {
   switch (m['type']) {
+    case 'weapon-intent': case 'weapon-state':
+      return isWeaponMessage(m);
     case 'radar-state': case 'streak-effects': case 'effect':
       return isPresentationMessage(m);
     case 'ordnance':

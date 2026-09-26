@@ -117,7 +117,8 @@ export class PilotControlView {
 
   snapshot() {
     return { active: this.row !== null, instanceId: this.row?.instanceId ?? null, returning: this.returning,
-      yaw: this.yaw, pitch: this.pitch, firing: this.fire, lastSentAt: this.lastSentAt };
+      yaw: this.yaw, pitch: this.pitch, firing: this.fire, lastSentAt: this.lastSentAt,
+      hostShots: this.row?.shots ?? 0 };
   }
 
   dispose(): void {

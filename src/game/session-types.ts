@@ -19,6 +19,7 @@ import type { ShotClaim } from '../weapons/controller';
 import type { GameClient } from './client';
 import type { ActorId, GameEvent, TeamId } from './events';
 import type { HostStats } from './host-ports';
+import type { WeaponIntent, WeaponState } from './host-weapon-state';
 import type { PilotControls } from './killstreaks/pilot-types';
 export type { PilotControls } from './killstreaks/pilot-types';
 
@@ -40,6 +41,8 @@ export interface SessionActor {
 }
 
 export interface SessionSnapshot {
+  /** Only the local actor's private weapon state; never an enemy ammo projection. */
+  readonly weaponState?: WeaponState | null;
   readonly at: number;
   readonly match: MatchStateMsg;
   readonly actors: readonly SessionActor[];
@@ -97,6 +100,8 @@ export interface MatchDriver {
   tick(now: number, x: number, y: number, z: number, yaw: number, pitch: number, stance?: PlayerStance): void;
   /** A trigger pull from `weapons/controller.ts`, stamped and submitted or sent. */
   localShot(claim: ShotClaim): void;
+  /** Returns the assigned intent sequence, or null while there is no live authority. */
+  weaponIntent(input: Omit<WeaponIntent, 'seq' | 'life'>): number | null;
   /** A streak key press from the human. */
   pressStreak(slot: number): void;
   pilotInput(controls: PilotControls): void;

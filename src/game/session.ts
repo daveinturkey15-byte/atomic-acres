@@ -26,6 +26,7 @@
 
 import type { AABB } from '../core/kit';
 import type { ShotClaim } from '../weapons/controller';
+import type { WeaponIntent } from './host-weapon-state';
 import { LobbySession } from '../net/lobby-session';
 import { createHostDriver } from '../net/match-host';
 import { createGuestDriver } from '../net/match-guest';
@@ -251,6 +252,9 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
     },
 
     localShot(claim: ShotClaim): void { driver?.localShot(claim); },
+    weaponIntent(input: Omit<WeaponIntent, 'seq' | 'life'>): number | null {
+      return driver?.weaponIntent(input) ?? null;
+    },
     pressStreak(slot): void { driver?.pressStreak(slot); },
     pilotInput(controls): void { driver?.pilotInput(controls); },
     exitPilot(): void { driver?.exitPilot(); },

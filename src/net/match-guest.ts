@@ -35,7 +35,7 @@ import type { GuestClient } from './room';
 import { createPose, intentFromVelocity, isPlayerStance, type Pose } from './room-core';
 import type { PlayerStance } from './room-core';
 import { INTERP_DELAY_MS, TICK_HZ } from './snapshot';
-import { localizeGameMessage } from './event-clock';
+import { localizeGameMessage, localizeWeaponState, rebaseWeaponShotAcks } from './event-clock';
 
 const TICK_MS = 1000 / TICK_HZ;
 /** Divergence between the body and the host's acked seat that earns a teleport. */
@@ -60,11 +60,17 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   const selfId = guest.getPlayerId() ?? 'guest';
   const client = new GameClient(selfId);
   const resumed = guest.resumeState();
+  // Refused current-life claims also have exact acknowledgements. A new
+  // document must start above those, not just above the admitted ShotWindow.
+  const resolvedHigh = Math.max(resumed?.shotSeq ?? -1, resumed?.weaponState?.lastShotSeq ?? -1);
+  const resumedShotBase = resolvedHigh + 1;
   // A reload has no spawn edge to carry the host's current kit into the new
   // GameClient. Seed the read-only projection before UI binding; OrdnanceScene
   // adopts this inventory directly without resetting life, ammo history, or the
   // host's shot window.
   if (resumed !== null) {
+    if (resumed.weaponState !== undefined) client.applySnapshot({ at: performance.now(),
+      weaponState: rebaseWeaponShotAcks(localizeWeaponState(resumed.weaponState, guest.hostClockOffset()), resumedShotBase) });
     if (resumed.primaryId !== undefined) client.ordnance.self.primaryId = resumed.primaryId;
     if (resumed.rounds !== undefined) client.ordnance.self.rounds = resumed.rounds;
     if (resumed.sidearmId !== undefined) client.ordnance.self.sidearmId = resumed.sidearmId;
@@ -94,7 +100,8 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   // survived the rejoin). A cold join starts pre-life as before: no `spawn`
   // seen, no shots until the first one arrives.
   let lives = resumed?.life ?? 0;
-  let shotSeqBase = resumed === null || resumed.shotSeq < 0 ? 0 : resumed.shotSeq + 1;
+  let shotSeqBase = resumedShotBase;
+  let weaponIntentSeq = (resumed?.weaponState?.lastIntentSeq ?? -1) + 1;
   let resumePlacementPending = resumed !== null;
   let matches = 0;
   let snaps = 0;
@@ -148,6 +155,12 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     // the message. Relative spans (flash duration, etc.) stay unchanged.
     const msg = localizeGameMessage(raw, guest.hostClockOffset());
     switch (msg.type) {
+      case 'weapon-state':
+        if (msg.actorId === selfId && msg.state.life === lives) {
+          weaponIntentSeq = Math.max(weaponIntentSeq, msg.state.lastIntentSeq + 1);
+          client.applySnapshot({ at: performance.now(), weaponState: rebaseWeaponShotAcks(msg.state, shotSeqBase) });
+        }
+        break;
       case 'damage':
         record(msg.e);
         break;
@@ -164,6 +177,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
           // host's per-life ShotWindow.
           lives = msg.e.reason === 'initial' ? 1 : Math.max(1, lives + 1);
           shotSeqBase = 0;
+          weaponIntentSeq = 0;
           resumePlacementPending = false;
           opts.placeLocal?.(msg.e.x, msg.e.y, msg.e.z, msg.e.yaw);
           // The body just teleported: forget its history and skip one velocity
@@ -297,6 +311,12 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
         dx: claim.direction.x, dy: claim.direction.y, dz: claim.direction.z,
       });
     },
+    weaponIntent(input): number | null {
+      if (disposed || lives === 0 || resumePlacementPending || guest.getState() !== 'playing') return null;
+      const seq = weaponIntentSeq++;
+      guest.sendGame({ type: 'weapon-intent', seq, life: lives, weaponId: input.weaponId, action: input.action });
+      return seq;
+    },
     pressStreak(slot): void {
       const pilot = client.streakEffects.some(s => s.kind === 'aircraft' && s.variant === 'piloted-drone' && s.actorId === selfId && s.remainingMs > Math.max(0, performance.now() - client.streakEffectsAt));
       const chosen = client.view().streak.slots.find(s => s.slot === slot);
@@ -375,7 +395,8 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
       // Absent before the first bolt event would fake a zero; the view's
       // snapshot is always present, so report it exactly.
       const crossbow = client.crossbow.snapshot();
-      return { at: performance.now(), match: m, actors, stats: { shotsAdmitted: 0, shotsRejected: 0, hitsLanded: 0, hitsBlocked: 0 }, crossbow };
+      return { at: performance.now(), match: m, actors, stats: { shotsAdmitted: 0, shotsRejected: 0, hitsLanded: 0, hitsBlocked: 0 }, crossbow,
+        weaponState: client.weaponState };
     },
 
     netLine(now): string | null {

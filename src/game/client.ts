@@ -45,6 +45,7 @@ import { BoltView } from './crossbow-view';
 import { isCrossbowEvent } from './events-crossbow';
 import type { RadarSample } from './killstreaks/effects/reveal';
 import type { StreakEffectView } from './killstreaks/effect-view';
+import type { WeaponState } from './host-weapon-state';
 // ---------------------------------------------------------------------------
 // The view
 // ---------------------------------------------------------------------------
@@ -93,6 +94,7 @@ export type ClientEdge =
   | { readonly kind: 'banner-clear' };
 
 export interface ClientSnapshot {
+  readonly weaponState?: WeaponState | null;
   readonly radar?: readonly RadarSample[];
   readonly effects?: readonly StreakEffectView[];
   readonly at: number;
@@ -133,6 +135,10 @@ export const REMOTE_SHOT_RECENT_LIMIT = 128;
 // ---------------------------------------------------------------------------
 
 export class GameClient {
+  /** Private self-only projection, in the local clock and controller shot-seq domain. */
+  weaponState: WeaponState | null = null;
+  private weaponLife = 0;
+  private weaponEpochAt = -Infinity;
   readonly streakEffects: StreakEffectView[] = [];
   streakEffectsAt = 0;
   private radar: readonly RadarSample[] = [];
@@ -254,6 +260,8 @@ export class GameClient {
       }
       case 'death':
         if (e.victimId === this.selfId) {
+          this.weaponState = null;
+          this.weaponEpochAt = Math.max(this.weaponEpochAt, e.at);
           this.alive = false;
           this.health = 0;
           this.respawnAt = e.respawnAt;
@@ -263,6 +271,9 @@ export class GameClient {
         return;
       case 'spawn':
         if (e.actorId === this.selfId) {
+          this.weaponLife = e.reason === 'initial' ? 1 : Math.max(1, this.weaponLife + 1);
+          this.weaponState = null;
+          this.weaponEpochAt = e.at;
           this.alive = true;
           this.team = e.team;
           this.respawnAt = null;
@@ -356,6 +367,18 @@ export class GameClient {
   // -------------------------------------------------------------------------
 
   applySnapshot(s: ClientSnapshot): void {
+    if (s.weaponState === null) this.weaponState = null;
+    else if (s.weaponState !== undefined) {
+      const state = s.weaponState, previous = this.weaponState;
+      const currentLife = this.weaponLife === 0 || state.life === this.weaponLife;
+      const forward = previous === null || state.revision > previous.revision ||
+        (state.revision === previous.revision && state.at >= previous.at);
+      if (currentLife && state.at >= this.weaponEpochAt && forward) {
+        this.weaponLife = state.life;
+        this.weaponState = { ...state, primary: { ...state.primary }, sidearm: { ...state.sidearm },
+          resolvedShotSeqs: [...state.resolvedShotSeqs] };
+      }
+    }
     if (s.radar !== undefined) this.radar = s.radar;
     if (s.effects !== undefined) { this.streakEffectsAt = s.at; this.streakEffects.length = 0; this.streakEffects.push(...s.effects); }
     if (s.at > this.now) this.now = s.at;

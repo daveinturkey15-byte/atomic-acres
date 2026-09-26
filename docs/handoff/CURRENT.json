@@ -41,7 +41,6 @@
     "Railgun held charge",
     "Minigun visible aim reference and all-aircraft pixel/motion acceptance",
     "Server magazine/reload protocol",
-    "Full earned drone possession browser proof: native pointer-lock denial and subsequent bot death retained",
     "Local Comfy/Pixal/TRELLIS live endpoint, model inventory and new workbench mesh/runtime acceptance",
     "AKP pull-only currency blocked by preexisting unrelated doctor state"
   ],
@@ -67,7 +66,8 @@
     "artAcceptance": "OPEN independentgrips/framing/menu/reticlebelowbar",
     "physicalLanWan": "OPEN",
     "characterAnimationRegistry": "VERIFIED278b02b: all15 named Kimodo character clips loaded in bothrunning clients; motion/contact acceptance OPEN",
-    "lighting": "PASS278 four positions throughrealgame loop; luma134/114.4/132.1/85.6"
+    "lighting": "PASS278 four positions throughrealgame loop; luma134/114.4/132.1/85.6",
+    "earnedPilot": "VERIFIED278b02b final attempt3:5real kills/life1/0deaths, native flight/aim/Escape/re-entry/expiry/body shot/noerrors; aircraft damage pixels OPEN"
   },
   "evidence": "../evidence/SALVAGE-2026-09-26.json",
   "nextPass": {
@@ -78,16 +78,157 @@
       "Finish earned pilot and aircraft visible-game acceptance without forged health/charges or pointer-lock spoofing"
     ],
     "performanceBrief": "../perf/SALVAGE-PERF-NEXT-2026-09-26.md",
-    "runtimeWriters": "None active; all native agents frozen. Declare fresh disjoint ownership before edits.",
-    "gpu": "No QA jobs active. Persistent owner preview4348 stays running.",
+    "runtimeWriters": "Overnightpass1: Astra combat owns reference-weapon-models.ts/newreference-heavy-hands.ts; root owns integration. Astra visuals/playflow own unique QA scripts/docs only; no GPU jobs before root admission.",
+    "gpu": "No browser/GPU active; frozen2a2 local gates PASS, exactcompiledfallback preserved; weapon-state source under CPU review",
     "heartbeat": "atomic-acres-overnight-polish ACTIVE every30min; maximum4additionalworkhours, stopSept27 07:30Europe/London; no overlap"
   },
   "overnightBudget": {
     "declaredAtUtc": "2026-09-26T21:32:38.189640+00:00",
     "maxWorkSeconds": 14400,
-    "workSecondsUsed": 0,
+    "workSecondsUsed": 6747,
     "deadlineUtc": "2026-09-27T06:30:00Z",
-    "activeRun": null,
+    "activeRun": {
+      "id": "overnight-pass1-20260926",
+      "startedAtUtc": "2026-09-26T21:39:04.302Z",
+      "baselineCommit": "ac3f1d45b31c5516fa9504980ce4aa4828674ffa",
+      "runtimeCommit": "278b02bc4bcf3ea9e47411848b0ec6bf54b10814",
+      "scope": "Shadow/HUD/grip bounded pass plus coherent host-owned magazine/reload/Railcharge subsystem; three disjoint native Astra CPUwriters; GPU serial",
+      "lastAccountedAtUtc": "2026-09-26T23:31:33.603439+00:00",
+      "accounting": "workSecondsUsed charged through lastAccountedAtUtc; add only subsequent active wall time, including waits",
+      "candidateCommit": "2a2e22babdeca8311f0b6533b83551520791ffdd",
+      "activeJob": null
+    },
     "policy": "Persist cumulative elapsed WORK time after each heartbeat pass; include agent/GPU waits for an admitted active pass; do not reset on turn/compaction. Check remaining budget and deadline before dispatch. Stop and pause heartbeat on completion, four workhours spent or deadline."
+  },
+  "overnightPass1": {
+    "baselineCommit": "ac3f1d45b31c5516fa9504980ce4aa4828674ffa",
+    "runtimeCommit": "278b02bc4bcf3ea9e47411848b0ec6bf54b10814",
+    "workers": {
+      "astra_combat": [
+        "src/weapons/reference-weapon-models.ts",
+        "src/weapons/reference-heavy-hands.ts",
+        "scripts/_verify-overnight-heavy-hands.mjs"
+      ],
+      "astra_visuals": [
+        "scripts/_verify-overnight-performance.mjs",
+        "docs/perf/OVERNIGHT-PERF-PASS1-2026-09-26.md"
+      ],
+      "astra_playflow": [
+        "scripts/_verify-overnight-earned-pilot.mjs",
+        "docs/gameplay/OVERNIGHT-PILOT-PASS1-2026-09-26.md"
+      ],
+      "root": [
+        "src/main.ts",
+        "src/weapons/controller.ts",
+        "protocolintegration",
+        "docs/handoff",
+        "commits",
+        "serialGPUQA",
+        "src/core/pilot-controls.ts viewport presentation"
+      ]
+    },
+    "state": "VERIFIED accepted local graphics/HUD candidate2a2; preserved captures/builds/overnight-graphics-2a2e22b before weaponstatebuild",
+    "repairBudget": "Initialtake plus2localized repairs per issue; preserve baseline/rejects/gates",
+    "local3DPreflight": {
+      "claimState": "VERIFIED",
+      "status": "HELD",
+      "atUtc": "2026-09-26T21:49:00Z",
+      "command": "python scripts/art-gen/comfy_trellis.py preflight",
+      "failure": "/system_stats connectionrefused atconfiguredlocalendpoint; no submitted job",
+      "modelInventory": "OPEN; no guessed filesystemweights conclusion",
+      "resourceSnapshot": "5080total16303MiB/used10311/free5667/util52%; RAM~38GiBfree, commit~57.2/95.6GiB",
+      "ownerProcesses": "Preserved; localrecipeforbidsstarting/restarting/updatingownerComfy"
+    },
+    "candidate": {
+      "sourceCommit": "2a2e22babdeca8311f0b6533b83551520791ffdd",
+      "url": "http://127.0.0.1:4361/",
+      "dist": "dist-next",
+      "entry": "assets/index-C3FJHan_.js",
+      "entrySha256": "893032aef3b849801b41cfe96daf86b3f1aa2be52760850f919f840e11e9ff9f",
+      "acceptance": "VERIFIED local nativepilot/menu/delayed-SDP/rejoin/traversal/playcap/unchanged210ssoak; art60FPS/physicalLANWANOPEN; owner4348 unchanged"
+    },
+    "repairCounts": {
+      "pilotHarness": {
+        "used": 2,
+        "max": 2,
+        "next": "final execution PASS278; unchanged rerun on new source pending"
+      },
+      "heavyCaptureHarness": {
+        "used": 2,
+        "max": 2
+      },
+      "heavyVisibleArt": {
+        "used": 1,
+        "max": 2
+      },
+      "shadowVisibleOrRuntime": {
+        "used": 0,
+        "max": 2
+      }
+    },
+    "shadowPixels": "VERIFIED independent eight originalPNG review no visible shadow/transparency loss; time/actor/HUD noise disclosed; temporal/owner/60FPS OPEN",
+    "heavyMotion": "OPEN failed advancing timestamp gate;456frames/12.73s/two out-of-order events retained; capture helper repair2/2 exhausted; no further repair or bypass",
+    "pilotHudComponent": "VERIFIED35 checks at1600x900 and390x844; exact oldsource negative rejects; realgame source2a2 acceptance active",
+    "soak": "VERIFIED unchanged210s22samples; JS slope0.294MBmin r2.273, renderer slope2.426MBmin/net7.78MiB; game44-53FPSlate; pageRAF58.6fps not gameFPS"
+  },
+  "overnightWeaponState": {
+    "state": "SOURCE FROZEN; root CPU authority15/combat25/client13/wire17/typecheck/render-site PASS; actual browser acceptance OPEN",
+    "baseCommit": "2a2e22babdeca8311f0b6533b83551520791ffdd",
+    "sourceCutoffUtc": "2026-09-26T23:55:00Z",
+    "acceptanceReserveSeconds": 2400,
+    "budget": "Same cumulative overnightBudget, includes all agent/GPU waits; initial plus2 localized repairs per issue",
+    "observedGap": "Host total ammo authoritative but mag split/reload timers client-only; resume repacks; bots omit reload; Railgun no held charge",
+    "owners": {
+      "astra_combat": [
+        "src/game/host-weapon-state.ts",
+        "src/game/host-kit.ts",
+        "src/game/host-firearms.ts",
+        "src/game/host-ordnance.ts",
+        "src/game/host-drops.ts",
+        "src/game/pickups.ts",
+        "src/game/host.ts",
+        "src/game/host-ports.ts",
+        "src/game/bots.ts",
+        "NEWauthorityQA/doc"
+      ],
+      "astra_visuals": [
+        "src/net/protocol-weapons.ts",
+        "src/net/protocol.ts",
+        "src/net/protocol-game.ts",
+        "src/net/room.ts",
+        "src/net/room-guest.ts",
+        "src/net/match-host.ts",
+        "src/net/match-guest.ts",
+        "src/net/event-clock.ts",
+        "src/game/session-solo.ts",
+        "src/game/session-types.ts",
+        "src/game/events.ts",
+        "src/game/vocab.ts",
+        "NEWwireQA/doc"
+      ],
+      "astra_playflow": [
+        "src/weapons/controller.ts",
+        "src/weapons/types.ts",
+        "src/weapons/ordnance-scene.ts",
+        "src/game/ordnance-view.ts",
+        "src/ui/hud.ts",
+        "NEWclientQA/doc"
+      ],
+      "root": [
+        "src/main.ts",
+        "integration/review/commits",
+        "serialGPUacceptance",
+        "docs/handoff"
+      ]
+    },
+    "contract": "Combat canonical host-weapon-state exports; exact API freeze before adapters, no duplicate definitions",
+    "gates": "Hostmag/reload/charge conservation/cancel/replay/life/nativeinput/bots/resume +unchanged shot-age/muzzle/cadence, then realmenus/pilot/netrejoin/210ssoak. No partial default or assertion weakening.",
+    "rootIntegration": "Genuine active/alive/menu/focus/lock admission for native actions; viewport reward hint; readonly originalshot time and hostdrone shots for strengthened proof",
+    "review": "Separate clock-order and solo life-domain fixes, preserved failingreproductions; olderrematch explicitissuedDeadeye+actualreload PASS withoutchangedassertions",
+    "open": [
+      "Rare reliable-send failure can retain predicted debit untilnewlife/rebind",
+      "Clock correction immediately after epoch timestamp fence remains unproven",
+      "Native/builtpage/network/soak acceptance pending"
+    ]
   }
 }
