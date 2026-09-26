@@ -44,6 +44,11 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
     const r = room.rosterRevision();
     if (r === rev) return;
     rev = r;
+    // A replacement document has no previous HUD levels, even when the seat
+    // and its ledger are unchanged. Refresh on this frame rather than waiting
+    // for the periodic two-second broadcast; no spawn or ledger reset occurs.
+    lastStreakAt = -Infinity;
+    lastMatchAt = -Infinity;
     const roster = room.roster();
     const ids = [room.hostId];
     for (const e of roster) if (!e.isHost) ids.push(e.id);
@@ -182,6 +187,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
       room.setStamp(null);
       room.setMovementState(null);
       room.setExtraSamples(null);
+      room.setResumeFacts(null);
       solo.dispose();
       void opts;
     },

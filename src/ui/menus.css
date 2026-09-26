@@ -407,6 +407,22 @@
   vector-effect: non-scaling-stroke;
 }
 
+#start .aa-weapon-art {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 62px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+#start .aa-kit-weapon .aa-weapon-art { height: 50px; }
+#start .aa-weapon-art > :is(img, svg) { grid-area: 1 / 1; }
+#start .aa-weapon-art > img { width: 100%; height: 100%; object-fit: contain; opacity: 0; }
+#start .aa-art-ready > img { opacity: 1; }
+#start .aa-art-ready > svg { visibility: hidden; }
+
 #start .aa-weapon-glyph-rail {
   fill: none;
   stroke: #4ec9c0;

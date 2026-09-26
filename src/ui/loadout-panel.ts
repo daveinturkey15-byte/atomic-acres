@@ -41,6 +41,7 @@ import {
   GRENADE_BY_ID, LETHAL_IDS, LETHAL_PER_LIFE, SMOKE_LIFETIME_MS, TACTICAL_IDS, type GrenadeDef,
 } from '../game/ordnance';
 import { WEAPONS } from '../weapons/catalog';
+import { weaponArt } from './weapon-art';
 
 export interface LoadoutSection {
   readonly root: HTMLElement;
@@ -60,25 +61,6 @@ function weaponById(id: string) {
   return WEAPONS.find((w) => w.id === id);
 }
 
-/** A compact schematic, derived from weapon traits so every catalog entry has
- * a useful visual without shipping a second asset roster. */
-function weaponGlyph(def: NonNullable<ReturnType<typeof weaponById>>): SVGSVGElement {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.classList.add('aa-weapon-glyph');
-  svg.setAttribute('viewBox', '0 0 128 48');
-  svg.setAttribute('aria-hidden', 'true');
-  const kind = def.pellets > 1 ? 'shotgun' : def.adsFov < 40 ? 'precision' : def.magSize > 40 ? 'support' : def.interval < 0.09 ? 'compact' : 'rifle';
-  svg.dataset.weaponClass = kind;
-  const body = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  body.setAttribute('class', 'aa-weapon-glyph-body');
-  body.setAttribute('d', kind === 'shotgun' ? 'M6 20h56l19 5h39v7H80l-18 5H40l-5-7H6z' : 'M5 21h70l20-7h28v8l-25 3v7l18 5H89l-16-7H50l-8 6H27l5-9H5z');
-  svg.append(body);
-  const rail = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  rail.setAttribute('class', 'aa-weapon-glyph-rail');
-  rail.setAttribute('d', kind === 'precision' ? 'M38 18h83M72 34h32' : 'M40 18h57M53 34h24');
-  svg.append(rail);
-  return svg;
-}
 
 /** The tactical the next life actually throws — the same fallback `ordnance-scene.tacticalFor` applies when the store's grenade is not a tactical id. */
 function effectiveTactical(store: LoadoutStore): GrenadeId {
@@ -159,7 +141,7 @@ export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSecti
     const weapon = document.createElement('span');
     weapon.className = 'aa-kit-weapon';
     const kitDef = weaponById(kit.primary);
-    if (kitDef) weapon.append(weaponGlyph(kitDef));
+    if (kitDef) weapon.append(weaponArt(kitDef));
     const weaponName = document.createElement('span');
     weaponName.className = 'aa-kit-weapon-name';
     weaponName.textContent = kitDef?.name ?? kit.primary;
@@ -270,7 +252,7 @@ export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSecti
     const line = document.createElement('span');
     line.className = 'aa-prim-line';
     line.textContent = weaponLine(id) ?? id;
-    btn.append(weaponGlyph(def), name, line);
+    btn.append(weaponArt(def), name, line);
     btn.addEventListener('click', (e) => { stop(e); selectPrimary(id); });
     primButtons.set(id, btn);
     prims.append(btn);
@@ -303,7 +285,7 @@ export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSecti
     const stats = document.createElement('span');
     stats.className = 'aa-prim-line';
     stats.textContent = weaponLine(id) ?? id;
-    btn.append(weaponGlyph(def), name, stats);
+    btn.append(weaponArt(def), name, stats);
     btn.addEventListener('click', (e) => { stop(e); selectSidearm(id); });
     sidearmButtons.set(id, btn);
     sidearms.append(btn);

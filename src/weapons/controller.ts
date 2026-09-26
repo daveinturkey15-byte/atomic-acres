@@ -23,6 +23,7 @@
  * The 30 s soak in the lane report measures the heap cost of that choice.
  */
 import * as THREE from 'three';
+import { REFERENCE_WEAPON_IDS, REFERENCE_SOCKETS, loadReferenceWeaponRig, type ReferenceWeaponRig } from './reference-weapon-models';
 import { PAL } from '../core/palette';
 import type { MaterialLibrary } from '../core/materials';
 import type { GunsHudState, MoveSample, WeaponSnapshot } from './types';
@@ -167,6 +168,7 @@ interface WeaponQaSnapshot extends WeaponSnapshot {
   carbine?: CarbineCanaryStatus;
   /** Read-only roster-heroes canary status (?heroes=canary), same honesty contract. */
   heroes?: RosterHeroCanaryStatus;
+  referenceModels?: Record<string, { url: string; sockets: string[] }>;
   /** Read-only crossbow canary status (?crossbow=canary): requested vs actually listed. */
   crossbow?: CrossbowCanaryStatus;
 }
@@ -264,6 +266,7 @@ export class WeaponsController {
   private carbineCanaryRequested = false;
   /** One adopted GLB rig per hero id (bounded to ROSTER_HERO_WEAPON_IDS). */
   private readonly heroRigs = new Map<string, RosterHeroRig>();
+  private readonly referenceRigs = new Map<string, ReferenceWeaponRig>();
   private heroesCanaryRequested = false;
   private crossbowCanaryRequested = false;
   private disposed = false;
@@ -447,6 +450,8 @@ export class WeaponsController {
       });
     }
 
+    void this.loadReferenceModels(opts.mat);
+
     const enableHeroesCanary = opts.heroesCanary ?? isRosterHeroesCanaryRequested();
     this.heroesCanaryRequested = enableHeroesCanary;
     if (enableHeroesCanary) {
@@ -490,6 +495,27 @@ export class WeaponsController {
         }).catch((err) => {
           console.warn(`[WeaponsController] Hero rig '${heroId}' failed, keeping fallback:`, err);
         });
+      }
+    }
+  }
+
+  /** Sequential decodes bound memory; the current procedural rig remains on failure. */
+  private async loadReferenceModels(mat: MaterialLibrary): Promise<void> {
+    for (const id of REFERENCE_WEAPON_IDS) {
+      if (this.disposed) return;
+      try {
+        const rig = await loadReferenceWeaponRig(id, mat);
+        const weapon = this.weapons.find((w) => w.def.id === id);
+        if (this.disposed || !weapon) { rig.dispose(); continue; }
+        rig.group.position.copy(weapon.rig.group.position);
+        rig.group.quaternion.copy(weapon.rig.group.quaternion);
+        this.overlay.add(rig.group);
+        weapon.rig = rig;
+        this.referenceRigs.set(id, rig);
+        for (const w of this.weapons) w.rig.group.visible = false;
+        this.weapons[this.active].rig.group.visible = this.visible;
+      } catch (error) {
+        console.warn(`[WeaponsController] Reference model ${id} unavailable; keeping fallback`, error);
       }
     }
   }
@@ -616,9 +642,12 @@ export class WeaponsController {
     // blend — hip pose untouched at factor 0, settled ADS puts both authored
     // sight anchors on the camera axis. Never the camera, never the
     // reticle, never a fallback rig — the gun moves, nothing else does.
-    const heroMount = HERO_ADS_MOUNT[cur.def.id];
-    if (heroMount !== undefined && this.adsT > 0 && this.heroRigs.has(cur.def.id)) {
+    const referenceMount = this.referenceRigs.get(cur.def.id)?.adsMount;
+    const heroMount = referenceMount ?? HERO_ADS_MOUNT[cur.def.id];
+    const hasAuthoredMount = referenceMount !== undefined || this.heroRigs.has(cur.def.id);
+    if (heroMount !== undefined && this.adsT > 0 && hasAuthoredMount) {
       this.tmpOffset.y += heroMount.offsetY * this.adsT;
+      this.tmpOffset.x += (referenceMount?.offsetX ?? 0) * this.adsT;
     }
     this.tmpOffset.x += Math.sin(time * 1.1) * swayAmp * adsDamp + bobX + 0.04 * this.handLower;
     this.tmpOffset.y += Math.cos(time * 1.7) * swayAmp * 0.7 * adsDamp + bobY
@@ -627,7 +656,7 @@ export class WeaponsController {
       - 0.09 * this.handLower;
     this.tmpOffset.applyQuaternion(this.camera.quaternion).add(this.camera.position);
     cur.rig.group.position.copy(this.tmpOffset);
-    const heroBlend = heroMount !== undefined && this.heroRigs.has(cur.def.id) ? this.adsT : 0;
+    const heroBlend = heroMount !== undefined && hasAuthoredMount ? this.adsT : 0;
     this.tmpEuler.set(
       0.21 * this.sprintBlend - 0.35 * reloadDip + 0.3 * this.handLower
         + (heroMount?.pitch ?? 0) * heroBlend,
@@ -645,6 +674,7 @@ export class WeaponsController {
       cur.rig.hands?.updatePose?.(this.motion.crouch, this.motion.prone, this.handLower);
       this.tmpOffset.copy(this.motion.offset);
       this.tmpOffset.y += (heroMount?.offsetY ?? 0) * heroBlend;
+      this.tmpOffset.x += (referenceMount?.offsetX ?? 0) * heroBlend;
       this.tmpOffset.applyQuaternion(this.camera.quaternion).add(this.camera.position);
       cur.rig.group.position.copy(this.tmpOffset);
       this.tmpEuler.copy(this.motion.rotation);
@@ -908,6 +938,9 @@ export class WeaponsController {
       };
     }
     out.heroes = { requested: this.heroesCanaryRequested, adopted };
+    out.referenceModels = Object.fromEntries([...this.referenceRigs].map(([id, rig]) => [id, {
+      url: rig.assetUrl, sockets: REFERENCE_SOCKETS.filter((name) => !!rig.group.getObjectByName(name)),
+    }]));
     out.crossbow = {
       requested: this.crossbowCanaryRequested,
       active: this.weapons.some((w) => w.def.id === CROSSBOW_ID),
@@ -1372,6 +1405,8 @@ export class WeaponsController {
     // never the family-shared procedural rigs below.
     for (const heroRig of this.heroRigs.values()) heroRig.dispose();
     this.heroRigs.clear();
+    for (const rig of this.referenceRigs.values()) rig.dispose();
+    this.referenceRigs.clear();
     for (const rig of this.rigs.values()) disposeOwnedGeometries(rig.group);
     this.rigs.clear();
     this.disposeAudio();

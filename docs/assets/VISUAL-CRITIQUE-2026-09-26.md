@@ -1,0 +1,33 @@
+# Retained-frame visual critique — 2026-09-26
+
+**VERIFIED — Verdict: improved, partial; frozen visual bar NOT MET.** Independent visual assessment of ten opened 1600×900 captures. Scores are critic judgments from pixels, not mechanical test results. The required bar remains every criterion ≥7/10 and no critical visual failure.
+
+**CLAIMED — Artifact identity:** the requesting integrator attributes these retained captures to the older committed artifact `df38222`, not current source `bbd1529`. This review did not independently bind PNGs to a build. **OPEN — Current-source art acceptance**, animation, other camera angles, and performance/resource cost are outside this evidence.
+
+## Scores
+
+| Criterion | Before → after | Observed evidence and assessment |
+|---|---:|---|
+| Distinct runtime weapon silhouettes | 2 → 8 | VERIFIED — All four `salvage-special-effects-*.png` views show essentially the same wooden rifle despite different weapon labels. The corresponding `salvage-polished-effects-*.png` views show tank-fed flamethrower, long finned railgun, compact flare pistol, and transverse crossbow limbs. Clear improvement. |
+| Stylized 1950s suburban identity | 6 → 6.5 | VERIFIED — Cream/red coaches, curved streetlamps, antenna, fenced house and teal/ochre weapon colors provide useful retro cues. The generic black weapon boxes and severe dark menu treatment weaken the authored period identity. Environment identity is substantially unchanged. |
+| Coherent materials and lighting | 5.5 → 5.5 | VERIFIED — Directional shadows give stable street depth. However, finely noisy asphalt, nearly untextured coach panels and flat saturated weapon blocks sit at noticeably different finish levels. Polished railgun/crossbow metal strips read as pale slabs, while black receivers lose surface definition. Unchanged overall; new silhouettes have not yet received equivalent surface refinement. |
+| Believable hand/grip contact | 4.5 → 4.5 | VERIFIED — The support hand remains a hooklike black form beneath the forward receiver. In polished railgun and crossbow views, short exposed finger bars and the large angular firing glove do not clearly wrap a grip. The polished flare pistol has an especially ambiguous two-hand contact arrangement. More hand geometry is visible, but convincing contact remains unresolved. |
+| Bounded, readable effects | 4 → 7 | VERIFIED — Flamethrower and crossbow opaque glowing ovals/smoke balls become smaller translucent flames; the crosshair and lane remain readable. Flare-gun flames are similarly improved. The crossbow ground ring remains conspicuously bright and broad. OPEN — Railgun discharge is not visible in either sampled frame; effect duration and moving overlap cannot be scored from these stills. The 7 applies only to visible effects. |
+| Map architecture and sightline readability | 8 → 8 | VERIFIED — Coach edges, wheels, house roofline, fence and lane remain legible in the matched street viewpoint. Reduced FX obstruction helps the center locally. No apparent architecture regression in this view. Other map areas are unreviewed. |
+| Menu clarity and visual completeness | 5.5 (single retained state) | VERIFIED — `salvage-menu-home.png` has a clear title, primary action and map card. In `salvage-menu-class.png`, nearly every weapon shares the same tiny rifle thumbnail; dense small text and the long FLAMETHROWER label crowd card boundaries. The streak area continues below the viewport. No before/after menu pair was supplied. |
+
+**VERIFIED — No blank-frame or gross map-occlusion failure is visible in the reviewed stills.** Several criteria remain below 7, so this is not a visual acceptance pass. **OPEN — No claim that the complete game is free of critical visual failures.**
+
+## Three highest-value corrections
+
+1. **OPEN — Make every menu weapon visually identifiable.** Replace repeated rifle thumbnails with clear, adequately sized silhouettes of the actual weapons and ensure long names fit without crowding. Evidence: `captures/salvage-menu-class.png`, especially the explosive crossbow, flamethrower, flare gun and sidearm rows. Keep the home screen's clear action hierarchy. Acceptance view: the whole class page at 1600×900, including its lower controls, plus readable special-weapon cards.
+2. **OPEN — Establish convincing grip contact before adding more detail.** Shape and pose fingers around the firing grip and forward support point, show a plausible thumb/wrist relationship, and remove visibly detached finger-bar readings. Evidence: `captures/salvage-polished-effects-railgun.png`, `captures/salvage-polished-effects-explosive-crossbow.png`, and `captures/salvage-polished-effects-flare-gun.png`. Acceptance views: neutral and firing frames for each weapon, with an unobstructed close view of both contact points.
+3. **OPEN — Bring weapons and environment to one material finish.** Give receivers and painted housings readable edge highlights and controlled roughness; make pale rail/limb parts visibly metallic; moderate the asphalt's fine noise so it does not exceed the detail scale of the coaches and weapons. Preserve the useful cream/teal/ochre palette and stable street lighting. Evidence: all four `captures/salvage-polished-effects-*.png` frames, particularly the flat yellow flamethrower tanks and broad teal crossbow receiver. Acceptance view: the same street camera with the same exposure and all four weapons.
+
+## Pairwise change summary
+
+- **VERIFIED — Flamethrower: improved.** `salvage-special-effects-flamethrower.png` → `salvage-polished-effects-flamethrower.png`: unique tank silhouette and greatly reduced bright center obstruction; flat tank surfaces and grip contact remain unfinished.
+- **VERIFIED — Railgun: improved silhouette, effect comparison OPEN.** `salvage-special-effects-railgun.png` → `salvage-polished-effects-railgun.png`: fins, long stock and colored energy components distinguish it. Neither still captures a visible beam; no beam-quality claim follows.
+- **VERIFIED — Flare gun: improved.** `salvage-special-effects-flare-gun.png` → `salvage-polished-effects-flare-gun.png`: compact pistol replaces the rifle; small fire replaces opaque blobs. Hand placement remains difficult to read.
+- **VERIFIED — Explosive crossbow: improved.** `salvage-special-effects-explosive-crossbow.png` → `salvage-polished-effects-explosive-crossbow.png`: limbs/string establish the weapon immediately and translucent fire reveals the lane. Bright ground ring and pale ground puff remain visually synthetic.
+- **VERIFIED — No clear regression established by these pairs.** Their ammo counts and sampled effect phases differ, so they establish the shown appearance rather than equivalent timing, animation quality or reproducible peak effect bounds.

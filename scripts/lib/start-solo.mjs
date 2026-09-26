@@ -1,5 +1,8 @@
+import { waitForRenderedPage } from './render-ready.mjs';
+
 /** Exercise the visible menu and fail if the authoritative match never starts. */
 export async function startSolo(page) {
+  await waitForRenderedPage(page);
   await page.getByRole('button', { name: 'Play solo', exact: true }).click();
   await page.getByRole('button', { name: 'Deploy', exact: true }).click();
   await page.waitForFunction(() => {

@@ -21,7 +21,9 @@ await build({ stdin: { resolveDir: root, contents: `
   export { OrdnanceScene } from './src/weapons/ordnance-scene';
   export { GameClient } from './src/game/client';
   export * as THREE from 'three';
-` }, outfile: output, bundle: true, platform: 'node', format: 'esm', logLevel: 'warning' });
+` }, outfile: output, bundle: true, platform: 'node', format: 'esm', logLevel: 'warning',
+  // Match vite.config.ts's local base injection when bundling browser modules for CPU proof.
+  define: { 'import.meta.env.BASE_URL': JSON.stringify('./') } });
 
 function element(tag) {
   const node = {
