@@ -1,0 +1,490 @@
+{
+  "schemaVersion": 1,
+  "claimState": "VERIFIED",
+  "capturedAt": "2026-09-26T21:25:36.028054+00:00",
+  "scope": "Local headless Chrome/WebGPU and same-machine two-browser WebRTC. No physical LAN/WAN, sustained60FPS or final human art acceptance.",
+  "identity": {
+    "project": "atomic-acres",
+    "repository": "daveinturkey15-byte/atomic-acres",
+    "lineage": "standalone restart begun 2026-09-17",
+    "branch": "salvage/full-game-20260926",
+    "sourceCommit": "278b02bc4bcf3ea9e47411848b0ec6bf54b10814",
+    "stampedAt": "2026-09-26T21:04:42.749Z",
+    "entry": "assets/index-BO7JlS3z.js",
+    "entrySha256": "93cc77fd7c92e0c6ca16c1517144d257507f306e6429e60dca5369dbeab80105",
+    "untrackedPublicFiles": [],
+    "acceptance": "Local tested preview; not a production release or complete feature/art acceptance."
+  },
+  "servedEntryBytes": 2012498,
+  "rawReportHashes": {
+    "captures/leak/salvage-278b02b-final-gameplay-soak.json": "96968e7d79ebdb81b3ac0075955c99e2dc69bccf4f91c9cd02c137bd13bc8372",
+    "captures/net-two-browsers-278b02b-final.json": "9bb9bccc8409c761f4e077f2ec1477b881f1567158978f73ae0abc4d01abbd5c",
+    "captures/salvage-net-rejoin-278b02b-final.json": "6c4587b65dbae2ea9c802ae49d504fabba001b68cc11e3287fb9565f9cbe3880",
+    "captures/salvage-browser-menu.json": "92acd2adf9403cbbc7dafd8561bdd34a09315f5c717f36368abf87cbd6fbb7ba",
+    "captures/animation-registry-278b02b-final-net.json": "d7aec5944681e31a10111c6ebaca3771e05f2c4f3c9690c1a22bb59393e7e61a"
+  },
+  "menu": {
+    "status": "PASS",
+    "checks": [
+      "canonical class and3sidearms",
+      "4chosen streaks admitted",
+      "390px no horizontal overflow",
+      "real active host kit and selected tactical",
+      "Digit2 selected backup"
+    ],
+    "errors": [],
+    "viewportWidths": [
+      1600,
+      390
+    ]
+  },
+  "rejoin": {
+    "status": "PASS",
+    "steps": [
+      "real menu class and four streak choices admitted over WebRTC",
+      "real primary/sidearm ammo consumed and unearned streak answered",
+      "host detects actual peer silence and reserves the same seat",
+      "peer replacement preserves class, ammo, life, four HUD slots and one body per seat",
+      "post-resume input, shot and streak sequences continue without rejection",
+      "deliberate leave releases host seat, actor, rendered body and guest rejoin offer"
+    ],
+    "errors": [],
+    "postResumeStats": {
+      "shotsAdmitted": 3,
+      "shotsRejected": 0,
+      "hitsLanded": 0,
+      "hitsBlocked": 0
+    }
+  },
+  "network": {
+    "status": "PASS",
+    "secondsRequested": 120,
+    "delaySdpMs": 500,
+    "earlyIceCandidates": 6,
+    "sampleCount": 11,
+    "checks": [
+      {
+        "name": "A hosts a room, code on screen",
+        "ok": true
+      },
+      {
+        "name": "B joins by code over WebRTC; both rosters show two players",
+        "ok": true
+      },
+      {
+        "name": "both ready, Start enabled on the host",
+        "ok": true
+      },
+      {
+        "name": "host starts; both pages leave the menu (A host, B guest)",
+        "ok": true
+      },
+      {
+        "name": "B walked and the host tracked it",
+        "ok": true
+      },
+      {
+        "name": "host belief of B within 200 ms (mid-walk gap / walk speed)",
+        "ok": true
+      },
+      {
+        "name": "host pose settles on B's stop position",
+        "ok": true
+      },
+      {
+        "name": "a clear firing position beside B exists",
+        "ok": true
+      },
+      {
+        "name": "A fired the real weapon at B",
+        "ok": true
+      },
+      {
+        "name": "B's HUD showed the damage",
+        "ok": true
+      },
+      {
+        "name": "the feed shows the kill",
+        "ok": true
+      },
+      {
+        "name": "RTT and snapshot rate read from the diagnostics",
+        "ok": true
+      },
+      {
+        "name": "120 s from Start without a disconnect",
+        "ok": true
+      },
+      {
+        "name": "ICE reached the relay target before SDP",
+        "ok": true
+      }
+    ],
+    "errors": {
+      "A": [],
+      "B": []
+    },
+    "walk": [
+      {
+        "t": 57,
+        "own": [
+          -3.570054184092817,
+          18.328403177262228
+        ],
+        "seen": [
+          -3.570054184092817,
+          18.328403177262228
+        ]
+      },
+      {
+        "t": 223,
+        "own": [
+          -3.4477506008776118,
+          17.700505317005597
+        ],
+        "seen": [
+          -3.401865125034932,
+          17.46493256156327
+        ]
+      },
+      {
+        "t": 366,
+        "own": [
+          -3.28761029018666,
+          16.878356400511876
+        ],
+        "seen": [
+          -3.2491582614250247,
+          16.680946431423123
+        ]
+      },
+      {
+        "t": 502,
+        "own": [
+          -3.1516057397725477,
+          16.180118753296572
+        ],
+        "seen": [
+          -3.122055493340802,
+          16.028409898847876
+        ]
+      },
+      {
+        "t": 644,
+        "own": [
+          -2.992011420370011,
+          16.028409898847876
+        ],
+        "seen": [
+          -2.992011420370011,
+          16.028409898847876
+        ]
+      },
+      {
+        "t": 810,
+        "own": [
+          -2.6101414479727767,
+          15.937266034211936
+        ],
+        "seen": [
+          -2.6101414479727767,
+          15.937266034211936
+        ]
+      },
+      {
+        "t": 973,
+        "own": [
+          -1.9841929271458576,
+          15.880654465643127
+        ],
+        "seen": [
+          -1.8419879758027964,
+          15.880654465643127
+        ]
+      },
+      {
+        "t": 1104,
+        "own": [
+          -1.3888430371500964,
+          15.701058580730246
+        ],
+        "seen": [
+          -1.3888430371500964,
+          15.701058580730246
+        ]
+      },
+      {
+        "t": 1253,
+        "own": [
+          -1.1112920387312595,
+          15.194524644644444
+        ],
+        "seen": [
+          -1.052331756717868,
+          15.016852122444467
+        ]
+      },
+      {
+        "t": 1388,
+        "own": [
+          -0.9112201049469848,
+          14.468433370193148
+        ],
+        "seen": [
+          -0.9112201049469854,
+          14.468433370193148
+        ]
+      },
+      {
+        "t": 1546,
+        "own": [
+          -0.7541796581700295,
+          13.721090996422607
+        ],
+        "seen": [
+          -0.7541796581700303,
+          13.721090996422607
+        ]
+      },
+      {
+        "t": 1686,
+        "own": [
+          -0.6349457039966687,
+          13.119350768709417
+        ],
+        "seen": [
+          -0.5960783986684929,
+          12.921043787074975
+        ]
+      },
+      {
+        "t": 1874,
+        "own": [
+          -0.47801671990482325,
+          12.31662643838876
+        ],
+        "seen": [
+          -0.47801671990482425,
+          12.31662643838876
+        ]
+      },
+      {
+        "t": 2033,
+        "own": [
+          -0.3165932212174692,
+          11.488370199467727
+        ],
+        "seen": [
+          -0.2807970355795465,
+          11.304624524433523
+        ]
+      },
+      {
+        "t": 2242,
+        "own": [
+          -0.15799935635728724,
+          10.674233417546489
+        ],
+        "seen": [
+          -0.11211278137913316,
+          10.438660876199298
+        ]
+      },
+      {
+        "t": 2395,
+        "own": [
+          0.010861589985830165,
+          9.807326144074459
+        ],
+        "seen": [
+          0.05188335390845278,
+          9.807326144074459
+        ]
+      },
+      {
+        "t": 2545,
+        "own": [
+          0.2166528733170198,
+          9.807326144074459
+        ],
+        "seen": [
+          0.3081260730714215,
+          9.807326144074459
+        ]
+      },
+      {
+        "t": 2661,
+        "own": [
+          0.6746734310294814,
+          9.807326144074459
+        ],
+        "seen": [
+          0.8091887223022374,
+          9.807326144074459
+        ]
+      },
+      {
+        "t": 2817,
+        "own": [
+          0.8527555132795516,
+          9.807326144074459
+        ],
+        "seen": [
+          0.9110944448780461,
+          9.807326144074459
+        ]
+      },
+      {
+        "t": 2942,
+        "own": [
+          0.9407288146931116,
+          9.655185406184621
+        ],
+        "seen": [
+          0.94072881469311,
+          9.518553208028072
+        ]
+      }
+    ]
+  },
+  "soak": {
+    "status": "PASS",
+    "seconds": 210,
+    "elapsed": 210.8,
+    "samples": 22,
+    "limits": {
+      "maxSlopeMBPerMin": 0.5,
+      "maxExternalMB": 20
+    },
+    "js": {
+      "slope": 0.661,
+      "r2": 0.188,
+      "n": 16
+    },
+    "rendererFit": {
+      "slope": 2.73,
+      "r2": 0.984,
+      "n": 16
+    },
+    "rendererWindow": {
+      "netMB": 6.71,
+      "upFraction": 0.8
+    },
+    "fails": [],
+    "pageRafCallbacks": 8286,
+    "pageRafPerSecond": 39.31,
+    "gameFpsRange": [
+      29,
+      36
+    ],
+    "finalResourceCounts": {
+      "geometries": 462,
+      "textures": 149,
+      "nodes": 1952,
+      "listeners": 262
+    },
+    "qualification": "JS slope .661MB/min exceeds .5 but fit r2 .188 is below existing .25 gate and slope below1.0 unconditional gate. Thresholds unchanged. Page RAF is not game FPS; render-invocation liveness is not a dedicated game-frame counter."
+  },
+  "traversal": {
+    "status": "PASS",
+    "routesPassed": 5,
+    "routesTotal": 5,
+    "houseFacesEnterable": 4,
+    "houseFacesTotal": 4,
+    "garageInvariant": "PASS",
+    "backend": "webgpu",
+    "runtimeErrors": 0,
+    "command": "AA_PREVIEW_PORT=4348 node scripts/traverse.mjs"
+  },
+  "lighting": {
+    "status": "PASS",
+    "realGameLoopPositions": 4,
+    "drawCalls": [
+      944,
+      666,
+      935,
+      849
+    ],
+    "luma": [
+      134.0,
+      114.4,
+      132.1,
+      85.6
+    ],
+    "command": "AA_PREVIEW_PORT=4348 node scripts/playcap.mjs"
+  },
+  "animationRegistry": {
+    "status": "PASS",
+    "characterClipsLoaded": 15,
+    "clients": 2,
+    "clipNames": [
+      "aim",
+      "aim-rifle-walk",
+      "crouch-idle",
+      "crouch-walk",
+      "death",
+      "fire",
+      "hit-react",
+      "jump",
+      "land",
+      "reload",
+      "run",
+      "sprint",
+      "turn-left",
+      "turn-right",
+      "walk"
+    ],
+    "motionAndContactAcceptance": "OPEN; historical foot-slide values are not fresh acceptance"
+  },
+  "captureHashes": {
+    "play-spawnA.png": "773fcbca025334018e7ef4cae67f1fac1f4122d4782eb9c552946538a991b93f",
+    "play-circle.png": "dd219c2ccd9ad73fa99033b8e50dfc86b1ee65b0f692a11383331555b2ae3072",
+    "play-spawnB.png": "62423725d8b90f018b2f898bf5b64201790c31f52e11f3c9068cf8231362fcbb",
+    "play-orangeInside.png": "4ac96ea18a0119d20461843c321a9689b7379022af9306dda134dee9f48d430a",
+    "salvage-menu-class.png": "f75426876f879fca3abe6b2bb29b7a74b2e0efce22f881d0926ca0c21cce6dbb",
+    "salvage-menu-mobile.png": "40d8fac4a67f206215fa74daa6bc61232d6d21a2331522c9be40da8d6d3b51d2",
+    "salvage-hud-active.png": "e1d60f329ec4e2403a772a4361f3ec55563660e93b2422866f8018834d7eda20"
+  },
+  "art": {
+    "status": "OPEN",
+    "independentCritique": "docs/assets/VISUAL-CRITIQUE-2026-09-26.md",
+    "frozenMinimum": 7,
+    "gripScores": [
+      4,
+      4.5
+    ],
+    "heavyFramingScore": 5,
+    "menuScore": 6.5,
+    "repairedAdsVisibilityScore": 7,
+    "minigunAimReferenceScore": 6
+  },
+  "nextBriefs": [
+    "docs/assets/HEAVY-GRIP-BRIEF-2026-09-26.md",
+    "docs/assets/GARDEN-WORKBENCH-BRIEF-2026-09-26.md",
+    "docs/perf/SALVAGE-PERF-NEXT-2026-09-26.md"
+  ],
+  "historicalLedger": {
+    "path": "docs/handoff/CURRENT-2026-09-20.json",
+    "workingCopySha256": "6121769f14d990a24f7187a6c20d867031ea2d8890ebd0a530982b68988a899d",
+    "workingCopyBytes": 167301,
+    "gitBlobSha256": "5f9c763a8413e88d65fd519d3de163a8ede94c3952305496d019a949c2595f95",
+    "gitBlobBytes": 164256,
+    "qualification": "Original WindowsCRLF working-copy bytes preserved; all non-EOL bytes match the pre-replacement GitLF blob. core.autocrlf=true normalizes repository text."
+  },
+  "durableEvidence": {
+    "detailedReports": [
+      "SALVAGE-278b02b-SOAK.json",
+      "SALVAGE-278b02b-NET.json",
+      "SALVAGE-278b02b-REJOIN.json",
+      "SALVAGE-278b02b-MENU.json",
+      "SALVAGE-278b02b-ANIMATION.json",
+      "SALVAGE-278b02b-PLAY.json"
+    ],
+    "pixels": [
+      "pixels/play-circle.png",
+      "pixels/salvage-menu-class.png",
+      "pixels/salvage-hud-active.png"
+    ],
+    "localOnly": "Full network free-formlog, remaining four final capturePNG files and earlier rejected receipts remain in captures/ and selected chatoutputs. Traversal console result is recorded in the aggregate; it has no raw structuredreport."
+  }
+}

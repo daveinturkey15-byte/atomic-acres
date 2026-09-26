@@ -1,0 +1,626 @@
+{
+  "url": "http://localhost:4348/",
+  "screens": [
+    "salvage-menu-home.png",
+    "salvage-menu-class.png",
+    "salvage-menu-mobile.png",
+    "salvage-hud-active.png"
+  ],
+  "checks": [
+    "canonical class and3sidearms",
+    "4chosen streaks admitted",
+    "390px no horizontal overflow",
+    "real active host kit and selected tactical",
+    "Digit2 selected backup"
+  ],
+  "actual": {
+    "kit": {
+      "primary": "mp5",
+      "sidearm": "magnum"
+    },
+    "host": {
+      "at": 34161.5,
+      "match": {
+        "type": "match-state",
+        "at": 34161.5,
+        "mode": "tdm",
+        "phase": "active",
+        "endsAt": 334161.5,
+        "scoreLimit": 10,
+        "teamScores": [
+          0,
+          0
+        ],
+        "scores": [
+          {
+            "id": "bot-01",
+            "team": 1,
+            "kills": 0,
+            "deaths": 0,
+            "score": 0
+          },
+          {
+            "id": "bot-02",
+            "team": 1,
+            "kills": 0,
+            "deaths": 0,
+            "score": 0
+          },
+          {
+            "id": "bot-03",
+            "team": 0,
+            "kills": 0,
+            "deaths": 0,
+            "score": 0
+          },
+          {
+            "id": "bot-04",
+            "team": 1,
+            "kills": 0,
+            "deaths": 0,
+            "score": 0
+          },
+          {
+            "id": "bot-05",
+            "team": 0,
+            "kills": 0,
+            "deaths": 0,
+            "score": 0
+          },
+          {
+            "id": "you",
+            "team": 0,
+            "kills": 0,
+            "deaths": 0,
+            "score": 0
+          }
+        ],
+        "winner": null,
+        "winnerId": null,
+        "endReason": null
+      },
+      "actors": [
+        {
+          "id": "you",
+          "team": 0,
+          "bot": false,
+          "hp": 100,
+          "alive": true,
+          "life": 1,
+          "spawnIndex": 16,
+          "protectedUntil": 32511.5,
+          "respawnAt": null,
+          "kills": 0,
+          "deaths": 0,
+          "score": 0,
+          "streak": 0,
+          "slots": [
+            {
+              "streakId": "tracker-dart",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "supply-crate",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "strike-relay",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "mp5",
+          "rounds": 150,
+          "sidearmId": "magnum",
+          "sidearmRounds": 42,
+          "tacticalId": "smoke",
+          "speedMultiplier": 1,
+          "rewardWeaponId": null,
+          "rewardWeaponRemainingMs": 0,
+          "armed": null,
+          "blindUntil": 0,
+          "stance": "stand"
+        },
+        {
+          "id": "bot-01",
+          "team": 1,
+          "bot": true,
+          "hp": 100,
+          "alive": true,
+          "life": 1,
+          "spawnIndex": 9,
+          "protectedUntil": 32511.5,
+          "respawnAt": null,
+          "kills": 0,
+          "deaths": 0,
+          "score": 0,
+          "streak": 0,
+          "slots": [
+            {
+              "streakId": "recon-sweep",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "sentry-post",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "blast-mortar",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "longhorn",
+          "rounds": 150,
+          "sidearmId": "duster",
+          "sidearmRounds": 60,
+          "tacticalId": "smoke",
+          "speedMultiplier": 1,
+          "rewardWeaponId": null,
+          "rewardWeaponRemainingMs": 0,
+          "armed": null,
+          "blindUntil": 0,
+          "stance": "stand"
+        },
+        {
+          "id": "bot-02",
+          "team": 1,
+          "bot": true,
+          "hp": 100,
+          "alive": true,
+          "life": 1,
+          "spawnIndex": 17,
+          "protectedUntil": 32511.5,
+          "respawnAt": null,
+          "kills": 0,
+          "deaths": 0,
+          "score": 0,
+          "streak": 0,
+          "slots": [
+            {
+              "streakId": "recon-sweep",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "sentry-post",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "blast-mortar",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "rattler",
+          "rounds": 160,
+          "sidearmId": "duster",
+          "sidearmRounds": 60,
+          "tacticalId": "semtex",
+          "speedMultiplier": 1,
+          "rewardWeaponId": null,
+          "rewardWeaponRemainingMs": 0,
+          "armed": null,
+          "blindUntil": 0,
+          "stance": "stand"
+        },
+        {
+          "id": "bot-03",
+          "team": 0,
+          "bot": true,
+          "hp": 100,
+          "alive": true,
+          "life": 1,
+          "spawnIndex": 8,
+          "protectedUntil": 32511.5,
+          "respawnAt": null,
+          "kills": 0,
+          "deaths": 0,
+          "score": 0,
+          "streak": 0,
+          "slots": [
+            {
+              "streakId": "recon-sweep",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "sentry-post",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "blast-mortar",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "coachman",
+          "rounds": 30,
+          "sidearmId": "duster",
+          "sidearmRounds": 60,
+          "tacticalId": "flash",
+          "speedMultiplier": 1,
+          "rewardWeaponId": null,
+          "rewardWeaponRemainingMs": 0,
+          "armed": null,
+          "blindUntil": 0,
+          "stance": "stand"
+        },
+        {
+          "id": "bot-04",
+          "team": 1,
+          "bot": true,
+          "hp": 100,
+          "alive": true,
+          "life": 1,
+          "spawnIndex": 15,
+          "protectedUntil": 32511.5,
+          "respawnAt": null,
+          "kills": 0,
+          "deaths": 0,
+          "score": 0,
+          "streak": 0,
+          "slots": [
+            {
+              "streakId": "recon-sweep",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "sentry-post",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "blast-mortar",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "deadeye",
+          "rounds": 20,
+          "sidearmId": "duster",
+          "sidearmRounds": 60,
+          "tacticalId": "smoke",
+          "speedMultiplier": 1,
+          "rewardWeaponId": null,
+          "rewardWeaponRemainingMs": 0,
+          "armed": null,
+          "blindUntil": 0,
+          "stance": "stand"
+        },
+        {
+          "id": "bot-05",
+          "team": 0,
+          "bot": true,
+          "hp": 100,
+          "alive": true,
+          "life": 1,
+          "spawnIndex": 12,
+          "protectedUntil": 32511.5,
+          "respawnAt": null,
+          "kills": 0,
+          "deaths": 0,
+          "score": 0,
+          "streak": 0,
+          "slots": [
+            {
+              "streakId": "recon-sweep",
+              "slot": 1,
+              "charges": 0
+            },
+            {
+              "streakId": "signal-jam",
+              "slot": 2,
+              "charges": 0
+            },
+            {
+              "streakId": "sentry-post",
+              "slot": 3,
+              "charges": 0
+            },
+            {
+              "streakId": "blast-mortar",
+              "slot": 4,
+              "charges": 0
+            }
+          ],
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "mp5",
+          "rounds": 150,
+          "sidearmId": "duster",
+          "sidearmRounds": 60,
+          "tacticalId": "semtex",
+          "speedMultiplier": 1,
+          "rewardWeaponId": null,
+          "rewardWeaponRemainingMs": 0,
+          "armed": null,
+          "blindUntil": 0,
+          "stance": "stand"
+        }
+      ],
+      "stats": {
+        "shotsAdmitted": 0,
+        "shotsRejected": 5,
+        "hitsLanded": 0,
+        "hitsBlocked": 0
+      },
+      "ordnance": {
+        "grenades": 0,
+        "smokes": 0,
+        "drops": [],
+        "counts": {
+          "armed": 0,
+          "thrown": 0,
+          "detonated": 0,
+          "cookOffs": 0,
+          "blastHits": 0,
+          "flashed": 0,
+          "smokes": 0,
+          "melees": 0,
+          "meleeHits": 0,
+          "refused": 0,
+          "spawned": 0,
+          "expired": 0,
+          "culled": 0,
+          "scavenges": 0,
+          "swaps": 0
+        }
+      },
+      "crossbow": {
+        "live": 0,
+        "counts": {
+          "launched": 0,
+          "impacts": 0,
+          "victims": 0,
+          "walls": 0,
+          "expired": 0,
+          "dropped": 0
+        }
+      }
+    },
+    "state": {
+      "motionCanary": true,
+      "id": "mp5",
+      "name": "MP5",
+      "mag": 30,
+      "reserve": 120,
+      "ads": false,
+      "reloading": false,
+      "visible": true,
+      "shotsFired": 0,
+      "cool": 0,
+      "reloadProgress": 0,
+      "hands": {
+        "rootVisible": true,
+        "triggerHand": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "supportHand": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        },
+        "supportForearm": {
+          "position": [
+            0,
+            0,
+            0
+          ],
+          "rotation": [
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "carbine": {
+        "requested": false,
+        "active": false,
+        "isGLTF": false,
+        "url": null,
+        "sockets": []
+      },
+      "heroes": {
+        "requested": false,
+        "adopted": {}
+      },
+      "referenceModels": {
+        "mini-uzi": {
+          "url": "./assets/reference-weapons/mini-uzi/mini-uzi-fp-lod0.glb",
+          "sockets": [
+            "grip-socket-r",
+            "support-socket-l",
+            "reload-socket-l",
+            "magazine-socket",
+            "muzzle-socket",
+            "eject-socket",
+            "rear-sight-socket",
+            "front-sight-socket"
+          ]
+        },
+        "magnum": {
+          "url": "./assets/reference-weapons/magnum/magnum-fp-lod0.glb",
+          "sockets": [
+            "grip-socket-r",
+            "support-socket-l",
+            "reload-socket-l",
+            "magazine-socket",
+            "muzzle-socket",
+            "eject-socket",
+            "rear-sight-socket",
+            "front-sight-socket"
+          ]
+        },
+        "minigun": {
+          "url": "./assets/reference-weapons/minigun/minigun-fp-lod0.glb",
+          "sockets": [
+            "grip-socket-r",
+            "support-socket-l",
+            "reload-socket-l",
+            "magazine-socket",
+            "muzzle-socket",
+            "eject-socket",
+            "rear-sight-socket",
+            "front-sight-socket"
+          ]
+        }
+      },
+      "crossbow": {
+        "requested": false,
+        "active": true
+      }
+    },
+    "stats": {
+      "fps": 40,
+      "calls": 814,
+      "renderCallsTotal": 5967,
+      "triangles": 689729,
+      "geometries": 489,
+      "textures": 147,
+      "programs": 0,
+      "colliders": 659,
+      "eyeHeight": 1.68,
+      "bodyHeight": 1.78,
+      "stance": "stand",
+      "handedness": [
+        true,
+        true
+      ],
+      "mode": "walk",
+      "flySpeed": 12,
+      "environment": {
+        "groundPbr": false,
+        "distantMountains": false,
+        "lawnCanary": true,
+        "mode": "baseline"
+      }
+    },
+    "animation": {
+      "walk": "kimodo seed 1102 · 26f · 3.8 cm slide",
+      "crouch-idle": "kimodo seed 1105 · 53f · 0.5 cm slide",
+      "run": "kimodo seed 1003 · 18f · 6.2 cm slide",
+      "crouch-walk": "kimodo seed 1106 · 31f · 2.4 cm slide",
+      "aim-rifle-walk": "kimodo seed 1008 · 20f · 1.4 cm slide",
+      "jump": "kimodo seed 2001 · 75f · null cm slide",
+      "land": "kimodo seed 2002 · 60f · null cm slide",
+      "turn-left": "kimodo seed 2003 · 75f · null cm slide",
+      "turn-right": "kimodo seed 2004 · 75f · null cm slide",
+      "fire": "kimodo seed 2005 · 45f · null cm slide",
+      "reload": "kimodo seed 2006 · 100f · null cm slide",
+      "hit-react": "kimodo seed 2007 · 60f · null cm slide",
+      "aim": "kimodo seed 1207 · 51f · 0.9 cm slide",
+      "death": "kimodo seed 2008 · 110f · null cm slide",
+      "sprint": "kimodo seed 1204 · 40f · 4 cm slide"
+    }
+  },
+  "ledger": {
+    "id": "you",
+    "team": 0,
+    "bot": false,
+    "hp": 100,
+    "alive": true,
+    "life": 1,
+    "spawnIndex": 16,
+    "protectedUntil": 32511.5,
+    "respawnAt": null,
+    "kills": 0,
+    "deaths": 0,
+    "score": 0,
+    "streak": 0,
+    "slots": [
+      {
+        "streakId": "tracker-dart",
+        "slot": 1,
+        "charges": 0
+      },
+      {
+        "streakId": "signal-jam",
+        "slot": 2,
+        "charges": 0
+      },
+      {
+        "streakId": "supply-crate",
+        "slot": 3,
+        "charges": 0
+      },
+      {
+        "streakId": "strike-relay",
+        "slot": 4,
+        "charges": 0
+      }
+    ],
+    "lethal": 1,
+    "tactical": 1,
+    "primaryId": "mp5",
+    "rounds": 150,
+    "sidearmId": "magnum",
+    "sidearmRounds": 42,
+    "tacticalId": "smoke",
+    "speedMultiplier": 1,
+    "rewardWeaponId": null,
+    "rewardWeaponRemainingMs": 0,
+    "armed": null,
+    "blindUntil": 0,
+    "stance": "stand"
+  },
+  "errors": []
+}

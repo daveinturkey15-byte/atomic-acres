@@ -1,0 +1,35 @@
+{
+  "url": "http://localhost:4348/",
+  "threshold": 40,
+  "results": [
+    {
+      "name": "spawnA",
+      "luma": 134,
+      "ok": true,
+      "calls": 944,
+      "tris": 740035
+    },
+    {
+      "name": "circle",
+      "luma": 114.4,
+      "ok": true,
+      "calls": 666,
+      "tris": 634491
+    },
+    {
+      "name": "spawnB",
+      "luma": 132.1,
+      "ok": true,
+      "calls": 935,
+      "tris": 734003
+    },
+    {
+      "name": "orangeInside",
+      "luma": 85.6,
+      "ok": true,
+      "calls": 849,
+      "tris": 711205
+    }
+  ],
+  "errors": []
+}

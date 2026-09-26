@@ -1,7 +1,40 @@
 # Nuketown 2025 — agent contract
 
-A from-scratch, code-only recreation of **Black Ops 2 `Nuketown 2025`** in Three.js.
-Started 2026-09-17. This repository is deliberately small and stays that way.
+## Active owner resumption — September 26, 2026
+
+September26 evening owner update: continue overnight gameplay and asset polish
+with 2–4 native Astras. Dave now explicitly authorizes bringing useful existing
+assets across from the old project. This supersedes older no-asset-copy wording
+for this pass only: record source repository/path/hash and provenance, preserve
+editable originals and current fallback art, and verify imported pixels and
+resource cost. Old code/modules/build scripts/Git history remain reference-only.
+The active game remains this restart. Overnight continuation is bounded to four
+additional work hours after the interactive pass and stops by September27 07:30
+Europe/London; see the handoff and current-chat heartbeat. No old job resumed.
+
+Dave explicitly requested salvaging the richer new-project fork, completing the
+guns/killstreaks and menu/HUD, and improving graphics, lighting and game loops.
+The selected integration candidate is `salvage/full-game-20260926` at
+`C:/Users/david/Desktop/stuff/worktrees/nuketown-salvage-20260926`, based on the
+committed September20 restart alternate `c3afc07`. Read
+`docs/handoff/SALVAGE-2026-09-26.md`. The September24 preview at
+`Desktop/stuff/nuketown` remains the retained fallback. Neither is the older
+`atomic-acres-browser-arena` predecessor, which remains behavior reference only.
+
+The September20 pauses and provider-specific campaign directions below are
+historical. This resumption authorizes the current Codex work and isolated native
+weapon/streak/UI workers; it does not restart old providers, jobs or heartbeats.
+One writer per declared path scope; September26 native Astra workers share this
+integration checkout under the scopes in SALVAGE. The integrator owns commits,
+protocol/main integration and promotion; workers freeze their paths for review.
+Browser/GPU jobs serialize.
+Preserve old dirty worktrees, failed receipts, fixed gates and source artifacts.
+
+
+A from-scratch Atomic Acres restart inspired by **Black Ops 2 `Nuketown 2025`** in
+Three.js, started 2026-09-17. The current candidate preserves the restart's
+authored meshes, PBR materials and baked animation clips. It does not import the
+predecessor's modules. Newly authorized asset reuse must carry provenance.
 
 Workspace rules in `C:/Users/david/Desktop/stuff/AGENTS.md` and active AKP apply.
 

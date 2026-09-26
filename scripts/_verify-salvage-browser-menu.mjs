@@ -35,7 +35,7 @@ try {
   await page.setViewportSize({width:1600,height:900});
   await page.getByRole('button',{name:'Deploy',exact:true}).click();
   await page.waitForFunction(()=>{try{return window.__NTGAME.snapshot().match.phase==='active'}catch{return false}},null,{timeout:30000});
-  const actual=await page.evaluate(()=>({kit:window.__NT.weaponCmd('loadout'),host:window.__NTGAME.snapshot(),state:window.__NT.weaponCmd('state'),stats:window.__NT.stats()}));
+  const actual=await page.evaluate(()=>({kit:window.__NT.weaponCmd('loadout'),host:window.__NTGAME.snapshot(),state:window.__NT.weaponCmd('state'),stats:window.__NT.stats(),animation:window.__NTANIM?.report?.()}));
   assert.equal(actual.kit.primary,'mp5');assert.equal(actual.kit.sidearm,'magnum');
   // Host actor ordering is stable but identity is read explicitly on the page.
   const ledger=await page.evaluate(()=>window.__NTGAME.snapshot().actors.find(a=>a.id===window.__NTGAME.localId));

@@ -17,7 +17,8 @@ Codex generated-images directory.
   pots with distinct compact foliage. Preserve open space under the bench.
 - Readable three-quarter silhouette, grounded connected construction; no text,
   logos, people or extra environment. Restrained worn bevels and PBR materials.
-- Runtime budget: at most20k triangles,6 draws,2K textures,12MiB packed asset.
+- Runtime budget: at most20k triangles,6 draws,2K maximum texture dimensions,12MiB incremental runtime memory including mipmaps.
+  Measure decoded texture/geometry allocation; a small compressed GLB does not prove this limit.
 - Project-owned isolated outputs; preserve input, editable source, reject and
   selected takes, exact source/model/node receipts and import transform.
 - Art pass does not change gameplay geometry/collision. Compare fixed neutral

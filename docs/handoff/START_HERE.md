@@ -1,3 +1,19 @@
+# Active salvage candidate - owner resumption 26 September 2026
+
+Read `CURRENT.json` and `SALVAGE-2026-09-26.md` first. The active isolated
+candidate is `salvage/full-game-20260926` at
+`C:/Users/david/Desktop/stuff/worktrees/nuketown-salvage-20260926`.
+It recovers the richer committed alternate of the **new September17 repository**;
+`atomic-acres-browser-arena` is the historical reference. VERIFIED local
+gameplay/multiplayer gates passed on runtime278b02b; overnight polish continues.
+Preview: http://localhost:4348/. Read the OPEN art/performance and WAN gates.
+The selected September24 branch/preview remains preserved as the fallback.
+The original large recovery ledger is preserved verbatim in `CURRENT-2026-09-20.json`.
+
+Everything below is historical orientation and must not choose a checkout or preview.
+
+---
+
 # Current recovery handoff — 19 September 2026
 
 Start with `CURRENT.json` and its checkpoint report. The standalone recovery source is on `recovery/wave7-20260919`; the verified local URL is http://127.0.0.1:4191/. The original Claude checkout is retained. Everything below is the original September 17 handoff and is historical where the dated recovery ledger supersedes it.

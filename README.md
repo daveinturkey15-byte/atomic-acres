@@ -1,71 +1,32 @@
-# Atomic Acres
+# Atomic Acres - September17 restart, September26 salvage
 
-A from-scratch, code-only fan project inspired by **Black Ops 2 `Nuketown 2025`**
-in Three.js. It starts close to BO2's Nuketown 2025 and diverges from there —
-**Nuketown 2025** is the name of the map inside the game. Every mesh and every
-texture is generated procedurally at load — nothing is downloaded, and nothing
-is carried over from any previous project.
+Dave's active isolated salvage candidate is the **new Atomic Acres repository**,
+`daveinturkey15-byte/atomic-acres`, branch `salvage/full-game-20260926`.
+Start with [the current handoff](docs/handoff/START_HERE.md),
+[CURRENT.json](docs/handoff/CURRENT.json), and [AGENTS.md](AGENTS.md).
 
-Unofficial fan project — not affiliated with Activision or Treyarch.
+This candidate recovers this repository's richer September20 source: authored
+PBR scenery, camera-local hands, Kimodo animation clips, persistent classes, twenty
+weapon mechanics, four chosen streak slots, and authoritative multiplayer.
+VERIFIED local menu, gameplay, reconnect, two-browser delayed-SDP, traversal,
+lighting and 210-second soak gates passed. Final art, sustained 60 FPS and physical
+LAN/WAN remain OPEN; see the source-bound evidence in the handoff.
 
-Play it live at `https://daveinturkey15-byte.github.io/atomic-acres/`.
+Local candidate preview: http://localhost:4348/ (when running).
+Use **Play solo**, choose your class/streaks, then **Deploy**.
+Click the game to capture the pointer. WASD moves, mouse looks, left click fires,
+right click aims, Shift sprints, Space jumps, C/Ctrl crouches, and Z toggles prone.
+R reloads; 1/2 select primary/sidearm; 3–6 use earned streaks and 7 the banked bonus.
+Escape opens the menu.
+The served `preview-identity.json` binds source SHA and built script bytes.
+The simpler `layout-boii-proportions` branch/4188 preview is preserved separately.
+Production/master/Pages have not been replaced.
 
-## Play it
+The older `atomic-acres-browser-arena` project supports reference measurements
+and lessons. Dave's September26 evening update also permits useful asset reuse
+with source hashes/provenance and actual in-game review. Do not import old
+modules, build scripts or Git history. Keep this restart as the active game.
 
-```bash
-npm install
-npm run dev
-```
-
-Open the URL it prints, click to lock the pointer, then **WASD** to move, **mouse** to
-look, **shift** to sprint, **space** to jump. The debug line top-left shows fps, draw
-calls, triangles and your position.
-
-You start in the orange team's back yard. The white house is across the street; the
-cul-de-sac with the tour coach is to your right as you face the road.
-
-## Verify it
-
-```bash
-npm run check      # tsc
-npm run capture    # headless captures of every camera station
-npm run traverse   # walks the real player controller along required routes
-```
-
-`capture` starts its **own** dev server on a port it picks, so it can never photograph a
-stale preview someone else left running. It writes to `captures/` and fails on any page
-error. `traverse` drives the actual movement code — collision, step-up, gravity — along
-routes a player must be able to take, and scans each house wall to *find* the doors
-rather than assuming where they are.
-
-Both are necessary and neither is sufficient. **Open the frames and look at them.**
-`src/core/stations.ts` names, for every fidelity camera, the Black Ops 2 reference frame
-it is to be judged against; a station whose `ref` is `null` is a diagnostic view and
-proves nothing about how the map looks.
-
-## How it is put together
-
-```
-src/core/layout.ts      every dimension. Nothing else may hardcode one.
-src/core/palette.ts     every colour.
-src/core/materials.ts   procedural canvas textures; materials are shared singletons
-src/core/world.ts       renderer, sky dome, environment map, light rig
-src/core/player.ts      first-person controller
-src/core/stations.ts    camera stations, each paired to its reference frame
-src/core/kit.ts         the Builder type and geometry helpers
-src/build/*.ts          one file per feature, each exporting a single Builder
-src/ui/*.ts             HUD, menus, settings (wired from main.ts via initUI)
-src/main.ts             the only file that touches the scene
-```
-
-Adding a feature is a new file in `src/build/` and one line in `BUILDERS` in `main.ts`.
-There is deliberately no registry, no plugin loader and no pass system.
-
-See `AGENTS.md` for the module contract and `docs/SPEC.md` for the build spec and the
-reference reads.
-
-## The one invariant
-
-From either back yard, facing your own house, the garage is on your **right**. The two
-houses are a **180° rotational pair, not a mirror pair**. `layout.ts` derives this in
-`garageIsOnTheRight()` rather than hardcoding a sign.
+Run `npm run check`, `npm run build`, and the focused gameplay gates recorded
+in the current handoff. Look at actual game frames; a successful build is not
+visual acceptance. Commit reviewed runtime inputs before stamping a preview.

@@ -1,0 +1,2341 @@
+{
+  "url": "http://127.0.0.1:4348/",
+  "tag": "salvage-net-rejoin-278b02b-final",
+  "startedAt": "2026-09-26T21:05:39.121Z",
+  "status": "PASS",
+  "steps": [
+    {
+      "name": "real menu class and four streak choices admitted over WebRTC",
+      "evidence": {
+        "kit": {
+          "primary": "mp5",
+          "sidearm": "magnum",
+          "grenade": "smoke"
+        },
+        "streaks": [
+          "tracker-dart",
+          "signal-jam",
+          "sentry-post",
+          "blast-mortar"
+        ]
+      }
+    },
+    {
+      "name": "real primary/sidearm ammo consumed and unearned streak answered",
+      "evidence": {
+        "primaryRounds": 149,
+        "sidearmRounds": 41
+      }
+    },
+    {
+      "name": "host detects actual peer silence and reserves the same seat",
+      "evidence": [
+        {
+          "id": "host",
+          "name": "rejoin-host",
+          "ready": true,
+          "isHost": true,
+          "connected": true
+        },
+        {
+          "id": "p1",
+          "name": "rejoin-guest",
+          "ready": true,
+          "isHost": false,
+          "connected": false
+        }
+      ]
+    },
+    {
+      "name": "peer replacement preserves class, ammo, life, four HUD slots and one body per seat",
+      "evidence": {
+        "id": "p1",
+        "resume": {
+          "phase": "playing",
+          "startTick": 70,
+          "lastSeq": 81,
+          "lastStreakSeq": 0,
+          "lastPilotSeq": -1,
+          "life": 1,
+          "shotSeq": 2,
+          "primaryId": "mp5",
+          "rounds": 149,
+          "sidearmId": "magnum",
+          "sidearmRounds": 41,
+          "lethal": 1,
+          "tactical": 1,
+          "tacticalId": "smoke",
+          "armed": null,
+          "speedMultiplier": 1,
+          "rewardWeaponId": null,
+          "rewardWeaponRemainingMs": 0
+        }
+      }
+    },
+    {
+      "name": "post-resume input, shot and streak sequences continue without rejection",
+      "evidence": {
+        "ack": {
+          "seq": 82,
+          "x": -3.5840000000000005,
+          "y": 0.154,
+          "z": 18.4,
+          "yaw": -0.1923738410981259
+        },
+        "stats": {
+          "shotsAdmitted": 3,
+          "shotsRejected": 0,
+          "hitsLanded": 0,
+          "hitsBlocked": 0
+        }
+      }
+    },
+    {
+      "name": "deliberate leave releases host seat, actor, rendered body and guest rejoin offer",
+      "evidence": [
+        {
+          "id": "host",
+          "name": "rejoin-host",
+          "ready": true,
+          "isHost": true,
+          "connected": true
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "samples": {
+    "menu-rejoin-host": {
+      "surface": {
+        "surface": "pre-match",
+        "pointerLock": "unlocked",
+        "reason": "initial",
+        "requestSource": null,
+        "transitions": 0
+      },
+      "ready": true,
+      "backend": {
+        "requested": "webgpu",
+        "actual": "webgpu"
+      },
+      "visibility": "visible",
+      "stats": {
+        "fps": 38,
+        "calls": 870,
+        "renderCallsTotal": 843,
+        "triangles": 622495,
+        "geometries": 436,
+        "textures": 144,
+        "programs": 0,
+        "colliders": 659,
+        "eyeHeight": 1.68,
+        "bodyHeight": 1.78,
+        "stance": "stand",
+        "handedness": [
+          true,
+          true
+        ],
+        "mode": "walk",
+        "flySpeed": 12,
+        "environment": {
+          "groundPbr": false,
+          "distantMountains": false,
+          "lawnCanary": true,
+          "mode": "baseline"
+        }
+      },
+      "button": {
+        "disabled": false,
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "rect": {
+          "x": 670.734375,
+          "y": 360.84375,
+          "width": 151.859375,
+          "height": 39
+        }
+      },
+      "bootMs": 29157
+    },
+    "menu-rejoin-guest": {
+      "surface": {
+        "surface": "pre-match",
+        "pointerLock": "unlocked",
+        "reason": "initial",
+        "requestSource": null,
+        "transitions": 0
+      },
+      "ready": true,
+      "backend": {
+        "requested": "webgpu",
+        "actual": "webgpu"
+      },
+      "visibility": "visible",
+      "stats": {
+        "fps": 36,
+        "calls": 870,
+        "renderCallsTotal": 708,
+        "triangles": 622495,
+        "geometries": 435,
+        "textures": 144,
+        "programs": 0,
+        "colliders": 659,
+        "eyeHeight": 1.68,
+        "bodyHeight": 1.78,
+        "stance": "stand",
+        "handedness": [
+          true,
+          true
+        ],
+        "mode": "walk",
+        "flySpeed": 12,
+        "environment": {
+          "groundPbr": false,
+          "distantMountains": false,
+          "lawnCanary": true,
+          "mode": "baseline"
+        }
+      },
+      "button": {
+        "disabled": false,
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "rect": {
+          "x": 670.734375,
+          "y": 360.84375,
+          "width": 151.859375,
+          "height": 39
+        }
+      },
+      "bootMs": 29600
+    },
+    "fireAttempt": {
+      "host": {
+        "roster": [
+          {
+            "id": "host",
+            "name": "rejoin-host",
+            "ready": true,
+            "isHost": true,
+            "connected": true
+          },
+          {
+            "id": "p1",
+            "name": "rejoin-guest",
+            "ready": true,
+            "isHost": false,
+            "connected": true
+          }
+        ],
+        "snapshot": {
+          "at": 72951.80000001192,
+          "match": {
+            "type": "match-state",
+            "at": 72951.80000001192,
+            "mode": "tdm",
+            "phase": "active",
+            "endsAt": 370351.8000000119,
+            "scoreLimit": 10,
+            "teamScores": [
+              0,
+              0
+            ],
+            "scores": [
+              {
+                "id": "host",
+                "team": 0,
+                "kills": 0,
+                "deaths": 0,
+                "score": 0
+              },
+              {
+                "id": "p1",
+                "team": 1,
+                "kills": 0,
+                "deaths": 0,
+                "score": 0
+              }
+            ],
+            "winner": null,
+            "winnerId": null,
+            "endReason": null
+          },
+          "actors": [
+            {
+              "id": "host",
+              "team": 0,
+              "bot": false,
+              "hp": 100,
+              "alive": true,
+              "life": 1,
+              "spawnIndex": 14,
+              "protectedUntil": 68701.80000001192,
+              "respawnAt": null,
+              "kills": 0,
+              "deaths": 0,
+              "score": 0,
+              "streak": 0,
+              "slots": [
+                {
+                  "streakId": "recon-sweep",
+                  "slot": 1,
+                  "charges": 0
+                },
+                {
+                  "streakId": "signal-jam",
+                  "slot": 2,
+                  "charges": 0
+                },
+                {
+                  "streakId": "sentry-post",
+                  "slot": 3,
+                  "charges": 0
+                },
+                {
+                  "streakId": "blast-mortar",
+                  "slot": 4,
+                  "charges": 0
+                }
+              ],
+              "lethal": 1,
+              "tactical": 1,
+              "primaryId": "longhorn",
+              "rounds": 150,
+              "sidearmId": "duster",
+              "sidearmRounds": 60,
+              "tacticalId": "flash",
+              "speedMultiplier": 1,
+              "rewardWeaponId": null,
+              "rewardWeaponRemainingMs": 0,
+              "armed": null,
+              "blindUntil": 0,
+              "stance": "stand"
+            },
+            {
+              "id": "p1",
+              "team": 1,
+              "bot": false,
+              "hp": 100,
+              "alive": true,
+              "life": 1,
+              "spawnIndex": 9,
+              "protectedUntil": 68701.80000001192,
+              "respawnAt": null,
+              "kills": 0,
+              "deaths": 0,
+              "score": 0,
+              "streak": 0,
+              "slots": [
+                {
+                  "streakId": "tracker-dart",
+                  "slot": 1,
+                  "charges": 0
+                },
+                {
+                  "streakId": "signal-jam",
+                  "slot": 2,
+                  "charges": 0
+                },
+                {
+                  "streakId": "sentry-post",
+                  "slot": 3,
+                  "charges": 0
+                },
+                {
+                  "streakId": "blast-mortar",
+                  "slot": 4,
+                  "charges": 0
+                }
+              ],
+              "lethal": 1,
+              "tactical": 1,
+              "primaryId": "mp5",
+              "rounds": 149,
+              "sidearmId": "magnum",
+              "sidearmRounds": 41,
+              "tacticalId": "smoke",
+              "speedMultiplier": 1,
+              "rewardWeaponId": null,
+              "rewardWeaponRemainingMs": 0,
+              "armed": null,
+              "blindUntil": 0,
+              "stance": "stand"
+            }
+          ],
+          "stats": {
+            "shotsAdmitted": 2,
+            "shotsRejected": 0,
+            "hitsLanded": 0,
+            "hitsBlocked": 0
+          },
+          "ordnance": {
+            "grenades": 0,
+            "smokes": 0,
+            "drops": [],
+            "counts": {
+              "armed": 0,
+              "thrown": 0,
+              "detonated": 0,
+              "cookOffs": 0,
+              "blastHits": 0,
+              "flashed": 0,
+              "smokes": 0,
+              "melees": 0,
+              "meleeHits": 0,
+              "refused": 0,
+              "spawned": 0,
+              "expired": 0,
+              "culled": 0,
+              "scavenges": 0,
+              "swaps": 0
+            }
+          },
+          "crossbow": {
+            "live": 0,
+            "counts": {
+              "launched": 0,
+              "impacts": 0,
+              "victims": 0,
+              "walls": 0,
+              "expired": 0,
+              "dropped": 0
+            }
+          }
+        },
+        "counters": {
+          "kills": 0,
+          "deaths": 0,
+          "damage": 0,
+          "shotRejects": 0,
+          "streakEarned": 0,
+          "streakActivated": 0,
+          "streakDenied": 0,
+          "streakEnded": 0,
+          "spawns": 2,
+          "humanDeaths": 0,
+          "humanHitsTaken": 0,
+          "humanDamageTaken": 0,
+          "matchKills": 0,
+          "epoch": 1,
+          "bots": 0,
+          "remotes": 1,
+          "botTicks": 0,
+          "sightTicks": 0,
+          "engageTicks": 0,
+          "fireTicks": 0,
+          "shots": 0,
+          "knives": 0,
+          "grenades": 0,
+          "streakPresses": 0,
+          "blockedSteps": 0,
+          "streakRefused": 0,
+          "streakBlocks": 0,
+          "botDeaths": 0,
+          "reinforcements": 0,
+          "refusedReinforcements": 0,
+          "rosterRev": 6,
+          "seats": 1
+        },
+        "bodies": [
+          {
+            "id": "p1",
+            "x": -3.5840000000000005,
+            "y": 0.154,
+            "z": 18.4,
+            "crouch": false,
+            "prone": false,
+            "locomotion": "idle"
+          }
+        ],
+        "driverBodies": [
+          "p1"
+        ],
+        "transport": "host · rtt 39 ms · snap 10.8 Hz · age p50/p95 --/-- ms · corr 0/s · in 63/15 ok/rej · lan peers 1 drop 0",
+        "log": [
+          "70352 match-phase active winner=null reason=null"
+        ]
+      },
+      "guest": {
+        "id": "p1",
+        "mode": "guest",
+        "gun": {
+          "motionCanary": true,
+          "id": "mp5",
+          "name": "MP5",
+          "mag": 29,
+          "reserve": 120,
+          "ads": false,
+          "reloading": false,
+          "visible": true,
+          "shotsFired": 1,
+          "cool": 0,
+          "reloadProgress": 0,
+          "hands": {
+            "rootVisible": true,
+            "triggerHand": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            },
+            "supportHand": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            },
+            "supportForearm": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "carbine": {
+            "requested": false,
+            "active": false,
+            "isGLTF": false,
+            "url": null,
+            "sockets": []
+          },
+          "heroes": {
+            "requested": false,
+            "adopted": {}
+          },
+          "referenceModels": {
+            "mini-uzi": {
+              "url": "./assets/reference-weapons/mini-uzi/mini-uzi-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            },
+            "magnum": {
+              "url": "./assets/reference-weapons/magnum/magnum-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            },
+            "minigun": {
+              "url": "./assets/reference-weapons/minigun/minigun-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            }
+          },
+          "crossbow": {
+            "requested": false,
+            "active": true
+          }
+        },
+        "kit": {
+          "primary": "mp5",
+          "sidearm": "magnum"
+        },
+        "ordnance": {
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "mp5",
+          "tacticalId": "smoke",
+          "sidearmId": "magnum",
+          "sidearmRounds": 42,
+          "rounds": 150,
+          "armed": null,
+          "speedMultiplier": 1,
+          "rewardWeaponRemainingMs": 0,
+          "rewardWeaponId": null,
+          "flashAt": null,
+          "flashMs": 0,
+          "flashPeak": 0,
+          "spawnSeq": 1,
+          "pickupSeq": 0,
+          "lastPickupKind": null,
+          "lastPickupWeaponId": null,
+          "lastPickupRounds": 0,
+          "meleeSeq": 0
+        },
+        "counters": {
+          "kills": 0,
+          "deaths": 0,
+          "damage": 0,
+          "shotRejects": 0,
+          "streakEarned": 0,
+          "streakActivated": 0,
+          "streakDenied": 0,
+          "streakEnded": 0,
+          "spawns": 2,
+          "humanDeaths": 0,
+          "humanHitsTaken": 0,
+          "humanDamageTaken": 0,
+          "matchKills": 0,
+          "epoch": 1,
+          "bots": 0,
+          "remotes": 1,
+          "snaps": 0,
+          "lives": 1
+        },
+        "ordnanceLines": [
+          "36827 spawn you at=-3.6,0.2,18.4"
+        ],
+        "log": [],
+        "ack": {
+          "seq": 76,
+          "x": -3.5840000000000005,
+          "y": 0.154,
+          "z": 18.4,
+          "yaw": -0.1923738410981259
+        },
+        "resume": null,
+        "bodies": [
+          {
+            "id": "host",
+            "x": -2.4000000000000004,
+            "y": 3.5900000000000003,
+            "z": -24.400000000000002,
+            "crouch": false,
+            "prone": false,
+            "locomotion": "idle"
+          }
+        ],
+        "streakNames": [
+          "Tracker Dart",
+          "Signal Jam",
+          "Sentry Post",
+          "Blast Mortar"
+        ],
+        "transport": "guest · rtt 48 ms · snap 10.7 Hz · age p50/p95 29/63 ms · corr 0/s · in 0/0 ok/rej · lan peers 1 drop 0"
+      }
+    },
+    "before": {
+      "guest": {
+        "id": "p1",
+        "mode": "guest",
+        "gun": {
+          "motionCanary": true,
+          "id": "mp5",
+          "name": "MP5",
+          "mag": 29,
+          "reserve": 120,
+          "ads": false,
+          "reloading": false,
+          "visible": true,
+          "shotsFired": 1,
+          "cool": 0,
+          "reloadProgress": 0,
+          "hands": {
+            "rootVisible": true,
+            "triggerHand": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            },
+            "supportHand": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            },
+            "supportForearm": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "carbine": {
+            "requested": false,
+            "active": false,
+            "isGLTF": false,
+            "url": null,
+            "sockets": []
+          },
+          "heroes": {
+            "requested": false,
+            "adopted": {}
+          },
+          "referenceModels": {
+            "mini-uzi": {
+              "url": "./assets/reference-weapons/mini-uzi/mini-uzi-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            },
+            "magnum": {
+              "url": "./assets/reference-weapons/magnum/magnum-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            },
+            "minigun": {
+              "url": "./assets/reference-weapons/minigun/minigun-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            }
+          },
+          "crossbow": {
+            "requested": false,
+            "active": true
+          }
+        },
+        "kit": {
+          "primary": "mp5",
+          "sidearm": "magnum"
+        },
+        "ordnance": {
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "mp5",
+          "tacticalId": "smoke",
+          "sidearmId": "magnum",
+          "sidearmRounds": 42,
+          "rounds": 150,
+          "armed": null,
+          "speedMultiplier": 1,
+          "rewardWeaponRemainingMs": 0,
+          "rewardWeaponId": null,
+          "flashAt": null,
+          "flashMs": 0,
+          "flashPeak": 0,
+          "spawnSeq": 1,
+          "pickupSeq": 0,
+          "lastPickupKind": null,
+          "lastPickupWeaponId": null,
+          "lastPickupRounds": 0,
+          "meleeSeq": 0
+        },
+        "counters": {
+          "kills": 0,
+          "deaths": 0,
+          "damage": 0,
+          "shotRejects": 0,
+          "streakEarned": 0,
+          "streakActivated": 0,
+          "streakDenied": 0,
+          "streakEnded": 0,
+          "spawns": 2,
+          "humanDeaths": 0,
+          "humanHitsTaken": 0,
+          "humanDamageTaken": 0,
+          "matchKills": 0,
+          "epoch": 1,
+          "bots": 0,
+          "remotes": 1,
+          "snaps": 0,
+          "lives": 1
+        },
+        "ordnanceLines": [
+          "36827 spawn you at=-3.6,0.2,18.4"
+        ],
+        "log": [],
+        "ack": {
+          "seq": 77,
+          "x": -3.5840000000000005,
+          "y": 0.154,
+          "z": 18.4,
+          "yaw": -0.1923738410981259
+        },
+        "resume": null,
+        "bodies": [
+          {
+            "id": "host",
+            "x": -2.4000000000000004,
+            "y": 3.5900000000000003,
+            "z": -24.400000000000002,
+            "crouch": false,
+            "prone": false,
+            "locomotion": "idle"
+          }
+        ],
+        "streakNames": [
+          "Tracker Dart",
+          "Signal Jam",
+          "Sentry Post",
+          "Blast Mortar"
+        ],
+        "transport": "guest · rtt 48 ms · snap 12.0 Hz · age p50/p95 29/63 ms · corr 0/s · in 0/0 ok/rej · lan peers 1 drop 0"
+      },
+      "host": {
+        "roster": [
+          {
+            "id": "host",
+            "name": "rejoin-host",
+            "ready": true,
+            "isHost": true,
+            "connected": true
+          },
+          {
+            "id": "p1",
+            "name": "rejoin-guest",
+            "ready": true,
+            "isHost": false,
+            "connected": true
+          }
+        ],
+        "snapshot": {
+          "at": 73051.80000001192,
+          "match": {
+            "type": "match-state",
+            "at": 73051.80000001192,
+            "mode": "tdm",
+            "phase": "active",
+            "endsAt": 370351.8000000119,
+            "scoreLimit": 10,
+            "teamScores": [
+              0,
+              0
+            ],
+            "scores": [
+              {
+                "id": "host",
+                "team": 0,
+                "kills": 0,
+                "deaths": 0,
+                "score": 0
+              },
+              {
+                "id": "p1",
+                "team": 1,
+                "kills": 0,
+                "deaths": 0,
+                "score": 0
+              }
+            ],
+            "winner": null,
+            "winnerId": null,
+            "endReason": null
+          },
+          "actors": [
+            {
+              "id": "host",
+              "team": 0,
+              "bot": false,
+              "hp": 100,
+              "alive": true,
+              "life": 1,
+              "spawnIndex": 14,
+              "protectedUntil": 68701.80000001192,
+              "respawnAt": null,
+              "kills": 0,
+              "deaths": 0,
+              "score": 0,
+              "streak": 0,
+              "slots": [
+                {
+                  "streakId": "recon-sweep",
+                  "slot": 1,
+                  "charges": 0
+                },
+                {
+                  "streakId": "signal-jam",
+                  "slot": 2,
+                  "charges": 0
+                },
+                {
+                  "streakId": "sentry-post",
+                  "slot": 3,
+                  "charges": 0
+                },
+                {
+                  "streakId": "blast-mortar",
+                  "slot": 4,
+                  "charges": 0
+                }
+              ],
+              "lethal": 1,
+              "tactical": 1,
+              "primaryId": "longhorn",
+              "rounds": 150,
+              "sidearmId": "duster",
+              "sidearmRounds": 60,
+              "tacticalId": "flash",
+              "speedMultiplier": 1,
+              "rewardWeaponId": null,
+              "rewardWeaponRemainingMs": 0,
+              "armed": null,
+              "blindUntil": 0,
+              "stance": "stand"
+            },
+            {
+              "id": "p1",
+              "team": 1,
+              "bot": false,
+              "hp": 100,
+              "alive": true,
+              "life": 1,
+              "spawnIndex": 9,
+              "protectedUntil": 68701.80000001192,
+              "respawnAt": null,
+              "kills": 0,
+              "deaths": 0,
+              "score": 0,
+              "streak": 0,
+              "slots": [
+                {
+                  "streakId": "tracker-dart",
+                  "slot": 1,
+                  "charges": 0
+                },
+                {
+                  "streakId": "signal-jam",
+                  "slot": 2,
+                  "charges": 0
+                },
+                {
+                  "streakId": "sentry-post",
+                  "slot": 3,
+                  "charges": 0
+                },
+                {
+                  "streakId": "blast-mortar",
+                  "slot": 4,
+                  "charges": 0
+                }
+              ],
+              "lethal": 1,
+              "tactical": 1,
+              "primaryId": "mp5",
+              "rounds": 149,
+              "sidearmId": "magnum",
+              "sidearmRounds": 41,
+              "tacticalId": "smoke",
+              "speedMultiplier": 1,
+              "rewardWeaponId": null,
+              "rewardWeaponRemainingMs": 0,
+              "armed": null,
+              "blindUntil": 0,
+              "stance": "stand"
+            }
+          ],
+          "stats": {
+            "shotsAdmitted": 2,
+            "shotsRejected": 0,
+            "hitsLanded": 0,
+            "hitsBlocked": 0
+          },
+          "ordnance": {
+            "grenades": 0,
+            "smokes": 0,
+            "drops": [],
+            "counts": {
+              "armed": 0,
+              "thrown": 0,
+              "detonated": 0,
+              "cookOffs": 0,
+              "blastHits": 0,
+              "flashed": 0,
+              "smokes": 0,
+              "melees": 0,
+              "meleeHits": 0,
+              "refused": 0,
+              "spawned": 0,
+              "expired": 0,
+              "culled": 0,
+              "scavenges": 0,
+              "swaps": 0
+            }
+          },
+          "crossbow": {
+            "live": 0,
+            "counts": {
+              "launched": 0,
+              "impacts": 0,
+              "victims": 0,
+              "walls": 0,
+              "expired": 0,
+              "dropped": 0
+            }
+          }
+        },
+        "counters": {
+          "kills": 0,
+          "deaths": 0,
+          "damage": 0,
+          "shotRejects": 0,
+          "streakEarned": 0,
+          "streakActivated": 0,
+          "streakDenied": 1,
+          "streakEnded": 0,
+          "spawns": 2,
+          "humanDeaths": 0,
+          "humanHitsTaken": 0,
+          "humanDamageTaken": 0,
+          "matchKills": 0,
+          "epoch": 1,
+          "bots": 0,
+          "remotes": 1,
+          "botTicks": 0,
+          "sightTicks": 0,
+          "engageTicks": 0,
+          "fireTicks": 0,
+          "shots": 0,
+          "knives": 0,
+          "grenades": 0,
+          "streakPresses": 0,
+          "blockedSteps": 0,
+          "streakRefused": 0,
+          "streakBlocks": 0,
+          "botDeaths": 0,
+          "reinforcements": 0,
+          "refusedReinforcements": 0,
+          "rosterRev": 6,
+          "seats": 1
+        },
+        "bodies": [
+          {
+            "id": "p1",
+            "x": -3.5840000000000005,
+            "y": 0.154,
+            "z": 18.4,
+            "crouch": false,
+            "prone": false,
+            "locomotion": "idle"
+          }
+        ],
+        "driverBodies": [
+          "p1"
+        ],
+        "transport": "host · rtt 39 ms · snap 10.8 Hz · age p50/p95 --/-- ms · corr 0/s · in 64/15 ok/rej · lan peers 1 drop 0",
+        "log": [
+          "70352 match-phase active winner=null reason=null",
+          "72952 streak-denied p1 slot1 not-earned"
+        ]
+      },
+      "primaryRounds": 149,
+      "sidearmRounds": 41
+    },
+    "menu-rejoin": {
+      "surface": {
+        "surface": "pre-match",
+        "pointerLock": "unlocked",
+        "reason": "initial",
+        "requestSource": null,
+        "transitions": 0
+      },
+      "ready": true,
+      "backend": {
+        "requested": "webgpu",
+        "actual": "webgpu"
+      },
+      "visibility": "visible",
+      "stats": {
+        "fps": 41,
+        "calls": 870,
+        "renderCallsTotal": 820,
+        "triangles": 622495,
+        "geometries": 436,
+        "textures": 144,
+        "programs": 0,
+        "colliders": 659,
+        "eyeHeight": 1.68,
+        "bodyHeight": 1.78,
+        "stance": "stand",
+        "handedness": [
+          true,
+          true
+        ],
+        "mode": "walk",
+        "flySpeed": 12,
+        "environment": {
+          "groundPbr": false,
+          "distantMountains": false,
+          "lawnCanary": true,
+          "mode": "baseline"
+        }
+      },
+      "button": {
+        "disabled": false,
+        "display": "block",
+        "visibility": "visible",
+        "opacity": "1",
+        "rect": {
+          "x": 670.734375,
+          "y": 360.84375,
+          "width": 151.859375,
+          "height": 39
+        }
+      },
+      "bootMs": 28978
+    },
+    "resumed": {
+      "guest": {
+        "id": "p1",
+        "mode": "guest",
+        "gun": {
+          "motionCanary": true,
+          "id": "mp5",
+          "name": "MP5",
+          "mag": 30,
+          "reserve": 119,
+          "ads": false,
+          "reloading": false,
+          "visible": true,
+          "shotsFired": 0,
+          "cool": 0,
+          "reloadProgress": 0,
+          "hands": {
+            "rootVisible": true,
+            "triggerHand": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            },
+            "supportHand": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            },
+            "supportForearm": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "carbine": {
+            "requested": false,
+            "active": false,
+            "isGLTF": false,
+            "url": null,
+            "sockets": []
+          },
+          "heroes": {
+            "requested": false,
+            "adopted": {}
+          },
+          "referenceModels": {
+            "mini-uzi": {
+              "url": "./assets/reference-weapons/mini-uzi/mini-uzi-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            },
+            "magnum": {
+              "url": "./assets/reference-weapons/magnum/magnum-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            },
+            "minigun": {
+              "url": "./assets/reference-weapons/minigun/minigun-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            }
+          },
+          "crossbow": {
+            "requested": false,
+            "active": true
+          }
+        },
+        "kit": {
+          "primary": "mp5",
+          "sidearm": "magnum"
+        },
+        "ordnance": {
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "mp5",
+          "tacticalId": "smoke",
+          "sidearmId": "magnum",
+          "sidearmRounds": 41,
+          "rounds": 149,
+          "armed": null,
+          "speedMultiplier": 1,
+          "rewardWeaponRemainingMs": 0,
+          "rewardWeaponId": null,
+          "flashAt": null,
+          "flashMs": 0,
+          "flashPeak": 0,
+          "spawnSeq": 0,
+          "pickupSeq": 0,
+          "lastPickupKind": null,
+          "lastPickupWeaponId": null,
+          "lastPickupRounds": 0,
+          "meleeSeq": 0
+        },
+        "counters": {
+          "kills": 0,
+          "deaths": 0,
+          "damage": 0,
+          "shotRejects": 0,
+          "streakEarned": 0,
+          "streakActivated": 0,
+          "streakDenied": 0,
+          "streakEnded": 0,
+          "spawns": 0,
+          "humanDeaths": 0,
+          "humanHitsTaken": 0,
+          "humanDamageTaken": 0,
+          "matchKills": 0,
+          "epoch": 1,
+          "bots": 0,
+          "remotes": 1,
+          "snaps": 0,
+          "lives": 1
+        },
+        "ordnanceLines": [],
+        "log": [],
+        "ack": {
+          "seq": 81,
+          "x": -3.5840000000000005,
+          "y": 0.154,
+          "z": 18.4,
+          "yaw": -0.1923738410981259
+        },
+        "resume": {
+          "phase": "playing",
+          "startTick": 70,
+          "lastSeq": 81,
+          "lastStreakSeq": 0,
+          "lastPilotSeq": -1,
+          "life": 1,
+          "shotSeq": 2,
+          "primaryId": "mp5",
+          "rounds": 149,
+          "sidearmId": "magnum",
+          "sidearmRounds": 41,
+          "lethal": 1,
+          "tactical": 1,
+          "tacticalId": "smoke",
+          "armed": null,
+          "speedMultiplier": 1,
+          "rewardWeaponId": null,
+          "rewardWeaponRemainingMs": 0
+        },
+        "bodies": [
+          {
+            "id": "host",
+            "x": -2.4000000000000004,
+            "y": 3.5900000000000003,
+            "z": -24.400000000000002,
+            "crouch": false,
+            "prone": false,
+            "locomotion": "idle"
+          }
+        ],
+        "streakNames": [
+          "Tracker Dart",
+          "Signal Jam",
+          "Sentry Post",
+          "Blast Mortar"
+        ],
+        "transport": "guest · rtt -- ms · snap 0.0 Hz · age p50/p95 135/224 ms · corr 0/s · in 0/0 ok/rej · lan peers 1 drop 0"
+      },
+      "host": {
+        "roster": [
+          {
+            "id": "host",
+            "name": "rejoin-host",
+            "ready": true,
+            "isHost": true,
+            "connected": true
+          },
+          {
+            "id": "p1",
+            "name": "rejoin-guest",
+            "ready": true,
+            "isHost": false,
+            "connected": true
+          }
+        ],
+        "snapshot": {
+          "at": 110251.80000001192,
+          "match": {
+            "type": "match-state",
+            "at": 110251.80000001192,
+            "mode": "tdm",
+            "phase": "active",
+            "endsAt": 370351.8000000119,
+            "scoreLimit": 10,
+            "teamScores": [
+              0,
+              0
+            ],
+            "scores": [
+              {
+                "id": "host",
+                "team": 0,
+                "kills": 0,
+                "deaths": 0,
+                "score": 0
+              },
+              {
+                "id": "p1",
+                "team": 1,
+                "kills": 0,
+                "deaths": 0,
+                "score": 0
+              }
+            ],
+            "winner": null,
+            "winnerId": null,
+            "endReason": null
+          },
+          "actors": [
+            {
+              "id": "host",
+              "team": 0,
+              "bot": false,
+              "hp": 100,
+              "alive": true,
+              "life": 1,
+              "spawnIndex": 14,
+              "protectedUntil": 68701.80000001192,
+              "respawnAt": null,
+              "kills": 0,
+              "deaths": 0,
+              "score": 0,
+              "streak": 0,
+              "slots": [
+                {
+                  "streakId": "recon-sweep",
+                  "slot": 1,
+                  "charges": 0
+                },
+                {
+                  "streakId": "signal-jam",
+                  "slot": 2,
+                  "charges": 0
+                },
+                {
+                  "streakId": "sentry-post",
+                  "slot": 3,
+                  "charges": 0
+                },
+                {
+                  "streakId": "blast-mortar",
+                  "slot": 4,
+                  "charges": 0
+                }
+              ],
+              "lethal": 1,
+              "tactical": 1,
+              "primaryId": "longhorn",
+              "rounds": 150,
+              "sidearmId": "duster",
+              "sidearmRounds": 60,
+              "tacticalId": "flash",
+              "speedMultiplier": 1,
+              "rewardWeaponId": null,
+              "rewardWeaponRemainingMs": 0,
+              "armed": null,
+              "blindUntil": 0,
+              "stance": "stand"
+            },
+            {
+              "id": "p1",
+              "team": 1,
+              "bot": false,
+              "hp": 100,
+              "alive": true,
+              "life": 1,
+              "spawnIndex": 9,
+              "protectedUntil": 68701.80000001192,
+              "respawnAt": null,
+              "kills": 0,
+              "deaths": 0,
+              "score": 0,
+              "streak": 0,
+              "slots": [
+                {
+                  "streakId": "tracker-dart",
+                  "slot": 1,
+                  "charges": 0
+                },
+                {
+                  "streakId": "signal-jam",
+                  "slot": 2,
+                  "charges": 0
+                },
+                {
+                  "streakId": "sentry-post",
+                  "slot": 3,
+                  "charges": 0
+                },
+                {
+                  "streakId": "blast-mortar",
+                  "slot": 4,
+                  "charges": 0
+                }
+              ],
+              "lethal": 1,
+              "tactical": 1,
+              "primaryId": "mp5",
+              "rounds": 149,
+              "sidearmId": "magnum",
+              "sidearmRounds": 41,
+              "tacticalId": "smoke",
+              "speedMultiplier": 1,
+              "rewardWeaponId": null,
+              "rewardWeaponRemainingMs": 0,
+              "armed": null,
+              "blindUntil": 0,
+              "stance": "stand"
+            }
+          ],
+          "stats": {
+            "shotsAdmitted": 2,
+            "shotsRejected": 0,
+            "hitsLanded": 0,
+            "hitsBlocked": 0
+          },
+          "ordnance": {
+            "grenades": 0,
+            "smokes": 0,
+            "drops": [],
+            "counts": {
+              "armed": 0,
+              "thrown": 0,
+              "detonated": 0,
+              "cookOffs": 0,
+              "blastHits": 0,
+              "flashed": 0,
+              "smokes": 0,
+              "melees": 0,
+              "meleeHits": 0,
+              "refused": 0,
+              "spawned": 0,
+              "expired": 0,
+              "culled": 0,
+              "scavenges": 0,
+              "swaps": 0
+            }
+          },
+          "crossbow": {
+            "live": 0,
+            "counts": {
+              "launched": 0,
+              "impacts": 0,
+              "victims": 0,
+              "walls": 0,
+              "expired": 0,
+              "dropped": 0
+            }
+          }
+        },
+        "counters": {
+          "kills": 0,
+          "deaths": 0,
+          "damage": 0,
+          "shotRejects": 0,
+          "streakEarned": 0,
+          "streakActivated": 0,
+          "streakDenied": 1,
+          "streakEnded": 0,
+          "spawns": 2,
+          "humanDeaths": 0,
+          "humanHitsTaken": 0,
+          "humanDamageTaken": 0,
+          "matchKills": 0,
+          "epoch": 1,
+          "bots": 0,
+          "remotes": 1,
+          "botTicks": 0,
+          "sightTicks": 0,
+          "engageTicks": 0,
+          "fireTicks": 0,
+          "shots": 0,
+          "knives": 0,
+          "grenades": 0,
+          "streakPresses": 0,
+          "blockedSteps": 0,
+          "streakRefused": 0,
+          "streakBlocks": 0,
+          "botDeaths": 0,
+          "reinforcements": 0,
+          "refusedReinforcements": 0,
+          "rosterRev": 8,
+          "seats": 1
+        },
+        "bodies": [
+          {
+            "id": "p1",
+            "x": -3.5840000000000005,
+            "y": 0.154,
+            "z": 18.4,
+            "crouch": false,
+            "prone": false,
+            "locomotion": "idle"
+          }
+        ],
+        "driverBodies": [
+          "p1"
+        ],
+        "transport": "host · rtt 73 ms · snap 12.3 Hz · age p50/p95 --/-- ms · corr 0/s · in 68/15 ok/rej · lan peers 2 drop 0",
+        "log": [
+          "70352 match-phase active winner=null reason=null",
+          "72952 streak-denied p1 slot1 not-earned"
+        ]
+      },
+      "sidearm": {
+        "motionCanary": true,
+        "id": "magnum",
+        "name": "Magnum",
+        "mag": 6,
+        "reserve": 35,
+        "ads": false,
+        "reloading": false,
+        "visible": true,
+        "shotsFired": 0,
+        "cool": 0,
+        "reloadProgress": 0,
+        "hands": {
+          "rootVisible": true,
+          "triggerHand": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          },
+          "supportHand": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          },
+          "supportForearm": {
+            "position": [
+              0,
+              0,
+              0
+            ],
+            "rotation": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        "carbine": {
+          "requested": false,
+          "active": false,
+          "isGLTF": false,
+          "url": null,
+          "sockets": []
+        },
+        "heroes": {
+          "requested": false,
+          "adopted": {}
+        },
+        "referenceModels": {
+          "mini-uzi": {
+            "url": "./assets/reference-weapons/mini-uzi/mini-uzi-fp-lod0.glb",
+            "sockets": [
+              "grip-socket-r",
+              "support-socket-l",
+              "reload-socket-l",
+              "magazine-socket",
+              "muzzle-socket",
+              "eject-socket",
+              "rear-sight-socket",
+              "front-sight-socket"
+            ]
+          },
+          "magnum": {
+            "url": "./assets/reference-weapons/magnum/magnum-fp-lod0.glb",
+            "sockets": [
+              "grip-socket-r",
+              "support-socket-l",
+              "reload-socket-l",
+              "magazine-socket",
+              "muzzle-socket",
+              "eject-socket",
+              "rear-sight-socket",
+              "front-sight-socket"
+            ]
+          },
+          "minigun": {
+            "url": "./assets/reference-weapons/minigun/minigun-fp-lod0.glb",
+            "sockets": [
+              "grip-socket-r",
+              "support-socket-l",
+              "reload-socket-l",
+              "magazine-socket",
+              "muzzle-socket",
+              "eject-socket",
+              "rear-sight-socket",
+              "front-sight-socket"
+            ]
+          }
+        },
+        "crossbow": {
+          "requested": false,
+          "active": true
+        }
+      }
+    },
+    "after": {
+      "guest": {
+        "id": "p1",
+        "mode": "guest",
+        "gun": {
+          "motionCanary": true,
+          "id": "mp5",
+          "name": "MP5",
+          "mag": 29,
+          "reserve": 119,
+          "ads": false,
+          "reloading": false,
+          "visible": true,
+          "shotsFired": 1,
+          "cool": 0.025,
+          "reloadProgress": 0,
+          "hands": {
+            "rootVisible": true,
+            "triggerHand": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            },
+            "supportHand": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            },
+            "supportForearm": {
+              "position": [
+                0,
+                0,
+                0
+              ],
+              "rotation": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          "carbine": {
+            "requested": false,
+            "active": false,
+            "isGLTF": false,
+            "url": null,
+            "sockets": []
+          },
+          "heroes": {
+            "requested": false,
+            "adopted": {}
+          },
+          "referenceModels": {
+            "mini-uzi": {
+              "url": "./assets/reference-weapons/mini-uzi/mini-uzi-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            },
+            "magnum": {
+              "url": "./assets/reference-weapons/magnum/magnum-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            },
+            "minigun": {
+              "url": "./assets/reference-weapons/minigun/minigun-fp-lod0.glb",
+              "sockets": [
+                "grip-socket-r",
+                "support-socket-l",
+                "reload-socket-l",
+                "magazine-socket",
+                "muzzle-socket",
+                "eject-socket",
+                "rear-sight-socket",
+                "front-sight-socket"
+              ]
+            }
+          },
+          "crossbow": {
+            "requested": false,
+            "active": true
+          }
+        },
+        "kit": {
+          "primary": "mp5",
+          "sidearm": "magnum"
+        },
+        "ordnance": {
+          "lethal": 1,
+          "tactical": 1,
+          "primaryId": "mp5",
+          "tacticalId": "smoke",
+          "sidearmId": "magnum",
+          "sidearmRounds": 41,
+          "rounds": 149,
+          "armed": null,
+          "speedMultiplier": 1,
+          "rewardWeaponRemainingMs": 0,
+          "rewardWeaponId": null,
+          "flashAt": null,
+          "flashMs": 0,
+          "flashPeak": 0,
+          "spawnSeq": 0,
+          "pickupSeq": 0,
+          "lastPickupKind": null,
+          "lastPickupWeaponId": null,
+          "lastPickupRounds": 0,
+          "meleeSeq": 0
+        },
+        "counters": {
+          "kills": 0,
+          "deaths": 0,
+          "damage": 0,
+          "shotRejects": 0,
+          "streakEarned": 0,
+          "streakActivated": 0,
+          "streakDenied": 0,
+          "streakEnded": 0,
+          "spawns": 0,
+          "humanDeaths": 0,
+          "humanHitsTaken": 0,
+          "humanDamageTaken": 0,
+          "matchKills": 0,
+          "epoch": 1,
+          "bots": 0,
+          "remotes": 1,
+          "snaps": 0,
+          "lives": 1
+        },
+        "ordnanceLines": [],
+        "log": [],
+        "ack": {
+          "seq": 82,
+          "x": -3.5840000000000005,
+          "y": 0.154,
+          "z": 18.4,
+          "yaw": -0.1923738410981259
+        },
+        "resume": {
+          "phase": "playing",
+          "startTick": 70,
+          "lastSeq": 81,
+          "lastStreakSeq": 0,
+          "lastPilotSeq": -1,
+          "life": 1,
+          "shotSeq": 2,
+          "primaryId": "mp5",
+          "rounds": 149,
+          "sidearmId": "magnum",
+          "sidearmRounds": 41,
+          "lethal": 1,
+          "tactical": 1,
+          "tacticalId": "smoke",
+          "armed": null,
+          "speedMultiplier": 1,
+          "rewardWeaponId": null,
+          "rewardWeaponRemainingMs": 0
+        },
+        "bodies": [
+          {
+            "id": "host",
+            "x": -2.4000000000000004,
+            "y": 3.5900000000000003,
+            "z": -24.400000000000002,
+            "crouch": false,
+            "prone": false,
+            "locomotion": "idle"
+          }
+        ],
+        "streakNames": [
+          "Tracker Dart",
+          "Signal Jam",
+          "Sentry Post",
+          "Blast Mortar"
+        ],
+        "transport": "guest · rtt -- ms · snap 0.0 Hz · age p50/p95 0/224 ms · corr 0/s · in 0/0 ok/rej · lan peers 1 drop 0"
+      },
+      "host": {
+        "roster": [
+          {
+            "id": "host",
+            "name": "rejoin-host",
+            "ready": true,
+            "isHost": true,
+            "connected": true
+          },
+          {
+            "id": "p1",
+            "name": "rejoin-guest",
+            "ready": true,
+            "isHost": false,
+            "connected": true
+          }
+        ],
+        "snapshot": {
+          "at": 110851.80000001192,
+          "match": {
+            "type": "match-state",
+            "at": 110851.80000001192,
+            "mode": "tdm",
+            "phase": "active",
+            "endsAt": 370351.8000000119,
+            "scoreLimit": 10,
+            "teamScores": [
+              0,
+              0
+            ],
+            "scores": [
+              {
+                "id": "host",
+                "team": 0,
+                "kills": 0,
+                "deaths": 0,
+                "score": 0
+              },
+              {
+                "id": "p1",
+                "team": 1,
+                "kills": 0,
+                "deaths": 0,
+                "score": 0
+              }
+            ],
+            "winner": null,
+            "winnerId": null,
+            "endReason": null
+          },
+          "actors": [
+            {
+              "id": "host",
+              "team": 0,
+              "bot": false,
+              "hp": 100,
+              "alive": true,
+              "life": 1,
+              "spawnIndex": 14,
+              "protectedUntil": 68701.80000001192,
+              "respawnAt": null,
+              "kills": 0,
+              "deaths": 0,
+              "score": 0,
+              "streak": 0,
+              "slots": [
+                {
+                  "streakId": "recon-sweep",
+                  "slot": 1,
+                  "charges": 0
+                },
+                {
+                  "streakId": "signal-jam",
+                  "slot": 2,
+                  "charges": 0
+                },
+                {
+                  "streakId": "sentry-post",
+                  "slot": 3,
+                  "charges": 0
+                },
+                {
+                  "streakId": "blast-mortar",
+                  "slot": 4,
+                  "charges": 0
+                }
+              ],
+              "lethal": 1,
+              "tactical": 1,
+              "primaryId": "longhorn",
+              "rounds": 150,
+              "sidearmId": "duster",
+              "sidearmRounds": 60,
+              "tacticalId": "flash",
+              "speedMultiplier": 1,
+              "rewardWeaponId": null,
+              "rewardWeaponRemainingMs": 0,
+              "armed": null,
+              "blindUntil": 0,
+              "stance": "stand"
+            },
+            {
+              "id": "p1",
+              "team": 1,
+              "bot": false,
+              "hp": 100,
+              "alive": true,
+              "life": 1,
+              "spawnIndex": 9,
+              "protectedUntil": 68701.80000001192,
+              "respawnAt": null,
+              "kills": 0,
+              "deaths": 0,
+              "score": 0,
+              "streak": 0,
+              "slots": [
+                {
+                  "streakId": "tracker-dart",
+                  "slot": 1,
+                  "charges": 0
+                },
+                {
+                  "streakId": "signal-jam",
+                  "slot": 2,
+                  "charges": 0
+                },
+                {
+                  "streakId": "sentry-post",
+                  "slot": 3,
+                  "charges": 0
+                },
+                {
+                  "streakId": "blast-mortar",
+                  "slot": 4,
+                  "charges": 0
+                }
+              ],
+              "lethal": 1,
+              "tactical": 1,
+              "primaryId": "mp5",
+              "rounds": 148,
+              "sidearmId": "magnum",
+              "sidearmRounds": 41,
+              "tacticalId": "smoke",
+              "speedMultiplier": 1,
+              "rewardWeaponId": null,
+              "rewardWeaponRemainingMs": 0,
+              "armed": null,
+              "blindUntil": 0,
+              "stance": "stand"
+            }
+          ],
+          "stats": {
+            "shotsAdmitted": 3,
+            "shotsRejected": 0,
+            "hitsLanded": 0,
+            "hitsBlocked": 0
+          },
+          "ordnance": {
+            "grenades": 0,
+            "smokes": 0,
+            "drops": [],
+            "counts": {
+              "armed": 0,
+              "thrown": 0,
+              "detonated": 0,
+              "cookOffs": 0,
+              "blastHits": 0,
+              "flashed": 0,
+              "smokes": 0,
+              "melees": 0,
+              "meleeHits": 0,
+              "refused": 0,
+              "spawned": 0,
+              "expired": 0,
+              "culled": 0,
+              "scavenges": 0,
+              "swaps": 0
+            }
+          },
+          "crossbow": {
+            "live": 0,
+            "counts": {
+              "launched": 0,
+              "impacts": 0,
+              "victims": 0,
+              "walls": 0,
+              "expired": 0,
+              "dropped": 0
+            }
+          }
+        },
+        "counters": {
+          "kills": 0,
+          "deaths": 0,
+          "damage": 0,
+          "shotRejects": 0,
+          "streakEarned": 0,
+          "streakActivated": 0,
+          "streakDenied": 2,
+          "streakEnded": 0,
+          "spawns": 2,
+          "humanDeaths": 0,
+          "humanHitsTaken": 0,
+          "humanDamageTaken": 0,
+          "matchKills": 0,
+          "epoch": 1,
+          "bots": 0,
+          "remotes": 1,
+          "botTicks": 0,
+          "sightTicks": 0,
+          "engageTicks": 0,
+          "fireTicks": 0,
+          "shots": 0,
+          "knives": 0,
+          "grenades": 0,
+          "streakPresses": 0,
+          "blockedSteps": 0,
+          "streakRefused": 0,
+          "streakBlocks": 0,
+          "botDeaths": 0,
+          "reinforcements": 0,
+          "refusedReinforcements": 0,
+          "rosterRev": 8,
+          "seats": 1
+        },
+        "bodies": [
+          {
+            "id": "p1",
+            "x": -3.5840000000000005,
+            "y": 0.154,
+            "z": 18.4,
+            "crouch": false,
+            "prone": false,
+            "locomotion": "idle"
+          }
+        ],
+        "driverBodies": [
+          "p1"
+        ],
+        "transport": "host · rtt 73 ms · snap 12.1 Hz · age p50/p95 --/-- ms · corr 0/s · in 70/15 ok/rej · lan peers 2 drop 0",
+        "log": [
+          "70352 match-phase active winner=null reason=null",
+          "72952 streak-denied p1 slot1 not-earned",
+          "110652 streak-denied p1 slot1 not-earned"
+        ]
+      }
+    },
+    "left": {
+      "roster": [
+        {
+          "id": "host",
+          "name": "rejoin-host",
+          "ready": true,
+          "isHost": true,
+          "connected": true
+        }
+      ],
+      "snapshot": {
+        "at": 112151.80000001192,
+        "match": {
+          "type": "match-state",
+          "at": 112151.80000001192,
+          "mode": "tdm",
+          "phase": "active",
+          "endsAt": 370351.8000000119,
+          "scoreLimit": 10,
+          "teamScores": [
+            0,
+            0
+          ],
+          "scores": [
+            {
+              "id": "host",
+              "team": 0,
+              "kills": 0,
+              "deaths": 0,
+              "score": 0
+            }
+          ],
+          "winner": null,
+          "winnerId": null,
+          "endReason": null
+        },
+        "actors": [
+          {
+            "id": "host",
+            "team": 0,
+            "bot": false,
+            "hp": 100,
+            "alive": true,
+            "life": 1,
+            "spawnIndex": 14,
+            "protectedUntil": 68701.80000001192,
+            "respawnAt": null,
+            "kills": 0,
+            "deaths": 0,
+            "score": 0,
+            "streak": 0,
+            "slots": [
+              {
+                "streakId": "recon-sweep",
+                "slot": 1,
+                "charges": 0
+              },
+              {
+                "streakId": "signal-jam",
+                "slot": 2,
+                "charges": 0
+              },
+              {
+                "streakId": "sentry-post",
+                "slot": 3,
+                "charges": 0
+              },
+              {
+                "streakId": "blast-mortar",
+                "slot": 4,
+                "charges": 0
+              }
+            ],
+            "lethal": 1,
+            "tactical": 1,
+            "primaryId": "longhorn",
+            "rounds": 150,
+            "sidearmId": "duster",
+            "sidearmRounds": 60,
+            "tacticalId": "flash",
+            "speedMultiplier": 1,
+            "rewardWeaponId": null,
+            "rewardWeaponRemainingMs": 0,
+            "armed": null,
+            "blindUntil": 0,
+            "stance": "stand"
+          }
+        ],
+        "stats": {
+          "shotsAdmitted": 3,
+          "shotsRejected": 0,
+          "hitsLanded": 0,
+          "hitsBlocked": 0
+        },
+        "ordnance": {
+          "grenades": 0,
+          "smokes": 0,
+          "drops": [],
+          "counts": {
+            "armed": 0,
+            "thrown": 0,
+            "detonated": 0,
+            "cookOffs": 0,
+            "blastHits": 0,
+            "flashed": 0,
+            "smokes": 0,
+            "melees": 0,
+            "meleeHits": 0,
+            "refused": 0,
+            "spawned": 0,
+            "expired": 0,
+            "culled": 0,
+            "scavenges": 0,
+            "swaps": 0
+          }
+        },
+        "crossbow": {
+          "live": 0,
+          "counts": {
+            "launched": 0,
+            "impacts": 0,
+            "victims": 0,
+            "walls": 0,
+            "expired": 0,
+            "dropped": 0
+          }
+        }
+      },
+      "counters": {
+        "kills": 0,
+        "deaths": 0,
+        "damage": 0,
+        "shotRejects": 0,
+        "streakEarned": 0,
+        "streakActivated": 0,
+        "streakDenied": 2,
+        "streakEnded": 0,
+        "spawns": 2,
+        "humanDeaths": 0,
+        "humanHitsTaken": 0,
+        "humanDamageTaken": 0,
+        "matchKills": 0,
+        "epoch": 1,
+        "bots": 0,
+        "remotes": 0,
+        "botTicks": 0,
+        "sightTicks": 0,
+        "engageTicks": 0,
+        "fireTicks": 0,
+        "shots": 0,
+        "knives": 0,
+        "grenades": 0,
+        "streakPresses": 0,
+        "blockedSteps": 0,
+        "streakRefused": 0,
+        "streakBlocks": 0,
+        "botDeaths": 0,
+        "reinforcements": 0,
+        "refusedReinforcements": 0,
+        "rosterRev": 9,
+        "seats": 0
+      },
+      "bodies": [],
+      "driverBodies": [],
+      "transport": "host · rtt 62 ms · snap 11.6 Hz · age p50/p95 --/-- ms · corr 0/s · in 92/15 ok/rej · lan peers 1 drop 0",
+      "log": [
+        "70352 match-phase active winner=null reason=null",
+        "72952 streak-denied p1 slot1 not-earned",
+        "110652 streak-denied p1 slot1 not-earned"
+      ]
+    }
+  },
+  "identity": {
+    "project": "atomic-acres",
+    "repository": "daveinturkey15-byte/atomic-acres",
+    "lineage": "standalone restart begun 2026-09-17",
+    "branch": "salvage/full-game-20260926",
+    "sourceCommit": "278b02bc4bcf3ea9e47411848b0ec6bf54b10814",
+    "stampedAt": "2026-09-26T21:04:42.749Z",
+    "entry": "assets/index-BO7JlS3z.js",
+    "entrySha256": "93cc77fd7c92e0c6ca16c1517144d257507f306e6429e60dca5369dbeab80105",
+    "untrackedPublicFiles": [],
+    "acceptance": "Local tested preview; not a production release or complete feature/art acceptance."
+  },
+  "signalUrl": "http://127.0.0.1:62094",
+  "endedAt": "2026-09-26T21:07:33.408Z"
+}

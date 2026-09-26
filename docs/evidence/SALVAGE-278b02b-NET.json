@@ -1,0 +1,693 @@
+{
+  "url": "http://localhost:4348/",
+  "signalUrl": "http://127.0.0.1:4349",
+  "seconds": 120,
+  "delaySdpMs": 500,
+  "steps": [
+    {
+      "name": "A hosts a room, code on screen",
+      "ok": true,
+      "detail": "5J86D7"
+    },
+    {
+      "name": "B joins by code over WebRTC; both rosters show two players",
+      "ok": true,
+      "detail": "join took 2796 ms; A sees [\"alpha (host) - you\",\"bravo\"]; B sees [\"alpha (host)\",\"bravo - you\"]"
+    },
+    {
+      "name": "both ready, Start enabled on the host",
+      "ok": true,
+      "detail": "[{\"id\":\"host\",\"name\":\"alpha\",\"connected\":true,\"ready\":true},{\"id\":\"p1\",\"name\":\"bravo\",\"connected\":true,\"ready\":true}]"
+    },
+    {
+      "name": "host starts; both pages leave the menu (A host, B guest)",
+      "ok": true,
+      "detail": "A=host B=guest after 848 ms"
+    },
+    {
+      "name": "B walked and the host tracked it",
+      "ok": true,
+      "detail": "B moved 10.65 m in 3 s"
+    },
+    {
+      "name": "host belief of B within 200 ms (mid-walk gap / walk speed)",
+      "ok": true,
+      "detail": "median mid-walk gap 0.09 m = 19 ms"
+    },
+    {
+      "name": "host pose settles on B's stop position",
+      "ok": true,
+      "detail": "settled 217 ms after keyup, 0.02 m from B's own position"
+    },
+    {
+      "name": "a clear firing position beside B exists",
+      "ok": true,
+      "detail": "A at (1.0, 13.8)"
+    },
+    {
+      "name": "A fired the real weapon at B",
+      "ok": true,
+      "detail": "3 trigger pulls, B HUD health 100 -> 0 (changed on 4 polls)"
+    },
+    {
+      "name": "B's HUD showed the damage",
+      "ok": true,
+      "detail": "hp label 100 -> 0; damage-taken feed [\"34  alpha\",\"34  alpha\",\"32  alpha\"]"
+    },
+    {
+      "name": "the feed shows the kill",
+      "ok": true,
+      "detail": "host kills 0 -> 1; B feed [\"alpha \u00bb YOU\"]; A feed [\"alpha \u00bb bravo\"]"
+    },
+    {
+      "name": "RTT and snapshot rate read from the diagnostics",
+      "ok": true,
+      "detail": "guest p1 \u00b7 rtt 166 ms \u00b7 snap 17.7 Hz \u00b7 age p50/p95 142/194 ms \u00b7 snaps 0 \u00b7 offset 90 ms"
+    },
+    {
+      "name": "120 s from Start without a disconnect",
+      "ok": true,
+      "detail": "11 samples, 0 bad"
+    },
+    {
+      "name": "ICE reached the relay target before SDP",
+      "ok": true,
+      "detail": "6 early candidates"
+    }
+  ],
+  "samples": [
+    {
+      "t": 21,
+      "a": "host \u00b7 seats 1 \u00b7 rtt 41 ms \u00b7 tick 11.5 Hz \u00b7 in 372/17 ok/rej",
+      "b": "guest p1 \u00b7 rtt 69 ms \u00b7 snap 10.7 Hz \u00b7 age p50/p95 57/79 ms \u00b7 snaps 0 \u00b7 offset 26 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 31,
+      "a": "host \u00b7 seats 1 \u00b7 rtt 37 ms \u00b7 tick 11.6 Hz \u00b7 in 577/17 ok/rej",
+      "b": "guest p1 \u00b7 rtt 59 ms \u00b7 snap 12.9 Hz \u00b7 age p50/p95 38/55 ms \u00b7 snaps 0 \u00b7 offset 13 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 41,
+      "a": "host \u00b7 seats 1 \u00b7 rtt 37 ms \u00b7 tick 13.8 Hz \u00b7 in 779/17 ok/rej",
+      "b": "guest p1 \u00b7 rtt 51 ms \u00b7 snap 12.5 Hz \u00b7 age p50/p95 28/60 ms \u00b7 snaps 0 \u00b7 offset 5 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 51,
+      "a": "host \u00b7 seats 1 \u00b7 rtt 42 ms \u00b7 tick 11.6 Hz \u00b7 in 983/17 ok/rej",
+      "b": "guest p1 \u00b7 rtt 43 ms \u00b7 snap 11.0 Hz \u00b7 age p50/p95 23/41 ms \u00b7 snaps 0 \u00b7 offset 1 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 62,
+      "a": "host \u00b7 seats 1 \u00b7 rtt 44 ms \u00b7 tick 12.4 Hz \u00b7 in 1184/18 ok/rej",
+      "b": "guest p1 \u00b7 rtt 39 ms \u00b7 snap 13.6 Hz \u00b7 age p50/p95 23/42 ms \u00b7 snaps 0 \u00b7 offset -2 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 72,
+      "a": "host \u00b7 seats 1 \u00b7 rtt 40 ms \u00b7 tick 10.5 Hz \u00b7 in 1389/18 ok/rej",
+      "b": "guest p1 \u00b7 rtt 41 ms \u00b7 snap 10.8 Hz \u00b7 age p50/p95 20/43 ms \u00b7 snaps 0 \u00b7 offset -1 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 82,
+      "a": "host \u00b7 seats 1 \u00b7 rtt 43 ms \u00b7 tick 11.2 Hz \u00b7 in 1591/18 ok/rej",
+      "b": "guest p1 \u00b7 rtt 39 ms \u00b7 snap 12.0 Hz \u00b7 age p50/p95 27/42 ms \u00b7 snaps 0 \u00b7 offset 1 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 92,
+      "a": "host \u00b7 seats 1 \u00b7 rtt 40 ms \u00b7 tick 11.7 Hz \u00b7 in 1794/18 ok/rej",
+      "b": "guest p1 \u00b7 rtt 39 ms \u00b7 snap 11.8 Hz \u00b7 age p50/p95 18/37 ms \u00b7 snaps 0 \u00b7 offset 3 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 102,
+      "a": "host \u00b7 seats 1 \u00b7 rtt 38 ms \u00b7 tick 12.5 Hz \u00b7 in 1997/18 ok/rej",
+      "b": "guest p1 \u00b7 rtt 37 ms \u00b7 snap 11.9 Hz \u00b7 age p50/p95 24/41 ms \u00b7 snaps 0 \u00b7 offset 1 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 112,
+      "a": "host \u00b7 seats 1 \u00b7 rtt 34 ms \u00b7 tick 11.8 Hz \u00b7 in 2200/18 ok/rej",
+      "b": "guest p1 \u00b7 rtt 39 ms \u00b7 snap 12.2 Hz \u00b7 age p50/p95 22/40 ms \u00b7 snaps 0 \u00b7 offset -1 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    },
+    {
+      "t": 122,
+      "a": "host \u00b7 seats 1 \u00b7 rtt 41 ms \u00b7 tick 11.6 Hz \u00b7 in 2403/18 ok/rej",
+      "b": "guest p1 \u00b7 rtt 39 ms \u00b7 snap 11.8 Hz \u00b7 age p50/p95 18/38 ms \u00b7 snaps 0 \u00b7 offset 1 ms",
+      "modeA": "host",
+      "modeB": "guest",
+      "rosterA": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ],
+      "rosterB": [
+        {
+          "id": "host",
+          "name": "alpha",
+          "connected": true,
+          "ready": true
+        },
+        {
+          "id": "p1",
+          "name": "bravo",
+          "connected": true,
+          "ready": true
+        }
+      ]
+    }
+  ],
+  "errors": {
+    "A": [],
+    "B": []
+  },
+  "walk": [
+    {
+      "t": 57,
+      "own": [
+        -3.570054184092817,
+        18.328403177262228
+      ],
+      "seen": [
+        -3.570054184092817,
+        18.328403177262228
+      ]
+    },
+    {
+      "t": 223,
+      "own": [
+        -3.4477506008776118,
+        17.700505317005597
+      ],
+      "seen": [
+        -3.401865125034932,
+        17.46493256156327
+      ]
+    },
+    {
+      "t": 366,
+      "own": [
+        -3.28761029018666,
+        16.878356400511876
+      ],
+      "seen": [
+        -3.2491582614250247,
+        16.680946431423123
+      ]
+    },
+    {
+      "t": 502,
+      "own": [
+        -3.1516057397725477,
+        16.180118753296572
+      ],
+      "seen": [
+        -3.122055493340802,
+        16.028409898847876
+      ]
+    },
+    {
+      "t": 644,
+      "own": [
+        -2.992011420370011,
+        16.028409898847876
+      ],
+      "seen": [
+        -2.992011420370011,
+        16.028409898847876
+      ]
+    },
+    {
+      "t": 810,
+      "own": [
+        -2.6101414479727767,
+        15.937266034211936
+      ],
+      "seen": [
+        -2.6101414479727767,
+        15.937266034211936
+      ]
+    },
+    {
+      "t": 973,
+      "own": [
+        -1.9841929271458576,
+        15.880654465643127
+      ],
+      "seen": [
+        -1.8419879758027964,
+        15.880654465643127
+      ]
+    },
+    {
+      "t": 1104,
+      "own": [
+        -1.3888430371500964,
+        15.701058580730246
+      ],
+      "seen": [
+        -1.3888430371500964,
+        15.701058580730246
+      ]
+    },
+    {
+      "t": 1253,
+      "own": [
+        -1.1112920387312595,
+        15.194524644644444
+      ],
+      "seen": [
+        -1.052331756717868,
+        15.016852122444467
+      ]
+    },
+    {
+      "t": 1388,
+      "own": [
+        -0.9112201049469848,
+        14.468433370193148
+      ],
+      "seen": [
+        -0.9112201049469854,
+        14.468433370193148
+      ]
+    },
+    {
+      "t": 1546,
+      "own": [
+        -0.7541796581700295,
+        13.721090996422607
+      ],
+      "seen": [
+        -0.7541796581700303,
+        13.721090996422607
+      ]
+    },
+    {
+      "t": 1686,
+      "own": [
+        -0.6349457039966687,
+        13.119350768709417
+      ],
+      "seen": [
+        -0.5960783986684929,
+        12.921043787074975
+      ]
+    },
+    {
+      "t": 1874,
+      "own": [
+        -0.47801671990482325,
+        12.31662643838876
+      ],
+      "seen": [
+        -0.47801671990482425,
+        12.31662643838876
+      ]
+    },
+    {
+      "t": 2033,
+      "own": [
+        -0.3165932212174692,
+        11.488370199467727
+      ],
+      "seen": [
+        -0.2807970355795465,
+        11.304624524433523
+      ]
+    },
+    {
+      "t": 2242,
+      "own": [
+        -0.15799935635728724,
+        10.674233417546489
+      ],
+      "seen": [
+        -0.11211278137913316,
+        10.438660876199298
+      ]
+    },
+    {
+      "t": 2395,
+      "own": [
+        0.010861589985830165,
+        9.807326144074459
+      ],
+      "seen": [
+        0.05188335390845278,
+        9.807326144074459
+      ]
+    },
+    {
+      "t": 2545,
+      "own": [
+        0.2166528733170198,
+        9.807326144074459
+      ],
+      "seen": [
+        0.3081260730714215,
+        9.807326144074459
+      ]
+    },
+    {
+      "t": 2661,
+      "own": [
+        0.6746734310294814,
+        9.807326144074459
+      ],
+      "seen": [
+        0.8091887223022374,
+        9.807326144074459
+      ]
+    },
+    {
+      "t": 2817,
+      "own": [
+        0.8527555132795516,
+        9.807326144074459
+      ],
+      "seen": [
+        0.9110944448780461,
+        9.807326144074459
+      ]
+    },
+    {
+      "t": 2942,
+      "own": [
+        0.9407288146931116,
+        9.655185406184621
+      ],
+      "seen": [
+        0.94072881469311,
+        9.518553208028072
+      ]
+    }
+  ],
+  "qaEarlyIce": 6,
+  "retentionNote": "Detailed QA report retained with free-form relay/browser log omitted. Full local raw report hash is in SALVAGE-2026-09-26.json."
+}

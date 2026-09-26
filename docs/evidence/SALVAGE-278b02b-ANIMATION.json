@@ -1,0 +1,114 @@
+{
+  "capturedAt": "2026-09-26T21:11:28.522Z",
+  "identity": {
+    "project": "atomic-acres",
+    "repository": "daveinturkey15-byte/atomic-acres",
+    "lineage": "standalone restart begun 2026-09-17",
+    "branch": "salvage/full-game-20260926",
+    "sourceCommit": "278b02bc4bcf3ea9e47411848b0ec6bf54b10814",
+    "stampedAt": "2026-09-26T21:04:42.749Z",
+    "entry": "assets/index-BO7JlS3z.js",
+    "entrySha256": "93cc77fd7c92e0c6ca16c1517144d257507f306e6429e60dca5369dbeab80105",
+    "untrackedPublicFiles": [],
+    "acceptance": "Local tested preview; not a production release or complete feature/art acceptance."
+  },
+  "readOnly": true,
+  "rows": [
+    {
+      "tag": "A",
+      "url": "http://localhost:4348/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&room=authored&room-light=baked",
+      "data": {
+        "clips": {
+          "run": "kimodo seed 1003 · 18f · 6.2 cm slide",
+          "crouch-idle": "kimodo seed 1105 · 53f · 0.5 cm slide",
+          "crouch-walk": "kimodo seed 1106 · 31f · 2.4 cm slide",
+          "walk": "kimodo seed 1102 · 26f · 3.8 cm slide",
+          "aim-rifle-walk": "kimodo seed 1008 · 20f · 1.4 cm slide",
+          "jump": "kimodo seed 2001 · 75f · null cm slide",
+          "turn-left": "kimodo seed 2003 · 75f · null cm slide",
+          "land": "kimodo seed 2002 · 60f · null cm slide",
+          "turn-right": "kimodo seed 2004 · 75f · null cm slide",
+          "reload": "kimodo seed 2006 · 100f · null cm slide",
+          "fire": "kimodo seed 2005 · 45f · null cm slide",
+          "hit-react": "kimodo seed 2007 · 60f · null cm slide",
+          "aim": "kimodo seed 1207 · 51f · 0.9 cm slide",
+          "death": "kimodo seed 2008 · 110f · null cm slide",
+          "sprint": "kimodo seed 1204 · 40f · 4 cm slide"
+        },
+        "stats": {
+          "fps": 27,
+          "calls": 745,
+          "renderCallsTotal": 82452,
+          "triangles": 599567,
+          "geometries": 457,
+          "textures": 149,
+          "programs": 0,
+          "colliders": 659,
+          "eyeHeight": 1.68,
+          "bodyHeight": 1.78,
+          "stance": "stand",
+          "handedness": [
+            true,
+            true
+          ],
+          "mode": "walk",
+          "flySpeed": 12,
+          "environment": {
+            "groundPbr": false,
+            "distantMountains": false,
+            "lawnCanary": true,
+            "mode": "baseline"
+          }
+        }
+      }
+    },
+    {
+      "tag": "B",
+      "url": "http://localhost:4348/?lighting=authored&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary&room=authored&room-light=baked",
+      "data": {
+        "clips": {
+          "run": "kimodo seed 1003 · 18f · 6.2 cm slide",
+          "walk": "kimodo seed 1102 · 26f · 3.8 cm slide",
+          "crouch-idle": "kimodo seed 1105 · 53f · 0.5 cm slide",
+          "crouch-walk": "kimodo seed 1106 · 31f · 2.4 cm slide",
+          "jump": "kimodo seed 2001 · 75f · null cm slide",
+          "aim-rifle-walk": "kimodo seed 1008 · 20f · 1.4 cm slide",
+          "land": "kimodo seed 2002 · 60f · null cm slide",
+          "turn-right": "kimodo seed 2004 · 75f · null cm slide",
+          "turn-left": "kimodo seed 2003 · 75f · null cm slide",
+          "reload": "kimodo seed 2006 · 100f · null cm slide",
+          "hit-react": "kimodo seed 2007 · 60f · null cm slide",
+          "fire": "kimodo seed 2005 · 45f · null cm slide",
+          "death": "kimodo seed 2008 · 110f · null cm slide",
+          "sprint": "kimodo seed 1204 · 40f · 4 cm slide",
+          "aim": "kimodo seed 1207 · 51f · 0.9 cm slide"
+        },
+        "stats": {
+          "fps": 27,
+          "calls": 843,
+          "renderCallsTotal": 80543,
+          "triangles": 622041,
+          "geometries": 452,
+          "textures": 147,
+          "programs": 0,
+          "colliders": 659,
+          "eyeHeight": 1.68,
+          "bodyHeight": 1.78,
+          "stance": "stand",
+          "handedness": [
+            true,
+            true
+          ],
+          "mode": "walk",
+          "flySpeed": 12,
+          "environment": {
+            "groundPbr": false,
+            "distantMountains": false,
+            "lawnCanary": true,
+            "mode": "baseline"
+          }
+        }
+      }
+    }
+  ]
+}
