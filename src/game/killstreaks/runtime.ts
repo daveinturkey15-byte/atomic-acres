@@ -43,10 +43,19 @@ import {
   type StreakCatalog, type StreakLoadout,
 } from './catalog';
 import { evaluateActivation, rejectedOutcome, type ActivationContext, type StreakClaimReject } from './gate';
-import { createRecon, reconRevealsTo, stepRecon, type ReconState } from './effects/recon';
+import { createRecon, reconBlipVisible, reconRevealsTo, RECON_BLIP_HOLD_MS, stepRecon, type ReconState } from './effects/recon';
 import { createCounterRecon, jamsTeam, stepCounterRecon, type CounterReconState } from './effects/counter-recon';
 import { createSentry, stepSentry, validateSentryPlacement, type SentryState, type SentryTarget } from './effects/sentry';
 import { createMortar, stepMortar, validateMortarPlacement, type MortarState } from './effects/mortar';
+import { createDart, stepDart, type DartState } from './effects/dart';
+import { createFallout, falloutHides, stepFallout, type FalloutState } from './effects/fallout';
+import { createStrikeRelay, stepStrikeRelay, type StrikeRelayState } from './effects/strike-relay';
+import {
+  createSupplyCrate, crateGrantFits, stepSupplyCrate, validateCratePlacement, type SupplyCrateState,
+} from './effects/supply-crate';
+import { lastResortEvents, type RewardGrant } from './effects/rewards';
+import { DART_PULSE_MS } from './effects/dart';
+import type { RadarSample, RevealSample } from './effects/reveal';
 
 export { STREAK_CLAIM_REJECTS, STREAK_CLAIM_REJECT_LABELS, type ActivationContext, type StreakClaimReject } from './gate';
 
@@ -68,17 +77,21 @@ export const ADVANCE_DT_CAP_MS = 250;
 export const MAX_LADDER_KILLS = 100_000;
 
 /** The wiring table: the only place a streak id meets a stepper. */
-const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar'>> = Object.freeze({
+const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar' | 'dart' | 'fallout' | 'strike-relay' | 'supply-crate'>> = Object.freeze({
   'recon-sweep': 'recon',
   'signal-jam': 'counter-recon',
   'sentry-post': 'sentry',
   'blast-mortar': 'mortar',
+  'tracker-dart': 'dart',
+  'fallout-screen': 'fallout',
+  'strike-relay': 'strike-relay',
+  'supply-crate': 'supply-crate',
 });
 
 /** Derived, never authored: what this build can bring into the world. */
 export const WIRED_STREAK_IDS: readonly string[] = Object.freeze(Object.keys(EFFECT_KIND));
 
-export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState;
+export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState | DartState | FalloutState | StrikeRelayState | SupplyCrateState;
 /** What the host must know about an actor for a sentry to shoot it. */
 export type StreakTarget = SentryTarget;
 
@@ -139,6 +152,7 @@ export class StreakRuntime {
   private activations = 0;
   private lastAdvanceAt: number | null = null;
   private nowMs = 0;
+  private readonly pendingRewards: RewardGrant[] = [];
 
   constructor(opts: { seed?: number; matchEpoch?: number; catalog?: StreakCatalog<string> } = {}) {
     this.catalog = opts.catalog ?? STREAK_CATALOG;
@@ -295,7 +309,7 @@ export class StreakRuntime {
     const kind = EFFECT_KIND[streakId];
     const anchor = intent.anchor ?? intent.origin;
     let placed: { x: number; y: number; z: number } | null = null;
-    if (kind === 'sentry') {
+    if (kind === 'sentry' || kind === 'dart' || kind === 'fallout' || kind === 'strike-relay' || kind === 'supply-crate') {
       const p = validateSentryPlacement(anchor.x, anchor.z, world);
       if (!p.ok) return reject('no-placement', streakId);
       placed = { x: p.x, y: p.y, z: p.z };
@@ -317,9 +331,17 @@ export class StreakRuntime {
       ? createRecon(instanceId, a.actorId, a.team, streakId, def.durationMs, seed)
       : kind === 'counter-recon'
         ? createCounterRecon(instanceId, a.actorId, a.team, streakId, def.durationMs)
-        : kind === 'mortar'
+      : kind === 'mortar'
           ? createMortar(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
-          : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
+          : kind === 'dart'
+            ? createDart(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
+            : kind === 'fallout'
+              ? createFallout(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!)
+              : kind === 'strike-relay'
+                ? createStrikeRelay(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw)
+                : kind === 'supply-crate'
+                  ? createSupplyCrate(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed, this.catalog)
+                  : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
 
     const e: StreakActivatedEvent = Object.freeze({ type: 'streak-activated', at: now, actorId: a.actorId, team: a.team, streakId, slot: intent.slot, chargesLeft, instanceId });
     a.cause = e;
@@ -341,19 +363,56 @@ export class StreakRuntime {
     const health = new Map<ActorId, number>(targets.map((t) => [t.id, t.health]));
     const events: GameEvent[] = [];
     for (const [id, instance] of [...this.live]) {
+      const aimed = targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health }));
       const tick = instance.kind === 'recon'
-        ? stepRecon(instance, dt, { now })
+        ? stepRecon(instance, dt, { now, targets: aimed })
         : instance.kind === 'counter-recon'
           ? stepCounterRecon(instance, dt, { now })
           : instance.kind === 'mortar'
-            ? stepMortar(instance, dt, { now, targets: targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health })) })
-            : stepSentry(instance, dt, { now, world, targets: targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health })) });
+            ? stepMortar(instance, dt, { now, targets: aimed })
+            : instance.kind === 'dart'
+              ? stepDart(instance, dt, { now, world, targets: aimed })
+              : instance.kind === 'fallout-screen'
+                ? stepFallout(instance, dt)
+                : instance.kind === 'strike-relay'
+                  ? stepStrikeRelay(instance, dt, { now, targets: aimed })
+                  : instance.kind === 'supply-crate'
+                    ? stepSupplyCrate(instance, dt, { now, world, targets: aimed })
+                    : stepSentry(instance, dt, { now, world, targets: aimed });
       for (const e of tick.events) {
         if (e.type === 'damage') health.set((e as DamageEvent).victimId, (e as DamageEvent).healthAfter);
         events.push(e);
       }
-      if (tick.state.remainingMs > 0) this.live.set(id, tick.state);
-      else events.push(this.retire(id, tick.state, now, 'expired'));
+      let nextState = tick.state;
+      if (instance.kind === 'supply-crate' && tick.state.kind === 'supply-crate' && tick.state.opened) {
+        const crate = tick.state;
+        const collector = targets.find((target) => target.id === crate.captureActorId && target.alive && target.health > 0);
+        const owner = collector === undefined ? undefined : this.actors.get(collector.id);
+        const special = crate.reward === 'field-repair' || crate.reward === 'last-resort';
+        const canGrant = collector !== undefined && owner !== undefined
+          && (special ? (crate.reward !== 'field-repair' || this.pendingRewards.length < 16) : crateGrantFits(owner.charges, crate.reward, MAX_BANKED_STREAKS, MAX_CHARGES_PER_STREAK));
+        if (canGrant && collector !== undefined && owner !== undefined) {
+          if (crate.reward === 'field-repair') {
+            this.pendingRewards.push(Object.freeze({ actorId: collector.id, team: collector.team, reward: crate.reward, instanceId: crate.instanceId, at: now }));
+          } else if (crate.reward === 'last-resort') {
+            for (const event of lastResortEvents(collector.id, collector.team, now, targets.map((target) => ({ ...target, health: health.get(target.id) ?? target.health })))) {
+              health.set(event.victimId, event.healthAfter);
+              events.push(event);
+            }
+          } else {
+            const charges = (owner.charges.get(crate.reward) ?? 0) + 1;
+            owner.charges.set(crate.reward, charges);
+            events.push(Object.freeze({ type: 'streak-earned', at: now, actorId: collector.id, team: collector.team, streakId: crate.reward, slot: 0, charges }));
+          }
+          events.push(this.retire(id, tick.state, now, 'destroyed'));
+          continue;
+        }
+        // Full bank or a transiently invalid holder: reset the hold and keep
+        // the crate live until the next valid capture or expiry.
+        nextState = Object.freeze({ ...tick.state, opened: false, captureActorId: null, captureProgressMs: 0 });
+      }
+      if (nextState.remainingMs > 0) this.live.set(id, nextState);
+      else events.push(this.retire(id, nextState, now, 'expired'));
     }
     return events;
   }
@@ -374,8 +433,78 @@ export class StreakRuntime {
   /** The ONE place recon and counter-recon combine; checking one alone is half the pair. */
   revealedFor(team: TeamId): boolean {
     for (const i of this.live.values()) if (i.kind === 'counter-recon' && jamsTeam(i, team)) return false;
-    for (const i of this.live.values()) if (i.kind === 'recon' && reconRevealsTo(i, team)) return true;
+    for (const i of this.live.values()) {
+      if (i.kind === 'recon' && reconRevealsTo(i, team) && reconBlipVisible(i)) return true;
+      if (i.kind === 'dart' && i.team === team && i.remainingMs > 0 && i.samples.length > 0) return true;
+    }
     return false;
+  }
+
+  /**
+   * Return enemy ids visible to one observing team.  The caller supplies the
+   * host's current target table; positions and team ownership never cross this
+   * boundary as a global list. Signal Jam is checked for both recon and dart,
+   * while Fallout Screen hides only protected actors inside its radius.
+   */
+  revealedTargetIds(team: TeamId, targets: readonly StreakTarget[]): readonly ActorId[] {
+    return Object.freeze(this.radarFor(team, targets).map((sample) => sample.id).filter((id, i, all) => i === all.indexOf(id)));
+  }
+
+  /** Dart-only projection for minimap consumers that render sensor paint separately. */
+  paintedTargetIds(team: TeamId, targets: readonly StreakTarget[]): readonly ActorId[] {
+    const out = this.radarFor(team, targets)
+      .filter((sample) => sample.source === 'dart')
+      .map((sample) => sample.id)
+      .filter((id, i, all) => i === all.indexOf(id));
+    out.sort();
+    return Object.freeze(out);
+  }
+
+  /**
+   * Team-scoped, pulse-latched sensor samples for the minimap/HUD adapter.
+   *
+   * Recon and darts only contribute samples captured by their last pulse. The
+   * target table is consulted again solely to reject dead/friendly actors and
+   * to apply a currently active Fallout Screen; sample coordinates themselves
+   * remain frozen until the next pulse. Signal Jam suppresses every sample for
+   * the observing team, so this method cannot become a global wallhack by
+   * accident.
+   */
+  radarFor(team: TeamId, targets: readonly StreakTarget[]): readonly RadarSample[] {
+    if ([...this.live.values()].some((instance) => instance.kind === 'counter-recon' && jamsTeam(instance, team))) {
+      return Object.freeze([]);
+    }
+    const current = new Map(targets.map((target) => [target.id, target]));
+    const fallout = [...this.live.values()].filter((instance): instance is FalloutState => instance.kind === 'fallout-screen');
+    const visible = (sample: RevealSample): StreakTarget | null => {
+      const target = current.get(sample.id);
+      if (target === undefined || !target.alive || target.health <= 0 || target.team === team) return null;
+      if (fallout.some((screen) => falloutHides(screen, team, target.team, target.x, target.z))) return null;
+      return target;
+    };
+    const out: RadarSample[] = [];
+    for (const instance of this.live.values()) {
+      if (instance.kind === 'recon' && reconRevealsTo(instance, team) && reconBlipVisible(instance)) {
+        const expiresAt = this.nowMs + Math.max(0, RECON_BLIP_HOLD_MS - instance.sweepMs);
+        for (const sample of instance.latched) {
+          if (visible(sample) !== null) out.push(Object.freeze({ ...sample, source: 'recon', pulse: instance.pulses, expiresAt }));
+        }
+      } else if (instance.kind === 'dart' && instance.team === team && instance.remainingMs > 0 && instance.samples.length > 0) {
+        const expiresAt = this.nowMs + Math.max(0, DART_PULSE_MS - instance.pulseMs);
+        for (const sample of instance.samples) {
+          if (visible(sample) !== null) out.push(Object.freeze({ ...sample, source: 'dart', pulse: instance.pulses, expiresAt }));
+        }
+      }
+    }
+    out.sort((a, b) => a.id.localeCompare(b.id) || a.source.localeCompare(b.source) || a.expiresAt - b.expiresAt);
+    return Object.freeze(out);
+  }
+
+  /** Reward-only health adjustments are deliberately explicit for host integration. */
+  drainRewardGrants(): readonly RewardGrant[] {
+    const out = Object.freeze(this.pendingRewards.slice());
+    this.pendingRewards.length = 0;
+    return out;
   }
 
   /** The bank, one row per slot. Empty for an unknown actor, which is what `host.ts` puts in an `ActorSnapshot`. */

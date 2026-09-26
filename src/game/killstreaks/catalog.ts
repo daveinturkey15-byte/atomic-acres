@@ -26,11 +26,11 @@
  * `baseWeightTotal * 100` by construction and every fixed reward lands on its
  * stated percentage exactly, in integer arithmetic, with no rounding.
  *
- * The roster is ours; no name is taken from any shipped game. Three entries —
- * `recon-sweep`, `signal-jam`, `sentry-post` — have live effects; the rest are
- * declared content whose steppers are not written, and `runtime.ts` refuses
- * them with an enumerated, labelled reason rather than a silent no-op (§5.4).
- * Declaring them is what makes the pool a real pool, not a demonstration.
+ * The roster is ours; no name is taken from any shipped game. The eight
+ * selectable rows have live runtime behavior; `field-repair` and `last-resort`
+ * stay reward-only and are admitted by the crate adapter. A selectable row
+ * without a stepper must be refused by `runtime.ts` with an enumerated,
+ * labelled reason rather than becoming a silent no-op (§5.4).
  */
 
 // ---------------------------------------------------------------------------
@@ -49,7 +49,7 @@ export type StreakTier = (typeof STREAK_TIERS)[number];
 export const STREAK_AVAILABILITIES = ['selectable', 'reward-only', 'retired'] as const;
 export type StreakAvailability = (typeof STREAK_AVAILABILITIES)[number];
 
-/** How the player commits the activation. Only the first two ship today. */
+/** How the player commits the activation. */
 export const STREAK_ACTIVATIONS = ['instant', 'target-point', 'target-line', 'possession'] as const;
 export type StreakActivation = (typeof STREAK_ACTIVATIONS)[number];
 

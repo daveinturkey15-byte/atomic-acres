@@ -22,6 +22,8 @@
  */
 
 import type { ActorId, GameEvent, TeamId } from '../../events';
+import type { SentryTarget } from './sentry';
+import type { RevealSample } from './reveal';
 
 /**
  * Sweep period. FIRST VALUE for this project, not inherited: the old project
@@ -54,11 +56,14 @@ export interface ReconState {
   readonly pulses: number;
   /** True for the tick in which a sweep completed. */
   readonly pulsed: boolean;
+  /** Enemy positions captured by the most recent pulse, never continuously followed. */
+  readonly latched: readonly RevealSample[];
 }
 
 /** Only what cannot be derived. `dt` is the runtime's clamped step. */
 export interface ReconTickContext {
   readonly now: number;
+  readonly targets: readonly SentryTarget[];
 }
 
 export interface ReconTick {
@@ -89,13 +94,19 @@ export function createRecon(
     sweepMs: offset,
     pulses: 0,
     pulsed: false,
+    latched: Object.freeze([]),
   });
 }
 
-export function stepRecon(state: ReconState, dt: number, _ctx: ReconTickContext): ReconTick {
+export function stepRecon(state: ReconState, dt: number, ctx: ReconTickContext): ReconTick {
   const step = dt > 0 ? dt : 0;
   const total = state.sweepMs + step;
   const crossed = Math.floor(total / RECON_SWEEP_PERIOD_MS);
+  const latched = crossed > 0
+    ? Object.freeze(ctx.targets
+      .filter((target) => target.alive && target.health > 0 && target.team !== state.team && target.id !== state.actorId)
+      .map((target) => Object.freeze({ id: target.id, x: target.x, y: target.y, z: target.z })))
+    : state.latched;
   return {
     state: Object.freeze({
       ...state,
@@ -103,6 +114,7 @@ export function stepRecon(state: ReconState, dt: number, _ctx: ReconTickContext)
       sweepMs: total - crossed * RECON_SWEEP_PERIOD_MS,
       pulses: state.pulses + crossed,
       pulsed: crossed > 0,
+      latched,
     }),
     events: [],
   };
