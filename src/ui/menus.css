@@ -362,10 +362,11 @@
 }
 
 #start .aa-kit-weapon {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 7px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 3px;
+  min-width: 0;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.4px;
@@ -385,6 +386,11 @@
   height: 28px;
   overflow: visible;
   opacity: 0.9;
+}
+
+#start .aa-kit-weapon .aa-weapon-glyph {
+  width: 100%;
+  height: 24px;
 }
 
 #start :is(.aa-prim, .aa-sidearm) .aa-weapon-glyph {
@@ -410,8 +416,11 @@
 }
 
 #start .aa-kit-wstats {
+  min-width: 0;
+  width: 100%;
   font-size: 11px;
   font-weight: 500;
+  line-height: 1.4;
   color: rgba(232, 238, 247, 0.55);
   font-variant-numeric: tabular-nums;
 }

@@ -180,7 +180,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
         if (msg.actorId === selfId) client.applySnapshot({ at: performance.now(), radar: msg.samples });
         break;
       case 'streak-effects':
-        client.applySnapshot({ at: performance.now(), effects: msg.effects });
+        client.applySnapshot({ at: msg.at, effects: msg.effects });
         break;
       default:
         break;

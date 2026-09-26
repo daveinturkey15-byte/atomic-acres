@@ -13,6 +13,7 @@ await build({
   stdin: { contents: `export * as THREE from 'three';
     export * from './src/weapons/weapon-effects-scene';
     export * from './src/weapons/streak-effects-scene';
+    export * from './src/core/effect-materials';
     export * from './src/core/presentation-defaults';`, resolveDir: root, loader: 'ts' },
   bundle: true, platform: 'node', format: 'esm', outfile: join(out, 'proof.mjs'), logLevel: 'silent',
 });
@@ -25,11 +26,13 @@ const matFor = (kind, color, a = 0, b = 0) => {
   if (!registry.has(key)) registry.set(key, new THREE.MeshBasicMaterial({ color }));
   return registry.get(key);
 };
-const mat = { emissive: (c, s) => matFor('emissive', c, s), painted: (c, r, m) => matFor('painted', c, r, m), steel: matFor('steel', 0x999999) };
+const specialEffects = api.createSpecialEffectMaterials();
+const mat = { emissive: (c, s) => matFor('emissive', c, s), painted: (c, r, m) => matFor('painted', c, r, m), steel: matFor('steel', 0x999999), specialEffects };
 let sharedDisposals = 0;
 const weapons = createWeaponEffectsScene(mat);
 const streaks = createStreakEffectsScene(mat);
 for (const material of registry.values()) material.addEventListener('dispose', () => sharedDisposals++);
+for (const material of [specialEffects.flame, specialEffects.core, specialEffects.smoke]) material.addEventListener('dispose', () => sharedDisposals++);
 const frozenMaterialCount = registry.size;
 const nodeCount = weapons.group.children.length + streaks.group.children.length;
 const checks = [];
@@ -48,6 +51,17 @@ check('all special effects have visible finite geometry, duplicate edges do not 
   for (const [id, effect] of ['flame', 'flare-launch', 'flare-impact', 'crossbow-blast', 'rail'].entries()) {
     weapons.reset(); weapons.onEvent(event(effect, id)); weapons.onEvent(event(effect, id)); weapons.update(1050);
     assert.equal(weapons.counts().live, 1); assert(weapons.counts().instances > 0); finiteMatrices(weapons.group);
+  }
+});
+check('soft particles face the actual camera and retain transparent MRT auxiliaries', () => {
+  weapons.reset(); weapons.onEvent(event('flame', 1)); weapons.update(1050);
+  const camera = new THREE.PerspectiveCamera(); camera.rotation.set(0.3, 0.8, 0);
+  for (const mesh of weapons.group.children) mesh.onBeforeRender(null, null, camera);
+  finiteMatrices(weapons.group);
+  for (const material of [specialEffects.flame, specialEffects.core, specialEffects.smoke]) {
+    assert.equal(material.transparent, true); assert.equal(material.depthWrite, false); assert(material.mrtNode);
+    const data = material.map.image.data; assert.equal(data[3], 0);
+    assert(data.some((value, i) => i % 4 === 3 && value > 0 && value < 255));
   }
 });
 check('impact retires only its own launch, including actor identity', () => {

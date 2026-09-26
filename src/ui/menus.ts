@@ -98,7 +98,7 @@ export function initMenus(deps: MenuDeps): MenuHandle {
   root.className = 'aa-root';
   root.setAttribute('role', 'dialog');
   root.setAttribute('aria-modal', 'true');
-  root.setAttribute('aria-label', 'Nuketown 2025 menu');
+  root.setAttribute('aria-label', 'Atomic Acres menu');
   // Real clicks stop here: only the synthetic `#start.click()` reaches main.ts.
   root.addEventListener('click', (e) => e.stopPropagation());
 

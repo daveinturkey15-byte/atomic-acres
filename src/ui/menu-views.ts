@@ -4,9 +4,8 @@
  * wires; none of them decides anything. Split out of `menus.ts` when the
  * solo / multiplayer / options panels landed (the 400-line cap).
  *
- * Licence text lives HERE on the main menu footer and in the credits view:
- * docs/LICENCES-ANIMATION.md obligation 3 requires both lines wherever the
- * game names itself. Keep them.
+ * Licence text lives in the credits view. Both attribution lines are retained
+ * as required by docs/LICENCES-ANIMATION.md obligation 3.
  */
 import type { SessionSnapshot } from '../game/session-types';
 import type { MatchMode } from '../game/rules';
@@ -73,11 +72,12 @@ export function buildMain(): MainView {
   const maps = buildMapSelect();
   const foot = document.createElement('div');
   foot.className = 'aa-foot';
-  foot.append(text('div', 'aa-fan', FAN_LINE), text('div', 'aa-fan aa-credits', LICENCE_LINES.join(' · ')));
+  foot.append(text('div', 'aa-fan', FAN_LINE));
   root.append(
     text('div', 'aa-eyebrow', 'A fan project inspired by Black Ops 2'),
-    text('h1', 'aa-title', 'NUKETOWN 2025'),
-    text('div', 'aa-sub', 'Solo skirmishes and multiplayer'),
+    text('h1', 'aa-title', 'ATOMIC ACRES'),
+    text('div', 'aa-sub', 'NUKETOWN 2025'),
+    text('div', 'aa-hint', 'Solo skirmishes and multiplayer'),
     btnRow,
     text('div', 'aa-maphead', 'Map'),
     maps.root,
@@ -122,7 +122,8 @@ export interface CreditsView {
 export function buildCredits(): CreditsView {
   const root = view('Credits', 'aa-creditsview');
   const lines = [
-    'Nuketown 2025 — a standalone browser FPS rebuilt on Three.js WebGPU / TSL.',
+    'Atomic Acres — a standalone browser FPS rebuilt on Three.js WebGPU / TSL.',
+    'Map: Nuketown 2025.',
     'Procedural geometry, authored models and licensed textures. Asset sources are recorded with this build.',
     FAN_LINE,
     ...LICENCE_LINES,

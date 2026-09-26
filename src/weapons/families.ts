@@ -2,16 +2,15 @@
  * Weapons lane — roster20 families and the TEMPORARY viewmodel fallback map.
  *
  * The catalog is the only weapon table; this file adds the one axis it does
- * not carry: which behaviour family a weapon plays as, and which of the five
- * EXISTING first-person rigs stands in for it until per-weapon art lands.
+ * not carry: which behaviour family a weapon plays as, and which first-person
+ * rig represents it. Four special weapons now have native silhouettes.
  * It is deliberately THREE-free so the CPU invariant harness can bundle it
  * without dragging the renderer in.
  *
  * FALLBACKS ARE LABELED ART DEBT, not finished viewmodels. Nothing here claims
- * 20 unique 3D guns: fifteen weapons render with one of the five original
- * rigs (`viewmodel.ts` builders) chosen by family. When a real rig lands for a
- * weapon, change its row in `FAMILY_FALLBACK` — the controller patch is the
- * only consumer.
+ * 20 unique 3D guns: eleven weapons still borrow one of the five original
+ * rigs. The original five and four special builders provide nine native rigs.
+ * Per-weapon overrides belong in SPECIAL_RIG; family motion/audio stay separate.
  */
 
 import { WEAPONS } from './catalog';
@@ -25,11 +24,19 @@ export type WeaponFamily =
   | 'sniper'   // bolt precision
   | 'shotgun'  // pellet and slug shotguns
   | 'pistol'   // sidearm-class
-  | 'special' // shipped distinct delivery with a temporary rifle rig
-  | 'exotic';  // roster20 props without a real rig (railgun, crossbow, flame, flare)
+  | 'special' // shipped distinct delivery and native special-weapon rigs
+  | 'exotic';  // reserved unsupported prototype family
 
 /** One of the five shipped `viewmodel.ts` rigs, by builder name. */
 export type FallbackRig = 'rifle' | 'smg' | 'shotgun' | 'sniper' | 'pistol';
+export type WeaponRigId = FallbackRig | 'railgun' | 'crossbow' | 'flamethrower' | 'flaregun';
+
+const SPECIAL_RIG: Readonly<Partial<Record<string, WeaponRigId>>> = Object.freeze({
+  railgun: 'railgun',
+  'explosive-crossbow': 'crossbow',
+  flamethrower: 'flamethrower',
+  'flare-gun': 'flaregun',
+});
 
 /**
  * The explicit per-weapon table. One row per catalog id — a weapon without a
@@ -61,9 +68,9 @@ export const WEAPON_FAMILY: Readonly<Record<string, WeaponFamily>> = Object.free
 });
 
 /**
- * Family → standing-in rig. Labeled TEMPORARY: exotic has no silhouette of its
- * own yet and borrows the rifle; the DMR borrows the sniper; slug borrows the
- * pump shotgun. Replacing a row is the whole art upgrade, per weapon.
+ * Family → standing-in rig and motion profile. Native per-id overrides are
+ * resolved by viewmodelForWeapon; the DMR still borrows the sniper and slug
+ * borrows the pump shotgun. Special motion retains the original rifle profile.
  */
 export const FAMILY_FALLBACK: Readonly<Record<WeaponFamily, FallbackRig>> = Object.freeze({
   rifle: 'rifle',
@@ -92,7 +99,14 @@ export const RIG_OWNER: Readonly<Record<FallbackRig, string>> = Object.freeze({
 
 /** True when `id` renders with the rig originally built for it — no borrowed silhouette. */
 export function isNativeRig(id: string): boolean {
-  return RIG_OWNER[FAMILY_FALLBACK[weaponFamily(id)]] === id;
+  const family = weaponFamily(id);
+  return SPECIAL_RIG[id] !== undefined || RIG_OWNER[FAMILY_FALLBACK[family]] === id;
+}
+
+/** The actual builder key; distinct from the coarse animation/audio family. */
+export function viewmodelForWeapon(id: string): WeaponRigId {
+  const family = weaponFamily(id);
+  return SPECIAL_RIG[id] ?? FAMILY_FALLBACK[family];
 }
 
 /** Audio lane vocabulary — the five shipped `AudioService` shot families. */

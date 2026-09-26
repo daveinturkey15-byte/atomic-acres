@@ -7,6 +7,7 @@
  * compiles a small, fixed set of programs.
  */
 import * as THREE from 'three';
+import { createSpecialEffectMaterials, type SpecialEffectMaterials } from './effect-materials';
 import { createOperatorMaterial } from '../characters/operator-materials';
 import { createTurfTextures, disposeTurfTextures } from './turf-material';
 import { MeshBasicNodeMaterial, MeshStandardNodeMaterial } from 'three/webgpu';
@@ -266,6 +267,7 @@ export interface MaterialLibrary {
   impactDecal: THREE.Material;
   /** Soft radial flash sprite (masked, HDR core) for the weapon-effects flash quads. */
   flashSprite: THREE.Material;
+  specialEffects: SpecialEffectMaterials;
   viewmodel: ViewmodelMaterialSet;
   /** Lazy: baseline builds neither load nor allocate the authored room maps. */
   interior: () => InteriorMaterials;
@@ -334,6 +336,8 @@ export function buildMaterials(): MaterialLibrary {
     map: flashMaskTex, transparent: true, depthWrite: false,
   });
   own(flashSpriteMat);
+  const specialEffects = createSpecialEffectMaterials();
+  own(specialEffects);
   const viewmodel = createViewmodelMaterials();
   own(viewmodel);
   let disposed = false;
@@ -881,6 +885,7 @@ export function buildMaterials(): MaterialLibrary {
     leafCards: vegetation.leafCards,
     impactDecal: impact.material,
     flashSprite: flashSpriteMat,
+    specialEffects,
     viewmodel,
     interior() {
       if (disposed) throw new Error('Cannot build interior materials after disposal');

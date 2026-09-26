@@ -153,9 +153,9 @@ export interface TodPreset {
   readonly inscatter: number;
   readonly inscatterPower: number;
   readonly exposure: number;
-  /** Dome/env horizon->zenith ramp bias. Legacy 0.85 (pale-biased); authored 1.55 (deep zenith, structure near the horizon). */
+  /** Dome/env horizon->zenith ramp bias. Authored 0.55 brings blue into a player's normal view. */
   readonly rampBias: number;
-  /** Dome/env horizon haze band half-height. Legacy 0.3; authored 0.22. */
+  /** Dome/env horizon haze band half-height. Legacy 0.3; authored 0.12. */
   readonly horizonBand: number;
 }
 
@@ -286,7 +286,7 @@ const AUTHORED_NOON: TodPreset = Object.freeze({
   fogColor: lightCol(PAL.fog), fogDensity: 0.0016, fogHeight: 1e5,
   inscatter: 0.0, inscatterPower: 8,
   exposure: 1.05,
-  rampBias: 1.55, horizonBand: 0.22,
+  rampBias: 0.55, horizonBand: 0.12,
 });
 
 /** The authored table: only noon is re-authored; TOD and weather remain whole. */

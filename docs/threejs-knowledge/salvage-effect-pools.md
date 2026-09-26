@@ -22,7 +22,10 @@ VERIFIED implementation: `src/weapons/weapon-effects-scene.ts` consumes admitted
 weapon-effect events through a 32-slot ring. Five fixed instanced batches draw
 flame tongues, flare trails/fire, rail traces and crossbow bursts. Animation uses
 absolute event time; flare travel follows the host's 120 Hz semiimplicit gravity.
-It owns three geometries and no materials.
+It owns three geometries and no materials. `core/effect-materials.ts` adds two
+64px analytic soft masks and three materials owned once by `MaterialLibrary`.
+Flames, hot cores and dust use camera-facing masked quads; zero-alpha auxiliary
+MRT writes preserve the opaque normal/material buffers beneath their alpha.
 
 VERIFIED implementation: `src/weapons/streak-effects-scene.ts` draws host spatial
 snapshots with 16 slots and nine fixed batches. Snapshot time plus remaining
@@ -39,11 +42,24 @@ team-coloured pixels, then keep the existing frame budget; never repair this by
 mutating a shared material's colour while rendering each team.
 
 VERIFIED CPU lifecycle proof: `node scripts/_verify-salvage-effect-scenes.mjs`
-passes nine checks including a 5,000-event flood, matrix finiteness, duplicate
+passes ten checks including a 5,000-event flood, matrix finiteness, duplicate
 event handling, flare launch/impact identity, stale snapshot expiry and idempotent
-disposal that leaves registry materials intact.
+disposal that leaves registry materials intact. The soft-particle check verifies
+actual-camera billboarding, zero-alpha mask edges and transparent MRT auxiliary state.
 
-OPEN until root browser acceptance: actual appearance, frame costs, device/mobile
+VERIFIED first browser pass: all four actual host gun paths, five screenshots,
+zero browser errors. LOOKED frames exposed faceted particle balls and a rail
+trace which expired before its screenshot. Those are retained as the before
+artifact (`captures/salvage-special-effects-*`), not visual acceptance.
+
+OPEN after localized repair: masked-particle appearance, frame costs, device/mobile
 behavior and the unchanged gameplay soak. `scripts/capture-salvage-effects.mjs`
 uses the normal custom-loadout, Deploy and trigger paths; its screenshots are
 actual admitted effects, with QA teleport staging explicitly recorded.
+
+Authored-noon sky refinement, attempt 1: `rampBias` 1.55 to 0.55 and
+`horizonBand` 0.22 to 0.12. A power above one kept the normal player sky near
+the pale horizon colour; the earlier comment described that effect backwards.
+Both the dome and environment bake consume these same two numbers. Sun,
+exposure, colours and other time/weather presets remain unchanged. Same-camera
+review and unchanged-budget gameplay checks are required before acceptance.

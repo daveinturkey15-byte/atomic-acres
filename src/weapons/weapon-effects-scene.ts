@@ -13,7 +13,7 @@ type Slot = {
   effect: WeaponEffectEvent['effect']; actorId: string; id: number; at: number;
   duration: number; radius: number; live: boolean; origin: THREE.Vector3; dir: THREE.Vector3;
 };
-type Batch = { mesh: THREE.InstancedMesh; capacity: number; used: number };
+type Batch = { mesh: THREE.InstancedMesh; capacity: number; used: number; sprites?: Float32Array };
 
 /** Reconstruct the host's fixed-substep ballistic launch without per-frame integration. */
 export function flarePositionAt(ageMs: number, speed: number, gravity: number,
@@ -40,7 +40,7 @@ export function createWeaponEffectsScene(mat: MaterialLibrary): WeaponEffectsSce
   const group = new THREE.Group();
   group.name = 'special-weapon-effects';
   group.userData.presentationOnly = true;
-  const particleGeo = new THREE.IcosahedronGeometry(1, 1);
+  const particleGeo = new THREE.PlaneGeometry(2, 2);
   const beamGeo = new THREE.CylinderGeometry(1, 1, 1, 7, 1, true);
   const ringGeo = new THREE.RingGeometry(0.94, 1, 40);
   ringGeo.rotateX(-Math.PI / 2);
@@ -59,20 +59,40 @@ export function createWeaponEffectsScene(mat: MaterialLibrary): WeaponEffectsSce
   let next = 0;
   let live = 0;
 
-  function batch(name: string, geo: THREE.BufferGeometry, material: THREE.Material, capacity: number): Batch {
+  function batch(name: string, geo: THREE.BufferGeometry, material: THREE.Material, capacity: number, billboard = false): Batch {
     const mesh = new THREE.InstancedMesh(geo, material, capacity);
     mesh.name = name;
     mesh.count = 0;
     mesh.frustumCulled = false;
     mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     group.add(mesh);
-    return { mesh, capacity, used: 0 };
+    const result: Batch = { mesh, capacity, used: 0 };
+    if (billboard) {
+      result.sprites = new Float32Array(capacity * 5);
+      const cameraFacing = new THREE.Quaternion();
+      mesh.renderOrder = name.includes('smoke') ? 2 : name.includes('cores') ? 4 : 3;
+      // Billboard against the actual render camera, including replay/QA cameras.
+      // Fixed storage only; no camera or geometry allocation when a shot arrives.
+      mesh.onBeforeRender = (_renderer, _scene, camera) => {
+        camera.getWorldQuaternion(cameraFacing);
+        const data = result.sprites!;
+        for (let i = 0; i < result.used; i++) {
+          const at = i * 5;
+          position.set(data[at], data[at + 1], data[at + 2]);
+          scale.set(data[at + 3], data[at + 4], 1);
+          matrix.compose(position, cameraFacing, scale);
+          mesh.setMatrixAt(i, matrix);
+        }
+        if (result.used > 0) mesh.instanceMatrix.needsUpdate = true;
+      };
+    }
+    return result;
   }
-  const warm = batch('flame-envelope-and-embers', particleGeo, mat.emissive(PAL.sunDuskGlow, 2.2), 288);
-  const hot = batch('white-hot-cores', particleGeo, mat.emissive(PAL.sunColor, 3.5), 128);
-  const smoke = batch('cooling-smoke-puffs', particleGeo, mat.painted(PAL.asphalt, 1, 0), 96);
+  const warm = batch('flame-envelope-and-embers', particleGeo, mat.specialEffects.flame, 288, true);
+  const hot = batch('white-hot-cores', particleGeo, mat.specialEffects.core, 128, true);
+  const smoke = batch('cooling-smoke-puffs', particleGeo, mat.specialEffects.smoke, 96, true);
   const rail = batch('rail-ion-traces', beamGeo, mat.emissive(PAL.signTeal, 3), SPECIAL_EFFECT_SLOTS);
-  const rings = batch('blast-shock-rings', ringGeo, mat.emissive(PAL.sunGolden, 1.6), SPECIAL_EFFECT_SLOTS);
+  const rings = batch('blast-shock-rings', ringGeo, mat.emissive(PAL.sunGolden, 0.65), SPECIAL_EFFECT_SLOTS);
   const batches = [warm, hot, smoke, rail, rings];
   const slots: Slot[] = Array.from({ length: SPECIAL_EFFECT_SLOTS }, () => ({
     effect: 'flame', actorId: '', id: -1, at: 0, duration: 0, radius: 0, live: false,
@@ -84,6 +104,11 @@ export function createWeaponEffectsScene(mat: MaterialLibrary): WeaponEffectsSce
     position.set(x, y, z);
     scale.set(sx, sy, sz);
     matrix.compose(position, q, scale);
+    if (b.sprites) {
+      const at = b.used * 5;
+      b.sprites[at] = x; b.sprites[at + 1] = y; b.sprites[at + 2] = z;
+      b.sprites[at + 3] = sx; b.sprites[at + 4] = sy;
+    }
     b.mesh.setMatrixAt(b.used++, matrix);
   }
 
@@ -132,17 +157,19 @@ export function createWeaponEffectsScene(mat: MaterialLibrary): WeaponEffectsSce
         up.crossVectors(side, s.dir).normalize();
         // Overlapping tapered tongues read as a continuous jet; a broad solid cone does not.
         for (let j = 0; j < 9; j++) {
-          const f = (j + 1) / 10;
-          const d = 0.4 + s.radius * f;
+          const f = j / 9;
+          const d = 0.7 + s.radius * f;
           const twist = j * GOLDEN + s.id * 0.8 + t * 2;
           const spread = (0.035 + f * 0.26) * Math.sin(twist);
-          const x = p.x + s.dir.x * d + side.x * spread;
-          const y = p.y + s.dir.y * d + up.y * spread + f * t * 0.3;
-          const z = p.z + s.dir.z * d + side.z * spread;
-          const size = (0.1 + f * 0.47) * fade;
+          // Events originate at the admitted eye ray. A small presentation-only
+          // hand/nozzle offset gives the jet a readable start below-right of aim.
+          const x = p.x + s.dir.x * d + side.x * (0.28 + spread);
+          const y = p.y - 0.24 + s.dir.y * d + up.y * spread + f * t * 0.3;
+          const z = p.z + s.dir.z * d + side.z * (0.28 + spread);
+          const size = (0.065 + f * 0.38) * fade;
           orientation.setFromUnitVectors(Y_AXIS, s.dir);
-          emit(warm, x, y, z, size, size * 1.75, size, orientation);
-          if (j < 5) emit(hot, x, y, z, size * 0.5, size, size * 0.5, orientation);
+          emit(warm, x, y, z, size, size * 1.7, size, orientation);
+          if (j < 3) emit(hot, x, y, z, size * 0.32, size * 0.75, size * 0.32, orientation);
         }
       } else if (s.effect === 'flare-launch') {
         // Exact host substep formula, evaluated for the head and retained trail samples.
@@ -173,13 +200,13 @@ export function createWeaponEffectsScene(mat: MaterialLibrary): WeaponEffectsSce
           const a = j * GOLDEN + s.id * 0.4;
           const r = radius * (0.2 + (j % 3) * 0.3);
           const flicker = 0.78 + 0.22 * Math.sin(age * 0.028 + a);
-          const size = (groundFire ? 0.12 : 0.2 + (1 - t) * 0.42) * fade * flicker;
+          const size = (groundFire ? 0.16 : 0.18 + (1 - t) * 0.32) * fade * flicker;
           const x = p.x + Math.cos(a) * r, z = p.z + Math.sin(a) * r;
           const y = p.y + (groundFire ? size * 1.1 : t * (0.9 + j * 0.13));
           emit(warm, x, y, z, size, size * 2.2, size);
-          if (j % 2 === 0) emit(hot, x, y - size * 0.2, z, size * 0.52);
+          if (j % 2 === 0) emit(hot, x, y - size * 0.2, z, size * 0.32);
           if (j < 3) emit(smoke, x + Math.sin(a) * t * 0.3,
-            p.y + 0.45 + t * (groundFire ? 2 : 1.4), z, (0.18 + t * 0.4) * fade);
+            p.y + 0.45 + t * (groundFire ? 2 : 1.4), z, (0.28 + t * 0.65) * fade);
         }
       }
     }

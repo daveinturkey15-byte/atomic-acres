@@ -21,6 +21,7 @@ let owned;
 try {
   owned = await stockBrowser(tag);
   const { page } = owned;
+  const cdp = await page.context().newCDPSession(page);
   page.on('pageerror', (e) => report.errors.push(String(e)));
   page.on('console', (message) => { if (message.type() === 'error') report.errors.push(message.text()); });
   await page.addInitScript(() => {
@@ -61,7 +62,13 @@ try {
     } else {
       assert.equal(await page.evaluate(() => window.__NT.weaponCmd('fire')), true, 'trigger admitted by controller');
     }
-    if (weapon === 'railgun') await pause(25);
+    if (weapon === 'railgun') {
+      // A second normal shot uses the now-compiled effect material. Keep host
+      // cadence and the true 180ms lifetime; never freeze clocks for a picture.
+      await page.waitForFunction(() => window.__NT.weaponCmd('state').cool <= 0, null, { timeout: 6000 });
+      assert.equal(await page.evaluate(() => window.__NT.weaponCmd('fire')), true, 'second rail trigger admitted');
+      await page.waitForFunction(() => window.__NT.specialEffects().weapons.live > 0, null, { polling: 'raf', timeout: 1000 });
+    }
     if (weapon === 'flare-gun') await pause(180);
     if (weapon === 'explosive-crossbow') await pause(200);
     const during = await page.evaluate(() => ({ gun: window.__NT.weaponCmd('state'), effects: window.__NT.specialEffects(),
@@ -69,7 +76,12 @@ try {
       pose: window.__NT.playerPose(), frame: window.__NT.stats(), ordnance: window.__NT.ordnance(),
     }));
     const image = `${tag}-${weapon}.png`;
-    await page.screenshot({ path: join(out, image) });
+    if (weapon === 'railgun') {
+      // Direct compositor read avoids screenshot UI-stability waits that can
+      // outlive a valid 180ms trace. The actual game loop keeps running.
+      const png = await cdp.send('Page.captureScreenshot', { format: 'png', fromSurface: true, captureBeyondViewport: false });
+      writeFileSync(join(out, image), Buffer.from(png.data, 'base64'));
+    } else await page.screenshot({ path: join(out, image) });
     if (weapon === 'flamethrower') await page.evaluate(() => clearInterval(window.__fxProofTimer));
     report.frames.push({ weapon, image, before, during });
     assert.equal(during.phase, 'active');

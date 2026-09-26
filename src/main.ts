@@ -5,6 +5,7 @@
  * there is deliberately no registry framework, no plugin loader and no pass system.
  */
 import * as THREE from 'three';
+import { installPresentationDefaults } from './core/presentation-defaults';
 import { createWorld } from './core/world';
 import { buildMaterials } from './core/materials';
 import { installArchitecturalMaterials } from './core/architectural-materials';
@@ -66,6 +67,10 @@ import {
 } from './build/coach-owned-canary';
 import { buildFacadeDetailCanary } from './build/facade-detail-canary';
 import { buildOrangeFacadeKitGated, isOrangeFacadeKitOptIn } from './build/orange-facade-kit';
+
+// Apply the reviewed restart presentation before builders read their feature
+// flags. Explicit comparisons and room/signalling parameters remain intact.
+installPresentationDefaults();
 
 /** Facade detail canary opt-in: ?facade=canary only. Any absent or other value
  * keeps the baseline registry untouched. The __NT_OVERRIDE global exists so CPU

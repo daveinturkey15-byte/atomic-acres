@@ -6,6 +6,12 @@ import { createFirstPersonHands } from './first-person-hands';
 import type { ViewmodelRig } from './types';
 export type { ViewmodelRig } from './types';
 export {
+  buildRailgunViewmodel,
+  buildCrossbowViewmodel,
+  buildFlamethrowerViewmodel,
+  buildFlareGunViewmodel,
+} from './special-viewmodels';
+export {
   loadCatalogCarbineRig,
   type CatalogCarbineRig,
   isCarbineCanaryRequested,

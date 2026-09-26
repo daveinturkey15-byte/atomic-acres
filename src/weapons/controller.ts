@@ -2,8 +2,8 @@
  * Atomic Acres — first-person weapon lane controller (fan project inspired by
  * BO2-era arcade shooters, not a clone or port).
  *
- * Owns one SHARED viewmodel rig per shipped builder — five total, keyed by
- * behaviour family (`./families`) — one transient pool (./effects), and a
+ * Owns one SHARED viewmodel rig per shipped builder — nine total, selected by
+ * `./families` — one transient pool (./effects), and a
  * private overlay scene rendered on top of the world. After construction only
  * visible flags, transforms, FOV, and preallocated pool slots change: no new
  * materials/geometries/lights, no scene add/remove.
@@ -35,9 +35,13 @@ import {
   buildShotgunViewmodel,
   buildSniperViewmodel,
   buildPistolViewmodel,
+  buildRailgunViewmodel,
+  buildCrossbowViewmodel,
+  buildFlamethrowerViewmodel,
+  buildFlareGunViewmodel,
   type ViewmodelRig,
 } from './viewmodel';
-import { FAMILY_FALLBACK, FAMILY_VOICE, weaponFamily, type FallbackRig } from './families';
+import { FAMILY_FALLBACK, FAMILY_VOICE, weaponFamily, viewmodelForWeapon, type WeaponRigId } from './families';
 import { isPlayableWeapon } from './roster';
 import { CROSSBOW_ID, isCrossbowCanaryOptIn } from './crossbow-runtime';
 import { WeaponEffects } from './effects';
@@ -67,20 +71,23 @@ import {
 
 const DEG = Math.PI / 180;
 
-// Roster20: family-driven VIEWMODEL SHARING (`weapons/families.ts`). The five
-// shipped builders run ONCE each; every weapon whose family falls back to the
-// same rig renders that one group. 20 weapons ⇒ 5 rig graphs, not 20 — the
-// per-weapon eager rig was 15 duplicate graphs of build and disposal burden.
+// Roster20: nine builders run ONCE each. The four special silhouettes have
+// native rigs; eleven conventional variants still share their family rig.
+// 20 weapons ⇒ 9 rig graphs, with no duplicate graph/disposal burden.
 // Mount transform, reload pose and visibility are per-ACTIVE-weapon state
 // driven every frame, so a shared group is indistinguishable from a private
 // one; `switchTo` resets the reload pose on the way out, and the canary swap
 // below never releases a rig another weapon still renders.
-const FALLBACK_RIG_BUILDERS: Record<FallbackRig, (mat: MaterialLibrary) => ViewmodelRig> = {
+const VIEWMODEL_BUILDERS: Record<WeaponRigId, (mat: MaterialLibrary) => ViewmodelRig> = {
   rifle: buildRifleViewmodel,
   smg: buildSmgViewmodel,
   shotgun: buildShotgunViewmodel,
   sniper: buildSniperViewmodel,
   pistol: buildPistolViewmodel,
+  railgun: buildRailgunViewmodel,
+  crossbow: buildCrossbowViewmodel,
+  flamethrower: buildFlamethrowerViewmodel,
+  flaregun: buildFlareGunViewmodel,
 };
 const BASE_FOV = 72;
 const MISS_DISTANCE = 120;
@@ -258,7 +265,7 @@ export class WeaponsController {
   private crossbowCanaryRequested = false;
   private disposed = false;
   /** The one rig per shipped builder, shared by every weapon of its family. */
-  private readonly rigs = new Map<FallbackRig, ViewmodelRig>();
+  private readonly rigs = new Map<WeaponRigId, ViewmodelRig>();
 
   private visible = true;
   private triggerHeld = false;
@@ -331,7 +338,7 @@ export class WeaponsController {
     const enableCrossbowCanary = opts.crossbowCanary ?? isCrossbowCanaryOptIn(typeof window !== 'undefined' ? window.location.search : undefined);
     this.crossbowCanaryRequested = enableCrossbowCanary;
     this.weapons = WEAPONS.filter((def) => isPlayableWeapon(def.id) || (enableCrossbowCanary && def.id === CROSSBOW_ID)).map((def) => {
-      const rig = this.sharedRig(FAMILY_FALLBACK[weaponFamily(def.id)], opts.mat);
+      const rig = this.sharedRig(viewmodelForWeapon(def.id), opts.mat);
       return {
         def,
         rig,
@@ -486,13 +493,13 @@ export class WeaponsController {
 
   /**
    * The one rig per shipped builder: created on first reference, added to the
-   * overlay exactly once, shared by every weapon of its family. Exactly five
+   * overlay exactly once, shared by every weapon using that builder. Nine
    * of these exist for the full playable roster.
    */
-  private sharedRig(key: FallbackRig, mat: MaterialLibrary): ViewmodelRig {
+  private sharedRig(key: WeaponRigId, mat: MaterialLibrary): ViewmodelRig {
     let rig = this.rigs.get(key);
     if (rig === undefined) {
-      rig = FALLBACK_RIG_BUILDERS[key](mat);
+      rig = VIEWMODEL_BUILDERS[key](mat);
       rig.group.visible = false;
       this.rigs.set(key, rig);
       this.overlay.add(rig.group);
