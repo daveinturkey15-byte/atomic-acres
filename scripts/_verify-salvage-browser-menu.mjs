@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { stockBrowser } from './lib/stock-browser.mjs';
+import { usePreview } from './lib/preview.mjs';
+const {url}=await usePreview();
+const query=process.env.AA_ART_QUERY || '';
+const owned=await stockBrowser('salvage-menu');
+const {page}=owned;
+const errors=[];
+page.on('pageerror',e=>errors.push(String(e)));
+page.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+mkdirSync('captures',{recursive:true});
+const report={url:url+(query?'?'+query:''),screens:[],checks:[]};
+try {
+  await page.goto(report.url,{waitUntil:'load',timeout:90000});
+  await page.waitForFunction(()=>window.__NT?.ready===true,null,{timeout:180000});
+  await page.screenshot({path:'captures/salvage-menu-home.png'});report.screens.push('salvage-menu-home.png');
+  await page.getByRole('button',{name:'Play solo',exact:true}).click();
+  const primary=page.getByRole('group',{name:'Primary weapon',exact:true}).getByRole('button',{name:/^MP5\b/});
+  assert.equal(await primary.count(),1,'one canonical primary choice');
+  await primary.click();
+  await page.getByRole('button',{name:'Magnum',exact:true}).click();
+  await page.getByRole('group',{name:'Tactical grenade',exact:true}).getByRole('button',{name:/Smoke/i}).click();
+  assert.equal(await page.getByLabel('Killstreak slot 1',{exact:true}).count(),1);
+  await page.getByLabel('Killstreak slot 1',{exact:true}).selectOption('tracker-dart');
+  await page.getByLabel('Killstreak slot 3',{exact:true}).selectOption('supply-crate');
+  await page.getByLabel('Killstreak slot 4',{exact:true}).selectOption('strike-relay');
+  await page.screenshot({path:'captures/salvage-menu-class.png'});report.screens.push('salvage-menu-class.png');
+  await page.setViewportSize({width:390,height:844});
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2);
+  assert.equal(overflow,false,'no horizontal overflow at390px');
+  await page.getByRole('button',{name:'Deploy',exact:true}).scrollIntoViewIfNeeded();
+  await page.screenshot({path:'captures/salvage-menu-mobile.png'});report.screens.push('salvage-menu-mobile.png');
+  await page.setViewportSize({width:1600,height:900});
+  await page.getByRole('button',{name:'Deploy',exact:true}).click();
+  await page.waitForFunction(()=>{try{return window.__NTGAME.snapshot().match.phase==='active'}catch{return false}},null,{timeout:30000});
+  const actual=await page.evaluate(()=>({kit:window.__NT.weaponCmd('loadout'),host:window.__NTGAME.snapshot(),state:window.__NT.weaponCmd('state'),stats:window.__NT.stats()}));
+  assert.equal(actual.kit.primary,'mp5');assert.equal(actual.kit.sidearm,'magnum');
+  // Host actor ordering is stable but identity is read explicitly on the page.
+  const ledger=await page.evaluate(()=>window.__NTGAME.snapshot().actors.find(a=>a.id===window.__NTGAME.localId));
+  assert.equal(ledger.primaryId,'mp5');assert.equal(ledger.sidearmId,'magnum');assert.equal(ledger.tacticalId,'smoke');
+  assert.deepEqual(ledger.slots.map(s=>s.streakId),['tracker-dart','signal-jam','supply-crate','strike-relay']);
+  await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keydown',{code:'Digit2',bubbles:true})));
+  assert.equal(await page.evaluate(()=>window.__NT.weaponCmd('state').id),'magnum');
+  await page.evaluate(()=>window.dispatchEvent(new KeyboardEvent('keyup',{code:'Digit2',bubbles:true})));
+  await page.evaluate(()=>window.__NT.teleport(-6,0,0,-Math.PI/2));
+  await page.waitForTimeout(500);
+  await page.screenshot({path:'captures/salvage-hud-active.png'});report.screens.push('salvage-hud-active.png');
+  report.checks.push('canonical class and3sidearms','4chosen streaks admitted','390px no horizontal overflow','real active host kit and selected tactical','Digit2 selected backup');
+  report.actual=actual;report.ledger=ledger;
+  assert.equal(errors.length,0,errors.join('\n'));
+  console.log('PASS browser menus/activeHUD: '+report.checks.join(', '));
+} finally {
+  report.errors=errors;writeFileSync('captures/salvage-browser-menu.json',JSON.stringify(report,null,2));
+  await owned.close();
+}

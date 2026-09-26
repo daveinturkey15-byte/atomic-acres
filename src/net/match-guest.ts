@@ -44,6 +44,7 @@ export const GUEST_SNAP_M = 1.0;
 const HIST = 64;
 
 interface Body {
+  weaponId?: string;
   id: ActorId; x: number; y: number; z: number; yaw: number; speed: number;
   alive: boolean; stance: PlayerStance; seen: number;
 }
@@ -294,7 +295,13 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
 
     bots(): readonly BotBody[] {
       const renderAt = performance.now() + guest.hostClockOffset() - INTERP_DELAY_MS;
-      for (const p of guest.latestPlayers()) {
+      const players = guest.latestPlayers();
+      for (let i = bodies.length - 1; i >= 0; i--) {
+        if (players.some(p => p.id === bodies[i].id)) continue;
+        bodyById.delete(bodies[i].id);
+        bodies.splice(i, 1);
+      }
+      for (const p of players) {
         if (p.id === selfId) continue;
         const b = body(p.id);
         const had = b.seen > 0;
@@ -306,6 +313,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
         b.x = scratch.x; b.y = scratch.y; b.z = scratch.z; b.yaw = scratch.yaw;
         b.stance = scratch.stance ?? p.stance ?? 'stand';
         b.alive = p.alive !== false;
+        b.weaponId = p.weaponId;
         // Speed from the interpolated track at frame rate, smoothed: the rig's
         // walk cycle wants a level, not a 60 Hz square wave.
         const inst = had ? Math.hypot(b.x - px, b.z - pz) * 60 : 0;

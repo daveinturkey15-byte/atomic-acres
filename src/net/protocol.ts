@@ -237,6 +237,8 @@ export interface InputMsg {
 
 /** One authoritative player sample inside a state broadcast. */
 export interface PlayerSample {
+  /** Host-authored carried weapon, used for remote third-person art. */
+  weaponId?: string;
   id: string;
   x: number;
   y: number;
@@ -421,6 +423,7 @@ export function isNetMessage(v: unknown): v is NetMessage {
           Number.isSafeInteger(s['ack']) &&
           // Wave 0 optional game fields: absent is legal, malformed is not.
           (s['hp'] === undefined || isFiniteNum(s['hp'])) &&
+          (s['weaponId'] === undefined || typeof s['weaponId'] === 'string') &&
           (s['team'] === undefined || isTeamId(s['team'])) &&
           (s['alive'] === undefined || typeof s['alive'] === 'boolean') &&
           (s['stance'] === undefined || isPlayerStance(s['stance']))

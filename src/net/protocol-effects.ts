@@ -25,10 +25,14 @@ export function isPresentationMessage(v: Record<string, unknown>): boolean {
   const e = v.e;
   if (e.type === 'weapon-effect') return ['flame','flare-launch','flare-impact','crossbow-blast','rail'].includes(e.effect as string) &&
     typeof e.actorId === 'string' && typeof e.weaponId === 'string' && (e.team === 0 || e.team === 1) &&
-    Number.isSafeInteger(e.id) && point(e) && finite(e.dx) && finite(e.dy) && finite(e.dz) && finite(e.radius) && finite(e.durationMs);
+    Number.isSafeInteger(e.id) && (e.id as number) >= 1 && point(e) && finite(e.dx) && finite(e.dy) && finite(e.dz) &&
+    finite(e.radius) && e.radius >= 0 && finite(e.durationMs) && e.durationMs >= 0;
   if (e.type === 'mortar-telegraph') return Number.isSafeInteger(e.instanceId) && point(e) &&
-    typeof e.actorId === 'string' && finite(e.radius) && finite(e.endsAt);
+    typeof e.actorId === 'string' && typeof e.streakId === 'string' && (e.team === 0 || e.team === 1) &&
+    finite(e.radius) && e.radius >= 0 && finite(e.endsAt) && e.endsAt >= (e.at as number) &&
+    Number.isSafeInteger(e.impacts) && (e.impacts as number) >= 0;
   if (e.type === 'mortar-impact') return Number.isSafeInteger(e.instanceId) && point(e) &&
-    typeof e.actorId === 'string' && finite(e.index) && finite(e.victims) && (e.team === 0 || e.team === 1);
+    typeof e.actorId === 'string' && typeof e.streakId === 'string' && Number.isSafeInteger(e.index) && (e.index as number) >= 0 &&
+    Number.isSafeInteger(e.victims) && (e.victims as number) >= 0 && (e.team === 0 || e.team === 1);
   return false;
 }

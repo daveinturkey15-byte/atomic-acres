@@ -348,7 +348,8 @@ export function botIntent(
     pitch = operatorPitchToward(eye, sense.target);
   }
 
-  const engaged = sense.visible && sense.distance <= BOT_FIRE_RANGE_M;
+  const engaged = sense.visible && sense.distance <= BOT_FIRE_RANGE_M &&
+    (supply === null || supply.rounds > 0 || sense.distance <= BOT_KNIFE_M);
   if (engaged) {
     fire = now - bot.targetSince >= BOT_REACTION_MS && bot.cooldown <= 0;
     // Ordnance, only when the host has told us what we carry. The knife is
@@ -373,8 +374,7 @@ export function botIntent(
     moveX = fx * forward + Math.cos(yaw) * bot.strafe * 0.85;
     moveZ = fz * forward - Math.sin(yaw) * bot.strafe * 0.85;
   } else {
-    // Out of rounds and nothing to shoot: the nearest drop is the goal.
-    const spot = supply !== null && supply.rounds <= 0 && drops !== null ? nearestScavengeDrop(bot, drops) : null;
+    const spot = supply !== null && supply.rounds <= 0 && drops !== null ? nearestScavengeDrop(bot, drops, supply.primaryId) : null;
     const goalX = spot === null ? bot.goalX : spot.x;
     const goalZ = spot === null ? bot.goalZ : spot.z;
     if (spot !== null) { scavengeX = spot.x; scavengeZ = spot.z; }
@@ -384,8 +384,7 @@ export function botIntent(
     if (gd > 1e-3) {
       moveX = gx / gd;
       moveZ = gz / gd;
-      // Nothing to shoot: face where it is going, so the body reads as walking
-      // rather than moonwalking. The rig has no independent upper body yet.
+      // Face the travel direction when no target holds the upper-body aim.
       if (sense.target === null) yaw = operatorYawToward(bot.x, bot.z, goalX, goalZ);
     }
   }

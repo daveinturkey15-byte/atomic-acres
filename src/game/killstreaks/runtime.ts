@@ -531,7 +531,8 @@ export class StreakRuntime {
   /** Level plus edge, the whole shape `StreakStateMsg` documents. Null for an unknown actor. */
   streakStateFor(actorId: ActorId, at: number = this.nowMs): StreakStateMsg | null {
     const a = this.actors.get(actorId);
-    return a ? { type: 'streak-state', at, actorId, kills: a.kills, slots: this.snapshotFor(actorId), cause: a.cause } : null;
+    return a ? { type: 'streak-state', at, actorId, kills: a.kills, slots: this.snapshotFor(actorId), cause: a.cause,
+      causeId: a.cause === null ? null : JSON.stringify(a.cause) } : null;
   }
 
   /** Every terminal path ends the same way: nothing live survives a match end. */

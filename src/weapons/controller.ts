@@ -27,6 +27,7 @@ import type { MaterialLibrary } from '../core/materials';
 import type { GunsHudState, MoveSample, WeaponSnapshot } from './types';
 export type { GunsHudState, MoveSample, WeaponSnapshot } from './types';
 import { WEAPONS, damageAt, patternMult, type WeaponDef } from './catalog';
+import { behaviorFor } from './behavior';
 import { defaultLoadoutStore, resolveLoadout, SIDEARM_IDS, sidearmForPrimary, type Loadout } from '../game/loadout';
 import {
   buildRifleViewmodel,
@@ -1166,7 +1167,12 @@ export class WeaponsController {
     let pullDist = 0;
     // Audio lane: surface of the nearest hit this pull (one impact cue max).
     let pullDusty = false;
-    for (let p = 0; p < def.pellets; p++) {
+    const delivery = behaviorFor(def.id).kind;
+    // Bolts, flares and flame receive their travel/contact effects from the
+    // host. A local bullet trace would falsely show an immediate wall strike.
+    const bulletPellets = delivery === 'hitscan' || delivery === 'piercing' ? def.pellets : 0;
+    cur.rig.muzzle.getWorldPosition(this.tmpMuzzle);
+    for (let p = 0; p < bulletPellets; p++) {
       // Uniform-disc sample in the camera frame, then to world. No allocation.
       const u = this.rand();
       const v = this.rand();
@@ -1179,7 +1185,6 @@ export class WeaponsController {
       this.raycaster.set(this.camera.position, this.tmpDir);
       const hits = this.raycaster.intersectObjects(this.targets, true);
 
-      cur.rig.muzzle.getWorldPosition(this.tmpMuzzle);
       if (hits.length > 0) {
         const hit = hits[0];
         anyHit = true;

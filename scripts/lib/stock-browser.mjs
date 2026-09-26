@@ -16,7 +16,7 @@ export async function stockBrowser(label = 'qa') {
     });
   });
   const child = spawnGuarded('C:/Program Files/Google/Chrome/Application/chrome.exe', [
-    '--headless=new', '--remote-debugging-port=' + port, '--user-data-dir=' + profile,
+    '--headless=new', '--mute-audio', '--remote-debugging-port=' + port, '--user-data-dir=' + profile,
     '--no-first-run', '--no-default-browser-check', '--window-size=1600,900', 'about:blank',
   ], { windowsHide: true, stdio: 'ignore' });
   let browser;

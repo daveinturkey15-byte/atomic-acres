@@ -108,6 +108,8 @@ export interface StreakSlotState { streakId: string; slot: number; charges: numb
  * arrives during a stall, and a level-only feed can never show one at all.
  */
 export interface StreakStateMsg {
+  /** Identity in the host clock, unchanged by guest clock localization. */
+  causeId?: string | null;
   type: 'streak-state';
   at: number;
   actorId: string;
@@ -452,6 +454,7 @@ export function isGameMessage(m: Record<string, unknown>): boolean {
         Number.isSafeInteger(m['seq']) && (m['seq'] as number) >= 0;
     case 'streak-state':
       return (
+        (m['causeId'] === undefined || m['causeId'] === null || (typeof m['causeId'] === 'string' && m['causeId'].length <= 1024)) &&
         isNum(m['at']) &&
         typeof m['actorId'] === 'string' &&
         isNum(m['kills']) &&

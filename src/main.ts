@@ -691,6 +691,7 @@ interface QA {
   weaponCmd: (cmd: string, arg?: string | number | boolean) => unknown;
   /** Ordnance lane: the client projection's log, counts and pools. Read-only. */
   ordnance: () => Record<string, unknown>;
+  specialEffects: () => { weapons: ReturnType<typeof weaponEffects.counts>; streaks: ReturnType<typeof streakEffects.counts> };
   audio: () => ReturnType<WeaponsController['audioStats']>;
   disposeEnvironment?: () => void;
   /** Owned coach canary actual-adoption status (read-only, real geometry).
@@ -778,6 +779,9 @@ const qa: QA = {
   },
   ordnance() {
     return ordnance.qa();
+  },
+  specialEffects() {
+    return { weapons: weaponEffects.counts(), streaks: streakEffects.counts() };
   },
   audio() {
     return weapons.audioStats();

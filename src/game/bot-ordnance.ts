@@ -48,6 +48,7 @@ export interface BotSupply {
   readonly lethal: number;
   readonly tactical: number;
   readonly rounds: number;
+  readonly primaryId?: string;
   readonly armed: string | null;
 }
 
@@ -84,11 +85,11 @@ export function botTacticalFor(bot: BotCarrier): GrenadeId {
 }
 
 /** Nearest drop with rounds, inside `BOT_SCAVENGE_M`, or null. */
-export function nearestScavengeDrop(bot: BotCarrier, drops: readonly BotDropSpot[]): BotDropSpot | null {
+export function nearestScavengeDrop(bot: BotCarrier, drops: readonly BotDropSpot[], weaponId?: string): BotDropSpot | null {
   let best: BotDropSpot | null = null;
   let bestD = BOT_SCAVENGE_M;
   for (const d of drops) {
-    if (d.rounds <= 0) continue;
+    if (d.rounds <= 0 || (weaponId !== undefined && d.weaponId !== weaponId)) continue;
     const dist = Math.hypot(d.x - bot.x, d.z - bot.z);
     if (dist <= bestD) { best = d; bestD = dist; }
   }

@@ -1,5 +1,5 @@
 /** Visible equipment for the host's bounded streak snapshots. This module never
- * places, targets or awards anything: its six batches render admitted state only. */
+ * places, targets or awards anything: fixed batches render admitted state only. */
 import * as THREE from 'three';
 import type { MaterialLibrary } from '../core/materials';
 import { PAL } from '../core/palette';
@@ -46,13 +46,24 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
   const dark = batch('equipment-rubber-and-recesses', box, mat.painted(PAL.opBoot, 0.9, 0.1), 192, true);
   const metal = batch('equipment-machined-fittings', cylinder, mat.steel, 128, true);
   const markings = batch('equipment-id-and-warning-strips', box, mat.painted(PAL.hazardYellow, 0.65, 0.2), 96);
-  const signals = batch('team-lenses-and-muzzle-pops', sphere, mat.emissive(PAL.roofWhite, 2.2), 64);
-  const fields = batch('streak-field-boundaries', ring, mat.emissive(PAL.roofWhite, 0.85), 64);
-  const batches = [armor, dark, metal, markings, signals, fields];
+  // instanceColor tints the diffuse term, not MeshStandard's emissive term.
+  // Team-coloured registry materials preserve teal/red even under bloom.
+  const signalTeams = [
+    batch('teal-equipment-lenses', sphere, mat.emissive(PAL.signTeal, 2.2), 64),
+    batch('red-equipment-lenses', sphere, mat.emissive(PAL.applianceRed, 2.2), 64),
+  ];
+  const muzzle = batch('sentry-muzzle-pops', sphere, mat.emissive(PAL.sunColor, 3), 16);
+  const fieldTeams = [
+    batch('teal-streak-field-boundaries', ring, mat.emissive(PAL.signTeal, 0.85), 64),
+    batch('red-streak-field-boundaries', ring, mat.emissive(PAL.applianceRed, 0.85), 64),
+  ];
+  const batches = [armor, dark, metal, markings, ...signalTeams, muzzle, ...fieldTeams];
   const teamColors = [new THREE.Color(PAL.signTeal), new THREE.Color(PAL.applianceRed)];
   const muzzleColor = new THREE.Color(PAL.sunColor);
   // Allocate instance-color buffers during construction, never when the first streak fires.
-  for (const b of [signals, fields]) for (let i = 0; i < b.capacity; i++) b.mesh.setColorAt(i, muzzleColor);
+  for (const b of [...signalTeams, muzzle, ...fieldTeams]) {
+    for (let i = 0; i < b.capacity; i++) b.mesh.setColorAt(i, muzzleColor);
+  }
 
   function part(b: Batch, s: StreakEffectView, yaw: number, x: number, y: number, z: number,
     sx: number, sy: number, sz: number, rx = 0, rz = 0, tint?: THREE.Color): void {
@@ -70,7 +81,7 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
     b.used++;
   }
   function field(s: StreakEffectView, radius: number, tint: THREE.Color, x = 0, z = 0, yaw = 0): void {
-    part(fields, s, yaw, x, 0.07, z, radius, 1, radius, 0, 0, tint);
+    part(fieldTeams[s.team], s, yaw, x, 0.07, z, radius, 1, radius, 0, 0, tint);
   }
   function base(s: StreakEffectView, height: number, yaw = 0): void {
     part(dark, s, yaw, 0, 0.06, 0, 0.42, 0.12, 0.42);
@@ -91,6 +102,7 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
         || !Number.isFinite(s.x) || !Number.isFinite(s.y) || !Number.isFinite(s.z)) continue;
       shown++;
       const tint = teamColors[s.team];
+      const signals = signalTeams[s.team];
       let edge = edges.find((v) => v.id === s.instanceId);
       if (!edge) {
         edge = edges.find((v) => !rows.some((r) => r.instanceId === v.id)) ?? edges[index];
@@ -110,7 +122,7 @@ export function createStreakEffectsScene(mat: MaterialLibrary) {
         part(metal, s, yaw, 0.02, 0.87, -0.875, 0.05, 0.05, 0.05, Math.PI / 2);
         part(dark, s, yaw, 0.12, 1.03, -0.1, 0.13, 0.12, 0.2);
         part(signals, s, yaw, 0.12, 1.03, -0.212, 0.037, 0.037, 0.015, 0, 0, tint);
-        if (edge.flashUntil > nowMs) part(signals, s, yaw, 0.02, 0.87, -0.97, 0.09, 0.09, 0.2, 0, 0, muzzleColor);
+        if (edge.flashUntil > nowMs) part(muzzle, s, yaw, 0.02, 0.87, -0.97, 0.09, 0.09, 0.2, 0, 0, muzzleColor);
         field(s, 0.7, tint);
       } else if (s.kind === 'dart') {
         base(s, 0.45);

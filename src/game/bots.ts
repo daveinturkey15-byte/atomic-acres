@@ -51,6 +51,9 @@ import {
 import { aimVector, scatter, type Dir } from './bot-aim';
 import { pickGoal, stepBot, updateSide } from './bot-nav';
 import { KNIFE_ID, KNIFE_RECOVERY_MS } from './ordnance';
+import { WEAPONS, type WeaponDef } from '../weapons/catalog';
+import { sidearmForPrimary, type Loadout } from './loadout';
+import { botTacticalFor } from './bot-ordnance';
 
 export * from './bot-sense';
 export * from './bot-nav';
@@ -59,7 +62,7 @@ export * from './bot-aim';
 /** What the director submits to. Exactly the host's own public methods — no
  *  wrapper, no adapter, so there is nothing here that can drift from it. */
 export interface BotHost {
-  addActor(id: ActorId, team: TeamId, opts?: { bot?: boolean }): void;
+  addActor(id: ActorId, team: TeamId, opts?: { bot?: boolean; primaryId?: string; loadout?: Loadout }): void;
   updatePose(id: ActorId, x: number, y: number, z: number, at?: number): void;
   submitInput(id: ActorId, msg: { type: 'input'; seq: number; mx: number; mz: number; yaw: number; pitch: number; fire: boolean; jump: boolean }): void;
   submitShot(id: ActorId, claim: { type: 'shot'; seq: number; life: number; weaponId: string; firedAt: number; ox: number; oy: number; oz: number; dx: number; dy: number; dz: number }, receivedAt?: number): unknown;
@@ -90,7 +93,7 @@ export class BotDirector {
   private serial = 0;
   /** Scratch for the aim line and the kit view; never escape `tick`. */
   private readonly dir: Dir = { x: 0, y: 0, z: 0 };
-  private readonly supply: { lethal: number; tactical: number; rounds: number; armed: string | null } = { lethal: 0, tactical: 0, rounds: 0, armed: null };
+  private readonly supply: { lethal: number; tactical: number; rounds: number; primaryId: string; armed: string | null } = { lethal: 0, tactical: 0, rounds: 0, primaryId: '', armed: null };
   /**
    * Instruments, not decoration. "The bots do not shoot enough" is an
    * adjective; `sight/engage/fire` per live bot-tick is a number, and it is
@@ -147,7 +150,9 @@ export class BotDirector {
       streakHoldSlot: null, streakHoldUntil: 0, streakBlocked: false,
     };
     this.bots.push(bot);
-    this.opts.host.addActor(id, team, { bot: true });
+    bot.tacticalId = botTacticalFor(bot);
+    this.opts.host.addActor(id, team, { bot: true, primaryId: weapon.id,
+      loadout: { primary: weapon.id, sidearm: sidearmForPrimary(weapon.id), grenade: bot.tacticalId } });
     return bot;
   }
 
@@ -251,7 +256,11 @@ export class BotDirector {
 
       const ready = this.readySlot(b, s, now);
       const k = this.supply;
-      k.lethal = s.lethal; k.tactical = s.tactical; k.rounds = s.rounds; k.armed = s.armed;
+      k.lethal = s.lethal; k.tactical = s.tactical; k.rounds = s.rounds + (s.sidearmRounds ?? 0);
+      k.primaryId = s.primaryId; k.armed = s.armed;
+      if (s.tacticalId === 'flash' || s.tacticalId === 'smoke' || s.tacticalId === 'semtex') b.tacticalId = s.tacticalId;
+      const heldId = s.rounds > 0 ? s.primaryId : (s.sidearmRounds ?? 0) > 0 ? s.sidearmId : null;
+      const heldWeapon = heldId === null ? undefined : WEAPONS.find((w) => w.id === heldId);
       const intent = botIntent(b, sense, now, s.hp, ready, k as BotSupply, drops);
       b.yaw = intent.yaw;
       b.pitch = intent.pitch;
@@ -262,7 +271,7 @@ export class BotDirector {
       // reaction. `regular` reproduces the reducer's answer exactly. A knife
       // or a grenade this tick replaces the bullet, as the reducer decided.
       const d = this.difficulty;
-      const fire = !intent.knife && intent.grenade === null && sense.visible && sense.distance <= d.fireRangeM &&
+      const fire = heldWeapon !== undefined && !intent.knife && intent.grenade === null && sense.visible && sense.distance <= d.fireRangeM &&
         now - b.targetSince >= d.reactionMs && b.cooldown <= 0;
 
       this.opts.host.updatePose(b.id, b.x, b.y, b.z, now);
@@ -272,7 +281,7 @@ export class BotDirector {
       });
       if (fire) this.m.fireTicks++;
       if (sense.target !== null) {
-        if (fire) this.shoot(b, sense.target, now);
+        if (fire) this.shoot(b, sense.target, now, heldWeapon!);
         else if (intent.knife && b.cooldown <= 0) this.knife(b, sense.target, now);
         else if (intent.grenade !== null) this.throwGrenade(b, intent.grenade, sense.target, now);
       }
@@ -340,12 +349,12 @@ export class BotDirector {
     return { x: b.x, y: b.y + BOT_AIM_ORIGIN_Y, z: b.z };
   }
 
-  private shoot(b: BotRuntime, target: Vec3, now: number): void {
+  private shoot(b: BotRuntime, target: Vec3, now: number, weapon: WeaponDef): void {
     if (!aimVector(this.eye(b), target, this.dir)) return;
     scatter(this.dir, this.difficulty.aimErrorRad, this.opts.rand);
-    b.cooldown = b.weapon.interval;
+    b.cooldown = weapon.interval;
     this.m.shots++;
-    this.claim(b, b.weapon.id, now);
+    this.claim(b, weapon.id, now);
   }
 
   /** The knife: one swing along the aim line; the host measures the reach. */

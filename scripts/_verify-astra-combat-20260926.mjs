@@ -17,9 +17,10 @@ export { createWorldQuery } from '${src('src/game/world-query.ts')}';
 export { WEAPONS } from '${src('src/weapons/catalog.ts')}';
 export { SIDEARM_IDS } from '${src('src/game/loadout.ts')}';
 export { isPlayableWeapon } from '${src('src/weapons/roster.ts')}';
+export { BotDirector, botIntent } from '${src('src/game/bots.ts')}';
 `);
 await build({ entryPoints: [entry], outfile: bundle, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent' });
-const { GameHost, createWorldQuery, WEAPONS, SIDEARM_IDS, isPlayableWeapon } = await import(pathToFileURL(bundle).href);
+const { GameHost, createWorldQuery, WEAPONS, SIDEARM_IDS, isPlayableWeapon, BotDirector, botIntent } = await import(pathToFileURL(bundle).href);
 let cases = 0;
 const test = (name, fn) => { fn(); cases++; process.stdout.write(`PASS ${name}\n`); };
 const def = (id) => WEAPONS.find((w) => w.id === id);
@@ -199,6 +200,68 @@ test('field repair grants are applied once, heal 35, and obey the maximum', () =
   f.advance(); assert.equal(f.actor().hp, 67);
   pending.push({ actorId: 'target', team: 1, reward: 'field-repair', at: f.now(), instanceId: 2 });
   f.advance(); assert.equal(f.actor().hp, 100);
+});
+
+test('real bot director registers its arsenal and tactical, then lands admitted shots', () => {
+  const world = createWorldQuery([]);
+  const host = new GameHost({ world, now: 0, rules: { mode: 'tdm', scoreLimit: null, durationMs: null, friendlyFire: false } });
+  const director = new BotDirector({ host, world, rand: host.rand, maxBots: 2 });
+  host.addActor('human', 1);
+  const first = director.add(0); const second = director.add(0);
+  assert.ok(first && second && first.weapon.id !== second.weapon.id);
+  for (const bot of director.roster) {
+    assert.equal(host.loadoutOf(bot.id).primaryId, bot.weapon.id);
+    assert.equal(host.loadoutOf(bot.id).tacticalId, bot.tacticalId);
+    bot.x = bot === first ? -1 : 1; bot.y = 0; bot.z = 0;
+  }
+  const events = []; host.tick(3000);
+  for (let now = 3000; now <= 4000; now += 50) {
+    host.updatePose('human', 0, 0, 5, now);
+    director.tick(now, 0, [{ id: 'human', team: 1, alive: true, x: 0, y: 0, z: 5 }], host.snapshot().actors);
+    events.push(...host.tick(now));
+  }
+  for (const bot of director.roster) {
+    assert.ok(events.some((e) => e.type === 'shot-fired' && e.actorId === bot.id && e.weaponId === bot.weapon.id), bot.id);
+    assert.ok(events.some((e) => e.type === 'damage' && e.attackerId === bot.id), `${bot.id} did not land host damage`);
+    const outcome = host.submitShot(bot.id, { type: 'shot', seq: ++bot.shotSeq, life: host.lifeOf(bot.id),
+      weaponId: bot.tacticalId, firedAt: 4000, ox: bot.x, oy: 1.42, oz: bot.z, dx: 0, dy: 0, dz: 1 }, 4000);
+    assert.equal(outcome.accepted, true, `${bot.id} tactical refused`);
+  }
+  assert.equal(events.filter((e) => e.type === 'shot-rejected').length, 0);
+});
+
+test('a dry bot seeks usable primary ammo even while an enemy remains visible', () => {
+  const world = createWorldQuery([]); const host = new GameHost({ world });
+  const director = new BotDirector({ host, world, rand: host.rand, maxBots: 1 });
+  const bot = director.add(0); bot.x = 0; bot.y = 0; bot.z = 0;
+  const intent = botIntent(bot, { targetId: 'human', target: { x: 0, y: 1.42, z: 5 }, distance: 5, visible: true },
+    4000, 100, null, { lethal: 0, tactical: 0, rounds: 0, primaryId: bot.weapon.id, armed: null }, [
+      { x: -2, z: 0, weaponId: 'mp5', rounds: 50 }, { x: 4, z: 0, weaponId: bot.weapon.id, rounds: 20 },
+    ]);
+  assert.equal(intent.fire, false); assert.equal(intent.scavengeX, 4); assert.ok(intent.moveX > 0);
+});
+
+test('a stalled host retires expired flares without an invisible later hit or fire', () => {
+  const f = fixture('flare-gun'); f.shot(); f.drain();
+  const events = f.advance(5000);
+  for (let i = 0; i < 30; i++) events.push(...f.advance(100));
+  assert.equal(events.filter((e) => e.type === 'damage').length, 0);
+  const terminal = events.filter((e) => e.type === 'weapon-effect' && e.effect === 'flare-impact');
+  assert.equal(terminal.length, 1); assert.equal(terminal[0].durationMs, 100);
+  assert.equal(f.actor().hp, 100);
+});
+
+test('new lives reject stale-life claims and forged muzzle origins', () => {
+  const f = fixture('longhorn'); const oldLife = f.host.lifeOf('shooter');
+  for (let i = 1; i <= 3; i++) {
+    assert.equal(f.host.submitShot('target', { type: 'shot', weaponId: 'longhorn', seq: i,
+      life: f.host.lifeOf('target'), firedAt: f.now(), ox: 0, oy: 1.2, oz: 5, dx: 0, dy: 0, dz: -1 }, f.now()).accepted, true);
+    f.advance(110);
+  }
+  assert.equal(f.actor('shooter').alive, false);
+  f.advance(10_000); assert.ok(f.host.lifeOf('shooter') > oldLife);
+  assert.equal(f.shot({ life: oldLife }).reason, 'life-epoch');
+  assert.equal(f.shot({ ox: 50 }).reason, 'bad-origin');
 });
 
 process.stdout.write(`VERIFIED ${cases} host combat scenarios; 20 real weapon paths. Rendering/network-device acceptance is separate.\n`);

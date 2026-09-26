@@ -353,6 +353,7 @@ export class GameHost {
     const a = this.life.actors.get(sample.id);
     return a ? {
       ...sample, hp: a.health.hp, team: a.team, alive: a.health.alive, stance: a.stance,
+      weaponId: this.ordnance.kitOf(a).primaryId,
     } : sample;
   }
 

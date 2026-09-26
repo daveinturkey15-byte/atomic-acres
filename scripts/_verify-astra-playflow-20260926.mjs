@@ -154,10 +154,45 @@ try {
     assert.ok(claims[i].time - claims[i - 1].time >= issued.interval * 1000 - 1,
       `automatic claims preserve scheduled cadence: ${claims[i].time - claims[i - 1].time}ms`);
   }
+  const presentation = { rays: 0, tracers: 0, impacts: 0, impactSounds: 0, flashes: 0, shots: 0 };
+  controller.raycaster.intersectObjects = () => {
+    presentation.rays++;
+    return [{ distance: 10, point: new THREE.Vector3(0, 0, -10),
+      face: { normal: new THREE.Vector3(0, 0, 1) }, object: { matrixWorld: new THREE.Matrix4() } }];
+  };
+  controller.effects.tracer = () => { presentation.tracers++; };
+  controller.effects.impact = () => { presentation.impacts++; };
+  controller.effects.flashAt = (position) => {
+    assert.ok(position.toArray().every(Number.isFinite), 'muzzle presentation uses a valid position');
+    presentation.flashes++;
+  };
+  controller.audioSvc.impact = () => { presentation.impactSounds++; };
+  controller.playShot = () => { presentation.shots++; };
+  let presentationTime = 20;
+  for (const id of ['m4a1', 'railgun', 'explosive-crossbow', 'flare-gun', 'flamethrower']) {
+    const def = api.WEAPONS.find((w) => w.id === id);
+    assert.ok(def, `presentation test catalog row exists: ${id}`);
+    controller.onSelfSpawn(id, def.magSize + def.startReserve, 'magnum');
+    controller.update(.05, presentationTime++, move);
+    for (const key of Object.keys(presentation)) presentation[key] = 0;
+    const claimCount = claims.length;
+    const recoilCount = controller.recoilTotal;
+    assert.equal(controller.command('fire'), true, `${id} actually fires`);
+    assert.equal(claims.length, claimCount + 1, `${id} sends its authoritative claim`);
+    assert.equal(controller.recoilTotal, recoilCount + 1, `${id} retains recoil`);
+    assert.equal(presentation.flashes, 1, `${id} retains muzzle flash`);
+    assert.equal(presentation.shots, 1, `${id} retains its shot voice`);
+    const bullet = id === 'm4a1' || id === 'railgun';
+    for (const key of ['rays', 'tracers', 'impacts', 'impactSounds']) {
+      assert.equal(presentation[key], bullet ? 1 : 0,
+        `${id} ${bullet ? 'keeps' : 'does not invent'} immediate bullet ${key}`);
+    }
+    if (!bullet) assert.equal(controller.lastDamage, 0, `${id} does not predict immediate damage`);
+  }
   controller.dispose();
   console.log(JSON.stringify({ ok: true, checks: ['menu selection', 'saved class retention', 'prejoin editing', 'room class lock',
     'storage refusal continuity', 'four streak choices', 'primary and sidearm keys', 'bounded weapon wheel',
-    'pickup slot replacement', 'automatic fire cadence'], claims: claims.length }));
+    'pickup slot replacement', 'automatic fire cadence', 'authoritative special weapon presentation'], claims: claims.length }));
 } finally {
   await rm(scratch, { recursive: true, force: true });
 }

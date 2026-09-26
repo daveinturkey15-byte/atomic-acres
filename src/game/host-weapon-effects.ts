@@ -8,7 +8,7 @@ import { hitHeight, pickTarget, type TargetCandidate } from './host-shot';
 import type { HostActor, HostLife } from './host-life';
 
 interface Burn { victim: ActorId; life: number; owner: ActorId; weapon: string; expires: number; next: number; x: number; z: number }
-interface Flare { id: number; owner: ActorId; seq: number; x: number; y: number; z: number; vx: number; vy: number; vz: number; age: number; distance: number }
+interface Flare { id: number; owner: ActorId; seq: number; x: number; y: number; z: number; vx: number; vy: number; vz: number; age: number; distance: number; expiresAt: number }
 interface Fire { owner: ActorId; x: number; y: number; z: number; expires: number; next: number }
 const MAX_FLARES = 16;
 const MAX_FIRES = 16;
@@ -61,7 +61,8 @@ export class HostWeaponEffects {
     if (this.flares.length >= MAX_FLARES) return;
     const id = this.nextId++;
     this.flares.push({ id, owner: a.id, seq: c.seq, x: c.ox, y: c.oy, z: c.oz,
-      vx: c.dx * profile.speed!, vy: c.dy * profile.speed!, vz: c.dz * profile.speed!, age: 0, distance: 0 });
+      vx: c.dx * profile.speed!, vy: c.dy * profile.speed!, vz: c.dz * profile.speed!, age: 0, distance: 0,
+      expiresAt: now + profile.lifetime! * 1000 });
     this.emit(a, c, now, 'flare-launch', id, 0.15, profile.lifetime! * 1000);
   }
 
@@ -87,6 +88,8 @@ export class HostWeaponEffects {
     }
     for (let i = this.flares.length - 1; i >= 0; i--) {
       const flare = this.flares[i];
+      // A stalled host cannot leave an invisible projectile alive after its visual expiry.
+      if (now >= flare.expiresAt) { this.impact(flare, now, false); this.flares.splice(i, 1); continue; }
       let remaining = dt;
       let stopped = false;
       while (remaining > 1e-9 && !stopped) {
@@ -141,15 +144,17 @@ export class HostWeaponEffects {
     }
     const ground = this.world.groundY(f.x, f.z);
     if (f.y <= ground && from.y >= ground) { f.y = ground + 0.04; this.impact(f, now); return true; }
-    if (!this.world.inBounds(f.x, f.z) || f.age >= profile.lifetime! || f.distance >= profile.range!) { this.impact(f, now); return true; }
+    if (!this.world.inBounds(f.x, f.z) || f.age >= profile.lifetime! || f.distance >= profile.range!) { this.impact(f, now, false); return true; }
     return false;
   }
 
-  private impact(f: Flare, now: number): void {
+  private impact(f: Flare, now: number, ignite = true): void {
     const owner = this.life.actors.get(f.owner);
     if (!owner) return;
     this.life.emit({ type: 'weapon-effect', effect: 'flare-impact', at: now, actorId: owner.id, team: owner.team,
-      id: f.id, weaponId: FLARE.id, x: f.x, y: f.y, z: f.z, dx: 0, dy: 0, dz: 0, radius: FIRE_RADIUS, durationMs: FIRE_LIFETIME_MS });
+      id: f.id, weaponId: FLARE.id, x: f.x, y: f.y, z: f.z, dx: 0, dy: 0, dz: 0,
+      radius: ignite ? FIRE_RADIUS : 0.15, durationMs: ignite ? FIRE_LIFETIME_MS : 100 });
+    if (!ignite) return;
     if (this.fires.length >= MAX_FIRES) this.fires.shift();
     this.fires.push({ owner: f.owner, x: f.x, y: f.y + 0.03, z: f.z, expires: now + FIRE_LIFETIME_MS, next: now });
   }

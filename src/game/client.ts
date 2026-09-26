@@ -136,6 +136,16 @@ export class GameClient {
   readonly streakEffects: StreakEffectView[] = [];
   streakEffectsAt = 0;
   private radar: readonly RadarSample[] = [];
+  private readonly streakCauseKeys = new Set<string>();
+  private readonly streakCauseOrder: string[] = [];
+  private lastSnapshotCauseId: string | null = null;
+
+  private rememberStreakCause(key: string): boolean {
+    if (this.streakCauseKeys.has(key)) return false;
+    this.streakCauseKeys.add(key); this.streakCauseOrder.push(key);
+    if (this.streakCauseOrder.length > 128) this.streakCauseKeys.delete(this.streakCauseOrder.shift()!);
+    return true;
+  }
   private readonly names = new Map<ActorId, string>();
   private readonly streakNames = new Map<string, string>();
   private readonly lastShotAt = new Map<ActorId, number>();
@@ -210,6 +220,9 @@ export class GameClient {
   // -------------------------------------------------------------------------
 
   applyEvent(e: GameEvent): void {
+    if (e.type === 'streak-earned' || e.type === 'streak-activated' || e.type === 'streak-denied' || e.type === 'streak-ended') {
+      if (!this.rememberStreakCause(JSON.stringify(e))) return;
+    }
     if (e.at > this.now) this.now = e.at;
     if (isMortarEvent(e) || e.type === 'streak-ended') {
       this.mortar.apply(e);
@@ -350,7 +363,16 @@ export class GameClient {
     if (s.streak && s.streak.actorId === this.selfId) {
       const slots = s.streak.slots;
       this.streak = { kills: s.streak.kills, slots, ready: slots.filter((x) => x.charges > 0).length };
-      if (s.streak.cause) this.applyEvent(s.streak.cause);
+      if (s.streak.cause) {
+        const key = s.streak.causeId ?? JSON.stringify(s.streak.cause);
+        const changed = key !== this.lastSnapshotCauseId;
+        this.lastSnapshotCauseId = key;
+        if (changed && !this.streakCauseKeys.has(key)) {
+          this.applyEvent(s.streak.cause);
+          // The localized event key can differ from the stable host cause id.
+          if (!this.streakCauseKeys.has(key)) this.rememberStreakCause(key);
+        }
+      }
     }
     if (s.players) {
       this.samples.clear();
