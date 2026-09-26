@@ -23,7 +23,10 @@ import {
   type BotTeamLayout, type MatchMode, type SoloSetup,
 } from '../game/rules';
 import { formatClock } from '../game/match';
-import { buildLoadoutSection } from './loadout-panel';
+import { buildLoadoutSection, type LoadoutSection } from './loadout-panel';
+import { buildStreakLoadoutSection, type StreakLoadoutSection } from './streak-loadout-panel';
+import type { LoadoutStore } from '../game/loadout';
+import type { StreakLoadout } from '../game/killstreaks/catalog';
 import { loadSoloSetupRaw, saveSoloSetupRaw } from './settings';
 
 export interface SoloSetupPanelDeps {
@@ -31,6 +34,10 @@ export interface SoloSetupPanelDeps {
   onChange(setup: SoloSetup): void;
   onDeploy(setup: SoloSetup): void;
   onBack(): void;
+  /** Optional parent seam: the UI persists the choice, the session may adopt it. */
+  onLoadoutChange?(store: LoadoutStore): void;
+  /** Optional parent seam: the UI persists the choice, the host remains authority. */
+  onStreakLoadoutChange?(loadout: StreakLoadout): void;
 }
 
 export interface SoloSetupPanel {
@@ -38,6 +45,8 @@ export interface SoloSetupPanel {
   setup(): SoloSetup;
   setMode(mode: 'solo' | 'rules'): void;
   refresh(): void;
+  loadout(): LoadoutStore;
+  streakLoadout(): StreakLoadout;
 }
 
 const MODE_LABEL: Record<MatchMode, string> = { tdm: 'Team deathmatch', ffa: 'Free for all', domination: 'Domination' };
@@ -108,7 +117,9 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
   cols.className = 'aa-solo-cols';
   const loadoutCol = document.createElement('div');
   loadoutCol.className = 'aa-solo-loadout';
-  loadoutCol.append(buildLoadoutSection().root);
+  const loadout: LoadoutSection = buildLoadoutSection({ onChange: deps.onLoadoutChange });
+  const streakLoadout: StreakLoadoutSection = buildStreakLoadoutSection({ onChange: deps.onStreakLoadoutChange });
+  loadoutCol.append(loadout.root, streakLoadout.root);
   const setupCol = document.createElement('div');
   setupCol.className = 'aa-solo-setup';
   cols.append(loadoutCol, setupCol);
@@ -229,6 +240,8 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
   return {
     root,
     setup: () => setup,
+    loadout: loadout.read,
+    streakLoadout: streakLoadout.read,
     setMode(mode): void {
       botsRow.classList.toggle('aa-hidden', mode === 'rules');
       deploy.classList.toggle('aa-hidden', mode === 'rules');

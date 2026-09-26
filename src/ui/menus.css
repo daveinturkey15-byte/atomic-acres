@@ -271,11 +271,30 @@
 }
 
 #start .aa-loadhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: #8faec9;
+}
+
+#start .aa-loadtitle {
+  margin: 0;
+  font: inherit;
+  color: #8faec9;
+}
+
+#start .aa-loadmeta {
+  flex: 0 1 auto;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.3px;
+  color: rgba(143, 174, 201, 0.62);
+  white-space: nowrap;
 }
 
 #start .aa-loadsub {
@@ -344,11 +363,50 @@
 
 #start .aa-kit-weapon {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.4px;
   color: #ffd9a8;
+}
+
+#start .aa-kit-weapon-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#start .aa-weapon-glyph {
+  flex: 0 0 auto;
+  width: 72px;
+  height: 28px;
+  overflow: visible;
+  opacity: 0.9;
+}
+
+#start .aa-prim .aa-weapon-glyph {
+  align-self: center;
+  width: 100%;
+  height: 25px;
+  margin: 0 0 2px;
+}
+
+#start .aa-weapon-glyph-body {
+  fill: rgba(255, 217, 168, 0.72);
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+#start .aa-weapon-glyph-rail {
+  fill: none;
+  stroke: #4ec9c0;
+  stroke-width: 2;
+  stroke-linecap: square;
+  vector-effect: non-scaling-stroke;
 }
 
 #start .aa-kit-wstats {
@@ -517,6 +575,163 @@
 
 #start .aa-loadnote:empty {
   display: none;
+}
+
+/* --- Saved classes ------------------------------------------------------- */
+#start .aa-saved-label {
+  margin-top: 2px;
+}
+
+#start .aa-saved {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+#start .aa-saved-slot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 24px;
+  gap: 4px;
+  min-width: 0;
+}
+
+#start .aa-saved-pick,
+#start .aa-saved-clear {
+  font: inherit;
+  color: #d9e4ef;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(12, 18, 26, 0.84);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+#start .aa-saved-pick {
+  min-width: 0;
+  overflow: hidden;
+  padding: 7px 8px;
+  text-align: left;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+#start .aa-saved-clear {
+  width: 24px;
+  padding: 0;
+  font-size: 16px;
+  line-height: 1;
+  color: rgba(232, 238, 247, 0.5);
+}
+
+#start .aa-saved-pick:hover,
+#start .aa-saved-clear:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(18, 28, 40, 0.96);
+  color: #ffffff;
+}
+
+#start .aa-saved-pick[aria-pressed="true"] {
+  border-color: #ff9c4a;
+  background: rgba(20, 30, 44, 0.96);
+  color: #ffd9a8;
+  box-shadow: 0 0 0 1px rgba(255, 156, 74, 0.7);
+}
+
+#start .aa-saved-clear:disabled,
+#start .aa-saved-pick[data-empty="true"] {
+  cursor: default;
+  color: rgba(232, 238, 247, 0.42);
+}
+
+#start .aa-saved-pick[data-empty="true"] {
+  border-style: dashed;
+}
+
+/* --- Killstreak suite ---------------------------------------------------- */
+#start .aa-streak-loadout {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+#start .aa-streak-note {
+  min-height: 1.3em;
+  font-size: 10px;
+  line-height: 1.35;
+  color: rgba(232, 238, 247, 0.58);
+}
+
+#start .aa-streak-loadout-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  min-width: 0;
+}
+
+#start .aa-streak-pick {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  padding: 7px 8px;
+  color: #e8eef7;
+  background: linear-gradient(150deg, rgba(16, 26, 38, 0.95), rgba(10, 15, 23, 0.95));
+  border: 1px solid rgba(78, 201, 192, 0.22);
+  border-radius: 3px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+#start .aa-streak-pick:focus-within {
+  border-color: #4ec9c0;
+  box-shadow: 0 0 0 1px rgba(78, 201, 192, 0.52), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+#start .aa-streak-pick-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 5px;
+  min-width: 0;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: #8faec9;
+  text-transform: uppercase;
+}
+
+#start .aa-streak-pick-top > span:last-child {
+  color: #4ec9c0;
+  font-size: 8px;
+  letter-spacing: 0.8px;
+}
+
+#start .aa-streak-select {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 6px;
+  overflow: hidden;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+#start .aa-streak-pick-summary {
+  min-height: 1.25em;
+  overflow: hidden;
+  font-size: 9px;
+  letter-spacing: 0.35px;
+  color: rgba(232, 238, 247, 0.54);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* --- Settings, Forms and Input Controls --- */
@@ -986,4 +1201,24 @@
   #start .aa-solo-setup { gap: 6px; }
   #start .aa-solo-setup .aa-setting-row { padding: 1px 0; }
   #start .aa-solo-loadout .aa-loadout { gap: 5px; }
+}
+
+/* The suite keeps four choices visible on wide screens and flows to two
+ * columns on phones; every select remains a native keyboard target. */
+@media (max-width: 720px) {
+  #start .aa-loadhead { align-items: flex-start; flex-direction: column; gap: 2px; }
+  #start .aa-loadmeta { white-space: normal; }
+  #start .aa-streak-loadout-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 400px) {
+  #start .aa-saved { grid-template-columns: 1fr; }
+  #start .aa-streak-loadout-grid { grid-template-columns: 1fr; }
+  #start .aa-streak-pick { padding: 6px 7px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #start .aa-saved-pick,
+  #start .aa-saved-clear,
+  #start .aa-streak-pick { transition: none; }
 }

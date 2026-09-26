@@ -32,6 +32,8 @@ import {
   applySettings, installInputShims, probeApplied, type AppliedProbe, type ApplyTargets, type MenuPlayer, type MenuWorld, type MenuAudio,
 } from './settings-apply';
 import { buildSoloSetupPanel } from './solo-setup';
+import type { LoadoutStore } from '../game/loadout';
+import type { StreakLoadout } from '../game/killstreaks/catalog';
 import { loadSettings, resetSettings, saveSettings, type Settings } from './settings';
 
 export type { MenuPlayer, MenuWorld } from './settings-apply';
@@ -47,6 +49,8 @@ export interface MenuDeps {
   audio?: MenuAudio;
   match(): LocalMatch | null;
   names(): ReadonlyMap<string, string>;
+  onLoadoutChange?(store: LoadoutStore): void;
+  onStreakLoadoutChange?(loadout: StreakLoadout): void;
 }
 
 export interface MenuHandle {
@@ -106,6 +110,8 @@ export function initMenus(deps: MenuDeps): MenuHandle {
     onChange: (s) => { deps.match()?.configure(s); },
     onDeploy: () => startSolo(),
     onBack: () => { panel = optionsReturn === 'multiplayer' ? 'multiplayer' : 'main'; solo.setMode('solo'); render(); },
+    onLoadoutChange: deps.onLoadoutChange,
+    onStreakLoadoutChange: deps.onStreakLoadoutChange,
   });
   const lobby = buildLobbyPanel({
     session: () => deps.match()?.lobby ?? null,

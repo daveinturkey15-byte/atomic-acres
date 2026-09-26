@@ -34,8 +34,8 @@
  */
 
 import {
-  FIELD_KITS, PRIMARY_IDS, SAVE_REFUSAL_LABELS, SIDEARM_IDS, fieldKitById, kitTraits, loadLoadout, resolveLoadout,
-  saveLoadout, type GrenadeId, type KitTraits, type LoadoutStore,
+  CUSTOM_SLOT_COUNT, FIELD_KITS, PRIMARY_IDS, SAVE_REFUSAL_LABELS, SIDEARM_IDS, fieldKitById, kitTraits, loadLoadout,
+  resolveLoadout, saveLoadout, type GrenadeId, type KitTraits, type LoadoutStore,
 } from '../game/loadout';
 import {
   GRENADE_BY_ID, LETHAL_IDS, LETHAL_PER_LIFE, SMOKE_LIFETIME_MS, TACTICAL_IDS, type GrenadeDef,
@@ -44,6 +44,12 @@ import { WEAPONS } from '../weapons/catalog';
 
 export interface LoadoutSection {
   readonly root: HTMLElement;
+  refresh(): void;
+  read(): LoadoutStore;
+}
+
+export interface LoadoutSectionDeps {
+  onChange?(store: LoadoutStore): void;
 }
 
 function stop(e: Event): void {
@@ -52,6 +58,26 @@ function stop(e: Event): void {
 
 function weaponById(id: string) {
   return WEAPONS.find((w) => w.id === id);
+}
+
+/** A compact schematic, derived from weapon traits so every catalog entry has
+ * a useful visual without shipping a second asset roster. */
+function weaponGlyph(def: NonNullable<ReturnType<typeof weaponById>>): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.classList.add('aa-weapon-glyph');
+  svg.setAttribute('viewBox', '0 0 128 48');
+  svg.setAttribute('aria-hidden', 'true');
+  const kind = def.pellets > 1 ? 'shotgun' : def.adsFov < 40 ? 'precision' : def.magSize > 40 ? 'support' : def.interval < 0.09 ? 'compact' : 'rifle';
+  svg.dataset.weaponClass = kind;
+  const body = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  body.setAttribute('class', 'aa-weapon-glyph-body');
+  body.setAttribute('d', kind === 'shotgun' ? 'M6 20h56l19 5h39v7H80l-18 5H40l-5-7H6z' : 'M5 21h70l20-7h28v8l-25 3v7l18 5H89l-16-7H50l-8 6H27l5-9H5z');
+  svg.append(body);
+  const rail = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  rail.setAttribute('class', 'aa-weapon-glyph-rail');
+  rail.setAttribute('d', kind === 'precision' ? 'M38 18h83M72 34h32' : 'M40 18h57M53 34h24');
+  svg.append(rail);
+  return svg;
 }
 
 /** The tactical the next life actually throws — the same fallback `ordnance-scene.tacticalFor` applies when the store's grenade is not a tactical id. */
@@ -93,7 +119,7 @@ const TRAIT_LABELS: ReadonlyArray<readonly [label: string, key: keyof KitTraits]
   ['Mobility', 'mobility'],
 ];
 
-export function buildLoadoutSection(): LoadoutSection {
+export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSection {
   const root = document.createElement('div');
   root.className = 'aa-loadout';
 
@@ -128,7 +154,12 @@ export function buildLoadoutSection(): LoadoutSection {
 
     const weapon = document.createElement('span');
     weapon.className = 'aa-kit-weapon';
-    weapon.textContent = weaponById(kit.primary)?.name ?? kit.primary;
+    const kitDef = weaponById(kit.primary);
+    if (kitDef) weapon.append(weaponGlyph(kitDef));
+    const weaponName = document.createElement('span');
+    weaponName.className = 'aa-kit-weapon-name';
+    weaponName.textContent = kitDef?.name ?? kit.primary;
+    weapon.append(weaponName);
     const wline = weaponLine(kit.primary);
     if (wline) {
       const stats = document.createElement('span');
@@ -174,6 +205,39 @@ export function buildLoadoutSection(): LoadoutSection {
   }
   root.append(kits);
 
+  // --- Saved custom classes -----------------------------------------------
+  // Custom slots are part of the game's loadout store.  Surface them here so
+  // a player can return to a previous weapon/tactical pair without silently
+  // overwriting it while browsing the catalog.
+  const savedLabel = document.createElement('div');
+  savedLabel.className = 'aa-loadsub aa-saved-label';
+  savedLabel.textContent = 'SAVED CLASSES';
+  const saved = document.createElement('div');
+  saved.className = 'aa-saved';
+  saved.setAttribute('role', 'group');
+  saved.setAttribute('aria-label', 'Saved custom classes');
+  const savedButtons: Array<{ readonly button: HTMLButtonElement; readonly clear: HTMLButtonElement; readonly index: number }> = [];
+  for (let i = 0; i < CUSTOM_SLOT_COUNT; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'aa-saved-slot';
+    const pick = document.createElement('button');
+    pick.type = 'button';
+    pick.className = 'aa-saved-pick';
+    pick.setAttribute('aria-pressed', 'false');
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'aa-saved-clear';
+    clear.textContent = '×';
+    clear.title = `Clear saved class ${i + 1}`;
+    clear.setAttribute('aria-label', `Clear saved class ${i + 1}`);
+    pick.addEventListener('click', (e) => { stop(e); selectSaved(i); });
+    clear.addEventListener('click', (e) => { stop(e); clearSaved(i); });
+    slot.append(pick, clear);
+    saved.append(slot);
+    savedButtons.push({ button: pick, clear, index: i });
+  }
+  root.append(savedLabel, saved);
+
   // --- Primary weapon choice ------------------------------------------------
   // Derived from PRIMARY_IDS (playable non-sidearms), never a second table: a
   // new catalog primary appears here by existing. Gated prototypes and
@@ -202,7 +266,7 @@ export function buildLoadoutSection(): LoadoutSection {
     const line = document.createElement('span');
     line.className = 'aa-prim-line';
     line.textContent = weaponLine(id) ?? id;
-    btn.append(name, line);
+    btn.append(weaponGlyph(def), name, line);
     btn.addEventListener('click', (e) => { stop(e); selectPrimary(id); });
     primButtons.set(id, btn);
     prims.append(btn);
@@ -267,6 +331,7 @@ export function buildLoadoutSection(): LoadoutSection {
     const result = saveLoadout(next);
     note.textContent = result.saved || !result.refusal ? '' : SAVE_REFUSAL_LABELS[result.refusal];
     refresh();
+    deps.onChange?.(next);
   }
 
   function selectKit(id: string): void {
@@ -347,6 +412,24 @@ export function buildLoadoutSection(): LoadoutSection {
     apply({ ...store, custom, selected: { kind: 'custom', slot: sel.slot } });
   }
 
+  function selectSaved(slot: number): void {
+    const store = loadLoadout();
+    if (!store.custom[slot]) return;
+    if (store.selected.kind === 'custom' && store.selected.slot === slot) return;
+    apply({ ...store, selected: { kind: 'custom', slot } });
+  }
+
+  function clearSaved(slot: number): void {
+    const store = loadLoadout();
+    if (!store.custom[slot]) return;
+    const custom = store.custom.slice();
+    custom[slot] = null;
+    const selected = store.selected.kind === 'custom' && store.selected.slot === slot
+      ? { kind: 'kit' as const, id: FIELD_KITS[0].id }
+      : store.selected;
+    apply({ ...store, custom, selected });
+  }
+
   // --- Readout -------------------------------------------------------------
   function refresh(): void {
     const store = loadLoadout();
@@ -367,6 +450,22 @@ export function buildLoadoutSection(): LoadoutSection {
       const active = id === resolved.primary;
       btn.classList.toggle('aa-selected', active);
       btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    for (const item of savedButtons) {
+      const custom = store.custom[item.index];
+      const active = store.selected.kind === 'custom' && store.selected.slot === item.index;
+      item.button.classList.toggle('aa-selected', active);
+      item.button.setAttribute('aria-pressed', active ? 'true' : 'false');
+      item.clear.disabled = custom === null;
+      if (custom === null) {
+        item.button.textContent = `CLASS ${item.index + 1} · EMPTY`;
+        item.button.title = `Save a custom class in slot ${item.index + 1} by choosing a weapon or tactical`;
+      } else {
+        const primaryName = weaponById(custom.primary)?.name ?? custom.primary;
+        const grenadeName = GRENADE_BY_ID.get(custom.grenade)?.name ?? custom.grenade;
+        item.button.textContent = custom.name || `${primaryName} · ${grenadeName}`;
+        item.button.title = `${primaryName} · ${grenadeName}`;
+      }
     }
 
     const primaryName = weaponById(resolved.primary)?.name ?? resolved.primary;
@@ -393,5 +492,5 @@ export function buildLoadoutSection(): LoadoutSection {
   }
 
   refresh();
-  return { root };
+  return { root, refresh, read: loadLoadout };
 }

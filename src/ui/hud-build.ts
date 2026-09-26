@@ -15,6 +15,7 @@
 
 import { FEED_DAMAGE_LIMIT, FEED_EVENT_LIMIT } from '../game/feed';
 import type { FeedDestination } from '../game/events';
+import { SLOT_COUNT } from '../game/killstreaks/catalog';
 import { MAX_PLAYERS } from '../net/protocol';
 import { MAP_PX } from './layout';
 
@@ -22,7 +23,7 @@ import { MAP_PX } from './layout';
  * wire's `StreakSlotState[]` (loadout order) agree. The old 5 here was the
  * retired KillstreakLoadoutV1 shape, which nothing pushes; slot 5 was built and
  * then hidden forever. */
-export const STREAK_SLOTS = 4;
+export const STREAK_SLOTS = SLOT_COUNT;
 
 export interface FeedPool {
   readonly rows: readonly HTMLElement[];

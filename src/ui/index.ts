@@ -33,6 +33,8 @@ import { initNetOverlay } from './net-overlay';
 import type { ClientEdge, ClientView, GameClient } from '../game/client';
 import type { MatchMode } from '../game/rules';
 import type { LocalMatch } from '../game/session';
+import type { LoadoutStore } from '../game/loadout';
+import type { StreakLoadout } from '../game/killstreaks/catalog';
 import { formatClock } from '../game/match';
 import { streakById } from '../game/killstreaks/catalog';
 
@@ -54,6 +56,10 @@ export interface UiDeps {
   player: UiPlayer;
   world: MenuWorld;
   audio?: MenuAudio;
+  /** Optional parent seam: menu persistence remains UI-owned. */
+  onLoadoutChange?(store: LoadoutStore): void;
+  /** Optional parent seam: the host validates this before a live match. */
+  onStreakLoadoutChange?(loadout: StreakLoadout): void;
 }
 
 export interface UiHandle {
@@ -172,7 +178,11 @@ export function initUI(deps: UiDeps): UiHandle {
   const names = new Map<string, string>();
   const matchOf = (): LocalMatch | null => bound ?? readWindowMatch();
 
-  const menu = initMenus({ hud, player: deps.player, world: deps.world, audio: deps.audio, match: matchOf, names: () => names });
+  const menu = initMenus({
+    hud, player: deps.player, world: deps.world, audio: deps.audio, match: matchOf, names: () => names,
+    onLoadoutChange: deps.onLoadoutChange,
+    onStreakLoadoutChange: deps.onStreakLoadoutChange,
+  });
   initGlyphScheme();
   const net = initNetOverlay({
     hud: document.getElementById('hud'),
