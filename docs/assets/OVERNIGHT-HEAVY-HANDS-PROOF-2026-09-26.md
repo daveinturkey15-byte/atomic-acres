@@ -43,3 +43,26 @@ VERIFIED: an initial source typecheck passed before the final helper and integra
 | `scripts/_verify-overnight-heavy-hands.mjs` | `d3e97c116baf13c8748161766b8a16805001c47e176a2fbac25d252c009048c8` |
 
 OPEN — decision `continue` to the integrator's serialized pixel review, not accepted. This is the initial take; **two localized visual repairs remain maximum**. Retain baseline hip/ADS PNGs, the generated contact study, and every rejected take. Required next evidence: same 1600×900 hip/ADS, neutral front/side/three-quarter inspection, and brief firing/reload/turn motion. Critic must judge grasp/contact ≥7/10 with connected wrists, four readable fingers plus thumb, plausible support, open aim, improved framing, coherent material finish, and no motion/resource regression. CPU contact and contrast measurements do not prove those pixel criteria. No browser, GPU, build, commit or push was performed by this worker.
+
+## Localized visible repair 1 — support thumb and reload
+
+VERIFIED: inspected the independent stills critique and the actual canary ADS, hip and reload PNGs. The critique remains OPEN: initial framing, aim reference and material identity improved, but thumb readability and reload contact did not pass; the concealed right grasp was unproven. This repair changes only the support thumb and support-hand reload path. It neither changes the camera/gun nor accepts an occluded right hand.
+
+VERIFIED: the support thumb now splays beyond the index/palm silhouette, with a tan canvas back and separate dark rubber tip; its contact remains on the opposite side of the actual crossbar from the four fingers. The reload path leaves the bar upward/outward, rotates about the palm, then seats outside an actual ray-hit drum rim. It returns along the same arc to exact bind. It does not use the old reload socket inside the housing. Per-frame work changes existing transforms only.
+
+VERIFIED: strengthened `scripts/_verify-overnight-heavy-hands.mjs` PASS; retained result `captures/overnight-heavy-hands-repair1-cpu.json`. Hands are 11 meshes/3,624 triangles; gun remains 10 meshes/10,848 triangles/5 embedded textures. Thumb silhouette extends 23.335 mm beyond the palm; all ten bind-contact gaps remain below 2 mm. Reload contact is on the real decoded drum, with nearest glove distance 5.735 mm. At 39 sampled reload phases, once the glove descends into drum height its complete glove bounds stay outside the drum side plane. This conservative drum-plane check does not prove full swept collision against every gun triangle or forearm anatomy.
+
+VERIFIED: the preserved `6d5fde7` initial helper fails the new thumb-silhouette and outside-drum criteria, so these assertions distinguish the criticized take. Exact right-hand geometry/transform signatures remain unchanged from that take. Existing default-rig, all-asset hash, ADS aperture, budget, reset and disposal checks still pass. `scripts/_verify-astra-reference-models-20260926.mjs` passes unchanged; `npx tsc --noEmit` passes.
+
+VERIFIED: initial helper/proof bytes also remain in `captures/overnight-heavy-hands-before-repair1.ts.txt` (SHA256 `341abc47ecb8aad8c2aca3e67b1f054e2403e6b36993aa976bd7abc9d88b9ba5`) and `captures/overnight-heavy-hands-before-repair1-proof.mjs.txt` (`d3e97c116baf13c8748161766b8a16805001c47e176a2fbac25d252c009048c8`). Original GLB bytes are unchanged.
+
+VERIFIED: `scripts/_inspect-overnight-heavy-rig.mjs --out captures/overnight-heavy-neutral-repair1` CPU-built a separate inspection bundle and identity manifest. It uses the actual adapter, model and material library, fixed front/left/right/three-quarter cameras, an explicit inspection label and a reload slider. It renders only on inspection changes, exposes `window.__HEAVY_INSPECT.view(name)`, `.reload(0..1)`, `.stats()` and `.dispose()`, and refuses output overwrite. It launches no browser/server. Neutral lighting/cameras are separate evidence, never a replacement gameplay view. Root may serve that directory and wait for `document.documentElement.dataset.ready === 'true'` before capture. Browser execution remains OPEN.
+
+| Repair-1 worker path | SHA256 |
+|---|---|
+| `src/weapons/reference-weapon-models.ts` | `e1b9eea033ad18f4345ca848c2ac88955c7ca35a83c19189e433460736407b33` |
+| `src/weapons/reference-heavy-hands.ts` | `7e0c48189b1efd98445ff2329a568dff21ce39bf0be1594730e8ee64a298c6dd` |
+| `scripts/_verify-overnight-heavy-hands.mjs` | `5cfdd3939c0985255e15fe9720f68ee770446cac18aaf8c4099640774c31460d` |
+| `scripts/_inspect-overnight-heavy-rig.mjs` | `e19e58ac7cfb55d3a292862bd02d86ff2dc67b40229d78fa8fcf6978bb8d6389` |
+
+OPEN: source frozen for independent still/motion review. One of two localized visual repairs is consumed; **one remains maximum**. The critic must still judge visible opposition, useful reload contact and anatomical motion; neutral right-hand inspection is outstanding. No art threshold changed, default promotion occurred, or new GPU/browser/runtime-build job ran in this worker.

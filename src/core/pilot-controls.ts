@@ -49,7 +49,10 @@ export class PilotControlView {
   constructor(private readonly deps: PilotControlDeps) {
     this.hint = document.createElement('div');
     this.hint.className = 'hud-pilot';
-    Object.assign(this.hint.style, { position: 'absolute', left: '50%', top: '19%', transform: 'translateX(-50%)',
+    // #hud is a compact debug container, so this control card belongs to the
+    // viewport rather than its contents-sized containing block.
+    Object.assign(this.hint.style, { position: 'fixed', left: '50%', top: 'max(70px, 9vh)', transform: 'translateX(-50%)',
+      width: 'min(620px, calc(100vw - 32px))', boxSizing: 'border-box',
       padding: '12px 18px', border: '1px solid #4ec9c0', borderRadius: '3px', background: 'rgba(7,19,23,.86)',
       color: '#e8fff9', textAlign: 'center', fontSize: '12px', fontWeight: '700', letterSpacing: '.8px',
       lineHeight: '1.6', whiteSpace: 'pre-line', maxWidth: '90vw', pointerEvents: 'none', display: 'none' });
@@ -98,7 +101,7 @@ export class PilotControlView {
     if (camera.fov !== 72) { camera.fov = 72; camera.updateProjectionMatrix(); }
     const remaining = Math.max(0, row.remainingMs - Math.max(0, now - this.snapshotAt));
     const line = this.returning ? 'RETURNING TO PLAYER'
-      : `PILOTED DRONE · ${Math.ceil(row.health ?? 0)} HP · ${Math.ceil(remaining / 1000)} s\nWASD fly · Q / E descend / climb · Mouse aim · LMB fire · Esc return`;
+      : `PILOTED DRONE | ${Math.ceil(row.health ?? 0)} HP | ${Math.ceil(remaining / 1000)} s\nWASD fly | Q / E descend / climb | Mouse aim | LMB fire | Esc return`;
     if (line !== this.lastHint) { this.lastHint = line; this.hint.textContent = line; }
   }
 

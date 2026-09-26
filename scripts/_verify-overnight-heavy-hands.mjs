@@ -11,15 +11,19 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const folder = mkdtempSync(join(tmpdir(), 'aa-heavy-hands-'));
 const baselineRef = 'ac3f1d45b31c5516fa9504980ce4aa4828674ffa';
 const retained = execFileSync('git', ['show', `${baselineRef}:src/weapons/reference-weapon-models.ts`], { cwd: root, encoding: 'utf8' });
+const initialRef = '6d5fde72042cf6492ca438056bba55d5cc46e113';
+const initialSources = Object.fromEntries(['reference-weapon-models', 'reference-heavy-hands'].map(name => [name,
+  execFileSync('git', ['show', `${initialRef}:src/weapons/${name}.ts`], { cwd: root, encoding: 'utf8' })]));
 const entry = `export * as THREE from 'three'; export * from './src/weapons/reference-weapon-models';
  export {collectGltfResources} from './src/weapons/catalog-carbine-loader';`;
 const modules = [];
-for (const baseline of [false, true]) {
-  const outfile = join(folder, baseline ? 'baseline.mjs' : 'candidate.mjs');
+for (const baseline of [false, true, 'initial']) {
+  const outfile = join(folder, baseline === 'initial' ? 'initial.mjs' : baseline ? 'baseline.mjs' : 'candidate.mjs');
   await build({ stdin: { contents: entry, resolveDir: root, loader: 'ts' }, outfile,
     bundle: true, platform: 'node', format: 'esm', logLevel: 'silent', plugins: baseline ? [{
-      name: 'retained-adapter', setup(b) { b.onLoad({ filter: /reference-weapon-models\.ts$/ }, () => ({
-        contents: retained, loader: 'ts', resolveDir: join(root, 'src/weapons'),
+      name: 'retained-adapter', setup(b) { b.onLoad({ filter: /reference-(weapon-models|heavy-hands)\.ts$/ }, args => ({
+        contents: baseline === 'initial' ? initialSources[args.path.endsWith('reference-heavy-hands.ts') ? 'reference-heavy-hands' : 'reference-weapon-models'] : retained,
+        loader: 'ts', resolveDir: join(root, 'src/weapons'),
       })); },
     }] : [] });
   modules.push(await import(pathToFileURL(outfile).href));
@@ -32,7 +36,7 @@ globalThis.createImageBitmap = async (blob) => {
   const image = { width: 512, height: 512, closes: 0, close() { this.closes++; } };
   images.push(image); return image;
 };
-const [api, oldApi] = modules, { THREE } = api;
+const [api, oldApi, initialApi] = modules, { THREE } = api;
 assert.equal(api.isHeavyHandsCanaryRequested(), false, 'headless/default path preserves accepted rig');
 globalThis.location = { search: '?heavy-hands=canary' };
 assert.equal(api.isHeavyHandsCanaryRequested(), true, 'actual browser query admits only the explicit canary');
@@ -128,7 +132,49 @@ for (const hand of [rig.hands.triggerHand, rig.hands.supportHand]) {
   assert(nearest(bridge, palm) < .024, 'glove bridge joins palm');
 }
 const beforeReload = rig.hands.supportHand.matrixWorld.clone();
+const supportPalm = rig.hands.supportHand.getObjectByName('SupportHand/CanvasPalm');
+const supportThumb = rig.hands.supportHand.getObjectByName('SupportHand/OpposedThumb');
+const palmBounds = new THREE.Box3().setFromObject(supportPalm);
+const thumbBounds = new THREE.Box3().setFromObject(supportThumb);
+assert(thumbBounds.max.x > palmBounds.max.x + .012, 'opposed support thumb must emerge beyond palm silhouette');
+const initialRig = initialApi.adaptReferenceWeaponModel('minigun', await parse(initialApi, 'minigun'), mat, { heavyHands: true });
+initialRig.group.updateMatrixWorld(true);
+const initialPalm = new THREE.Box3().setFromObject(initialRig.hands.supportHand.getObjectByName('SupportHand/CanvasPalm'));
+const initialThumb = new THREE.Box3().setFromObject(initialRig.hands.supportHand.getObjectByName('SupportHand/OpposedThumb'));
+assert(initialThumb.max.x - initialPalm.max.x < .012, 'retained initial take must fail the new visible-thumb silhouette requirement');
+assert.deepEqual(signature({group:rig.hands.triggerHand}), signature({group:initialRig.hands.triggerHand}),
+  'right-hand geometry and fit must remain unchanged pending neutral inspection');
+const supportFingerContact = contacts.find(c => c.side === 'support' && c.digit === 'Index');
+const supportThumbContact = contacts.find(c => c.side === 'support' && c.digit === 'Thumb');
+const bar = new THREE.Vector3(...rig.hands.supportHand.userData.heavyHandleCentre);
+assert(supportFingerContact.point[2] > bar.z && supportThumbContact.point[2] < bar.z,
+  'thumb and fingers must contact opposite sides of the actual bar');
 rig.hands.updateReload(.5); assert(rig.hands.supportHand.position.length() > .03);
+rig.group.updateMatrixWorld(true);
+const reloadContact = new THREE.Vector3(...rig.hands.root.userData.heavyReloadContact.point);
+const drum = model.scene.getObjectByName('minigun_FP_LOD0_Runtime_magazine_MAT_Pass65_minigun_Gunmetal');
+assert(nearest(drum, reloadContact) < .00001, 'reload target is a real exposed drum triangle');
+const supportMeshes = rig.hands.supportHand.children.filter(n => n.isMesh);
+const reloadGap = Math.min(...supportMeshes.map(m => nearest(m, reloadContact)));
+assert(reloadGap < .014, `seated reload glove must reach real drum rim: ${reloadGap}`);
+const drumBounds = new THREE.Box3().setFromObject(drum);
+initialRig.hands.updateReload(.5); initialRig.group.updateMatrixWorld(true);
+const initialReloadBounds = new THREE.Box3();
+for (const m of initialRig.hands.supportHand.children.filter(n=>n.isMesh)) initialReloadBounds.union(new THREE.Box3().setFromObject(m));
+assert(initialReloadBounds.max.x > drumBounds.min.x + .03 && initialReloadBounds.min.y < drumBounds.max.y,
+  'retained initial direct reach must fail the outside-drum reload requirement');
+initialRig.dispose();
+const reloadSweep = [];
+for (let n = 1; n < 40; n++) {
+  const progress = n / 40;
+  rig.hands.updateReload(progress); rig.group.updateMatrixWorld(true);
+  const bounds = new THREE.Box3(); for (const m of supportMeshes) bounds.union(new THREE.Box3().setFromObject(m));
+  // Once the glove descends into the drum's height range, it stays entirely
+  // outside the exposed side plane rather than crossing into the housing.
+  if (bounds.min.y < drumBounds.max.y && progress > .1 && progress < .9)
+    assert(bounds.max.x <= drumBounds.min.x + .006, `reload glove enters drum at ${progress}`);
+  reloadSweep.push({ progress, minY: bounds.min.y, maxX: bounds.max.x });
+}
 rig.hands.resetReload(); rig.group.updateMatrixWorld(true);
 assert.deepEqual(rig.hands.supportHand.matrixWorld.elements, beforeReload.elements);
 const { offsetX, offsetY, pitch, yaw } = rig.adsMount;
@@ -167,6 +213,7 @@ assert.equal(texDisposes, resources.textures.size); assert.equal(materialDispose
 assert(images.every(i => i.closes === 1), 'owned image resources disposed exactly once');
 console.log(JSON.stringify({ status: 'PASS', baselineRef, hands: { meshes: handMeshes.length, triangles: handTris },
   gun: rig.stats, contacts: contactResults, cameraOffset: rig.cameraOffset,
+  repair1: { thumbBeyondPalmMm: (thumbBounds.max.x - palmBounds.max.x) * 1000, reloadGapMm: reloadGap * 1000, reloadSweep },
   retainedHandContactGapMm: oldContactGaps.map(g => +(g * 1000).toFixed(2)),
   nearestGunZ: { before: nearBefore, after: nearAfter }, aim: { contrast, markWidthPx },
   visualAcceptance: 'OPEN: real neutral/gameplay hip/ADS/firing/reload/turn capture required' }, null, 2));

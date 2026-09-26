@@ -235,3 +235,45 @@ unchanged 180-second earning window/six-minute total limit. It never fires from
 an invalid position or changes the bot. Five real kills in the original life,
 native lock, own-ammunition, possession and all restoration gates remain required.
 Both localized pilot repairs are now used; a further correct failure stays OPEN.
+
+## Fresh art pair and final capture-harness repair 2
+
+VERIFIED retained baseline attempt 2 and canary attempt 1 each contain 12 frames,
+zero browser errors and final HP100/life1/deaths0. Both actually used fixed
+(22,0,38), yaw0 at 1600x900. Their status is CAPTURED_PENDING_PIXEL_REVIEW;
+these receipts do not establish visual acceptance or motion quality.
+
+Before changing the helper, its exact bytes were preserved at
+`captures/harness-sources/_capture-overnight-heavy-grip-before-motion-155ad2f702e9.mjs`;
+SHA256 `155ad2f702e9de5c32ef19ddb228b1ee928fb7be00ed4edfc05ec0375258e95a`
+matches the frozen still-only helper. This is the final allowed art harness
+repair, 2 of 2. Earlier partial/rejected frames and paired receipts remain intact.
+
+Optional `--motion` uses the existing owned CDP session's real
+`Page.startScreencast` (JPEG quality80, everyNthFrame1). Each frame is acknowledged
+before file writing and saved with its original browser swap timestamp, receive
+time, action phase, metadata, hash and filename. Recording starts at the fixed
+Minigun hip view and includes native ADS/fire/reload/turn actions plus roughly
+two seconds of actual mouse turn oscillation. The sky still is taken after the
+recording stops. No frame/animation API is replaced, and no additional renderer,
+clock, health, director or inventory mutation is introduced.
+
+The recorder is capped at 15 seconds/1000 frames. A successful capture requires
+8–15 seconds of strictly advancing real frame timestamps and at least two frames
+for each action phase, alongside every existing life/kit/shot/reload check. Its
+`motion/manifest.json` and `motion/frames.ffconcat` retain actual inter-frame timing
+for root's separate offline ffmpeg conversion; no interpolated frame or invented
+final hold is supplied. A phase label includes its real transition and does not
+claim every frame already reached the settled state. Pixel review is still required.
+
+VERIFIED syntax and a CPU-only mocked CDP lifecycle check passed (immediate ack
+before frame write, timestamp/phase retention, stop and manifest). An initial mock
+assertion used an incorrect exact floating-point literal; the check was corrected
+to compute the same timestamp subtraction. No runtime assertion changed. No browser
+or GPU job was launched by this worker. The earned-pilot helper remains byte-frozen
+at SHA256 `b883fde29fae5c12fb6e7fddc1e5847a5673e145232a45303c08444daceed8bb`.
+
+OPEN: the final motion run, MP4 conversion/review, and neutral front/side/three-quarter
+model inspection. Add `--motion` to the final canary command while retaining
+`--pose-from captures/overnight-heavy-grip-baseline-attempt2/report.json` and the
+exact expected source/entry hashes for the final built artifact.

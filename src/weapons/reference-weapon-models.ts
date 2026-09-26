@@ -111,10 +111,7 @@ export function adaptReferenceWeaponModel(
     const support = localPoint('support-socket-l');
     const reload = localPoint('reload-socket-l').sub(support);
     if (mat && heavyHands) {
-      const topBar = new THREE.Vector3(-.09, .23, .26).applyMatrix4(mount.matrixWorld);
-      group.worldToLocal(topBar);
-      const heavyReload = localPoint('reload-socket-l').sub(topBar);
-      hands = createReferenceHeavyHands(group, model, mount, mat, [heavyReload.x, heavyReload.y, heavyReload.z]);
+      hands = createReferenceHeavyHands(group, model, mount, mat);
     } else if (mat) {
       hands = createFirstPersonHands(group, mat, support.z, support.y, [reload.x, reload.y, reload.z]);
       // Existing geometry's support palm is x=-.01. A parent correction survives

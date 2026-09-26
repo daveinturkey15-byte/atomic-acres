@@ -27,13 +27,12 @@ function digit(points: THREE.Vector3[], radius: number): THREE.BufferGeometry {
 
 export function createReferenceHeavyHands(
   parent: THREE.Group, model: THREE.Group, mount: THREE.Group, mat: MaterialLibrary,
-  reloadTarget: Vec3,
 ): FirstPersonHandsRig {
   const handle = model.getObjectByName(POLYMER_NAME);
   if (!(handle instanceof THREE.Mesh)) throw new Error('Minigun: missing actual handle mesh');
   parent.updateMatrixWorld(true);
   const root = new THREE.Group(); root.name = 'FirstPersonHands';
-  root.userData.heavyFitVersion = 1;
+  root.userData.heavyFitVersion = 2;
   const contacts: { side: Side; digit: string; point: number[]; centre: number[] }[] = [];
   root.userData.heavyContacts = contacts;
   // Palette materials are shared library singletons. This rig owns geometry only.
@@ -99,9 +98,16 @@ export function createReferenceHeavyHands(
       const fingerGeometry = mergeGeometries(fingers)!;
       mesh(hand, `${hand.name}/FourFingers`, fingerGeometry, rubber);
       for (const geo of fingers) { pending.delete(geo); geo.dispose(); }
+      // Support thumb opposes the fingers on the far side of the real bar,
+      // but splays beyond the index/palm silhouette instead of hiding inside it.
       const thumbPoints = [0, -40, -80, -125].map((a, j) => surface(a,
-        .033 - j * .006, .009, j === 2 ? 'Thumb' : undefined));
-      mesh(hand, `${hand.name}/OpposedThumb`, digit(thumbPoints, .009), rubber);
+        trigger ? .033 - j * .006 : [.033, .055, .057, .048][j], .009, j === 2 ? 'Thumb' : undefined));
+      mesh(hand, `${hand.name}/OpposedThumb`, digit(thumbPoints, .009), trigger ? rubber : canvas);
+      if (!trigger) {
+        const tip = new THREE.SphereGeometry(.0092, 8, 4);
+        tip.translate(...thumbPoints[3].toArray());
+        mesh(hand, 'SupportHand/ThumbGripPad', tip, rubber);
+      }
       const wrist = palmCentre.clone().add(new THREE.Vector3(trigger ? .025 : -.057, trigger ? -.048 : -.010, .058));
       const elbow = centre.clone().add(new THREE.Vector3(trigger ? .16 : -.45, -.30, .43));
       // A short glove bridge visibly joins palm to cuff, then the sleeve joins it.
@@ -127,13 +133,49 @@ export function createReferenceHeavyHands(
     throw error;
   }
   parent.add(root);
+  try {
   const supportHand = handGroups[1];
+  // Fit the closed glove to the exposed drum side. The old reload socket sits
+  // inside its housing; reaching it directly visibly buries the whole glove.
+  parent.updateMatrixWorld(true);
+  const drum = model.getObjectByName('minigun_FP_LOD0_Runtime_magazine_MAT_Pass65_minigun_Gunmetal');
+  if (!(drum instanceof THREE.Mesh)) throw new Error('Minigun: missing reload drum');
+  const drumBounds = new THREE.Box3().setFromObject(drum);
+  const drumCentre = parent.worldToLocal(drumBounds.getCenter(new THREE.Vector3()));
+  const probe = new THREE.Vector3(drumCentre.x - .3, drumCentre.y + .06, drumCentre.z + .07);
+  ray.set(parent.localToWorld(probe), new THREE.Vector3(1, 0, 0).transformDirection(parent.matrixWorld));
+  const drumHit = ray.intersectObject(drum, false)[0];
+  if (!drumHit) throw new Error('Minigun: exposed drum contact absent');
+  const contact = parent.worldToLocal(drumHit.point.clone());
+  const palm = new THREE.Vector3(...supportHand.userData.heavyPalm);
+  let lowestGloveY = Infinity;
+  for (const node of supportHand.children) {
+    if (!(node instanceof THREE.Mesh)) continue;
+    const positions = node.geometry.attributes.position;
+    for (let i = 0; i < positions.count; i++) lowestGloveY = Math.min(lowestGloveY, positions.getY(i));
+  }
+  const seated = new THREE.Vector3(contact.x - (palm.y - lowestGloveY) - .001, contact.y, contact.z);
+  const clear = new THREE.Vector3(seated.x - .045, palm.y + .12, palm.z + .045);
+  root.userData.heavyReloadContact = { point: contact.toArray(), palm: seated.toArray(), clear: clear.toArray() };
   const resetReload = (): void => { supportHand.position.set(0, 0, 0); supportHand.rotation.set(0, 0, 0); };
   const updateReload = (progress: number): void => {
     if (!Number.isFinite(progress) || progress <= 0 || progress >= 1) { resetReload(); return; }
     const reach = Math.sin(progress * Math.PI);
-    supportHand.position.set(reloadTarget[0] * reach, reloadTarget[1] * reach, reloadTarget[2] * reach);
-    supportHand.rotation.z = -.075 * reach;
+    const leg = reach < .6 ? reach / .6 : (reach - .6) / .4;
+    const t = leg * leg * (3 - 2 * leg);
+    const from = reach < .6 ? palm : clear, to = reach < .6 ? clear : seated;
+    const angle = Math.PI / 2 * Math.min(1, reach / .6);
+    const c = Math.cos(angle), s = Math.sin(angle);
+    // Rotate about the actual palm, never the unrelated weapon origin. Only
+    // existing transforms change per frame; the reverse arc reseats the bar.
+    supportHand.position.set(from.x + (to.x - from.x) * t - (c * palm.x - s * palm.y),
+      from.y + (to.y - from.y) * t - (s * palm.x + c * palm.y), from.z + (to.z - from.z) * t - palm.z);
+    supportHand.rotation.z = angle;
   };
   return { root, triggerHand: handGroups[0], supportHand, supportForearm: forearms[1], updateReload, resetReload };
+  } catch (error) {
+    root.traverse(n => { if (n instanceof THREE.Mesh) n.geometry.dispose(); });
+    root.removeFromParent();
+    throw error;
+  }
 }
