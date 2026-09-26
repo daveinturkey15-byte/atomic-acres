@@ -65,6 +65,8 @@ export interface MenuHandle {
   settings(): Settings;
   write(patch: Partial<Settings>): Settings;
   probe(): AppliedProbe;
+  loadout(): LoadoutStore;
+  streakLoadout(): StreakLoadout;
 }
 
 /** End-screen refresh cadence. The countdown reads fine at 4 Hz. */
@@ -119,6 +121,8 @@ export function initMenus(deps: MenuDeps): MenuHandle {
     write,
     rules: () => solo.setup(),
     onEditRules: () => { optionsReturn = 'multiplayer'; solo.setMode('rules'); panel = 'solo'; render(); },
+    onEditLoadout: () => { optionsReturn = 'multiplayer'; solo.setMode('loadout'); panel = 'solo'; render(); },
+    onBeforeAdmission: adoptSelection,
     onBack: () => { panel = 'main'; render(); },
   });
   const options = buildSettingsPanel({ read: () => settings, write });
@@ -159,6 +163,10 @@ export function initMenus(deps: MenuDeps): MenuHandle {
     if (!menuVisible(life)) return;
     if (show === lobby.root) lobby.refresh();
     if (show === options.root) options.refresh();
+    if (show === solo.root) {
+      solo.refresh();
+      solo.setLoadoutEditable(deps.match()?.lobby.active() !== true);
+    }
     try {
       (show.querySelector('button:not([disabled]), input, select') as HTMLElement | null)?.focus();
     } catch {
@@ -191,11 +199,17 @@ export function initMenus(deps: MenuDeps): MenuHandle {
     const m = deps.match();
     if (m === null) return;
     if (m.lobby.active()) m.leave();
+    adoptSelection();
     m.configure(solo.setup());
     m.begin();
     send({ type: 'match-start' });
     send({ type: 'match-ready' });
     lockPointer();
+  }
+
+  function adoptSelection(): void {
+    deps.onLoadoutChange?.(solo.loadout());
+    deps.onStreakLoadoutChange?.(solo.streakLoadout());
   }
 
   function leaveMatch(): void {
@@ -372,5 +386,7 @@ export function initMenus(deps: MenuDeps): MenuHandle {
     settings: () => settings,
     write,
     probe: () => probeApplied(targets, settings),
+    loadout: () => solo.loadout(),
+    streakLoadout: () => solo.streakLoadout(),
   };
 }

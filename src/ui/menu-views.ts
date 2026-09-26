@@ -123,7 +123,7 @@ export function buildCredits(): CreditsView {
   const root = view('Credits', 'aa-creditsview');
   const lines = [
     'Nuketown 2025 — a standalone browser FPS rebuilt on Three.js WebGPU / TSL.',
-    'Map, props, characters and effects are procedural: built in code, no downloaded art.',
+    'Procedural geometry, authored models and licensed textures. Asset sources are recorded with this build.',
     FAN_LINE,
     ...LICENCE_LINES,
   ];

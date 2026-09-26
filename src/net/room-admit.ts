@@ -10,7 +10,8 @@
  * `HostRoom` owns the table and calls these; nothing here sends a message.
  */
 import { SPAWN_A, SPAWN_B } from '../core/layout';
-import { PRIMARY_IDS } from '../game/loadout';
+import { PRIMARY_IDS, SIDEARM_IDS, GRENADE_IDS, sidearmForPrimary, type Loadout } from '../game/loadout';
+import { validateStreakLoadout, type StreakLoadout } from '../game/killstreaks/catalog';
 import { REJOIN_GRACE_MS } from '../game/rules';
 import { MAX_PLAYERS, createJoinCode, type HelloMsg, type InputMsg, type LobbyPhase, type RejectReason, type RosterEntry } from './protocol';
 import { cleanName, createPose, isPlayerStance, type PlayerStance, type Pose } from './room-core';
@@ -28,6 +29,19 @@ export function validPrimaryId(value: unknown): string | undefined {
   return typeof value === 'string' && PRIMARY_IDS.includes(value) ? value : undefined;
 }
 
+export function validLoadout(value: unknown): Loadout | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  const v = value as Partial<Loadout>;
+  const primary = validPrimaryId(v.primary);
+  if (!primary || !GRENADE_IDS.includes(v.grenade!)) return undefined;
+  const sidearm = typeof v.sidearm === 'string' && SIDEARM_IDS.includes(v.sidearm) ? v.sidearm : sidearmForPrimary(primary);
+  return Object.freeze({ primary, sidearm, grenade: v.grenade! });
+}
+
+export function validStreakLoadout(value: unknown): StreakLoadout | undefined {
+  return validateStreakLoadout(value).valid ? Object.freeze([...(value as StreakLoadout)]) : undefined;
+}
+
 export interface HostMember {
   entry: RosterEntry;
   peerId: PeerId | null; // null = the host's own seat
@@ -35,10 +49,14 @@ export interface HostMember {
   pose: Pose;
   /** Sanitized lobby declaration; immutable once the match leaves the lobby. */
   primaryId?: string;
+  loadout?: Loadout;
+  streakLoadout?: StreakLoadout;
   lastInput: {
     mx: number; mz: number; yaw: number; sprint: boolean; stance: PlayerStance;
   };
   lastSeq: number;
+  /** Streak intent replay fence. Survives silence and authenticated rejoin. */
+  lastStreakSeq: number;
   pingAt: number;
   lastHeardAt: number;
   disconnectedAt: number;
@@ -60,6 +78,7 @@ export function newMember(
     pose: createPose(slot.x, 0, slot.z, slot.yaw),
     lastInput: { mx: 0, mz: 0, yaw: slot.yaw, sprint: false, stance: 'stand' },
     lastSeq: -1,
+    lastStreakSeq: -1,
     pingAt: 0,
     lastHeardAt: now,
     disconnectedAt: 0,

@@ -27,6 +27,8 @@ export interface LobbyPanelDeps {
   /** The rules the host's match will use; shown as one line with an edit button. */
   rules(): SoloSetup;
   onEditRules(): void;
+  onEditLoadout?(): void;
+  onBeforeAdmission?(): void;
   onBack(): void;
 }
 
@@ -125,6 +127,8 @@ export function buildLobbyPanel(deps: LobbyPanelDeps): LobbyPanel {
   capRow.append(el('span', '', 'Room size'), cap);
   const hostRow = el('div', 'aa-row');
   hostRow.append(button('Host a room', 'aa-primary', host));
+  const kitRow = el('div', 'aa-row');
+  kitRow.append(button('Loadout & streaks', '', () => deps.onEditLoadout?.()));
   const joinRow = el('div', 'aa-row aa-join-row');
   joinRow.append(code, button('Join by code', '', join));
   const rejoinRow = el('div', 'aa-row aa-hidden');
@@ -132,7 +136,7 @@ export function buildLobbyPanel(deps: LobbyPanelDeps): LobbyPanel {
   rejoinRow.append(rejoinBtn);
   const backRow = el('div', 'aa-row');
   backRow.append(button('Back', '', deps.onBack));
-  idle.append(idRow, linkRow, signalRow, capRow, botsRow, hostRow, joinRow, rejoinRow, backRow);
+  idle.append(idRow, linkRow, signalRow, capRow, botsRow, kitRow, hostRow, joinRow, rejoinRow, backRow);
 
   // ---- in a room: code, roster, ready, start, leave ------------------------
   const codeBig = el('div', 'aa-code');
@@ -162,6 +166,7 @@ export function buildLobbyPanel(deps: LobbyPanelDeps): LobbyPanel {
     const s = deps.session();
     if (s === null) return;
     const st = deps.settings();
+    deps.onBeforeAdmission?.();
     s.host({ name: st.callsign, tier: st.linkTier, signalUrl: st.signalUrl, capacity: Number(cap.value), bots: Number(bots.value) });
     refresh();
   }
@@ -169,6 +174,7 @@ export function buildLobbyPanel(deps: LobbyPanelDeps): LobbyPanel {
     const s = deps.session();
     if (s === null) return;
     const st = deps.settings();
+    deps.onBeforeAdmission?.();
     s.join(code.value, { name: st.callsign, tier: st.linkTier, signalUrl: st.signalUrl });
     refresh();
   }

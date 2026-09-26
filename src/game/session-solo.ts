@@ -26,7 +26,7 @@
  * bug than not shipping the end condition at all.
  */
 
-import { MAX_PLAYERS, type MatchStateMsg, type PlayerSample, type ShotMsg, type StreakStateMsg } from '../net/protocol';
+import { MAX_PLAYERS, type MatchStateMsg, type PlayerSample, type ShotMsg, type StreakStateMsg, type RadarStateMsg, type StreakEffectsMsg } from '../net/protocol';
 import { TICK_HZ } from '../net/snapshot';
 import type { PlayerStance } from '../net/room-core';
 import type { ShotClaim } from '../weapons/controller';
@@ -35,7 +35,8 @@ import { GameClient } from './client';
 import type { ActorId, GameEvent, TeamId, WorldQuery } from './events';
 import { GameHost } from './host';
 import type { HostSnapshot, ShotAdmission } from './host-ports';
-import { STREAK_CATALOG } from './killstreaks/catalog';
+import { STREAK_CATALOG, type StreakLoadout } from './killstreaks/catalog';
+import type { Loadout } from './loadout';
 import { StreakRuntime } from './killstreaks/runtime';
 import { BOT_DIFFICULTY_PRESETS, TEAM_A, opposingTeam, rulesForSetup, type SoloSetup } from './rules';
 import type { SessionLog } from './session-log';
@@ -64,6 +65,8 @@ export interface SoloDriverOptions {
   readonly localTeam?: TeamId;
   /** Authored loadout primary, or a provider read at each deploy boundary. */
   readonly localPrimaryId?: string | (() => string | undefined);
+  readonly localLoadout?: () => Loadout;
+  readonly localStreakLoadout?: () => StreakLoadout;
   /** Shared across drivers so `counters()` stays session-cumulative. */
   readonly instrument: SessionLog;
   /**
@@ -84,6 +87,8 @@ interface RemoteSeat {
   alive: boolean;
   stance: PlayerStance;
   primaryId?: string;
+  loadout?: Loadout;
+  streakLoadout?: StreakLoadout;
   seq: number;
 }
 
@@ -96,7 +101,7 @@ interface Body { id: ActorId; x: number; y: number; z: number; yaw: number; spee
 export type EventSink = (events: readonly GameEvent[], now: number) => void;
 
 export interface SoloDriver extends MatchDriver {
-  addRemote(id: ActorId, name: string, team: TeamId, primaryId?: string): void;
+  addRemote(id: ActorId, name: string, team: TeamId, primaryId?: string, loadout?: Loadout, streakLoadout?: StreakLoadout): void;
   removeRemote(id: ActorId): void;
   /** The room integrated this seat to here. Called once per room tick. */
   remotePose(id: ActorId, x: number, y: number, z: number, yaw: number, stance?: PlayerStance, primaryId?: string): void;
@@ -111,6 +116,8 @@ export interface SoloDriver extends MatchDriver {
   setEventSink(sink: EventSink | null): void;
   matchState(): MatchStateMsg | null;
   streakStateFor(id: ActorId, now: number): StreakStateMsg | null;
+  radarStateFor(id: ActorId, now: number): RadarStateMsg | null;
+  effectsState(now: number): StreakEffectsMsg;
   stampSample(s: PlayerSample): PlayerSample;
   /** Bots as wire samples, for a room that must show them to guests. */
   botSamples(into: PlayerSample[]): void;
@@ -174,8 +181,8 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       crossbowCanary: opts.crossbowCanary === true,
     });
     const d = new BotDirector({ host: h, world, rand: h.rand, maxBots: MAX_PLAYERS - 1, difficulty });
-    h.addActor(localId, localTeam, { primaryId: primaryForLocal() });
-    for (const s of seats.values()) h.addActor(s.id, s.team, { primaryId: s.primaryId });
+    h.addActor(localId, localTeam, { primaryId: primaryForLocal(), loadout: opts.localLoadout?.(), streakLoadout: opts.localStreakLoadout?.() });
+    for (const s of seats.values()) h.addActor(s.id, s.team, { primaryId: s.primaryId, loadout: s.loadout, streakLoadout: s.streakLoadout });
     const humans = [{ team: localTeam }, ...[...seats.values()].map((s) => ({ team: s.team }))];
     for (let i = 0; i < botCount; i++) {
       const team = rules.mode !== 'ffa' && setup.teams === 'enemies'
@@ -212,6 +219,8 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
         }
       } else if (e.type === 'death') {
         d.onDeath(e.victimId, localTeam);
+        const remote = seats.get(e.victimId);
+        if (remote !== undefined) remote.alive = false;
       } else if (e.type === 'match-phase' && e.phase === 'ended' && endedAt === null) {
         endedAt = now;
       }
@@ -281,7 +290,20 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       at: now, match: after.match,
       streak: streaks === null ? null : streaks.streakStateFor(localId, now),
       players: samples(h, d),
+      radar: radarStateFor(localId, now)?.samples ?? [],
+      effects: streaks?.effectSnapshot() ?? [],
     });
+  };
+
+  const radarStateFor = (id: ActorId, now: number): RadarStateMsg | null => {
+    if (host === null || director === null || streaks === null) return null;
+    const players = samples(host, director);
+    const observer = players.find(p => p.id === id);
+    if (observer?.team === undefined) return null;
+    const targets = players.filter(p => p.team !== undefined).map(p => ({
+      id: p.id, team: p.team!, x: p.x, y: p.y, z: p.z, alive: p.alive === true, health: p.hp ?? 0,
+    }));
+    return { type: 'radar-state', at: now, actorId: id, samples: streaks.radarFor(observer.team, targets) };
   };
 
   const body = (id: ActorId): Body => {
@@ -382,12 +404,12 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
 
     // ---- remote seats (the room host binding) --------------------------------
 
-    addRemote(id, name, team, primaryId): void {
+    addRemote(id, name, team, primaryId, loadout, streakLoadout): void {
       let s = seats.get(id);
       if (s === undefined) {
         s = {
           id, name, team, x: 0, y: 0, z: 0, yaw: 0, speed: 0, alive: true,
-          stance: 'stand', primaryId, seq: 0,
+          stance: 'stand', primaryId, loadout, streakLoadout, seq: 0,
         };
         seats.set(id, s);
       }
@@ -397,7 +419,9 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       // that point a lobby declaration is immutable for the current life;
       // later input cannot swap the live kit.
       if (s.primaryId === undefined && primaryId !== undefined) s.primaryId = primaryId;
-      host?.addActor(id, team, { primaryId: s.primaryId });
+      if (s.loadout === undefined) s.loadout = loadout;
+      if (s.streakLoadout === undefined) s.streakLoadout = streakLoadout;
+      host?.addActor(id, team, { primaryId: s.primaryId, loadout: s.loadout, streakLoadout: s.streakLoadout });
       pushNames();
     },
 
@@ -447,6 +471,8 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     setEventSink(s): void { sink = s; },
     matchState: () => lastMatch,
     streakStateFor: (id, now) => (streaks === null ? null : streaks.streakStateFor(id, now)),
+    radarStateFor,
+    effectsState: (now) => ({ type: 'streak-effects', at: now, effects: streaks?.effectSnapshot() ?? [] }),
     stampSample: (s) => (host === null ? s : host.stampSample(s)),
     botSamples(into): void {
       if (director === null || host === null) return;

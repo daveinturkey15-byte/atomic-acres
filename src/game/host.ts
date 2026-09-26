@@ -1,46 +1,13 @@
 /**
- * Nuketown 2025 — THE ONLY WRITER.
+ * Authoritative match coordinator. Only this composed module writes health,
+ * score, equipment, shot admission and streak rewards. Position arrives from
+ * the movement authority through updatePose; the host retains rewind samples.
  *
- * Health, score, kills, deaths, streak charges, spawn choice, match phase and
- * the RNG seed are written here and nowhere else (IMPORT-PLAN §2). Everything
- * else in `src/game/` is a pure function this file calls, or a consumer of the
- * events it emits. A guest that writes a score is a bug, not an optimisation.
- *
- * DOM-free and scene-free. The world arrives through the injected `WorldQuery`
- * port and nothing else. `HostDeps` is not a callback bag (§5.3): every member
- * is a pure function or an event-answering state machine, and none of them
- * calls back into the host.
- *
- * It owns none of the arithmetic it orchestrates. The damage number is
- * `damage.ts`'s, the health transition `health.ts`'s, the spawn point
- * `spawns.ts`'s, the queue `respawn.ts`'s, the score `scoring.ts`'s and the
- * phase `match.ts`'s. This file decides WHEN, and writes the result down —
- * the whole difference from the old project's `applyDamage`, which did all of
- * that plus audio, rumble, camera trauma and pointer lock in one ~100-line
- * function (§5.2).
- *
- * POSITION is NOT owned here. `net/room.ts` integrates movement; this host is
- * TOLD (`updatePose`) and keeps a bounded history so a shot resolves against
- * where everyone was when the trigger went down. `snapshot()` therefore
- * carries no coordinates, and `stampSample()` adds `hp`/`team`/`alive` to a
- * sample `room.ts` authored — which is why those three fields are optional on
- * `PlayerSample`.
- *
- * FOUR FILES, ONE MODULE (the 400-line cap). `./host-ports` holds every shape
- * that crosses the boundary; `./host-shot` holds shot admission and hit
- * geometry, with the eight admission rules in its header; `./host-life` holds
- * damage, death and redeployment — composed, not inherited, and owning the
- * state those three write; `./host-streaks` holds the streak boundary the
- * integration lane widened against lane C's real runtime. The two that are
- * PUBLIC SHAPE — ports and the streak boundary — are re-exported here; import
- * them from THIS file.
- *
- * `HostLife` is deliberately NOT re-exported. It is the authoritative mutator:
- * it writes health, the score ledger and the respawn queue directly, with none
- * of the ordering `GameHost` puts around them. `GameHost` is its only
- * constructor and `life` is private, so publishing it bought nothing and cost
- * the one guarantee IMPORT-PLAN §2 asks for — that authoritative state has one
- * writer. The split is a file-size split, not an API. */
+ * HostLife owns damage/death/spawn; HostOrdnance owns grenades and equipment;
+ * HostFirearms owns cadence, pellets, rails, flames and flares; HostCrossbow
+ * owns explosive bolts. Every admitted outcome is published through GameEvent.
+ * Scene, DOM and local controller prediction never write authoritative damage.
+ */
 
 export * from './host-ports';
 export * from './host-streaks';
@@ -59,11 +26,14 @@ import { advanceFfa, advanceMatch, createMatch, endsAtForWire, type MatchState }
 import { leaderboard, teamTotals, withActor, withoutActor } from './scoring';
 import { regenStep } from './health';
 import { clearRespawns, dueRespawns } from './respawn';
-import { acceptShot, admitShot, pickTarget, type TargetCandidate } from './host-shot';
+import { acceptShot, admitShot } from './host-shot';
 import { HostOrdnance } from './host-ordnance';
+import { HostFirearms } from './host-firearms';
 import { CROSSBOW_ID, HostCrossbow } from './host-crossbow';
-import { isOrdnanceId } from './ordnance';
-import { PRIMARY_IDS } from './loadout';
+import { isOrdnanceId, TACTICAL_IDS } from './ordnance';
+import { PRIMARY_IDS, SIDEARM_IDS, sidearmForPrimary, type Loadout } from './loadout';
+import type { StreakLoadout } from './killstreaks/catalog';
+import { fieldRepairHealth } from './killstreaks/effects/rewards';
 import { normalizeStance, type PlayerStance } from '../net/room-core';
 
 /** The one shape of "yes". A refusal always carries its reason and label. */
@@ -86,6 +56,7 @@ export class GameHost {
   private readonly life: HostLife;
   /** Grenades, smoke, flash, the knife, drops. Composed like `life`; never published. */
   private readonly ordnance: HostOrdnance;
+  private readonly firearms: HostFirearms;
   /** Canary bolts in flight. Composed like `ordnance`; never published. */
   private readonly crossbow: HostCrossbow;
   /** Admit the gated crossbow id as live bolts. False by default (still gated). */
@@ -110,6 +81,7 @@ export class GameHost {
     });
     this.life.phase = this.match.phase;
     this.ordnance = new HostOrdnance(this.life, this.world, this.clock);
+    this.firearms = new HostFirearms(this.life, this.world, this.ordnance, this.clock);
     this.crossbowCanary = opts.crossbowCanary === true;
     this.crossbow = new HostCrossbow(this.life, this.world, this.clock);
   }
@@ -119,7 +91,7 @@ export class GameHost {
   /** Admit an actor and deploy it. Re-adding a live id only moves its team.
    *  `primaryId` is the weapon it carries, so a corpse that never fired still
    *  drops the right gun; absent, the host assumes the default kit's. */
-  addActor(id: ActorId, team: TeamId, opts: { bot?: boolean; primaryId?: string } = {}): void {
+  addActor(id: ActorId, team: TeamId, opts: { bot?: boolean; primaryId?: string; loadout?: Loadout; streakLoadout?: StreakLoadout } = {}): void {
     this.life.ledger = withActor(this.life.ledger, id, team);
     const existing = this.life.actors.get(id);
     if (existing) {
@@ -127,10 +99,14 @@ export class GameHost {
       return;
     }
     const a = this.life.newActor(id, team, opts.bot === true, this.clock);
-    a.primaryHint = opts.primaryId !== undefined && PRIMARY_IDS.includes(opts.primaryId)
-      ? opts.primaryId : null;
+    const primary = opts.loadout?.primary ?? opts.primaryId;
+    a.primaryHint = primary !== undefined && PRIMARY_IDS.includes(primary) ? primary : null;
+    a.sidearmHint = opts.loadout && SIDEARM_IDS.includes(opts.loadout.sidearm)
+      ? opts.loadout.sidearm : sidearmForPrimary(a.primaryHint ?? 'longhorn');
+    const tactical = opts.loadout?.grenade;
+    a.tacticalHint = tactical && TACTICAL_IDS.includes(tactical) ? tactical : TACTICAL_IDS[0];
     this.life.actors.set(id, a);
-    this.deps.streaks?.registerActor(id, team);
+    this.deps.streaks?.registerActor(id, team, opts.streakLoadout);
     this.life.deploy(a, this.clock, 'initial');
   }
 
@@ -141,6 +117,7 @@ export class GameHost {
     this.life.respawns = { queue: this.life.respawns.queue.filter((e) => e.actorId !== id) };
     this.ordnance.forget(id);
     this.crossbow.forget(id);
+    this.firearms.forget(id);
     this.life.push(this.deps.streaks?.recordDisconnect(id, this.clock));
   }
 
@@ -162,6 +139,15 @@ export class GameHost {
     const a = this.life.actors.get(id);
     if (a === undefined || primaryId === undefined || !PRIMARY_IDS.includes(primaryId)) return;
     a.primaryHint = primaryId;
+  }
+
+  /** Authored next-life kit; current held weapons and ammo remain untouched. */
+  setLoadout(id: ActorId, loadout: Loadout): void {
+    const a = this.life.actors.get(id);
+    if (!a || !PRIMARY_IDS.includes(loadout.primary) || !SIDEARM_IDS.includes(loadout.sidearm)) return;
+    a.primaryHint = loadout.primary;
+    a.sidearmHint = loadout.sidearm;
+    a.tacticalHint = TACTICAL_IDS.includes(loadout.grenade) ? loadout.grenade : TACTICAL_IDS[0];
   }
 
   /** Aim and buttons. Position is deliberately absent from `InputMsg`. */
@@ -191,7 +177,7 @@ export class GameHost {
    * so it re-pressed at 20 Hz and filled the feed (§5.4 in reverse: a refusal
    * nobody can hear is as bad as one nobody is given).
    */
-  submitStreakIntent(id: ActorId, msg: StreakIntentMsg): StreakDenialReason | null {
+  submitStreakIntent(id: ActorId, msg: Pick<StreakIntentMsg, 'type' | 'slot' | 'toggle'>): StreakDenialReason | null {
     const a = this.life.actors.get(id);
     if (!a) return null;
     const p = a.poses.at(this.clock);
@@ -218,16 +204,7 @@ export class GameHost {
 
   // ---- Shots ----------------------------------------
 
-  /**
-   * A claim. A bullet, or — when `weaponId` names ordnance (a grenade id,
-   * `knife`, `pickup`) — a throw, a swing or a pickup reach. Every kind passes
-   * the same eight rules and the same exactly-once window first; only the
-   * resolution differs, and the ordnance kinds are routed to `HostOrdnance`
-   * instead of the hit test. One claim shape on the wire, one admission.
-   * A canary `explosive-crossbow` claim is a fourth kind: admitted through the
-   * same rules (the roster gate reads as `malformed` with the canary off) and
-   * routed to `HostCrossbow` as a live ticked bolt instead of the hit test.
-   */
+  /** Every weapon shares life, sequence, clock and muzzle admission before its own delivery path. */
   submitShot(shooterId: ActorId, claim: ShotMsg, receivedAt: number = this.clock): ShotAdmission {
     const a = this.life.actors.get(shooterId) ?? null;
     const ordnance = isOrdnanceId(claim.weaponId);
@@ -239,7 +216,7 @@ export class GameHost {
     const reason = admitShot(claim, a === null ? null : {
       matchActive: this.match.phase === 'active', life: a.health.life, alive: a.health.alive,
       diedAt: a.health.diedAt,
-      knownWeapon: ordnance || (isCrossbow ? this.crossbowCanary : isPlayableWeapon(claim.weaponId)),
+      knownWeapon: ordnance || isPlayableWeapon(claim.weaponId) || (isCrossbow && this.crossbowCanary),
       window: a.window, pose: a.poses.at(claim.firedAt), receivedAt,
     });
     if (reason !== null) {
@@ -250,6 +227,12 @@ export class GameHost {
     const shooter = a as HostActor;
     acceptShot(shooter.window, claim.seq);
     if (ordnance) return this.ordnance.claim(shooter, claim, receivedAt);
+    const firearmRejection = this.firearms.admit(shooter, claim);
+    if (firearmRejection !== null) {
+      this.life.stats = { ...this.life.stats, shotsRejected: this.life.stats.shotsRejected + 1 };
+      this.life.emit({ type: 'shot-rejected', at: receivedAt, shooterId, seq: claim.seq, reason: firearmRejection });
+      return { accepted: false, reason: firearmRejection, label: SHOT_REJECT_LABELS[firearmRejection] };
+    }
     // This is the single authoritative presentation edge for firearm shots.
     // It is emitted after exactly-once admission and before hit resolution, so
     // misses are audible while rejected/duplicate claims never reach clients.
@@ -267,28 +250,10 @@ export class GameHost {
     }
     this.life.stats = { ...this.life.stats, shotsAdmitted: this.life.stats.shotsAdmitted + 1 };
     if (isCrossbow) {
-      // Canary ammo stays client-side like every bullet (the host keeps the
-      // estimate only): the kit ledger ignores the gated id, so canary
-      // corpses keep dropping their baseline primary.
       this.crossbow.launch(shooter, claim, receivedAt);
       return ADMITTED;
     }
-    this.ordnance.noteShot(shooter, claim.weaponId);
-
-    const candidates: TargetCandidate[] = [];
-    for (const v of this.life.actors.values()) {
-      if (v === shooter || !v.health.alive) continue;
-      const pose = v.poses.at(claim.firedAt);
-      if (pose !== null) candidates.push({ id: v.id, pose });
-    }
-    // Geometry last: the actor sweep is the cheap test that can refuse, and
-    // `lineOfSight` is the expensive one. A wall between them is a miss.
-    const hit = pickTarget(claim, candidates);
-    const victim = hit === null ? undefined : this.life.actors.get(hit.id);
-    if (hit !== null && victim !== undefined &&
-        this.world.lineOfSight({ x: claim.ox, y: claim.oy, z: claim.oz }, { x: hit.x, y: hit.y, z: hit.z })) {
-      this.life.hit(victim, shooter, hit.zone, hit.distance, claim.weaponId, 'bullet', receivedAt, claim.ox, claim.oz);
-    }
+    this.firearms.fire(shooter, claim, receivedAt);
     return ADMITTED;
   }
 
@@ -323,6 +288,7 @@ export class GameHost {
         this.life.push(this.deps.streaks?.endMatch(now));
         this.ordnance.endMatch(now);
         this.crossbow.endMatch(now);
+        this.firearms.endMatch();
       }
     }
 
@@ -338,13 +304,17 @@ export class GameHost {
     for (const a of this.life.actors.values()) a.health = regenStep(a.health, dtSeconds, now);
     if (this.deps.streaks) {
       this.life.absorb(this.deps.streaks.advance(now, this.world, this.life.streakTargets(now)));
+      for (const grant of this.deps.streaks.drainRewardGrants?.() ?? []) {
+        const actor = this.life.actors.get(grant.actorId);
+        if (grant.reward === 'field-repair' && actor?.health.alive && actor.team === grant.team) {
+          actor.health = { ...actor.health, hp: fieldRepairHealth(actor.health.hp) };
+        }
+      }
     }
-    // Last, and before the drain: ordnance reads this tick's deaths off
-    // `pending` (a corpse drops its gun) and its own detonations land on the
-    // same queue; bolts fly after, against CURRENT poses, and their impacts
-    // land on the same queue too.
-    this.ordnance.advance(now);
+    // Resolve firearm deaths before ordnance scans the queue for corpse drops.
     this.crossbow.advance(now);
+    this.firearms.advance(now);
+    this.ordnance.advance(now);
 
     const out = this.life.pending.slice();
     this.life.pending.length = 0;
@@ -371,6 +341,7 @@ export class GameHost {
         kills: e?.kills ?? 0, deaths: e?.deaths ?? 0, score: e?.score ?? 0, streak: e?.streak ?? 0,
         slots: this.deps.streaks?.snapshotFor(a.id) ?? [],
         lethal: kit.lethal, tactical: kit.tactical, primaryId: kit.primaryId, rounds: kit.rounds,
+        sidearmId: kit.sidearmId, sidearmRounds: kit.sidearmRounds, tacticalId: kit.tacticalId,
         armed: kit.armed, blindUntil: kit.blindUntil, stance: a.stance,
       });
     }
@@ -404,14 +375,17 @@ export class GameHost {
    * decomposition; the grenade counts are exact host kit values.
    */
   loadoutOf(id: ActorId): {
-    primaryId: string; rounds: number; lethal: number; tactical: number; armed: string | null;
+    primaryId: string; rounds: number; sidearmId: string; sidearmRounds: number;
+    lethal: number; tactical: number; tacticalId: string; armed: string | null;
   } | null {
     const actor = this.life.actors.get(id);
     if (actor === undefined) return null;
     const kit = this.ordnance.kitOf(actor);
     return {
       primaryId: kit.primaryId, rounds: kit.rounds,
+      sidearmId: kit.sidearmId, sidearmRounds: kit.sidearmRounds,
       lethal: kit.lethal, tactical: kit.tactical,
+      tacticalId: kit.tacticalId,
       armed: kit.armed,
     };
   }

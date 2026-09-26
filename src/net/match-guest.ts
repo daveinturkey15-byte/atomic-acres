@@ -66,6 +66,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   if (resumed !== null) {
     if (resumed.primaryId !== undefined) client.ordnance.self.primaryId = resumed.primaryId;
     if (resumed.rounds !== undefined) client.ordnance.self.rounds = resumed.rounds;
+    if (resumed.sidearmId !== undefined) client.ordnance.self.sidearmId = resumed.sidearmId;
+    if (resumed.sidearmRounds !== undefined) client.ordnance.self.sidearmRounds = resumed.sidearmRounds;
+    if (resumed.tacticalId !== undefined) client.ordnance.self.tacticalId = resumed.tacticalId;
     if (resumed.lethal !== undefined) client.ordnance.self.lethal = resumed.lethal;
     if (resumed.tactical !== undefined) client.ordnance.self.tactical = resumed.tactical;
     if (resumed.armed !== undefined) client.ordnance.self.armed = resumed.armed;
@@ -169,7 +172,14 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
         record(msg.e as GameEvent);
         break;
       case 'crossbow':
+      case 'effect':
         record(msg.e);
+        break;
+      case 'radar-state':
+        if (msg.actorId === selfId) client.applySnapshot({ at: performance.now(), radar: msg.samples });
+        break;
+      case 'streak-effects':
+        client.applySnapshot({ at: performance.now(), effects: msg.effects });
         break;
       default:
         break;

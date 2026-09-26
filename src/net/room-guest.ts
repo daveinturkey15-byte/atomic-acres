@@ -42,6 +42,8 @@ import {
 } from './room-core';
 import { SnapshotRing, TICK_DT, reconcileSelf } from './snapshot';
 import type { PeerId, Transport } from './transport';
+import type { Loadout } from '../game/loadout';
+import type { StreakLoadout } from '../game/killstreaks/catalog';
 
 export type GuestState = 'joining' | 'lobby' | 'starting' | 'playing' | 'rejected' | 'closed';
 
@@ -51,6 +53,8 @@ export interface GuestOptions {
   joinTimeoutMs?: number;
   /** The current menu primary, read when hello/ready is sent. */
   localPrimaryId?: string | (() => string | undefined);
+  localLoadout?: () => Loadout;
+  localStreakLoadout?: () => StreakLoadout;
   /** A seat this guest held before: resumed by the host inside the rejoin grace. */
   resume?: ResumeClaim | null;
 }
@@ -67,6 +71,7 @@ export interface SelfAck {
 /** Game-tag message tags a guest forwards to its match driver. */
 const GAME_TAGS: ReadonlySet<string> = new Set([
   'shot-reject', 'shot-fired', 'damage', 'kill', 'spawn', 'streak-state', 'match-state', 'ordnance', 'crossbow',
+  'radar-state', 'streak-effects', 'effect',
 ]);
 /** Directional receive allow-list. Guest-authored wire shapes are never host heartbeats. */
 const HOST_MESSAGE_TYPES: ReadonlySet<string> = new Set([
@@ -89,6 +94,7 @@ export class GuestClient {
   private rosterCache: RosterEntry[] = [];
   private startTick = -1;
   private seq = 0;
+  private streakSeq = 0;
   private lastAck = -1;
   /** Divergence of the last accepted ack: the true prediction error. */
   private ackError = 0;
@@ -113,6 +119,8 @@ export class GuestClient {
   /** Authoritative live-match resume block from welcome; null on a cold join. */
   private resumeEpoch: ResumeState | null = null;
   private readonly localPrimaryId: string | (() => string | undefined) | undefined;
+  private readonly localLoadout: (() => Loadout) | undefined;
+  private readonly localStreakLoadout: (() => StreakLoadout) | undefined;
   private disposed = false;
   /** Guest-local time of the last VALID host message while admitted; -1 until welcome. */
   private lastHostMsgAt = -1;
@@ -141,6 +149,8 @@ export class GuestClient {
     this.onChange = opts?.onChange ?? (() => undefined);
     this.resume = opts?.resume ?? null;
     this.localPrimaryId = opts?.localPrimaryId;
+    this.localLoadout = opts?.localLoadout;
+    this.localStreakLoadout = opts?.localStreakLoadout;
     roomOpened();
     this.diag.reset('guest');
     this.unsubscribe = transport.onMessage((from, msg) => this.handle(from, msg));
@@ -174,6 +184,7 @@ export class GuestClient {
     this.transport.send(this.hostPeer, {
       type: 'hello', code: this.joinCode, name: this.joinName, nonce: this.joinNonce,
       ...(primaryId === undefined ? {} : { primaryId }),
+      loadout: this.localLoadout?.(), streakLoadout: this.localStreakLoadout?.(),
       ...(this.resume === null ? {} : { resume: this.resume }),
     });
   }
@@ -225,6 +236,7 @@ export class GuestClient {
     const primaryId = typeof this.localPrimaryId === 'function' ? this.localPrimaryId() : this.localPrimaryId;
     this.transport.send(this.hostPeer, {
       type: 'ready', ready, ...(primaryId === undefined ? {} : { primaryId }),
+      loadout: this.localLoadout?.(), streakLoadout: this.localStreakLoadout?.(),
     });
   }
 
@@ -278,9 +290,9 @@ export class GuestClient {
   }
 
   /** A shot claim or a streak press, to the host. */
-  sendGame(msg: ShotMsg | StreakIntentMsg): void {
+  sendGame(msg: ShotMsg | Omit<StreakIntentMsg, 'seq'>): void {
     if (this.state !== 'playing' && this.state !== 'starting') return;
-    this.transport.send(this.hostPeer, msg);
+    this.transport.send(this.hostPeer, msg.type === 'streak-intent' ? { ...msg, seq: this.streakSeq++ } : msg);
   }
 
   /**
@@ -418,6 +430,7 @@ export class GuestClient {
         if (msg.resume !== undefined) {
           this.startTick = msg.resume.startTick;
           this.seq = msg.resume.lastSeq + 1;
+          this.streakSeq = (msg.resume.lastStreakSeq ?? -1) + 1;
           this.resumeEpoch = msg.resume;
           this.state = msg.resume.phase;
         } else {

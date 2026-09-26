@@ -1,0 +1,204 @@
+/** CPU verification of the real host: no DOM, graphics or browser claims. */
+import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const src = (path) => join(root, path).replaceAll('\\', '/');
+const folder = mkdtempSync(join(tmpdir(), 'aa-astra-combat-'));
+const entry = join(folder, 'entry.ts');
+const bundle = join(folder, 'bundle.mjs');
+writeFileSync(entry, `
+export { GameHost } from '${src('src/game/host.ts')}';
+export { createWorldQuery } from '${src('src/game/world-query.ts')}';
+export { WEAPONS } from '${src('src/weapons/catalog.ts')}';
+export { SIDEARM_IDS } from '${src('src/game/loadout.ts')}';
+export { isPlayableWeapon } from '${src('src/weapons/roster.ts')}';
+`);
+await build({ entryPoints: [entry], outfile: bundle, bundle: true, platform: 'node', format: 'esm', logLevel: 'silent' });
+const { GameHost, createWorldQuery, WEAPONS, SIDEARM_IDS, isPlayableWeapon } = await import(pathToFileURL(bundle).href);
+let cases = 0;
+const test = (name, fn) => { fn(); cases++; process.stdout.write(`PASS ${name}\n`); };
+const def = (id) => WEAPONS.find((w) => w.id === id);
+const wall = (z) => ({ min: { x: -3, y: 0, z }, max: { x: 3, y: 3, z: z + 0.2 } });
+
+function fixture(weapon, targets = [{ id: 'target', x: 0, z: 5, team: 1 }], boxes = [], extra = {}) {
+  const host = new GameHost({ world: createWorldQuery(boxes), now: 0,
+    rules: { mode: 'tdm', scoreLimit: null, durationMs: null, friendlyFire: false }, ...extra });
+  host.addActor('shooter', 0, { loadout: {
+    primary: SIDEARM_IDS.includes(weapon) ? 'longhorn' : weapon,
+    sidearm: SIDEARM_IDS.includes(weapon) ? weapon : 'duster', grenade: 'smoke',
+  } });
+  for (const t of targets) host.addActor(t.id, t.team ?? 1);
+  let now = 3000;
+  host.tick(now);
+  const pose = () => {
+    host.updatePose('shooter', 0, 0, 0, now);
+    for (const t of targets) host.updatePose(t.id, t.x, 0, t.z, now, t.stance ?? 'stand');
+  };
+  pose();
+  let seq = 0;
+  const shot = (changes = {}) => host.submitShot('shooter', { type: 'shot', life: host.lifeOf('shooter'),
+    seq: ++seq, weaponId: weapon, firedAt: now, ox: 0, oy: 1.2, oz: 0, dx: 0, dy: 0, dz: 1, ...changes }, now);
+  const advance = (ms = 20) => { now += ms; pose(); return host.tick(now); };
+  const drain = () => host.tick(now);
+  const actor = (id = 'target') => host.snapshot().actors.find((a) => a.id === id);
+  return { host, targets, shot, advance, drain, actor, now: () => now };
+}
+
+test('all 20 roster guns admit one carried shot and deal real damage', () => {
+  assert.equal(WEAPONS.length, 20);
+  for (const weapon of WEAPONS) {
+    assert.ok(isPlayableWeapon(weapon.id), `${weapon.id} still gated`);
+    const f = fixture(weapon.id);
+    assert.equal(f.shot().accepted, true, weapon.id);
+    let events = f.drain();
+    for (let i = 0; i < 60 && !events.some((e) => e.type === 'damage'); i++) events.push(...f.advance());
+    assert.ok(events.some((e) => e.type === 'damage' && e.weaponId === weapon.id), `${weapon.id} caused no damage`);
+    const kit = f.host.loadoutOf('shooter');
+    assert.equal(SIDEARM_IDS.includes(weapon.id) ? kit.sidearmRounds : kit.rounds,
+      weapon.magSize + weapon.startReserve - 1, `${weapon.id} did not consume exactly one round`);
+  }
+});
+
+test('shotgun pull resolves multiple pellets but spends one shell', () => {
+  const f = fixture('coachman');
+  f.shot();
+  const hits = f.drain().filter((e) => e.type === 'damage');
+  assert.ok(hits.length > 1, `only ${hits.length} pellets landed`);
+  assert.ok(hits.reduce((sum, e) => sum + e.amount, 0) > def('coachman').damage.base);
+  assert.equal(f.host.loadoutOf('shooter').rounds, def('coachman').magSize + def('coachman').startReserve - 1);
+});
+
+test('hitscan respects walls, prone height and friendly teams', () => {
+  const blocked = fixture('longhorn', undefined, [wall(2)]); blocked.shot();
+  assert.equal(blocked.drain().filter((e) => e.type === 'damage').length, 0);
+  const prone = fixture('longhorn', [{ id: 'target', x: 0, z: 5, stance: 'prone' }]); prone.shot();
+  assert.equal(prone.drain().filter((e) => e.type === 'damage').length, 0);
+  const friendly = fixture('longhorn', [{ id: 'target', x: 0, z: 5, team: 0 }]); friendly.shot();
+  assert.equal(friendly.actor().hp, 100);
+});
+
+test('rail pierces two merged surfaces with reduced damage, never a third', () => {
+  const f = fixture('railgun', [
+    { id: 'clear', x: 0, z: 2 }, { id: 'one', x: 0, z: 5 },
+    { id: 'two', x: 0, z: 8 }, { id: 'three', x: 0, z: 11 },
+  ], [wall(3), wall(3.05), wall(6), wall(9)]);
+  f.shot();
+  const hits = f.drain().filter((e) => e.type === 'damage');
+  assert.ok(hits.some((e) => e.victimId === 'clear'));
+  const first = hits.find((e) => e.victimId === 'one'); const second = hits.find((e) => e.victimId === 'two');
+  assert.ok(first && second && second.amount < first.amount);
+  assert.equal(f.actor('three').hp, 100);
+});
+
+test('flame cone hits off-axis coverage, excludes cover and burns after release', () => {
+  const f = fixture('flamethrower', [
+    { id: 'near', x: 0.3, z: 5 }, { id: 'far', x: 0, z: 8 }, { id: 'outside', x: 3, z: 5 },
+  ], [wall(6)]);
+  f.shot(); f.drain();
+  const initial = f.actor('near').hp;
+  assert.ok(initial < 100);
+  assert.equal(f.actor('far').hp, 100); assert.equal(f.actor('outside').hp, 100);
+  for (let i = 0; i < 20; i++) f.advance(20);
+  assert.ok(f.actor('near').hp < initial, 'no afterburn');
+});
+
+test('flare flies against current target poses and leaves an admitted fire', () => {
+  const f = fixture('flare-gun', [{ id: 'target', x: 4, z: 5 }]);
+  f.shot(); const launch = f.drain();
+  assert.ok(launch.some((e) => e.type === 'weapon-effect' && e.effect === 'flare-launch'));
+  assert.equal(f.actor().hp, 100, 'instant flare damage');
+  f.advance(60); f.targets[0].x = 0;
+  const events = [];
+  for (let i = 0; i < 30; i++) events.push(...f.advance());
+  assert.ok(events.some((e) => e.type === 'weapon-effect' && e.effect === 'flare-impact'));
+  assert.ok(events.some((e) => e.type === 'damage' && e.weaponId === 'flare-gun'));
+});
+
+test('crossbow flight is delayed and explosive splash respects cover', () => {
+  const f = fixture('explosive-crossbow', [{ id: 'target', x: 0, z: 5 }, { id: 'splash', x: 1, z: 5 }]);
+  f.shot(); f.drain(); assert.equal(f.actor().hp, 100);
+  const events = []; for (let i = 0; i < 15; i++) events.push(...f.advance());
+  assert.ok(events.some((e) => e.type === 'bolt-impact'));
+  assert.ok(events.some((e) => e.type === 'drop-spawned'), 'projectile death failed to drop the carried gun');
+  assert.ok(events.some((e) => e.type === 'damage' && e.victimId === 'splash' && e.cause === 'explosion'));
+  const behind = fixture('explosive-crossbow', undefined, [wall(2)]); behind.shot();
+  for (let i = 0; i < 20; i++) behind.advance();
+  assert.equal(behind.actor().hp, 100);
+});
+
+test('duplicate, cadence, uncarried gun and invalid direction are refused', () => {
+  const f = fixture('longhorn', []);
+  assert.equal(f.shot().accepted, true);
+  assert.equal(f.shot({ seq: 1 }).reason, 'duplicate');
+  assert.equal(f.shot().reason, 'shot-cooldown');
+  assert.equal(f.shot({ weaponId: 'railgun' }).reason, 'malformed');
+  assert.equal(f.shot({ dx: NaN }).reason, 'malformed');
+  assert.equal(f.host.loadoutOf('shooter').primaryId, 'longhorn');
+  assert.equal(f.host.loadoutOf('shooter').rounds, 149);
+});
+
+test('bounded network reorder preserves real cadence', () => {
+  const f = fixture('longhorn', []);
+  f.advance(200);
+  assert.equal(f.shot({ seq: 2, firedAt: f.now() }).accepted, true);
+  assert.equal(f.shot({ seq: 1, firedAt: f.now() - 100 }).accepted, true);
+  assert.equal(f.shot({ seq: 3, firedAt: f.now() - 40 }).reason, 'shot-cooldown');
+});
+
+test('primary and selected sidearm cannot exceed total issued ammunition', () => {
+  for (const weapon of ['explosive-crossbow', 'magnum']) {
+    const f = fixture(weapon, []); const w = def(weapon);
+    for (let i = 0; i < w.magSize + w.startReserve; i++) {
+      assert.equal(f.shot().accepted, true, `${weapon} round ${i}`); f.advance(w.interval * 1000 + 10);
+    }
+    assert.equal(f.shot().reason, 'empty-magazine');
+  }
+});
+
+test('selected tactical is enforced, next-life loadout cannot rewrite live kit', () => {
+  const f = fixture('longhorn', []);
+  assert.equal(f.shot({ weaponId: 'flash' }).accepted, false);
+  assert.equal(f.shot({ weaponId: 'smoke' }).accepted, true);
+  f.host.setLoadout('shooter', { primary: 'railgun', sidearm: 'magnum', grenade: 'semtex' });
+  assert.equal(f.host.loadoutOf('shooter').primaryId, 'longhorn');
+  assert.equal(f.host.loadoutOf('shooter').sidearmId, 'duster');
+  assert.equal(f.host.loadoutOf('shooter').tacticalId, 'smoke');
+});
+
+test('disconnect retires launched projectile and afterburn ownership', () => {
+  const f = fixture('flare-gun'); f.shot(); f.host.removeActor('shooter');
+  for (let i = 0; i < 50; i++) f.advance();
+  assert.equal(f.actor().hp, 100);
+});
+
+test('selected respawn delay applies to projectile deaths', () => {
+  const f = fixture('explosive-crossbow', undefined, [], { rules: {
+    mode: 'tdm', scoreLimit: null, durationMs: null, friendlyFire: false, respawnMs: 500,
+  } });
+  f.shot(); f.drain(); const events = [];
+  for (let i = 0; i < 15; i++) events.push(...f.advance());
+  const death = events.find((e) => e.type === 'death' && e.victimId === 'target');
+  assert.ok(death); assert.equal(death.respawnAt - death.at, 500);
+});
+
+test('field repair grants are applied once, heal 35, and obey the maximum', () => {
+  const pending = [];
+  const streaks = { registerActor() {}, recordElimination: () => [], recordDeath: () => [],
+    recordDisconnect: () => [], activate: () => [], advance: () => [], endMatch: () => [],
+    snapshotFor: () => [], drainRewardGrants: () => pending.splice(0) };
+  const f = fixture('longhorn', undefined, [], { deps: { streaks } });
+  f.shot(); f.advance(110); f.shot(); f.drain();
+  assert.equal(f.actor().hp, 32);
+  pending.push({ actorId: 'target', team: 1, reward: 'field-repair', at: f.now(), instanceId: 1 });
+  f.advance(); assert.equal(f.actor().hp, 67);
+  f.advance(); assert.equal(f.actor().hp, 67);
+  pending.push({ actorId: 'target', team: 1, reward: 'field-repair', at: f.now(), instanceId: 2 });
+  f.advance(); assert.equal(f.actor().hp, 100);
+});
+
+process.stdout.write(`VERIFIED ${cases} host combat scenarios; 20 real weapon paths. Rendering/network-device acceptance is separate.\n`);

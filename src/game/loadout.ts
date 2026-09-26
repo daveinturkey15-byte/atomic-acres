@@ -227,6 +227,8 @@ export const CUSTOM_SLOT_COUNT = 3;
 export interface CustomLoadout {
   readonly name: string;
   readonly primary: string;
+  /** Optional for existing v1 saves; absent retains the authored kit backup. */
+  readonly sidearm?: string;
   readonly grenade: GrenadeId;
 }
 
@@ -269,7 +271,8 @@ export function resolveLoadout(store: LoadoutStore): Loadout {
   if (store.selected.kind === 'custom') {
     const slot = store.custom[store.selected.slot];
     if (slot && isPlayableWeapon(slot.primary)) {
-      return { primary: slot.primary, sidearm: sidearmForPrimary(slot.primary), grenade: slot.grenade };
+      return { primary: slot.primary, sidearm: slot.sidearm && SIDEARM_IDS.includes(slot.sidearm) && slot.sidearm !== slot.primary
+        ? slot.sidearm : sidearmForPrimary(slot.primary), grenade: slot.grenade };
     }
   } else {
     const kit = fieldKitById(store.selected.id);
@@ -324,7 +327,8 @@ function sanitizeCustom(value: unknown): CustomLoadout | null {
     ? (v.grenade as GrenadeId)
     : GRENADE_IDS[0];
   const name = typeof v.name === 'string' && v.name.length > 0 ? v.name.slice(0, 24) : 'CUSTOM';
-  return { name, primary: v.primary, grenade };
+  const sidearm = typeof v.sidearm === 'string' && SIDEARM_IDS.includes(v.sidearm) && v.sidearm !== v.primary ? v.sidearm : undefined;
+  return { name, primary: v.primary, ...(sidearm ? { sidearm } : {}), grenade };
 }
 
 function sanitizeSelection(value: unknown, custom: readonly (CustomLoadout | null)[]): LoadoutSelection {

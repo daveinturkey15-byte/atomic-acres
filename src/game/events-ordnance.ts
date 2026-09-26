@@ -305,6 +305,9 @@ export interface PickupEvent {
 
 /** An actor's ordnance ledger, whenever it moves. The HUD renders this level. */
 export interface OrdnanceInventoryEvent {
+  readonly tacticalId?: string;
+  readonly sidearmId?: string;
+  readonly sidearmRounds?: number;
   readonly type: 'ordnance-inventory';
   readonly at: number;
   readonly actorId: ActorId;

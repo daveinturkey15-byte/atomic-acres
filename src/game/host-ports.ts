@@ -100,6 +100,9 @@ export interface ActorSnapshot {
   /** The host's ESTIMATE of the primary and its rounds (`host-kit.ts` says why). */
   readonly primaryId: string;
   readonly rounds: number;
+  readonly sidearmId: string;
+  readonly sidearmRounds: number;
+  readonly tacticalId: string;
   /** Grenade in hand with the pin out, or null. */
   readonly armed: string | null;
   /** Host time the flash blindness ends; 0 when not blinded. */

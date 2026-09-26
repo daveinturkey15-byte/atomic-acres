@@ -155,6 +155,21 @@ export interface ShotFiredEvent {
   readonly z: number;
 }
 
+/** Host-owned special-weapon presentation; damage remains a separate admitted event. */
+export interface WeaponEffectEvent {
+  readonly type: 'weapon-effect';
+  readonly effect: 'flame' | 'flare-launch' | 'flare-impact' | 'crossbow-blast' | 'rail';
+  readonly at: number;
+  readonly actorId: ActorId;
+  readonly team: TeamId;
+  readonly id: number;
+  readonly weaponId: string;
+  readonly x: number; readonly y: number; readonly z: number;
+  readonly dx: number; readonly dy: number; readonly dz: number;
+  readonly radius: number;
+  readonly durationMs: number;
+}
+
 /** A streak charge banked. `charges` is the total held for that streak after. */
 export interface StreakEarnedEvent {
   readonly type: 'streak-earned';
@@ -239,6 +254,7 @@ export type GameEvent =
   | SpawnEvent
   | ShotRejectedEvent
   | ShotFiredEvent
+  | WeaponEffectEvent
   | StreakEarnedEvent
   | StreakActivatedEvent
   | StreakDeniedEvent
@@ -263,6 +279,7 @@ export const GAME_EVENT_TYPES = [
   'spawn',
   'shot-rejected',
   'shot-fired',
+  'weapon-effect',
   'streak-earned',
   'streak-activated',
   'streak-denied',

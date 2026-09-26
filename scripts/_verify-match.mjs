@@ -17,6 +17,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import net from 'node:net';
 import { usePreview } from './lib/preview.mjs';
+import { startSolo } from './lib/start-solo.mjs';
 import { spawnGuarded, killTree } from './lib/proc-guard.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -78,7 +79,7 @@ try {
   const hasGame = await page.evaluate(() => typeof window.__NTGAME === 'object' && window.__NTGAME !== null);
   if (!hasGame) throw new Error('window.__NTGAME missing - the QA hook is not wired');
 
-  await page.evaluate(() => { const o = document.getElementById('start'); if (o) o.click(); });
+  await startSolo(page);
 
   const rows = [];
   const t0 = Date.now();

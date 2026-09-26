@@ -31,6 +31,8 @@ import { createHostDriver } from '../net/match-host';
 import { createGuestDriver } from '../net/match-guest';
 import { MAX_PLAYERS } from '../net/protocol';
 import type { ActorId } from './events';
+import type { Loadout } from './loadout';
+import type { StreakLoadout } from './killstreaks/catalog';
 import { DEFAULT_SOLO_SETUP, TEAM_A, sanitizeSoloSetup, type SoloSetup } from './rules';
 import { createSessionLog } from './session-log';
 import { createSoloDriver, REMATCH_MS } from './session-solo';
@@ -57,6 +59,8 @@ export interface LocalMatchOptions {
   readonly placeLocal?: (x: number, y: number, z: number, yaw: number) => void;
   /** Current menu primary, or a provider read at match/deploy boundaries. */
   readonly localPrimaryId?: string | (() => string | undefined);
+  readonly localLoadout?: () => Loadout;
+  readonly localStreakLoadout?: () => StreakLoadout;
   /**
    * Crossbow canary (`?crossbow=canary`): admit the gated id as live bolts.
    * Default false. Same source the controller reads for its weapon list.
@@ -133,6 +137,7 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
     typeof opts.localPrimaryId === 'function' ? opts.localPrimaryId() : opts.localPrimaryId;
   const lobby = new LobbySession({
     now: () => performance.now(), canStand: canOccupy, localPrimaryId: primaryForLocal,
+    localLoadout: opts.localLoadout, localStreakLoadout: opts.localStreakLoadout,
   });
   let setup: SoloSetup = opts.bots === undefined
     ? DEFAULT_SOLO_SETUP
@@ -154,6 +159,7 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
     swap(createSoloDriver({
       world, ui, setup, seed: opts.seed, placeLocal: opts.placeLocal,
       localId: LOCAL_ACTOR_ID, localName: 'YOU', localPrimaryId: primaryForLocal, instrument,
+      localLoadout: opts.localLoadout, localStreakLoadout: opts.localStreakLoadout,
       crossbowCanary: opts.crossbowCanary === true,
     }), 'solo');
   };
@@ -173,6 +179,7 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
         setup: lobby.hostBots() === 0 ? { ...roomSetup, bots: 0 } : roomSetup,
         localId: room.hostId, localName: room.hostName(), localTeam: TEAM_A,
         localPrimaryId: primaryForLocal,
+        localLoadout: opts.localLoadout, localStreakLoadout: opts.localStreakLoadout,
         crossbowCanary: opts.crossbowCanary === true,
       });
       swap(createHostDriver(room, solo, { world }), 'host');

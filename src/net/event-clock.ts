@@ -111,6 +111,12 @@ export function localizeGameMessage(message: GameNetMessage, offset: number): Ga
       return { ...message, e: localizeEvent(message.e, offset) };
     case 'crossbow':
       return { ...message, e: localizeEvent(message.e, offset) };
+    case 'effect':
+      return { ...message, e: localizeEvent(message.e, offset) };
+    case 'radar-state':
+      return { ...message, at: hostTimeToGuest(message.at, offset), samples: message.samples.map(s => ({ ...s, expiresAt: hostTimeToGuest(s.expiresAt, offset) })) };
+    case 'streak-effects':
+      return { ...message, at: hostTimeToGuest(message.at, offset) };
     case 'match-state':
       return localizeMatchState(message, offset);
     case 'streak-state':

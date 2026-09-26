@@ -35,7 +35,7 @@
 
 import {
   CUSTOM_SLOT_COUNT, FIELD_KITS, PRIMARY_IDS, SAVE_REFUSAL_LABELS, SIDEARM_IDS, fieldKitById, kitTraits, loadLoadout,
-  resolveLoadout, saveLoadout, type GrenadeId, type KitTraits, type LoadoutStore,
+  resolveLoadout, saveLoadout, sidearmForPrimary, type GrenadeId, type KitTraits, type LoadoutStore,
 } from '../game/loadout';
 import {
   GRENADE_BY_ID, LETHAL_IDS, LETHAL_PER_LIFE, SMOKE_LIFETIME_MS, TACTICAL_IDS, type GrenadeDef,
@@ -120,6 +120,10 @@ const TRAIT_LABELS: ReadonlyArray<readonly [label: string, key: keyof KitTraits]
 ];
 
 export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSection {
+  // Privacy/quota failures must not throw away a choice in the current match.
+  // Successful persistence still reads the shared store, including other tabs.
+  let unsaved: LoadoutStore | null = null;
+  const read = (): LoadoutStore => unsaved ?? loadLoadout();
   const root = document.createElement('div');
   root.className = 'aa-loadout';
 
@@ -277,6 +281,35 @@ export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSecti
   primStats.className = 'aa-note aa-prim-stats';
   root.append(primStats);
 
+  const sidearmLabel = document.createElement('div');
+  sidearmLabel.className = 'aa-loadsub';
+  sidearmLabel.textContent = 'Sidearm · key 2';
+  const sidearms = document.createElement('div');
+  sidearms.className = 'aa-prims aa-sidearms';
+  sidearms.setAttribute('role', 'group');
+  sidearms.setAttribute('aria-label', 'Sidearm');
+  const sidearmButtons = new Map<string, HTMLButtonElement>();
+  for (const id of SIDEARM_IDS) {
+    const def = weaponById(id);
+    if (!def) continue;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'aa-sidearm';
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-label', def.name);
+    const name = document.createElement('span');
+    name.className = 'aa-prim-name';
+    name.textContent = def.name;
+    const stats = document.createElement('span');
+    stats.className = 'aa-prim-line';
+    stats.textContent = weaponLine(id) ?? id;
+    btn.append(weaponGlyph(def), name, stats);
+    btn.addEventListener('click', (e) => { stop(e); selectSidearm(id); });
+    sidearmButtons.set(id, btn);
+    sidearms.append(btn);
+  }
+  root.append(sidearmLabel, sidearms);
+
   // --- Tactical grenade choice --------------------------------------------
   const tacLabel = document.createElement('div');
   tacLabel.className = 'aa-loadsub';
@@ -329,19 +362,20 @@ export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSecti
   // --- Store writes --------------------------------------------------------
   function apply(next: LoadoutStore): void {
     const result = saveLoadout(next);
+    unsaved = result.saved ? null : next;
     note.textContent = result.saved || !result.refusal ? '' : SAVE_REFUSAL_LABELS[result.refusal];
     refresh();
     deps.onChange?.(next);
   }
 
   function selectKit(id: string): void {
-    const store = loadLoadout();
+    const store = read();
     if (store.selected.kind === 'kit' && store.selected.id === id) return;
     apply({ ...store, selected: { kind: 'kit', id: fieldKitById(id).id } });
   }
 
   function selectTactical(g: GrenadeId): void {
-    const store = loadLoadout();
+    const store = read();
     const sel = store.selected;
     if (sel.kind === 'kit') {
       const kit = fieldKitById(sel.id);
@@ -378,7 +412,7 @@ export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSecti
       note.textContent = 'That weapon is not selectable yet.';
       return;
     }
-    const store = loadLoadout();
+    const store = read();
     const keep = resolveLoadout(store).grenade; // the grenade the next life already carries
     const sel = store.selected;
     if (sel.kind === 'kit') {
@@ -413,14 +447,36 @@ export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSecti
   }
 
   function selectSaved(slot: number): void {
-    const store = loadLoadout();
+    const store = read();
     if (!store.custom[slot]) return;
     if (store.selected.kind === 'custom' && store.selected.slot === slot) return;
     apply({ ...store, selected: { kind: 'custom', slot } });
   }
 
+  function selectSidearm(id: string): void {
+    if (!SIDEARM_IDS.includes(id)) return;
+    const store = read();
+    const current = resolveLoadout(store);
+    if (current.sidearm === id || current.primary === id) return;
+    const custom = store.custom.slice();
+    let slot: number;
+    if (store.selected.kind === 'custom') slot = store.selected.slot;
+    else {
+      const matching = custom.findIndex((entry) => entry !== null && entry.primary === current.primary
+        && entry.grenade === current.grenade && (entry.sidearm ?? sidearmForPrimary(entry.primary)) === id);
+      slot = matching >= 0 ? matching : custom.findIndex((entry) => entry === null);
+      if (slot < 0) {
+        note.textContent = 'All custom classes are full. Select a saved class to edit, or clear a slot first.';
+        return;
+      }
+    }
+    custom[slot] = { name: custom[slot]?.name ?? `${weaponById(current.primary)?.name ?? current.primary} · ${id}`.slice(0, 24),
+      primary: current.primary, grenade: current.grenade, sidearm: id };
+    apply({ ...store, custom, selected: { kind: 'custom', slot } });
+  }
+
   function clearSaved(slot: number): void {
-    const store = loadLoadout();
+    const store = read();
     if (!store.custom[slot]) return;
     const custom = store.custom.slice();
     custom[slot] = null;
@@ -432,12 +488,12 @@ export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSecti
 
   // --- Readout -------------------------------------------------------------
   function refresh(): void {
-    const store = loadLoadout();
+    const store = read();
     const resolved = resolveLoadout(store);
     const activeTac = effectiveTactical(store);
 
     for (const [kitId, card] of kitCards) {
-      const active = resolved.primary === fieldKitById(kitId).primary;
+      const active = store.selected.kind === 'kit' && store.selected.id === kitId;
       card.classList.toggle('aa-selected', active);
       card.setAttribute('aria-pressed', active ? 'true' : 'false');
     }
@@ -448,6 +504,11 @@ export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSecti
     }
     for (const [id, btn] of primButtons) {
       const active = id === resolved.primary;
+      btn.classList.toggle('aa-selected', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    }
+    for (const [id, btn] of sidearmButtons) {
+      const active = id === resolved.sidearm;
       btn.classList.toggle('aa-selected', active);
       btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     }
@@ -492,5 +553,5 @@ export function buildLoadoutSection(deps: LoadoutSectionDeps = {}): LoadoutSecti
   }
 
   refresh();
-  return { root, refresh, read: loadLoadout };
+  return { root, refresh, read };
 }

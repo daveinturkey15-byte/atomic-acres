@@ -21,6 +21,8 @@
  * the failure this boundary exists to stop.
  */
 
+import { isPresentationMessage, type PresentationMessage } from './protocol-effects';
+export * from './protocol-effects';
 import {
   DAMAGE_CAUSES,
   HIT_ZONES,
@@ -95,7 +97,7 @@ export interface KillMsg { type: 'kill'; kill: KillEvent | null; death: DeathEve
 export interface SpawnMsg { type: 'spawn'; e: SpawnEvent }
 
 /** Guest -> host: a streak slot press. `toggle` is the gate's control-toggle exemption. */
-export interface StreakIntentMsg { type: 'streak-intent'; slot: number; toggle: boolean }
+export interface StreakIntentMsg { type: 'streak-intent'; slot: number; toggle: boolean; seq: number }
 
 /** One slot of the host streak ledger, projected onto the wire. */
 export interface StreakSlotState { streakId: string; slot: number; charges: number }
@@ -177,9 +179,11 @@ export const GAME_MESSAGE_TYPES = [
   'match-state',
   'ordnance',
   'crossbow',
+  'radar-state', 'streak-effects', 'effect',
 ] as const;
 export type GameMessageType = (typeof GAME_MESSAGE_TYPES)[number];
 export type GameNetMessage =
+  | PresentationMessage
   | ShotMsg
   | ShotRejectMsg
   | ShotFiredMsg
@@ -402,6 +406,8 @@ function isCrossbowEvent(v: unknown): boolean {
  */
 export function isGameMessage(m: Record<string, unknown>): boolean {
   switch (m['type']) {
+    case 'radar-state': case 'streak-effects': case 'effect':
+      return isPresentationMessage(m);
     case 'ordnance':
       return isOrdnanceEvent(m['e']);
     case 'crossbow':
@@ -442,7 +448,8 @@ export function isGameMessage(m: Record<string, unknown>): boolean {
     case 'spawn':
       return isSpawnEvent(m['e']);
     case 'streak-intent':
-      return Number.isSafeInteger(m['slot']) && typeof m['toggle'] === 'boolean';
+      return Number.isSafeInteger(m['slot']) && typeof m['toggle'] === 'boolean' &&
+        Number.isSafeInteger(m['seq']) && (m['seq'] as number) >= 0;
     case 'streak-state':
       return (
         isNum(m['at']) &&

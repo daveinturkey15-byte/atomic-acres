@@ -43,7 +43,8 @@ export interface SoloSetupPanelDeps {
 export interface SoloSetupPanel {
   readonly root: HTMLElement;
   setup(): SoloSetup;
-  setMode(mode: 'solo' | 'rules'): void;
+  setMode(mode: 'solo' | 'rules' | 'loadout'): void;
+  setLoadoutEditable(editable: boolean): void;
   refresh(): void;
   loadout(): LoadoutStore;
   streakLoadout(): StreakLoadout;
@@ -115,15 +116,21 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
   // area. Every control below keeps its behaviour; only the parent changes.
   const cols = document.createElement('div');
   cols.className = 'aa-solo-cols';
-  const loadoutCol = document.createElement('div');
+  const loadoutCol = document.createElement('fieldset');
   loadoutCol.className = 'aa-solo-loadout';
+  loadoutCol.style.border = '0';
+  loadoutCol.style.padding = '0';
+  loadoutCol.style.margin = '0';
+  const lockedNote = document.createElement('div');
+  lockedNote.className = 'aa-note aa-hidden';
+  lockedNote.textContent = 'Your kit is locked for this room. Leave the room to change your next deployment.';
   const loadout: LoadoutSection = buildLoadoutSection({ onChange: deps.onLoadoutChange });
   const streakLoadout: StreakLoadoutSection = buildStreakLoadoutSection({ onChange: deps.onStreakLoadoutChange });
   loadoutCol.append(loadout.root, streakLoadout.root);
   const setupCol = document.createElement('div');
   setupCol.className = 'aa-solo-setup';
   cols.append(loadoutCol, setupCol);
-  root.append(cols);
+  root.append(lockedNote, cols);
 
   const refreshers: Array<() => void> = [];
   const change = (patch: Partial<SoloSetup>): void => {
@@ -242,12 +249,18 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
     setup: () => setup,
     loadout: loadout.read,
     streakLoadout: streakLoadout.read,
-    setMode(mode): void {
-      botsRow.classList.toggle('aa-hidden', mode === 'rules');
-      deploy.classList.toggle('aa-hidden', mode === 'rules');
-      title.textContent = mode === 'rules' ? 'Match rules' : 'Solo vs bots';
-      back.textContent = mode === 'rules' ? 'Back to lobby' : 'Back';
+    setLoadoutEditable(editable): void {
+      loadoutCol.disabled = !editable;
+      lockedNote.classList.toggle('aa-hidden', editable);
     },
-    refresh,
+    setMode(mode): void {
+      botsRow.classList.toggle('aa-hidden', mode !== 'solo');
+      deploy.classList.toggle('aa-hidden', mode !== 'solo');
+      setupCol.classList.toggle('aa-hidden', mode === 'loadout');
+      cols.classList.toggle('aa-loadout-only', mode === 'loadout');
+      title.textContent = mode === 'loadout' ? 'Loadout & streaks' : mode === 'rules' ? 'Match rules' : 'Solo vs bots';
+      back.textContent = mode !== 'solo' ? 'Back to lobby' : 'Back';
+    },
+    refresh(): void { refresh(); loadout.refresh(); streakLoadout.refresh(); },
   };
 }

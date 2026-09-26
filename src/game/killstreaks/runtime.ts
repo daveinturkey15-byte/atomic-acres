@@ -141,6 +141,21 @@ function hash32(seed: number, ordinal: number, text: string): number {
 }
 
 export class StreakRuntime {
+  /** Only the bounded spatial presentation fields leave the authoritative runtime. */
+  effectSnapshot(): readonly import('./effect-view').StreakEffectView[] {
+    return [...this.live.values()].filter((i) => 'x' in i).map((i) => {
+      const s = i as Exclude<LiveInstance, ReconState | CounterReconState>;
+      return Object.freeze({
+        kind: s.kind, instanceId: s.instanceId, actorId: s.actorId, team: s.team,
+        streakId: s.streakId, x: s.x, y: s.y, z: s.z, remainingMs: s.remainingMs,
+        ...('yaw' in s ? { yaw: s.yaw } : {}), ...('aimYaw' in s ? { aimYaw: s.aimYaw } : {}),
+        ...('shots' in s ? { shots: s.shots } : {}), ...('pulses' in s ? { pulses: s.pulses } : {}),
+        ...('elapsedMs' in s ? { elapsedMs: s.elapsedMs } : {}), ...('fired' in s ? { fired: s.fired } : {}),
+        ...('captureProgressMs' in s ? { captureProgressMs: s.captureProgressMs } : {}),
+        ...('opened' in s ? { opened: s.opened } : {}),
+      });
+    });
+  }
   private readonly catalog: StreakCatalog<string>;
   private readonly seed: number;
   private readonly matchEpoch: number;

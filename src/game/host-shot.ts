@@ -39,10 +39,8 @@
  *     where they fired, so validating against the current pose would refuse
  *     honest shots and admit teleport-muzzle ones.
  *
- * `empty-magazine` is in the vocabulary and is NOT decided here: the host sees
- * no reload, so it cannot count rounds without a protocol message that does
- * not exist yet. Declared, unimplemented, and listed in the lane handoff
- * rather than quietly dropped.
+ * Firearm cadence and total carried ammunition are enforced by HostFirearms
+ * after these shared rules. Magazine split and reload timing remain local.
  */
 
 import type { HitZone, ShotRejectReason } from './events';
@@ -242,6 +240,7 @@ export function admitShot(c: ShotMsg, ctx: ShotAdmissionCtx | null): ShotRejectR
     typeof c.weaponId !== 'string' || c.weaponId.length === 0 ||
     !Number.isFinite(c.firedAt) ||
     !Number.isFinite(c.ox) || !Number.isFinite(c.oy) || !Number.isFinite(c.oz) ||
+    !Number.isFinite(c.dx) || !Number.isFinite(c.dy) || !Number.isFinite(c.dz) ||
     Math.abs(Math.hypot(c.dx, c.dy, c.dz) - 1) > 1e-3
   ) return 'malformed';
 

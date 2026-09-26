@@ -35,6 +35,7 @@
 import type { ActorId, DamageEvent, GameEvent, MatchPhaseName, TeamId, Vec3, WorldQuery } from './events';
 import type { StreakSlotState } from '../net/protocol';
 import type { StreakTarget } from './killstreaks/runtime';
+import type { StreakLoadout } from './killstreaks/catalog';
 
 /** Lane C's sentry target shape, re-exported under the host's own name. */
 export type StreakTargetView = StreakTarget;
@@ -69,7 +70,7 @@ export interface StreakPress {
  * never swallowed (§5.4).
  */
 export interface StreakRuntimePort {
-  registerActor(actorId: ActorId, team: TeamId): void;
+  registerActor(actorId: ActorId, team: TeamId, loadout?: StreakLoadout): void;
   /** Called only for a kill the scoreboard CREDITED — never for a team kill. */
   recordElimination(actorId: ActorId, streak: number, now: number): GameEvent[];
   recordDeath(actorId: ActorId, now: number): GameEvent[];
@@ -78,18 +79,15 @@ export interface StreakRuntimePort {
   advance(now: number, world: WorldQuery, targets: readonly StreakTargetView[]): GameEvent[];
   endMatch(now: number): GameEvent[];
   snapshotFor(actorId: ActorId): StreakSlotState[];
+  drainRewardGrants?(): readonly import('./killstreaks/effects/rewards').RewardGrant[];
 }
 
 /**
  * The exactly-once key, minted host-side.
  *
- * STATED PLAINLY, because it is weaker than it looks: `net/protocol.ts`'s
- * `StreakIntentMsg` carries only `{slot, toggle}`, so a duplicated WIRE
- * message becomes two distinct host-stamped claims and would activate twice.
- * What this key does protect is the host's own path — a press processed twice
- * inside one host, and a claim replayed across a life or a match. Closing the
- * wire hole needs a `seq` on `StreakIntentMsg`, which is Wave 0's frozen file
- * and not this lane's to change. Reported, not patched over.
+ * The room admits each monotonic wire intent once per seat, preserving that
+ * fence on rejoin. This key separately guards host claims across life/match
+ * epochs and local reprocessing.
  */
 export function streakClaimId(actorId: ActorId, life: number, seq: number): string {
   // `^[A-Za-z0-9_:-]{4,80}$` is lane C's admission pattern; an id with any

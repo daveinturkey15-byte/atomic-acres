@@ -27,6 +27,7 @@
 import { EYE_HEIGHT } from '../core/layout';
 import { WEAPONS, type WeaponDef } from '../weapons/catalog';
 import { isPlayableWeapon } from '../weapons/roster';
+import type { GrenadeId } from './loadout';
 import type {
   ActorId, DamageCause, DamageEvent, GameBus, GameEvent, HitZone, MatchPhaseName,
   SpawnReason, TeamId, Vec3, WorldQuery,
@@ -92,6 +93,8 @@ export interface HostActor {
   streakSeq: number;
   /** The primary the seat said it carries (`addActor`), for the ordnance kit. null = assume the default kit's. */
   primaryHint: string | null;
+  sidearmHint: string | null;
+  tacticalHint: GrenadeId | null;
 }
 
 /** Read-only context. Four values, none of them a function into the caller. */
@@ -120,7 +123,8 @@ export class HostLife {
   newActor(id: ActorId, team: TeamId, bot: boolean, now: number): HostActor {
     return {
       id, team, bot, health: createHealth(now), spawnIndex: -1, yaw: 0, ack: -1,
-      window: createShotWindow(), poses: new PoseTrack(), stance: 'stand', streakSeq: 0, primaryHint: null,
+      window: createShotWindow(), poses: new PoseTrack(), stance: 'stand', streakSeq: 0,
+      primaryHint: null, sidearmHint: null, tacticalHint: null,
     };
   }
 
@@ -248,6 +252,7 @@ export class HostLife {
     const sched = scheduleRespawn(this.respawns, {
       actorId: victim.id, team: this.ctx.rules.mode === 'ffa' ? null : victim.team,
       diedAt: now, life: victim.health.life, phase: this.phase,
+      delayMs: this.ctx.rules.respawnMs,
     });
     this.respawns = sched.state;
     const here = victim.poses.at(now);

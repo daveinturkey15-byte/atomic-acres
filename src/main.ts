@@ -18,6 +18,9 @@ import { STATIONS, type Station } from './core/stations';
 import { WeaponsController } from './weapons/controller';
 import { isCrossbowCanaryOptIn } from './weapons/crossbow-runtime';
 import { OrdnanceScene } from './weapons/ordnance-scene';
+import { createWeaponEffectsScene } from './weapons/weapon-effects-scene';
+import { createStreakEffectsScene } from './weapons/streak-effects-scene';
+import type { GameClient } from './game/client';
 import { initUI } from './ui/index';
 import { wireNetcode } from './net/wire';
 import { createCharacterSystem, type CharacterHandle } from './characters';
@@ -28,6 +31,7 @@ import { loadBakedClips } from './characters/kimodo-clips';
 import { createLocalMatch, type LocalMatch, type MatchUi } from './game/session';
 import { PAL } from './core/palette';
 import { loadLoadout, resolveLoadout } from './game/loadout';
+import { loadStreakLoadout } from './ui/streak-loadout-panel';
 import { WorldAudio } from './audio/world-audio';
 import { createStaticReflectionProbe, type StaticReflectionProbe } from './core/static-reflection-probe';
 import { createCombatFeedbackAdapter } from './ui/combat-feedback-adapter';
@@ -243,9 +247,10 @@ if (new URLSearchParams(location.search).get('operator-demo') === '1') for (cons
   characters.spawn(cx, cz, cyaw);
 }
 player.teleport(SPAWN_A.x, 0, SPAWN_A.z, SPAWN_A.yaw);
-const ammoDiv = document.createElement('div');
 // The trigger is a CLAIM, not a verdict: the host resolves damage (IMPORT-PLAN s2).
 let match: LocalMatch | null = null;
+let selectedLoadout = resolveLoadout(loadLoadout());
+let selectedStreakLoadout = loadStreakLoadout().selected;
 // Crossbow canary, bounded opt-in (`?crossbow=canary` only). Read once here so
 // the controller's weapon list and the session's host flag share one source;
 // absent or any other value keeps the gated id listed nowhere and admitted nowhere.
@@ -255,8 +260,10 @@ const weapons = new WeaponsController({
   scene: world.scene,
   mat,
   targets: worldTargets,
-  onHud: (line) => { ammoDiv.textContent = line; },
+  // The combat HUD reads the controller snapshot; no duplicate debug ammo line.
+  onHud: () => undefined,
   onShot: (claim) => match?.localShot(claim),
+  localLoadout: () => selectedLoadout,
   crossbowCanary,
 });
 // Share the already-baked sky for rough-metal reflections on held weapons.
@@ -275,12 +282,14 @@ hudHelp.textContent =
   'WASD move · SHIFT sprint · SPACE jump · ' +
   'H help · Esc pause · ' +
   'LMB fire · RMB aim · R reload · 1/2 or wheel weapons · ' +
-  'G frag (hold to cook) · Q tactical · V knife · hold E pick up · C / CTRL crouch · Z prone';
-ammoDiv.classList.add('hud-debug');
-hud.append(hudStats, hudMode, hudHelp, ammoDiv);
+  'G frag (hold to cook) · Q tactical · V knife · hold E pick up · C / CTRL crouch · Z prone · 3–6 streaks';
+hud.append(hudStats, hudMode, hudHelp);
 // ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
 // initUI owns everything inside #hud and #start, so the capture harness still
-const ui = initUI({ player, world, audio: {
+const ui = initUI({ player, world,
+  onLoadoutChange: (store) => { selectedLoadout = resolveLoadout(store); },
+  onStreakLoadoutChange: (loadout) => { selectedStreakLoadout = loadout; },
+  audio: {
   setVolumes(master, effects) {
     weapons.setMasterVolume(master);
     weapons.setEffectsVolume(effects);
@@ -302,6 +311,7 @@ void netcode;
 // offers, and it fires again on every rematch.
 const ordnance = new OrdnanceScene({
   scene: world.scene, mat, colliders, hud: gameHud, weapons,
+  localLoadout: () => selectedLoadout,
   volumetricSmoke: () => world.post.enabled,
 });
 // Third-person grenade-throw bodies. Same seam as every other ordnance
@@ -309,9 +319,16 @@ const ordnance = new OrdnanceScene({
 const throwBodies = new ThrowBodyPresentation();
 const worldAudio = new WorldAudio(worldTargets, mat, weapons, colliders,
   (a, b) => match?.los(a.x, a.y, a.z, b.x, b.y, b.z) ?? true);
+const weaponEffects = createWeaponEffectsScene(mat);
+const streakEffects = createStreakEffectsScene(mat);
+let presentedClient: GameClient | null = null;
+world.scene.add(weaponEffects.group, streakEffects.group);
 const matchUi: MatchUi = {
   bindClient: (c) => {
     combatFeedback.reset();
+    weaponEffects.reset();
+    streakEffects.reset();
+    presentedClient = c;
     // Client projection is the common solo/host/guest boundary. Rebinding also
     // releases the previous match's smoke list; no bus subscription can leak.
     world.atmosphere.smoke.bind(c ? () => c.ordnance.smokes : null);
@@ -321,21 +338,24 @@ const matchUi: MatchUi = {
     ui.bindClient(c);
   },
   setNames: (n) => ui.setNames(n),
-  onEvent: (e) => combatFeedback.onEvent(e),
-  resetPresentation: () => combatFeedback.reset(),
+  onEvent: (e) => { combatFeedback.onEvent(e); weaponEffects.onEvent(e); },
+  resetPresentation: () => { combatFeedback.reset(); weaponEffects.reset(); streakEffects.reset(); },
 };
 // ---- The match. Host + local player + bots, started by the same click that
 // dismisses the lobby overlay, so nothing runs before a player asks for it.
 match = createLocalMatch({
   colliders, ui: matchUi,
-  localPrimaryId: () => resolveLoadout(loadLoadout()).primary,
+  localLoadout: () => selectedLoadout,
+  localStreakLoadout: () => selectedStreakLoadout,
   placeLocal: (x, y, z, yaw) => {
     player.teleport(x, y, z, yaw);
     player.setStance('stand');
   },
   crossbowCanary,
 });
+ui.bindMatch(match);
 const botBodies = new Map<string, CharacterHandle>();
+const liveBodyIds = new Set<string>();
 
 const startOverlay = document.getElementById('start')!;
 // Decode the small authored bank on the first menu gesture, before the first
@@ -425,11 +445,15 @@ addEventListener('pagehide', () => {
   weapons.dispose();
   ordnance.dispose();
   combatFeedback.dispose();
+  weaponEffects.dispose();
+  streakEffects.dispose();
 });
 // The first click lands on the overlay (it covers the canvas), so dismiss and lock
 // here; later clicks hit the canvas and re-lock via Player. Esc releases (browser
 // default) and Player drops held keys so nothing spins or keeps walking.
 startOverlay.addEventListener('click', () => {
+  selectedLoadout = resolveLoadout(ui.menu.loadout());
+  selectedStreakLoadout = ui.menu.streakLoadout();
   startOverlay.style.display = 'none';
   match?.begin();
   // requestPointerLock returns a PROMISE in current Chrome, so a refusal is an
@@ -462,7 +486,7 @@ addEventListener('mouseup', (e) => {
 });
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 addEventListener('keydown', (e) => {
-  if (e.repeat) return;
+  if (e.repeat || ui.menu.state().surface !== 'hidden') return;
   if (e.code === 'KeyR' || e.code === 'Digit1' || e.code === 'Digit2') {
     try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
   }
@@ -480,7 +504,7 @@ addEventListener('keyup', (e) => {
   try { weapons.keyUp(e.code); } catch { /* headless-safe */ }
 });
 canvas.addEventListener('wheel', (e) => {
-  if (player.getMode() !== 'walk') return;
+  if (player.getMode() !== 'walk' || ui.menu.state().surface !== 'hidden') return;
   try { weapons.wheel(e.deltaY); } catch { /* headless-safe */ }
 }, { passive: true });
 
@@ -548,7 +572,11 @@ function frame(): void {
     const st = player.state;
     match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch, player.getStance());
     ordnance.update(dt, now, st.pos.x, st.pos.y, st.pos.z);
+    weaponEffects.update(now);
+    if (presentedClient) streakEffects.update(now, presentedClient.streakEffects, presentedClient.streakEffectsAt);
+    liveBodyIds.clear();
     for (const b of match.bots()) {
+      liveBodyIds.add(b.id);
       let h = botBodies.get(b.id);
       if (!h) {
         h = characters.spawn(b.x, b.z, b.yaw, 1, undefined, b.weaponId || undefined);
@@ -567,6 +595,13 @@ function frame(): void {
       h.input.prone = b.stance === 'prone';
       if (b.alive && h.rig.isDead) h.rig.revive();
       else if (!b.alive && !h.rig.isDead) h.rig.playDeath();
+    }
+    // A departed peer or smaller next match must not leave an invulnerable
+    // figure behind, and repeated room joins must not retain old skeletons.
+    for (const [id, handle] of botBodies) {
+      if (liveBodyIds.has(id)) continue;
+      characters.despawn(handle);
+      botBodies.delete(id);
     }
     characters.update(dt, world.camera.position);
     throwBodies.update((id) => botBodies.get(id)?.rig ?? null);

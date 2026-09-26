@@ -25,7 +25,7 @@ import type { AABB } from '../core/kit';
 import type { MaterialLibrary } from '../core/materials';
 import type { GameClient } from '../game/client';
 import type { WorldQuery } from '../game/events';
-import { loadLoadout, resolveLoadout } from '../game/loadout';
+import { loadLoadout, resolveLoadout, type Loadout } from '../game/loadout';
 import { TACTICAL_IDS } from '../game/ordnance';
 import type { OrdnanceView } from '../game/ordnance-view';
 import { DROP_SWAP_RANGE_M } from '../game/pickups';
@@ -48,6 +48,7 @@ export interface OrdnanceSceneOptions {
   readonly colliders: readonly AABB[];
   readonly hud: HudApi;
   readonly weapons: WeaponsController;
+  readonly localLoadout?: () => Loadout;
   /** True only while the atmosphere post pass can render gameplay smoke. */
   readonly volumetricSmoke?: () => boolean;
 }
@@ -68,6 +69,7 @@ export class OrdnanceScene {
   private lastSpawnSeq = 0;
   private readonly onBlast: (x: number, y: number, z: number) => void;
   private readonly volumetricSmoke: () => boolean;
+  private readonly localLoadout: () => Loadout;
 
   constructor(opts: OrdnanceSceneOptions) {
     this.world = createWorldQuery(opts.colliders);
@@ -82,12 +84,13 @@ export class OrdnanceScene {
     this.hud = opts.hud;
     this.weapons = opts.weapons;
     this.volumetricSmoke = opts.volumetricSmoke ?? (() => false);
+    this.localLoadout = opts.localLoadout ?? (() => resolveLoadout(loadLoadout()));
     this.onBlast = (x, y, z) => this.weapons.blastAt(x, y, z);
   }
 
   /** The tactical the player's kit carries; a kit whose grenade is lethal throws the first tactical. */
-  private static tacticalFor(): string {
-    const g = resolveLoadout(loadLoadout()).grenade;
+  private tacticalFor(): string {
+    const g = this.client?.ordnance.self.tacticalId ?? this.localLoadout().grenade;
     return (TACTICAL_IDS as readonly string[]).includes(g) ? g : TACTICAL_IDS[0];
   }
 
@@ -107,13 +110,14 @@ export class OrdnanceScene {
     this.boltFx.group.visible = client !== null;
     this.drops.group.visible = client !== null;
     this.client = client;
-    this.tacticalId = OrdnanceScene.tacticalFor();
+    this.tacticalId = this.tacticalFor();
     this.lastPickupSeq = client === null ? 0 : client.ordnance.self.pickupSeq;
     this.lastSpawnSeq = client === null ? 0 : client.ordnance.self.spawnSeq;
     if (client !== null && client.ordnance.self.primaryId !== null) {
       // Resume inventory is a level, not a synthetic spawn edge. Preserve the
       // host's current rounds/life/window while restoring the refreshed HUD gun.
-      this.weapons.adoptWeapon(client.ordnance.self.primaryId, client.ordnance.self.rounds);
+      const self = client.ordnance.self;
+      this.weapons.adoptWeapon(self.primaryId!, self.rounds, self.sidearmId, self.sidearmRounds);
     }
     if (client === null) {
       this.hud.setPrompt(null);
@@ -159,10 +163,11 @@ export class OrdnanceScene {
     this.boltFx.update(dt, nowMs, c.crossbow, (x, y, z) => this.weapons.blastAt(x, y, z));
 
     const self = v.self;
+    this.tacticalId = this.tacticalFor();
     // Verdicts the controller must act on, as edges off the projection's counters.
     if (self.spawnSeq !== this.lastSpawnSeq) {
       this.lastSpawnSeq = self.spawnSeq;
-      this.weapons.onSelfSpawn(self.primaryId, self.rounds);
+      this.weapons.onSelfSpawn(self.primaryId, self.rounds, self.sidearmId, self.sidearmRounds);
     }
     if (self.pickupSeq !== this.lastPickupSeq) {
       this.lastPickupSeq = self.pickupSeq;

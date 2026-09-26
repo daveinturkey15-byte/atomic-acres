@@ -1,59 +1,15 @@
 /**
- * Nuketown 2025 — authoritative explosive-crossbow bolts: host-owned ticked
- * projectiles (CANARY, gated).
+ * Host-owned explosive bolts: ticked ballistic flight against current poses,
+ * strict segment occlusion, one direct hit and bounded four-metre splash.
  *
- * Replaces the preserved partial's synchronous `resolveCrossbowFlight`, which
- * flew the whole 2.5 s trajectory at claim time against poses rewound to
- * `firedAt` and held — a sprinting victim clears ~1 m during a 1 s flight, so
- * long crossing shots missed what the host should lead. Live bolts here
- * advance once per host tick (`GameHost.tick` calls `advance` after
- * `HostOrdnance.advance` and before the event drain) against CURRENT poses
- * (`poses.at(now)` rebuilt every tick), so the bolt meets the target where it
- * IS, not where it was when the trigger went down.
+ * The shared shot gate admits the claim and HostFirearms spends one carried
+ * round before launch. Speed, gravity, lifetime and range are host tuning;
+ * claims supply no damage or impact position. Bolts survive the owner's death
+ * but retire on disconnect, match end, range or lifetime expiry.
  *
- * Admission runs the same eight rules through the shared `admitShot`: the
- * host computes `knownWeapon` as ordnance OR (crossbow ? canary : playable),
- * so a gated crossbow claim with the canary off reads `malformed` exactly
- * like an unknown id, and an admitted canary claim consumes the exactly-once
- * seq before `launch` runs. There is no damage field, no impact field and no
- * flight-time field on the wire (`ShotMsg`): speed, gravity, range and
- * lifetime are tuning, and the host integrates the flight itself.
- *
- * Each tick rebuilds candidates from CURRENT poses (all alive actors except
- * the owner — geometry only, no teams), then integrates every live bolt in
- * fixed `substep` increments (1/120 s: a 60 m/s bolt moves 0.5 m per step).
- * Per substep, wall occlusion runs FIRST through the SAME
- * `WorldQuery.lineOfSight` the hitscan path uses, victim entry SECOND through
- * the SAME `pickTarget` capsule geometry; a victim behind a wall loses to the
- * wall because the wall is tested first at the shorter distance. At most one
- * victim per bolt, ever: the first entry retires it.
- *
- * The catalog HAS the row (`weapons/catalog.ts:explosive-crossbow`, 95 to 40
- * over 25 to 55 m) but the roster gates it (`weapons/roster.ts:GATED`), so
- * `HostLife.hit` would silently drop the hit without a number. The bolt
- * therefore arrives with its number already computed from host-measured
- * distance and host-resolved zone through the shared `damageAt` falloff and
- * zone multiplier plus the bot scalar, clamped by `admitted` — the same
- * `preResolved` door the streak lane uses, with the same two refusals (spawn
- * protection, then hostility) still applied inside `hit`.
- *
- * Fixed pool (`CROSSBOW_POOL = 16`, matching `ordnance-view.ts:FLIGHT_POOL`):
- * every live bolt has a visual slot, a 17th concurrent launch is dropped
- * (admitted, window consumed, no bolt — the grenade-pool exhaustion shape),
- * never grown. Lifetime 2.5 s and range 90 m retire the bolt absolutely.
- * Ammo and reload live in the controller generic path off the catalog def
- * (mag 1, reserve 12, 1.9 and 2.4 s) — the host keeps no magazine count (like
- * bullets) and does not rewrite the kit estimate, so canary corpses drop
- * their baseline primary. Launched bolts persist after the owner death
- * (host-owned, like grenades in flight); only a disconnect retires them.
- *
- * Every state change is an event: `bolt-launched` (launch state for replay —
- * presentation (`game/crossbow-view.ts:BoltView` + `weapons/crossbow-fx.ts`
- * run the SAME `advanceBolt` stepper), `bolt-impact` (the authoritative snap,
- * victim or miss). Damage is a `DamageEvent` with cause `bullet` through
- * `HostLife.hit`, so a bolt kill scores like a rifle kill.
- * `GameHost` still emits `shot-fired` at launch, so misses are audible while
- * rejected claims never reach clients. The events are the contract.
+ * Launch/impact events drive remote presentation; weapon-effect describes the
+ * explosion. HostLife still enforces protection, hostility and score exactly
+ * once. A fixed sixteen-bolt pool bounds simulation and presentation work.
  */
 
 import { WEAPONS, damageAt, type WeaponDef } from '../weapons/catalog';
@@ -78,6 +34,9 @@ export const CROSSBOW_POOL = 16;
 /** Longest step the host integrates bolts over; a stalled host owes no tunnel. */
 const MAX_STEP_S = 0.1;
 const SEG_EPS = 1e-6;
+/** Authored explosive tip: lethal on direct hit, bounded splash with strict occlusion. */
+const BLAST_RADIUS = 4;
+const BLAST_DAMAGE = 65;
 
 function mustCrossbowDef(): WeaponDef {
   const found = WEAPONS.find((w) => w.id === CROSSBOW_ID);
@@ -242,6 +201,7 @@ export class HostCrossbow {
     b: LiveBolt, step: number, now: number,
     candidates: readonly TargetCandidate[],
   ): void {
+    if (now >= b.expiresAt) { this.stop(b, 'expired', b.distance, b.x, b.y, b.z, now); return; }
     const from = this.scratchFrom;
     const to = this.scratchTo;
     from.x = b.x; from.y = b.y; from.z = b.z;
@@ -280,6 +240,12 @@ export class HostCrossbow {
         return;
       }
     }
+    const ground = this.world.groundY(b.x, b.z);
+    if (b.y <= ground && from.y >= ground) {
+      this.stop(b, 'wall', b.distance, b.x, ground + 0.04, b.z, now);
+      return;
+    }
+    if (!this.world.inBounds(b.x, b.z)) { this.stop(b, 'expired', b.distance, b.x, b.y, b.z, now); return; }
     if (!alive) {
       this.stop(b, 'expired', b.distance, b.x, b.y, b.z, now);
     }
@@ -304,6 +270,7 @@ export class HostCrossbow {
       team: owner === null || owner === undefined ? null : owner.team,
       victimId, zone, distance, x, y, z, stopped: 'victim',
     });
+    this.explode(b, x, y, z, now);
   }
 
   private stop(
@@ -321,6 +288,27 @@ export class HostCrossbow {
       team: owner === null ? null : owner.team,
       victimId: null, zone: null, distance, x, y, z, stopped,
     });
+    this.explode(b, x, y, z, now);
+  }
+
+  private explode(b: LiveBolt, x: number, y: number, z: number, now: number): void {
+    const owner = this.life.actors.get(b.ownerId);
+    if (!owner) return;
+    const origin = { x, y, z };
+    for (const victim of this.life.actors.values()) {
+      if (!victim.health.alive) continue;
+      const p = victim.poses.at(now);
+      if (!p) continue;
+      const target = { x: p.x, y: p.y + (p.stance === 'prone' ? 0.25 : p.stance === 'crouch' ? 0.6 : 0.9), z: p.z };
+      const distance = Math.hypot(target.x - x, target.y - y, target.z - z);
+      if (distance >= BLAST_RADIUS || !this.world.lineOfSight(origin, target)) continue;
+      const scale = owner.bot && !victim.bot ? BOT_DAMAGE_MULTIPLIER : 1;
+      this.life.hit(victim, owner, 'body', distance, CROSSBOW_ID, 'explosion', now, x, z,
+        admitted(BLAST_DAMAGE * (1 - distance / BLAST_RADIUS) * scale));
+    }
+    this.life.emit({ type: 'weapon-effect', effect: 'crossbow-blast', at: now,
+      actorId: owner.id, team: owner.team, id: b.boltId, weaponId: CROSSBOW_ID,
+      x, y, z, dx: 0, dy: 0, dz: 0, radius: BLAST_RADIUS, durationMs: 350 });
   }
 
   private acquire(): LiveBolt | null {

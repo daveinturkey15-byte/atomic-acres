@@ -121,9 +121,9 @@ export class HostOrdnance {
     return this.refuse(a, msg, 'arm', 'no-grenade', now);
   }
 
-  /** An admitted BULLET: the kit's round estimate moves. */
-  noteShot(a: HostActor, weaponId: string): void {
-    this.kits.noteShot(a, weaponId);
+  /** Spend one carried firearm round. Reload timing stays local; total issue is authoritative. */
+  spendShot(a: HostActor, weaponId: string): ShotRejectReason | null {
+    return this.kits.spendShot(a, weaponId);
   }
 
   private refuse(a: HostActor, msg: ShotMsg, action: OrdnanceAction, reason: OrdnanceRejectReason, at: number): ShotAdmission {
@@ -135,6 +135,7 @@ export class HostOrdnance {
   private grenadeClaim(a: HostActor, msg: ShotMsg, now: number): ShotAdmission {
     const def = GRENADE_BY_ID.get(msg.weaponId) as GrenadeDef;
     const kit = this.kits.kitOf(a);
+    if (def.slot === 'tactical' && def.id !== kit.tacticalId) return this.refuse(a, msg, 'arm', 'no-grenade', now);
     if (kit.armed === null) {
       const held = def.slot === 'lethal' ? kit.lethal : kit.tactical;
       if (held <= 0) return this.refuse(a, msg, 'arm', 'no-grenade', now);
@@ -365,9 +366,11 @@ export class HostOrdnance {
   // ---- Readouts and lifecycle ----------------------------------------------
 
   /** The kit fields the actor snapshot carries. */
-  kitOf(a: HostActor): { lethal: number; tactical: number; primaryId: string; rounds: number; armed: string | null; blindUntil: number } {
+  kitOf(a: HostActor): { lethal: number; tactical: number; tacticalId: string; sidearmId: string; sidearmRounds: number; primaryId: string; rounds: number; armed: string | null; blindUntil: number } {
     const k = this.kits.kitOf(a);
-    return { lethal: k.lethal, tactical: k.tactical, primaryId: k.primaryId, rounds: k.rounds, armed: k.armed === null ? null : k.armed.grenadeId, blindUntil: this.sight.blindUntil(a.id) };
+    return { lethal: k.lethal, tactical: k.tactical, tacticalId: k.tacticalId,
+      sidearmId: k.sidearmId, sidearmRounds: k.sidearmRounds, primaryId: k.primaryId, rounds: k.rounds,
+      armed: k.armed === null ? null : k.armed.grenadeId, blindUntil: this.sight.blindUntil(a.id) };
   }
 
   forget(id: ActorId): void {

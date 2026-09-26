@@ -43,6 +43,8 @@ import { OrdnanceView, decorateKillLine, isOrdnanceEvent } from './ordnance-view
 import { MortarView, isMortarEvent } from './killstreaks/effects/mortar-view';
 import { BoltView } from './crossbow-view';
 import { isCrossbowEvent } from './events-crossbow';
+import type { RadarSample } from './killstreaks/effects/reveal';
+import type { StreakEffectView } from './killstreaks/effect-view';
 // ---------------------------------------------------------------------------
 // The view
 // ---------------------------------------------------------------------------
@@ -91,6 +93,8 @@ export type ClientEdge =
   | { readonly kind: 'banner-clear' };
 
 export interface ClientSnapshot {
+  readonly radar?: readonly RadarSample[];
+  readonly effects?: readonly StreakEffectView[];
   readonly at: number;
   readonly match?: MatchStateMsg | null;
   readonly streak?: StreakStateMsg | null;
@@ -129,6 +133,9 @@ export const REMOTE_SHOT_RECENT_LIMIT = 128;
 // ---------------------------------------------------------------------------
 
 export class GameClient {
+  readonly streakEffects: StreakEffectView[] = [];
+  streakEffectsAt = 0;
+  private radar: readonly RadarSample[] = [];
   private readonly names = new Map<ActorId, string>();
   private readonly streakNames = new Map<string, string>();
   private readonly lastShotAt = new Map<ActorId, number>();
@@ -336,6 +343,8 @@ export class GameClient {
   // -------------------------------------------------------------------------
 
   applySnapshot(s: ClientSnapshot): void {
+    if (s.radar !== undefined) this.radar = s.radar;
+    if (s.effects !== undefined) { this.streakEffectsAt = s.at; this.streakEffects.length = 0; this.streakEffects.push(...s.effects); }
     if (s.at > this.now) this.now = s.at;
     if (s.match) this.applyMatch(s.match);
     if (s.streak && s.streak.actorId === this.selfId) {
@@ -382,8 +391,12 @@ export class GameClient {
       }
       if (!known) continue;
       const dist = self ? Math.hypot(p.x - self.x, p.z - self.z) : Number.POSITIVE_INFINITY;
-      if (!shouldRevealEnemy(dist, this.now, this.lastShotAt.get(p.id) ?? 0)) continue;
-      out.push({ id: p.id, kind: 'enemy', x: p.x, z: p.z, yaw: p.yaw });
+      if (shouldRevealEnemy(dist, this.now, this.lastShotAt.get(p.id) ?? 0)) {
+        out.push({ id: p.id, kind: 'enemy', x: p.x, z: p.z, yaw: p.yaw });
+      } else {
+        const sensor = this.radar.find(r => r.id === p.id && r.expiresAt > this.now);
+        if (sensor) out.push({ id: p.id, kind: 'enemy', x: sensor.x, z: sensor.z, yaw: 0 });
+      }
     }
     return out;
   }

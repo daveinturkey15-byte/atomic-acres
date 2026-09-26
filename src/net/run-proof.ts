@@ -1,7 +1,8 @@
 /**
- * Node driver for the headless loopback proof. No browser, no build:
- *   node src/net/run-proof.ts [seed]
- * (Node 24 strips types natively.) Virtual clock, deterministic per seed.
+ * Node driver for the headless loopback proof. No browser:
+ *   node scripts/_verify-net-proof.mjs [seed]
+ * The wrapper resolves the extensionless TypeScript imports as Vite does.
+ * Virtual clock, deterministic per seed.
  * Structural failures exit non-zero; the numbers always print regardless.
  */
 import { formatProofReport, runLoopbackProof } from './proof';

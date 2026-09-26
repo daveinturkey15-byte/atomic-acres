@@ -16,7 +16,7 @@
  * room keeps integrating from wherever it believes the seat is.
  */
 import { balanceTeams } from '../game/rules';
-import { isOrdnanceEventType, type GameEvent, type KillEvent, type WorldQuery } from '../game/events';
+import { isOrdnanceEventType, isMortarEventType, type GameEvent, type KillEvent, type WorldQuery } from '../game/events';
 import { isCrossbowEventType } from '../game/events-crossbow';
 import type { SoloDriver } from '../game/session-solo';
 import type { BotBody, MatchDriver } from '../game/session-types';
@@ -37,6 +37,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
   let rev = -1;
   let lastMatchAt = -Infinity;
   let lastStreakAt = -Infinity;
+  let lastEffectsAt = -Infinity;
   let phaseEdge = false;
   let disposed = false;
   const syncRoster = (): void => {
@@ -51,7 +52,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
     for (const e of roster) {
       if (e.isHost) continue;
       seen.add(e.id);
-       solo.addRemote(e.id, e.name, teams.get(e.id) ?? 1, room.primaryOf(e.id));
+      solo.addRemote(e.id, e.name, teams.get(e.id) ?? 1, room.primaryOf(e.id), room.loadoutOf(e.id), room.streakLoadoutOf(e.id));
       seats.add(e.id);
     }
     for (const id of seats) {
@@ -101,6 +102,8 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
             room.broadcast({ type: 'ordnance', e } as NetMessage);
           } else if (isCrossbowEventType(e.type)) {
             room.broadcast({ type: 'crossbow', e } as NetMessage);
+          } else if (isMortarEventType(e.type) || e.type === 'weapon-effect') {
+            room.broadcast({ type: 'effect', e } as NetMessage);
           }
       }
     }
@@ -156,6 +159,14 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
       if (now - lastStreakAt >= STREAK_LEVEL_MS) {
         lastStreakAt = now;
         for (const id of seats) streakTo(id, now);
+      }
+      if (now - lastEffectsAt >= MATCH_STATE_MS) {
+        lastEffectsAt = now;
+        room.broadcast(solo.effectsState(now));
+        for (const id of seats) {
+          const radar = solo.radarStateFor(id, now);
+          if (radar !== null) room.sendToPlayer(id, radar);
+        }
       }
     },
 

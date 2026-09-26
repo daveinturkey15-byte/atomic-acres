@@ -49,7 +49,7 @@ import {
   type NetMessage, type PlayerSample, type RosterEntry,
 } from './protocol';
 import {
-  admissionRefusal, inputAccepted, newMember, resumeSeat, sweepSeats, validPrimaryId,
+  admissionRefusal, inputAccepted, newMember, resumeSeat, sweepSeats, validPrimaryId, validLoadout, validStreakLoadout,
   INPUT_Y_MAX, type HostMember,
 } from './room-admit';
 import {
@@ -157,6 +157,8 @@ export class HostRoom {
 
   /** The sanitized lobby declaration captured before Start. */
   primaryOf(id: string): string | undefined { return this.members.get(id)?.primaryId; }
+  loadoutOf(id: string) { return this.members.get(id)?.loadout; }
+  streakLoadoutOf(id: string) { return this.members.get(id)?.streakLoadout; }
 
   /** The game host deployed this seat somewhere: the room's integration continues from there. */
   placeSeat(id: string, x: number, z: number, yaw: number, stance: PlayerStance = 'stand'): void {
@@ -337,6 +339,10 @@ export class HostRoom {
         if (!m || m.entry.isHost || this.phase !== 'lobby') return;
         const declaredPrimary = validPrimaryId(msg.primaryId);
         if (declaredPrimary !== undefined) m.primaryId = declaredPrimary;
+        const kit = validLoadout(msg.loadout);
+        if (kit !== undefined) { m.loadout = kit; m.primaryId = kit.primary; }
+        const streaks = validStreakLoadout(msg.streakLoadout);
+        if (streaks !== undefined) m.streakLoadout = streaks;
         m.entry.ready = msg.ready;
         this.broadcastRoster();
         break;
@@ -364,8 +370,13 @@ export class HostRoom {
         }
         break;
       case 'shot':
-      case 'streak-intent':
         if (m && m.entry.connected && this.gameHandler !== null) this.gameHandler(m.entry.id, msg);
+        break;
+      case 'streak-intent':
+        if (m && m.entry.connected && this.phase === 'playing' && this.gameHandler !== null && msg.seq > m.lastStreakSeq) {
+          m.lastStreakSeq = msg.seq;
+          this.gameHandler(m.entry.id, msg);
+        }
         break;
       default:
         break;
@@ -384,6 +395,10 @@ export class HostRoom {
       if (this.phase === 'lobby') {
         const declaredPrimary = validPrimaryId(hello.primaryId);
         if (declaredPrimary !== undefined) back.primaryId = declaredPrimary;
+        const kit = validLoadout(hello.loadout);
+        if (kit !== undefined) { back.loadout = kit; back.primaryId = kit.primary; }
+        const streaks = validStreakLoadout(hello.streakLoadout);
+        if (streaks !== undefined) back.streakLoadout = streaks;
       }
       back.lastHeardAt = this.now();
       // A seat resuming a live match must land in that match, with the
@@ -398,6 +413,7 @@ export class HostRoom {
         phase: this.phase,
         startTick: this.startTick,
         lastSeq: back.lastSeq,
+        lastStreakSeq: back.lastStreakSeq,
         ...(this.resumeFacts === null ? { life: 1, shotSeq: -1 } : this.resumeFacts(back.entry.id)),
       };
       this.transport.send(from, { type: 'welcome', playerId: back.entry.id, hostNow: this.now(), roster: this.roster(), token: back.token, resume });
@@ -412,6 +428,9 @@ export class HostRoom {
     const id = 'p' + this.nextId++;
     const m = newMember(id, cleanName(hello.name), false, from, this.members.size, this.now(), this.codeRand);
     m.primaryId = validPrimaryId(hello.primaryId);
+    m.loadout = validLoadout(hello.loadout);
+    if (m.loadout !== undefined) m.primaryId = m.loadout.primary;
+    m.streakLoadout = validStreakLoadout(hello.streakLoadout);
     this.members.set(id, m);
     this.peerToId.set(from, id);
     this.transport.send(from, { type: 'welcome', playerId: id, hostNow: this.now(), roster: this.roster(), token: m.token });

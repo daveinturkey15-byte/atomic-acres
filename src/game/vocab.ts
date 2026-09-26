@@ -140,6 +140,7 @@ export const SHOT_REJECT_REASONS = [
   'future',
   'bad-origin',
   'empty-magazine',
+  'shot-cooldown',
 ] as const;
 export type ShotRejectReason = (typeof SHOT_REJECT_REASONS)[number];
 
@@ -154,6 +155,7 @@ export const SHOT_REJECT_LABELS: Readonly<Record<ShotRejectReason, string>> = Ob
   'future': 'SHOT AHEAD OF CLOCK',
   'bad-origin': 'MUZZLE MISMATCH',
   'empty-magazine': 'MAGAZINE EMPTY',
+  'shot-cooldown': 'WEAPON CYCLING',
 });
 
 // ---------------------------------------------------------------------------
@@ -175,6 +177,8 @@ export const SHOT_REJECT_LABELS: Readonly<Record<ShotRejectReason, string>> = Ob
  * actor per tick.
  */
 export interface WorldQuery {
+  /** Read-only collision geometry for bounded penetration; no game state or callbacks. */
+  readonly solids?: readonly { readonly min: Vec3; readonly max: Vec3 }[];
   /** True when nothing solid sits between the two points. Colliders only — never characters. */
   lineOfSight(from: Vec3, to: Vec3): boolean;
   /** Walkable surface height at a column, in metres. */

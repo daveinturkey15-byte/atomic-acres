@@ -23,6 +23,8 @@ import { REJECT_LABELS, createJoinCode, isJoinCode, type RejectReason, type Resu
 import { GuestClient, HostRoom, type HostOptions, type Pose, type PlayerStance } from './room';
 import { createRtcTransport, rtcAvailable, type RtcTransport } from './rtc';
 import { createLocalTransport, type Transport } from './transport';
+import type { Loadout } from '../game/loadout';
+import type { StreakLoadout } from '../game/killstreaks/catalog';
 
 export type LinkTier = 'tabs' | 'lan';
 export const LINK_TIERS: readonly LinkTier[] = Object.freeze(['tabs', 'lan'] as const);
@@ -104,6 +106,8 @@ export class LobbySession {
   private readonly now: () => number;
   private readonly canStand: HostOptions['canStand'] | undefined;
   private readonly localPrimaryId: string | (() => string | undefined) | undefined;
+  private readonly localLoadout: (() => Loadout) | undefined;
+  private readonly localStreakLoadout: (() => StreakLoadout) | undefined;
   private room: HostRoom | null = null;
   private guest: GuestClient | null = null;
   private transport: Transport | null = null;
@@ -118,10 +122,14 @@ export class LobbySession {
     now: () => number;
     canStand?: (pose: Readonly<Pose>, target: PlayerStance) => boolean;
     localPrimaryId?: string | (() => string | undefined);
+    localLoadout?: () => Loadout;
+    localStreakLoadout?: () => StreakLoadout;
   }) {
     this.now = opts.now;
     this.canStand = opts.canStand;
     this.localPrimaryId = opts.localPrimaryId;
+    this.localLoadout = opts.localLoadout;
+    this.localStreakLoadout = opts.localStreakLoadout;
   }
 
   onChange(fn: (() => void) | null): void { this.listener = fn; }
@@ -221,6 +229,7 @@ export class LobbySession {
     const joinTimeoutMs = a.tier === 'lan' ? 15_000 : 6_000;
     this.guest = new GuestClient(this.transport as Transport, 'host', code, a.name, {
       now: this.now, resume, joinTimeoutMs, localPrimaryId: this.localPrimaryId,
+      localLoadout: this.localLoadout, localStreakLoadout: this.localStreakLoadout,
       onChange: () => this.onGuestChange(code, signalUrl),
     });
     this.guest.startAutoPing();

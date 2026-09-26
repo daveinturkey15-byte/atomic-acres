@@ -75,6 +75,9 @@ export interface SelfOrdnance {
   lethal: number;
   tactical: number;
   primaryId: string | null;
+  tacticalId: string | null;
+  sidearmId: string | null;
+  sidearmRounds: number;
   rounds: number;
   /** Grenade in hand with the pin out, as the host sees it. */
   armed: string | null;
@@ -115,7 +118,7 @@ export class OrdnanceView {
   readonly blasts: BlastView[] = [];
   blastSeq = 0;
   readonly self: SelfOrdnance = {
-    lethal: 0, tactical: 0, primaryId: null, rounds: 0, armed: null,
+    lethal: 0, tactical: 0, primaryId: null, tacticalId: null, sidearmId: null, sidearmRounds: 0, rounds: 0, armed: null,
     flashAt: -Infinity, flashMs: 0, flashPeak: 0,
     spawnSeq: 0, pickupSeq: 0, lastPickupKind: null, lastPickupWeaponId: null, lastPickupRounds: 0, meleeSeq: 0,
   };
@@ -289,6 +292,9 @@ export class OrdnanceView {
         if (e.actorId !== this.selfId) return null;
         this.self.lethal = e.lethal; this.self.tactical = e.tactical;
         this.self.primaryId = e.primaryId; this.self.rounds = e.rounds; this.self.armed = e.armed;
+        this.self.tacticalId = e.tacticalId ?? null;
+        this.self.sidearmId = e.sidearmId ?? null;
+        this.self.sidearmRounds = e.sidearmRounds ?? 0;
         return null;
       case 'ordnance-rejected':
         this.counts.rejected++;

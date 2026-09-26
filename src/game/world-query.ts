@@ -260,6 +260,7 @@ export function losBlockedBySmoke(world: WorldQuery, a: Vec3, b: Vec3): boolean 
  */
 export function createWorldQuery(colliders: readonly AABB[]): WorldQueryWithSight {
   return {
+    solids: colliders,
     sight: new SightField(),
 
     /**

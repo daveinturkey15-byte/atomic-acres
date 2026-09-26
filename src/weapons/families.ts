@@ -25,6 +25,7 @@ export type WeaponFamily =
   | 'sniper'   // bolt precision
   | 'shotgun'  // pellet and slug shotguns
   | 'pistol'   // sidearm-class
+  | 'special' // shipped distinct delivery with a temporary rifle rig
   | 'exotic';  // roster20 props without a real rig (railgun, crossbow, flame, flare)
 
 /** One of the five shipped `viewmodel.ts` rigs, by builder name. */
@@ -53,10 +54,10 @@ export const WEAPON_FAMILY: Readonly<Record<string, WeaponFamily>> = Object.free
   'slug-shotgun': 'shotgun',
   magnum: 'pistol',
   'flashlight-pistol': 'pistol',
-  railgun: 'exotic',
-  'explosive-crossbow': 'exotic',
-  flamethrower: 'exotic',
-  'flare-gun': 'exotic',
+  railgun: 'special',
+  'explosive-crossbow': 'special',
+  flamethrower: 'special',
+  'flare-gun': 'special',
 });
 
 /**
@@ -72,6 +73,7 @@ export const FAMILY_FALLBACK: Readonly<Record<WeaponFamily, FallbackRig>> = Obje
   sniper: 'sniper',
   shotgun: 'shotgun',
   pistol: 'pistol',
+  special: 'rifle',
   exotic: 'rifle',
 });
 
@@ -105,6 +107,7 @@ export const FAMILY_VOICE: Readonly<Record<WeaponFamily, AudioVoice>> = Object.f
   sniper: 'deadeye',
   shotgun: 'coachman',
   pistol: 'duster',
+  special: 'duster',
   exotic: 'duster',
 });
 

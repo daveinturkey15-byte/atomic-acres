@@ -74,6 +74,8 @@ function duration(ms: number): string {
 }
 
 export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): StreakLoadoutSection {
+  let unsaved: StreakLoadout | null = null;
+  const read = (): StreakLoadout => unsaved ?? loadStreakLoadout().selected;
   const root = document.createElement('section');
   root.className = 'aa-streak-loadout';
   root.setAttribute('aria-label', 'Killstreak loadout');
@@ -85,13 +87,13 @@ export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): 
   title.textContent = 'STREAK SUITE';
   const meta = document.createElement('span');
   meta.className = 'aa-loadmeta';
-  meta.textContent = 'HOST VERIFIED ON DEPLOY';
+  meta.textContent = 'KEYS 3 · 4 · 5 · 6';
   head.append(title, meta);
   root.append(head);
 
   const note = document.createElement('div');
   note.className = 'aa-streak-note';
-  note.textContent = 'Choose one streak per tier. Grey rows are catalogued for future wiring.';
+  note.textContent = 'Choose one streak per tier. Earn kills, then press its numbered key when ready.';
   root.append(note);
 
   const grid = document.createElement('div');
@@ -104,7 +106,7 @@ export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): 
     const top = document.createElement('span');
     top.className = 'aa-streak-pick-top';
     const slot = document.createElement('span');
-    slot.textContent = `SLOT ${i + 1}`;
+    slot.textContent = `KEY ${i + 3}`;
     const tier = document.createElement('span');
     tier.textContent = SLOT_TIERS[i].toUpperCase();
     top.append(slot, tier);
@@ -117,7 +119,7 @@ export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): 
       if (!def) continue;
       const option = document.createElement('option');
       option.value = id;
-      option.textContent = WIRED_STREAK_IDS.includes(id) ? def.displayName : `${def.displayName} · UNWIRED`;
+      option.textContent = WIRED_STREAK_IDS.includes(id) ? def.displayName : `${def.displayName} · UNAVAILABLE`;
       option.disabled = !WIRED_STREAK_IDS.includes(id);
       option.title = option.disabled ? 'Catalogued but unavailable in this build' : `${def.cost} kills · ${def.activation}`;
       select.append(option);
@@ -127,7 +129,7 @@ export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): 
       stop(e);
       const id = select.value;
       if (!WIRED_STREAK_IDS.includes(id)) return;
-      const next = [...loadStreakLoadout().selected] as string[];
+      const next = [...read()] as string[];
       next[i] = id;
       const check = validateStreakLoadout(next, STREAK_CATALOG);
       if (!check.valid || next.some((entry) => !WIRED_STREAK_IDS.includes(entry))) {
@@ -136,8 +138,11 @@ export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): 
         return;
       }
       const store: StreakLoadoutStore = { version: STREAK_LOADOUT_VERSION, selected: Object.freeze(next) as StreakLoadout };
-      if (!saveStreakLoadout(store)) note.textContent = 'STREAK SUITE NOT SAVED — STORAGE BLOCKED';
-      else note.textContent = 'STREAK SUITE SAVED FOR THE NEXT DEPLOY';
+      const saved = saveStreakLoadout(store);
+      unsaved = saved ? null : store.selected;
+      note.textContent = saved
+        ? 'STREAK SUITE SAVED FOR THE NEXT DEPLOY'
+        : 'SELECTED FOR THIS SESSION · STORAGE BLOCKED';
       deps.onChange?.(store.selected);
       refresh();
     });
@@ -152,10 +157,17 @@ export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): 
   root.append(grid);
 
   function refresh(): void {
-    const selected = loadStreakLoadout().selected;
+    const selected = read();
     for (let i = 0; i < selects.length; i++) {
       const id = selected[i];
       selects[i].value = id;
+      for (const option of Array.from(selects[i].options)) {
+        const candidate: string[] = [...selected];
+        candidate[i] = option.value;
+        const check = validateStreakLoadout(candidate, STREAK_CATALOG);
+        option.disabled = !WIRED_STREAK_IDS.includes(option.value) || !check.valid;
+        if (!check.valid) option.title = check.errors.join(' · ');
+      }
       const def = streakById(id, STREAK_CATALOG);
       summaries[i].textContent = def === null
         ? 'UNAVAILABLE'
@@ -164,5 +176,5 @@ export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): 
   }
 
   refresh();
-  return { root, refresh, read: () => loadStreakLoadout().selected };
+  return { root, refresh, read };
 }

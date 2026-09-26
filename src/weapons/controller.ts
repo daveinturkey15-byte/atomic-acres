@@ -27,6 +27,7 @@ import type { MaterialLibrary } from '../core/materials';
 import type { GunsHudState, MoveSample, WeaponSnapshot } from './types';
 export type { GunsHudState, MoveSample, WeaponSnapshot } from './types';
 import { WEAPONS, damageAt, patternMult, type WeaponDef } from './catalog';
+import { defaultLoadoutStore, resolveLoadout, SIDEARM_IDS, sidearmForPrimary, type Loadout } from '../game/loadout';
 import {
   buildRifleViewmodel,
   buildSmgViewmodel,
@@ -222,6 +223,8 @@ interface ControllerOpts {
   onHud: (line: string) => void;
   /** Optional: absent means nobody is listening, and the gun is a toy again. */
   onShot?: (claim: ShotClaim) => void;
+  /** Pre-match preview only; admitted spawn/pickup events replace these ids. */
+  localLoadout?: () => Loadout;
   /** Optional explicit opt-in for catalog carbine canary (?carbine=canary) */
   carbineCanary?: boolean;
   /** Test seam for the pending canary load (defaults to the real GLB loader). */
@@ -244,6 +247,8 @@ export class WeaponsController {
   private effects: WeaponEffects;
   private weapons: WeaponState[];
   private active = 0;
+  private carriedPrimary = '';
+  private carriedSidearm = '';
   private carbineCanaryRig: CatalogCarbineRig | null = null;
   private carbineCanaryRequested = false;
   /** One adopted GLB rig per hero id (bounded to ROSTER_HERO_WEAPON_IDS). */
@@ -317,6 +322,9 @@ export class WeaponsController {
     this.targets = opts.targets;
     this.onHud = opts.onHud;
     this.onShot = opts.onShot ?? null;
+    const loadout = opts.localLoadout?.() ?? resolveLoadout(defaultLoadoutStore());
+    this.carriedPrimary = loadout.primary;
+    this.carriedSidearm = SIDEARM_IDS.includes(loadout.sidearm) ? loadout.sidearm : sidearmForPrimary(loadout.primary);
 
     this.overlay = new THREE.Scene();
     const enableCrossbowCanary = opts.crossbowCanary ?? isCrossbowCanaryOptIn(typeof window !== 'undefined' ? window.location.search : undefined);
@@ -676,23 +684,11 @@ export class WeaponsController {
       return true;
     }
     if (code === 'Digit1') {
-      this.switchTo(0);
+      this.switchCarried(this.carriedPrimary);
       return true;
     }
     if (code === 'Digit2') {
-      this.switchTo(1);
-      return true;
-    }
-    if (code === 'Digit3') {
-      this.switchTo(2);
-      return true;
-    }
-    if (code === 'Digit4') {
-      this.switchTo(3);
-      return true;
-    }
-    if (code === 'Digit5') {
-      this.switchTo(4);
+      this.switchCarried(this.carriedSidearm);
       return true;
     }
     // G / Q / V / E: the off hand. A swing cancels a reload, as in BO2.
@@ -739,9 +735,20 @@ export class WeaponsController {
   }
 
   /** The host swapped our primary for a drop's: hold that gun, with the rounds it had. */
-  adoptWeapon(weaponId: string, rounds: number): boolean {
+  adoptWeapon(weaponId: string, rounds: number, sidearmId?: string | null, sidearmRounds?: number): boolean {
     const idx = this.weapons.findIndex((w) => w.def.id === weaponId);
     if (idx < 0) return false;
+    this.carriedPrimary = weaponId;
+    if (sidearmId && SIDEARM_IDS.includes(sidearmId)) this.carriedSidearm = sidearmId;
+    else if (!this.carriedSidearm || this.carriedSidearm === weaponId) this.carriedSidearm = sidearmForPrimary(weaponId);
+    if (sidearmRounds !== undefined) {
+      const sidearm = this.weapons.find((entry) => entry.def.id === this.carriedSidearm);
+      if (sidearm) {
+        const total = Math.max(0, Math.floor(sidearmRounds));
+        sidearm.mag = Math.min(sidearm.def.magSize, total);
+        sidearm.reserve = total - sidearm.mag;
+      }
+    }
     const w = this.weapons[idx];
     const total = Math.max(0, Math.floor(rounds));
     w.mag = Math.min(w.def.magSize, total);
@@ -766,7 +773,7 @@ export class WeaponsController {
   }
 
   /** A new life: whatever the hand was doing is over. */
-  onSelfSpawn(primaryId?: string | null, rounds = 0): void {
+  onSelfSpawn(primaryId?: string | null, rounds = 0, sidearmId?: string | null, sidearmRounds?: number): void {
     this.ord.cancel();
     for (const w of this.weapons) {
       w.reloading = false;
@@ -774,7 +781,15 @@ export class WeaponsController {
       w.rig.hands?.resetReload();
     }
     if (primaryId) {
-      this.adoptWeapon(primaryId, rounds);
+      this.adoptWeapon(primaryId, rounds, sidearmId ?? sidearmForPrimary(primaryId), sidearmRounds);
+      const sidearm = this.weapons.find((w) => w.def.id === this.carriedSidearm);
+      if (sidearm) {
+        const issued = sidearmRounds ?? sidearm.def.magSize + sidearm.def.startReserve;
+        sidearm.mag = Math.min(sidearm.def.magSize, Math.max(0, Math.floor(issued)));
+        sidearm.reserve = Math.max(0, Math.floor(issued)) - sidearm.mag;
+        sidearm.cool = 0;
+        sidearm.bloom = 0;
+      }
       const weapon = this.weapons[this.active];
       weapon.cool = 0;
       weapon.bloom = 0;
@@ -784,7 +799,12 @@ export class WeaponsController {
 
   wheel(deltaY: number): void {
     if (deltaY === 0) return;
-    this.switchTo((this.active + (deltaY > 0 ? 1 : this.weapons.length - 1)) % this.weapons.length);
+    const next = this.weapons[this.active].def.id === this.carriedPrimary ? this.carriedSidearm : this.carriedPrimary;
+    this.switchCarried(next);
+  }
+
+  private switchCarried(id: string): boolean {
+    return this.switchTo(this.weapons.findIndex((w) => w.def.id === id));
   }
 
   setVisible(v: boolean): void {
@@ -906,6 +926,8 @@ export class WeaponsController {
       }
       case 'state':
         return this.snapshot(true);
+      case 'loadout':
+        return { primary: this.carriedPrimary, sidearm: this.carriedSidearm };
       case 'sights': {
         // QA-only (repair2): live screen projection of the active hero's
         // authored sight anchors. Everything is measured from the real rig
@@ -1093,7 +1115,7 @@ export class WeaponsController {
    * a pickup reach are all "an action at the eye along the aim at a time",
    * and the host tells them apart by `weaponId`. One author, one sequence.
    */
-  private claim(weaponId: string): void {
+  private claim(weaponId: string, firedAt = this.nowMs): void {
     if (this.onShot === null) return;
     this.tmpDir.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
     const c = this.camera.position;
@@ -1102,7 +1124,7 @@ export class WeaponsController {
       direction: { x: this.tmpDir.x, y: this.tmpDir.y, z: this.tmpDir.z },
       seq: ++this.shotSeq,
       weaponId,
-      time: this.nowMs,
+      time: firedAt,
     });
   }
 
@@ -1127,7 +1149,7 @@ export class WeaponsController {
     // throw anywhere in the effects path cannot swallow the shot the host is
     // meant to resolve. Camera forward carries the recoil already applied this
     // frame, which is what the player was actually pointing at.
-    this.claim(def.id);
+    this.claim(def.id, fromAuto ? this.nowMs + Math.min(0, this.autoTimer) * 1000 : this.nowMs);
 
     // Spread cone: base (hip<->ADS) + movement + accumulated bloom, crouch bonus.
     cur.bloom = Math.min(def.spread.bloomMax, cur.bloom + def.spread.bloom);

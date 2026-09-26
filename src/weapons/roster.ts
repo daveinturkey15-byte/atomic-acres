@@ -31,20 +31,9 @@ export type RosterReadiness = 'playable' | 'prototype';
  * Why a designed weapon is held back from the selectable roster. Authored —
  * the reason is the contract, not the id.
  */
-const GATED: Readonly<Record<string, readonly string[]>> = Object.freeze({
-  railgun: [
-    'designed as a charge/pierce EMRG; the controller fires plain semi-auto hitscan',
-  ],
-  'explosive-crossbow': [
-    'designed as a slow bolt with explosion AoE; the controller fires an instant hitscan slug',
-  ],
-  flamethrower: [
-    'designed as a short-range cone with burn damage-over-time; the controller fires hitscan ticks with neither cone nor burn',
-  ],
-  'flare-gun': [
-    'designed as an arced signal flare; the controller fires straight hitscan',
-  ],
-});
+// All twenty delivery paths are implemented by host-firearms/host-crossbow.
+// Future catalog prototypes still require an explicit gate here.
+const GATED: Readonly<Record<string, readonly string[]>> = Object.freeze({});
 
 // A gate may only name catalog ids, and gating must agree with the `exotic`
 // family in families.ts in BOTH directions — an exotic whose behaviour shipped

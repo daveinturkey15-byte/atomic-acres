@@ -20,12 +20,13 @@ import type { StreakRuntime } from './killstreaks/runtime';
 
 export function streakPort(rt: StreakRuntime, matchEpoch: number): StreakRuntimePort {
   return {
-    registerActor: (id: ActorId, team: TeamId) => rt.registerActor(id, team),
+    registerActor: (id: ActorId, team: TeamId, loadout) => rt.registerActor(id, team, loadout),
     recordElimination: (id, streak, now) => rt.recordElimination(id, streak, now),
     recordDeath: (id, now) => rt.recordDeath(id, now),
     recordDisconnect: (id, now) => rt.recordDisconnect(id, now),
     endMatch: (now) => rt.endMatch(now),
     snapshotFor: (id) => rt.snapshotFor(id),
+    drainRewardGrants: () => rt.drainRewardGrants(),
     advance: (now: number, world: WorldQuery, targets: readonly StreakTargetView[]) =>
       rt.advance(now, world, targets),
     activate: (p: StreakPress, now: number, world: WorldQuery) => rt.activate({
