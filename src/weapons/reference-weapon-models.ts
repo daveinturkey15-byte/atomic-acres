@@ -5,6 +5,8 @@ import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
 import type { MaterialLibrary } from '../core/materials';
 import { createFirstPersonHands } from './first-person-hands';
 import { TRIGGER_SPEC } from './hand-geometry-canary';
+import { createReferenceHeavyHands } from './reference-heavy-hands';
+import { PAL } from '../core/palette';
 import { collectGltfResources, disposeResourceSet, disposeOwnedGeometries } from './catalog-carbine-loader';
 import type { ViewmodelRig, FirstPersonHandsRig } from './types';
 
@@ -23,9 +25,17 @@ export interface ReferenceWeaponRig extends ViewmodelRig {
   readonly weaponId: ReferenceWeaponId;
   readonly assetUrl: string;
   readonly adsMount: { offsetX: number; offsetY: number; pitch: number; yaw: number };
+  /** Camera-local presentation depth, applied equally at hip/ADS; never gameplay pose. */
+  readonly cameraOffset?: { readonly x: number; readonly y: number; readonly z: number };
   readonly stats: { meshes: number; triangles: number; textures: number };
   readonly adsSightNames: readonly [string, string];
   dispose(): void;
+}
+
+export interface ReferenceWeaponOptions { readonly heavyHands?: boolean }
+
+export function isHeavyHandsCanaryRequested(): boolean {
+  return typeof location !== 'undefined' && new URLSearchParams(location.search).get('heavy-hands') === 'canary';
 }
 
 /** Fresh loader and owned resources per rig: no disposed global cache can be reused. */
@@ -49,9 +59,11 @@ export function adaptReferenceWeaponModel(
   weaponId: ReferenceWeaponId,
   gltf: Pick<GLTF, 'scene'>,
   mat?: MaterialLibrary,
+  options: ReferenceWeaponOptions = {},
 ): ReferenceWeaponRig {
   if (!REFERENCE_WEAPON_IDS.includes(weaponId)) throw new Error('Unregistered reference weapon');
   const model = gltf.scene;
+  const heavyHands = weaponId === 'minigun' && (options.heavyHands ?? isHeavyHandsCanaryRequested());
   const group = new THREE.Group();
   group.name = `ReferenceWeapon:${weaponId}`;
   group.userData.referenceWeaponId = weaponId;
@@ -98,7 +110,12 @@ export function adaptReferenceWeaponModel(
     group.updateMatrixWorld(true);
     const support = localPoint('support-socket-l');
     const reload = localPoint('reload-socket-l').sub(support);
-    if (mat) {
+    if (mat && heavyHands) {
+      const topBar = new THREE.Vector3(-.09, .23, .26).applyMatrix4(mount.matrixWorld);
+      group.worldToLocal(topBar);
+      const heavyReload = localPoint('reload-socket-l').sub(topBar);
+      hands = createReferenceHeavyHands(group, model, mount, mat, [heavyReload.x, heavyReload.y, heavyReload.z]);
+    } else if (mat) {
       hands = createFirstPersonHands(group, mat, support.z, support.y, [reload.x, reload.y, reload.z]);
       // Existing geometry's support palm is x=-.01. A parent correction survives
       // resetReload/updatePose, which intentionally overwrite the hand transform.
@@ -163,6 +180,34 @@ export function adaptReferenceWeaponModel(
       if (meshes > REFERENCE_MODEL_BUDGET.meshes || triangles > REFERENCE_MODEL_BUDGET.triangles) {
         throw new Error(`${weaponId}: raised sights exceed unchanged model budget`);
       }
+    } else if (heavyHands) {
+      // A two-tone chevron below the exact aim line stays legible against sky
+      // and dark targets while preserving the centre and aperture-margin rays.
+      sightAssembly = new THREE.Group(); sightAssembly.name = 'RestartHeavyAimReference';
+      group.add(sightAssembly);
+      const pane = localPoint('optic-socket');
+      const anchor = rear.clone(); anchor.z = pane.z - .002;
+      for (const [name, width, color, z] of [
+        ['Outline', .0026, PAL.opBoot, 0], ['Inset', .0012, PAL.capsuleWhite, .0002],
+      ] as const) {
+        const positions: number[] = [];
+        for (const sign of [-1, 1]) {
+          const a = new THREE.Vector2(0, -.005), b = new THREE.Vector2(sign * .006, -.012);
+          const perpendicular = new THREE.Vector2(b.y - a.y, a.x - b.x).normalize().multiplyScalar(width / 2);
+          const p = [a.clone().add(perpendicular), a.clone().sub(perpendicular), b.clone().add(perpendicular), b.clone().sub(perpendicular)];
+          for (const index of [0, 1, 2, 2, 1, 3]) positions.push(p[index].x, p[index].y, z);
+        }
+        const geometry = new THREE.BufferGeometry();
+        geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geometry.computeVertexNormals();
+        const material = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, toneMapped: false });
+        const marker = new THREE.Mesh(geometry, material); marker.name = `HeavyAim${name}`;
+        marker.position.copy(anchor); marker.renderOrder = 101; marker.frustumCulled = false;
+        sightAssembly.add(marker); meshes++; triangles += 4;
+      }
+    }
+    if (meshes > REFERENCE_MODEL_BUDGET.meshes || triangles > REFERENCE_MODEL_BUDGET.triangles) {
+      throw new Error(`${weaponId}: fitted presentation exceeds unchanged model budget`);
     }
     rear.applyQuaternion(rotation);
     // The correction is added to the controller's -0.148m shared ADS height.
@@ -173,6 +218,7 @@ export function adaptReferenceWeaponModel(
     let disposed = false;
     return {
       group, muzzle, eject, hands, weaponId, assetUrl, adsMount,
+      ...(heavyHands ? { cameraOffset: { x: 0, y: 0, z: -.30 } } : {}),
       stats: { meshes, triangles, textures },
       adsSightNames,
       dispose() {

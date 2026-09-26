@@ -656,7 +656,9 @@ export class WeaponsController {
     // blend — hip pose untouched at factor 0, settled ADS puts both authored
     // sight anchors on the camera axis. Never the camera, never the
     // reticle, never a fallback rig — the gun moves, nothing else does.
-    const referenceMount = this.referenceRigs.get(cur.def.id)?.adsMount;
+    const referenceRig = this.referenceRigs.get(cur.def.id);
+    const referenceMount = referenceRig?.adsMount;
+    const cameraOffset = referenceRig?.cameraOffset;
     const heroMount = referenceMount ?? HERO_ADS_MOUNT[cur.def.id];
     const hasAuthoredMount = referenceMount !== undefined || this.heroRigs.has(cur.def.id);
     if (heroMount !== undefined && this.adsT > 0 && hasAuthoredMount) {
@@ -668,6 +670,9 @@ export class WeaponsController {
       - 0.05 * this.sprintBlend
       - 0.06 * reloadDip
       - 0.09 * this.handLower;
+    this.tmpOffset.x += cameraOffset?.x ?? 0;
+    this.tmpOffset.y += cameraOffset?.y ?? 0;
+    this.tmpOffset.z += cameraOffset?.z ?? 0;
     this.tmpOffset.applyQuaternion(this.camera.quaternion).add(this.camera.position);
     cur.rig.group.position.copy(this.tmpOffset);
     const heroBlend = heroMount !== undefined && hasAuthoredMount ? this.adsT : 0;
@@ -689,6 +694,9 @@ export class WeaponsController {
       this.tmpOffset.copy(this.motion.offset);
       this.tmpOffset.y += (heroMount?.offsetY ?? 0) * heroBlend;
       this.tmpOffset.x += (referenceMount?.offsetX ?? 0) * heroBlend;
+      this.tmpOffset.x += cameraOffset?.x ?? 0;
+      this.tmpOffset.y += cameraOffset?.y ?? 0;
+      this.tmpOffset.z += cameraOffset?.z ?? 0;
       this.tmpOffset.applyQuaternion(this.camera.quaternion).add(this.camera.position);
       cur.rig.group.position.copy(this.tmpOffset);
       this.tmpEuler.copy(this.motion.rotation);
