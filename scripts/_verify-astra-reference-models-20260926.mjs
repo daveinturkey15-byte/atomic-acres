@@ -48,6 +48,9 @@ const parse = async (id) => {
 for (const id of api.REFERENCE_WEAPON_IDS) {
   const gltf = await parse(id);
   assert.equal(gltf.animations.length, 13, 'original presentation clips retained in file');
+  if (id === 'minigun') gltf.scene.traverse((n) => {
+    if (n.isMesh && n.name.endsWith('_Lens')) assert.equal(n.material.transparent, false, 'source pane reproduces opaque defect');
+  });
   const rig = api.adaptReferenceWeaponModel(id, gltf, mat);
   const resources = api.collectGltfResources(rig.group);
   for (const geometry of resources.geometries) {
@@ -73,11 +76,36 @@ for (const id of api.REFERENCE_WEAPON_IDS) {
   assert.deepEqual(rig.hands.supportHand.matrixWorld.elements, handBind.elements, 'reload bind restored');
   const mount = rig.adsMount;
   const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(mount.pitch, mount.yaw, 0, 'YXZ'));
-  for (const name of ['rear-sight-socket', 'front-sight-socket']) {
+  for (const name of rig.adsSightNames) {
     const p = point(name).applyQuaternion(q).add(new THREE.Vector3(mount.offsetX, -.148 + mount.offsetY, -.3));
     assert(Math.hypot(p.x, p.y) < .00001 && p.z < 0, `${id}: both sights on camera axis`);
   }
   assert(point('muzzle-socket').z < -.3, 'forward muzzle');
+  const rear = point('rear-sight-socket'), front = point('front-sight-socket');
+  const oldQ = new THREE.Quaternion().setFromUnitVectors(front.clone().sub(rear).normalize(), new THREE.Vector3(0, 0, -1));
+  const oldRear = rear.clone().applyQuaternion(oldQ);
+  const oldOffset = new THREE.Vector3(-oldRear.x, -oldRear.y, -.3);
+  rig.group.position.copy(oldOffset); rig.group.quaternion.copy(oldQ); rig.group.updateMatrixWorld(true);
+  const ray = new THREE.Raycaster(new THREE.Vector3(), new THREE.Vector3(0, 0, -1), .05, 2);
+  if (id !== 'minigun') {
+    assert(ray.intersectObject(rig.group, true).some((hit) => hit.object.name.includes('_Runtime_')), 'negative control: original anchor-only mount occludes actual aiming ray');
+  }
+  rig.group.position.set(mount.offsetX, -.148 + mount.offsetY, -.3);
+  rig.group.quaternion.copy(q); rig.group.updateMatrixWorld(true);
+  const rearWorld = rig.group.getObjectByName(rig.adsSightNames[0]).getWorldPosition(new THREE.Vector3());
+  const opaque = (hit) => {
+    const materials = Array.isArray(hit.object.material) ? hit.object.material : [hit.object.material];
+    return materials.some((m) => !m.transparent || m.opacity > .2);
+  };
+  for (const [x, y] of [[0, 0], [-.003, 0], [.003, 0], [-.003, .003], [.003, .003]]) {
+    ray.set(new THREE.Vector3(), new THREE.Vector3(x, y, rearWorld.z).normalize());
+    assert.equal(ray.intersectObject(rig.group, true).filter(opaque).length, 0, `${id}: actual triangle aperture clearance at ${x},${y}`);
+  }
+  if (id === 'minigun') rig.group.traverse((n) => {
+    if (n.isMesh && n.name.endsWith('_Lens')) {
+      assert(n.material.transparent && n.material.opacity <= .2 && !n.material.depthWrite, 'retained lens has transparent finish');
+    }
+  });
   let geometryDisposals = 0, materialDisposals = 0, textureDisposals = 0;
   for (const g of resources.geometries) g.addEventListener('dispose', () => geometryDisposals++);
   for (const m of resources.materials) if (m !== material) m.addEventListener('dispose', () => materialDisposals++);

@@ -130,3 +130,15 @@ VERIFIED: `node scripts/_verify-astra-reference-models-20260926.mjs` passed real
 CLAIMED: Existing project receipts declare project-original geometry and textures. The nineteen conventional weapon and crossbow receipts are retained at the historical source. No individual Crimson thumbnail receipt was found; it is recorded as a retained project variant explicitly approved by the owner, not given a fabricated receipt.
 
 OPEN: Root must inspect actual Mini Uzi/Magnum/Minigun hip, ADS and reload frames, verify browser PBR texture upload and contact quality (especially Minigun's wide grips), and measure draw-call/frame/memory cost. Imported menu art is a distinct presentation improvement, not proof of matching third-person models. No first-person clips, world/drop LODs or independent owner art acceptance are claimed by this intake.
+
+## ADS repair after actual pixel rejection
+
+VERIFIED: The root's `captures/salvage-reference-mini-uzi-ads.png` and `captures/salvage-reference-magnum-ads.png` show solid sight/receiver geometry covering the aim point. Read-only triangle raycasts reproduced the obstruction at 0.273m (Mini Uzi) and 0.317m (Magnum). The previous two-anchor alignment proof was insufficient: the anchors are embedded in solid material-group meshes. Those rejected frames and the original asset bytes remain preserved.
+
+VERIFIED: The original restart adapter now adds six small authored pieces per affected weapon: a rear U-notch with a physical attachment base, plus a mounted front blade. It measures the actual imported vertex silhouette and raises the effective sight line by 43.72mm (Mini Uzi) or 29.43mm (Magnum). The entire original receiver remains visible and intact. The actual front blade sits 1.5mm beneath its effective aim marker for a six-o'clock hold. Derived rig totals are 13 meshes/11,496 triangles and 15 meshes/12,688 triangles, within the unchanged 16-mesh/16,000-triangle cap. Two explicit effective sight anchors replace the unsuitable original sockets for ADS calculation; original sockets remain for provenance.
+
+VERIFIED: The Minigun's separate Lens material was actually opaque (`transparent=false`, opacity1, depthWrite=true). Its existing pane geometry now has an original transparent polycarbonate finish (opacity0.16, depthWrite=false), retaining the same owned material and exactly-once disposal. It remains eight meshes/10,840 triangles. No GLB or image byte changed.
+
+VERIFIED: The enhanced CPU proof raycasts the real decoded triangles along the camera centre and four aperture-margin rays. All five rays clear opaque geometry on each rig. A negative control restores the original socket-only mount and must detect the Mini Uzi/Magnum solid obstruction. Hash, contact, reload and resource-disposal assertions remain in force. These tests protect geometric visibility but do not replace rendered acceptance.
+
+OPEN: The root must re-render and inspect all three ADS frames, physical sight attachments and hip/reload appearance. This adapter repair is a source candidate until those actual pixels pass.

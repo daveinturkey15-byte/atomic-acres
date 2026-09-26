@@ -331,5 +331,31 @@
   ],
   "acceptance": "VERIFIED byte hashes, 21 WebP pixel decodes with Pillow, real r180 Meshopt geometry decode, socket fit, ADS solve, reload reset and owned-resource disposal. OPEN actual restart pixels, browser texture upload, hand fit and GPU cost.",
   "runtimeAdapter": "src/weapons/reference-weapon-models.ts",
-  "integration": "Three bounded sequential async upgrades; existing procedural models remain until successful load; no imported animation clips played; no source modules or scripts copied."
+  "integration": "Three bounded sequential async upgrades; existing procedural models remain until successful load; no imported animation clips played; no source modules or scripts copied.",
+  "derivedAdapter": {
+    "source": "src/weapons/reference-weapon-models.ts",
+    "reason": "Actual restart ADS pixels revealed original sight sockets inside solid geometry; initial anchor-only CPU proof was insufficient.",
+    "mini-uzi": {
+      "newGeometry": "Six original meshes: mounted U-notch and front blade; effective raised sight anchors",
+      "meshes": 13,
+      "triangles": 11496,
+      "liftMeters": 0.04372256528423341
+    },
+    "magnum": {
+      "newGeometry": "Six original meshes: mounted U-notch and front blade; effective raised sight anchors",
+      "meshes": 15,
+      "triangles": 12688,
+      "liftMeters": 0.02943013055330303
+    },
+    "minigun": {
+      "materialCorrection": "Existing opaque Lens mesh receives transparent polycarbonate finish; opacity0.16 and depthWritefalse; no geometry removed"
+    },
+    "originalAssetBytes": "unchanged; all24inputhashespreserved",
+    "fixedBudgets": {
+      "meshes": 16,
+      "triangles": 16000,
+      "textures": 8
+    },
+    "acceptance": "CPU actualtrianglecenter+aperturemarginrays pass; oldmountnegativecontrol correctlyblocked; rootpixelreviewstillOPEN"
+  }
 }

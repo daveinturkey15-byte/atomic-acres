@@ -26,6 +26,7 @@ import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import net from 'node:net';
 import { usePreview } from './lib/preview.mjs';
+import { waitForRenderedPage } from './lib/render-ready.mjs';
 import { spawnGuarded, killTree } from './lib/proc-guard.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -112,7 +113,11 @@ const step = (name, ok, detail) => { report.steps.push({ name, ok, detail }); sa
 
 async function openMultiplayer(P, callsign) {
   await P.page.goto(url, { waitUntil: 'load', timeout: 90000 });
+  const readyDeadline = Date.now() + 180000;
   await P.page.waitForFunction(() => window.__NT && window.__NT.ready === true && window.__AA_UI && window.__NTGAME, null, { timeout: 180000 });
+  // Device readiness can precede cold WebGPU frames; keep both gates inside
+  // the existing boot budget before the ordinary visible Multiplayer click.
+  await waitForRenderedPage(P.page, Math.max(1, readyDeadline - Date.now()));
   await P.page.getByRole('button', { name: 'Multiplayer' }).click();
   await P.page.getByLabel('Link').selectOption('lan');
   await P.page.getByLabel('Signal server').fill(SIGNAL_URL);

@@ -24,6 +24,7 @@ export interface ReferenceWeaponRig extends ViewmodelRig {
   readonly assetUrl: string;
   readonly adsMount: { offsetX: number; offsetY: number; pitch: number; yaw: number };
   readonly stats: { meshes: number; triangles: number; textures: number };
+  readonly adsSightNames: readonly [string, string];
   dispose(): void;
 }
 
@@ -56,6 +57,7 @@ export function adaptReferenceWeaponModel(
   group.userData.referenceWeaponId = weaponId;
   group.userData.sourceProvenance = './assets/reference-weapons/source-provenance.json';
   let hands: FirstPersonHandsRig | undefined;
+  let sightAssembly: THREE.Group | undefined;
   try {
     for (const name of REFERENCE_SOCKETS) {
       if (!model.getObjectByName(name)) throw new Error(`${weaponId}: missing ${name}`);
@@ -71,6 +73,12 @@ export function adaptReferenceWeaponModel(
       node.castShadow = false;
       node.receiveShadow = false;
       node.renderOrder = 100;
+      // The retained Minigun exports its separate optic pane as opaque.
+      // A transparent polycarbonate finish preserves the actual pane geometry.
+      if (weaponId === 'minigun' && node.name.endsWith('_Lens')) {
+        const pane = node.material as THREE.MeshStandardMaterial;
+        pane.transparent = true; pane.opacity = .16; pane.depthWrite = false;
+      }
     });
     const textures = collectGltfResources(model).textures.size;
     if (!meshes || meshes > REFERENCE_MODEL_BUDGET.meshes || textures < 5
@@ -109,6 +117,53 @@ export function adaptReferenceWeaponModel(
     if (line.length() < .05 || line.z >= 0) throw new Error(`${weaponId}: invalid sight line`);
     const rotation = new THREE.Quaternion().setFromUnitVectors(line.normalize(), new THREE.Vector3(0, 0, -1));
     const euler = new THREE.Euler().setFromQuaternion(rotation, 'YXZ');
+    let adsSightNames: readonly [string, string] = ['rear-sight-socket', 'front-sight-socket'];
+    if (weaponId !== 'minigun') {
+      // Imported sight markers sit inside solid geometry. Preserve that mesh;
+      // build a physically mounted open notch above its measured silhouette.
+      let top = -Infinity;
+      const vertex = new THREE.Vector3();
+      model.traverse((node) => {
+        if (!(node instanceof THREE.Mesh)) return;
+        const positions = node.geometry.getAttribute('position');
+        for (let i = 0; i < positions.count; i++) {
+          vertex.fromBufferAttribute(positions, i).applyMatrix4(node.matrixWorld).applyQuaternion(rotation);
+          top = Math.max(top, vertex.y);
+        }
+      });
+      const lift = top - rear.clone().applyQuaternion(rotation).y + .012;
+      if (lift < .021 || lift > .075) throw new Error(`${weaponId}: sight mount outside bounded fit`);
+      const inverse = rotation.clone().invert();
+      const raised = new THREE.Vector3(0, lift, 0).applyQuaternion(inverse);
+      const oldRear = rear.clone(), oldFront = front.clone();
+      rear.add(raised); front.add(raised);
+      sightAssembly = new THREE.Group();
+      sightAssembly.name = 'RestartRaisedIronSights';
+      group.add(sightAssembly);
+      const metal = new THREE.MeshStandardMaterial({ color: 0x263034, metalness: .75, roughness: .43 });
+      const part = (name: string, anchor: THREE.Vector3, x: number, y: number, w: number, h: number, d: number) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), metal);
+        mesh.name = name;
+        mesh.position.copy(new THREE.Vector3(x, y, 0).applyQuaternion(inverse).add(anchor));
+        mesh.quaternion.copy(inverse); mesh.frustumCulled = false; mesh.renderOrder = 100;
+        sightAssembly!.add(mesh); meshes++; triangles += 12;
+      };
+      part('RestartRearNotchLeft', rear, -.014, 0, .006, .025, .012);
+      part('RestartRearNotchRight', rear, .014, 0, .006, .025, .012);
+      part('RestartRearNotchBase', rear, 0, -.016, .034, .010, .014);
+      part('RestartRearSightMount', oldRear, 0, (lift - .021) / 2, .022, lift - .021, .020);
+      part('RestartFrontSightMount', oldFront, 0, (lift - .021) / 2, .022, lift - .021, .020);
+      // Front blade tip sits 1.5mm below the sight ray, as a usable six-o'clock hold.
+      part('RestartFrontBlade', front, 0, -.01125, .006, .0195, .010);
+      for (const [name, position] of [['restart-rear-aperture', rear], ['restart-front-aim', front]] as const) {
+        const anchor = new THREE.Object3D(); anchor.name = name; anchor.position.copy(position); sightAssembly.add(anchor);
+      }
+      adsSightNames = ['restart-rear-aperture', 'restart-front-aim'];
+      group.userData.sightLiftMeters = lift;
+      if (meshes > REFERENCE_MODEL_BUDGET.meshes || triangles > REFERENCE_MODEL_BUDGET.triangles) {
+        throw new Error(`${weaponId}: raised sights exceed unchanged model budget`);
+      }
+    }
     rear.applyQuaternion(rotation);
     // The correction is added to the controller's -0.148m shared ADS height.
     const adsMount = { offsetX: -rear.x, offsetY: .148 - rear.y, pitch: euler.x, yaw: euler.y };
@@ -119,17 +174,20 @@ export function adaptReferenceWeaponModel(
     return {
       group, muzzle, eject, hands, weaponId, assetUrl, adsMount,
       stats: { meshes, triangles, textures },
+      adsSightNames,
       dispose() {
         if (disposed) return;
         disposed = true;
         group.removeFromParent();
         if (hands) { disposeOwnedGeometries(hands.root); hands.root.removeFromParent(); }
         releaseModel(model);
+        if (sightAssembly) releaseModel(sightAssembly);
       },
     };
   } catch (error) {
     if (hands) disposeOwnedGeometries(hands.root);
     releaseModel(model);
+    if (sightAssembly) releaseModel(sightAssembly);
     throw error;
   }
 }

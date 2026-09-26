@@ -510,7 +510,7 @@ const canvas = world.renderer.domElement;
 canvas.addEventListener('mousedown', (e) => {
   if (pilot.active()) return;
   try {
-    if (e.button === 0 || e.button === 2) weapons.pointerDown(e.button);
+    if (e.button === 0 || e.button === 2) weapons.pointerDown(e.button, performance.now());
   } catch { /* headless: no pointer, no weapon input */ }
 });
 addEventListener('mouseup', (e) => {

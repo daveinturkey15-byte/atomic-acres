@@ -278,6 +278,10 @@ export class WeaponsController {
   private adsOn = false;
   private adsT = 0;
   private autoTimer = 0;
+  /** Fresh native press not yet accounted for by a frame's elapsed time. */
+  private autoInputAtMs: number | null = null;
+  /** Manual cooldown survives release; it belongs to the shot, not the held trigger. */
+  private coolInputAtMs: number | null = null;
   private sprintBlend = 0;
   private bobPhase = 0;
   private bobScale = 0;
@@ -566,7 +570,12 @@ export class WeaponsController {
 
     // Bloom bleeds off a few seconds after the last shot.
     if (cur.bloom > 0) cur.bloom = Math.max(0, cur.bloom - def.spread.bloomMax * dt * 1.4);
-    if (cur.cool > 0) cur.cool -= dt;
+    let cooldownElapsed = dt;
+    if (this.coolInputAtMs !== null) {
+      cooldownElapsed = Math.min(dt, Math.max(0, this.nowMs - this.coolInputAtMs) / 1000);
+      if (this.nowMs >= this.coolInputAtMs) this.coolInputAtMs = null;
+    }
+    if (cur.cool > 0) cur.cool -= cooldownElapsed;
 
     // ADS on the weapon's own timer: FOV, spread, pose and moveScale ride adsT.
     const adsTarget = this.adsOn ? 1 : 0;
@@ -594,7 +603,12 @@ export class WeaponsController {
 
     // Auto fire while the trigger is held.
     if (this.triggerHeld && def.auto && !cur.reloading) {
-      this.autoTimer -= dt;
+      let elapsed = dt;
+      if (this.autoInputAtMs !== null) {
+        elapsed = Math.min(dt, Math.max(0, this.nowMs - this.autoInputAtMs) / 1000);
+        if (this.nowMs >= this.autoInputAtMs) this.autoInputAtMs = null;
+      }
+      this.autoTimer -= elapsed;
       while (this.autoTimer <= 0) {
         if (!this.tryFire(true)) {
           this.autoTimer = 0;
@@ -691,7 +705,7 @@ export class WeaponsController {
     this.pushHud();
   }
 
-  pointerDown(button: number): void {
+  pointerDown(button: number, inputAtMs?: number): void {
     // Audio lane: every click is a user gesture — unlock WebAudio here.
     this.audioSvc.resume();
     if (!this.visible) return;
@@ -699,8 +713,14 @@ export class WeaponsController {
       this.triggerHeld = true;
       const cur = this.weapons[this.active];
       if (cur.reloading) return;
-      if (this.tryFire(false) && cur.def.auto) this.autoTimer = cur.def.interval;
-      else this.autoTimer = 0;
+      if (this.tryFire(false, inputAtMs) && cur.def.auto) {
+        this.autoTimer = cur.def.interval;
+        this.autoInputAtMs = typeof inputAtMs === 'number' && Number.isFinite(inputAtMs) && inputAtMs > this.nowMs
+          ? inputAtMs : null;
+      } else {
+        this.autoTimer = 0;
+        this.autoInputAtMs = null;
+      }
     } else if (button === 2) {
       this.adsOn = true;
       this.pushHud();
@@ -711,6 +731,7 @@ export class WeaponsController {
     if (button === 0) {
       this.triggerHeld = false;
       this.autoTimer = 0;
+      this.autoInputAtMs = null;
     } else if (button === 2) {
       this.adsOn = false;
       this.pushHud();
@@ -815,6 +836,7 @@ export class WeaponsController {
 
   /** A new life: whatever the hand was doing is over. */
   onSelfSpawn(primaryId?: string | null, rounds = 0, sidearmId?: string | null, sidearmRounds?: number): void {
+    this.coolInputAtMs = null;
     this.ord.cancel();
     for (const w of this.weapons) {
       w.reloading = false;
@@ -858,6 +880,8 @@ export class WeaponsController {
       this.adsT = 0;
       this.triggerHeld = false;
       this.autoTimer = 0;
+      this.autoInputAtMs = null;
+      this.coolInputAtMs = null;
       this.kickPitch = 0;
       this.kickYaw = 0;
       this.climbPitch = 0;
@@ -1130,6 +1154,8 @@ export class WeaponsController {
     this.adsT = 0;
     this.triggerHeld = false;
     this.autoTimer = 0;
+    this.autoInputAtMs = null;
+    this.coolInputAtMs = null;
     if (Math.abs(this.camera.fov - BASE_FOV) > 0.01) {
       this.camera.fov = BASE_FOV;
       this.camera.updateProjectionMatrix();
@@ -1172,7 +1198,7 @@ export class WeaponsController {
     });
   }
 
-  private tryFire(fromAuto: boolean): boolean {
+  private tryFire(fromAuto: boolean, inputAtMs?: number): boolean {
     const cur = this.weapons[this.active];
     const def = cur.def;
     // The trigger waits for the off hand: no bullet mid-throw, mid-stab or mid-reach.
@@ -1193,7 +1219,13 @@ export class WeaponsController {
     // throw anywhere in the effects path cannot swallow the shot the host is
     // meant to resolve. Camera forward carries the recoil already applied this
     // frame, which is what the player was actually pointing at.
-    this.claim(def.id, fromAuto ? this.nowMs + Math.min(0, this.autoTimer) * 1000 : this.nowMs);
+    // Native input supplies performance.now() in the frame clock's epoch.
+    // Synthetic callers keep virtual frame time; invalid/older stamps cannot
+    // rewind it. Automatic catch-up keeps its original scheduled timestamps.
+    const manualAt = typeof inputAtMs === 'number' && Number.isFinite(inputAtMs)
+      ? Math.max(this.nowMs, inputAtMs) : this.nowMs;
+    if (!fromAuto && manualAt > this.nowMs) this.coolInputAtMs = manualAt;
+    this.claim(def.id, fromAuto ? this.nowMs + Math.min(0, this.autoTimer) * 1000 : manualAt);
 
     // Spread cone: base (hip<->ADS) + movement + accumulated bloom, crouch bonus.
     cur.bloom = Math.min(def.spread.bloomMax, cur.bloom + def.spread.bloom);
