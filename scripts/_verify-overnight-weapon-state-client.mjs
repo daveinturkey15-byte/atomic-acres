@@ -147,6 +147,59 @@ assert.equal(reload.ctl.snapshot().mag, 4); assert.equal(reload.ctl.snapshot().r
 assert.equal(reload.ctl.grantRounds('m4a1', 999), false, 'total-only grant cannot double-credit canonical reserve');
 reload.close(); pass('ordinary dry reload finishes only from host magazine/reserve, never by client repacking');
 
+// Actual controller lifecycle: browser control loss is not an explicit reload cancel.
+for (const acknowledged of [false, true]) {
+  const f = fixture('m4a1', { mag: 2, reserve: 4 });
+  assert.equal(f.ctl.command('reload'), true);
+  const started = f.host.snapshot(f.now); assert(started.primary.reloadRemainingMs > 0);
+  if (acknowledged) f.deliver();
+  const beforeIntents = f.intents.length;
+  (f.ctl.releaseWeaponInput ?? f.ctl.cancelWeaponAction).call(f.ctl);
+  assert.equal(f.intents.length, beforeIntents, 'focus/lock loss must not send a reload cancellation');
+  assert.equal(f.host.snapshot(f.now).primary.reloadRemainingMs, started.primary.reloadRemainingMs);
+  f.advance(started.primary.reloadRemainingMs + 100);
+  assert.equal(f.host.primary.mag, 6); assert.equal(f.host.primary.reserve, 0);
+  assert.equal(f.ctl.snapshot().mag, 6); assert(!f.ctl.snapshot().reloading);
+  f.close();
+}
+
+const staleChargeReload = fixture(); staleChargeReload.down(); staleChargeReload.advance(750); staleChargeReload.up(); staleChargeReload.down(); staleChargeReload.advance(100);
+assert(staleChargeReload.ctl.command('reload'));
+const pendingReloadCount = staleChargeReload.intents.length;
+const priorReloadShots = staleChargeReload.shots.length;
+staleChargeReload.ctl.releaseWeaponInput();
+assert.equal(staleChargeReload.intents.length, pendingReloadCount, 'stale charge cannot cancel a newer pending reload');
+const pendingReloadState = staleChargeReload.host.snapshot(staleChargeReload.now);
+assert(pendingReloadState.primary.reloadRemainingMs > 0);
+staleChargeReload.advance(pendingReloadState.primary.reloadRemainingMs + 1);
+assert.equal(staleChargeReload.shots.length, priorReloadShots); staleChargeReload.close();
+const pendingChargeRelease = fixture(); pendingChargeRelease.down();
+pendingChargeRelease.ctl.releaseWeaponInput(); pendingChargeRelease.advance(1000);
+assert.equal(pendingChargeRelease.shots.length, 0);
+assert.equal(pendingChargeRelease.host.snapshot(pendingChargeRelease.now).primary.chargeElapsedMs, null);
+pendingChargeRelease.close();
+pass('focus/lock loss preserves acknowledged or pending host reload and exact ammunition transfer');
+
+for (const mode of ['release', 'dispose']) {
+  const f = fixture(); f.down(); f.advance(200);
+  if (mode === 'release') (f.ctl.releaseWeaponInput ?? f.ctl.cancelWeaponAction).call(f.ctl);
+  else f.ctl.dispose();
+  assert.equal(f.host.snapshot(f.now).primary.chargeElapsedMs, null);
+  assert(f.intents.some(i => i.intent.action === 'cancel'));
+  if (mode === 'release') f.advance(1000);
+  assert.equal(f.shots.length, 0); f.close();
+}
+const lostAuto = fixture('m4a1'); lostAuto.down(); lostAuto.advance(100);
+(lostAuto.ctl.releaseWeaponInput ?? lostAuto.ctl.cancelWeaponAction).call(lostAuto.ctl);
+const stoppedShots = lostAuto.shots.length; lostAuto.advance(1000);
+assert.equal(lostAuto.shots.length, stoppedShots); lostAuto.close();
+const lostDocument = fixture('m4a1', { mag: 2, reserve: 4 });
+lostDocument.ctl.command('reload'); const documentReload = lostDocument.host.snapshot(lostDocument.now);
+lostDocument.ctl.dispose(); lostDocument.host.advance(lostDocument.now + documentReload.primary.reloadRemainingMs + 1);
+assert.equal(lostDocument.host.primary.mag, 6); assert.equal(lostDocument.host.primary.reserve, 0);
+lostDocument.close();
+pass('input release/disposal cancel paid charge and held automatic fire but retain document-independent reload');
+
 const equip = fixture('m4a1'); equip.ctl.keyDown('Digit2');
 assert.equal(equip.ctl.snapshot().id, 'magnum'); assert.equal(equip.ctl.command('fire'), false);
 equip.deliver(); assert.equal(equip.ctl.command('fire'), true);

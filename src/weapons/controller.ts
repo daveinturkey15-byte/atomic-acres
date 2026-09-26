@@ -852,7 +852,22 @@ export class WeaponsController {
     this.syncHudState();
   }
 
-  /** Menu, death, possession, loss of focus/lock and teardown share one cancel. */
+  /** Losing browser control releases held input; a paid host reload continues.
+   * A stale charge level cannot cancel a newer pending reload/equip intent. */
+  releaseWeaponInput(): void {
+    const cur = this.weapons[this.active];
+    const row = this.weaponAuthority.project(cur.def.id, this.nowMs);
+    const pending = this.pendingWeaponIntent;
+    const levelCurrent = !pending || (this.weaponAuthority.state?.lastIntentSeq ?? -1) >= pending.seq;
+    const charging = this.chargePressSeq !== null || pending?.action === 'charge-start'
+      || (levelCurrent && row && row.chargeElapsedMs !== null);
+    this.triggerHeld = false; this.chargePressSeq = null; this.chargeFired = false;
+    this.autoTimer = 0; this.autoInputAtMs = null; this.adsOn = false;
+    if (charging && pending?.action !== 'cancel') this.sendWeaponIntent('cancel', cur.def.id);
+    this.syncHudState();
+  }
+
+  /** Explicit action interruption, death, possession and kit changes cancel reload too. */
   cancelWeaponAction(): void {
     const cur = this.weapons[this.active];
     const row = this.weaponAuthority.project(cur.def.id, this.nowMs);
@@ -1574,7 +1589,7 @@ export class WeaponsController {
   dispose(): void {
     if (this.disposed) return;
     this.disposed = true;
-    this.cancelWeaponAction();
+    this.releaseWeaponInput();
     this.effects.dispose();
     if (this.carbineCanaryRig) {
       this.carbineCanaryRig.dispose();

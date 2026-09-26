@@ -1,0 +1,9 @@
+# Input release and host reload - localized repair
+
+VERIFIED: the stronger real rejoin attempt2 on source69654e7 admitted native R with MP5 magazine28/reserve120, reload1800ms, intent4/revision11. After actual document destruction the host accepted intent5/revision13 and kept28/120 with no reload. The ordinary timer had been canceled by client teardown. The failure is retained locally at captures/overnight-69654e7-rejoin-attempt2.json; raw transport resume credentials must remain local.
+
+VERIFIED: repair1/2 for this distinct lifecycle issue separates releaseWeaponInput from explicit cancelWeaponAction. Blur, lost native pointer lock, the input-admission transition and disposal stop held charge, automatic fire and ADS. They preserve normal host reload and its exact ammunition split. An old charge level cannot override a newer pending reload/equip intent. Explicit equip/offhand interruption, spawn/death, possession and action cancellation retain their previous behavior. No wire action, host timer, shot threshold or acceptance assertion changed.
+
+VERIFIED: preserved original controller/main/helper and actual failing CPU replay in captures/weapon-focus-reload-before. It expected one reload intent and observed two after input loss. The new actual-controller/HostWeaponState replay passes15 groups, including pending and acknowledged reloads, old charge plus pending reload, unacknowledged charge release, held automatic-fire cessation, document disposal during reload, existing explicit cancellation and exact host transfer. One new fixture initially asserted zero shots despite spending one cartridge to set up reload; corrected only its prior-shot baseline, with the failed output retained in the working transcript.
+
+OPEN: browser acceptance on the repaired compiled source; local two-browser networking is separate from physical LAN/WAN.

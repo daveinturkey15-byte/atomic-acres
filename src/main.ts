@@ -525,7 +525,7 @@ function footWeaponInputAllowed(requireNativeLock = true): boolean {
     && view.match.phase === 'active' && document.hasFocus() && !pilot.active()
     && (!requireNativeLock || document.pointerLockElement === canvas);
 }
-function cancelWeaponInput(): void { weapons.cancelWeaponAction(); }
+function cancelWeaponInput(): void { weapons.releaseWeaponInput(); }
 function cancelUnlockedWeaponInput(): void {
   if (document.pointerLockElement !== canvas) cancelWeaponInput();
 }
@@ -609,7 +609,7 @@ function frame(): void {
   if (!cameraHeldByQA) {
     const pilotView = presentedClient?.view();
     const weaponInputAllowed = footWeaponInputAllowed();
-    if (weaponInputWasAllowed && !weaponInputAllowed) weapons.cancelWeaponAction();
+    if (weaponInputWasAllowed && !weaponInputAllowed) weapons.releaseWeaponInput();
     weaponInputWasAllowed = weaponInputAllowed;
     pilot.sync(presentedClient?.streakEffects ?? [], presentedClient?.selfId ?? null,
       pilotView?.alive === true && pilotView.match.phase === 'active', presentedClient?.streakEffectsAt ?? 0, now);

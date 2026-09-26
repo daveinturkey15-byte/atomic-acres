@@ -154,7 +154,7 @@ async function equip(page, key) {
   await page.keyboard.press(key);
   await page.waitForFunction(wanted => {
     const w = window.__NTGAME.snapshot().weaponState, gun = window.__NT.weaponCmd('state');
-    return w?.activeWeaponId === wanted && w.lastIntentReason === null && gun.id === wanted;
+    return w?.activeWeaponId === wanted && w.lastIntentReason === null && gun.id === wanted && !gun.actionPending;
   }, id, { timeout: 15000 });
 }
 async function acquireNativeLock(page) {

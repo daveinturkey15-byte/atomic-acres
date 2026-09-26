@@ -155,15 +155,23 @@ async function aimAndFire(id = null) {
       phases.push({ at: w.at, revision: w.revision, lastIntentSeq: w.lastIntentSeq,
         lastIntentReason: w.lastIntentReason, mag: w.primary.mag,
         chargeElapsedMs: w.primary.chargeElapsedMs, chargeRequiredMs: w.primary.chargeRequiredMs });
+      report.activeChargePhases = phases;
       charged ||= w.primary.chargeElapsedMs !== null;
-      if (!report.chargingFrame && w.primary.chargeElapsedMs !== null && w.primary.chargeElapsedMs < 750) {
-        assert.match(await owned.page.locator('.hud-reload').textContent(), /CHARGING/, 'actual charge HUD must be visible');
+      const chargeHud = owned.page.locator('.hud-reload');
+      const chargeText = await chargeHud.textContent();
+      phases.at(-1).hud = { text: chargeText, charging: current.gun.charging, pending: current.gun.actionPending };
+      // Authority can acknowledge on the input callback before the next RAF
+      // presents it. Require the same actual HUD during a later live charge
+      // sample, rather than treating that earlier callback as a rendered frame.
+      if (!report.chargingFrame && w.primary.chargeElapsedMs !== null && w.primary.chargeElapsedMs < 750
+        && current.gun.charging && !current.gun.actionPending && /CHARGING/.test(chargeText ?? '') && await chargeHud.isVisible()) {
         await owned.page.screenshot({ path: join(out, `${tag}-charging.png`) });
         report.chargingFrame = `${tag}-charging.png`;
       }
       if (self(current).rounds === self(before).rounds - 1) break;
     } while (Date.now() < end);
     assert(charged, 'host must actually acknowledge a charging phase');
+    assert(report.chargingFrame, 'actual visible charge HUD must be captured during an admitted incomplete hold');
     const firstCharge = phases.find(p => p.chargeElapsedMs !== null);
     assert(firstCharge && current.lastWeaponShot.weaponId === 'railgun'
       && current.lastWeaponShot.seq > before.lastWeaponShot.seq
