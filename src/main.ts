@@ -714,6 +714,7 @@ interface QA {
   spawn: (team: 'a' | 'b') => void;
   release: () => void;
   stats: () => Record<string, unknown>;
+  shadowMaterial: () => Record<string, unknown>;
   moduleStats: typeof moduleStats;
   colliderCount: number;
   colliderSnapshot: () => {
@@ -866,6 +867,8 @@ const qa: QA = {
       environment: getEnvironmentFlags(),
     };
   },
+  shadowMaterial: () => ({ installed: world.shadowMaterialCanary.installed,
+    reason: world.shadowMaterialCanary.reason, ...world.shadowMaterialCanary.counts() }),
   moduleStats,
   colliderCount: colliders.length,
   colliderSnapshot() {

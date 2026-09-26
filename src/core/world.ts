@@ -56,6 +56,7 @@ import type { Node } from 'three/webgpu';
 import { PAL } from './palette';
 import { BOUND_X_MIN, BOUND_X_MAX, BOUND_Z } from './layout';
 import { bootRenderer, type BackendKind, type WorldRenderer } from './renderer';
+import { installShadowMaterialCanary, type ShadowMaterialCanary } from './shadow-material-canary';
 import { buildPost, type PostBackend, type PostChain } from './post';
 import {
   createAtmosphere,
@@ -73,6 +74,7 @@ import {
 
 export interface World {
   renderer: WorldRenderer;
+  shadowMaterialCanary: ShadowMaterialCanary;
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   sun: THREE.DirectionalLight;
@@ -149,6 +151,7 @@ function makeSky(u: AtmosphereUniforms): THREE.Mesh {
 export function createWorld(canvasParent: HTMLElement): World {
   const boot = bootRenderer();
   const renderer = boot.renderer;
+  const shadowMaterialCanary = installShadowMaterialCanary(renderer);
   canvasParent.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
@@ -299,6 +302,7 @@ export function createWorld(canvasParent: HTMLElement): World {
   addEventListener('resize', resize);
   const dispose = () => {
     removeEventListener('resize', resize);
+    shadowMaterialCanary.dispose();
     post.dispose();
     atmosphere.dispose();
     sky.geometry.dispose();
@@ -312,7 +316,7 @@ export function createWorld(canvasParent: HTMLElement): World {
     /* already console.error'd in renderer.ts — this catch marks it handled */
   });
   return {
-    renderer, scene, camera, sun, backend: boot.requested, backendReady: boot.ready, render,
+    renderer, shadowMaterialCanary, scene, camera, sun, backend: boot.requested, backendReady: boot.ready, render,
     postEnabled: post.enabled, postBackend: post.backend, post, atmosphere, resize, dispose,
   };
 }
