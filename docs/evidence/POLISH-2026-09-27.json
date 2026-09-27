@@ -1,0 +1,716 @@
+{
+  "schemaVersion": 1,
+  "project": "atomic-acres",
+  "checkedAt": "2026-09-27T15:49:42.033Z",
+  "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+  "gitHead": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+  "previewUrl": "http://localhost:4362/?preview=68f3f35",
+  "identity": {
+    "project": "atomic-acres",
+    "repository": "daveinturkey15-byte/atomic-acres",
+    "lineage": "standalone restart begun 2026-09-17",
+    "branch": "salvage/full-game-20260926",
+    "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+    "stampedAt": "2026-09-27T15:21:42.097Z",
+    "entry": "assets/index-kobPoli-.js",
+    "entrySha256": "a9ae9cadf44d0aea0a2656aeae8e3f16f57bac05544718347aeaf8c8032007d9",
+    "untrackedPublicFiles": [],
+    "acceptance": "VERIFIED committed source, CPU/build/raw source-map/HTTP; actual visual/net gates tracked separately in POLISH handoff. Isolated candidate, not production.",
+    "runtimeEntries": [
+      {
+        "path": "assets/boot-status-GuGUkyp6.js",
+        "bytes": 1323,
+        "sha256": "70e0b2c004e60c5772e6343128f17164f62d7f8da97adb796d079ace684d3eb9"
+      },
+      {
+        "path": "assets/index-kobPoli-.js",
+        "bytes": 2536,
+        "sha256": "a9ae9cadf44d0aea0a2656aeae8e3f16f57bac05544718347aeaf8c8032007d9"
+      },
+      {
+        "path": "assets/main-mQX_U2nK.js",
+        "bytes": 2066607,
+        "sha256": "ad5d2c13562ac91220d067bfdeff56fccaeb1ffa1037f2d45bb6361707752322"
+      }
+    ]
+  },
+  "runtimeReadback": [
+    {
+      "path": "assets/boot-status-GuGUkyp6.js",
+      "bytes": 1323,
+      "sha256": "70e0b2c004e60c5772e6343128f17164f62d7f8da97adb796d079ace684d3eb9",
+      "state": "VERIFIED actual HTTP bytes"
+    },
+    {
+      "path": "assets/index-kobPoli-.js",
+      "bytes": 2536,
+      "sha256": "a9ae9cadf44d0aea0a2656aeae8e3f16f57bac05544718347aeaf8c8032007d9",
+      "state": "VERIFIED actual HTTP bytes"
+    },
+    {
+      "path": "assets/main-mQX_U2nK.js",
+      "bytes": 2066607,
+      "sha256": "ad5d2c13562ac91220d067bfdeff56fccaeb1ffa1037f2d45bb6361707752322",
+      "state": "VERIFIED actual HTTP bytes"
+    }
+  ],
+  "fallbackReadback": [
+    {
+      "port": 4361,
+      "sourceCommit": "ec8eba38613dcbe9e171b064fae831ad925433a3",
+      "entry": "assets/index-OtNCQL-M.js",
+      "entrySha256": "e366c7df7b235c2e735e91d0a91bf8fa0abb395f34466ce3ea21fe1626fd250d",
+      "state": "VERIFIED retained HTTP identity/entry"
+    },
+    {
+      "port": 4348,
+      "sourceCommit": "2f837ae3d53cc1d7c3a78610e1276ab085a271cb",
+      "entry": "assets/index-BFvUiAGm.js",
+      "entrySha256": "35e31151acac08c75e3d8ed2a15af078f1879d8cf4d6f578dcf1fb0a1abd464f",
+      "state": "VERIFIED retained HTTP identity/entry"
+    }
+  ],
+  "exactBuildManifest": "captures/builds/polish-candidate-68f3f35-manifest.json",
+  "latestGates": {
+    "menu": {
+      "receipt": "captures/polish-gates-20260927/menu-1790522503453.json",
+      "name": "menu",
+      "at": "2026-09-27T15:21:43.452Z",
+      "gpuFreeMiB": 6326,
+      "ramGiB": 22.62552261352539,
+      "requiredGpuMiB": 4096,
+      "requiredRamGiB": 12,
+      "state": "EXIT_0_REQUIRES_REPORT_REVIEW",
+      "elapsedPassSeconds": 3670.362,
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "exitCode": 0,
+      "finishedAt": "2026-09-27T15:22:42.755Z"
+    },
+    "playcap": {
+      "receipt": "captures/polish-gates-20260927/playcap-1790522567542.json",
+      "name": "playcap",
+      "at": "2026-09-27T15:22:47.541Z",
+      "gpuFreeMiB": 5736,
+      "ramGiB": 23.420387268066406,
+      "requiredGpuMiB": 4096,
+      "requiredRamGiB": 12,
+      "state": "EXIT_0_REQUIRES_REPORT_REVIEW",
+      "elapsedPassSeconds": 3734.433,
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "exitCode": 0,
+      "finishedAt": "2026-09-27T15:23:45.109Z"
+    },
+    "rejoin": {
+      "receipt": "captures/polish-gates-20260927/rejoin-1790522782336.json",
+      "name": "rejoin",
+      "at": "2026-09-27T15:26:22.334Z",
+      "gpuFreeMiB": 4991,
+      "ramGiB": 23.462284088134766,
+      "requiredGpuMiB": 4096,
+      "requiredRamGiB": 12,
+      "state": "EXIT_0_REQUIRES_REPORT_REVIEW",
+      "elapsedPassSeconds": 3949.229,
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "exitCode": 0,
+      "finishedAt": "2026-09-27T15:28:25.418Z"
+    },
+    "soak": {
+      "receipt": "captures/polish-gates-20260927/soak-1790522960879.json",
+      "name": "soak",
+      "at": "2026-09-27T15:29:20.878Z",
+      "gpuFreeMiB": 5854,
+      "ramGiB": 23.51807403564453,
+      "requiredGpuMiB": 4096,
+      "requiredRamGiB": 12,
+      "state": "EXIT_0_REQUIRES_REPORT_REVIEW",
+      "elapsedPassSeconds": 4127.607,
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "exitCode": 0,
+      "finishedAt": "2026-09-27T15:33:35.433Z"
+    },
+    "net": {
+      "receipt": "captures/polish-gates-20260927/net-1790523266722.json",
+      "name": "net",
+      "at": "2026-09-27T15:34:26.721Z",
+      "gpuFreeMiB": 6134,
+      "ramGiB": 21.269176483154297,
+      "requiredGpuMiB": 4096,
+      "requiredRamGiB": 12,
+      "state": "EXIT_0_REQUIRES_REPORT_REVIEW",
+      "elapsedPassSeconds": 4433.586,
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "exitCode": 0,
+      "finishedAt": "2026-09-27T15:37:11.463Z"
+    },
+    "baseline": {
+      "receipt": "captures/polish-gates-20260927/baseline-1790523481386.json",
+      "name": "baseline",
+      "at": "2026-09-27T15:38:01.385Z",
+      "gpuFreeMiB": 6160,
+      "ramGiB": 21.45737075805664,
+      "requiredGpuMiB": 4096,
+      "requiredRamGiB": 12,
+      "state": "EXIT_0_REQUIRES_REPORT_REVIEW",
+      "elapsedPassSeconds": 4648.282,
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "exitCode": 0,
+      "finishedAt": "2026-09-27T15:38:52.677Z"
+    },
+    "traverse": {
+      "receipt": "captures/polish-gates-20260927/traverse-1790523587361.json",
+      "name": "traverse",
+      "at": "2026-09-27T15:39:47.360Z",
+      "gpuFreeMiB": 6158,
+      "ramGiB": 21.322490692138672,
+      "requiredGpuMiB": 4096,
+      "requiredRamGiB": 12,
+      "state": "EXIT_0_REQUIRES_REPORT_REVIEW",
+      "elapsedPassSeconds": 4754.277,
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "exitCode": 0,
+      "finishedAt": "2026-09-27T15:40:03.763Z"
+    },
+    "composition": {
+      "receipt": "captures/polish-gates-20260927/composition-1790523621363.json",
+      "name": "composition",
+      "at": "2026-09-27T15:40:21.361Z",
+      "gpuFreeMiB": 6173,
+      "ramGiB": 21.28647232055664,
+      "requiredGpuMiB": 4096,
+      "requiredRamGiB": 12,
+      "state": "FAILED",
+      "elapsedPassSeconds": 4788.189,
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "exitCode": 1,
+      "finishedAt": "2026-09-27T15:41:15.772Z"
+    }
+  },
+  "acceptance": [
+    {
+      "name": "menu",
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "state": "VERIFIED reviewed actual local gate PASS",
+      "receipt": "captures/polish-gates-20260927/menu-1790522503453.json"
+    },
+    {
+      "name": "playcap",
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "state": "VERIFIED reviewed actual local gate PASS",
+      "receipt": "captures/polish-gates-20260927/playcap-1790522567542.json"
+    },
+    {
+      "name": "traverse",
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "state": "VERIFIED reviewed actual local gate PASS",
+      "receipt": "captures/polish-gates-20260927/traverse-1790523587361.json"
+    },
+    {
+      "name": "net",
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "state": "VERIFIED reviewed actual local gate PASS",
+      "receipt": "captures/polish-gates-20260927/net-1790523266722.json"
+    },
+    {
+      "name": "rejoin",
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "state": "VERIFIED reviewed actual local gate PASS",
+      "receipt": "captures/polish-gates-20260927/rejoin-1790522782336.json"
+    },
+    {
+      "name": "soak",
+      "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+      "state": "VERIFIED original memory/liveness verdict PASS;30FPS/performance remains OPEN",
+      "receipt": "captures/polish-gates-20260927/soak-1790522960879.json"
+    }
+  ],
+  "reports": {
+    "composition": {
+      "path": "captures/polish-composition/result.json",
+      "sha256": "dfd077638383d074a81d9dafbd4f6f7309710b9c2ba755d49a2a6363fbe8dcb7",
+      "checks": [
+        {
+          "name": "Difficulty radio keeps its own name: Recruit",
+          "pass": true
+        },
+        {
+          "name": "Difficulty radio keeps its own name: Regular",
+          "pass": true
+        },
+        {
+          "name": "Difficulty radio keeps its own name: Veteran",
+          "pass": true
+        },
+        {
+          "name": "Difficulty group remains labelled",
+          "pass": true
+        },
+        {
+          "name": "Solo 390 no horizontal overflow past client+1",
+          "pass": true
+        },
+        {
+          "name": "Solo 1280 no horizontal overflow past client+1",
+          "pass": true
+        },
+        {
+          "name": "Solo 1600 no horizontal overflow past client+1",
+          "pass": true
+        },
+        {
+          "name": "All setup rows + Deploy visible without scrolling at 1600x900",
+          "pass": false,
+          "data": {
+            "rows": [
+              {
+                "top": 89,
+                "bottom": 121
+              },
+              {
+                "top": 129,
+                "bottom": 172
+              },
+              {
+                "top": 180,
+                "bottom": 209
+              },
+              {
+                "top": 225,
+                "bottom": 239
+              },
+              {
+                "top": 247,
+                "bottom": 279
+              },
+              {
+                "top": 287,
+                "bottom": 319
+              },
+              {
+                "top": 327,
+                "bottom": 355
+              },
+              {
+                "top": 363,
+                "bottom": 395
+              },
+              {
+                "top": 403,
+                "bottom": 435
+              }
+            ],
+            "deploy": {
+              "top": 1291.5,
+              "bottom": 1325.5
+            }
+          }
+        },
+        {
+          "name": "All setup rows + Deploy visible without scrolling at 1280x720",
+          "pass": false,
+          "data": {
+            "rows": [
+              {
+                "top": 82,
+                "bottom": 112
+              },
+              {
+                "top": 118,
+                "bottom": 161
+              },
+              {
+                "top": 167,
+                "bottom": 194
+              },
+              {
+                "top": 208,
+                "bottom": 222
+              },
+              {
+                "top": 228,
+                "bottom": 258
+              },
+              {
+                "top": 264,
+                "bottom": 294
+              },
+              {
+                "top": 300,
+                "bottom": 326
+              },
+              {
+                "top": 332,
+                "bottom": 362
+              },
+              {
+                "top": 368,
+                "bottom": 398
+              }
+            ],
+            "deploy": {
+              "top": 1268.5,
+              "bottom": 1302.5
+            }
+          }
+        },
+        {
+          "name": "Scroll reaches Deploy at 390x844",
+          "pass": true
+        },
+        {
+          "name": "Deploy visible without scrolling at 1600x900",
+          "pass": true
+        },
+        {
+          "name": "MP5+Semtex prints one pair, not the mirrored name twice",
+          "pass": true
+        },
+        {
+          "name": "MP5+Semtex survives a reload from the store",
+          "pass": true
+        }
+      ],
+      "errorCount": 0,
+      "fatal": "Error: locator.getAttribute: Error: strict mode violation: getByRole('button', { name: /^MP5\\b/ }) resolved to 2 elements:\n    1) <button type=\"button\" aria-pressed=\"true\" title=\"MP5 · Semtex\" class=\"aa-saved-pick aa-selected\">MP5 · Semtex</button> aka getByRole('button', { name: 'MP5 · Semtex' })\n    2) <button type=\"button\" aria-pressed=\"true\" class=\"aa-prim aa-selected\">…</button> aka getByRole('button', { name: 'MP5 26 dmg · 800 rpm · 30 rd' })\n\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /^MP5\\b/ })\u001b[22m\n",
+      "state": "FAILED: two desktop setup/Deploy visibility checks plus ambiguous post-reload MP5 locator"
+    },
+    "menu": {
+      "path": "captures/salvage-browser-menu.json",
+      "sha256": "c2cb633ba363ce34f7494eade0944dd08267d099fe813154163a230e376724d6",
+      "checks": [
+        "home390 no horizontal overflow",
+        "pre-match crosshair hidden and active restored",
+        "full Magnum normal ammo colour",
+        "canonical class and3sidearms",
+        "5chosen reference-suite streaks admitted",
+        "390px no horizontal overflow",
+        "real active host kit and selected tactical",
+        "Digit2 selected backup"
+      ],
+      "errorCount": 0,
+      "streaks": [
+        "tracker-dart",
+        "piloted-drone",
+        "carpet-bomber",
+        "chopper",
+        "drone-swarm"
+      ]
+    },
+    "playcap": {
+      "path": "captures/polish-20260927-summary.json",
+      "sha256": "1b18844363e2644fd8d8e915466068fa8fe7c5403cc52c6babcb1ee5d3dae6c2",
+      "threshold": 40,
+      "results": [
+        {
+          "name": "spawnA",
+          "luma": 134,
+          "ok": true,
+          "calls": 944,
+          "tris": 740035
+        },
+        {
+          "name": "circle",
+          "luma": 114.3,
+          "ok": true,
+          "calls": 675,
+          "tris": 660471
+        },
+        {
+          "name": "spawnB",
+          "luma": 132.4,
+          "ok": true,
+          "calls": 952,
+          "tris": 734575
+        },
+        {
+          "name": "orangeInside",
+          "luma": 85.3,
+          "ok": true,
+          "calls": 868,
+          "tris": 724045
+        }
+      ],
+      "errorCount": 0
+    },
+    "baseline": {
+      "path": "captures/polish-material-baseline-20260927-summary.json",
+      "sha256": "f437f43928319a64fe9c61ad20b2e8f57ed29c5c090699572c06063713022bdf",
+      "query": "http://localhost:4362/?surface-finish=off&weapon-fx=off",
+      "results": [
+        {
+          "name": "spawnA",
+          "luma": 134,
+          "ok": true,
+          "calls": 945,
+          "tris": 740575
+        },
+        {
+          "name": "circle",
+          "luma": 114.4,
+          "ok": true,
+          "calls": 678,
+          "tris": 674235
+        },
+        {
+          "name": "spawnB",
+          "luma": 132,
+          "ok": true,
+          "calls": 936,
+          "tris": 734543
+        },
+        {
+          "name": "orangeInside",
+          "luma": 85.7,
+          "ok": true,
+          "calls": 871,
+          "tris": 711309
+        }
+      ],
+      "errorCount": 0
+    },
+    "net": {
+      "path": "captures/net-two-browsers.json",
+      "sha256": "602a73b7f1b90cdd97347c684b4b9d115d23c81b0264faf3d954ad20d4be8b5a",
+      "seconds": 120,
+      "delaySdpMs": 500,
+      "steps": [
+        {
+          "name": "A hosts a room, code on screen",
+          "ok": true,
+          "detail": "584T2G"
+        },
+        {
+          "name": "B joins by code over WebRTC; both rosters show two players",
+          "ok": true,
+          "detail": "join took 2095 ms; A sees [\"alpha (host) - you\",\"bravo\"]; B sees [\"alpha (host)\",\"bravo - you\"]"
+        },
+        {
+          "name": "both ready, Start enabled on the host",
+          "ok": true,
+          "detail": "[{\"id\":\"host\",\"name\":\"alpha\",\"connected\":true,\"ready\":true},{\"id\":\"p1\",\"name\":\"bravo\",\"connected\":true,\"ready\":true}]"
+        },
+        {
+          "name": "host starts; both pages leave the menu (A host, B guest)",
+          "ok": true,
+          "detail": "A=host B=guest after 893 ms"
+        },
+        {
+          "name": "B walked and the host tracked it",
+          "ok": true,
+          "detail": "B moved 11.53 m in 3 s"
+        },
+        {
+          "name": "host belief of B within 200 ms (mid-walk gap / walk speed)",
+          "ok": true,
+          "detail": "median mid-walk gap 0.08 m = 17 ms"
+        },
+        {
+          "name": "host pose settles on B's stop position",
+          "ok": true,
+          "detail": "settled 261 ms after keyup, 0.03 m from B's own position"
+        },
+        {
+          "name": "a clear firing position beside B exists",
+          "ok": true,
+          "detail": "A at (6.2, 7.9)"
+        },
+        {
+          "name": "A fired the real weapon at B",
+          "ok": true,
+          "detail": "3 trigger pulls, B HUD health 100 -> 0 (changed on 5 polls)"
+        },
+        {
+          "name": "B's HUD showed the damage",
+          "ok": true,
+          "detail": "hp label 100 -> 0; damage-taken feed [\"34  alpha\",\"34  alpha\",\"32  alpha\"]"
+        },
+        {
+          "name": "the feed shows the kill",
+          "ok": true,
+          "detail": "host kills 0 -> 1; B feed [\"alpha » YOU\"]; A feed [\"alpha » bravo\"]"
+        },
+        {
+          "name": "RTT and snapshot rate read from the diagnostics",
+          "ok": true,
+          "detail": "guest p1 · rtt 183 ms · snap 18.4 Hz · age p50/p95 119/148 ms · snaps 0 · offset 83 ms"
+        },
+        {
+          "name": "120 s from Start without a disconnect",
+          "ok": true,
+          "detail": "11 samples, 0 bad"
+        },
+        {
+          "name": "ICE reached the relay target before SDP",
+          "ok": true,
+          "detail": "6 early candidates"
+        }
+      ],
+      "errorCount": 0,
+      "earlyIce": 6
+    },
+    "rejoin": {
+      "path": "captures/polish-rejoin.json",
+      "sha256": "373405140f4a0610de2160fd47e5bd540af0d9f979e36abf419ca8a87346523b",
+      "status": "PASS",
+      "steps": [
+        "real menu class and five streak choices admitted over WebRTC",
+        "real primary/sidearm ammo consumed and unearned streak answered",
+        "host detects actual peer silence and reserves the same seat",
+        "peer replacement preserves class, ammo, life, five HUD slots and one body per seat",
+        "post-resume input, shot and streak sequences continue without rejection",
+        "deliberate leave releases host seat, actor, rendered body and guest rejoin offer"
+      ],
+      "errorCount": 0
+    },
+    "soak": {
+      "path": "captures/leak/polish-20260927-soak.json",
+      "sha256": "e5847abdec3e8fb7dbb8dcbb2d3721566df0b9e72de12b1b91e70e5383354ec1",
+      "seconds": 210,
+      "limits": {
+        "maxSlopeMBPerMin": 0.5,
+        "maxExternalMB": 20
+      },
+      "fails": [],
+      "frames": 3274,
+      "elapsed": 211.5,
+      "pageRafFps": 15.479905437352246,
+      "framePerformanceState": "OPEN below30 page rAF/s; original gate uses multi-pass render.calls and cannot establish30gameFPS",
+      "js": {
+        "slope": 0.749,
+        "r2": 0.247,
+        "n": 16
+      },
+      "proc": {
+        "slope": -0.798,
+        "r2": 0.025,
+        "n": 16
+      },
+      "procMono": {
+        "netMB": -3.84,
+        "upFraction": 0.4
+      },
+      "samples": 22,
+      "first": {
+        "t": 1.2,
+        "floorMB": 35.85,
+        "heapTotalMB": 40.42,
+        "v8HeapTotalMB": 40.67,
+        "rendererMB": 714.95,
+        "gpuProcMB": 861.76,
+        "chromeTotalMB": 1848,
+        "uaMemoryMB": null,
+        "frames": 71,
+        "fps": 4,
+        "geometries": 459,
+        "textures": 147,
+        "programs": 0,
+        "nodes": 1945,
+        "listeners": 274,
+        "injectedMB": 0
+      },
+      "last": {
+        "t": 211.5,
+        "floorMB": 37.54,
+        "heapTotalMB": 41.67,
+        "v8HeapTotalMB": 41.67,
+        "rendererMB": 663.07,
+        "gpuProcMB": 867.51,
+        "chromeTotalMB": 1816.81,
+        "uaMemoryMB": null,
+        "frames": 3274,
+        "fps": 23,
+        "geometries": 462,
+        "textures": 149,
+        "programs": 0,
+        "nodes": 1953,
+        "listeners": 274,
+        "injectedMB": 0
+      }
+    }
+  },
+  "pixels": [
+    {
+      "path": "captures/polish-68f3f35-menu/polish-home-390.png",
+      "sha256": "a582f59fb1c3f780ac3bb9c665c6f527d4a1bba438f366b033b893e25e3c5472"
+    },
+    {
+      "path": "captures/polish-68f3f35-menu/salvage-hud-active.png",
+      "sha256": "8bf4fedb2bf079e964b510cc38cbe02e571aee224b9086fc5e302785704c2aa0"
+    },
+    {
+      "path": "captures/polish-68f3f35-menu/salvage-menu-home.png",
+      "sha256": "2597a0c3904eda5ae005994562a9b4a43ca86f0f1946aba1fc74c3fbfff88082"
+    },
+    {
+      "path": "captures/polish-68f3f35-menu/salvage-menu-mobile.png",
+      "sha256": "f74f2fbbc57da08ba102c2b01e40bf56cd4f54fb4fce64f7ae391d53c2422ac9"
+    },
+    {
+      "path": "captures/polish-20260927-circle.png",
+      "sha256": "1f8f531469780c0e5720daed99c723b529dccddb3b5797fdb5446c6701aacb83"
+    },
+    {
+      "path": "captures/polish-20260927-orangeInside.png",
+      "sha256": "ea735c3b1dc7351ea83e8f330c4e2a8b52a99024dc108dff19be5287f2f62b7b"
+    },
+    {
+      "path": "captures/polish-20260927-spawnA.png",
+      "sha256": "704327c695b691c8bac1d792dad58d26d2eea7b42171b3af0d473fcbd4b45dd7"
+    },
+    {
+      "path": "captures/polish-20260927-spawnB.png",
+      "sha256": "6e8da24a2fee4bb2512b1809e1a7838fe89b7a1cdcd3626affc85d4aad561e20"
+    },
+    {
+      "path": "captures/polish-material-baseline-20260927-circle.png",
+      "sha256": "642c66906119a8d951e8bf69aa6113fbe2e12f3093a0852afba13e1b47168e01"
+    },
+    {
+      "path": "captures/polish-material-baseline-20260927-orangeInside.png",
+      "sha256": "fb57b12fc462ab90a08443eac2c43f73965594d413be10bb58b15a0166aaa56d"
+    },
+    {
+      "path": "captures/polish-material-baseline-20260927-spawnA.png",
+      "sha256": "40e2ce2e32c950d6a15bbcd6ec374dd51b7dbea306a3aa3ade8c12eaf873eaad"
+    },
+    {
+      "path": "captures/polish-material-baseline-20260927-spawnB.png",
+      "sha256": "56c4707a6326065833042a75a6cf4e604f46e4cafb4eef414579cfed80dc1cdb"
+    }
+  ],
+  "motion": [
+    {
+      "path": "captures/polish-motion-video-20260927/report.json",
+      "sha256": "83bd04b86de362c4da6cd1adde75e637e2b29a9b9d8bf9e97dc82b494766307a",
+      "status": "FAIL",
+      "failure": "Error: page.waitForFunction: Error: [session] no match yet - call begin() first\n    at Object.snapshot (http://127.0.0.1:4362/assets/main-CrJ4O8fX.js:445:139627)\n    at Object.snapshot (http://127.0.0.1:4362/assets/main-CrJ4O8fX.js:445:154874)\n    at eval (eval at predicate (eval at evaluate (:311:30)), <anonymous>:1:24)\n    at predicate (eval at evaluate (:311:30), <anonymous>:7:27)\n    at next (eval at evaluate (:311:30), <anonymous>:29:33)\n    at eval (eval at evaluate (:311:30), <anonymous>:42:13)\n    at UtilityScript.evaluate (<anonymous>:313:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)",
+      "errorCount": 0,
+      "sourceCommit": "26c990230f36e3c2b2edc4e50ddd5ae517c5bb23"
+    },
+    {
+      "path": "captures/polish-motion-video-20260927-repair1/report.json",
+      "sha256": "4c9e0f56c7ae539cd3dc11eaccd0936041b0d69008b6445f1f6b37d40dafd0c2",
+      "status": "FAIL",
+      "failure": "AssertionError [ERR_ASSERTION]: bounded real-time6–8seconds, never virtual clock",
+      "elapsedMs": 9076,
+      "errorCount": 0,
+      "sourceCommit": "26c990230f36e3c2b2edc4e50ddd5ae517c5bb23"
+    },
+    {
+      "path": "captures/polish-motion-video-20260927-repair2/report.json",
+      "sha256": "666ead39c38b6331870fed12277ed3867a6373a9555cb6bb6d05bef96357fc0c",
+      "status": "FAIL",
+      "failure": "AssertionError [ERR_ASSERTION]: actual rendered loop advances",
+      "elapsedMs": 6019,
+      "errorCount": 0,
+      "sourceCommit": "26c990230f36e3c2b2edc4e50ddd5ae517c5bb23"
+    }
+  ],
+  "open": [
+    "Strict short-motion capture failed initial plus2repairs; no automatic retry",
+    "Full contact/settled ADS/third-person temporal and owner art acceptance",
+    "Physical LAN/WAN, native owner browser and sustained60FPS target",
+    "Matched model/prompt/resource readiness for new generated assets",
+    "H3 original source-video location"
+  ],
+  "claimState": "VERIFIED exact source/build/HTTP and individually reviewed receipts; isolated owner-review canary, no production/full-art acceptance"
+}

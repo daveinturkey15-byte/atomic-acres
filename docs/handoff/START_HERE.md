@@ -1,5 +1,15 @@
 # Current restart - fresh OPEN-items pass 27 September 2026
 
+VERIFIED latest owner-review preview: http://localhost:4362/?preview=68f3f35 —
+NEW September17 restart, `salvage/full-game-20260926`, exact runtime68f3f35.
+Read `POLISH-2026-09-27.md`, CURRENT.polishPass20260927 and the exact evidence
+receipt first. Menu/material/motion/FX source improvements are committed; real
+Deploy, HUD, five-slot suite and local delayed-SDP/rejoin were exercised.
+OPEN strict moving-capture and full art/performance acceptance. The unchanged210s
+soak's memory PASS is not a30FPS claim; measured page rAF was15.48Hz.
+This is an isolated review canary.4361/ec8eba3 and4348/2f837ae remain retained;
+the overnight heartbeat stays PAUSED. The older sections below are historical.
+
 VERIFIED latest loading-recovery successor:4361/ec8eba3. Start with
 `LOADING-FIX-2026-09-27.md` and `CURRENT.json.loadingFix20260927`.
 OPEN normal hardware first-frame capture/owner acceptance; no promotion.

@@ -18,14 +18,16 @@ const changes = name==='menu' ? [
   ["['tracker-dart','signal-jam','supply-crate','strike-relay']", "['tracker-dart','piloted-drone','carpet-bomber','chopper','drone-swarm']"],
   ["'4chosen streaks admitted'", "'5chosen reference-suite streaks admitted'"],
 ] : [
-  ['s.streakNames.length === 4', 's.streakNames.length === 5'],
+  ['s.streakNames.length === 4', 's.streakNames.length === 5', 2],
   ["'all four streak HUD slots did not arrive'", "'all five streak HUD slots did not arrive'"],
   ["'real menu class and four streak choices admitted over WebRTC'", "'real menu class and five streak choices admitted over WebRTC'"],
+  ["'resumed four-slot HUD did not arrive'", "'resumed five-slot HUD did not arrive'"],
+  ["'peer replacement preserves class, ammo, life, four HUD slots and one body per seat'", "'peer replacement preserves class, ammo, life, five HUD slots and one body per seat'"],
 ];
 let source = raw;
-for (const [before,after] of changes) {
-  assert.equal(source.split(before).length-1,1,'one exact fixture replacement: '+before);
-  source = source.replace(before,after);
+for (const [before,after,expectedCount=1] of changes) {
+  assert.equal(source.split(before).length-1,expectedCount,'exact fixture replacement count: '+before);
+  source = source.replaceAll(before,after);
 }
 const assertionCount = s => (s.match(/\bassert\./g)??[]).length;
 assert.equal(assertionCount(source),assertionCount(raw),'all original assertion calls retained');

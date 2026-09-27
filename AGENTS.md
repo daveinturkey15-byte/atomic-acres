@@ -1,5 +1,21 @@
 # Nuketown 2025 — agent contract
 
+## Latest owner-review polish — September27, 2026
+
+VERIFIED latest isolated review preview: http://localhost:4362/?preview=68f3f35,
+runtime68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e, dist-polish. This is the NEW
+September17 restart. Read `docs/handoff/POLISH-2026-09-27.md`,
+`CURRENT.json.polishPass20260927` and `docs/evidence/POLISH-2026-09-27.json` first.
+Three native Astra scopes completed menu, motion and material source work; root
+owns reviewed commits and serial GPU/browser acceptance. All source lanes frozen.
+VERIFIED real menu/deploy/HUD, five-slot suite and local delayed-SDP/rejoin evidence.
+OPEN strict short-motion gate FAILED initial+2repairs; do not automatically retry
+or relax it. Original210s memory soak PASS does not prove30gameFPS: multi-pass
+render-call counting masks the observed15.48Hz page rAF rate. Performance and
+full hand/rig/owner art acceptance remain OPEN; this review canary is not promoted.
+Preserve4361/ec8eba3,4348/2f837ae, cold4188/e30ffd8 and all failed/rejected receipts.
+The overnight heartbeat stays PAUSED; old budgets and campaigns are not resumed.
+
 ## Latest loading-recovery pass — September 27, 2026
 
 VERIFIED: held candidate4361 now serves ec8eba38613dcbe9e171b064fae831ad925433a3,

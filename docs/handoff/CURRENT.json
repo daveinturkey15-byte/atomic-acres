@@ -402,5 +402,37 @@
     "completedAt": "2026-09-27T14:09:31.021602+00:00",
     "activeRun": null,
     "accounting": "Cumulative elapsed new pass plus charged120-second final-delivery reserve. At close top up if actual elapsed+60 exceeds prior charge. No reduction/reset;6532 prior open-pass and9971 overnight preserved."
+  },
+  "polishPass20260927": {
+    "state": "closed bounded polish; isolated owner-review canary; menu fit, motion and performance OPEN",
+    "startedAt": "2026-09-27T14:20:33Z",
+    "maxWorkSeconds": 5400,
+    "workSecondsUsed": 5400,
+    "lastAccountedAt": "2026-09-27T15:49:40.711Z",
+    "baseline": "b9adb96b561378adf679cafc925a871820134746",
+    "ownerPlayReport": "CLAIMED owner reports works well and fun; native/pixel/net gates remain distinct",
+    "rootScope": "concepts, effects.ts, weapon-fx-canary.ts, main integration, evidence/build/serial QA",
+    "uiScope": "menu-views.ts and concept-polish.css",
+    "motionScope": "viewmodel-motion.ts, first-person-hands-motion.ts, body-presentation.ts",
+    "surfaceScope": "architectural-materials.ts and surface-weathering.ts",
+    "oldBudgets": "9971 overnight,6532 openpass,1816 loading retained; heartbeatPAUSED",
+    "repairLimit": 2,
+    "gpu": "Root only; mechanical fresh admission4096MiB/12GiB; no owner process changes",
+    "promotion": "Review canary only; retained4361/4348/4188 fallback channels; no production promotion",
+    "completedAt": "2026-09-27T15:49:40.711Z",
+    "finalDeliveryReserveSeconds": 60,
+    "sourceCommit": "68f3f35a7d729c28e101bd6fa41d9e9111c8bf1e",
+    "previewUrl": "http://localhost:4362/?preview=68f3f35",
+    "handoff": "docs/handoff/POLISH-2026-09-27.md",
+    "evidence": "docs/evidence/POLISH-2026-09-27.json",
+    "server": {
+      "pid": 43972,
+      "createdAt": "2026-09-27T15:47:55.052128+01:00",
+      "managedExecSession": 70106,
+      "ownership": "Root-owned HTTP preview only; source writers frozen, all browser/GPU acceptance jobs ended"
+    },
+    "acceptance": "VERIFIED menu/deploy, five streak slots, traversal, local two-browser delayed-SDP/rejoin and original210s memory/liveness verdict. OPEN desktop loadout fit, strict clip after initial+2repairs,15.48pageRAF/s performance, physical LAN/WAN and owner art acceptance.",
+    "activeRun": null,
+    "accounting": "Cumulative elapsed admitted pass including agents/browser waits plus60s delivery reserve; no old-ledger reset"
   }
 }
