@@ -1,0 +1,209 @@
+{
+  "schemaVersion": 1,
+  "claimState": "VERIFIED",
+  "atUtc": "2026-09-27T00:16:42.059116+00:00",
+  "identity": {
+    "project": "atomic-acres",
+    "repository": "daveinturkey15-byte/atomic-acres",
+    "lineage": "standalone restart begun 2026-09-17",
+    "branch": "salvage/full-game-20260926",
+    "sourceCommit": "2f837ae3d53cc1d7c3a78610e1276ab085a271cb",
+    "stampedAt": "2026-09-26T23:49:32.052Z",
+    "entry": "assets/index-BFvUiAGm.js",
+    "entrySha256": "35e31151acac08c75e3d8ed2a15af078f1879d8cf4d6f578dcf1fb0a1abd464f",
+    "untrackedPublicFiles": [],
+    "acceptance": "Local tested preview; not a production release or complete feature/art acceptance."
+  },
+  "scope": "Local WebGPU gameplay and same-machine real two-browser WebRTC; separate from physical LAN/WAN,60FPS and ownerart",
+  "acceptance": {
+    "native": {
+      "status": "PASS",
+      "kills": 5,
+      "steps": 6,
+      "errors": 0,
+      "actualHostDroneShots": 1,
+      "gates": "750ms originalclaim/exactACK, shortrelease, noheldrepeat, conservednativeR, fiveearnedkills/originallife/zeroDeaths, realpilot/reentry/expiry/bodyrestore"
+    },
+    "net": {
+      "checks": 14,
+      "connectedSamples": 11,
+      "earlyIce": 6,
+      "requestedSeconds": 120,
+      "delaySdpMs": 500,
+      "errors": 0,
+      "walkMeters": 11.55,
+      "medianHostGapMs": 9,
+      "stopMs": 329,
+      "stopMeters": 0.05,
+      "ordinaryShots": 3,
+      "guestHp": "100to0"
+    },
+    "standardRejoin": {
+      "status": "PASS",
+      "steps": 6,
+      "errors": 0,
+      "fixture": "Requestedweapon/privatehostequipACK/!actionPending wait added; EVERYoriginalassertion retained",
+      "scope": "Same seat/life/kit/ammo/sequences/HUD/body; deliberateLeave cleanup"
+    },
+    "strengthenedRejoin": {
+      "status": "FAIL_RETAINED",
+      "positiveSteps": 7,
+      "browserErrors": 0,
+      "verifiedSubset": "Bothactualdocumentrejoins/exactmag+reservesplits/offlinenativeR unchangedhosttimer",
+      "open": "Own undefined__NTUI diagnosticgetter aftersupportedunlock; exhaustedhelper2/2; deliberateLeave notearnedbythishelper. Standardproof separatePASS."
+    },
+    "menu": "PASSdesktop390px/MP5+Magnum+Smoke/4savedslots/Digit2/noerrors; originalsrootviewed",
+    "traversal": "PASS5routes/4faces/garageRIGHT/WebGPU/errors0; retainedstdout",
+    "lighting": {
+      "positions": 4,
+      "luma": [
+        134.1,
+        114.3,
+        115.2,
+        85.6
+      ],
+      "drawCalls": [
+        945,
+        665,
+        946,
+        848
+      ],
+      "threshold": 40,
+      "source": "Actualgameframeloop,originalPNGrootviewed"
+    },
+    "soak": {
+      "requestedSeconds": 210,
+      "samples": 22,
+      "scenario": "solo-gameplay",
+      "gameplayEntered": true,
+      "js": {
+        "slope": 0.19,
+        "r2": 0.099,
+        "n": 16
+      },
+      "renderer": {
+        "slope": -0.838,
+        "r2": 0.022,
+        "n": 16
+      },
+      "rendererNet": {
+        "netMB": -4.21,
+        "upFraction": 0.47
+      },
+      "gameFpsRange": [
+        44,
+        55
+      ],
+      "pageRafFps": 58.72,
+      "fails": [],
+      "limits": {
+        "maxSlopeMBPerMin": 0.5,
+        "maxExternalMB": 20
+      },
+      "boundary": "pageRAF count is not actualgameFPS; originalthresholds unchanged"
+    }
+  },
+  "cpu": {
+    "actualHostWeaponStateGroups": 15,
+    "combatScenarios": 25,
+    "actualControllerGroups": 15,
+    "actualRoomDriverWireGroups": 17,
+    "expandedStreakGroups": 15,
+    "effectLifecycleGroups": 14,
+    "streakBackoff": "PASSrealGameHostadapter/oneevent/zero4000msrepresses; assertionsunchanged",
+    "typecheckRenderSites": "PASS",
+    "boundary": "Counted root observations; source/CPU are distinct from browser/pixels"
+  },
+  "open": [
+    "Physical LAN/WAN",
+    "Sustained60FPS",
+    "Ownerart/frozenvisualbar",
+    "Eightnormalviewmodels stillfamilyfallback",
+    "Heavyhandmotion/neutralpartialtake rejected; opt-in only",
+    "NewPixal/TRELLISmesh/export/runtime: configuredComfyconnectionrefused, startapprovalpending",
+    "Rare reliablyunsentpredicteddebit retention",
+    "Clock correctionimmediatelyafterepoch fence unproven",
+    "Strengthenedrejoinhelper exhaustedFAILED",
+    "AKPpull-onlycurrency preexistingdoctorhold"
+  ],
+  "preservation": {
+    "owner278": "captures/builds/owner-preview-278b02b:177files/87371872bytes allhashmatched",
+    "graphics2a2": "captures/builds/overnight-graphics-2a2e22b:178files/98320397bytes allhashmatched",
+    "weapon696": "captures/builds/overnight-weapons-69654e7:177files/87403181bytes allhashmatched",
+    "simpler4188": "untouchedlayout-boii-proportions/e30ffd8",
+    "baselineProcess": "Owned40904 stopped after verifiedcommandline/listener; cleanoriginalweaponbranchf2054ad restored",
+    "predecessor": "Oldmodules/history neverimported; original24reusedownerassetsretainprovenance"
+  },
+  "reports": [
+    {
+      "path": "captures/overnight-2f837ae-native.json",
+      "bytes": 286183,
+      "sha256": "8782d51c465d3c1cb0662e03dbbca3f0853b8ffc219b441cea939993cff67c52",
+      "retention": "machine-local receipt; raw resumecredentials never copied into this aggregate"
+    },
+    {
+      "path": "captures/overnight-2f837ae-net-two-browsers.json",
+      "bytes": 19075,
+      "sha256": "d6ac362ba063070100c2b3613c19ab0851990ff7068eec55376645071e78b7db",
+      "retention": "machine-local receipt; raw resumecredentials never copied into this aggregate"
+    },
+    {
+      "path": "captures/overnight-2f837ae-standard-rejoin-ack.json",
+      "bytes": 78240,
+      "sha256": "80c3e1dca8a56fafe694de9535c21ccb7ad205b158a6cb22c81e5bf7b2221fe1",
+      "retention": "machine-local receipt; raw resumecredentials never copied into this aggregate"
+    },
+    {
+      "path": "captures/overnight-2f837ae-rejoin-final.json",
+      "bytes": 146470,
+      "sha256": "7c978681e39bac010377799fd4815a3eca41a276a7ad3c5ac23f5bce911b0b83",
+      "retention": "machine-local receipt; raw resumecredentials never copied into this aggregate"
+    },
+    {
+      "path": "captures/overnight-2f837ae-standard-rejoin.json",
+      "bytes": 72965,
+      "sha256": "8a8dce0480ec27cb8d3dccaa0d91cdeeb2d0fd619288e8ccca8360e5d4e81de0",
+      "retention": "machine-local receipt; raw resumecredentials never copied into this aggregate"
+    },
+    {
+      "path": "captures/overnight-2f837ae-menu/salvage-browser-menu.json",
+      "bytes": 21902,
+      "sha256": "a74f90e14f183be52e60df94993bcf47b481ab24bc63f944c70c6cc1f1d49ba9",
+      "retention": "machine-local receipt; raw resumecredentials never copied into this aggregate"
+    },
+    {
+      "path": "captures/overnight-2f837ae-play-summary.json",
+      "bytes": 838,
+      "sha256": "fcde8697012a56e15e7f4b8d25a3e8741a5bf285117f4827b18d5e0599945bac",
+      "retention": "machine-local receipt; raw resumecredentials never copied into this aggregate"
+    },
+    {
+      "path": "captures/overnight-2f837ae-traverse.txt",
+      "bytes": 892,
+      "sha256": "4c8f504cd89b037b7abde5268461a81f7a28d67e8711bca22df83b5b774d6e36",
+      "retention": "machine-local receipt; raw resumecredentials never copied into this aggregate"
+    },
+    {
+      "path": "captures/leak/overnight-2f837ae-soak-soak.json",
+      "bytes": 9744,
+      "sha256": "d0b2de031d77cddc0944dd5633faa489476b43b92160c7cacc27fc159dc3f4f3",
+      "retention": "machine-local receipt; raw resumecredentials never copied into this aggregate"
+    },
+    {
+      "path": "captures/streak-reject-overnight-root-weapon-adapter.json",
+      "bytes": 1399,
+      "sha256": "da82a4794715515e53f52429db5f89197a782bd0740edcffdf589ebd2fe71337",
+      "retention": "machine-local receipt; raw resumecredentials never copied into this aggregate"
+    }
+  ],
+  "sourceHashes": {
+    "src/main.ts": "97b7347cbb94248f682a552febdac7950e1d108cfd458c7b587b18e69dd93872",
+    "src/weapons/controller.ts": "a8f1f05d6a78b22c549af0a5fb5c303c66277b3e08927353a2c20aaa269bc388",
+    "src/game/host-weapon-state.ts": "3d8fe6b20a5feeb7041760dca3f45546c4247ddad3d9e704a198873a3ef7afe7",
+    "src/core/shadow-material-canary.ts": "c603810fabce98f38f15255be05da2a4c54bfdfb7dd66d4316dcf9ad2c9b5baa",
+    "scripts/_verify-overnight-native-weapon-state.mjs": "ea71d93a8554ccd9e0b7438a4490677b72b9f18d2fd806eaf66265985341e6bf",
+    "scripts/_verify-salvage-net-rejoin.mjs": "5699dd024fb22f83d2a95a88aa3b2e66184ed26fe5ecfb81c2dc68e849fb6f74",
+    "scripts/_verify-overnight-weapon-state-rejoin.mjs": "5bdcadf635b3f4d05c6fec6257de4125614fcd94a17e6fb40f1c5759d21b313c",
+    "scripts/_verify-streak-reject.mjs": "4dfe178a628b1c851693e688d95c287b85444fb48429c665914b4d76805d974f"
+  }
+}

@@ -78,14 +78,14 @@
       "Finish earned pilot and aircraft visible-game acceptance without forged health/charges or pointer-lock spoofing"
     ],
     "performanceBrief": "../perf/SALVAGE-PERF-NEXT-2026-09-26.md",
-    "runtimeWriters": "Overnightpass1: Astra combat owns reference-weapon-models.ts/newreference-heavy-hands.ts; root owns integration. Astra visuals/playflow own unique QA scripts/docs only; no GPU jobs before root admission.",
-    "gpu": "No browser/GPU active; frozen2a2 local gates PASS, exactcompiledfallback preserved; weapon-state source under CPU review",
+    "runtimeWriters": "Sourcefrozen2f837ae; rootrelease/handoff only",
+    "gpu": "Allrootbrowser/GPUjobsclosed; allnativewritersfrozen",
     "heartbeat": "atomic-acres-overnight-polish ACTIVE every30min; maximum4additionalworkhours, stopSept27 07:30Europe/London; no overlap"
   },
   "overnightBudget": {
     "declaredAtUtc": "2026-09-26T21:32:38.189640+00:00",
     "maxWorkSeconds": 14400,
-    "workSecondsUsed": 6747,
+    "workSecondsUsed": 9456,
     "deadlineUtc": "2026-09-27T06:30:00Z",
     "activeRun": {
       "id": "overnight-pass1-20260926",
@@ -93,10 +93,11 @@
       "baselineCommit": "ac3f1d45b31c5516fa9504980ce4aa4828674ffa",
       "runtimeCommit": "278b02bc4bcf3ea9e47411848b0ec6bf54b10814",
       "scope": "Shadow/HUD/grip bounded pass plus coherent host-owned magazine/reload/Railcharge subsystem; three disjoint native Astra CPUwriters; GPU serial",
-      "lastAccountedAtUtc": "2026-09-26T23:31:33.603439+00:00",
+      "lastAccountedAtUtc": "2026-09-27T00:16:42.059116+00:00",
       "accounting": "workSecondsUsed charged through lastAccountedAtUtc; add only subsequent active wall time, including waits",
-      "candidateCommit": "2a2e22babdeca8311f0b6533b83551520791ffdd",
-      "activeJob": null
+      "candidateCommit": "2f837ae3d53cc1d7c3a78610e1276ab085a271cb",
+      "activeJob": null,
+      "phase": "LOCAL2f837ae ACCEPTANCEPASSED; ownerpromotion preparation"
     },
     "policy": "Persist cumulative elapsed WORK time after each heartbeat pass; include agent/GPU waits for an admitted active pass; do not reset on turn/compaction. Check remaining budget and deadline before dispatch. Stop and pause heartbeat on completion, four workhours spent or deadline."
   },
@@ -172,7 +173,7 @@
     "soak": "VERIFIED unchanged210s22samples; JS slope0.294MBmin r2.273, renderer slope2.426MBmin/net7.78MiB; game44-53FPSlate; pageRAF58.6fps not gameFPS"
   },
   "overnightWeaponState": {
-    "state": "SOURCE FROZEN; root CPU authority15/combat25/client13/wire17/typecheck/render-site PASS; actual browser acceptance OPEN",
+    "state": "VERIFIED2f837ae requiredlocalCPU/native/net/standardrejoin/menu/traverse/playcap/210ssoakPASS; strongerhelperFAILretained",
     "baseCommit": "2a2e22babdeca8311f0b6533b83551520791ffdd",
     "sourceCutoffUtc": "2026-09-26T23:55:00Z",
     "acceptanceReserveSeconds": 2400,
@@ -229,6 +230,50 @@
       "Rare reliable-send failure can retain predicted debit untilnewlife/rebind",
       "Clock correction immediately after epoch timestamp fence remains unproven",
       "Native/builtpage/network/soak acceptance pending"
-    ]
+    ],
+    "candidate": {
+      "sourceCommit": "2f837ae3d53cc1d7c3a78610e1276ab085a271cb",
+      "url": "http://127.0.0.1:4361/",
+      "entry": "assets/index-BFvUiAGm.js",
+      "entrySha256": "35e31151acac08c75e3d8ed2a15af078f1879d8cf4d6f578dcf1fb0a1abd464f",
+      "acceptance": "VERIFIEDallrequiredlocalgates PASS; owner4348 promotionpending"
+    },
+    "nativeProofRepair": {
+      "used": 1,
+      "max": 2,
+      "issue": "Observe actual rendered charge HUD after input callback before end of live incomplete hold; unchangedvisibleHUD/charge/kill/life/timing thresholds",
+      "prior": "captures/native-weapon-hud-ready-repair1/",
+      "claimState": "VERIFIED native69654e7 attempt2 passed5actualkills/reload/charge/drone; fresh2f837ae required"
+    },
+    "focusReloadIssue": {
+      "claimState": "VERIFIED",
+      "repair": 1,
+      "max": 2,
+      "cause": "Page teardown/input loss sent admitted broad cancel intent5 after positive native reloadintent4; exact magazine unchanged instead of offline transfer",
+      "prior": "captures/weapon-focus-reload-before/",
+      "state": "VERIFIED source repair1 CPU+independentreview; actualbrowser rerun active"
+    },
+    "nativeAcceptance": "VERIFIED2f837ae5realearnedkills/nativeheldRail/exactclaimACKtime750ms/manualreloadconserved/nativeaircraftactualhostshots/reentry/expiry/bodyrestore/errors0",
+    "rejoinProofRepair": {
+      "used": 2,
+      "max": 2,
+      "state": "EXHAUSTED2/2: strongerhelper sevenpasses inclbothrejoins/offlinereload; own undefined diagnostic getter prevents Leave verification. OPEN wholehelper; preservedfailures; unchanged mandatory standardgate separately active",
+      "prior": "captures/weapon-rejoin-leave-unlock-repair2/",
+      "gate": "Supported document.exitPointerLock then actualpausedmenu/Leave cleanup; no override or thresholdchange"
+    },
+    "standardRejoinSetup": {
+      "claimState": "VERIFIED",
+      "repair": "equipreadinesscorrection2/2 acrossaffectedfixtures",
+      "source": "scripts/_verify-salvage-net-rejoin.mjs",
+      "before": "captures/standard-rejoin-equip-contract-before/",
+      "assertions": "ALLassertionlines identical; pre-shot wait nowrequires hostack/requestedweapon/!actionPending plusoldcooldown",
+      "state": "VERIFIED6/6actualsteps PASS afterlegalACKsetup; all originalassertionsunchanged; deliberateLeave cleanup earned"
+    },
+    "delayedSdpAcceptance": "VERIFIED2f837ae:120s/14of14/11samples/6earlyICE/zeroAorBerrors/zerodisconnect;11.55mwalk/medianhost9ms/stop329ms.05m/3shots100to0",
+    "menuAcceptance": "VERIFIEDdesktop390px/classMP5+Magnum+Smoke/fourstreakchoices/Digit2/noerrors; root originalmenu/mobileframesviewed",
+    "traversalAcceptance": "VERIFIED2f837ae5/5routes+4/4faces+garageRIGHT+WebGPU+errors0",
+    "playcapAcceptance": "VERIFIED2f837ae4/4realgamelooppositions lit luma134.1/114.3/115.2/85.6,calls945/665/946/848; originaluncroppedframesrootviewed",
+    "soakAcceptance": "VERIFIEDunchanged210s22samples/js.19MBminr2.099/renderer-.838MBminnet-4.21MB/fails0; actualgame44-55FPS/pageRAF58.7distinct",
+    "evidence": "../evidence/OVERNIGHT-UPGRADE-2026-09-27.json"
   }
 }

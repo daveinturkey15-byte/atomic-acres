@@ -1,0 +1,15 @@
+{
+  "claimState": "VERIFIED",
+  "scope": "Actual-controller/HostWeaponState CPU replay, no browser/transport/pixels assertion",
+  "command": "node scripts/_verify-overnight-weapon-state-client.mjs",
+  "rootObservedGroups": 15,
+  "sourceHashes": {
+    "src/weapons/controller.ts": "a8f1f05d6a78b22c549af0a5fb5c303c66277b3e08927353a2c20aaa269bc388",
+    "src/weapons/weapon-state-client.ts": "6615f8d614ae10bb4821b9842cc63598368072256e03be30467f340a8157aa20",
+    "src/game/host-weapon-state.ts": "3d8fe6b20a5feeb7041760dca3f45546c4247ddad3d9e704a198873a3ef7afe7",
+    "src/weapons/types.ts": "1d65a98a6112d758a199066af644d882c84d93e1747a8f0afbb6fa331072e9e7",
+    "src/ui/hud.ts": "b352897eae9df21bce68e79e394dcffdd8173072628aa3f00ebf72e4c5ad2198"
+  },
+  "evidenceBoundary": "Root ran/read all15 PASS lines and returned JSON before sourcecommit2f837ae; temporary report path no longerexists. This is a retained aggregate observation, not a copy of that ephemeral report.",
+  "focusReloadFalsifier": "captures/weapon-focus-reload-before/actual-negative.log"
+}

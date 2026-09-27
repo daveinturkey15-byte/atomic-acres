@@ -122,7 +122,14 @@ async function active(page, mode) {
 }
 async function fireOne(page, key) {
   await page.keyboard.press(key);
-  await page.waitForFunction(() => window.__NT.weaponCmd('state').cool <= 0);
+  // Equip is now host-acknowledged. A legal trigger follows the requested
+  // weapon's actual ACK; cooldown alone can precede that presentation.
+  await page.waitForFunction(code => {
+    const gun = window.__NT.weaponCmd('state'), kit = window.__NT.weaponCmd('loadout');
+    const wanted = code === 'Digit2' ? kit.sidearm : kit.primary;
+    return gun.cool <= 0 && gun.id === wanted && !gun.actionPending
+      && window.__NTGAME.snapshot().weaponState?.activeWeaponId === wanted;
+  }, key);
   assert.equal(await page.evaluate(() => window.__NT.weaponCmd('fire')), true, 'normal controller accepted one trigger');
   await pause(350);
   return page.evaluate(() => window.__NT.weaponCmd('state'));

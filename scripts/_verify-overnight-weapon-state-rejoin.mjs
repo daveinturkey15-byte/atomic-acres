@@ -419,7 +419,12 @@ try {
   step('second real rejoin preserves completed magazine/reserve, life, sequences, four HUD slots and one body',
     { split: split(reloadResumed.weaponState), resume: reloadResumed.resume });
 
-  await guest.page.keyboard.press('Escape');
+  // CDP-injected Escape is not Chrome's native pointer-lock escape gesture.
+  // Use the supported browser unlock API, then require the real reducer/menu.
+  await guest.page.evaluate(() => document.exitPointerLock());
+  await until(() => guest.page.evaluate(() => ({
+    lock: document.pointerLockElement !== null, menu: window.__NTUI.menu.state().surface,
+  })), s => !s.lock && s.menu === 'paused-match', 'real focused unlock did not open pause/Leave menu');
   await guest.page.getByRole('button', { name: 'Leave match', exact: true }).click();
   const left = await until(hostState, s => s.roster.length === 1 && s.driverBodies.length === 0
     && s.bodies.length === 0 && !s.snapshot.actors.some(a => a.id === guestId), 'deliberate leave retained stale seat/body');
