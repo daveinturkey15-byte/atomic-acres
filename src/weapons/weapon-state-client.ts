@@ -5,26 +5,33 @@ import type { WeaponAmmoState, WeaponState } from '../game/host-weapon-state';
 export const WEAPON_STATE_MAX_AGE_MS = 1500;
 const PENDING_SHOT_CAP = 64;
 
+/** Local projection metadata, never a peer-authored protocol field. */
+export interface WeaponStateProjection extends WeaponState {
+  readonly sourceAt?: number;
+}
+
 export interface WeaponAmmoProjection extends WeaponAmmoState {
   readonly reloading: boolean;
   readonly chargeProgress: number;
 }
 
 export class WeaponStateClient {
-  private latest: WeaponState | null = null;
+  private latest: WeaponStateProjection | null = null;
   private readonly pending = new Map<number, string>();
 
-  get state(): WeaponState | null { return this.latest; }
+  get state(): WeaponStateProjection | null { return this.latest; }
   get pendingShots(): number { return this.pending.size; }
 
   clear(): void { this.latest = null; this.pending.clear(); }
 
-  apply(next: WeaponState): boolean {
+  apply(next: WeaponStateProjection): boolean {
     const old = this.latest;
+    const sourceAt = next.sourceAt ?? next.at;
+    if (!Number.isFinite(sourceAt)) return false;
     // Revision is host authority; `at` has crossed the adjustable guest clock
     // offset and can move backwards even while a newer revision settles a shot.
     if (old && (next.life < old.life || (next.life === old.life &&
-      (next.revision < old.revision || next.revision === old.revision && next.at <= old.at)))) return false;
+      (next.revision < old.revision || next.revision === old.revision && sourceAt <= (old.sourceAt ?? old.at))))) return false;
     if (!old || next.life !== old.life) this.pending.clear();
     // High-water lastShotSeq cannot acknowledge an earlier missing packet.
     for (const seq of next.resolvedShotSeqs) this.pending.delete(seq);
@@ -47,6 +54,10 @@ export class WeaponStateClient {
   predictShot(seq: number, weaponId: string): void {
     if (this.latest && this.pending.size < PENDING_SHOT_CAP) this.pending.set(seq, weaponId);
   }
+
+  /** Only a synchronous definite non-send may retire a prediction without a
+   * host ACK. Queued/accepted/unknown delivery never calls this path. */
+  cancelUnsentShot(seq: number): void { this.pending.delete(seq); }
 
   project(weaponId: string, now: number): WeaponAmmoProjection | null {
     const state = this.latest;

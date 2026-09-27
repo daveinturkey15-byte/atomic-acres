@@ -423,7 +423,7 @@ try {
   // Use the supported browser unlock API, then require the real reducer/menu.
   await guest.page.evaluate(() => document.exitPointerLock());
   await until(() => guest.page.evaluate(() => ({
-    lock: document.pointerLockElement !== null, menu: window.__NTUI.menu.state().surface,
+    lock: document.pointerLockElement !== null, menu: window.__AA_UI.menu.state().surface,
   })), s => !s.lock && s.menu === 'paused-match', 'real focused unlock did not open pause/Leave menu');
   await guest.page.getByRole('button', { name: 'Leave match', exact: true }).click();
   const left = await until(hostState, s => s.roster.length === 1 && s.driverBodies.length === 0

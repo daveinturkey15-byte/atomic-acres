@@ -52,6 +52,7 @@ import { OrdnanceInput } from './ordnance-input';
 import { isMotionCanaryRequested, ViewmodelMotion } from './viewmodel-motion';
 import type { WeaponIntent, WeaponState as HostWeaponState } from '../game/host-weapon-state';
 import { WeaponStateClient } from './weapon-state-client';
+import { buildOpenpassLmg, OPENPASS_SOCKET_NAMES, type OpenpassWeaponRig } from './openpass-weapon-rigs';
 import { AudioService, type AudioStats, type ShotFamily, type StepSurface, type StepOptions, type EnvironmentKind } from '../audio/service';
 import {
   loadCatalogCarbineRig,
@@ -171,6 +172,8 @@ interface WeaponQaSnapshot extends WeaponSnapshot {
   /** Read-only roster-heroes canary status (?heroes=canary), same honesty contract. */
   heroes?: RosterHeroCanaryStatus;
   referenceModels?: Record<string, { url: string; sockets: string[] }>;
+  /** One presentation-only candidate; pixels/owner acceptance remain separate. */
+  lmgModelCanary?: { requested: boolean; adopted: boolean; stats: OpenpassWeaponRig['stats'] | null; sockets: string[] };
   /** Read-only crossbow canary status (?crossbow=canary): requested vs actually listed. */
   crossbow?: CrossbowCanaryStatus;
 }
@@ -237,7 +240,7 @@ interface ControllerOpts {
   targets: THREE.Object3D[];
   onHud: (line: string) => void;
   /** Optional: absent means nobody is listening, and the gun is a toy again. */
-  onShot?: (claim: ShotClaim) => void;
+  onShot?: (claim: ShotClaim) => boolean | void;
   /** Driver assigns the intent sequence/life and returns its sequence. */
   onWeaponIntent?: (intent: Omit<WeaponIntent, 'seq' | 'life'>) => number | null;
   /** Pre-match preview only; admitted spawn/pickup events replace these ids. */
@@ -248,6 +251,8 @@ interface ControllerOpts {
   carbineLoader?: (opts: CarbineLoaderOptions) => Promise<CatalogCarbineRig>;
   /** Optional explicit opt-in for the roster-heroes canary (?heroes=canary) */
   heroesCanary?: boolean;
+  /** Unreviewed source rig, opt-in only through ?lmg-model=canary. */
+  lmgModelCanary?: boolean;
   /** Test seam for pending hero loads (defaults to the real hero loader). */
   heroesLoader?: (weaponId: string, opts: RosterHeroLoaderOptions) => Promise<RosterHeroRig>;
   /** Optional explicit opt-in for the crossbow canary (?crossbow=canary). Gated by default. */
@@ -272,6 +277,8 @@ export class WeaponsController {
   private readonly heroRigs = new Map<string, RosterHeroRig>();
   private readonly referenceRigs = new Map<string, ReferenceWeaponRig>();
   private heroesCanaryRequested = false;
+  private lmgModelCanaryRequested = false;
+  private openpassLmgRig: OpenpassWeaponRig | null = null;
   private crossbowCanaryRequested = false;
   private disposed = false;
   /** The one rig per shipped builder, shared by every weapon of its family. */
@@ -312,7 +319,7 @@ export class WeaponsController {
   private recoilHead = 0;
   private recoilTotal = 0;
 
-  private onShot: ((claim: ShotClaim) => void) | null = null;
+  private onShot: ((claim: ShotClaim) => boolean | void) | null = null;
   private readonly weaponAuthority = new WeaponStateClient();
   private readonly onWeaponIntent: ControllerOpts['onWeaponIntent'];
   private pendingWeaponIntent: { seq: number; action: WeaponIntent['action']; weaponId: string } | null = null;
@@ -372,6 +379,18 @@ export class WeaponsController {
         shotsFired: 0,
       };
     });
+    this.lmgModelCanaryRequested = opts.lmgModelCanary ?? (typeof window !== 'undefined'
+      && new URLSearchParams(window.location.search).get('lmg-model') === 'canary');
+    // Preserve the independent imported-hero experiment when both are requested.
+    if (this.lmgModelCanaryRequested && !(opts.heroesCanary ?? isRosterHeroesCanaryRequested())) {
+      const weapon = this.weapons.find(w => w.def.id === 'lmg');
+      if (weapon) {
+        this.openpassLmgRig = buildOpenpassLmg(opts.mat);
+        this.openpassLmgRig.group.visible = false;
+        this.overlay.add(this.openpassLmgRig.group);
+        weapon.rig = this.openpassLmgRig;
+      }
+    }
     for (let i = 0; i < IMPACT_RING; i++) this.impactPts.push(new THREE.Vector3());
 
     const hemi = new THREE.HemisphereLight(PAL.skyHorizon, PAL.bounce, 0.9);
@@ -686,7 +705,7 @@ export class WeaponsController {
     // sight anchors on the camera axis. Never the camera, never the
     // reticle, never a fallback rig — the gun moves, nothing else does.
     const referenceRig = this.referenceRigs.get(cur.def.id);
-    const referenceMount = referenceRig?.adsMount;
+    const referenceMount = referenceRig?.adsMount ?? (cur.rig === this.openpassLmgRig ? this.openpassLmgRig.adsMount : undefined);
     const cameraOffset = referenceRig?.cameraOffset;
     const heroMount = referenceMount ?? HERO_ADS_MOUNT[cur.def.id];
     const hasAuthoredMount = referenceMount !== undefined || this.heroRigs.has(cur.def.id);
@@ -1111,6 +1130,12 @@ export class WeaponsController {
     out.referenceModels = Object.fromEntries([...this.referenceRigs].map(([id, rig]) => [id, {
       url: rig.assetUrl, sockets: REFERENCE_SOCKETS.filter((name) => !!rig.group.getObjectByName(name)),
     }]));
+    out.lmgModelCanary = {
+      requested: this.lmgModelCanaryRequested,
+      adopted: this.openpassLmgRig !== null,
+      stats: this.openpassLmgRig?.stats ?? null,
+      sockets: this.openpassLmgRig ? OPENPASS_SOCKET_NAMES.filter(name => !!this.openpassLmgRig?.group.getObjectByName(name)) : [],
+    };
     out.crossbow = {
       requested: this.crossbowCanaryRequested,
       active: this.weapons.some((w) => w.def.id === CROSSBOW_ID),
@@ -1336,24 +1361,33 @@ export class WeaponsController {
    * a pickup reach are all "an action at the eye along the aim at a time",
    * and the host tells them apart by `weaponId`. One author, one sequence.
    */
-  private claim(weaponId: string, firedAt = this.nowMs, predictAmmo = false): void {
-    if (this.onShot === null) return;
+  private claim(weaponId: string, firedAt = this.nowMs, predictAmmo = false): boolean {
+    if (this.onShot === null) return true;
     this.tmpDir.set(0, 0, -1).applyQuaternion(this.camera.quaternion);
     const c = this.camera.position;
     const seq = ++this.shotSeq;
     if (predictAmmo) this.weaponAuthority.predictShot(seq, weaponId);
-    this.onShot({
+    const accepted = this.onShot({
       origin: { x: c.x, y: c.y, z: c.z },
       direction: { x: this.tmpDir.x, y: this.tmpDir.y, z: this.tmpDir.z },
       seq,
       weaponId,
       time: firedAt,
-    });
+    }) !== false;
+    if (!accepted) {
+      if (predictAmmo) this.weaponAuthority.cancelUnsentShot(seq);
+      // The transport explicitly admitted neither a send nor a queue entry.
+      // Reuse only this still-last unsent allocation; accepted/ambiguous sends
+      // and any re-entrant newer claim keep their monotonic sequence fence.
+      if (this.shotSeq === seq) this.shotSeq -= 1;
+    }
+    return accepted;
   }
 
   private tryFire(fromAuto: boolean, inputAtMs?: number, charged = false): boolean {
     const cur = this.weapons[this.active];
     const def = cur.def;
+    const previousCool = cur.cool, previousCoolInput = this.coolInputAtMs;
     // The trigger waits for the off hand: no bullet mid-throw, mid-stab or mid-reach.
     if (!this.visible || cur.reloading || this.ord.busy) return false;
     if (this.onWeaponIntent && (!this.onShot || !this.weaponAuthority.canPredict(def.id, this.nowMs)
@@ -1380,7 +1414,14 @@ export class WeaponsController {
     const manualAt = typeof inputAtMs === 'number' && Number.isFinite(inputAtMs)
       ? Math.max(this.nowMs, inputAtMs) : this.nowMs;
     if (!fromAuto && manualAt > this.nowMs) this.coolInputAtMs = manualAt;
-    this.claim(def.id, fromAuto ? this.nowMs + Math.min(0, this.autoTimer) * 1000 : manualAt, !!this.onWeaponIntent);
+    if (!this.claim(def.id, fromAuto ? this.nowMs + Math.min(0, this.autoTimer) * 1000 : manualAt, !!this.onWeaponIntent)) {
+      cur.mag += 1;
+      cur.shotsFired -= 1;
+      cur.cool = previousCool;
+      this.coolInputAtMs = previousCoolInput;
+      this.pushHud(true);
+      return false;
+    }
 
     // Spread cone: base (hip<->ADS) + movement + accumulated bloom, crouch bonus.
     cur.bloom = Math.min(def.spread.bloomMax, cur.bloom + def.spread.bloom);
@@ -1602,6 +1643,11 @@ export class WeaponsController {
     this.heroRigs.clear();
     for (const rig of this.referenceRigs.values()) rig.dispose();
     this.referenceRigs.clear();
+    this.openpassLmgRig?.dispose();
+    this.openpassLmgRig = null;
+    // Offhand meshes are controller-owned, just like the firearm families.
+    disposeOwnedGeometries(this.ord.hand.knife.group);
+    disposeOwnedGeometries(this.ord.hand.grenade);
     for (const rig of this.rigs.values()) disposeOwnedGeometries(rig.group);
     this.rigs.clear();
     this.disposeAudio();

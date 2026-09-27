@@ -46,6 +46,7 @@ import { isCrossbowEvent } from './events-crossbow';
 import type { RadarSample } from './killstreaks/effects/reveal';
 import type { StreakEffectView } from './killstreaks/effect-view';
 import type { WeaponState } from './host-weapon-state';
+import type { WeaponStateProjection } from '../weapons/weapon-state-client';
 // ---------------------------------------------------------------------------
 // The view
 // ---------------------------------------------------------------------------
@@ -95,6 +96,9 @@ export type ClientEdge =
 
 export interface ClientSnapshot {
   readonly weaponState?: WeaponState | null;
+  /** Receive-boundary metadata only: unadjusted host clock for epoch/order
+   * fences. The weapon state's localized `at` remains its display clock. */
+  readonly weaponSourceAt?: number;
   readonly radar?: readonly RadarSample[];
   readonly effects?: readonly StreakEffectView[];
   readonly at: number;
@@ -136,9 +140,10 @@ export const REMOTE_SHOT_RECENT_LIMIT = 128;
 
 export class GameClient {
   /** Private self-only projection, in the local clock and controller shot-seq domain. */
-  weaponState: WeaponState | null = null;
+  weaponState: WeaponStateProjection | null = null;
   private weaponLife = 0;
   private weaponEpochAt = -Infinity;
+  private weaponSourceAt = -Infinity;
   readonly streakEffects: StreakEffectView[] = [];
   streakEffectsAt = 0;
   private radar: readonly RadarSample[] = [];
@@ -225,7 +230,7 @@ export class GameClient {
 
   // -------------------------------------------------------------------------
 
-  applyEvent(e: GameEvent): void {
+  applyEvent(e: GameEvent, sourceAt = e.at): void {
     if (e.type === 'streak-earned' || e.type === 'streak-activated' || e.type === 'streak-denied' || e.type === 'streak-ended') {
       if (!this.rememberStreakCause(JSON.stringify(e))) return;
     }
@@ -261,7 +266,7 @@ export class GameClient {
       case 'death':
         if (e.victimId === this.selfId) {
           this.weaponState = null;
-          this.weaponEpochAt = Math.max(this.weaponEpochAt, e.at);
+          this.weaponEpochAt = Math.max(this.weaponEpochAt, sourceAt);
           this.alive = false;
           this.health = 0;
           this.respawnAt = e.respawnAt;
@@ -273,7 +278,7 @@ export class GameClient {
         if (e.actorId === this.selfId) {
           this.weaponLife = e.reason === 'initial' ? 1 : Math.max(1, this.weaponLife + 1);
           this.weaponState = null;
-          this.weaponEpochAt = e.at;
+          this.weaponEpochAt = sourceAt;
           this.alive = true;
           this.team = e.team;
           this.respawnAt = null;
@@ -370,12 +375,14 @@ export class GameClient {
     if (s.weaponState === null) this.weaponState = null;
     else if (s.weaponState !== undefined) {
       const state = s.weaponState, previous = this.weaponState;
+      const sourceAt = s.weaponSourceAt ?? state.at;
       const currentLife = this.weaponLife === 0 || state.life === this.weaponLife;
       const forward = previous === null || state.revision > previous.revision ||
-        (state.revision === previous.revision && state.at >= previous.at);
-      if (currentLife && state.at >= this.weaponEpochAt && forward) {
+        (state.revision === previous.revision && sourceAt >= this.weaponSourceAt);
+      if (Number.isFinite(sourceAt) && currentLife && sourceAt >= this.weaponEpochAt && forward) {
         this.weaponLife = state.life;
-        this.weaponState = { ...state, primary: { ...state.primary }, sidearm: { ...state.sidearm },
+        this.weaponSourceAt = sourceAt;
+        this.weaponState = { ...state, sourceAt, primary: { ...state.primary }, sidearm: { ...state.sidearm },
           resolvedShotSeqs: [...state.resolvedShotSeqs] };
       }
     }

@@ -98,8 +98,9 @@ export interface BotBody {
 export interface MatchDriver {
   /** One frame. `now` is `performance.now()`; drivers tick at `TICK_HZ`. */
   tick(now: number, x: number, y: number, z: number, yaw: number, pitch: number, stance?: PlayerStance): void;
-  /** A trigger pull from `weapons/controller.ts`, stamped and submitted or sent. */
-  localShot(claim: ShotClaim): void;
+  /** false means definitely unsubmitted/unsent. void preserves local authority
+   * and legacy adapters; an accepted send still needs its exact host ACK. */
+  localShot(claim: ShotClaim): boolean | void;
   /** Returns the assigned intent sequence, or null while there is no live authority. */
   weaponIntent(input: Omit<WeaponIntent, 'seq' | 'life'>): number | null;
   /** A streak key press from the human. */

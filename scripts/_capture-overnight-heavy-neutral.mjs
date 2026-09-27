@@ -9,16 +9,22 @@ import { spawnSync } from 'node:child_process';
 import { stockBrowser } from './lib/stock-browser.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const RETAINED = 'captures/overnight-heavy-neutral-repair1';
 const args = process.argv.slice(2);
+const arg = name => { const i = args.indexOf('--' + name); return i < 0 ? null : args[i + 1]; };
+const RETAINED = arg('retained') ?? 'captures/overnight-heavy-neutral-repair1';
+assert(/^captures\/[a-z0-9-]+$/.test(RETAINED), 'Retained viewer must be an explicit project capture directory');
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const MODEL = 'assets/reference-weapons/minigun/minigun-fp-lod0.glb';
 const PINS = Object.freeze({
-  'index.html': 'ec9e1a7ca1ed63c24035f8b9cd30760ff11be88f11a681ea932299b612c3774f',
-  'inspection-identity.json': '1cd713808af7746b287d41bb17f529b459b7e188b93033072e3483d1b1ec3507',
-  'inspection.js': '04f5a92b515b9927b3fe1187a852e40475d5076477a0ab92629a342d56795497',
+  'index.html': arg('expected-html-sha256') ?? 'ec9e1a7ca1ed63c24035f8b9cd30760ff11be88f11a681ea932299b612c3774f',
+  'inspection-identity.json': arg('expected-manifest-sha256') ?? '1cd713808af7746b287d41bb17f529b459b7e188b93033072e3483d1b1ec3507',
+  'inspection.js': arg('expected-bundle-sha256') ?? '04f5a92b515b9927b3fe1187a852e40475d5076477a0ab92629a342d56795497',
   [MODEL]: 'bc7c965c3931ca2cce575a98552532b46fae11f41e313d3b03940cf726583a3b',
 });
+for (const expected of Object.values(PINS)) assert(/^[a-f0-9]{64}$/.test(expected), 'Explicit SHA256 pin required');
+if (arg('retained')) for (const key of ['expected-html-sha256', 'expected-manifest-sha256', 'expected-bundle-sha256']) {
+  assert(arg(key), 'A fresh viewer requires all three externally reviewed identity pins');
+}
 // buildMaterials() requests these even though this viewer has no vegetation meshes.
 // Exact additional public-file routes approved by the integrator; no directory fallback.
 const TEXTURES = Object.freeze({
@@ -134,7 +140,7 @@ mkdirSync(out);
 const report = { label: 'NEUTRAL UI COMPONENT CAPTURE ONLY', status: 'RUNNING', startedAt: new Date().toISOString(),
   limitations: 'Neutral lights and camera differ from gameplay. No gameplay, audio, authority, motion throughput, performance or anatomy/art acceptance. Seven discrete poses, not a reload animation recording. No geometry/material/node overrides.',
   identity, resourceBefore, chromeLaunchWindow: [1600, 900], viewport: [1600, 900], DPR: 1,
-  requests: [], errors: [], warnings: [], captures: [] };
+  requests: [], errors: [], warnings: [], captures: [], attemptedStates: [] };
 const server = makeServer(routes, report.requests);
 let owned;
 const deadline = Date.now() + 300000;
@@ -163,6 +169,7 @@ try {
     remaining();
     await page.evaluate(async s => { await window.__HEAVY_INSPECT.reload(s.reload); await window.__HEAVY_INSPECT.view(s.view); }, shot);
     const state = await page.evaluate(stateInPage);
+    report.attemptedStates.push({ ...shot, state });
     assert.equal(state.backend, 'webgpu'); assert.equal(state.view, shot.view); assert.equal(state.reload, shot.reload);
     assert.deepEqual(state.viewport, [1600, 900, 1]); assert.deepEqual(state.buffer, [1600, 900]);
     assert(state.calls > 0 && state.triangles > 0, 'No actual rendered component');

@@ -70,7 +70,8 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   // host's shot window.
   if (resumed !== null) {
     if (resumed.weaponState !== undefined) client.applySnapshot({ at: performance.now(),
-      weaponState: rebaseWeaponShotAcks(localizeWeaponState(resumed.weaponState, guest.hostClockOffset()), resumedShotBase) });
+      weaponState: rebaseWeaponShotAcks(localizeWeaponState(resumed.weaponState, guest.hostClockOffset()), resumedShotBase),
+      weaponSourceAt: resumed.weaponState.at });
     if (resumed.primaryId !== undefined) client.ordnance.self.primaryId = resumed.primaryId;
     if (resumed.rounds !== undefined) client.ordnance.self.rounds = resumed.rounds;
     if (resumed.sidearmId !== undefined) client.ordnance.self.sidearmId = resumed.sidearmId;
@@ -143,9 +144,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     opts.ui.setNames(names);
   };
 
-  const record = (e: GameEvent): void => {
+  const record = (e: GameEvent, sourceAt = e.at): void => {
     opts.ui.onEvent?.(e);
-    client.applyEvent(e);
+    client.applyEvent(e, sourceAt);
     opts.instrument.record(e);
   };
 
@@ -158,7 +159,8 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
       case 'weapon-state':
         if (msg.actorId === selfId && msg.state.life === lives) {
           weaponIntentSeq = Math.max(weaponIntentSeq, msg.state.lastIntentSeq + 1);
-          client.applySnapshot({ at: performance.now(), weaponState: rebaseWeaponShotAcks(msg.state, shotSeqBase) });
+          client.applySnapshot({ at: performance.now(), weaponState: rebaseWeaponShotAcks(msg.state, shotSeqBase),
+            weaponSourceAt: raw.type === 'weapon-state' ? raw.state.at : msg.state.at });
         }
         break;
       case 'damage':
@@ -166,10 +168,10 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
         break;
       case 'kill':
         if (msg.kill !== null) record(msg.kill);
-        record(msg.death);
+        record(msg.death, raw.type === 'kill' ? raw.death.at : msg.death.at);
         break;
       case 'spawn':
-        record(msg.e);
+        record(msg.e, raw.type === 'spawn' ? raw.e.at : msg.e.at);
         if (msg.e.actorId === selfId) {
           // An initial deployment is also the rematch boundary. Counting every
           // spawn would carry life 2 into a fresh GameHost whose life is 1.
@@ -298,9 +300,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     counters: () => ({ ...opts.instrument.tally, epoch: matches, bots: 0, remotes: bodies.length, snaps, lives }),
     ended: () => lastMatch !== null && lastMatch.phase === 'ended',
     rematchNow: () => undefined,
-    localShot(claim: ShotClaim): void {
-      if (lives === 0 || resumePlacementPending) return;
-      guest.sendGame({
+    localShot(claim: ShotClaim): boolean {
+      if (disposed || lives === 0 || resumePlacementPending) return false;
+      return guest.sendGame({
         // On a resumed page the controller's seq restarted at 0; the base
         // lifts the claim back above the host's retained window (first shot
         // lands one past `shotSeq`, inside `MAX_SEQ_GAP`). A spawn resets the
@@ -314,8 +316,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     weaponIntent(input): number | null {
       if (disposed || lives === 0 || resumePlacementPending || guest.getState() !== 'playing') return null;
       const seq = weaponIntentSeq++;
-      guest.sendGame({ type: 'weapon-intent', seq, life: lives, weaponId: input.weaponId, action: input.action });
-      return seq;
+      const accepted = guest.sendGame({ type: 'weapon-intent', seq, life: lives, weaponId: input.weaponId, action: input.action });
+      if (!accepted && weaponIntentSeq === seq + 1) weaponIntentSeq = seq;
+      return accepted ? seq : null;
     },
     pressStreak(slot): void {
       const pilot = client.streakEffects.some(s => s.kind === 'aircraft' && s.variant === 'piloted-drone' && s.actorId === selfId && s.remainingMs > Math.max(0, performance.now() - client.streakEffectsAt));

@@ -294,9 +294,9 @@ export class GuestClient {
   }
 
   /** A shot claim or a streak press, to the host. */
-  sendGame(msg: ShotMsg | import('./protocol-weapons').WeaponIntentMsg | Omit<StreakIntentMsg, 'seq'>): void {
-    if (this.state !== 'playing' && this.state !== 'starting') return;
-    this.transport.send(this.hostPeer, msg.type === 'streak-intent' ? { ...msg, seq: this.streakSeq++ } : msg);
+  sendGame(msg: ShotMsg | import('./protocol-weapons').WeaponIntentMsg | Omit<StreakIntentMsg, 'seq'>): boolean {
+    if (this.disposed || (this.state !== 'playing' && this.state !== 'starting')) return false;
+    return this.transport.send(this.hostPeer, msg.type === 'streak-intent' ? { ...msg, seq: this.streakSeq++ } : msg) !== false;
   }
 
   sendPilot(controls: import('../game/killstreaks/pilot-types').PilotControls): void {

@@ -21,6 +21,9 @@ import { createReferenceWeaponLoader, adaptReferenceWeaponModel } from './src/we
 const scene=new THREE.Scene(); scene.background=new THREE.Color(0x687176);
 const camera=new THREE.PerspectiveCamera(40,1600/900,.01,20);
 const renderer=new WebGPURenderer({antialias:true}); renderer.setSize(1600,900); renderer.setPixelRatio(1);
+// This viewer draws manually. r180's internal RAF resets Info even with no user
+// animation loop, so a later automation RPC must read the completed draw receipt.
+renderer.info.autoReset=false;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
 document.body.append(renderer.domElement); await renderer.init();
 if (!renderer.backend.isWebGPUBackend) throw Error('Neutral inspection requires actual WebGPU');
@@ -32,13 +35,18 @@ const key=new THREE.DirectionalLight(0xfff2db,3.2);key.position.set(-2,3,4);scen
 const fill=new THREE.DirectionalLight(0xddeaff,1.4);fill.position.set(3,1,-2);scene.add(fill);
 const target=new THREE.Vector3(.1,-.03,-.03);
 const views={front:[.1,.25,-1.75],right:[1.75,.3,.35],left:[-1.7,.3,.35],threeQuarter:[1.25,.6,1.45]};
-let current='threeQuarter',progress=0,disposed=false,tail=Promise.resolve();
-function draw(){tail=tail.then(async()=>{if(disposed)return;rig.group.updateMatrixWorld(true);await renderer.renderAsync(scene,camera);});return tail;}
+let current='threeQuarter',progress=0,disposed=false,tail=Promise.resolve(),lastDraw=null;
+function draw(){tail=tail.then(async()=>{if(disposed)return;rig.group.updateMatrixWorld(true);renderer.info.reset();
+  await renderer.renderAsync(scene,camera);
+  lastDraw={calls:renderer.info.render.calls,drawCalls:renderer.info.render.drawCalls,
+    triangles:renderer.info.render.triangles,completedAtMs:performance.now(),view:current,reload:progress};
+});return tail;}
 function view(name){if(!views[name])throw Error('Unknown inspection view');current=name;camera.position.set(...views[name]);camera.lookAt(target);return draw();}
 function reload(p){if(!Number.isFinite(p)||p<0||p>1)throw Error('Invalid reload sample');progress=p;rig.hands.updateReload(p);return draw();}
 window.__HEAVY_INSPECT={view,reload,stats:()=>({label:'NEUTRAL INSPECTION ONLY; not gameplay acceptance',view:current,reload:progress,
   backend:renderer.backend.isWebGPUBackend?'webgpu':'other',gun:rig.stats,sourceClips:parsed.animations.length,
-  handFit:rig.hands.root.userData.heavyFitVersion,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles}),
+  handFit:rig.hands.root.userData.heavyFitVersion,calls:lastDraw?.calls??0,triangles:lastDraw?.triangles??0,
+  lastDraw,liveCounters:{calls:renderer.info.render.calls,triangles:renderer.info.render.triangles}}),
   dispose:async()=>{await tail;if(disposed)return;disposed=true;rig.dispose();materials.dispose();renderer.dispose();}};
 for(const name of Object.keys(views)){const b=document.createElement('button');b.textContent=name;b.onclick=()=>view(name);document.querySelector('nav').append(b);}
 document.querySelector('input').oninput=e=>reload(Number(e.target.value));

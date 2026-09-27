@@ -275,7 +275,7 @@ const weapons = new WeaponsController({
     qaLastWeaponShotSeq = claim.seq;
     qaLastWeaponShotAt = claim.time;
     qaLastWeaponShotId = claim.weaponId;
-    match?.localShot(claim);
+    return match ? match.localShot(claim) : false;
   },
   onWeaponIntent: (input) => match?.weaponIntent(input) ?? null,
   localLoadout: () => selectedLoadout,

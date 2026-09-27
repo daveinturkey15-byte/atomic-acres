@@ -20,7 +20,9 @@ export type TransportHandler = (from: PeerId, msg: NetMessage) => void;
 export interface Transport {
   readonly localId: PeerId;
   readonly closed: boolean;
-  send(to: PeerId, msg: NetMessage): void;
+  /** false means definitely not sent or queued. void preserves legacy accepted
+   * transports; acceptance is never proof of delivery or a gameplay ACK. */
+  send(to: PeerId, msg: NetMessage): boolean | void;
   /** Returns an unsubscribe function. Rooms MUST call it in dispose(). */
   onMessage(handler: TransportHandler): () => void;
   close(): void;

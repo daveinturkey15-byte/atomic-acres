@@ -232,10 +232,10 @@ export function createRtcTransport(opts: RtcOptions): RtcTransport {
     get closed() {
       return closed;
     },
-    send(to: PeerId, msg: NetMessage): void {
-      if (closed) return;
+    send(to: PeerId, msg: NetMessage): boolean {
+      if (closed) return false;
       const p = peers.get(to);
-      if (p === undefined) return;
+      if (p === undefined) return false;
       const s = JSON.stringify(msg);
       const fast = FAST_TYPES.has(msg.type) ? p.fast : null;
       const ch = fast !== null && fast.readyState === 'open' ? fast : p.ctl;
@@ -243,17 +243,19 @@ export function createRtcTransport(opts: RtcOptions): RtcTransport {
         try {
           ch.send(s);
           stats.sent += 1;
+          return true;
         } catch {
           stats.dropped += 1;
+          return false;
         }
-        return;
       }
-      if (fast !== null) return; // a fast message with no open channel is worthless late
+      if (fast !== null) return false; // a fast message with no open channel is worthless late
       if (p.queue.length >= QUEUE_CAP) {
         p.queue.shift();
         stats.dropped += 1;
       }
       p.queue.push(s);
+      return true; // accepted into the existing early reliable queue, not delivered
     },
     onMessage(handler: TransportHandler): () => void {
       handlers.add(handler);

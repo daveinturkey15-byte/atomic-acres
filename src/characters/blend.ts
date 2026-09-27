@@ -48,6 +48,18 @@ export interface RigInput {
   carryWeight?: number;
 }
 
+/** Coverage of the legacy skate estimator, not a contact-quality verdict. */
+export interface SkateCoverage {
+  state: 'unmeasured' | 'incomplete' | 'measured';
+  reason: 'no-samples' | 'no-admitted-stance' | 'no-eligible-completed-stance' | 'eligible-completed-stance';
+  /** Calls to measureSkate, not unique rendered frames. */
+  sampleCount: number;
+  /** Completed stances that pass the estimator's existing duration/warm-up gates. */
+  eligibleCompletedStances: number;
+  /** Currently admitted feet; their unfinished drift is not in worstCm yet. */
+  pendingStances: number;
+}
+
 /** Scratch rig that samples authored clips without touching any live bones. */
 export class OverlaySampler {
   private readonly bones: Record<StandardBoneName, THREE.Bone>;
@@ -338,6 +350,8 @@ export class CharacterRig {
   private strideSkate = new Map<string, number>();
   private worstStrideCm = 0;
   private stridesDone = 0;
+  private skateSampleCount = 0;
+  private eligibleSkateStances = 0;
   private stanceSince = new Map<string, number>();
   private footPrevY = new Map<string, number>();
   private footPrevT = new Map<string, number>();
@@ -823,6 +837,7 @@ export class CharacterRig {
    * crossfade/blend transient, not the gait.
    */
   measureSkate(): number {
+    this.skateSampleCount++;
     this.root.updateMatrixWorld(true);
     const now = performance.now() / 1000;
     const dt = Math.max(1e-3, now - this.lastSkateT);
@@ -868,6 +883,7 @@ export class CharacterRig {
         const total = (this.strideSkate.get(side) ?? 0) * 100;
         this.stridesDone++;
         if (dur >= 0.08 && this.stridesDone > 2) {
+          this.eligibleSkateStances++;
           if (total > this.worstStrideCm) this.worstStrideCm = total;
         }
         this.strideSkate.set(side, 0);
@@ -883,6 +899,8 @@ export class CharacterRig {
 
   }
   resetSkate(): void {
+    this.skateSampleCount = 0;
+    this.eligibleSkateStances = 0;
     this.worstStrideCm = 0;
     this.stridesDone = 0;
     this.footPrev.clear();
@@ -890,6 +908,24 @@ export class CharacterRig {
     this.footPrevT.clear();
     this.stanceActive.clear();
     this.stanceSince.clear();
+  }
+
+  /** Read-only coverage. A measured completed prefix may still have pending feet.
+   * No admitted stance (including fast motion excluded by the legacy predicate)
+   * is unmeasured, never evidence that a returned zero means no foot sliding. */
+  skateCoverage(): SkateCoverage {
+    const pendingStances = Number(this.stanceActive.get('Left') === true)
+      + Number(this.stanceActive.get('Right') === true);
+    const measured = this.eligibleSkateStances > 0;
+    const incomplete = this.stridesDone > 0 || pendingStances > 0;
+    return {
+      state: measured ? 'measured' : incomplete ? 'incomplete' : 'unmeasured',
+      reason: this.skateSampleCount === 0 ? 'no-samples' : measured ? 'eligible-completed-stance'
+        : incomplete ? 'no-eligible-completed-stance' : 'no-admitted-stance',
+      sampleCount: this.skateSampleCount,
+      eligibleCompletedStances: this.eligibleSkateStances,
+      pendingStances,
+    };
   }
 
   /** Completed strides, live foot heights and stance flags. */

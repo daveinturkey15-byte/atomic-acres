@@ -251,7 +251,7 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
       if (!driver.ended()) endedAt = null;
     },
 
-    localShot(claim: ShotClaim): void { driver?.localShot(claim); },
+    localShot(claim: ShotClaim): boolean | void { return driver ? driver.localShot(claim) : false; },
     weaponIntent(input: Omit<WeaponIntent, 'seq' | 'life'>): number | null {
       return driver?.weaponIntent(input) ?? null;
     },

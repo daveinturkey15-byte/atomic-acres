@@ -255,11 +255,15 @@ if (spec.speed > 0.25) {
   await page.waitForTimeout(9000);
   slide = await page.evaluate(() => {
     const r = window.__NTANIM.skate(0);
+    r.contactCoverage = window.__NTANIM.skateCoverage?.(0) ?? null;
     window.__NTANIM.skateStop();
     return r;
   });
   console.log(`[anim] in-game skate: worst ${slide.worstCm} cm over ${slide.strides} strides`
     + `   footY L ${slide.footYLeft} R ${slide.footYRight}   hipsY ${slide.hipsY}`);
+  if (slide.contactCoverage?.state !== 'measured') {
+    console.log('[anim] OPEN: contact was not measured; a zero slip value cannot establish foot-contact acceptance');
+  }
 }
 
 const stats = await page.evaluate(() => { try { return window.__NT.stats(); } catch { return {}; } });
@@ -273,4 +277,4 @@ const summary = { clip: clipName, url, threshold: DARK_THRESHOLD, spec, report: 
 writeFileSync(join(OUT, `${tag}-summary.json`), JSON.stringify(summary, null, 2));
 console.log(`[anim] ${shots.length - dark.length}/${shots.length} views lit through the REAL game loop`
   + `   draw calls ${stats.calls ?? '?'}  programs ${stats.programs ?? '?'}`);
-process.exit(dark.length ? 1 : 0);
+process.exit(dark.length || (slide && slide.contactCoverage?.state !== 'measured') ? 1 : 0);

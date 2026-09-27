@@ -88,6 +88,7 @@ export interface AnimQA {
   surface(i: number): Record<string, number | string>;
   skateStart(i: number): boolean;
   skate(i: number): Record<string, number>;
+  skateCoverage(i: number): ReturnType<CharacterHandle['rig']['skateCoverage']> | null;
   skateStop(): void;
   selfTick(on: boolean): boolean;
   verifySubstitution(): Promise<Record<string, string>>;
@@ -507,6 +508,7 @@ export function installAnimQA(s: AnimSystem): void {
       if (!c) return {};
       return { worstCm: c.rig.measureSkate(), ...c.rig.debugSkate() };
     },
+    skateCoverage(i) { return pick(i)?.rig.skateCoverage() ?? null; },
     skateStop() { skateOn = false; },
     /**
      * HARNESS ONLY, off by default.
