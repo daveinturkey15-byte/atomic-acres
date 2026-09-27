@@ -1,0 +1,2115 @@
+{
+  "status": "HELD_NOT_SUBMITTED",
+  "checkedAt": "2026-09-27T12:04:15.961547+00:00",
+  "submissionAdmitted": false,
+  "endpoint": "http://127.0.0.1:8188",
+  "server": {
+    "comfyui_version": "0.37.0",
+    "pytorch_version": "2.14.0+cu130",
+    "ram_free": 29421375488
+  },
+  "queue": {
+    "queue_running": 0,
+    "queue_pending": 0
+  },
+  "gpuSnapshot": "1848, 14130, 30",
+  "gpuFields": [
+    "freeMiB",
+    "usedMiB",
+    "utilizationPercent"
+  ],
+  "images": [
+    {
+      "path": "docs/assets/references/garden-workbench-v1.png",
+      "sha256": "374f50678c055d14a85a5341537e8247e696e13b2dcecb0a933e470fde638612",
+      "bytes": 1712922,
+      "mode": "RGB",
+      "size": [
+        1536,
+        1024
+      ]
+    },
+    {
+      "path": "docs/assets/references/garden-workbench-cutout-openpass-take1.png",
+      "sha256": "906f891a1968a3877b0aa94cc69a8927c6f39a57f803323a955d846abf6d9ad7",
+      "bytes": 1620065,
+      "mode": "RGBA",
+      "size": [
+        1536,
+        1024
+      ],
+      "alpha": {
+        "min": 0,
+        "max": 254,
+        "zero": 975098,
+        "le8": 1003213,
+        "partial1to249": 57407,
+        "ge250": 540359,
+        "bboxPositive": [
+          0,
+          9,
+          1457,
+          997
+        ],
+        "bboxGE205": [
+          133,
+          33,
+          1395,
+          951
+        ],
+        "partialBeyond8pxOfOpaque": 4581,
+        "alpha9to249Beyond8pxOfOpaque": 489
+      },
+      "alphaRegions": {
+        "open_leg_lower": {
+          "xyxy": [
+            300,
+            690,
+            900,
+            860
+          ],
+          "max": 1,
+          "mean": 0.0018235294117647058,
+          "positive": 186,
+          "pixels": 102000
+        },
+        "left_exterior": {
+          "xyxy": [
+            0,
+            400,
+            120,
+            900
+          ],
+          "max": 1,
+          "mean": 0.00015,
+          "positive": 9,
+          "pixels": 60000
+        },
+        "floor": {
+          "xyxy": [
+            300,
+            880,
+            900,
+            1024
+          ],
+          "max": 1,
+          "mean": 0.0001388888888888889,
+          "positive": 12,
+          "pixels": 86400
+        },
+        "above_object": {
+          "xyxy": [
+            900,
+            0,
+            1536,
+            150
+          ],
+          "max": 1,
+          "mean": 0.0003039832285115304,
+          "positive": 29,
+          "pixels": 95400
+        }
+      }
+    }
+  ],
+  "modelNamePresenceOnly": {
+    "diffusion_models": {
+      "trellis_2_int8_convrot.safetensors": true,
+      "pixal3d_int8_convrot.safetensors": false
+    },
+    "vae": {
+      "trellis_2_shape_vae_bf16.safetensors": true,
+      "trellis_2_texture_vae_bf16.safetensors": true
+    },
+    "clip_vision": {
+      "dino_v3_vit_l.safetensors": true
+    },
+    "geometry_estimation": {
+      "moge_2_vitl_normal_fp16.safetensors": false
+    },
+    "background_removal": {
+      "birefnet.safetensors": false
+    }
+  },
+  "modelRootsHashesLicenses": "OPEN",
+  "builder": {
+    "path": "scripts/art-gen/comfy_trellis.py",
+    "sha256": "31d3c01c572a87865e9d9f0b152b85efab2fd1a7a2fc4666671630c73f60fed1"
+  },
+  "pinnedOfficialSources": {
+    "nodes.py": {
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/v0.37.0/nodes.py",
+      "sha256": "1af4a41e1d844550a836cf1d1b00fad85d3d0aefaf435743431a8f1598643e22",
+      "bytes": 108670
+    },
+    "nodes_mask.py": {
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/v0.37.0/comfy_extras/nodes_mask.py",
+      "sha256": "08171f430ddd9a327cec92293ac25fd1bc39d5c9079187a51463fb42d2a9d65b",
+      "bytes": 17122
+    },
+    "nodes_images.py": {
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/v0.37.0/comfy_extras/nodes_images.py",
+      "sha256": "5bc0a44ee22469506d5c86fccde5f4973d156b2356e0ced6a779d1299b0f1acf",
+      "bytes": 79479
+    },
+    "validation.py": {
+      "url": "https://raw.githubusercontent.com/Comfy-Org/ComfyUI/v0.37.0/comfy_execution/validation.py",
+      "sha256": "0f8d37760f3c0e05836e7ade85f9b12fa1d3ecdfe710dfe88b4682f8fdb7ba75",
+      "bytes": 9469
+    }
+  },
+  "schemaChecks": {
+    "result": "FIELDS_MATCH_LIVE_SCHEMA",
+    "errors": [],
+    "deferred": [
+      "Input placeholder deliberately not resolved/uploaded; LoadImage file validation OPEN"
+    ],
+    "limitation": "No server prompt validation, load, generation or output execution; node names are not readiness."
+  },
+  "schemas": {
+    "ApplyTextureToMesh": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH",
+            {}
+          ],
+          "base_color": [
+            "IMAGE",
+            {}
+          ]
+        },
+        "optional": {
+          "metallic": [
+            "IMAGE",
+            {}
+          ],
+          "roughness": [
+            "IMAGE",
+            {}
+          ],
+          "occlusion": [
+            "IMAGE",
+            {}
+          ],
+          "normal_map": [
+            "IMAGE",
+            {}
+          ]
+        }
+      },
+      "output": [
+        "MESH"
+      ],
+      "python_module": "comfy_extras.nodes_mesh_postprocess"
+    },
+    "BakeAmbientOcclusion": {
+      "input": {
+        "required": {
+          "low_poly": [
+            "MESH",
+            {}
+          ],
+          "high_poly": [
+            "MESH",
+            {}
+          ],
+          "resolution": [
+            "INT",
+            {
+              "default": 1024,
+              "min": 64,
+              "max": 8192,
+              "step": 64
+            }
+          ],
+          "samples": [
+            "INT",
+            {
+              "tooltip": "Rays per texel. More = smoother, slower. Raise if grainy.",
+              "default": 64,
+              "min": 4,
+              "max": 1024,
+              "step": 4
+            }
+          ],
+          "max_distance": [
+            "FLOAT",
+            {
+              "tooltip": "Ray length, as a fraction of the bounding box diagonal. Smaller = tighter, more local occlusion.",
+              "default": 0.5,
+              "min": 0.01,
+              "max": 2.0,
+              "step": 0.01
+            }
+          ],
+          "strength": [
+            "FLOAT",
+            {
+              "tooltip": "Scales the occlusion. >1 darkens, <1 lightens.",
+              "default": 1.0,
+              "min": 0.0,
+              "max": 2.0,
+              "step": 0.05
+            }
+          ],
+          "bias": [
+            "FLOAT",
+            {
+              "tooltip": "Ray origin lift off the surface, as a fraction of the bounding box diagonal. Raise if even surfaces show dark blotches/holes.",
+              "default": 0.01,
+              "min": 0.0001,
+              "max": 0.2,
+              "step": 0.0005
+            }
+          ]
+        }
+      },
+      "output": [
+        "IMAGE"
+      ],
+      "python_module": "comfy_extras.nodes_mesh_postprocess"
+    },
+    "BakeNormalMapFromMesh": {
+      "input": {
+        "required": {
+          "low_poly": [
+            "MESH",
+            {}
+          ],
+          "high_poly": [
+            "MESH",
+            {}
+          ],
+          "resolution": [
+            "INT",
+            {
+              "display_name": "resolution",
+              "default": 1024,
+              "min": 64,
+              "max": 8192,
+              "step": 64
+            }
+          ],
+          "cage_distance": [
+            "FLOAT",
+            {
+              "tooltip": "Surface search band, as a fraction of the bounding box diagonal. Raise for wrong/missing patches under heavy decimation; lower if it grabs across gaps.",
+              "default": 0.05,
+              "min": 0.001,
+              "max": 0.5,
+              "step": 0.001
+            }
+          ],
+          "ignore_backfaces": [
+            "BOOLEAN",
+            {
+              "tooltip": "Skip high-poly surfaces facing away from the texel, so crevices/enclosed spaces don't grab the opposite wall. Disable only if the high-poly winding is inconsistent.",
+              "default": true
+            }
+          ]
+        }
+      },
+      "output": [
+        "IMAGE"
+      ],
+      "python_module": "comfy_extras.nodes_mesh_postprocess"
+    },
+    "BakeTextureFromVoxel": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH",
+            {}
+          ],
+          "voxel_colors": [
+            "VOXEL",
+            {}
+          ],
+          "texture_size": [
+            "INT",
+            {
+              "display_name": "resolution",
+              "tooltip": "Square UV atlas resolution.",
+              "default": 2048,
+              "min": 64,
+              "max": 8192
+            }
+          ]
+        },
+        "optional": {
+          "reference_mesh": [
+            "MESH",
+            {
+              "tooltip": "Optional dense pre-decimation mesh; back-projects each texel onto its true surface before sampling, removing faceted baking on coarse meshes."
+            }
+          ]
+        }
+      },
+      "output": [
+        "IMAGE",
+        "IMAGE",
+        "IMAGE"
+      ],
+      "python_module": "comfy_extras.nodes_mesh_postprocess"
+    },
+    "CFGOverride": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL",
+            {}
+          ],
+          "cfg": [
+            "FLOAT",
+            {
+              "default": 1.0,
+              "min": 0.0,
+              "max": 100.0,
+              "step": 0.1,
+              "round": 0.01
+            }
+          ],
+          "start_percent": [
+            "FLOAT",
+            {
+              "default": 0.0,
+              "min": 0.0,
+              "max": 1.0,
+              "step": 0.001
+            }
+          ],
+          "end_percent": [
+            "FLOAT",
+            {
+              "default": 1.0,
+              "min": 0.0,
+              "max": 1.0,
+              "step": 0.001
+            }
+          ]
+        }
+      },
+      "output": [
+        "MODEL"
+      ],
+      "python_module": "comfy_extras.nodes_custom_sampler"
+    },
+    "CLIPVisionLoader": {
+      "input": {
+        "required": {
+          "clip_name": [
+            [
+              "dino_v3_vit_l.safetensors"
+            ]
+          ]
+        }
+      },
+      "output": [
+        "CLIP_VISION"
+      ],
+      "python_module": "nodes"
+    },
+    "DecimateMesh": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH",
+            {}
+          ],
+          "target_face_count": [
+            "INT",
+            {
+              "tooltip": "Target max faces. 0 disables.",
+              "default": 200000,
+              "min": 0,
+              "max": 50000000
+            }
+          ],
+          "placement_mode": [
+            "COMFY_DYNAMICCOMBO_V3",
+            {
+              "display_name": "placement_mode",
+              "tooltip": "midpoint: cumesh-faithful (recommended). qem: QEM-optimal placement.",
+              "options": [
+                {
+                  "key": "midpoint",
+                  "inputs": {
+                    "required": {}
+                  }
+                },
+                {
+                  "key": "qem",
+                  "inputs": {
+                    "required": {
+                      "line_quadric_weight": [
+                        "FLOAT",
+                        {
+                          "tooltip": "Per-edge line-quadric weight; preserves sharp ridges/valleys. 0 = off.",
+                          "default": 0.0,
+                          "min": 0.0,
+                          "max": 100.0,
+                          "step": 0.1
+                        }
+                      ],
+                      "feature_edge_quadric_weight": [
+                        "FLOAT",
+                        {
+                          "tooltip": "Extra quadric weight on dihedral feature edges (creases). 0 = off.",
+                          "default": 0.0,
+                          "min": 0.0,
+                          "max": 1000.0,
+                          "step": 1.0
+                        }
+                      ],
+                      "feature_edge_min_dihedral_deg": [
+                        "FLOAT",
+                        {
+                          "tooltip": "Minimum dihedral angle (degree) to count an edge as a feature edge.",
+                          "default": 30.0,
+                          "min": 0.0,
+                          "max": 180.0,
+                          "step": 1.0
+                        }
+                      ],
+                      "clamp_v_to_edge": [
+                        "BOOLEAN",
+                        {
+                          "tooltip": "Project the QEM-optimal position onto the collapsed edge segment.",
+                          "default": true
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "hidden": {
+          "unique_id": [
+            "UNIQUE_ID"
+          ]
+        }
+      },
+      "output": [
+        "MESH"
+      ],
+      "python_module": "comfy_extras.nodes_mesh_postprocess"
+    },
+    "EmptyTrellis2LatentStructure": {
+      "input": {
+        "required": {
+          "batch_size": [
+            "INT",
+            {
+              "tooltip": "The number of latent images in the batch.",
+              "default": 1,
+              "min": 1,
+              "max": 4096
+            }
+          ]
+        }
+      },
+      "output": [
+        "LATENT"
+      ],
+      "python_module": "comfy_extras.nodes_trellis2"
+    },
+    "GetMeshInfo": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH",
+            {}
+          ]
+        },
+        "hidden": {
+          "unique_id": [
+            "UNIQUE_ID"
+          ]
+        }
+      },
+      "output": [
+        "MESH",
+        "STRING"
+      ],
+      "python_module": "comfy_extras.nodes_save_3d"
+    },
+    "ImageCropToMask": {
+      "input": {
+        "required": {
+          "images": [
+            "IMAGE",
+            {}
+          ],
+          "masks": [
+            "MASK",
+            {}
+          ],
+          "width": [
+            "INT",
+            {
+              "tooltip": "Output width in pixels.",
+              "default": 1024,
+              "min": 64,
+              "max": 4096,
+              "step": 8
+            }
+          ],
+          "height": [
+            "INT",
+            {
+              "tooltip": "Output height in pixels.",
+              "default": 1024,
+              "min": 64,
+              "max": 4096,
+              "step": 8
+            }
+          ],
+          "pad_factor": [
+            "FLOAT",
+            {
+              "tooltip": "Extra margin around the mask bounding box as a multiplier.",
+              "default": 1.0,
+              "min": 1.0,
+              "max": 2.0,
+              "step": 0.01
+            }
+          ],
+          "grow_mask": [
+            "INT",
+            {
+              "tooltip": "Grow or shrink the mask by this many pixels before cropping.",
+              "default": 0,
+              "min": -32,
+              "max": 32,
+              "step": 1
+            }
+          ],
+          "background": [
+            "COLOR",
+            {
+              "tooltip": "Background color behind the masked subject.",
+              "default": "#000000",
+              "socketless": true
+            }
+          ]
+        }
+      },
+      "output": [
+        "IMAGE"
+      ],
+      "python_module": "comfy_extras.nodes_images"
+    },
+    "InvertMask": {
+      "input": {
+        "required": {
+          "mask": [
+            "MASK",
+            {}
+          ]
+        }
+      },
+      "output": [
+        "MASK"
+      ],
+      "python_module": "comfy_extras.nodes_mask"
+    },
+    "KSampler": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL",
+            {
+              "tooltip": "The model used for denoising the input latent."
+            }
+          ],
+          "seed": [
+            "INT",
+            {
+              "default": 0,
+              "min": 0,
+              "max": 18446744073709551615,
+              "control_after_generate": true,
+              "tooltip": "The random seed used for creating the noise."
+            }
+          ],
+          "steps": [
+            "INT",
+            {
+              "default": 20,
+              "min": 1,
+              "max": 10000,
+              "tooltip": "The number of steps used in the denoising process."
+            }
+          ],
+          "cfg": [
+            "FLOAT",
+            {
+              "default": 8.0,
+              "min": 0.0,
+              "max": 100.0,
+              "step": 0.1,
+              "round": 0.01,
+              "tooltip": "The Classifier-Free Guidance scale balances creativity and adherence to the prompt. Higher values result in images more closely matching the prompt however too high values will negatively impact quality."
+            }
+          ],
+          "sampler_name": [
+            [
+              "euler",
+              "euler_cfg_pp",
+              "euler_ancestral",
+              "euler_ancestral_cfg_pp",
+              "heun",
+              "heunpp2",
+              "exp_heun_2_x0",
+              "exp_heun_2_x0_sde",
+              "dpm_2",
+              "dpm_2_ancestral",
+              "lms",
+              "dpm_fast",
+              "dpm_adaptive",
+              "dpmpp_2s_ancestral",
+              "dpmpp_2s_ancestral_cfg_pp",
+              "dpmpp_sde",
+              "dpmpp_sde_gpu",
+              "dpmpp_2m",
+              "dpmpp_2m_cfg_pp",
+              "dpmpp_2m_sde",
+              "dpmpp_2m_sde_gpu",
+              "dpmpp_2m_sde_heun",
+              "dpmpp_2m_sde_heun_gpu",
+              "dpmpp_3m_sde",
+              "dpmpp_3m_sde_gpu",
+              "ddpm",
+              "lcm",
+              "ipndm",
+              "ipndm_v",
+              "deis",
+              "cfgpp_ud10_ab",
+              "res_multistep",
+              "res_multistep_cfg_pp",
+              "res_multistep_ancestral",
+              "res_multistep_ancestral_cfg_pp",
+              "gradient_estimation",
+              "gradient_estimation_cfg_pp",
+              "er_sde",
+              "seeds_2",
+              "seeds_3",
+              "sa_solver",
+              "sa_solver_pece",
+              "ddim",
+              "uni_pc",
+              "uni_pc_bh2"
+            ],
+            {
+              "tooltip": "The algorithm used when sampling, this can affect the quality, speed, and style of the generated output."
+            }
+          ],
+          "scheduler": [
+            [
+              "simple",
+              "sgm_uniform",
+              "karras",
+              "exponential",
+              "ddim_uniform",
+              "beta",
+              "normal",
+              "linear_quadratic",
+              "kl_optimal"
+            ],
+            {
+              "tooltip": "The scheduler controls how noise is gradually removed to form the image."
+            }
+          ],
+          "positive": [
+            "CONDITIONING",
+            {
+              "tooltip": "The conditioning describing the attributes you want to include in the image."
+            }
+          ],
+          "negative": [
+            "CONDITIONING",
+            {
+              "tooltip": "The conditioning describing the attributes you want to exclude from the image."
+            }
+          ],
+          "latent_image": [
+            "LATENT",
+            {
+              "tooltip": "The latent image to denoise."
+            }
+          ],
+          "denoise": [
+            "FLOAT",
+            {
+              "default": 1.0,
+              "min": 0.0,
+              "max": 1.0,
+              "step": 0.01,
+              "tooltip": "The amount of denoising applied, lower values will maintain the structure of the initial image allowing for image to image sampling."
+            }
+          ]
+        }
+      },
+      "output": [
+        "LATENT"
+      ],
+      "python_module": "nodes"
+    },
+    "LoadImage": {
+      "input": {
+        "required": {
+          "image": [
+            "COMBO",
+            {
+              "options": [],
+              "image_upload": true,
+              "redacted": "owner input filenames not retained"
+            }
+          ]
+        }
+      },
+      "output": [
+        "IMAGE",
+        "MASK"
+      ],
+      "python_module": "nodes"
+    },
+    "MeshSmoothNormals": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH",
+            {}
+          ],
+          "crease_angle": [
+            "FLOAT",
+            {
+              "tooltip": "Edges whose dihedral angle exceeds this value (degrees) stay hard (vertices are split). 180 = fully smooth; lower preserves sharp edges (e.g. ~30-60 for hard-surface).",
+              "default": 180.0,
+              "min": 0.0,
+              "max": 180.0,
+              "step": 1.0
+            }
+          ]
+        }
+      },
+      "output": [
+        "MESH"
+      ],
+      "python_module": "comfy_extras.nodes_mesh_postprocess"
+    },
+    "MeshToFile3D": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH",
+            {}
+          ]
+        }
+      },
+      "output": [
+        "FILE_3D_GLB"
+      ],
+      "python_module": "comfy_extras.nodes_save_3d"
+    },
+    "ModelSamplingSD3": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL"
+          ],
+          "shift": [
+            "FLOAT",
+            {
+              "default": 3.0,
+              "min": 0.0,
+              "max": 100.0,
+              "step": 0.01
+            }
+          ]
+        }
+      },
+      "output": [
+        "MODEL"
+      ],
+      "python_module": "comfy_extras.nodes_model_advanced"
+    },
+    "PaintMesh": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH",
+            {}
+          ],
+          "voxel_colors": [
+            "VOXEL",
+            {}
+          ]
+        }
+      },
+      "output": [
+        "MESH"
+      ],
+      "python_module": "comfy_extras.nodes_mesh_postprocess"
+    },
+    "PreviewAny": {
+      "input": {
+        "required": {
+          "source": [
+            "*",
+            {}
+          ]
+        }
+      },
+      "output": [
+        "STRING"
+      ],
+      "python_module": "comfy_extras.nodes_preview_any"
+    },
+    "RemeshMesh": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH",
+            {}
+          ],
+          "resolution": [
+            "INT",
+            {
+              "tooltip": "Voxel grid resolution (output density). 256 ~ 100k faces, 512 ~ 1M. For an exact face count, follow with Decimate Mesh.",
+              "default": 512,
+              "min": 32,
+              "max": 2048
+            }
+          ],
+          "sign_mode": [
+            "COMFY_DYNAMICCOMBO_V3",
+            {
+              "display_name": "sign_mode",
+              "tooltip": "udf: robust to messy/non-manifold input. sdf: clean single surface with QEF (Quadratic Error Function) sharp-feature recovery, but needs consistent winding.",
+              "options": [
+                {
+                  "key": "udf",
+                  "inputs": {
+                    "required": {
+                      "qef": [
+                        "BOOLEAN",
+                        {
+                          "tooltip": "QEF (Quadratic Error Function) dual-vertex placement for sharper edges.",
+                          "advanced": true,
+                          "default": false
+                        }
+                      ],
+                      "drop_inverted_components": [
+                        "BOOLEAN",
+                        {
+                          "tooltip": "Drop inward-normal (negative-volume) closed components \u2014 the UDF inner shell.",
+                          "advanced": true,
+                          "default": false
+                        }
+                      ],
+                      "drop_enclosed_components": [
+                        "BOOLEAN",
+                        {
+                          "tooltip": "Drop components inside the largest's bbox that fail a point-in-mesh raycast. Disable for legitimate nested parts.",
+                          "advanced": true,
+                          "default": false
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "sdf",
+                  "inputs": {
+                    "required": {
+                      "qef": [
+                        "BOOLEAN",
+                        {
+                          "tooltip": "QEF (Quadratic Error Function) dual-vertex placement (recovers sharp features) vs edge-crossing centroid.",
+                          "default": true
+                        }
+                      ],
+                      "manifold": [
+                        "BOOLEAN",
+                        {
+                          "tooltip": "Manifold Dual Contouring: 1-4 dual verts/voxel for multi-sheet cases. Slower.",
+                          "default": false
+                        }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          ],
+          "band": [
+            "FLOAT",
+            {
+              "tooltip": "Narrow-band width in voxel units. In UDF mode also offsets the surface.",
+              "advanced": true,
+              "default": 1.0,
+              "min": 0.5,
+              "max": 4.0,
+              "step": 0.1
+            }
+          ],
+          "project_back": [
+            "FLOAT",
+            {
+              "tooltip": "Linearly interpolate vertices toward the original surface (0 = pure DC, 1 = snapped).",
+              "advanced": true,
+              "default": 0.0,
+              "min": 0.0,
+              "max": 1.0,
+              "step": 0.05
+            }
+          ],
+          "fix_poles": [
+            "BOOLEAN",
+            {
+              "tooltip": "Collapse valence-3 vertex pairs (DC T-junction artifact).",
+              "advanced": true,
+              "default": false
+            }
+          ],
+          "smooth_iters": [
+            "INT",
+            {
+              "tooltip": "Taubin smoothing iterations (0 = off). 2-3 cleans DC staircase-like artifacts; higher over-smooth QEF edges.",
+              "default": 0,
+              "min": 0,
+              "max": 20
+            }
+          ],
+          "drop_small_components": [
+            "FLOAT",
+            {
+              "tooltip": "Drop components below this fraction of the largest's face count. 0 disables.",
+              "advanced": true,
+              "default": 0.01,
+              "min": 0.0,
+              "max": 0.5,
+              "step": 0.005
+            }
+          ],
+          "precluster_max_verts": [
+            "INT",
+            {
+              "tooltip": "Cap input vertex count before the field queries, inputs above this are cluster-decimated to it first. Prevents OOM on huge meshes.",
+              "advanced": true,
+              "default": 20000000,
+              "min": 0,
+              "max": 100000000
+            }
+          ]
+        },
+        "hidden": {
+          "unique_id": [
+            "UNIQUE_ID"
+          ]
+        }
+      },
+      "output": [
+        "MESH"
+      ],
+      "python_module": "comfy_extras.nodes_mesh_postprocess"
+    },
+    "RenderUVAtlas": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH",
+            {}
+          ],
+          "resolution": [
+            "INT",
+            {
+              "default": 1024,
+              "min": 64,
+              "max": 4096,
+              "step": 64
+            }
+          ]
+        }
+      },
+      "output": [
+        "IMAGE"
+      ],
+      "python_module": "comfy_extras.nodes_mesh_postprocess"
+    },
+    "RescaleCFG": {
+      "input": {
+        "required": {
+          "model": [
+            "MODEL"
+          ],
+          "multiplier": [
+            "FLOAT",
+            {
+              "default": 0.7,
+              "min": 0.0,
+              "max": 1.0,
+              "step": 0.01
+            }
+          ]
+        }
+      },
+      "output": [
+        "MODEL"
+      ],
+      "python_module": "comfy_extras.nodes_model_advanced"
+    },
+    "SaveGLB": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH,FILE_3D_GLB,FILE_3D_GLTF,FILE_3D_OBJ,FILE_3D_FBX,FILE_3D_STL,FILE_3D_USDZ,FILE_3D_PLY,FILE_3D_SPLAT,FILE_3D_SPZ,FILE_3D_KSPLAT,FILE_3D_SPLAT_ANY,FILE_3D_POINT_CLOUD_ANY,FILE_3D",
+            {
+              "tooltip": "Mesh or 3D file to save"
+            }
+          ],
+          "filename_prefix": [
+            "STRING",
+            {
+              "default": "3d/ComfyUI",
+              "multiline": false
+            }
+          ]
+        },
+        "hidden": {
+          "prompt": [
+            "PROMPT"
+          ],
+          "extra_pnginfo": [
+            "EXTRA_PNGINFO"
+          ]
+        }
+      },
+      "output": [],
+      "python_module": "comfy_extras.nodes_save_3d"
+    },
+    "SaveImage": {
+      "input": {
+        "required": {
+          "images": [
+            "IMAGE",
+            {
+              "tooltip": "The images to save."
+            }
+          ],
+          "filename_prefix": [
+            "STRING",
+            {
+              "default": "ComfyUI",
+              "tooltip": "The prefix for the file to save. This may include formatting information such as %date:yyyy-MM-dd% or %Empty Latent Image.width% to include values from nodes."
+            }
+          ]
+        },
+        "hidden": {
+          "prompt": "PROMPT",
+          "extra_pnginfo": "EXTRA_PNGINFO"
+        }
+      },
+      "output": [
+        "IMAGE"
+      ],
+      "python_module": "nodes"
+    },
+    "Trellis2Conditioning": {
+      "input": {
+        "required": {
+          "clip_vision_model": [
+            "CLIP_VISION",
+            {}
+          ],
+          "image": [
+            "IMAGE",
+            {
+              "tooltip": "Preprocessed image from ImageCropToMask (pad_factor=1.0 for TRELLIS.2)."
+            }
+          ]
+        }
+      },
+      "output": [
+        "CONDITIONING",
+        "CONDITIONING"
+      ],
+      "python_module": "comfy_extras.nodes_trellis2"
+    },
+    "Trellis2ShapeStage": {
+      "input": {
+        "required": {
+          "positive": [
+            "CONDITIONING",
+            {}
+          ],
+          "negative": [
+            "CONDITIONING",
+            {}
+          ],
+          "voxel": [
+            "VOXEL",
+            {
+              "tooltip": "Dense structure voxel from VaeDecodeStructureTrellis2."
+            }
+          ]
+        }
+      },
+      "output": [
+        "CONDITIONING",
+        "CONDITIONING",
+        "LATENT"
+      ],
+      "python_module": "comfy_extras.nodes_trellis2"
+    },
+    "Trellis2TextureStage": {
+      "input": {
+        "required": {
+          "positive": [
+            "CONDITIONING",
+            {}
+          ],
+          "negative": [
+            "CONDITIONING",
+            {}
+          ],
+          "shape_latent": [
+            "LATENT",
+            {}
+          ]
+        }
+      },
+      "output": [
+        "CONDITIONING",
+        "CONDITIONING",
+        "LATENT"
+      ],
+      "python_module": "comfy_extras.nodes_trellis2"
+    },
+    "Trellis2UpsampleStage": {
+      "input": {
+        "required": {
+          "positive": [
+            "CONDITIONING",
+            {}
+          ],
+          "negative": [
+            "CONDITIONING",
+            {}
+          ],
+          "shape_latent": [
+            "LATENT",
+            {
+              "tooltip": "The 512-resolution shape latent output from the first shape-stage KSampler."
+            }
+          ],
+          "vae": [
+            "VAE",
+            {}
+          ],
+          "target_resolution": [
+            "INT",
+            {
+              "tooltip": "Voxel resolution of the upsampled shape. Higher = more detail, more VRAM.",
+              "default": 1024,
+              "min": 1024,
+              "max": 2048,
+              "step": 128
+            }
+          ]
+        }
+      },
+      "output": [
+        "CONDITIONING",
+        "CONDITIONING",
+        "LATENT"
+      ],
+      "python_module": "comfy_extras.nodes_trellis2"
+    },
+    "UNETLoader": {
+      "input": {
+        "required": {
+          "unet_name": [
+            [
+              "trellis_2_int8_convrot.safetensors"
+            ]
+          ],
+          "weight_dtype": [
+            [
+              "default"
+            ],
+            {
+              "advanced": true
+            }
+          ]
+        }
+      },
+      "output": [
+        "MODEL"
+      ],
+      "python_module": "nodes"
+    },
+    "UnwrapMesh": {
+      "input": {
+        "required": {
+          "mesh": [
+            "MESH",
+            {}
+          ],
+          "segmenter": [
+            "COMBO",
+            {
+              "tooltip": "pec: fast parallel-edge-collapse charting on GPU. adaptive: CPU, slower.",
+              "default": "pec",
+              "multiselect": false,
+              "options": [
+                "pec",
+                "adaptive"
+              ]
+            }
+          ],
+          "resolution": [
+            "INT",
+            {
+              "tooltip": "Target atlas resolution for texel-density auto-scale (0 = fit-to-content).",
+              "default": 1024,
+              "min": 0,
+              "max": 8192,
+              "step": 256
+            }
+          ],
+          "padding": [
+            "INT",
+            {
+              "tooltip": "Texel padding between charts.",
+              "default": 1,
+              "min": 0,
+              "max": 16
+            }
+          ],
+          "weld_distance": [
+            "FLOAT",
+            {
+              "tooltip": "Coincident-vert merge radius as a fraction of mesh extent (0 = auto). Raise to ~0.001 if you get per-triangle charts (unwelded input).",
+              "default": 0.0,
+              "min": 0.0,
+              "max": 1.0,
+              "step": 0.0001
+            }
+          ]
+        },
+        "hidden": {
+          "unique_id": [
+            "UNIQUE_ID"
+          ]
+        }
+      },
+      "output": [
+        "MESH"
+      ],
+      "python_module": "comfy_extras.nodes_mesh_postprocess"
+    },
+    "VAELoader": {
+      "input": {
+        "required": {
+          "vae_name": [
+            [
+              "trellis_2_shape_vae_bf16.safetensors",
+              "trellis_2_texture_vae_bf16.safetensors"
+            ]
+          ]
+        }
+      },
+      "output": [
+        "VAE"
+      ],
+      "python_module": "nodes"
+    },
+    "VaeDecodeShapeTrellis": {
+      "input": {
+        "required": {
+          "samples": [
+            "LATENT",
+            {}
+          ],
+          "vae": [
+            "VAE",
+            {}
+          ]
+        }
+      },
+      "output": [
+        "MESH",
+        "SHAPE_SUBDIVIDES"
+      ],
+      "python_module": "comfy_extras.nodes_trellis2"
+    },
+    "VaeDecodeStructureTrellis2": {
+      "input": {
+        "required": {
+          "samples": [
+            "LATENT",
+            {}
+          ],
+          "vae": [
+            "VAE",
+            {}
+          ],
+          "resolution": [
+            "COMBO",
+            {
+              "default": "32",
+              "multiselect": false,
+              "options": [
+                "32",
+                "64"
+              ]
+            }
+          ]
+        }
+      },
+      "output": [
+        "VOXEL"
+      ],
+      "python_module": "comfy_extras.nodes_trellis2"
+    },
+    "VaeDecodeTextureTrellis": {
+      "input": {
+        "required": {
+          "samples": [
+            "LATENT",
+            {}
+          ],
+          "vae": [
+            "VAE",
+            {}
+          ],
+          "shape_subdivides": [
+            "SHAPE_SUBDIVIDES",
+            {
+              "tooltip": "Shape information used to guide higher-detail reconstruction during decoding. Helps preserve structure consistency at higher resolutions."
+            }
+          ]
+        }
+      },
+      "output": [
+        "VOXEL"
+      ],
+      "python_module": "comfy_extras.nodes_trellis2"
+    }
+  },
+  "changesFromExistingDraft": [
+    "BiRefNet branch replaced by explicit LoadImage inverse-alpha -> InvertMask",
+    "TRELLIS crop pad_factor 1.0 matches live tooltip; 1024x1024 black composite retained",
+    "Game decimation target 20000; 1024 atlas/base, 512 normal and AO; raw sculpt target 700000 retained"
+  ],
+  "holds": [
+    "Free VRAM below project reserve and historic profile needs almost the whole 16GiB GPU",
+    "Actual model roots, content hashes, loading and component licenses unresolved",
+    "Input alpha edge/halo and exact object preservation not art-accepted",
+    "Mesh hidden surfaces, leaf/leg retention, UVs and <=12MiB runtime budget unexecuted",
+    "Full feed graph resource admission and AO/cage scale parameters require review"
+  ],
+  "editableApiGraphDraft": {
+    "10": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "__NOT_UPLOADED_WORKBENCH_CUTOUT__"
+      }
+    },
+    "12": {
+      "class_type": "InvertMask",
+      "inputs": {
+        "mask": [
+          "10",
+          1
+        ]
+      }
+    },
+    "13": {
+      "class_type": "ImageCropToMask",
+      "inputs": {
+        "images": [
+          "10",
+          0
+        ],
+        "masks": [
+          "12",
+          0
+        ],
+        "width": 1024,
+        "height": 1024,
+        "pad_factor": 1.0,
+        "grow_mask": 0,
+        "background": "#000000"
+      }
+    },
+    "14": {
+      "class_type": "CLIPVisionLoader",
+      "inputs": {
+        "clip_name": "dino_v3_vit_l.safetensors"
+      }
+    },
+    "15": {
+      "class_type": "Trellis2Conditioning",
+      "inputs": {
+        "clip_vision_model": [
+          "14",
+          0
+        ],
+        "image": [
+          "13",
+          0
+        ]
+      }
+    },
+    "20": {
+      "class_type": "UNETLoader",
+      "inputs": {
+        "unet_name": "trellis_2_int8_convrot.safetensors",
+        "weight_dtype": "default"
+      }
+    },
+    "21": {
+      "class_type": "CFGOverride",
+      "inputs": {
+        "model": [
+          "20",
+          0
+        ],
+        "cfg": 1.0,
+        "start_percent": 0.667,
+        "end_percent": 1.0
+      }
+    },
+    "22": {
+      "class_type": "RescaleCFG",
+      "inputs": {
+        "model": [
+          "21",
+          0
+        ],
+        "multiplier": 0.7
+      }
+    },
+    "23": {
+      "class_type": "ModelSamplingSD3",
+      "inputs": {
+        "model": [
+          "22",
+          0
+        ],
+        "shift": 5.0
+      }
+    },
+    "24": {
+      "class_type": "CFGOverride",
+      "inputs": {
+        "model": [
+          "20",
+          0
+        ],
+        "cfg": 1.0,
+        "start_percent": 0.769,
+        "end_percent": 1.0
+      }
+    },
+    "25": {
+      "class_type": "RescaleCFG",
+      "inputs": {
+        "model": [
+          "24",
+          0
+        ],
+        "multiplier": 0.5
+      }
+    },
+    "30": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "trellis_2_shape_vae_bf16.safetensors"
+      }
+    },
+    "31": {
+      "class_type": "VAELoader",
+      "inputs": {
+        "vae_name": "trellis_2_texture_vae_bf16.safetensors"
+      }
+    },
+    "40": {
+      "class_type": "EmptyTrellis2LatentStructure",
+      "inputs": {
+        "batch_size": 1
+      }
+    },
+    "41": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "23",
+          0
+        ],
+        "seed": 56,
+        "steps": 12,
+        "cfg": 7.5,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "positive": [
+          "15",
+          0
+        ],
+        "negative": [
+          "15",
+          1
+        ],
+        "latent_image": [
+          "40",
+          0
+        ],
+        "denoise": 1.0
+      }
+    },
+    "42": {
+      "class_type": "VaeDecodeStructureTrellis2",
+      "inputs": {
+        "samples": [
+          "41",
+          0
+        ],
+        "vae": [
+          "30",
+          0
+        ],
+        "resolution": "32"
+      }
+    },
+    "50": {
+      "class_type": "Trellis2ShapeStage",
+      "inputs": {
+        "positive": [
+          "15",
+          0
+        ],
+        "negative": [
+          "15",
+          1
+        ],
+        "voxel": [
+          "42",
+          0
+        ]
+      }
+    },
+    "51": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "25",
+          0
+        ],
+        "seed": 42,
+        "steps": 20,
+        "cfg": 7.5,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "positive": [
+          "50",
+          0
+        ],
+        "negative": [
+          "50",
+          1
+        ],
+        "latent_image": [
+          "50",
+          2
+        ],
+        "denoise": 1.0
+      }
+    },
+    "60": {
+      "class_type": "Trellis2UpsampleStage",
+      "inputs": {
+        "positive": [
+          "50",
+          0
+        ],
+        "negative": [
+          "50",
+          1
+        ],
+        "shape_latent": [
+          "51",
+          0
+        ],
+        "vae": [
+          "30",
+          0
+        ],
+        "target_resolution": 1536
+      }
+    },
+    "61": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "25",
+          0
+        ],
+        "seed": 42,
+        "steps": 12,
+        "cfg": 7.5,
+        "sampler_name": "euler",
+        "scheduler": "simple",
+        "positive": [
+          "60",
+          0
+        ],
+        "negative": [
+          "60",
+          1
+        ],
+        "latent_image": [
+          "60",
+          2
+        ],
+        "denoise": 1.0
+      }
+    },
+    "62": {
+      "class_type": "VaeDecodeShapeTrellis",
+      "inputs": {
+        "samples": [
+          "61",
+          0
+        ],
+        "vae": [
+          "30",
+          0
+        ]
+      }
+    },
+    "70": {
+      "class_type": "Trellis2TextureStage",
+      "inputs": {
+        "positive": [
+          "60",
+          0
+        ],
+        "negative": [
+          "60",
+          1
+        ],
+        "shape_latent": [
+          "61",
+          0
+        ]
+      }
+    },
+    "71": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "20",
+          0
+        ],
+        "seed": 43,
+        "steps": 12,
+        "cfg": 1.0,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "positive": [
+          "70",
+          0
+        ],
+        "negative": [
+          "70",
+          1
+        ],
+        "latent_image": [
+          "70",
+          2
+        ],
+        "denoise": 1.0
+      }
+    },
+    "72": {
+      "class_type": "VaeDecodeTextureTrellis",
+      "inputs": {
+        "samples": [
+          "71",
+          0
+        ],
+        "vae": [
+          "31",
+          0
+        ],
+        "shape_subdivides": [
+          "62",
+          1
+        ]
+      }
+    },
+    "80": {
+      "class_type": "GetMeshInfo",
+      "inputs": {
+        "mesh": [
+          "62",
+          0
+        ]
+      }
+    },
+    "81": {
+      "class_type": "RemeshMesh",
+      "inputs": {
+        "mesh": [
+          "80",
+          0
+        ],
+        "resolution": 768,
+        "sign_mode": "udf",
+        "sign_mode.qef": false,
+        "sign_mode.drop_inverted_components": false,
+        "sign_mode.drop_enclosed_components": false,
+        "band": 1.0,
+        "project_back": 0.0,
+        "fix_poles": false,
+        "smooth_iters": 20,
+        "drop_small_components": 0.01,
+        "precluster_max_verts": 20000000
+      }
+    },
+    "90": {
+      "class_type": "DecimateMesh",
+      "inputs": {
+        "mesh": [
+          "81",
+          0
+        ],
+        "target_face_count": 700000,
+        "placement_mode": "midpoint"
+      }
+    },
+    "91": {
+      "class_type": "GetMeshInfo",
+      "inputs": {
+        "mesh": [
+          "90",
+          0
+        ]
+      }
+    },
+    "92": {
+      "class_type": "PreviewAny",
+      "inputs": {
+        "source": [
+          "91",
+          1
+        ]
+      }
+    },
+    "93": {
+      "class_type": "MeshSmoothNormals",
+      "inputs": {
+        "mesh": [
+          "91",
+          0
+        ],
+        "crease_angle": 180.0
+      }
+    },
+    "94": {
+      "class_type": "PaintMesh",
+      "inputs": {
+        "mesh": [
+          "93",
+          0
+        ],
+        "voxel_colors": [
+          "72",
+          0
+        ]
+      }
+    },
+    "95": {
+      "class_type": "MeshToFile3D",
+      "inputs": {
+        "mesh": [
+          "94",
+          0
+        ]
+      }
+    },
+    "96": {
+      "class_type": "SaveGLB",
+      "inputs": {
+        "mesh": [
+          "95",
+          0
+        ],
+        "filename_prefix": "3d/atomic-acres-workbench-openpass-draft-sculpt"
+      }
+    },
+    "100": {
+      "class_type": "DecimateMesh",
+      "inputs": {
+        "mesh": [
+          "81",
+          0
+        ],
+        "target_face_count": 20000,
+        "placement_mode": "midpoint"
+      }
+    },
+    "101": {
+      "class_type": "GetMeshInfo",
+      "inputs": {
+        "mesh": [
+          "100",
+          0
+        ]
+      }
+    },
+    "102": {
+      "class_type": "PreviewAny",
+      "inputs": {
+        "source": [
+          "101",
+          1
+        ]
+      }
+    },
+    "103": {
+      "class_type": "MeshSmoothNormals",
+      "inputs": {
+        "mesh": [
+          "101",
+          0
+        ],
+        "crease_angle": 180.0
+      }
+    },
+    "104": {
+      "class_type": "UnwrapMesh",
+      "inputs": {
+        "mesh": [
+          "103",
+          0
+        ],
+        "segmenter": "pec",
+        "resolution": 1024,
+        "padding": 1,
+        "weld_distance": 0.0002
+      }
+    },
+    "105": {
+      "class_type": "BakeTextureFromVoxel",
+      "inputs": {
+        "mesh": [
+          "104",
+          0
+        ],
+        "voxel_colors": [
+          "72",
+          0
+        ],
+        "texture_size": 1024,
+        "reference_mesh": [
+          "62",
+          0
+        ]
+      }
+    },
+    "106": {
+      "class_type": "BakeNormalMapFromMesh",
+      "inputs": {
+        "low_poly": [
+          "104",
+          0
+        ],
+        "high_poly": [
+          "81",
+          0
+        ],
+        "resolution": 512,
+        "cage_distance": 0.05,
+        "ignore_backfaces": true
+      }
+    },
+    "107": {
+      "class_type": "BakeAmbientOcclusion",
+      "inputs": {
+        "low_poly": [
+          "104",
+          0
+        ],
+        "high_poly": [
+          "81",
+          0
+        ],
+        "resolution": 512,
+        "samples": 64,
+        "max_distance": 0.71,
+        "strength": 1.0,
+        "bias": 0.01
+      }
+    },
+    "108": {
+      "class_type": "ApplyTextureToMesh",
+      "inputs": {
+        "mesh": [
+          "104",
+          0
+        ],
+        "base_color": [
+          "105",
+          0
+        ],
+        "metallic": [
+          "105",
+          1
+        ],
+        "roughness": [
+          "105",
+          2
+        ],
+        "occlusion": [
+          "107",
+          0
+        ],
+        "normal_map": [
+          "106",
+          0
+        ]
+      }
+    },
+    "109": {
+      "class_type": "MeshSmoothNormals",
+      "inputs": {
+        "mesh": [
+          "108",
+          0
+        ],
+        "crease_angle": 180.0
+      }
+    },
+    "110": {
+      "class_type": "MeshToFile3D",
+      "inputs": {
+        "mesh": [
+          "109",
+          0
+        ]
+      }
+    },
+    "111": {
+      "class_type": "SaveGLB",
+      "inputs": {
+        "mesh": [
+          "110",
+          0
+        ],
+        "filename_prefix": "3d/atomic-acres-workbench-openpass-draft-game"
+      }
+    },
+    "112": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "105",
+          0
+        ],
+        "filename_prefix": "atomic-acres-workbench-openpass-draft-basecolor"
+      }
+    },
+    "113": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "106",
+          0
+        ],
+        "filename_prefix": "atomic-acres-workbench-openpass-draft-normal"
+      }
+    },
+    "114": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "107",
+          0
+        ],
+        "filename_prefix": "atomic-acres-workbench-openpass-draft-ao"
+      }
+    },
+    "115": {
+      "class_type": "RenderUVAtlas",
+      "inputs": {
+        "mesh": [
+          "104",
+          0
+        ],
+        "resolution": 1024
+      }
+    },
+    "116": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "115",
+          0
+        ],
+        "filename_prefix": "atomic-acres-workbench-openpass-draft-uvatlas"
+      }
+    },
+    "117": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "13",
+          0
+        ],
+        "filename_prefix": "atomic-acres-workbench-openpass-draft-cropinput"
+      }
+    }
+  },
+  "preUnionValidation": {
+    "receiptSha256": "4026889b7782484fd244582f47ce85e4c59b623b14f8917294c817024ce83161",
+    "checks": {
+      "result": "MISMATCH",
+      "errors": [
+        "96.mesh: edge type FILE_3D_GLB != MESH,FILE_3D_GLB,FILE_3D_GLTF,FILE_3D_OBJ,FILE_3D_FBX,FILE_3D_STL,FILE_3D_USDZ,FILE_3D_PLY,FILE_3D_SPLAT,FILE_3D_SPZ,FILE_3D_KSPLAT,FILE_3D_SPLAT_ANY,FILE_3D_POINT_CLOUD_ANY,FILE_3D",
+        "111.mesh: edge type FILE_3D_GLB != MESH,FILE_3D_GLB,FILE_3D_GLTF,FILE_3D_OBJ,FILE_3D_FBX,FILE_3D_STL,FILE_3D_USDZ,FILE_3D_PLY,FILE_3D_SPLAT,FILE_3D_SPZ,FILE_3D_KSPLAT,FILE_3D_SPLAT_ANY,FILE_3D_POINT_CLOUD_ANY,FILE_3D"
+      ],
+      "deferred": [
+        "Input placeholder deliberately not resolved/uploaded; LoadImage file validation OPEN"
+      ],
+      "limitation": "No server prompt validation, load, generation or output execution; node names are not readiness."
+    },
+    "correction": "Pinned ComfyUI v0.37.0 validate_node_input treats comma-separated accepted types as unions; two SaveGLB links were falsely rejected by the first local checker."
+  },
+  "localValidatorNegatives": [
+    "width=1 remains rejected",
+    "IMAGE connected to MASK remains rejected"
+  ],
+  "schemaRecheckedAt": "2026-09-27T12:05:11.876236+00:00",
+  "compositeSemantics": {
+    "checkedAt": "2026-09-27T12:08:32.278527+00:00",
+    "priorDraftSha256": "f98ac0e238ef58f3d4aa98177645b3359e3e5ac17a15f9df5a4fcbb2ad012505",
+    "sourceSha256": "5bc0a44ee22469506d5c86fccde5f4973d156b2356e0ced6a779d1299b0f1acf",
+    "graphPath": "LoadImage IMAGE[0]+InvertMask(LoadImage MASK[1]) -> ImageCropToMask IMAGE[0] -> Trellis2Conditioning.image",
+    "sourceBehavior": "_crop_image_with_mask multiplies RGB by foreground alpha and adds background*(1-alpha); ImageCropToMask resizes that composite and returns it. Not bbox-only.",
+    "proofScope": "NumPy semantic CPU arithmetic against actual retained RGBA pixels plus pinned source/graph wiring inspection; not execution of Comfy tensor crop/interpolation or conditioning.",
+    "transparentPixelCount": 975098,
+    "transparentToBlackNonzeroChannels": 0,
+    "transparentToWhiteAllOne": true,
+    "openLegBlackCompositeMaxByte": 0.2901960611343384,
+    "openLegWhiteDeviationMaxByte": 0.9921571612358093,
+    "opaqueCoreMaskMin": 0.9803921580314636,
+    "outcome": "COMPOSITOR_ROUTE_CORRECT; alpha fringe/object fidelity and actual node output acceptance remain OPEN; no input changed"
+  }
+}

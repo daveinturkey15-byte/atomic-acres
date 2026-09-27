@@ -1,4 +1,15 @@
-# Current restart - verified overnight result 27 September 2026
+# Current restart - fresh OPEN-items pass 27 September 2026
+
+Dave's latest request resumes OPEN-item work in a fresh bounded interactive pass.
+Read `OPEN-PASS-2026-09-27.md` and `CURRENT.json.openPass20260927` first. The owner
+preview4348 still serves historical accepted runtime2f837ae. Its IAB pointer-lock
+failure was reproduced. Held source-tested fixes are now on4361, exact5cc3a26;
+read CURRENT for its entry hash and OPEN live acceptance. Do not assume4348 has
+the new entry, mouse, five-slot streak or movement repairs.
+The overnight heartbeat remains PAUSED. The previous result below is retained
+acceptance evidence, not authorization to restart old campaigns.
+
+## Verified overnight result
 
 Read `CURRENT.json` and `OVERNIGHT-RESULT-2026-09-27.md` first. The active isolated
 candidate is `salvage/full-game-20260926` at

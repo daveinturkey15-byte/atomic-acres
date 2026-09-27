@@ -1,5 +1,19 @@
 # Nuketown 2025 — agent contract
 
+## Fresh owner open-items pass — September 27, 2026
+
+Dave now asks to work on the OPEN items. Read `docs/handoff/OPEN-PASS-2026-09-27.md`
+and `CURRENT.json.openPass20260927` for this fresh two-hour interactive pass.
+The old overnight deadline and exhausted takes remain historical evidence; its
+heartbeat stays PAUSED. Accepted runtime remains2f837ae on4348 until a successor
+passes the unchanged local acceptance gates. Native Astra workers have explicit
+disjoint source scopes; root owns integration and serial GPU/browser work.
+VERIFIED source-tested gameplay fixes are built on4361/5cc3a26;4348 is preserved
+2f837ae and has a reproduced owner-IAB pointer-lock failure. Browser interaction
+stopped after owner Dune/WoW focus/control complaints. Do not automatically run
+input or promote4361: actual exact-build gameplay/net/traversal/soak is OPEN.
+Preserve owner processes, the cold4188 simpler restart and all retained builds.
+
 ## Verified overnight checkpoint - September 27, 2026
 
 VERIFIED: owner preview4348 is NEW restart runtime2f837ae. Read

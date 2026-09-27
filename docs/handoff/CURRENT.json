@@ -5,13 +5,13 @@
   "lineage": "September17 restart; same-repo September20 richer alternate salvaged",
   "worktree": "C:/Users/david/Desktop/stuff/worktrees/nuketown-salvage-20260926",
   "branch": "salvage/full-game-20260926",
-  "checkpoint": "OVERNIGHT-RESULT-2026-09-27.md",
-  "state": "VERIFIED local upgraded preview promoted; bounded overnight pass complete; ownerart/WAN/60FPS OPEN",
+  "checkpoint": "OPEN-PASS-2026-09-27.md",
+  "state": "VERIFIED held5cc3a26 gameplay-fix candidate4361 built/stamped/HTTP verified; owner4348 preserved2f837ae with reproduced IAB pointer-lock failure; live successor acceptance OPEN",
   "baseSource": "c3afc077fafa3aa4c01b9721232dda9165ec663f",
   "preview": {
     "url": "http://localhost:4348/",
     "identity": "preview-identity.json",
-    "acceptance": "VERIFIED all required local gates passed on2f837ae; art60FPS and physicalLAN/WAN OPEN",
+    "acceptance": "VERIFIED historical headless local gates on2f837ae; actual IAB Deploy capture denied with WrongDocumentError and owner play complaint; latest fixes not served4348; physicalLAN/WAN/art60FPS OPEN",
     "entry": "assets/index-BFvUiAGm.js",
     "entrySha256": "35e31151acac08c75e3d8ed2a15af078f1879d8cf4d6f578dcf1fb0a1abd464f"
   },
@@ -30,21 +30,25 @@
   "history": "CURRENT-2026-09-20.json preserves the original paused recovery ledger; it is historical evidence, not active authority",
   "ownerAuthorization": "2026-09-26 resume and few-hour Astra integration; no old provider campaigns/heartbeat restarted",
   "workers": {
-    "native": "All owned native writers frozen/completed",
-    "browserAndGpu": "one acceptance job at a time; owner processes preserved"
+    "native": "All native Astra runtime/test writers frozen/completed; root reviewed explicit paths and committed5cc3a26. No browser input or GPU jobs.",
+    "browserAndGpu": "No owned browser/GPU acceptance job. Browser interaction stopped; only root HTTP52288/4361 and preserved owner36600/4348."
   },
   "production": "unchanged; no main/master/Pages publish",
   "open": [
-    "Physical LAN/WAN",
-    "Sustained60FPS",
-    "Ownerart/frozenvisualbar",
-    "Eightnormalviewmodels stillfamilyfallback",
-    "Heavyhandmotion/neutralpartialtake rejected; opt-in only",
-    "NewPixal/TRELLISmesh/export/runtime: configuredComfyconnectionrefused, startapprovalpending",
-    "Rare reliablyunsentpredicteddebit retention",
-    "Clock correctionimmediatelyafterepoch fence unproven",
-    "Strengthenedrejoinhelper exhaustedFAILED",
-    "AKPpull-onlycurrency preexistingdoctorhold"
+    "Physical LAN/WAN: actual second-device evidence",
+    "Sustained60FPS: fresh actual-game profile required",
+    "Owner art/frozen visual bar",
+    "Eight default family-fallback rigs: one source LMG opt-in canary, actual pixels OPEN",
+    "Heavy hands/motion: prior rejected takes remain opt-in; fresh neutral GPU check OPEN",
+    "Local3D: endpoint/model root/four checkpoint hashes/header keys and source licenses VERIFIED; resource/inference/input-edge/distribution attribution and mesh/export/game pixels OPEN; no submission",
+    "Known-unsent ammo/sequence and raw epoch/final projection repaired in5cc3a26 source (inherits2d3ef47); live successor acceptance OPEN",
+    "Strengthened rejoin getter repaired in source; exact-build live rerun OPEN",
+    "Accepted/queued then lost messages: exact ACK limitation OPEN",
+    "AKP pull-only currency: preexisting unrelated doctor hold",
+    "Current5cc3a26 live menu/deploy/gameplay/traversal, real delayed-SDP/rejoin and unchanged210s soak before promotion",
+    "Complete old-reference mechanics/visual menu parity: Chopper possession, map targeting, drone counts and balance remain OPEN",
+    "Pilot movement rebinding: some old default movement keys remain aliases; streak binding collision repaired and tested",
+    "Owner Dune/WoW focus/control issue belongs to separate accessibility chat; this game source repair is not proof of a machine/controller fix"
   ],
   "sourceSha": "2f837ae3d53cc1d7c3a78610e1276ab085a271cb",
   "sourceShaRole": "Exact compiled promoted runtime; later QA/docs commits do not change these inputs.",
@@ -72,17 +76,18 @@
     "earnedPilot": "VERIFIEDPASS2f837ae5actualkills/life1/deaths0/native750msRail/reloadconservation/dronehostshots1/reentry/expiry/bodyrestore/errors0",
     "weaponAuthority": "VERIFIED15host/25combat/15controller/17roomwire; authoritative magazine,reserve,reload and heldcharge"
   },
-  "evidence": "../evidence/OVERNIGHT-UPGRADE-2026-09-27.json",
+  "evidence": "../evidence/OPENPASS-2026-09-27.json",
   "nextPass": {
     "order": [
-      "Owner art review and8 remaining fallback rigs",
-      "Local3D workbench only after owner-service approval and endpoint/model/resource admission",
-      "PhysicalLAN/WAN and sustained60FPS",
-      "Stronger helper diagnostic getter requires a fresh admitted pass"
+      "Owner manual review of held4361/5cc3a26 entry, mouse, five-slot suite and movement",
+      "Fresh admitted isolated headless exact-build menu/deploy/gameplay/traversal, real delayedSDP/rejoin and unchanged210s soak before promotion",
+      "Remaining old-reference mechanics/menu art,8 fallback rigs and owner art",
+      "Local3D one workbench canary after current input/model/resource/inference gates; no download or old provider campaign",
+      "PhysicalLAN/WAN and sustained60FPS"
     ],
-    "runtimeWriters": "None; all native writers frozen/completed",
-    "gpu": "No owned acceptance jobs;4348 remains listening; simpler4188 build preserved cold",
-    "heartbeat": "VERIFIED atomic-acres-overnight-polish PAUSED at completion; old campaigns unchanged"
+    "runtimeWriters": "None; all native scopes frozen/completed",
+    "browserInput": "Stopped after owner focus complaint; no unattended restart from this handoff",
+    "heartbeat": "atomic-acres-overnight-polish remains PAUSED; overnight budget9971 and deadline unchanged"
   },
   "overnightBudget": {
     "declaredAtUtc": "2026-09-26T21:32:38.189640+00:00",
@@ -280,5 +285,58 @@
     "playcapAcceptance": "VERIFIED2f837ae4/4realgamelooppositions lit luma134.1/114.3/115.2/85.6,calls945/665/946/848; originaluncroppedframesrootviewed",
     "soakAcceptance": "VERIFIEDunchanged210s22samples/js.19MBminr2.099/renderer-.838MBminnet-4.21MB/fails0; actualgame44-55FPS/pageRAF58.7distinct",
     "evidence": "../evidence/OVERNIGHT-UPGRADE-2026-09-27.json"
+  },
+  "openPass20260927": {
+    "id": "open-items-20260927",
+    "state": "completed-source-build-http-verified; live-acceptance-held",
+    "ownerRequest": "OPEN items plus playable entry, direct mouse sensitivity, old-reference streak keys/menu, collisions and bot pathing",
+    "dispatchSha": "537ddb76477b8be7953c9bcd651458f255ce48da",
+    "startedAt": "2026-09-27T11:27:50+00:00",
+    "maxWorkSeconds": 7200,
+    "workSecondsUsed": 6363,
+    "lastAccountedAt": "2026-09-27T13:12:52.074833+00:00",
+    "checkpoint": "docs/handoff/OPEN-PASS-2026-09-27.md",
+    "repairLimitPerIssue": 2,
+    "gpuAdmission": "Earlier1.8-2.2GiB headroom held jobs. Last13:05 reading10,258MiB VRAM/22.05GiB RAM meets browser reserve, but browser interaction remains stopped after owner focus/control complaint; no new browser/GPU job admitted. Generation/inference/mesh gate remains OPEN.",
+    "preservedOvernightWorkSeconds": 9971,
+    "accounting": "Conservatively charges all elapsed pass/agent/cloud/resource waits plus60 seconds for final commit/push/readback delivery. Unused reserve remains charged; previous9971-second overnight ledger unchanged. No reset.",
+    "cpuFindings": "VERIFIED root playflow7, parity12/360v1 saves, streak integration6, bindings5 plus separate legacy closure7, admission4, movement7/current house-module doorway, network6, host15/client15; explicit wire fixture adapter17 preserves97 assertions and byte-exact original helper. TypeScript/render allow-list PASS.",
+    "sourceCandidate": "5cc3a2692470a971aeadb7cedf868fd6b6a25cf9",
+    "candidate": {
+      "project": "atomic-acres",
+      "repository": "daveinturkey15-byte/atomic-acres",
+      "lineage": "standalone restart begun 2026-09-17",
+      "branch": "salvage/full-game-20260926",
+      "sourceCommit": "5cc3a2692470a971aeadb7cedf868fd6b6a25cf9",
+      "stampedAt": "2026-09-27T13:02:47.095Z",
+      "entry": "assets/index-Bgsxx5Qm.js",
+      "entrySha256": "92948f0bfb840948381027b4bbefb2b18a5c7e8f0cfaf5d5a2c0fd792ab1cb10",
+      "untrackedPublicFiles": [],
+      "acceptance": "VERIFIED committed source, CPU checks and build only; live native/menu/gameplay/traversal/real two-browser/rejoin/210-second soak OPEN; not promoted.",
+      "candidateRole": "Held owner-requested gameplay fix preview. Owner4348 remains historical2f837ae build with reproduced IAB pointer-lock failure.",
+      "dist": "dist-next",
+      "url": "http://127.0.0.1:4361/",
+      "entryBytes": 2063417
+    },
+    "server": {
+      "pid": 52288,
+      "createdAt": "2026-09-27T14:02:49.152260+01:00",
+      "managedExecSession": 98895,
+      "ownership": "Root-owned HTTP4361 only; no browser/GPU/input job. Previous owned37200 was identity-checked and stopped; owner36600 untouched."
+    },
+    "sourceWriters": "All native Astra runtime/test writers frozen/completed; root reviewed explicit paths and committed5cc3a26. No browser input or GPU jobs.",
+    "evidence": "docs/evidence/OPENPASS-2026-09-27.json",
+    "inputStop": "Owner reports stuck controls/focus in Dune/WoW: all browser interaction stopped. Separate accessibility chat owns controller work; no OS input or owner process changes by this pass.",
+    "previousCandidate": {
+      "sourceCommit": "2d3ef47bb4e917b5e804495cb57146d14ae49742",
+      "backup": "captures/builds/openpass-candidate-2d3ef47/",
+      "files": 178,
+      "bytes": 98452173
+    },
+    "sourceMap": "VERIFIED all226 local source-map sourceContents equal raw current UTF8 bytes; entry hash and both served preview identities verified; all178 owner dist files unchanged.",
+    "liveAcceptance": "OPEN actual current menu/deploy/gameplay frames, traversal, delayedSDP/rejoin and unchanged210s soak. Owner4348 remains retained2f837ae; candidate4361 is manual-review source-tested build, not promoted.",
+    "completedAt": "2026-09-27T13:12:52.074833+00:00",
+    "finalDeliveryReserveSeconds": 60,
+    "activeRun": null
   }
 }

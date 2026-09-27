@@ -1,0 +1,165 @@
+{
+  "schemaVersion": 1,
+  "project": "atomic-acres",
+  "claimState": "VERIFIED committed source/CPU/build/HTTP/source-map identity; live successor acceptance OPEN",
+  "checkedAt": "2026-09-27T13:08:45.198528+00:00",
+  "sourceCandidate": "5cc3a2692470a971aeadb7cedf868fd6b6a25cf9",
+  "acceptedOwnerRuntime": "2f837ae3d53cc1d7c3a78610e1276ab085a271cb",
+  "acceptedOwnerUrl": "http://localhost:4348/",
+  "candidate": {
+    "project": "atomic-acres",
+    "repository": "daveinturkey15-byte/atomic-acres",
+    "lineage": "standalone restart begun 2026-09-17",
+    "branch": "salvage/full-game-20260926",
+    "sourceCommit": "5cc3a2692470a971aeadb7cedf868fd6b6a25cf9",
+    "stampedAt": "2026-09-27T13:02:47.095Z",
+    "entry": "assets/index-Bgsxx5Qm.js",
+    "entrySha256": "92948f0bfb840948381027b4bbefb2b18a5c7e8f0cfaf5d5a2c0fd792ab1cb10",
+    "untrackedPublicFiles": [],
+    "acceptance": "VERIFIED committed source, CPU checks and build only; live native/menu/gameplay/traversal/real two-browser/rejoin/210-second soak OPEN; not promoted.",
+    "candidateRole": "Held owner-requested gameplay fix preview. Owner4348 remains historical2f837ae build with reproduced IAB pointer-lock failure."
+  },
+  "proofs": [
+    {
+      "path": "captures/openpass-net-root-repair1.json",
+      "sha256": "0b1cc44e3d39ba7108333a09918bdd995a71593a05c38ea7d83672c8d8d466c2",
+      "bytes": 2860,
+      "status": "PASS",
+      "checks": 6
+    },
+    {
+      "path": "captures/openpass-rig-root-final.json",
+      "sha256": "a7b05e50a0f481359cd32523fb13acb676cd8dff105aaf8671271a725dc809e4",
+      "bytes": 1032,
+      "status": "PASS_CPU_ONLY",
+      "checks": 4
+    },
+    {
+      "path": "captures/openpass-dual-preview-identity-v1.json",
+      "sha256": "cb4a71784bba1fdcdffd765dac5d7dead8a5881401242861b31c3cf81c9e8c4a",
+      "bytes": 1153
+    }
+  ],
+  "rootChecks": {
+    "typecheckAndRenderSites": "PASS",
+    "hostAuthorityGroups": 15,
+    "weaponClientGroups": 15,
+    "wireGroups": 17,
+    "eventClock": "PASS both signs",
+    "networkGroups": 6,
+    "rigIntegrationGroups": 4,
+    "observerIntegrationGroups": 4,
+    "manualCounterLifetime": "PASS CPU",
+    "rigGeometry": "PASS CPU",
+    "neutralIdentity": "PASS CPU23files7poses; browser OPEN"
+  },
+  "boundaries": {
+    "physicalLanWan": "OPEN: actual second-device evidence required",
+    "nativeGameplayAndBrowser": "OPEN current build; all browser interaction stopped after owner focus complaint. Earlier headroom hold later recovered; no current successor browser run.",
+    "ownerArt": "OPEN; LMG opt-in only",
+    "footContact": "OPEN quality; absent coverage now refused",
+    "sustained60fps": "OPEN; retained older profile is not current build timing",
+    "local3D": "VERIFIED endpoint/model root/four hashes/header keys/license texts; held input-edge/inference/resource/distribution attribution/mesh/export/game pixels; no submission",
+    "heavyMotion": "OPEN old rejected nonmonotonic timestamps preserved",
+    "acceptedThenLostMessages": "OPEN exact ACK protocol unchanged",
+    "heartbeat": "remains PAUSED",
+    "fullOldGameParity": "OPEN Chopper control/map targeting/drone counts/balance/visual menu",
+    "pilotMovementRebind": "OPEN some default movement keys remain aliases; legacy movement/streak collision closed"
+  },
+  "imagegen": {
+    "tool": "builtin image_gen.imagegen",
+    "reference": "docs/assets/references/garden-workbench-v1.png",
+    "derived": "docs/assets/references/garden-workbench-cutout-openpass-take1.png",
+    "derivedSha256": "906f891a1968a3877b0aa94cc69a8927c6f39a57f803323a955d846abf6d9ad7",
+    "exactPrompt": "OPEN after compaction; intended instruction paraphrase retained",
+    "gate": "derived raster only; not mesh/runtime/owner acceptance",
+    "nativeOutputCopy": "VERIFIED byte identity"
+  },
+  "candidateUrl": "http://127.0.0.1:4361/",
+  "latestProofs": [
+    {
+      "path": "captures/openpass-playflow-root-release.json",
+      "sha256": "3c39c8255a08049f6090460ee9716be581c8006686c0817cb90eb0b6d7bd35d7",
+      "bytes": 3555,
+      "checks": 7,
+      "claimState": "VERIFIED source/CPU or artifact identity only"
+    },
+    {
+      "path": "captures/openpass-streak-parity-root-release.json",
+      "sha256": "91ece333ee9d005f5e74ada973f9b0eed45ad7d28289488e108eeabc2c4bab55",
+      "bytes": 744,
+      "checks": 12,
+      "claimState": "VERIFIED source/CPU or artifact identity only"
+    },
+    {
+      "path": "captures/openpass-streak-integration-root-release.json",
+      "sha256": "733261539cb1d8ca9405e9fccab55329f0fe3b8d2f87d886adeb3bbf47d3fe32",
+      "bytes": 18263,
+      "checks": 6,
+      "claimState": "VERIFIED source/CPU or artifact identity only"
+    },
+    {
+      "path": "captures/openpass-streak-bindings-root-release.json",
+      "sha256": "467c564e6e53d8c1b346456d2bda7c7634f0f3389a9294c6ca718fa864e4a486",
+      "bytes": 11614,
+      "checks": 5,
+      "claimState": "VERIFIED source/CPU or artifact identity only"
+    },
+    {
+      "path": "captures/openpass-streak-legacy-root-release.json",
+      "sha256": "8d343f4c2583ef8596f044f254f78e3a7a3f06f8e0b409b88968438c2b13c398",
+      "bytes": 11894,
+      "checks": 7,
+      "claimState": "VERIFIED source/CPU or artifact identity only"
+    },
+    {
+      "path": "captures/openpass-streak-admission-root-release.json",
+      "sha256": "8b8336e69d52b7270728a8a09252f477b481e8d83f255483a865f9cc94601490",
+      "bytes": 5091,
+      "checks": 4,
+      "claimState": "VERIFIED source/CPU or artifact identity only"
+    },
+    {
+      "path": "captures/openpass-movement-root-release.json",
+      "sha256": "5f912dab0503dca022fcf65a7ec04c51d746a4a5d22ba42e1efde0bbf637d1fb",
+      "bytes": 20393,
+      "checks": 7,
+      "claimState": "VERIFIED source/CPU or artifact identity only"
+    },
+    {
+      "path": "captures/openpass-net-root-release.json",
+      "sha256": "bb3260642bbd03d4668531d5c4d3726a714f919f5df21165ab9b056cf70d6749",
+      "bytes": 2860,
+      "checks": 6,
+      "claimState": "VERIFIED source/CPU or artifact identity only"
+    },
+    {
+      "path": "captures/openpass-dual-preview-identity-release.json",
+      "sha256": "66bb28b5f5f97d21e5450e7844eec238585d6a8891a8219d0ad5ce1e631faa6f",
+      "bytes": 1232,
+      "checks": null,
+      "claimState": "VERIFIED source/CPU or artifact identity only"
+    },
+    {
+      "path": "captures/openpass-wire-contract-2026-09-27T13-02-29-322Z/receipt.json",
+      "sha256": "3e5642008d27fd4176db263ca5fbac3bfe0ee2f9d81c6bc3e845202de408c5b3",
+      "bytes": 2062,
+      "checks": 17,
+      "claimState": "VERIFIED source/CPU or artifact identity only"
+    }
+  ],
+  "preservedNegatives": [
+    "captures/openpass-playflow-audit.json",
+    "captures/openpass-freecursor-review.json",
+    "captures/openpass-movement-audit.json",
+    "captures/openpass-movement-before/",
+    "captures/openpass-streak-integration-20260927/initial-four-slot-negative.json",
+    "captures/openpass-streak-integration-20260927/initial-integration.json",
+    "captures/openpass-streak-integration-20260927/admission-version1-negative.json",
+    "captures/openpass-streak-integration-20260927/legacy-movement-binding-negative.json",
+    "captures/openpass-wire-original-v1-fixture-negative.json"
+  ],
+  "sourceMap": "226 local sourceContents match raw UTF8 current bytes",
+  "ownerBuild": "178 files/89,416,169 bytes byte-exact unchanged",
+  "wireFixtureAdapter": "17 groups/97 assertions unchanged; explicit invalid-version fixtures updated2->3 and old1 added, current terminal welcome2. Original helper60076d70 remains byte-exact; obsolete-fixture failure retained."
+}
