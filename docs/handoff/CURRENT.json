@@ -345,8 +345,8 @@
     "ownerRequest": "Updated preview stuck on Loading; diagnose and fix actual startup",
     "startedAt": "2026-09-27T13:40:15+00:00",
     "maxWorkSeconds": 1800,
-    "workSecondsUsed": 1778,
-    "lastAccountedAt": "2026-09-27T14:07:53.002018+00:00",
+    "workSecondsUsed": 1816,
+    "lastAccountedAt": "2026-09-27T14:09:31.021636+00:00",
     "repairLimitPerIssue": 2,
     "rootOwnership": "Source/build/HTTP integration; no OS input or owner process changes",
     "agentScope": "astra_combat read-only startup source investigation",
@@ -392,6 +392,15 @@
     "evidence": "docs/evidence/LOADING-FIX-2026-09-27.json",
     "frameAcceptance": "FAILED unchanged15-second screenshot twice before repair and after initial-only doubleRAF. MenuDOM3.136s; actual menu pixels not accepted. No thresholds lowered. Owner cause OPEN.",
     "resourceAdmissionIssue": "Final repeat3631MiB below4096MiB reserve was wrongly dispatched by combined shell read-and-run; do not count acceptance. Already ended/reaped before attempted owned stop; helper now enforces admission BEFORE spawn. No owner processes touched. No further hardware jobs.",
-    "finalDeliveryReserveSeconds": 120
+    "finalDeliveryReserveSeconds": 120,
+    "server": {
+      "pid": 51252,
+      "createdAt": "2026-09-27T15:04:31.008642+01:00",
+      "managedExecSession": 39440,
+      "ownership": "Root-owned HTTP4361 only. All diagnostic Chrome trees reaped; no GPU/input job remains."
+    },
+    "completedAt": "2026-09-27T14:09:31.021602+00:00",
+    "activeRun": null,
+    "accounting": "Cumulative elapsed new pass plus charged120-second final-delivery reserve. At close top up if actual elapsed+60 exceeds prior charge. No reduction/reset;6532 prior open-pass and9971 overnight preserved."
   }
 }
