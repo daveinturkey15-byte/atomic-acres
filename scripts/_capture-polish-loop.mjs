@@ -33,9 +33,12 @@ try {
     window.__polishTimeline = [];
     const key = (type, code) => window.dispatchEvent(new KeyboardEvent(type, { code, bubbles: true }));
     key('keydown', 'KeyW'); key('keydown', 'ShiftLeft');
-    const event = (delay, name, action) => setTimeout(() => { action(); window.__polishTimeline.push({ at: performance.now(), name }); }, delay);
+    const event = (delay, name, action) => setTimeout(() => { const result = action(); window.__polishTimeline.push({ at: performance.now(), name, result }); }, delay);
     event(850, 'sprint stop', () => { key('keyup', 'KeyW'); key('keyup', 'ShiftLeft'); });
-    event(1200, 'jump', () => { key('keydown', 'Space'); key('keyup', 'Space'); });
+    event(1200, 'jump', () => {
+      key('keydown', 'Space');
+      requestAnimationFrame(() => requestAnimationFrame(() => key('keyup', 'Space')));
+    });
     event(2000, 'fire', () => window.__NT.weaponCmd('fire'));
     event(2500, 'reload', () => window.__NT.weaponCmd('reload'));
     event(4800, 'ADS', () => window.__NT.weaponCmd('ads', true));
@@ -52,14 +55,20 @@ try {
     assert(report.samples[i].stats.renderCallsTotal > report.samples[i-1].stats.renderCallsTotal, 'actual rendered loop advances');
   }
   report.timeline = await page.evaluate(() => window.__polishTimeline);
+  assert(Math.max(...report.samples.map(s => s.pose.y)) > report.samples[0].pose.y + 0.1, 'actual jump rises above the starting floor');
+  assert(Math.abs(report.samples.at(-1).pose.y - report.samples[0].pose.y) < 0.1, 'actual jump returns to the floor');
+  for (const name of ['fire', 'reload']) assert.equal(report.timeline.find(e => e.name === name)?.result, true, `${name} admitted by the weapon controller`);
   assert.equal(report.errors.length, 0, 'no browser errors');
   const video = page.video();
   await context.close(); context = null;
+  const actionThroughCloseSeconds = (Date.now() - began) / 1000;
   const raw = out + '/full-session.webm';
   renameSync(await video.path(), raw);
   const metadata = JSON.parse(execFileSync('ffprobe', ['-v', 'error', '-show_format', '-show_streams', '-of', 'json', raw], { encoding: 'utf8', windowsHide: true }));
   report.rawVideo = { path: raw, duration: Number(metadata.format.duration) };
-  execFileSync('ffmpeg', ['-v', 'error', '-i', raw, '-ss', String(Math.max(0, Number(metadata.format.duration) - 6)), '-t', '6', '-an', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '20', '-y', out+'/review-6s.mp4'], { windowsHide: true, timeout: 60000 });
+  report.clipStartSeconds = Math.max(0, Number(metadata.format.duration) - actionThroughCloseSeconds);
+  report.clipAlignment = 'action-start estimate from real wall time through recording close; full raw retained';
+  execFileSync('ffmpeg', ['-v', 'error', '-i', raw, '-ss', String(report.clipStartSeconds), '-t', '6', '-an', '-c:v', 'libx264', '-preset', 'ultrafast', '-crf', '20', '-y', out+'/review-6s.mp4'], { windowsHide: true, timeout: 60000 });
   for (const seconds of [0, 2, 4, 5.5]) execFileSync('ffmpeg', ['-v', 'error', '-ss', String(seconds), '-i', out+'/review-6s.mp4', '-frames:v', '1', '-y', out+`/frame-${seconds}.png`], { windowsHide: true, timeout: 15000 });
   report.reviewVideo = out+'/review-6s.mp4';
   report.status = 'PASS_TECHNICAL; moving-pixel critic/owner acceptance separate';

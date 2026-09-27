@@ -298,6 +298,7 @@ weapons.overlay.environment = world.scene.environment;
 // hides #hud/#crosshair before every shot, so a new top-level element would leak
 // into captures. Children of #hud are hidden with it.
 const hud = document.getElementById('hud')!;
+const crosshair = document.getElementById('crosshair');
 const hudStats = document.createElement('div');
 const hudMode = document.createElement('div');
 const hudHelp = document.createElement('div');
@@ -605,6 +606,7 @@ function frame(): void {
       // The home/lobby presents the town, while the existing paused-match
       // view retains combat context. This changes presentation once per edge.
       hud.classList.toggle('hud-prematch', preMatch);
+      crosshair?.classList.toggle('hud-prematch', preMatch);
       weapons.setVisible(!preMatch && !pilot.active());
       lastPreMatchPresentation = preMatch;
     }
@@ -646,7 +648,7 @@ function frame(): void {
   // loop means neither lane had to know about the other's internals.
   if (!cameraHeldByQA) {
     const snap = weapons.snapshot();
-    gameHud.setAmmo(snap.mag, snap.reserve);
+    gameHud.setAmmo(snap.mag, snap.reserve, weapons.hud.magSize);
     gameHud.setADS(snap.ads);
   }
 

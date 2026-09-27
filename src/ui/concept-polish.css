@@ -6,7 +6,7 @@
  * file after menus.css so the concept palette can tune the existing controls.
  */
 
-#hud.hud-prematch { visibility: hidden; }
+#hud.hud-prematch, #crosshair.hud-prematch { visibility: hidden; }
 
 #start {
   --aa-ivory: #f2eee2;

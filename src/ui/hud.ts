@@ -64,7 +64,7 @@ const HIT_MS: Readonly<Record<HitKind, number>> = { body: HIT_BODY_MS, head: HIT
 export type { ScoreRowView, ScoreView, StreakHudView, StreakSlotView } from './hud-match';
 
 export interface HudApi {
-  setAmmo(mag: number, reserve: number): void;
+  setAmmo(mag: number, reserve: number, capacity?: number): void;
   setWeapon(name: string, reloading?: boolean): void;
   setWeaponAction(state: Pick<GunsHudState, 'charging' | 'chargeProgress' | 'reloading' | 'reloadRemainingMs' | 'actionPending'>): void;
   setHealth(hp: number): void;
@@ -173,6 +173,7 @@ export function initHud(): HudApi {
   let lastGap = -1;
   let cMag = -1;
   let cRes = -1;
+  let cCapacity = -1;
   let cLowAmmo = false;
   let cWeapon = '';
   let cReloading = false;
@@ -226,15 +227,22 @@ export function initHud(): HudApi {
   addEventListener('blur', () => n.scoreboard.classList.add('hud-score-hidden'));
 
   return {
-    setAmmo(mag: number, reserve: number): void {
+    setAmmo(mag: number, reserve: number, capacity?: number): void {
       const m = Math.max(0, Math.round(mag));
       const r = Math.max(0, Math.round(reserve));
-      if (m === cMag && r === cRes) return;
+      const cap = capacity !== undefined && Number.isFinite(capacity) && capacity > 0
+        ? Math.max(1, Math.round(capacity)) : 0;
+      if (m === cMag && r === cRes && cap === cCapacity) return;
       cMag = m;
       cRes = r;
+      cCapacity = cap;
       n.mag.textContent = String(m);
       n.reserve.textContent = String(r);
-      const low = m <= LOW_AMMO || m <= ASSUMED_MAG * 0.2;
+      // Known guns warn on their own remaining fraction. The legacy two-argument
+      // readout retains its fallback; a full small magazine must not look empty.
+      const low = cap > 0
+        ? m === 0 || (m < cap && m <= Math.max(1, Math.floor(cap * 0.2)))
+        : m <= LOW_AMMO || m <= ASSUMED_MAG * 0.2;
       if (low !== cLowAmmo) {
         cLowAmmo = low;
         n.ammo.classList.toggle('hud-low', low);
