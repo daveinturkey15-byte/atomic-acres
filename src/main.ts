@@ -5,6 +5,7 @@
  * there is deliberately no registry framework, no plugin loader and no pass system.
  */
 import * as THREE from 'three';
+import { bootStage, bootStep } from './core/boot-status';
 import { installPresentationDefaults } from './core/presentation-defaults';
 import { createWorld } from './core/world';
 import { buildMaterials } from './core/materials';
@@ -75,6 +76,7 @@ import { buildOrangeFacadeKitGated, isOrangeFacadeKitOptIn } from './build/orang
 
 // Apply the reviewed restart presentation before builders read their feature
 // flags. Explicit comparisons and room/signalling parameters remain intact.
+bootStage('Preparing presentation');
 installPresentationDefaults();
 
 /** Facade detail canary opt-in: ?facade=canary only. Any absent or other value
@@ -133,9 +135,10 @@ if (!handedness.every(Boolean)) {
 }
 
 const world = createWorld(document.body);
+await bootStep('Starting graphics', () => world.backendReady);
 const mat = buildMaterials();
-await installArchitecturalMaterials(mat);
-await installRoomVisibility(mat);
+await bootStep('Loading surface textures', () => installArchitecturalMaterials(mat));
+await bootStep('Loading room lighting', () => installRoomVisibility(mat));
 installLawnCanaryQA(mat.lawn);
 const player = new Player(world.camera, world.renderer.domElement);
 
@@ -148,7 +151,7 @@ const worldTargets: THREE.Object3D[] = [];
 
 // Load the reviewed asset once before scene assembly. A failed optional prop
 // remains absent instead of blocking the playable map or retrying each frame.
-await Promise.all([
+await bootStep('Loading scenery', () => Promise.all([
   loadFieldCase().catch((error: unknown) => console.warn('[field-case] unavailable', error)),
   // Authored mountains GLB: opt-in only (?mountains=authored). Baseline and
   // canary runs must not fetch the file at all - no request, no 404 noise.
@@ -169,8 +172,9 @@ await Promise.all([
   // 'ready' or 'fallback' and never rejects, so a missing file or a slow
   // fetch (8s bound) degrades to the procedural coach inside the same await.
   ...(isCoachOwnedCanaryOptIn() ? [preloadCoachOwnedCanary()] : []),
-]);
+]));
 
+bootStage('Building arena');
 for (const [name, build] of BUILDERS) {
   const t0 = performance.now();
   const ctx: BuildContext = { mat, rand: makeRng('nuketown-2025:' + name) };
@@ -206,15 +210,15 @@ world.atmosphere.setRainShelter(worldTargets);
 // CharacterRig creates one AnimationAction per clip in its constructor. Sixteen
 // glTF clips, 350 kB, generated locally (public/anim/LICENCES.md). Top-level await
 // is fine here - tsconfig and vite both target es2022.
-await loadBakedClips();
+await bootStep('Loading animations', () => loadBakedClips());
 // Authored sand operator GLB: opt-in only (?operator=authored). Bounded 8s
 // preload BEFORE the first CharacterSystem — dressAuthored adopts the shared
 // cache; a miss resolves null and every figure keeps the procedural dress.
 if (isAuthoredOperatorEnabled()) {
-  await preloadAuthoredOperator().catch((error: unknown) => {
+  await bootStep('Loading operators', () => preloadAuthoredOperator().catch((error: unknown) => {
     console.warn('[operator] authored GLB unavailable, procedural fallback', error);
     return null;
-  });
+  }));
 }
 const characters = createCharacterSystem(world.scene, {
   // `material` is the shipped path: ONE ctx.mat singleton for the whole figure,
@@ -333,6 +337,7 @@ hud.addEventListener('click', (event) => {
 let lastRewardHint = '';
 // ---- HUD and menus. Built by the ui lane; this is the wiring step it asked for.
 // initUI owns everything inside #hud and #start, so the capture harness still
+bootStage('Preparing menu');
 const ui = initUI({ player, world,
   onLoadoutChange: (store) => { selectedLoadout = resolveLoadout(store); },
   onStreakLoadoutChange: (loadout) => { selectedStreakLoadout = loadout; },

@@ -30,6 +30,30 @@
     <div id="crosshair"></div>
     <div id="hud"></div>
     <div id="start"><h1>ATOMIC ACRES</h1><p role="status">Loading Nuketown 2025…</p><div class="fan">Unofficial fan project — not affiliated with Activision or Treyarch.</div></div>
-    <script type="module" src="/src/main.ts"></script>
+    <script>
+      // This boundary also works when the module entry itself cannot download.
+      (() => {
+        let stopped = false;
+        const fail = () => {
+          if (stopped) return;
+          stopped = true;
+          clearTimeout(timer);
+          const status = document.querySelector('#start > [role="status"]');
+          if (!status) return;
+          status.setAttribute('data-boot-error', 'true');
+          status.textContent = 'Game files could not load. Retry loading.';
+          const retry = document.createElement('button');
+          retry.type = 'button'; retry.textContent = 'Retry loading';
+          retry.addEventListener('click', () => location.reload());
+          status.after(retry);
+        };
+        const timer = setTimeout(fail, 45000);
+        addEventListener('error', event => {
+          if (event.target instanceof HTMLScriptElement && event.target.dataset.gameEntry === 'true') fail();
+        }, true);
+        addEventListener('atomic-acres:boot-started', () => { stopped = true; clearTimeout(timer); }, { once: true });
+      })();
+    </script>
+    <script type="module" data-game-entry="true" src="/src/boot.ts"></script>
   </body>
 </html>
