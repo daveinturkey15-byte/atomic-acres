@@ -17,6 +17,7 @@ import { SLOT_COUNT } from '../game/killstreaks/catalog';
 import type { HudNodes } from './hud-build';
 import {
   projectStreakStrip,
+  STREAK_SLOT_CODES,
   streakSig,
   type StreakCardState,
 } from './streak-presentation';
@@ -68,6 +69,7 @@ export interface StreakHudView {
 export interface MatchSurfaces {
   setScore(s: ScoreView | null): void;
   setStreak(v: StreakHudView | null): void;
+  setStreakBindings(codes: readonly string[]): void;
   setBanner(text: string | null, sub?: string): void;
   setRespawn(secs: number | null): void;
 }
@@ -98,8 +100,16 @@ export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
   let cBannerText: string | null = null;
   let cBannerSub = '';
   let cRespawn = -2;
+  let streakCodes: readonly string[] = STREAK_SLOT_CODES;
+  let lastStreak: StreakHudView | null = null;
 
-  return {
+  const surfaces: MatchSurfaces = {
+    setStreakBindings(codes): void {
+      if (codes.length !== STREAK_SLOT_CODES.length || codes.every((c, i) => c === streakCodes[i])) return;
+      streakCodes = [...codes];
+      cStreak = null;
+      surfaces.setStreak(lastStreak);
+    },
     setScore(s: ScoreView | null): void {
       if (s === null) {
         if (cScore === '') return;
@@ -143,6 +153,7 @@ export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
      * no state the wire does not carry (no active timer, no cooldown) is shown.
      */
     setStreak(v: StreakHudView | null): void {
+      lastStreak = v;
       if (v === null) {
         if (cStreak === '') return;
         cStreak = '';
@@ -155,7 +166,7 @@ export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
       n.streak.classList.remove('hud-hidden');
       n.streak.classList.toggle('hud-streak-has-reward', v.slots.length > SLOT_COUNT);
       n.streakKills.textContent = String(v.kills);
-      const cards = projectStreakStrip(v.slots, v.kills);
+      const cards = projectStreakStrip(v.slots, v.kills, streakCodes);
       for (let i = 0; i < n.streakSlots.length; i++) {
         const node = n.streakSlots[i];
         const p = cards[i];
@@ -212,4 +223,5 @@ export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
       n.respawn.classList.remove('hud-hidden');
     },
   };
+  return surfaces;
 }

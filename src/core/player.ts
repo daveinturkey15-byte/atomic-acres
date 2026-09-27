@@ -16,6 +16,7 @@
 import * as THREE from 'three';
 import type { AABB } from './kit';
 import { EYE_HEIGHT, CROUCH_EYE, PRONE_EYE, SPAWN_A } from './layout';
+import { gamePointerLook } from './pointer-input';
 
 const HALF_W = 0.3;          // player half-width (0.6 m capsule)
 const BODY_H = 1.78;         // full standing height
@@ -61,6 +62,9 @@ export class Player {
   private keys = new Set<string>();
   private colliders: AABB[] = [];
   private locked = false;
+  private freeCursorLook = false;
+  private sensitivity = 1;
+  private invertY = false;
   /** world-space wish direction injected by the traversability probe, or null */
   private probeWish: { x: number; z: number } | null = null;
   private mode: MoveMode = 'walk';
@@ -68,6 +72,7 @@ export class Player {
   private bodyHeight = BODY_H;
   private eyeHeight = EYE_HEIGHT;
   private inputSuspended = false;
+  private menuInputSuspended = false;
   private speedMultiplier = 1;
 
   constructor(private camera: THREE.PerspectiveCamera, private dom: HTMLElement) {
@@ -84,6 +89,18 @@ export class Player {
 
   setColliders(list: AABB[]): void {
     this.colliders = list;
+  }
+
+  setFreeCursorLook(enabled: boolean): void { this.freeCursorLook = enabled; }
+  setSensitivity(value: number): void { this.sensitivity = value; }
+  setInvertY(value: boolean): void { this.invertY = value; }
+  /** Menu suspension is independent of aircraft possession. */
+  setMenuInputSuspended(suspended: boolean): void {
+    if (suspended === this.menuInputSuspended) return;
+    this.menuInputSuspended = suspended;
+    this.keys.clear();
+    this.state.vel.x = 0;
+    this.state.vel.z = 0;
   }
 
   /** Possession parks the real body; the pilot owns only the review camera. */
@@ -122,7 +139,7 @@ export class Player {
 
   private bind(): void {
     addEventListener('keydown', (e) => {
-      if (this.inputSuspended) return;
+      if (this.inputSuspended || this.menuInputSuspended) return;
       this.keys.add(e.code);
       if (e.code === 'Space') e.preventDefault();
       // Inspection modes are available only to the explicit QA API. Gameplay
@@ -133,9 +150,7 @@ export class Player {
     addEventListener('keyup', (e) => this.keys.delete(e.code));
     addEventListener('blur', () => this.keys.clear());
 
-    this.dom.addEventListener('click', () => {
-      if (!this.locked) this.dom.requestPointerLock();
-    });
+    // The menu shell owns capture requests, including rejection and recovery.
     document.addEventListener('pointerlockchange', () => {
       this.locked = document.pointerLockElement === this.dom;
       // Esc releases the lock; drop held keys so the camera neither spins (it
@@ -143,10 +158,10 @@ export class Player {
       if (!this.locked) this.keys.clear();
     });
     addEventListener('mousemove', (e) => {
-      if (!this.locked || this.inputSuspended) return;
-      const s = 0.0022;
+      if (this.inputSuspended || this.menuInputSuspended || !gamePointerLook(e, this.dom, this.freeCursorLook)) return;
+      const s = 0.0022 * this.sensitivity;
       this.state.yaw -= e.movementX * s;
-      this.state.pitch -= e.movementY * s;
+      this.state.pitch -= e.movementY * s * (this.invertY ? -1 : 1);
       const lim = Math.PI / 2 - 0.02;
       this.state.pitch = Math.max(-lim, Math.min(lim, this.state.pitch));
     });
@@ -313,6 +328,7 @@ export class Player {
 
   update(dtRaw: number): void {
     const dt = Math.min(dtRaw, MAX_DT);
+    // Menus block input, while gravity and collision continue in the live match.
     if (this.inputSuspended) { this.state.vel.set(0, 0, 0); this.syncCamera(); return; }
     if (this.mode === 'walk') this.updateWalk(dt);
     else this.updateFly(dt);
@@ -362,7 +378,7 @@ export class Player {
     }
   }
 
-  /** Walk: gravity, collision, step-up, jump. Untouched hard-won behaviour. */
+  /** Walk: gravity, collision, step-up, jump. */
   private updateWalk(dt: number): void {
     const st = this.state;
 
@@ -434,10 +450,13 @@ export class Player {
 
     // ---- vertical
     const p = st.pos;
+    const beforeY = p.y;
     p.y += st.vel.y * dt;
 
     if (st.vel.y <= 0) {
-      const g = this.groundUnder(p, p.y + 0.35);
+      // Sweep crossed floors from the previous feet height. Checking only the
+      // endpoint loses thin upper floors during a permitted 50ms frame.
+      const g = this.groundUnder(p, Math.max(beforeY, p.y + 0.35));
       if (p.y <= g + 0.02) {
         p.y = g;
         st.vel.y = 0;

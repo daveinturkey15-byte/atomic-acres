@@ -35,6 +35,8 @@ import { buildSoloSetupPanel } from './solo-setup';
 import type { LoadoutStore } from '../game/loadout';
 import type { StreakLoadout } from '../game/killstreaks/catalog';
 import { loadSettings, resetSettings, saveSettings, type Settings } from './settings';
+import { requestGamePointerLock } from '../core/pointer-input';
+import { streakBindingCodes } from './bindings';
 
 export type { MenuPlayer, MenuWorld } from './settings-apply';
 export { MAPS, THUMB_H, THUMB_W, type MapEntry } from './map-select';
@@ -61,6 +63,8 @@ export interface MenuHandle {
   /** A pause request from something other than Escape (gamepad Start, a harness). */
   pause(): void;
   state(): MenuLifecycleState;
+  /** True only while playing after this browser refused mouse capture. */
+  freeCursor(): boolean;
   panel(): MenuPanel;
   settings(): Settings;
   write(patch: Partial<Settings>): Settings;
@@ -85,6 +89,15 @@ export function initMenus(deps: MenuDeps): MenuHandle {
   let optionsReturn: MenuPanel = 'main';
   let lastEndRefresh = 0;
   let lobbyBound: LocalMatch | null = null;
+  let freeCursor = false;
+  const pointerHint = document.createElement('div');
+  pointerHint.className = 'hud-pointer-mode';
+  pointerHint.textContent = 'Free cursor · hold right mouse to look · Esc menu';
+  Object.assign(pointerHint.style, { position: 'fixed', left: '50%', top: '112px',
+    transform: 'translateX(-50%)', maxWidth: 'calc(100vw - 24px)', padding: '5px 9px',
+    background: 'rgba(7,19,23,.8)', color: '#e8fff9', fontSize: '11px', textAlign: 'center',
+    pointerEvents: 'none', display: 'none' });
+  document.getElementById('hud')?.append(pointerHint);
 
   const write = (patch: Partial<Settings>): Settings => {
     saveSettings({ ...settings, ...patch });
@@ -114,6 +127,7 @@ export function initMenus(deps: MenuDeps): MenuHandle {
     onBack: () => { panel = optionsReturn === 'multiplayer' ? 'multiplayer' : 'main'; solo.setMode('solo'); render(); },
     onLoadoutChange: deps.onLoadoutChange,
     onStreakLoadoutChange: deps.onStreakLoadoutChange,
+    streakCodes: () => streakBindingCodes(settings.bindings),
   });
   const lobby = buildLobbyPanel({
     session: () => deps.match()?.lobby ?? null,
@@ -153,6 +167,10 @@ export function initMenus(deps: MenuDeps): MenuHandle {
   }
 
   function render(): void {
+    const freeLook = freeCursor && life.surface === 'hidden';
+    deps.player.setMenuInputSuspended?.(menuVisible(life));
+    deps.player.setFreeCursorLook?.(freeLook);
+    pointerHint.style.display = freeLook ? '' : 'none';
     const show = visibleView();
     for (const v of [main.root, solo.root, lobby.root, options.root, credits.root, pause.root, end.root, deploying, errorView]) {
       v.classList.toggle('aa-hidden', v !== show);
@@ -181,18 +199,16 @@ export function initMenus(deps: MenuDeps): MenuHandle {
     render();
   }
 
-  function lockPointer(source: 'match-start' | 'resume' = 'match-start'): void {
+  function lockPointer(source: 'match-start' | 'resume' | 'canvas' = 'match-start'): void {
+    if (freeCursor) return;
     send({ type: 'pointer-request', source });
-    try {
-      const p = canvas?.requestPointerLock() as unknown as Promise<void> | undefined;
-      // A rejected request is a REAL state (`denied`): the game runs with a
-      // free mouse and the next canvas click re-locks. Never assume success:
-      // `pointerlockchange` is the only authority, which is what keeps a
-      // headless browser from reaching `locked` and pausing over a capture.
-      p?.then?.(() => send({ type: 'pointer-acquired' }), () => send({ type: 'pointer-rejected' }));
-    } catch {
-      send({ type: 'pointer-rejected' });
-    }
+    requestGamePointerLock(canvas, pointerRejected);
+  }
+
+  function pointerRejected(): void {
+    if (document.pointerLockElement === canvas) return;
+    freeCursor = true;
+    send({ type: 'pointer-rejected' });
   }
 
   function startSolo(): void {
@@ -244,11 +260,17 @@ export function initMenus(deps: MenuDeps): MenuHandle {
 
   // Pointer lock and focus are the two truths the reducer cannot see.
   document.addEventListener('pointerlockchange', () => {
-    if (document.pointerLockElement) {
+    if (document.pointerLockElement === canvas) {
+      freeCursor = false;
       send({ type: 'pointer-acquired' });
+      if (life.surface !== 'hidden') document.exitPointerLock();
       return;
     }
     send({ type: 'pointer-lost', focusTransition: !document.hasFocus(), pauseAllowed: true });
+  });
+  document.addEventListener('pointerlockerror', pointerRejected);
+  canvas?.addEventListener('click', () => {
+    if (life.surface === 'hidden' && document.pointerLockElement !== canvas) lockPointer('canvas');
   });
   addEventListener('blur', () => send({ type: 'focus-lost' }));
   addEventListener('focus', () => send({ type: 'focus-gained' }));
@@ -256,7 +278,7 @@ export function initMenus(deps: MenuDeps): MenuHandle {
   // The synthetic `#start.click()` (playcap, every harness): main.ts begins the
   // default match and hides the overlay; mirror it so the reducer agrees.
   overlay.addEventListener('click', (e) => {
-    if (e.target !== overlay) return;
+    if (e.isTrusted || e.target !== overlay) return;
     if (life.surface === 'pre-match') {
       send({ type: 'match-start' });
       send({ type: 'match-ready' });
@@ -382,6 +404,7 @@ export function initMenus(deps: MenuDeps): MenuHandle {
       send({ type: 'pause-requested' });
     },
     state: () => life,
+    freeCursor: () => freeCursor && life.surface === 'hidden',
     panel: () => panel,
     settings: () => settings,
     write,

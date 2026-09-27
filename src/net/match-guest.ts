@@ -25,7 +25,7 @@
 import { GameClient } from '../game/client';
 import type { ActorId, GameEvent } from '../game/events';
 
-import { STREAK_CATALOG } from '../game/killstreaks/catalog';
+import { SLOT_COUNT, STREAK_CATALOG } from '../game/killstreaks/catalog';
 import type { SessionLog } from '../game/session-log';
 import { displayNameFor } from '../game/session-solo';
 import type { BotBody, MatchDriver, MatchUi, SessionActor, SessionSnapshot } from '../game/session-types';
@@ -323,11 +323,11 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     pressStreak(slot): void {
       const pilot = client.streakEffects.some(s => s.kind === 'aircraft' && s.variant === 'piloted-drone' && s.actorId === selfId && s.remainingMs > Math.max(0, performance.now() - client.streakEffectsAt));
       const chosen = client.view().streak.slots.find(s => s.slot === slot);
-      guest.sendGame({ type: 'streak-intent', slot, toggle: pilot && (chosen?.streakId === 'piloted-drone' || slot === 5) });
+      guest.sendGame({ type: 'streak-intent', slot, toggle: pilot && (chosen?.streakId === 'piloted-drone' || slot === SLOT_COUNT + 1) });
     },
     pilotInput: (controls) => guest.sendPilot(controls),
     exitPilot(): void {
-      const slot = client.view().streak.slots.find(s => s.streakId === 'piloted-drone')?.slot ?? 5;
+      const slot = client.view().streak.slots.find(s => s.streakId === 'piloted-drone')?.slot ?? SLOT_COUNT + 1;
       guest.sendGame({ type: 'streak-intent', slot, toggle: true });
     },
 

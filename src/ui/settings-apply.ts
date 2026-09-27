@@ -36,7 +36,7 @@
  * effect is ACTIVE must check `enabled`, never the slider.
  */
 import type { HudApi } from './hud';
-import { remapTable } from './bindings';
+import { remapTable, streakBindingCodes } from './bindings';
 import { accessibilityOf, type Settings } from './settings';
 import type { TodName, WeatherName } from '../core/atmosphere';
 
@@ -48,7 +48,7 @@ void PLAYER_LOOK_GAIN;
 
 export type OptionStatus = 'live' | 'shim' | 'persist';
 export const OPTION_STATUS: Readonly<Record<string, OptionStatus>> = Object.freeze({
-  quality: 'live', fov: 'shim', sensitivity: 'shim', invertY: 'shim', bindings: 'shim',
+  quality: 'live', fov: 'shim', sensitivity: 'live', invertY: 'live', bindings: 'shim',
   shadowMapSize: 'live', resolutionScale: 'live', netOverlay: 'live',
   reducedMotion: 'live', damageFlashScale: 'live',
   ao: 'live', ssr: 'live', bloom: 'live', fog: 'live', tod: 'live', weather: 'live',
@@ -62,6 +62,8 @@ export const STATUS_NOTE: Readonly<Record<OptionStatus, string>> = Object.freeze
 
 /** Minimal surface the menus actually use — probed, never assumed. */
 export interface MenuPlayer {
+  setFreeCursorLook?: (enabled: boolean) => void;
+  setMenuInputSuspended?: (suspended: boolean) => void;
   setSensitivity?: (v: number) => void;
   setInvertY?: (v: boolean) => void;
   setBindings?: (b: Readonly<Record<string, string>>) => void;
@@ -104,7 +106,7 @@ export interface MenuWorld {
     projectionMatrix?: { elements: ArrayLike<number> };
   };
   renderer?: {
-    domElement?: { requestPointerLock: () => unknown; width?: number; height?: number };
+    domElement?: HTMLCanvasElement;
     setPixelRatio?: (v: number) => void;
     getPixelRatio?: () => number;
   };
@@ -251,6 +253,7 @@ export function applySettings(s: Settings, t: ApplyTargets): void {
   }
   remap = t.player.setBindings ? new Map() : remapTable(s.bindings);
   t.hud.setAccessibility(accessibilityOf(s));
+  t.hud.setStreakBindings?.(streakBindingCodes(s.bindings));
 }
 
 /**

@@ -56,6 +56,8 @@ import {
 import { isCrossbowEventType } from '../game/events-crossbow';
 import { isOrdnanceEventType } from '../game/events-ordnance';
 import { isMatchMode, type MatchMode } from '../game/rules';
+import { SLOT_COUNT } from '../game/killstreaks/catalog';
+import { MAX_CHARGES_PER_STREAK } from '../game/killstreaks/limits';
 
 // ---------------------------------------------------------------------------
 // Messages
@@ -296,7 +298,9 @@ function isStreakSlot(v: unknown): boolean {
     isObj(v) &&
     typeof v['streakId'] === 'string' &&
     Number.isSafeInteger(v['slot']) &&
-    Number.isSafeInteger(v['charges'])
+    (v['slot'] as number) >= 1 && (v['slot'] as number) <= SLOT_COUNT + 1 &&
+    Number.isSafeInteger(v['charges']) && (v['charges'] as number) >= 0 &&
+    (v['charges'] as number) <= MAX_CHARGES_PER_STREAK
   );
 }
 
@@ -466,6 +470,7 @@ export function isGameMessage(m: Record<string, unknown>): boolean {
       return isSpawnEvent(m['e']);
     case 'streak-intent':
       return Number.isSafeInteger(m['slot']) && typeof m['toggle'] === 'boolean' &&
+        (m['slot'] as number) >= 1 && (m['slot'] as number) <= SLOT_COUNT + 1 &&
         Number.isSafeInteger(m['seq']) && (m['seq'] as number) >= 0;
     case 'pilot-input':
       return isPilotInput(m);
@@ -476,7 +481,9 @@ export function isGameMessage(m: Record<string, unknown>): boolean {
         typeof m['actorId'] === 'string' &&
         isNum(m['kills']) &&
         Array.isArray(m['slots']) &&
+        m['slots'].length <= SLOT_COUNT + 1 &&
         (m['slots'] as unknown[]).every(isStreakSlot) &&
+        new Set(m['slots'].map((s: StreakSlotState) => s.slot)).size === m['slots'].length &&
         isStreakCause(m['cause'])
       );
     case 'match-state':

@@ -2,27 +2,34 @@
  * Pre-match killstreak picker.
  *
  * The catalog is the roster and `SLOT_FAMILIES` is the slot policy.  The UI
- * only persists a validated four-id selection; the host remains the authority
+ * only persists a validated five-id selection; the host remains the authority
  * that admits the loadout and refuses effects that are not wired in this
  * build.  Unsupported catalog rows stay visible and disabled so the player
  * can see the full authored ladder without being offered a fake button.
  */
 
 import {
-  DEFAULT_STREAK_LOADOUT, SLOT_FAMILIES, SLOT_TIERS, STREAK_CATALOG, streakById, validateStreakLoadout,
+  DEFAULT_STREAK_LOADOUT, MUTUAL_EXCLUSIONS, SLOT_FAMILIES, SLOT_TIERS, STREAK_CATALOG, streakById, validateStreakLoadout,
   type StreakLoadout,
 } from '../game/killstreaks/catalog';
 import { WIRED_STREAK_IDS } from '../game/killstreaks/runtime';
+import { streakDescription } from './streak-descriptions';
+import { STREAK_SLOT_CODES } from './streak-presentation';
+import { codeLabel } from './bindings';
 
-export const STREAK_LOADOUT_STORAGE_KEY = 'nuketown2025.streak-loadout.v1';
-export const STREAK_LOADOUT_VERSION = 1;
+export const LEGACY_STREAK_LOADOUT_STORAGE_KEY = 'nuketown2025.streak-loadout.v1';
+export const STREAK_LOADOUT_STORAGE_KEY = 'nuketown2025.streak-loadout.v2';
+export const STREAK_LOADOUT_VERSION = 2;
 
 export interface StreakLoadoutStore {
-  readonly version: 1;
+  readonly version: 2;
   readonly selected: StreakLoadout;
+  readonly legacyRetained: boolean;
+  readonly migratedFrom: 1 | null;
 }
 
 export interface StreakLoadoutSectionDeps {
+  codes?(): readonly string[];
   onChange?(loadout: StreakLoadout): void;
 }
 
@@ -30,6 +37,7 @@ export interface StreakLoadoutSection {
   readonly root: HTMLElement;
   refresh(): void;
   read(): StreakLoadout;
+  setEditable(editable: boolean): void;
 }
 
 function ambientStorage(): Storage | null {
@@ -37,32 +45,76 @@ function ambientStorage(): Storage | null {
 }
 
 export function defaultStreakLoadoutStore(): StreakLoadoutStore {
-  return { version: STREAK_LOADOUT_VERSION, selected: Object.freeze([...DEFAULT_STREAK_LOADOUT]) };
+  return { version: STREAK_LOADOUT_VERSION, selected: Object.freeze([...DEFAULT_STREAK_LOADOUT]), legacyRetained: false, migratedFrom: null };
+}
+
+/** Pure migration; the caller never writes the legacy record. Old order breaks ties. */
+export function migrateLegacyStreakLoadout(value: unknown): StreakLoadout | null {
+  if (!value || typeof value !== 'object') return null;
+  const record = value as { version?: unknown; selected?: unknown };
+  if (record.version !== 1 || !Array.isArray(record.selected) || record.selected.length !== 4) return null;
+  const old: unknown[] = record.selected;
+  const legacyFamilies: readonly (readonly string[])[] = [SLOT_FAMILIES[0].filter(id => id !== 'supply-crate'),
+    SLOT_FAMILIES[0].filter(id => id !== 'supply-crate'), [...SLOT_FAMILIES[1], 'supply-crate'],
+    [...SLOT_FAMILIES[2], ...SLOT_FAMILIES[4]]];
+  if (new Set(old).size !== old.length || old.some((id, i) => typeof id !== 'string'
+    || !legacyFamilies[i].includes(id) || !WIRED_STREAK_IDS.includes(id))) return null;
+  if (MUTUAL_EXCLUSIONS.some(([a, b]) => old.includes(a) && old.includes(b))) return null;
+  const selected: string[] = [];
+  for (let i = 0; i < SLOT_FAMILIES.length; i++) {
+    const candidates = [...old, DEFAULT_STREAK_LOADOUT[i], ...DEFAULT_STREAK_LOADOUT, ...SLOT_FAMILIES[i]];
+    const id = candidates.find((candidate): candidate is string => typeof candidate === 'string'
+      && SLOT_FAMILIES[i].some(id => id === candidate) && !selected.includes(candidate)
+      && WIRED_STREAK_IDS.includes(candidate)
+      && !MUTUAL_EXCLUSIONS.some(([a, b]) => candidate === a && selected.includes(b) || candidate === b && selected.includes(a)));
+    if (!id) return null;
+    selected.push(id);
+  }
+  return validateStreakLoadout(selected).valid ? Object.freeze(selected) as StreakLoadout : null;
+}
+
+function parseRecord(raw: string | null): Record<string, unknown> | null {
+  try { const v: unknown = raw === null ? null : JSON.parse(raw); return v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : null; }
+  catch { return null; }
 }
 
 export function loadStreakLoadout(storage: Pick<Storage, 'getItem'> | null = ambientStorage()): StreakLoadoutStore {
   if (!storage) return defaultStreakLoadoutStore();
   try {
-    const raw = storage.getItem(STREAK_LOADOUT_STORAGE_KEY);
-    if (!raw) return defaultStreakLoadoutStore();
-    const parsed = JSON.parse(raw) as { version?: unknown; selected?: unknown };
-    if (parsed.version !== STREAK_LOADOUT_VERSION || !Array.isArray(parsed.selected)) return defaultStreakLoadoutStore();
-    const check = validateStreakLoadout(parsed.selected, STREAK_CATALOG);
-    if (!check.valid || parsed.selected.some((id) => !WIRED_STREAK_IDS.includes(String(id)))) return defaultStreakLoadoutStore();
-    return { version: STREAK_LOADOUT_VERSION, selected: Object.freeze([...parsed.selected] as StreakLoadout) };
+    const legacyRaw = storage.getItem(LEGACY_STREAK_LOADOUT_STORAGE_KEY);
+    const parsed = parseRecord(storage.getItem(STREAK_LOADOUT_STORAGE_KEY));
+    if (parsed?.version === STREAK_LOADOUT_VERSION && Array.isArray(parsed.selected)
+      && validateStreakLoadout(parsed.selected).valid && parsed.selected.every(id => WIRED_STREAK_IDS.includes(String(id)))) {
+      return { version: 2, selected: Object.freeze([...parsed.selected]) as StreakLoadout,
+        legacyRetained: legacyRaw !== null, migratedFrom: parsed.migratedFrom === 1 ? 1 : null };
+    }
+    const migrated = migrateLegacyStreakLoadout(parseRecord(legacyRaw));
+    return { ...defaultStreakLoadoutStore(), ...(migrated ? { selected: migrated, migratedFrom: 1 as const } : {}),
+      legacyRetained: legacyRaw !== null };
   } catch {
     return defaultStreakLoadoutStore();
   }
 }
 
-export function saveStreakLoadout(store: StreakLoadoutStore, storage: Pick<Storage, 'setItem'> | null = ambientStorage()): boolean {
-  if (!storage) return false;
+export function saveStreakLoadout(store: StreakLoadoutStore, storage: (Pick<Storage, 'setItem'> & Partial<Pick<Storage, 'getItem'>>) | null = ambientStorage()): boolean {
+  if (!storage || store.version !== 2 || !validateStreakLoadout(store.selected).valid
+    || store.selected.some(id => !WIRED_STREAK_IDS.includes(id))) return false;
   try {
-    storage.setItem(STREAK_LOADOUT_STORAGE_KEY, JSON.stringify(store));
-    return true;
+    const raw = JSON.stringify(store);
+    storage.setItem(STREAK_LOADOUT_STORAGE_KEY, raw);
+    return storage.getItem ? storage.getItem(STREAK_LOADOUT_STORAGE_KEY) === raw : true;
   } catch {
     return false;
   }
+}
+
+/** Picking the other heavy slot's reward swaps them before canonical validation. */
+export function chooseStreakSlot(selected: StreakLoadout, index: number, id: string): StreakLoadout | null {
+  if (!Number.isInteger(index) || index < 0 || index >= SLOT_FAMILIES.length || !WIRED_STREAK_IDS.includes(id)) return null;
+  const next: string[] = [...selected], sibling = index === 2 ? 3 : index === 3 ? 2 : -1;
+  if (sibling >= 0 && next[sibling] === id) next[sibling] = next[index];
+  next[index] = id;
+  return validateStreakLoadout(next).valid ? Object.freeze(next) as StreakLoadout : null;
 }
 
 function stop(e: Event): void { e.stopPropagation(); }
@@ -74,8 +126,12 @@ function duration(ms: number): string {
 }
 
 export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): StreakLoadoutSection {
-  let unsaved: StreakLoadout | null = null;
-  const read = (): StreakLoadout => unsaved ?? loadStreakLoadout().selected;
+  let unsaved: StreakLoadoutStore | null = null, editable = true;
+  const readStore = (): StreakLoadoutStore => unsaved ?? loadStreakLoadout();
+  const read = (): StreakLoadout => readStore().selected;
+  const codes = (): readonly string[] => deps.codes?.() ?? STREAK_SLOT_CODES;
+  const keyNote = (): string => 'Choose five streaks. Keys ' + codes().slice(0, SLOT_FAMILIES.length).map(codeLabel).join(' · ')
+    + '; extra crate reward ' + codeLabel(codes()[SLOT_FAMILIES.length]) + '.';
   const root = document.createElement('section');
   root.className = 'aa-streak-loadout';
   root.setAttribute('aria-label', 'Killstreak loadout');
@@ -87,26 +143,34 @@ export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): 
   title.textContent = 'STREAK SUITE';
   const meta = document.createElement('span');
   meta.className = 'aa-loadmeta';
-  meta.textContent = 'KEYS 3 · 4 · 5 · 6';
-  head.append(title, meta);
+  meta.textContent = 'KEYS ' + codes().slice(0, SLOT_FAMILIES.length).map(codeLabel).join(' · ');
+  const defaults = document.createElement('button');
+  defaults.type = 'button'; defaults.className = 'aa-button'; defaults.textContent = 'USE DEFAULTS';
+  defaults.setAttribute('aria-label', 'Use default killstreak loadout');
+  head.append(title, meta, defaults);
   root.append(head);
 
   const note = document.createElement('div');
   note.className = 'aa-streak-note';
-  note.textContent = 'Choose one streak per tier. Earn kills, then press its numbered key when ready.';
+  note.setAttribute('aria-live', 'polite');
+  note.textContent = readStore().migratedFrom === 1
+    ? 'Saved four-slot setup adapted to five slots. Original setup retained.'
+    : keyNote();
   root.append(note);
 
   const grid = document.createElement('div');
   grid.className = 'aa-streak-loadout-grid';
   const selects: HTMLSelectElement[] = [];
   const summaries: HTMLElement[] = [];
+  const keyLabels: HTMLElement[] = [];
   for (let i = 0; i < SLOT_FAMILIES.length; i++) {
     const card = document.createElement('label');
     card.className = 'aa-streak-pick';
     const top = document.createElement('span');
     top.className = 'aa-streak-pick-top';
     const slot = document.createElement('span');
-    slot.textContent = `KEY ${i + 3}`;
+    slot.textContent = `KEY ${codeLabel(codes()[i])}`;
+    keyLabels.push(slot);
     const tier = document.createElement('span');
     tier.textContent = SLOT_TIERS[i].toUpperCase();
     top.append(slot, tier);
@@ -127,24 +191,17 @@ export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): 
     select.addEventListener('click', stop);
     select.addEventListener('change', (e) => {
       stop(e);
+      if (!editable || select.matches(':disabled')) { refresh(); return; }
       const id = select.value;
-      if (!WIRED_STREAK_IDS.includes(id)) return;
-      const next = [...read()] as string[];
-      next[i] = id;
-      const check = validateStreakLoadout(next, STREAK_CATALOG);
-      if (!check.valid || next.some((entry) => !WIRED_STREAK_IDS.includes(entry))) {
-        note.textContent = check.errors.join(' · ') || 'STREAK NOT AVAILABLE IN THIS BUILD';
+      const before = read(), sibling = i === 2 ? 3 : i === 3 ? 2 : -1;
+      const swapped = sibling >= 0 && before[sibling] === id && before[i] !== id;
+      const next = chooseStreakSlot(before, i, id);
+      if (!next) {
+        note.textContent = 'That reward cannot be selected in this slot.';
         refresh();
         return;
       }
-      const store: StreakLoadoutStore = { version: STREAK_LOADOUT_VERSION, selected: Object.freeze(next) as StreakLoadout };
-      const saved = saveStreakLoadout(store);
-      unsaved = saved ? null : store.selected;
-      note.textContent = saved
-        ? 'STREAK SUITE SAVED FOR THE NEXT DEPLOY'
-        : 'SELECTED FOR THIS SESSION · STORAGE BLOCKED';
-      deps.onChange?.(store.selected);
-      refresh();
+      commit(next, swapped ? `HEAVY SLOTS SWAPPED · ` : '');
     });
 
     const summary = document.createElement('span');
@@ -156,25 +213,44 @@ export function buildStreakLoadoutSection(deps: StreakLoadoutSectionDeps = {}): 
   }
   root.append(grid);
 
+  function commit(selected: StreakLoadout, prefix = ''): void {
+    const store: StreakLoadoutStore = { ...readStore(), selected };
+    const saved = saveStreakLoadout(store);
+    unsaved = saved ? null : store;
+    note.textContent = prefix + (saved ? 'STREAK SUITE SAVED FOR THE NEXT DEPLOY' : 'SELECTED FOR THIS SESSION · STORAGE BLOCKED');
+    deps.onChange?.(selected);
+    refresh();
+  }
+  defaults.addEventListener('click', (event) => {
+    stop(event);
+    if (editable && !defaults.matches(':disabled')) commit(Object.freeze([...DEFAULT_STREAK_LOADOUT]));
+  });
+
   function refresh(): void {
     const selected = read();
+    meta.textContent = 'KEYS ' + codes().slice(0, SLOT_FAMILIES.length).map(codeLabel).join(' · ');
+    defaults.disabled = !editable;
     for (let i = 0; i < selects.length; i++) {
+      keyLabels[i].textContent = `KEY ${codeLabel(codes()[i])}`;
       const id = selected[i];
       selects[i].value = id;
+      selects[i].disabled = !editable;
       for (const option of Array.from(selects[i].options)) {
-        const candidate: string[] = [...selected];
-        candidate[i] = option.value;
-        const check = validateStreakLoadout(candidate, STREAK_CATALOG);
-        option.disabled = !WIRED_STREAK_IDS.includes(option.value) || !check.valid;
-        if (!check.valid) option.title = check.errors.join(' · ');
+        option.disabled = chooseStreakSlot(selected, i, option.value) === null;
+        const candidate = streakById(option.value);
+        option.title = option.disabled ? 'Unavailable with this loadout' : candidate ? streakDescription(candidate.id) : '';
       }
       const def = streakById(id, STREAK_CATALOG);
       summaries[i].textContent = def === null
         ? 'UNAVAILABLE'
-        : `${def.cost} KILLS · ${def.activation.replace('-', ' ').toUpperCase()} · ${duration(def.durationMs)}`;
+        : `${def.cost} KILLS · ${duration(def.durationMs)} — ${streakDescription(def.id)}`;
     }
   }
 
   refresh();
-  return { root, refresh, read };
+  return { root, refresh, read, setEditable(value) {
+    editable = value;
+    note.textContent = value ? keyNote() : 'MATCH ACTIVE · STREAK SELECTION FROZEN';
+    refresh();
+  } };
 }

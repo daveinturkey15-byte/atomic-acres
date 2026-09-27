@@ -4,6 +4,7 @@
 import type { PerspectiveCamera } from 'three';
 import type { StreakEffectView } from '../game/killstreaks/effect-view';
 import type { PilotControls } from '../game/killstreaks/pilot-types';
+import { gamePointerLook, gamePointerActive } from './pointer-input';
 
 export const PILOT_VIEW_MAX_AGE_MS = 750;
 const INPUT_INTERVAL_MS = 50;
@@ -21,6 +22,9 @@ export interface PilotControlDeps {
   streak(slot: number): void;
   transition(active: boolean): void;
   lookSettings(): { sensitivity: number; invertY: boolean };
+  freeCursor?(): boolean;
+  controlsAllowed?(): boolean;
+  streakCodes?(): readonly string[];
 }
 
 export function controlledPilotView(rows: readonly StreakEffectView[], selfId: string | null,
@@ -86,6 +90,7 @@ export class PilotControlView {
   update(now: number): void {
     const row = this.row;
     if (row === null) return;
+    if (!this.controlsAllowed()) { this.keys.clear(); this.fire = false; }
     if (now - this.lastSentAt >= INPUT_INTERVAL_MS) {
       this.lastSentAt = now;
       this.deps.send({
@@ -101,7 +106,7 @@ export class PilotControlView {
     if (camera.fov !== 72) { camera.fov = 72; camera.updateProjectionMatrix(); }
     const remaining = Math.max(0, row.remainingMs - Math.max(0, now - this.snapshotAt));
     const line = this.returning ? 'RETURNING TO PLAYER'
-      : `PILOTED DRONE | ${Math.ceil(row.health ?? 0)} HP | ${Math.ceil(remaining / 1000)} s\nWASD fly | Q / E descend / climb | Mouse aim | LMB fire | Esc return`;
+      : `PILOTED DRONE | ${Math.ceil(row.health ?? 0)} HP | ${Math.ceil(remaining / 1000)} s\nWASD fly | Q / E descend / climb | ${this.deps.freeCursor?.() ? 'RMB drag aim' : 'Mouse aim'} | LMB fire | Esc return`;
     if (line !== this.lastHint) { this.lastHint = line; this.hint.textContent = line; }
   }
 
@@ -133,6 +138,9 @@ export class PilotControlView {
   private axis(positive: string, negative: string): number {
     return this.returning ? 0 : Number(this.keys.has(positive)) - Number(this.keys.has(negative));
   }
+  private controlsAllowed(): boolean {
+    return document.hasFocus() && this.deps.controlsAllowed?.() !== false;
+  }
   private stop(e: Event): void { e.preventDefault(); e.stopImmediatePropagation(); }
   private requestExit(): void {
     if (this.row === null || this.returning) return;
@@ -140,9 +148,9 @@ export class PilotControlView {
     this.deps.exit();
   }
   private keyDown = (e: KeyboardEvent): void => {
-    if (!this.active()) return;
+    if (!this.active() || !this.controlsAllowed()) return;
     if (e.code === 'Escape') { this.stop(e); this.requestExit(); return; }
-    const slot = ['Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7'].indexOf(e.code);
+    const slot = (this.deps.streakCodes?.() ?? ['Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8']).indexOf(e.code);
     if (slot >= 0) { this.stop(e); if (!e.repeat && !this.returning) this.deps.streak(slot + 1); return; }
     if (!CONTROL_KEYS.has(e.code) && !BODY_KEYS.has(e.code)) return;
     this.stop(e);
@@ -155,7 +163,8 @@ export class PilotControlView {
   private mouseMove = (e: MouseEvent): void => {
     if (!this.active()) return;
     this.stop(e);
-    if (this.returning || document.pointerLockElement !== this.deps.canvas) return;
+    if (this.returning || !this.controlsAllowed()
+      || !gamePointerLook(e, this.deps.canvas, this.deps.freeCursor?.() === true)) return;
     const settings = this.deps.lookSettings();
     const scale = .0022 * settings.sensitivity;
     this.yaw -= Math.max(-2000, Math.min(2000, e.movementX)) * scale;
@@ -164,8 +173,9 @@ export class PilotControlView {
       this.pitch - Math.max(-2000, Math.min(2000, e.movementY)) * scale * (settings.invertY ? -1 : 1)));
   };
   private mouseDown = (e: MouseEvent): void => {
-    if (!this.active() || e.target !== this.deps.canvas) return;
-    this.stop(e); if (e.button === 0 && !this.returning) this.fire = true;
+    if (!this.active() || !this.controlsAllowed() || e.target !== this.deps.canvas) return;
+    this.stop(e); if (e.button === 0 && !this.returning
+      && gamePointerActive(this.deps.canvas, this.deps.freeCursor?.() === true)) this.fire = true;
   };
   private mouseUp = (e: MouseEvent): void => {
     if (!this.active()) return;

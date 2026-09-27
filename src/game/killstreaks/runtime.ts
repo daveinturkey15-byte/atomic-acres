@@ -29,6 +29,8 @@ import { earnElimination, type ActorLedger } from './earning';
 import { createEffect, effectKind, stepEffect, type LiveInstance } from './behaviors';
 import { acceptPilotInput, releaseAircraftControl, toggleAircraftControl, type AircraftState } from './effects/aircraft';
 import { carpetCorridor } from './effects/carpet';
+import { MAX_CHARGES_PER_STREAK } from './limits';
+export { MAX_CHARGES_PER_STREAK } from './limits';
 import type { PilotInput, AircraftTarget } from './pilot-types';
 export { WIRED_STREAK_IDS, type LiveInstance } from './behaviors';
 
@@ -36,7 +38,6 @@ export { STREAK_CLAIM_REJECTS, STREAK_CLAIM_REJECT_LABELS, type ActivationContex
 
 /** Bank8, claims512, live12; stalled frames lose excess time rather than banking bursts. */
 export const MAX_BANKED_STREAKS = 8;
-export const MAX_CHARGES_PER_STREAK = 255;
 export const MAX_SEEN_CLAIMS = 512;
 export const MAX_LIVE_INSTANCES = 12;
 export const ADVANCE_DT_CAP_MS = 250;

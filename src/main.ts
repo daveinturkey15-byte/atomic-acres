@@ -14,6 +14,7 @@ import { installReflectiveSurfaces } from './core/reflective-surfaces';
 import { makeRng, type AABB, type BuildContext, type Builder } from './core/kit';
 import { Player, type MoveMode } from './core/player';
 import { PilotControlView } from './core/pilot-controls';
+import { gamePointerActive } from './core/pointer-input';
 import { presentBody } from './characters/body-presentation';
 import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core/layout';
 import { STATIONS, type Station } from './core/stations';
@@ -34,6 +35,9 @@ import { createLocalMatch, type LocalMatch, type MatchUi } from './game/session'
 import { PAL } from './core/palette';
 import { loadLoadout, resolveLoadout } from './game/loadout';
 import { loadStreakLoadout } from './ui/streak-loadout-panel';
+import { SLOT_COUNT } from './game/killstreaks/catalog';
+import { STREAK_SLOT_CODES } from './ui/streak-presentation';
+import { streakBindingCodes } from './ui/bindings';
 import { WorldAudio } from './audio/world-audio';
 import { createStaticReflectionProbe, type StaticReflectionProbe } from './core/static-reflection-probe';
 import { createCombatFeedbackAdapter } from './ui/combat-feedback-adapter';
@@ -297,7 +301,7 @@ hudHelp.textContent =
   'WASD move · SHIFT sprint · SPACE jump · ' +
   'H help · Esc pause · ' +
   'LMB fire · RMB aim · R reload · 1/2 or wheel weapons · ' +
-  'G frag (hold to cook) · Q tactical · V knife · hold E pick up · C / CTRL crouch · Z prone · 3–6 streaks · 7 crate reward';
+  'G frag (hold to cook) · Q tactical · V knife · hold E pick up · C / CTRL crouch · Z prone · 3–7 streaks · 8 crate reward';
 hud.append(hudStats, hudMode, hudHelp);
 const pilot = new PilotControlView({
   camera: world.camera, canvas: world.renderer.domElement, hud,
@@ -305,6 +309,9 @@ const pilot = new PilotControlView({
   exit: () => match?.exitPilot(),
   streak: (slot) => match?.pressStreak(slot),
   lookSettings: () => ui.menu.settings(),
+  freeCursor: () => ui.menu.freeCursor(),
+  controlsAllowed: () => ui.menu.state().surface === 'hidden',
+  streakCodes: () => streakBindingCodes(ui.menu.settings().bindings),
   transition: (active) => {
     weapons.pointerUp(0); weapons.pointerUp(2);
     player.setInputSuspended(active);
@@ -320,7 +327,7 @@ Object.assign(rewardHint.style, { position: 'fixed', right: '22px', top: '27vh',
 hud.append(rewardHint);
 hud.addEventListener('click', (event) => {
   if ((event.target as Element | null)?.closest('.hud-streak-reward') && ui.menu.state().surface === 'hidden') {
-    match?.pressStreak(5);
+    match?.pressStreak(SLOT_COUNT + 1);
   }
 });
 let lastRewardHint = '';
@@ -493,20 +500,12 @@ addEventListener('pagehide', () => {
   streakEffects.dispose();
   pilot.dispose();
 });
-// The first click lands on the overlay (it covers the canvas), so dismiss and lock
-// here; later clicks hit the canvas and re-lock via Player. Esc releases (browser
-// default) and Player drops held keys so nothing spins or keeps walking.
-startOverlay.addEventListener('click', () => {
+// Retain synthetic #start.click() for the frozen capture harness. Real pointer
+// gestures use Deploy/Resume; clicking blank menu space never starts a match.
+startOverlay.addEventListener('click', (event) => {
+  if (event.isTrusted || event.target !== startOverlay) return;
   selectedLoadout = resolveLoadout(ui.menu.loadout());
   selectedStreakLoadout = ui.menu.streakLoadout();
-  startOverlay.style.display = 'none';
-  match?.begin();
-  // requestPointerLock returns a PROMISE in current Chrome, so a refusal is an
-  // unhandled rejection, not a throw - which is the PAGEERROR WrongDocumentError
-  // every playcap run has been printing. try/catch alone never caught it.
-  try { void Promise.resolve(world.renderer.domElement.requestPointerLock()).catch(() => {}); } catch { /* no API */ }
-});
-world.renderer.domElement.addEventListener('click', () => {
   startOverlay.style.display = 'none';
   match?.begin();
 });
@@ -523,7 +522,7 @@ function footWeaponInputAllowed(requireNativeLock = true): boolean {
   const view = presentedClient?.view();
   return ui.menu.state().surface === 'hidden' && view?.alive === true
     && view.match.phase === 'active' && document.hasFocus() && !pilot.active()
-    && (!requireNativeLock || document.pointerLockElement === canvas);
+    && (!requireNativeLock || gamePointerActive(canvas, ui.menu.freeCursor()));
 }
 function cancelWeaponInput(): void { weapons.releaseWeaponInput(); }
 function cancelUnlockedWeaponInput(): void {
@@ -555,10 +554,10 @@ addEventListener('keydown', (e) => {
       && footWeaponInputAllowed() && player.getMode() === 'walk') {
     try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
   }
-  // 3-6 are the four chosen streaks; 7 activates a banked crate reward.
+  // 3–7 are the five chosen streaks; 8 activates a banked crate reward.
   // A press always answers, even when it
   // is refused - a dead key is the defect IMPORT-PLAN s5.4 is written about.
-  const slot = ['Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7'].indexOf(e.code);
+  const slot = STREAK_SLOT_CODES.indexOf(e.code as typeof STREAK_SLOT_CODES[number]);
   if (slot >= 0) match?.pressStreak(slot + 1);
 });
 addEventListener('keyup', (e) => {

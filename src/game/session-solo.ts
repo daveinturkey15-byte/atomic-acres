@@ -37,7 +37,7 @@ import { GameClient } from './client';
 import type { ActorId, GameEvent, TeamId, WorldQuery } from './events';
 import { GameHost } from './host';
 import type { HostSnapshot, ShotAdmission } from './host-ports';
-import { STREAK_CATALOG, type StreakLoadout } from './killstreaks/catalog';
+import { SLOT_COUNT, STREAK_CATALOG, type StreakLoadout } from './killstreaks/catalog';
 import type { Loadout } from './loadout';
 import { StreakRuntime } from './killstreaks/runtime';
 import { BOT_DIFFICULTY_PRESETS, TEAM_A, opposingTeam, rulesForSetup, type SoloSetup } from './rules';
@@ -411,7 +411,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     pressStreak(slot): void {
       const pilot = streaks?.liveInstances().find(s => s.kind === 'aircraft' && s.variant === 'piloted-drone' && s.actorId === localId && s.remainingMs > 0);
       const chosen = streaks?.snapshotFor(localId).find(s => s.slot === slot);
-      const toggle = !!pilot && (chosen?.streakId === pilot.streakId || slot === 5);
+      const toggle = !!pilot && (chosen?.streakId === pilot.streakId || slot === SLOT_COUNT + 1);
       if (host !== null) host.submitStreakIntent(localId, { type: 'streak-intent', slot, toggle });
     },
     pilotInput(controls): void {
@@ -420,7 +420,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     },
     exitPilot(): void {
       const pilot = streaks?.pilotFor(localId);
-      const slot = pilot ? (streaks?.snapshotFor(localId).find(s => s.streakId === pilot.streakId)?.slot ?? 5) : null;
+      const slot = pilot ? (streaks?.snapshotFor(localId).find(s => s.streakId === pilot.streakId)?.slot ?? SLOT_COUNT + 1) : null;
       if (host !== null && slot) host.submitStreakIntent(localId, { type: 'streak-intent', slot, toggle: true });
     },
 

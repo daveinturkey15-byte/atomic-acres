@@ -28,7 +28,7 @@
  *
  * The native roster has sixteen selectable behaviors. Field Repair and Crimson
  * Flamethrower are immediate crate rewards; Last Resort is also selectable.
- * Existing IDs and saved four-slot classes remain valid. A selectable row
+ * Existing IDs remain valid; UI storage migrates retained four-slot records. A selectable row
  * without a stepper must be refused by `runtime.ts` with an enumerated,
  * labelled reason rather than becoming a silent no-op (§5.4).
  */
@@ -120,12 +120,12 @@ export const FIXED_REWARD_PERCENTS: Readonly<Record<string, number>> = Object.fr
 });
 
 /**
- * Loadout shape: four slots, by tier. This array is the ONLY place the slot
+ * Loadout shape: five chosen slots, by tier. This array is the ONLY place the slot
  * count and the slot→tier mapping exist; `SLOT_COUNT` and `SLOT_FAMILIES` are
- * both read off it. The final high slot also accepts top-tier streaks; two
- * low slots preserve the original loadout shape and duplicate constraint.
+ * both read off it. The two heavy slots are distinct; top rewards have their
+ * own fifth slot. Unslotted crate rewards use a separate runtime bonus row.
  */
-export const SLOT_TIERS: readonly StreakTier[] = Object.freeze(['low', 'low', 'mid', 'high'] as const);
+export const SLOT_TIERS: readonly StreakTier[] = Object.freeze(['low', 'mid', 'high', 'high', 'top'] as const);
 export const SLOT_COUNT = SLOT_TIERS.length;
 
 /**
@@ -147,7 +147,7 @@ export const STREAKS = Object.freeze([
   { id: 'signal-jam', displayName: 'Signal Jam', cost: 4, tier: 'low', availability: 'selectable', activation: 'instant', durationMs: 25_000, repeatable: false, baseWeightUnits: 22 },
   { id: 'tracker-dart', displayName: 'Tracker Dart', cost: 4, tier: 'low', availability: 'selectable', activation: 'target-point', durationMs: 20_000, repeatable: false, baseWeightUnits: 20 },
   { id: 'sentry-post', displayName: 'Sentry Post', cost: 5, tier: 'mid', availability: 'selectable', activation: 'target-point', durationMs: 40_000, repeatable: false, baseWeightUnits: 14 },
-  { id: 'supply-crate', displayName: 'Supply Crate', cost: 5, tier: 'mid', availability: 'selectable', activation: 'target-point', durationMs: 60_000, repeatable: false, baseWeightUnits: 0 },
+  { id: 'supply-crate', displayName: 'Supply Crate', cost: 5, tier: 'low', availability: 'selectable', activation: 'target-point', durationMs: 60_000, repeatable: false, baseWeightUnits: 0 },
   { id: 'fallout-screen', displayName: 'Fallout Screen', cost: 7, tier: 'high', availability: 'selectable', activation: 'target-point', durationMs: 20_000, repeatable: false, baseWeightUnits: 9 },
   { id: 'blast-mortar', displayName: 'Blast Mortar', cost: 8, tier: 'high', availability: 'selectable', activation: 'target-point', durationMs: 15_000, repeatable: false, baseWeightUnits: 5 },
   { id: 'strike-relay', displayName: 'Strike Relay', cost: 9, tier: 'high', availability: 'selectable', activation: 'target-line', durationMs: 18_000, repeatable: false, baseWeightUnits: 2 },
@@ -298,7 +298,7 @@ export function createStreakCatalog<const Id extends string>(
 
   const slotFamilies = Object.freeze(slotTiers.map((tier) => {
     const family = Object.freeze(
-      definitions.filter((d) => d.availability === 'selectable' && (d.tier === tier || (tier === 'high' && d.tier === 'top'))).map((d) => d.id),
+      definitions.filter((d) => d.availability === 'selectable' && d.tier === tier).map((d) => d.id),
     );
     if (family.length === 0) throw new Error(`slot tier ${tier} has no selectable streak`);
     return family;
@@ -351,9 +351,9 @@ export interface LoadoutValidation {
   readonly errors: readonly string[];
 }
 
-/** Legal, and every entry has a live effect except the one high-tier slot. */
+/** Five chosen rewards following the preserved reference slot order. */
 export const DEFAULT_STREAK_LOADOUT: StreakLoadout = Object.freeze([
-  'recon-sweep', 'signal-jam', 'sentry-post', 'blast-mortar',
+  'supply-crate', 'piloted-drone', 'carpet-bomber', 'chopper', 'drone-swarm',
 ] as const);
 
 /**

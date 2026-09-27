@@ -2,7 +2,10 @@
 import { WEAPON_INTENT_ACTIONS, WEAPON_INTENT_REASONS,
   type WeaponIntent, type WeaponState, type WeaponAmmoState } from '../game/host-weapon-state';
 
-export const WEAPON_STATE_PROTOCOL = 1;
+/** Shared room admission revision: v2 also requires five chosen streak slots.
+ * An old four-slot peer cannot safely interpret key7/slot5, even though its
+ * weapon-state shape is unchanged. Both hello and welcome fence this marker. */
+export const WEAPON_STATE_PROTOCOL = 2;
 
 export interface WeaponIntentMsg extends WeaponIntent { readonly type: 'weapon-intent' }
 /** Sent only to this authenticated actor's seat, never broadcast to opponents. */

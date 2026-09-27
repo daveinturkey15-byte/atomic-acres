@@ -72,6 +72,7 @@ export interface HudApi {
   setScore(s: ScoreView | null): void;
   /** Streak ladder strip. `null` hides it. */
   setStreak(v: StreakHudView | null): void;
+  setStreakBindings?(codes: readonly string[]): void;
   /** Centre banner. `null` hides. The arbiter in `game/feed.ts` decides what. */
   setBanner(text: string | null, sub?: string): void;
   /** Minimap blips, already filtered by the reveal rule. */
@@ -124,6 +125,7 @@ function noopApi(): HudApi {
     setHealth: noop,
     setScore: noop,
     setStreak: noop,
+    setStreakBindings: noop,
     setBanner: noop,
     setBlips: noop,
     setRespawn: noop,
@@ -274,6 +276,7 @@ export function initHud(): HudApi {
 
     setScore: match.setScore,
     setStreak: match.setStreak,
+    setStreakBindings: match.setStreakBindings,
     setBanner: match.setBanner,
     setRespawn: match.setRespawn,
 

@@ -769,13 +769,14 @@
   animation-duration: 90ms;
 }
 
-/* Narrower viewports: Intentional compact 2x2 layout with ladder anchored on the left */
+/* Narrower viewports: five chosen cards, separate reward, ladder on the left. */
 @media (max-width: 1200px) {
   #hud .hud-streak {
     display: grid;
     grid-template-areas:
       "ladder card1 card2"
-      "ladder card3 card4";
+      "ladder card3 card4"
+      "ladder card5 card5";
     gap: 6px;
     width: max-content;
     max-width: calc(100vw - 32px);
@@ -789,10 +790,11 @@
   #hud .hud-streak-card:nth-child(3) { grid-area: card2; }
   #hud .hud-streak-card:nth-child(4) { grid-area: card3; }
   #hud .hud-streak-card:nth-child(5) { grid-area: card4; }
-  #hud .hud-streak-card:nth-child(6) { grid-area: reward; }
+  #hud .hud-streak-card:nth-child(6) { grid-area: card5; }
+  #hud .hud-streak-card:nth-child(7) { grid-area: reward; }
   #hud .hud-streak.hud-streak-has-reward {
-    grid-template-areas: "ladder card1 card2" "ladder card3 card4" "ladder reward reward";
-    grid-template-rows: repeat(3, auto);
+    grid-template-areas: "ladder card1 card2" "ladder card3 card4" "ladder card5 card5" "ladder reward reward";
+    grid-template-rows: repeat(4, auto);
   }
 }
 
@@ -829,7 +831,7 @@
   #hud .hud-streak {
     width: calc(100vw - 32px);
     grid-template-columns: auto 1fr 1fr;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: repeat(3, auto);
   }
   #hud .hud-streak-card { min-width: 0; }
 

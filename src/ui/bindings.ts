@@ -18,6 +18,7 @@
 export const ACTIONS = [
   'forward', 'back', 'left', 'right', 'jump', 'sprint', 'crouch', 'prone',
   'fire', 'ads', 'reload', 'weapon1', 'weapon2', 'grenade', 'tactical', 'knife', 'use', 'scoreboard',
+  'streak1', 'streak2', 'streak3', 'streak4', 'streak5', 'streakBonus',
 ] as const;
 export type Action = (typeof ACTIONS)[number];
 
@@ -49,9 +50,20 @@ export const ACTION_DEFS: readonly ActionDef[] = Object.freeze([
   { id: 'knife', label: 'Knife', code: 'KeyV', rebindable: true, consumer: 'main.ts keydown (walk only) -> weapons.controller' },
   { id: 'use', label: 'Use / pick up', code: 'KeyE', rebindable: true, consumer: 'weapons/ordnance-input.ts' },
   { id: 'scoreboard', label: 'Scoreboard (hold)', code: 'Tab', rebindable: true, consumer: 'ui/hud.ts' },
+  { id: 'streak1', label: 'Streak slot 1', code: 'Digit3', rebindable: true, consumer: 'main.ts / pilot-controls.ts' },
+  { id: 'streak2', label: 'Streak slot 2', code: 'Digit4', rebindable: true, consumer: 'main.ts / pilot-controls.ts' },
+  { id: 'streak3', label: 'Streak slot 3', code: 'Digit5', rebindable: true, consumer: 'main.ts / pilot-controls.ts' },
+  { id: 'streak4', label: 'Streak slot 4', code: 'Digit6', rebindable: true, consumer: 'main.ts / pilot-controls.ts' },
+  { id: 'streak5', label: 'Streak slot 5', code: 'Digit7', rebindable: true, consumer: 'main.ts / pilot-controls.ts' },
+  { id: 'streakBonus', label: 'Care-package bonus', code: 'Digit8', rebindable: true, consumer: 'main.ts / pilot-controls.ts' },
 ]);
 
 export type Bindings = Readonly<Record<Action, string>>;
+
+/** Ordered action projection shared by pilot input and HUD key caps. */
+export function streakBindingCodes(b: Bindings): readonly string[] {
+  return [b.streak1, b.streak2, b.streak3, b.streak4, b.streak5, b.streakBonus];
+}
 
 /** Derived from the table; never authored twice. */
 export const DEFAULT_BINDINGS: Bindings = Object.freeze(
@@ -79,9 +91,19 @@ export function sanitizeBindings(raw: unknown): Bindings {
   // toggled fly — so it reads as the old default and migrates to KeyV, not kept.
   const r = incoming['knife'] === 'KeyF' ? { ...incoming, knife: 'KeyV' } : incoming;
   const used = new Set<string>();
+  const reserved = new Set(ACTION_DEFS.map(d => d.code));
+  const requested = new Set(Object.values(r).filter(isBindableCode));
+  // New streak actions must not steal a previously valid owner movement key.
+  // Keep other defaults/custom keys available before using an unused fallback.
+  const fallbackCodes = ['Digit9', 'Digit0', ...'BNMJKLUIOPTY'.split('').map(c => 'Key' + c),
+    ...Array.from({ length: 10 }, (_, i) => 'Numpad' + i)];
   for (const d of ACTION_DEFS) {
     let code = d.rebindable && isBindableCode(r[d.id]) ? (r[d.id] as string) : d.code;
     if (used.has(code)) code = d.code;
+    if (used.has(code) && d.id.startsWith('streak')) {
+      code = fallbackCodes.find(c => !used.has(c) && !reserved.has(c) && !requested.has(c))
+        ?? fallbackCodes.find(c => !used.has(c) && !reserved.has(c)) ?? code;
+    }
     if (used.has(code)) continue; // default also taken: leave unbound-by-conflict as default (flagged in the UI)
     used.add(code);
     out[d.id] = code;

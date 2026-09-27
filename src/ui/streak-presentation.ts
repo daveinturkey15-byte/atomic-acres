@@ -29,11 +29,9 @@
  *
  * ## Key provenance
  *
- * `main.ts` keydown maps Digit3–Digit6 onto `match.pressStreak(slot + 1)`
- * ("3-6 are the four killstreak slots"). `ui/bindings.ts` has no streak
- * actions yet, so there is no rebind channel to read; this table mirrors
- * main.ts and MUST move with it (checked by the positive control, which
- * asserts the mapping comment's claim). Slot order on the wire is loadout
+ * Five chosen slots use Digit3–Digit7; Digit8 is the conditional bonus.
+ * The input/HUD integration must consume the same ordered code contract.
+ * Slot order on the wire is loadout
  * order, 1-based, so index i presses `STREAK_SLOT_CODES[i]`.
  */
 
@@ -41,9 +39,9 @@ import { SLOT_COUNT, streakById } from '../game/killstreaks/catalog';
 import { WIRED_STREAK_IDS } from '../game/killstreaks/runtime';
 import { codeLabel } from './bindings';
 
-/** Four chosen slots use 3–6; the conditional crate reward uses 7. */
+/** Five chosen slots use 3–7; the conditional crate reward uses 8. */
 export const STREAK_SLOT_CODES: readonly string[] = Object.freeze([
-  'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7',
+  'Digit3', 'Digit4', 'Digit5', 'Digit6', 'Digit7', 'Digit8',
 ]);
 
 /** One pushed slot. `id` arrives once the ui/index.ts pushView hunk is applied; `label` is the roster name. */
@@ -101,12 +99,12 @@ function activationHint(activation: string, key: string): string {
 }
 
 /** Projects every pushed slot onto a card view. Index order is slot order (1-based on the wire). */
-export function projectStreakStrip(slots: readonly StreakSlotInput[], kills: number): readonly StreakCardProjection[] {
+export function projectStreakStrip(slots: readonly StreakSlotInput[], kills: number, codes: readonly string[] = STREAK_SLOT_CODES): readonly StreakCardProjection[] {
   const top = ladderTop(slots);
   const cycle = ladderCycle(kills, top);
   return slots.map((slot, i) => {
     const bonus = i === SLOT_COUNT;
-    const key = i < STREAK_SLOT_CODES.length ? codeLabel(STREAK_SLOT_CODES[i]) : '?';
+    const key = i < codes.length ? codeLabel(codes[i]) : '?';
     const def = slot.id === undefined ? null : streakById(slot.id);
     const name = def?.displayName ?? (slot.label && slot.label.length > 0 ? slot.label : (slot.id ?? 'STREAK'));
 

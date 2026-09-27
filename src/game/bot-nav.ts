@@ -8,13 +8,9 @@
  *
  * ## What the navigation actually is, stated plainly
  *
- * There is no path graph. A bot walks straight at its goal and, when the chest
- * segment to the next step is blocked, tries the two axis-aligned slides
- * before giving up for that tick. On a map 44 m across with wide flanks this
- * reads as competent; in a corridor maze it would not. `scripts/paths.mjs`
- * already floods the collision world and emits line-of-sight-simplified
- * waypoints — that is the upgrade path when this stops being enough, and it is
- * deliberately not taken yet.
+ * Direct steps use a Player-sized body against the existing solids. Blocked
+ * patrol/scavenge pursuit can use a bounded cached route; combat strafes keep
+ * their original intent. Ports without solids retain the legacy chest test.
  */
 
 import type { Vec3, WorldQuery } from './events';
@@ -23,6 +19,7 @@ import {
   BOT_CHEST_Y, BOT_FALLBACK_HP, BOT_SIDE_HYSTERESIS_MS, BOT_SPEED_MS, BOT_STEP_UP_M,
   type BotIntent, type BotRuntime,
 } from './bot-sense';
+import { botDetour, botWalkSegment, clearBotDetour } from './bot-navigation';
 
 /**
  * Which half of the map this bot wants, with the 1.2 s sustain. Without the
@@ -72,14 +69,32 @@ export function pickGoal(b: BotRuntime, now: number, rand: () => number): void {
 }
 
 /**
- * Movement. Straight at the wish, then the two axis slides. The blocking
- * test is the chest segment through the `WorldQuery` port — the same
- * colliders the player hits, so a bot cannot walk through something the
- * human cannot. Returns true when the step taken was a slide, not the wish.
+ * Movement. Full-body direct step, cached pursuit detour, then axis slides.
+ * True means the direct wish was blocked, including a complete stall; the
+ * director's existing blockedSteps counter now includes the formerly invisible
+ * zero-motion failures as well as successful avoidance.
  */
 export function stepBot(b: BotRuntime, intent: BotIntent, dt: number, world: WorldQuery): boolean {
   const dist = BOT_SPEED_MS * dt;
   if (dist <= 0 || (intent.moveX === 0 && intent.moveZ === 0)) { b.speed = 0; return false; }
+  if (world.solids) {
+    const len = Math.hypot(intent.moveX, intent.moveZ);
+    const direct = botWalkSegment(world, b, b.x + intent.moveX / len * dist, b.z + intent.moveZ / len * dist);
+    const gx = intent.scavengeX ?? b.goalX, gz = intent.scavengeZ ?? b.goalZ;
+    const goalDist = Math.hypot(gx - b.x, gz - b.z);
+    const pursuing = goalDist > 1e-6 &&
+      (intent.moveX * (gx - b.x) + intent.moveZ * (gz - b.z)) / (len * goalDist) > .999;
+    if (!pursuing) clearBotDetour(b);
+    const detour = pursuing ? botDetour(b, world, b, gx, gz, dist, dt, direct === null, b.life) : null;
+    const next = detour ?? direct
+      ?? (intent.moveX !== 0 ? botWalkSegment(world, b, b.x + Math.sign(intent.moveX) * dist, b.z) : null)
+      ?? (intent.moveZ !== 0 ? botWalkSegment(world, b, b.x, b.z + Math.sign(intent.moveZ) * dist) : null);
+    if (next) {
+      b.speed = Math.hypot(next.x - b.x, next.z - b.z) / dt;
+      b.x = next.x; b.y = next.y; b.z = next.z;
+    } else b.speed = 0;
+    return direct === null;
+  }
   const tries: [number, number][] = [
     [intent.moveX, intent.moveZ],
     [intent.moveX, 0],
@@ -102,5 +117,5 @@ export function stepBot(b: BotRuntime, intent: BotIntent, dt: number, world: Wor
     return slid;
   }
   b.speed = 0;
-  return false;
+  return true;
 }

@@ -38,6 +38,7 @@ export interface SoloSetupPanelDeps {
   onLoadoutChange?(store: LoadoutStore): void;
   /** Optional parent seam: the UI persists the choice, the host remains authority. */
   onStreakLoadoutChange?(loadout: StreakLoadout): void;
+  streakCodes?(): readonly string[];
 }
 
 export interface SoloSetupPanel {
@@ -125,7 +126,7 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
   lockedNote.className = 'aa-note aa-hidden';
   lockedNote.textContent = 'Your kit is locked for this room. Leave the room to change your next deployment.';
   const loadout: LoadoutSection = buildLoadoutSection({ onChange: deps.onLoadoutChange });
-  const streakLoadout: StreakLoadoutSection = buildStreakLoadoutSection({ onChange: deps.onStreakLoadoutChange });
+  const streakLoadout: StreakLoadoutSection = buildStreakLoadoutSection({ onChange: deps.onStreakLoadoutChange, codes: deps.streakCodes });
   loadoutCol.append(loadout.root, streakLoadout.root);
   const setupCol = document.createElement('div');
   setupCol.className = 'aa-solo-setup';
@@ -251,6 +252,7 @@ export function buildSoloSetupPanel(deps: SoloSetupPanelDeps): SoloSetupPanel {
     streakLoadout: streakLoadout.read,
     setLoadoutEditable(editable): void {
       loadoutCol.disabled = !editable;
+      streakLoadout.setEditable(editable);
       lockedNote.classList.toggle('aa-hidden', editable);
     },
     setMode(mode): void {
