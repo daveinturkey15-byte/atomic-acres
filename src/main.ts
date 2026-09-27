@@ -592,12 +592,23 @@ let cameraHeldByQA = false;
 let reflectionCaptureBusy = false;
 let reflectionProbe: StaticReflectionProbe | null = null;
 let weaponInputWasAllowed = false;
+let lastPreMatchPresentation: boolean | null = null;
 
 function frame(): void {
   if (reflectionCaptureBusy) { last = performance.now(); requestAnimationFrame(frame); return; }
   const now = performance.now();
   const dt = (now - last) / 1000;
   last = now;
+  if (!cameraHeldByQA) {
+    const preMatch = ui.menu.state().surface === 'pre-match';
+    if (preMatch !== lastPreMatchPresentation) {
+      // The home/lobby presents the town, while the existing paused-match
+      // view retains combat context. This changes presentation once per edge.
+      hud.classList.toggle('hud-prematch', preMatch);
+      weapons.setVisible(!preMatch && !pilot.active());
+      lastPreMatchPresentation = preMatch;
+    }
+  }
   // Per-frame counters. The WebGPU renderer's info accumulates across the session, so
   // stats().calls read 2192 -> 4116 -> 5754 across four captures and could not be
   // compared with the 1200-call budget in AGENTS.md. Reset at the top of every frame;

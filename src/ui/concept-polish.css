@@ -6,6 +6,8 @@
  * file after menus.css so the concept palette can tune the existing controls.
  */
 
+#hud.hud-prematch { visibility: hidden; }
+
 #start {
   --aa-ivory: #f2eee2;
   --aa-ivory-deep: #e6dfcf;
@@ -18,9 +20,7 @@
   --aa-amber-deep: #9e6710;
   --aa-quiet: #607173;
   --aa-panel-shadow: 0 18px 46px rgba(11, 26, 29, 0.3);
-  background:
-    linear-gradient(112deg, rgba(243, 239, 227, 0.84) 0%, rgba(243, 239, 227, 0.62) 38%, rgba(225, 233, 225, 0.28) 70%, rgba(20, 36, 39, 0.42) 100%),
-    radial-gradient(ellipse at 72% 15%, rgba(111, 157, 162, 0.28), rgba(20, 36, 39, 0.26));
+  background: rgba(9, 14, 20, 0.78);
   color: var(--aa-charcoal);
 }
 
@@ -455,5 +455,70 @@
     animation: none !important;
     scroll-behavior: auto !important;
     transition: none !important;
+  }
+}
+
+/* Final home composition: only an actually visible main view gets the world
+ * scrim and narrow command card. Child menus remain their own scroll surfaces. */
+#start:has(.aa-main:not(.aa-hidden)) {
+  background:
+    linear-gradient(108deg, rgba(25, 39, 40, 0.46) 0%, rgba(25, 39, 40, 0.16) 56%, rgba(11, 20, 23, 0.5) 100%),
+    radial-gradient(ellipse at 72% 15%, rgba(107, 147, 152, 0.14), rgba(20, 36, 39, 0.18));
+}
+
+#start:has(.aa-main:not(.aa-hidden)) .aa-root {
+  align-items: flex-start;
+}
+
+#start:has(.aa-main:not(.aa-hidden)) .aa-main {
+  width: min(480px, calc(100vw - 24px));
+  max-width: 480px;
+  margin-left: clamp(16px, 4vw, 64px);
+  margin-right: auto;
+  gap: 8px;
+  padding: 24px;
+}
+
+#start:has(.aa-main:not(.aa-hidden)) .aa-main .aa-title {
+  font-size: clamp(42px, 5vw, 60px);
+  letter-spacing: clamp(4px, 0.7vw, 8px);
+}
+
+#start:has(.aa-main:not(.aa-hidden)) .aa-main .aa-menu-row {
+  margin-top: 5px;
+}
+
+#start:has(.aa-main:not(.aa-hidden)) .aa-main .aa-btn {
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+#start:has(.aa-main:not(.aa-hidden)) .aa-mission-strip {
+  gap: 4px;
+  padding-top: 8px;
+}
+
+#start:has(.aa-main:not(.aa-hidden)) .aa-main .aa-map {
+  padding: 4px;
+}
+
+#start:has(.aa-main:not(.aa-hidden)) .aa-main .aa-thumb-wrap {
+  height: 116px;
+}
+
+#start:has(.aa-main:not(.aa-hidden)) .aa-main .aa-mapmeta {
+  padding-top: 4px;
+}
+
+#start:has(.aa-main:not(.aa-hidden)) .aa-main .aa-foot {
+  margin-top: 3px;
+  padding-top: 7px;
+}
+
+@media (max-width: 600px) {
+  #start:has(.aa-main:not(.aa-hidden)) .aa-main {
+    width: calc(100vw - 24px);
+    margin-left: 12px;
+    padding: 18px 14px;
   }
 }
