@@ -2,7 +2,8 @@
  * Software mode is diagnostic only and does not establish hardware acceptance. */
 import { chromium } from 'playwright';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { tmpdir, freemem } from 'node:os';
+import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
 import { spawnGuarded, cleanupAll } from './lib/proc-guard.mjs';
 const url = process.argv[2];
@@ -13,6 +14,15 @@ const fault = faultArg >= 0 ? process.argv[faultArg + 1] : null;
 if (fault && !['entry', 'module', 'scenery'].includes(fault)) throw Error('Unknown loading fault');
 const dir = join('captures', 'loading-' + new Date().toISOString().replace(/[:.]/g, '-'));
 mkdirSync(dir, { recursive: true });
+if (hardware) {
+  const gpuFreeMiB = Number(execFileSync('nvidia-smi', ['--query-gpu=memory.free', '--format=csv,noheader,nounits'], { encoding: 'utf8', windowsHide: true }).trim().split('\n')[0]);
+  const ramGiB = freemem() / 2 ** 30;
+  if (!Number.isFinite(gpuFreeMiB) || gpuFreeMiB < 4096 || ramGiB < 12) {
+    const held = { url, mode: 'hardware', state: 'HELD_RESOURCES', gpuFreeMiB, ramGiB, requiredGpuMiB: 4096, requiredRamGiB: 12 };
+    writeFileSync(join(dir, 'receipt.json'), JSON.stringify(held, null, 2) + '\n');
+    console.log(JSON.stringify(held)); process.exit(2);
+  }
+}
 const port = 9461;
 const args = ['--headless=new', '--remote-debugging-port=' + port,
   '--user-data-dir=' + mkdtempSync(join(tmpdir(), 'aa-loading-')),
@@ -34,6 +44,9 @@ try {
   }
   if (!browser) throw Error('Owned diagnostic Chrome did not connect');
   const page = browser.contexts()[0].pages()[0];
+  // Match the game's established CDP harness: fix viewport before navigation,
+  // so capture does not resize the render targets during the first frame.
+  await page.setViewportSize({ width: 1024, height: 768 });
   await page.addInitScript(() => {
     window.__startupLongTasks = [];
     new PerformanceObserver(list => {

@@ -1,0 +1,146 @@
+{
+  "claimState": "VERIFIED bounded-error recovery/source/CPU/build/HTTP; normal hardware pixels FAILED/OPEN, owner-specific cause OPEN",
+  "checkedAt": "2026-09-27T14:07:52.989314+00:00",
+  "candidate": {
+    "project": "atomic-acres",
+    "repository": "daveinturkey15-byte/atomic-acres",
+    "lineage": "standalone restart begun 2026-09-17",
+    "branch": "salvage/full-game-20260926",
+    "sourceCommit": "ec8eba38613dcbe9e171b064fae831ad925433a3",
+    "stampedAt": "2026-09-27T14:04:11.280Z",
+    "entry": "assets/index-OtNCQL-M.js",
+    "entrySha256": "e366c7df7b235c2e735e91d0a91bf8fa0abb395f34466ce3ea21fe1626fd250d",
+    "untrackedPublicFiles": [],
+    "acceptance": "VERIFIED source/CPU/build/HTTP, menu DOM and error/retry frames. OPEN normal hardware first frame (15s capture timeout), exact owner browser cause, gameplay/traversal/net/rejoin/210s soak. HELD candidate, not promoted.",
+    "runtimeEntries": [
+      {
+        "path": "assets/boot-status-GuGUkyp6.js",
+        "bytes": 1323,
+        "sha256": "70e0b2c004e60c5772e6343128f17164f62d7f8da97adb796d079ace684d3eb9"
+      },
+      {
+        "path": "assets/index-OtNCQL-M.js",
+        "bytes": 2536,
+        "sha256": "e366c7df7b235c2e735e91d0a91bf8fa0abb395f34466ce3ea21fe1626fd250d"
+      },
+      {
+        "path": "assets/main-Cdfg1uGD.js",
+        "bytes": 2063069,
+        "sha256": "8183c63bd7133b0f971214d1c6c5206df321aefec1d134b83da74dc4cecc9b1c"
+      }
+    ]
+  },
+  "sourceMapByteExactCount": 228,
+  "ownerUnchangedFileCount": 178,
+  "manifest": "captures/builds/loading-candidate-ec8eba3-manifest.json",
+  "manifestSha256": "7ac8a20d1f84bcf8ad064f161c415a04e9ddee29fcd2e00dce21c06c22567022",
+  "reports": [
+    {
+      "path": "captures/loading-2026-09-27T13-57-34-568Z/receipt.json",
+      "sha256": "86e621d57cc32e5ea9f323e00969f057bbe814abf0fab7006a2f707a7d1d4fef",
+      "fault": "entry",
+      "elapsedMs": 803,
+      "captureElapsedMs": null,
+      "dom": {
+        "title": "Nuketown 2025 \u2014 Standalone",
+        "url": "http://127.0.0.1:4361/?post=chain&lighting=authored&room=authored&room-light=baked",
+        "start": "ATOMIC ACRES\n\nGame files could not load. Retry loading.\n\nRetry loading\nUnofficial fan project \u2014 not affiliated with Activision or Treyarch.",
+        "menu": false,
+        "ready": false,
+        "bootError": true,
+        "retry": true
+      },
+      "screenshotError": false
+    },
+    {
+      "path": "captures/loading-2026-09-27T13-57-38-329Z/receipt.json",
+      "sha256": "b623d6bf1c750fd508d8a0fbe25a03e68067748a2f94f833358347a7dcbc1d62",
+      "fault": "module",
+      "elapsedMs": 616,
+      "captureElapsedMs": null,
+      "dom": {
+        "title": "Nuketown 2025 \u2014 Standalone",
+        "url": "http://127.0.0.1:4361/?post=chain&lighting=authored&room=authored&room-light=baked",
+        "start": "ATOMIC ACRES\n\nCouldn\u2019t start the game \u00b7 Loading game\n\nFailed to fetch dynamically imported module: http://127.0.0.1:4361/assets/main-Ctmi5H9t.js\n\nRetry loading",
+        "menu": false,
+        "ready": false,
+        "bootError": true,
+        "retry": true
+      },
+      "screenshotError": false
+    },
+    {
+      "path": "captures/loading-2026-09-27T14-00-31-912Z/receipt.json",
+      "sha256": "559d76635cf9727b7e6a22fe3d98db86a3f661249b0395339aa8b6a8774d9342",
+      "fault": "scenery",
+      "elapsedMs": 32363,
+      "captureElapsedMs": null,
+      "dom": {
+        "title": "Nuketown 2025 \u2014 Standalone",
+        "url": "http://127.0.0.1:4361/?post=chain&lighting=authored&room=authored&room-light=baked&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary",
+        "start": "ATOMIC ACRES\n\nCouldn\u2019t start the game \u00b7 Loading scenery\n\nLoading scenery took longer than 30 seconds. Reload to retry.\n\nRetry loading",
+        "menu": false,
+        "backend": "webgpu",
+        "ready": false,
+        "bootError": true,
+        "retry": true
+      },
+      "screenshotError": false
+    },
+    {
+      "path": "captures/loading-2026-09-27T14-02-17-359Z/receipt.json",
+      "sha256": "74cb2bff0df198d292a2afaa2439ce498cd05987aa5953ee4c40abd3c30630d1",
+      "fault": null,
+      "elapsedMs": 3180,
+      "captureElapsedMs": 25450,
+      "dom": {
+        "title": "Nuketown 2025 \u2014 Standalone",
+        "url": "http://127.0.0.1:4361/?post=chain&lighting=authored&room=authored&room-light=baked&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary",
+        "start": "A FAN PROJECT INSPIRED BY BLACK OPS 2\nATOMIC ACRES\nNUKETOWN 2025\nSolo skirmishes and multiplayer\nPLAY SOLO\nMULTIPLAYER\nOPTIONS\nCREDITS\nMAP\nNUKETOWN 2025\nTwin houses \u00b7 turning circle \u00b7 tour coach\nUnofficial fan project \u2014 not affiliated with Activision or Treyarch.",
+        "menu": true,
+        "backend": "webgpu",
+        "ready": true,
+        "bootError": false,
+        "retry": false
+      },
+      "screenshotError": true
+    },
+    {
+      "path": "captures/loading-2026-09-27T14-04-47-725Z/receipt.json",
+      "sha256": "6c7d18d5a75c9fcc696f61ea8190eb994de8434a33389407567e91a30cdb5330",
+      "fault": null,
+      "elapsedMs": 3136,
+      "captureElapsedMs": 25210,
+      "dom": {
+        "title": "Nuketown 2025 \u2014 Standalone",
+        "url": "http://127.0.0.1:4361/?preview=ec8eba3&post=chain&lighting=authored&room=authored&room-light=baked&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary",
+        "start": "A FAN PROJECT INSPIRED BY BLACK OPS 2\nATOMIC ACRES\nNUKETOWN 2025\nSolo skirmishes and multiplayer\nPLAY SOLO\nMULTIPLAYER\nOPTIONS\nCREDITS\nMAP\nNUKETOWN 2025\nTwin houses \u00b7 turning circle \u00b7 tour coach\nUnofficial fan project \u2014 not affiliated with Activision or Treyarch.",
+        "menu": true,
+        "backend": "webgpu",
+        "ready": true,
+        "bootError": false,
+        "retry": false
+      },
+      "screenshotError": true
+    },
+    {
+      "path": "captures/loading-2026-09-27T14-05-56-220Z/receipt.json",
+      "sha256": "234c7bf7a6990e1cfcfd939e7e0482bd9b74b7a5c3cf620b0c16f85ffc5cca0e",
+      "fault": null,
+      "elapsedMs": 6247,
+      "captureElapsedMs": 28302,
+      "dom": {
+        "title": "Nuketown 2025 \u2014 Standalone",
+        "url": "http://127.0.0.1:4361/?preview=ec8eba3&post=chain&lighting=authored&room=authored&room-light=baked&glazing=canary&motion=canary&architecture=canary&facade-kit=canary&foliage=canary&hands=rifle-canary&street-lamps=canary&coach=canary&weapon-finish=canary&operator=authored&lawn=canary&audiobank=2&fence-art=canary",
+        "start": "A FAN PROJECT INSPIRED BY BLACK OPS 2\nATOMIC ACRES\nNUKETOWN 2025\nSolo skirmishes and multiplayer\nPLAY SOLO\nMULTIPLAYER\nOPTIONS\nCREDITS\nMAP\nNUKETOWN 2025\nTwin houses \u00b7 turning circle \u00b7 tour coach\nUnofficial fan project \u2014 not affiliated with Activision or Treyarch.",
+        "menu": true,
+        "backend": "webgpu",
+        "ready": true,
+        "bootError": false,
+        "retry": false
+      },
+      "screenshotError": true
+    }
+  ],
+  "resourceAdmissionIssue": "Final repeat3631MiB below4096MiB reserve was wrongly dispatched by combined shell read-and-run; do not count acceptance. Already ended/reaped before attempted owned stop; helper now enforces admission BEFORE spawn. No owner processes touched. No further hardware jobs."
+}

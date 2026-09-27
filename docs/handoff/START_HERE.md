@@ -1,5 +1,11 @@
 # Current restart - fresh OPEN-items pass 27 September 2026
 
+VERIFIED latest loading-recovery successor:4361/ec8eba3. Start with
+`LOADING-FIX-2026-09-27.md` and `CURRENT.json.loadingFix20260927`.
+OPEN normal hardware first-frame capture/owner acceptance; no promotion.
+VERIFIED prior5cc3a26 and intermediate builds are retained byte-exact. The older
+open-items result below is historical and does not identify the current4361 bytes.
+
 Dave's latest request resumes OPEN-item work in a fresh bounded interactive pass.
 Read `OPEN-PASS-2026-09-27.md` and `CURRENT.json.openPass20260927` first. The owner
 preview4348 still serves historical accepted runtime2f837ae. Its IAB pointer-lock

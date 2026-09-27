@@ -1,5 +1,16 @@
 # Nuketown 2025 — agent contract
 
+## Latest loading-recovery pass — September 27, 2026
+
+VERIFIED: held candidate4361 now serves ec8eba38613dcbe9e171b064fae831ad925433a3,
+with bounded startup progress/error/retry handling and an initial-only menu paint
+yield. Read `docs/handoff/LOADING-FIX-2026-09-27.md` and CURRENT.loadingFix20260927.
+OPEN: normal hardware first-frame capture FAILED at its unchanged15s limit;
+DOM readiness is not pixel acceptance. Exact owner-browser cause remains OPEN.
+VERIFIED: old4348/dist2f837ae and all178 files remain unchanged. Overnight is
+PAUSED. No OS input, foreground activation or owner processes were changed.
+Do not automatically run further GPU/input jobs or promote this candidate.
+
 ## Fresh owner open-items pass — September 27, 2026
 
 Dave now asks to work on the OPEN items. Read `docs/handoff/OPEN-PASS-2026-09-27.md`

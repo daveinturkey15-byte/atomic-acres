@@ -6,7 +6,7 @@
   "worktree": "C:/Users/david/Desktop/stuff/worktrees/nuketown-salvage-20260926",
   "branch": "salvage/full-game-20260926",
   "checkpoint": "OPEN-PASS-2026-09-27.md",
-  "state": "VERIFIED held5cc3a26 gameplay-fix candidate4361 built/stamped/HTTP verified; owner4348 preserved2f837ae with reproduced IAB pointer-lock failure; live successor acceptance OPEN",
+  "state": "VERIFIED held loading-recovery successor ec8eba3 on4361; normal hardware first-frame/owner acceptance OPEN;4348 unchanged2f837ae",
   "baseSource": "c3afc077fafa3aa4c01b9721232dda9165ec663f",
   "preview": {
     "url": "http://localhost:4348/",
@@ -339,5 +339,59 @@
     "finalDeliveryReserveSeconds": 120,
     "activeRun": null,
     "initialFinalDeliveryReserveSeconds": 60
+  },
+  "loadingFix20260927": {
+    "state": "complete-bounded-recovery-pass; normal-first-frame/owner-acceptance-open",
+    "ownerRequest": "Updated preview stuck on Loading; diagnose and fix actual startup",
+    "startedAt": "2026-09-27T13:40:15+00:00",
+    "maxWorkSeconds": 1800,
+    "workSecondsUsed": 1778,
+    "lastAccountedAt": "2026-09-27T14:07:53.002018+00:00",
+    "repairLimitPerIssue": 2,
+    "rootOwnership": "Source/build/HTTP integration; no OS input or owner process changes",
+    "agentScope": "astra_combat read-only startup source investigation",
+    "browserScope": "CUA read-only inventory exposed zero IAB tabs; bounded software-rendering headless diagnostic only, no native input or GPU hardware job",
+    "resourceAdmission": "4255MiB freeVRAM/21.48GiB RAM but99percent GPU owner load. Hardware rendering held; software browser diagnostic output-muted/WebAudio intact.",
+    "sourceCandidate": "ec8eba38613dcbe9e171b064fae831ad925433a3",
+    "repairUsed": {
+      "entry-resource-error": 1,
+      "initial-menu-paint": 1,
+      "capture-viewport-setup": 1
+    },
+    "observations": "Old5cc software actual menuDOM2.769s, frame captured. Newd7 hardware menuDOM3.186s no page/network errors, but15s screenshot timed out. Owner-specific IAB cause unverified: no exposed tab. Do not equate DOM-ready with painted/gameplay acceptance.",
+    "cpuChecks": "TypeScript, render-site allowlist, actual boot-status CPU and7 original playflow checks PASS. RawUTF8 source maps228 exact.",
+    "candidate": {
+      "project": "atomic-acres",
+      "repository": "daveinturkey15-byte/atomic-acres",
+      "lineage": "standalone restart begun 2026-09-17",
+      "branch": "salvage/full-game-20260926",
+      "sourceCommit": "ec8eba38613dcbe9e171b064fae831ad925433a3",
+      "stampedAt": "2026-09-27T14:04:11.280Z",
+      "entry": "assets/index-OtNCQL-M.js",
+      "entrySha256": "e366c7df7b235c2e735e91d0a91bf8fa0abb395f34466ce3ea21fe1626fd250d",
+      "untrackedPublicFiles": [],
+      "acceptance": "VERIFIED source/CPU/build/HTTP, menu DOM and error/retry frames. OPEN normal hardware first frame (15s capture timeout), exact owner browser cause, gameplay/traversal/net/rejoin/210s soak. HELD candidate, not promoted.",
+      "runtimeEntries": [
+        {
+          "path": "assets/boot-status-GuGUkyp6.js",
+          "bytes": 1323,
+          "sha256": "70e0b2c004e60c5772e6343128f17164f62d7f8da97adb796d079ace684d3eb9"
+        },
+        {
+          "path": "assets/index-OtNCQL-M.js",
+          "bytes": 2536,
+          "sha256": "e366c7df7b235c2e735e91d0a91bf8fa0abb395f34466ce3ea21fe1626fd250d"
+        },
+        {
+          "path": "assets/main-Cdfg1uGD.js",
+          "bytes": 2063069,
+          "sha256": "8183c63bd7133b0f971214d1c6c5206df321aefec1d134b83da74dc4cecc9b1c"
+        }
+      ]
+    },
+    "evidence": "docs/evidence/LOADING-FIX-2026-09-27.json",
+    "frameAcceptance": "FAILED unchanged15-second screenshot twice before repair and after initial-only doubleRAF. MenuDOM3.136s; actual menu pixels not accepted. No thresholds lowered. Owner cause OPEN.",
+    "resourceAdmissionIssue": "Final repeat3631MiB below4096MiB reserve was wrongly dispatched by combined shell read-and-run; do not count acceptance. Already ended/reaped before attempted owned stop; helper now enforces admission BEFORE spawn. No owner processes touched. No further hardware jobs.",
+    "finalDeliveryReserveSeconds": 120
   }
 }
