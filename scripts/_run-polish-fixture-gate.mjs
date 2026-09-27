@@ -29,13 +29,28 @@ for (const [before,after] of changes) {
 }
 const assertionCount = s => (s.match(/\bassert\./g)??[]).length;
 assert.equal(assertionCount(source),assertionCount(raw),'all original assertion calls retained');
-if(name==='menu') source=source.replace("const primary=", "assert.equal(await page.locator('.aa-streak-select').count(),5,'all five visible suite selectors');\n  const primary=");
+if(name==='menu') {
+  source=source.replace("const primary=", "assert.equal(await page.locator('.aa-streak-select').count(),5,'all five visible suite selectors');\n  const primary=");
+  source=source.replace("await page.getByRole('button',{name:'Play solo',exact:true}).click();", `
+  assert.equal(await page.locator('#crosshair').evaluate(e=>getComputedStyle(e).visibility),'hidden','pre-match crosshair hidden');
+  await page.setViewportSize({width:390,height:844});
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+2),false,'home390 no horizontal overflow');
+  assert(await page.evaluate(()=>{const s=document.getElementById('start'),r=s.querySelector('.aa-root');return s.scrollWidth<=s.clientWidth+1&&r.scrollWidth<=r.clientWidth+1;}),'home390 internal panel has no horizontal overflow');
+  await page.screenshot({path:'captures/polish-home-390.png'});report.screens.push('polish-home-390.png');
+  await page.setViewportSize({width:1600,height:900});
+  await page.getByRole('button',{name:'Play solo',exact:true}).click();`);
+  source=source.replace("report.checks.push(", `
+  assert.equal(await page.locator('#crosshair').evaluate(e=>getComputedStyle(e).visibility),'visible','active crosshair restored');
+  assert.equal(await page.locator('.hud-ammo').evaluate(e=>e.classList.contains('hud-low')),false,'full Magnum magazine has normal colour');
+  report.checks.push('home390 no horizontal overflow','pre-match crosshair hidden and active restored','full Magnum normal ammo colour');
+  report.checks.push(`);
+}
 const adaptedHash = hash(source);
 // Keep each imported library's own import.meta.url and the original gate ROOT.
 source=source.replaceAll('import.meta.url',JSON.stringify(pathToFileURL(original).href))
   .replace(/from (['"])(\.\/lib\/[^'"]+)\1/g,(_m,_q,p)=>'from '+JSON.stringify(pathToFileURL(resolve('scripts',p)).href));
 const out=resolve('captures/polish-fixtures-20260927');mkdirSync(out,{recursive:true});
 writeFileSync(resolve(out,name+'-original.mjs'),raw);
-writeFileSync(resolve(out,name+'-receipt.json'),JSON.stringify({original,originalSha256:hash(raw),adaptedSha256:adaptedHash,changes,originalAssertionCalls:assertionCount(raw),adaptedAssertionCalls:assertionCount(source),state:'fixture-only five-slot contract; original four-slot failure retained; actual result separate'},null,2));
+writeFileSync(resolve(out,name+'-receipt.json'),JSON.stringify({original,originalSha256:hash(raw),adaptedSha256:adaptedHash,changes,originalAssertionCalls:assertionCount(raw),adaptedAssertionCalls:assertionCount(source),additionalMenuChecks:name==='menu'?['five selectors','prematch crosshair','mobile home overflow','active crosshair restored','full Magnum colour']:[],state:'five-slot fixture plus stricter presentation checks; all original assertions retained; actual result separate'},null,2));
 const target=resolve(out,name+'-adapted.mjs');writeFileSync(target,source);
 await import(pathToFileURL(target).href);

@@ -35,6 +35,7 @@ for (const required of [
   '@media (max-width: 600px)', '@media (prefers-reduced-motion: reduce)',
   '#hud .hud-matchbar', '#hud .hud-ammo', '#hud .hud-streak-card',
   '#hud .hud-streak-card .hud-streak-key',
+  '#start:has(.aa-main:not(.aa-hidden))', 'margin-left: 0;',
 ]) requireText(css, 'concept stylesheet', required);
 
 for (const forbidden of ['backdrop-filter', '@keyframes', 'infinite', 'canvas', 'url(']) {

@@ -7,7 +7,8 @@ import { stockBrowser } from './lib/stock-browser.mjs';
 import { waitForRenderedPage } from './lib/render-ready.mjs';
 
 const url = 'http://127.0.0.1:4362/';
-const out = 'captures/polish-motion-video-20260927';
+const out = process.argv[2] ?? 'captures/polish-motion-video-20260927';
+assert.match(out, /^captures\/polish-motion-video-[a-z0-9-]+$/);
 mkdirSync(out, { recursive: true });
 const report = { url, sourceCommit: null, kind: 'actual first-person movement/fire/reload/ADS presentation; not generated skeletal motion', samples: [], errors: [], status: 'OPEN' };
 const owned = await stockBrowser('polish-motion');
@@ -24,7 +25,10 @@ try {
   await page.getByLabel('Bots', { exact: true }).evaluate(el => { el.value = el.min; el.dispatchEvent(new Event('input', { bubbles: true })); });
   await page.getByRole('radio', { name: 'Recruit', exact: true }).click();
   await page.getByRole('button', { name: 'Deploy', exact: true }).click();
-  await page.waitForFunction(() => window.__NTGAME?.snapshot().match.phase === 'active', null, { timeout: 30000 });
+  await page.waitForFunction(() => {
+    try { return window.__NTGAME?.snapshot().match.phase === 'active'; }
+    catch { return false; } // begin() is asynchronous; absence is not an active match.
+  }, null, { timeout: 30000 });
   await page.evaluate(() => window.__NT.teleport(-6, 0, 0, -Math.PI / 2));
   await page.waitForTimeout(1000);
   await page.screenshot({ path: out + '/before.png', timeout: 15000 });
@@ -45,7 +49,9 @@ try {
     event(5900, 'ADS release', () => window.__NT.weaponCmd('ads', false));
   });
   for (let i = 0; i < 30; i++) {
-    await page.waitForTimeout(200);
+    // Schedule against the real action start: serial CDP round-trips must not
+    // accumulate another200ms wait on top of each sample's observed latency.
+    await page.waitForTimeout(Math.max(0, began + (i + 1) * 200 - Date.now()));
     report.samples.push(await page.evaluate(() => ({ at: performance.now(), stats: window.__NT.stats(), state: window.__NT.weaponCmd('state'), pose: window.__NT.playerPose?.() })));
   }
   report.elapsedMs = Date.now() - began;

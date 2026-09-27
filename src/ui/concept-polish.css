@@ -517,8 +517,12 @@
 
 @media (max-width: 600px) {
   #start:has(.aa-main:not(.aa-hidden)) .aa-main {
-    width: calc(100vw - 24px);
-    margin-left: 12px;
+    /* .aa-root already contributes the 12px viewport inset. A second
+     * margin-left made the fixed overlay's content 12px too wide at 390px. */
+    width: 100%;
+    max-width: none;
+    margin-left: 0;
+    margin-right: 0;
     padding: 18px 14px;
   }
 }

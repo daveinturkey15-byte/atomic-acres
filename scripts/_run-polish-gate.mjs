@@ -6,9 +6,10 @@ import { spawnGuarded, cleanupAll } from './lib/proc-guard.mjs';
 
 const gates = {
   menu: ['scripts/_run-polish-fixture-gate.mjs', 'menu'],
-  motion: ['scripts/_capture-polish-loop.mjs'],
+  motion: ['scripts/_capture-polish-loop.mjs', 'captures/polish-motion-video-20260927-repair2'],
   composition: ['scripts/ui/verify-menu-composition.mjs'],
   playcap: ['scripts/playcap.mjs', '--tag', 'polish-20260927'],
+  baseline: ['scripts/playcap.mjs', '--tag', 'polish-material-baseline-20260927', '--query', 'surface-finish=off&weapon-fx=off'],
   traverse: ['scripts/traverse.mjs'],
   net: ['scripts/_verify-net-two-browsers.mjs', '--seconds', '120', '--delay-sdp-ms', '500', '--signal-port', '4316'],
   rejoin: ['scripts/_run-polish-fixture-gate.mjs', 'rejoin', '--url', 'http://127.0.0.1:4362/', '--tag', 'polish-rejoin'],
