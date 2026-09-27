@@ -1,5 +1,14 @@
 # Nuketown 2025 — agent contract
 
+## Verified overnight checkpoint - September 27, 2026
+
+VERIFIED: owner preview4348 is NEW restart runtime2f837ae. Read
+`docs/handoff/START_HERE.md`, `CURRENT.json` and `OVERNIGHT-RESULT-2026-09-27.md`
+first. Required local gates passed; owner art, physical LAN/WAN,60FPS and the
+extra failed strengthened QA helper remain OPEN. This bounded pass ends here.
+Preserve simpler4188, full prior builds and rejected takes. Do not automatically
+resume old providers or exhausted QA/art loops.
+
 ## Active owner resumption — September 26, 2026
 
 September26 evening owner update: continue overnight gameplay and asset polish

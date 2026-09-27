@@ -1,12 +1,12 @@
-# Active salvage candidate - owner resumption 26 September 2026
+# Current restart - verified overnight result 27 September 2026
 
-Read `CURRENT.json` and `SALVAGE-2026-09-26.md` first. The active isolated
+Read `CURRENT.json` and `OVERNIGHT-RESULT-2026-09-27.md` first. The active isolated
 candidate is `salvage/full-game-20260926` at
 `C:/Users/david/Desktop/stuff/worktrees/nuketown-salvage-20260926`.
 It recovers the richer committed alternate of the **new September17 repository**;
-`atomic-acres-browser-arena` is the historical reference. VERIFIED local
-gameplay/multiplayer gates passed on runtime278b02b; overnight polish continues.
-Preview: http://localhost:4348/. Read the OPEN art/performance and WAN gates.
+`atomic-acres-browser-arena` is the historical reference. VERIFIED required local
+gates passed on promoted runtime2f837ae; the bounded overnight pass ends.
+Preview: http://localhost:4348/. Read OPEN art,60FPS,WAN and failed stronger-helper gates.
 The selected September24 branch/preview remains preserved as the fallback.
 The original large recovery ledger is preserved verbatim in `CURRENT-2026-09-20.json`.
 

@@ -101,7 +101,8 @@
         "maxExternalMB": 20
       },
       "boundary": "pageRAF count is not actualgameFPS; originalthresholds unchanged"
-    }
+    },
+    "characterAnimationRegistry": "Actual2f837ae menu/deploy report15loadedKimodo entries; contact/owner motion acceptance OPEN"
   },
   "cpu": {
     "actualHostWeaponStateGroups": 15,
@@ -130,7 +131,7 @@
     "owner278": "captures/builds/owner-preview-278b02b:177files/87371872bytes allhashmatched",
     "graphics2a2": "captures/builds/overnight-graphics-2a2e22b:178files/98320397bytes allhashmatched",
     "weapon696": "captures/builds/overnight-weapons-69654e7:177files/87403181bytes allhashmatched",
-    "simpler4188": "untouchedlayout-boii-proportions/e30ffd8",
+    "simpler4188": "VERIFIED layout-boii-proportions/e30ffd8 compiledbuild intact; listenercurrentlyabsent/coldfallback",
     "baselineProcess": "Owned40904 stopped after verifiedcommandline/listener; cleanoriginalweaponbranchf2054ad restored",
     "predecessor": "Oldmodules/history neverimported; original24reusedownerassetsretainprovenance"
   },
@@ -205,5 +206,42 @@
     "scripts/_verify-salvage-net-rejoin.mjs": "5699dd024fb22f83d2a95a88aa3b2e66184ed26fe5ecfb81c2dc68e849fb6f74",
     "scripts/_verify-overnight-weapon-state-rejoin.mjs": "5bdcadf635b3f4d05c6fec6257de4125614fcd94a17e6fb40f1c5759d21b313c",
     "scripts/_verify-streak-reject.mjs": "4dfe178a628b1c851693e688d95c287b85444fb48429c665914b4d76805d974f"
+  },
+  "promotion": {
+    "claimState": "VERIFIED",
+    "atUtc": "2026-09-27T00:18:34.529704+00:00",
+    "url": "http://localhost:4348/",
+    "identity": {
+      "project": "atomic-acres",
+      "repository": "daveinturkey15-byte/atomic-acres",
+      "lineage": "standalone restart begun 2026-09-17",
+      "branch": "salvage/full-game-20260926",
+      "sourceCommit": "2f837ae3d53cc1d7c3a78610e1276ab085a271cb",
+      "stampedAt": "2026-09-26T23:49:32.052Z",
+      "entry": "assets/index-BFvUiAGm.js",
+      "entrySha256": "35e31151acac08c75e3d8ed2a15af078f1879d8cf4d6f578dcf1fb0a1abd464f",
+      "untrackedPublicFiles": [],
+      "acceptance": "Local tested preview; not a production release or complete feature/art acceptance."
+    },
+    "servedEntryBytes": 2044297,
+    "copiedFiles": 177,
+    "verification": "every copied filehashmatched; ownerHTTPidentity/index/module checked; originalhashedorphans retained for liveoldtabs",
+    "preservedOldBuild": "captures/builds/owner-preview-278b02b",
+    "server": "ExistingownerVite36600 preserved; no serverrestart"
+  },
+  "previewPanel": "Queued for current hidden chat; opens when shown",
+  "completion": {
+    "claimState": "VERIFIED",
+    "atUtc": "2026-09-27T00:25:17.857436+00:00",
+    "workSecondsUsed": 9971,
+    "maxWorkSeconds": 14400,
+    "heartbeat": "PAUSED",
+    "writers": "Allownednativewritersfrozen",
+    "ownedServersRetired": [
+      40904,
+      1780
+    ],
+    "ownerServerPreserved": 36600,
+    "backedUpBranch": "salvage/full-game-20260926; finalremote readback follows"
   }
 }
