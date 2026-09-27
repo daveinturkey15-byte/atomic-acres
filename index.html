@@ -49,7 +49,8 @@
         };
         const timer = setTimeout(fail, 45000);
         addEventListener('error', event => {
-          if (event.target instanceof HTMLScriptElement && event.target.dataset.gameEntry === 'true') fail();
+          // Vite rewrites the entry tag and drops custom data attributes.
+          if (event.target instanceof HTMLScriptElement && event.target.type === 'module') fail();
         }, true);
         addEventListener('atomic-acres:boot-started', () => { stopped = true; clearTimeout(timer); }, { once: true });
       })();

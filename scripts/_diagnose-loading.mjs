@@ -57,4 +57,6 @@ finally { if (browser) await Promise.race([browser.close().catch(() => {}), new 
 writeFileSync(join(dir, 'receipt.json'), JSON.stringify(report, null, 2) + '\n');
 console.log(JSON.stringify({ dir, ...report }, null, 2));
 if (fault ? !report.dom?.bootError || !report.dom?.retry || report.dom?.menu || report.dom?.ready : !report.dom?.menu || report.errors.length) process.exitCode = 1;
+if (fault === 'entry' && report.elapsedMs >= 5000) process.exitCode = 1;
+if (fault === 'scenery' && !report.dom?.start?.includes('Loading scenery took longer than 30 seconds')) process.exitCode = 1;
 if (report.harnessError) process.exitCode = 1;
