@@ -293,13 +293,13 @@
     "dispatchSha": "537ddb76477b8be7953c9bcd651458f255ce48da",
     "startedAt": "2026-09-27T11:27:50+00:00",
     "maxWorkSeconds": 7200,
-    "workSecondsUsed": 6363,
-    "lastAccountedAt": "2026-09-27T13:12:52.074833+00:00",
+    "workSecondsUsed": 6532,
+    "lastAccountedAt": "2026-09-27T13:14:41.152878+00:00",
     "checkpoint": "docs/handoff/OPEN-PASS-2026-09-27.md",
     "repairLimitPerIssue": 2,
     "gpuAdmission": "Earlier1.8-2.2GiB headroom held jobs. Last13:05 reading10,258MiB VRAM/22.05GiB RAM meets browser reserve, but browser interaction remains stopped after owner focus/control complaint; no new browser/GPU job admitted. Generation/inference/mesh gate remains OPEN.",
     "preservedOvernightWorkSeconds": 9971,
-    "accounting": "Conservatively charges all elapsed pass/agent/cloud/resource waits plus60 seconds for final commit/push/readback delivery. Unused reserve remains charged; previous9971-second overnight ledger unchanged. No reset.",
+    "accounting": "All elapsed pass/agent/cloud/resource waits and final delivery charged cumulatively. Initial60-second delivery reserve was insufficient; topped up to actual elapsed plus120seconds. Unused reserve stays charged; previous9971-second overnight ledger unchanged. No reset.",
     "cpuFindings": "VERIFIED root playflow7, parity12/360v1 saves, streak integration6, bindings5 plus separate legacy closure7, admission4, movement7/current house-module doorway, network6, host15/client15; explicit wire fixture adapter17 preserves97 assertions and byte-exact original helper. TypeScript/render allow-list PASS.",
     "sourceCandidate": "5cc3a2692470a971aeadb7cedf868fd6b6a25cf9",
     "candidate": {
@@ -336,7 +336,8 @@
     "sourceMap": "VERIFIED all226 local source-map sourceContents equal raw current UTF8 bytes; entry hash and both served preview identities verified; all178 owner dist files unchanged.",
     "liveAcceptance": "OPEN actual current menu/deploy/gameplay frames, traversal, delayedSDP/rejoin and unchanged210s soak. Owner4348 remains retained2f837ae; candidate4361 is manual-review source-tested build, not promoted.",
     "completedAt": "2026-09-27T13:12:52.074833+00:00",
-    "finalDeliveryReserveSeconds": 60,
-    "activeRun": null
+    "finalDeliveryReserveSeconds": 120,
+    "activeRun": null,
+    "initialFinalDeliveryReserveSeconds": 60
   }
 }
