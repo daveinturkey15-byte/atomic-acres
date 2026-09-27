@@ -34,6 +34,12 @@ try {
   }
   if (!browser) throw Error('Owned diagnostic Chrome did not connect');
   const page = browser.contexts()[0].pages()[0];
+  await page.addInitScript(() => {
+    window.__startupLongTasks = [];
+    new PerformanceObserver(list => {
+      for (const entry of list.getEntries()) window.__startupLongTasks.push({ start: entry.startTime, duration: entry.duration });
+    }).observe({ type: 'longtask', buffered: true });
+  });
   if (fault === 'entry') await page.route('**/index-*.js', route => route.abort('failed'));
   if (fault === 'module') await page.route('**/main-*.js', route => route.abort('failed'));
   if (fault === 'scenery') await page.route('**/field-case/field-case.glb', () => { /* deliberately pending until browser closes */ });
@@ -47,11 +53,13 @@ try {
   report.elapsedMs = Date.now() - began;
   report.dom = await page.evaluate(() => ({ title: document.title, url: location.href,
     start: document.querySelector('#start')?.innerText, menu: !!document.querySelector('.aa-root'),
-    backend: document.querySelector('canvas')?.dataset.ntBackend, ready: window.__NT?.ready === true,
+    backend: document.querySelector('canvas[data-nt-backend]')?.dataset.ntBackend, ready: window.__NT?.ready === true,
     bootError: document.querySelector('#start [role=status]')?.getAttribute('data-boot-error') === 'true',
     retry: Array.from(document.querySelectorAll('#start button')).some(b => b.textContent === 'Retry loading') }));
   try { await page.screenshot({ path: join(dir, 'boot.png'), timeout: 15000 }); }
   catch (e) { report.screenshotError = String(e); }
+  report.captureElapsedMs = Date.now() - began;
+  report.longTasks = await Promise.race([page.evaluate(() => window.__startupLongTasks), new Promise(r => setTimeout(() => r('inspection timed out'), 2000))]);
 } catch (e) { report.harnessError = String(e); }
 finally { if (browser) await Promise.race([browser.close().catch(() => {}), new Promise(r => setTimeout(r, 2000))]); cleanupAll(); clearTimeout(deadline); }
 writeFileSync(join(dir, 'receipt.json'), JSON.stringify(report, null, 2) + '\n');
@@ -59,4 +67,6 @@ console.log(JSON.stringify({ dir, ...report }, null, 2));
 if (fault ? !report.dom?.bootError || !report.dom?.retry || report.dom?.menu || report.dom?.ready : !report.dom?.menu || report.errors.length) process.exitCode = 1;
 if (fault === 'entry' && report.elapsedMs >= 5000) process.exitCode = 1;
 if (fault === 'scenery' && !report.dom?.start?.includes('Loading scenery took longer than 30 seconds')) process.exitCode = 1;
+if (report.screenshotError) process.exitCode = 1;
+if (hardware && report.dom?.backend !== 'webgpu') process.exitCode = 1;
 if (report.harnessError) process.exitCode = 1;

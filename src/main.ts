@@ -741,7 +741,9 @@ function frame(): void {
   }
   requestAnimationFrame(frame);
 }
-requestAnimationFrame(frame);
+// Give the completed menu a paint opportunity before the first world frame
+// performs lazy shader compilation. Recurring render order stays unchanged.
+requestAnimationFrame(() => requestAnimationFrame(frame));
 
 // ---------------------------------------------------------------- QA surface
 // The capture harness drives the map through this. Keep it small and stable.
