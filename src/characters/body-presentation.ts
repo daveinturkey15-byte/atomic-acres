@@ -9,12 +9,17 @@ export interface BodyTrack {
   alive: boolean;
 }
 const DELAY_MS = 50;
-const tracks = new WeakMap<CharacterHandle, BodyTrack>();
+interface PresentedTrack extends BodyTrack {
+  renderedX: number; renderedZ: number; renderedAt: number;
+  buffered: boolean;
+}
+const tracks = new WeakMap<CharacterHandle, PresentedTrack>();
 const angleDelta = (a: number, b: number): number => Math.atan2(Math.sin(b - a), Math.cos(b - a));
 
-export function sampleBody(track: BodyTrack, pose: BodySample, alive: boolean): void {
+export function sampleBody(track: BodyTrack, pose: BodySample, alive: boolean): boolean {
   const distance = Math.hypot(pose.x - track.current.x, pose.y - track.current.y, pose.z - track.current.z);
-  if (alive !== track.alive || distance > 2 || pose.time < track.current.time || pose.time - track.current.time > 250) {
+  const reset = alive !== track.alive || distance > 2 || pose.time < track.current.time || pose.time - track.current.time > 250;
+  if (reset) {
     Object.assign(track.previous, pose);
     Object.assign(track.current, pose);
   } else if (pose.time > track.current.time) {
@@ -22,6 +27,7 @@ export function sampleBody(track: BodyTrack, pose: BodySample, alive: boolean): 
     Object.assign(track.current, pose);
   }
   track.alive = alive;
+  return reset;
 }
 
 /** Allocation-free interpolation, shortest-arc facing, no speculative movement. */
@@ -37,23 +43,40 @@ export function readBody(track: BodyTrack, now: number, out: BodySample): void {
 }
 
 const scratch: BodySample = { x: 0, y: 0, z: 0, yaw: 0, time: 0 };
-export function presentBody(handle: CharacterHandle, body: BotBody, now: number): void {
+/** Returns displayed horizontal speed for the mixer, never for simulation. */
+export function presentBody(handle: CharacterHandle, body: BotBody, now: number): number {
   scratch.x = body.x; scratch.y = body.y; scratch.z = body.z;
   scratch.yaw = body.yaw; scratch.time = body.sampleTimeMs ?? now;
   // Guest poses already come from the network interpolation buffer. Do not add
   // another delay, and never feed rendered positions back to hit admission.
-  if (body.sampleTimeMs !== undefined) {
-    let track = tracks.get(handle);
-    if (!track) {
-      track = { previous: { ...scratch }, current: { ...scratch }, alive: body.alive };
-      tracks.set(handle, track);
+  const buffered = body.sampleTimeMs !== undefined;
+  let track = tracks.get(handle);
+  let reset = false;
+  if (!track) {
+    track = { previous: { ...scratch }, current: { ...scratch }, alive: body.alive,
+      renderedX: scratch.x, renderedZ: scratch.z, renderedAt: now, buffered };
+    tracks.set(handle, track);
+    reset = true;
+  } else {
+    const modeChanged = track.buffered !== buffered;
+    reset = sampleBody(track, scratch, body.alive) || modeChanged;
+    if (modeChanged) {
+      Object.assign(track.previous, scratch);
+      Object.assign(track.current, scratch);
     }
-    sampleBody(track, scratch, body.alive);
+    track.buffered = buffered;
+  }
+  if (buffered) {
     readBody(track, now, scratch);
   }
+  const elapsed = now - track.renderedAt;
+  const speed = !reset && body.alive && elapsed > 0 && elapsed <= 250
+    ? Math.hypot(scratch.x - track.renderedX, scratch.z - track.renderedZ) * 1000 / elapsed : 0;
+  track.renderedX = scratch.x; track.renderedZ = scratch.z; track.renderedAt = now;
   handle.root.position.set(scratch.x, scratch.y, scratch.z);
   // Camera/host forward is -Z; the standard character and its weapon face +Z.
   handle.yaw = scratch.yaw + Math.PI;
   handle.root.rotation.y = handle.yaw;
   handle.rootMotion = false;
+  return speed;
 }

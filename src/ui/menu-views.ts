@@ -38,7 +38,7 @@ function kbd(action: string): HTMLElement {
 
 export function view(label: string, cls = ''): HTMLElement {
   const v = document.createElement('div');
-  v.className = ('aa-view aa-hidden ' + cls).trim();
+  v.className = ('aa-view aa-hidden aa-command-view ' + cls).trim();
   v.setAttribute('aria-label', label);
   return v;
 }
@@ -63,15 +63,21 @@ export function buildMain(): MainView {
   const root = view('Main menu', 'aa-main');
   root.classList.remove('aa-hidden');
   const btnRow = document.createElement('div');
-  btnRow.className = 'aa-row aa-menu-row';
+  btnRow.className = 'aa-row aa-menu-row aa-command-rail';
   const solo = button('Play solo', 'aa-primary');
   const multiplayer = button('Multiplayer');
   const options = button('Options');
   const credits = button('Credits');
   btnRow.append(solo, multiplayer, options, credits);
   const maps = buildMapSelect();
+  const mission = document.createElement('section');
+  mission.className = 'aa-mission-strip';
+  mission.setAttribute('aria-label', 'Mission map');
+  const mapHead = text('div', 'aa-maphead aa-section-kicker', 'Map');
+  maps.root.classList.add('aa-map-deck');
+  mission.append(mapHead, maps.root);
   const foot = document.createElement('div');
-  foot.className = 'aa-foot';
+  foot.className = 'aa-foot aa-legal-strip';
   foot.append(text('div', 'aa-fan', FAN_LINE));
   root.append(
     text('div', 'aa-eyebrow', 'A fan project inspired by Black Ops 2'),
@@ -79,8 +85,7 @@ export function buildMain(): MainView {
     text('div', 'aa-sub', 'NUKETOWN 2025'),
     text('div', 'aa-hint', 'Solo skirmishes and multiplayer'),
     btnRow,
-    text('div', 'aa-maphead', 'Map'),
-    maps.root,
+    mission,
     foot,
   );
   return { root, solo, multiplayer, options, credits, maps };
@@ -96,13 +101,13 @@ export interface PauseView {
 export function buildPause(): PauseView {
   const root = view('Paused', 'aa-pause');
   const row = document.createElement('div');
-  row.className = 'aa-row';
+  row.className = 'aa-row aa-command-rail';
   const resume = button('Resume', 'aa-primary');
   const options = button('Options');
   const leave = button('Leave match');
   row.append(resume, options, leave);
   const hint = document.createElement('div');
-  hint.className = 'aa-hint';
+  hint.className = 'aa-hint aa-control-strip';
   hint.append(
     kbd('move'), document.createTextNode(' move · '),
     kbd('fire'), document.createTextNode(' fire · '),
@@ -129,10 +134,10 @@ export function buildCredits(): CreditsView {
     ...LICENCE_LINES,
   ];
   const list = document.createElement('div');
-  list.className = 'aa-creditlines';
+  list.className = 'aa-creditlines aa-legal-copy';
   for (const l of lines) list.append(text('div', 'aa-creditline', l));
   const row = document.createElement('div');
-  row.className = 'aa-row';
+  row.className = 'aa-row aa-command-rail';
   const back = button('Back');
   row.append(back);
   root.append(text('h2', 'aa-h2', 'Credits'), list, row);
@@ -153,15 +158,22 @@ export function buildEnd(): EndView {
   const root = view('Match over', 'aa-end');
   const outcome = text('h2', 'aa-h2 aa-outcome', 'MATCH OVER');
   const why = text('div', 'aa-sub aa-why', '');
+  const outcomeBlock = document.createElement('div');
+  outcomeBlock.className = 'aa-outcome-block';
+  outcomeBlock.append(outcome, why);
   const table = document.createElement('div');
   table.className = 'aa-table';
   table.setAttribute('role', 'table');
+  const scoreboard = document.createElement('section');
+  scoreboard.className = 'aa-scoreboard-frame';
+  scoreboard.setAttribute('aria-label', 'Match scoreboard');
+  scoreboard.append(table);
   const row = document.createElement('div');
-  row.className = 'aa-row';
+  row.className = 'aa-row aa-command-rail';
   const rematch = button('Rematch', 'aa-primary');
   const leave = button('Leave');
   row.append(rematch, leave);
-  root.append(outcome, why, table, row);
+  root.append(outcomeBlock, scoreboard, row);
   let lastKey = '';
 
   function update(snap: SessionSnapshot | null, selfId: string, names: ReadonlyMap<string, string>, rematchMs: number | null, canRematch: boolean): void {
@@ -209,12 +221,12 @@ export function buildEnd(): EndView {
 
 export function buildDeploying(): HTMLElement {
   const root = view('Deploying', 'aa-deploying');
-  root.append(text('h2', 'aa-h2', 'DEPLOYING'));
+  root.append(text('h2', 'aa-h2 aa-view-title', 'DEPLOYING'));
   return root;
 }
 
 export function buildError(): HTMLElement {
   const root = view('Error', 'aa-errorview');
-  root.append(text('h2', 'aa-h2', 'Something broke'), text('div', 'aa-hint', 'The match stopped. Reload the page to try again.'));
+  root.append(text('h2', 'aa-h2 aa-view-title', 'Something broke'), text('div', 'aa-hint aa-control-strip', 'The match stopped. Reload the page to try again.'));
   return root;
 }

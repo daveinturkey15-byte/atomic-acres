@@ -24,6 +24,7 @@
  */
 import './hud.css';
 import './menus.css';
+import './concept-polish.css';
 import './lobby.css';
 import { initHud, type HudApi, type ScoreRowView, type ScoreView, type StreakHudView } from './hud';
 import { initMenus, type MenuHandle, type MenuPlayer, type MenuWorld } from './menus';

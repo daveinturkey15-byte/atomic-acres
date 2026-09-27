@@ -1,0 +1,2422 @@
+{
+  "sourceRepository": "daveinturkey15-byte/atomic-acres (same restart fallback)",
+  "sourceRoot": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference",
+  "imageCount": 112,
+  "entries": [
+    {
+      "family": "concept",
+      "file": "backyard-orange-lowsun-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\backyard-orange-lowsun-eye.png",
+      "sha256": "af0e51de8df7986a3ba5d8dfd68dc2a91969cd3e8fe40665b9921f3a4e5f0a07",
+      "bytes": 1379702,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "backyard-orange-lowsun-eye.png",
+        "id": "backyard-orange-lowsun-eye",
+        "light": "low-sun",
+        "prompt": "Eye-level view of the orange-house back yard at golden-hour low sun, long shadows from carport and fences.",
+        "route": "A",
+        "subject": "back-yards",
+        "bytes": 1379702
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "backyard-orange-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\backyard-orange-noon-eye.png",
+      "sha256": "d5c9c44d32daa45de1500c97dca9021ce5fb34d43848d1b0f42b972662b3c206",
+      "bytes": 1740113,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "backyard-orange-noon-eye.png",
+        "id": "backyard-orange-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level view inside the orange show-home back yard: white curved-roof carport, planting beds with red flowers, glasshouse, crate store, circular concrete patio.",
+        "route": "A",
+        "subject": "back-yards",
+        "bytes": 1740113
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "backyard-orange-noon-high34.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\backyard-orange-noon-high34.png",
+      "sha256": "2081c5c569aaac2b8c3d770c55cdb9fb45329d22810be3919d25411273524ebe",
+      "bytes": 1920754,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "high-three-quarter",
+        "filename": "backyard-orange-noon-high34.png",
+        "id": "backyard-orange-noon-high34",
+        "light": "harsh-noon",
+        "prompt": "High three-quarter view of the orange-house back yard showing carport curve, glasshouse, beds and patio layout.",
+        "route": "A",
+        "subject": "back-yards",
+        "bytes": 1920754
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "backyard-white-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\backyard-white-noon-eye.png",
+      "sha256": "8f78b64bf33249fec8daf2cb1a3f04316405accac69326edf0d0664ab55d85c5",
+      "bytes": 1692799,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "backyard-white-noon-eye.png",
+        "id": "backyard-white-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level view inside the white show-home back yard: round garden pod, tan sand pit, green shuffleboard court, stepping stones.",
+        "route": "A",
+        "subject": "back-yards",
+        "bytes": 1692799
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "backyard-white-noon-high34.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\backyard-white-noon-high34.png",
+      "sha256": "4d9513be7c93c7d8f51bab3f0b2f2c42cb940a8cbde9c52ef7604616a8992ced",
+      "bytes": 1678836,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "high-three-quarter",
+        "filename": "backyard-white-noon-high34.png",
+        "id": "backyard-white-noon-high34",
+        "light": "harsh-noon",
+        "prompt": "High three-quarter view of the white-house back yard layout: pod, sand pit, court, stones.",
+        "route": "A",
+        "subject": "back-yards",
+        "bytes": 1678836
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "backyard-white-overcast-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\backyard-white-overcast-eye.png",
+      "sha256": "01d8beacd108ec4930e8e481ebeacca3dd93eec2c41335ceef2be87995fbab7c",
+      "bytes": 1382750,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "backyard-white-overcast-eye.png",
+        "id": "backyard-white-overcast-eye",
+        "light": "overcast",
+        "prompt": "Eye-level view of the white-house back yard under flat overcast light.",
+        "route": "A",
+        "subject": "back-yards",
+        "bytes": 1382750
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "coach-lowsun-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\coach-lowsun-eye.png",
+      "sha256": "540f89fa9fbcf620d9434bc825910aba8506b441b55cb4abc0ffcfe39eaa05a8",
+      "bytes": 1063454,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "coach-lowsun-eye.png",
+        "id": "coach-lowsun-eye",
+        "light": "low-sun",
+        "prompt": "Eye-level view of the vintage tour coach at low golden sun, long shadows, glowing chrome.",
+        "route": "A",
+        "subject": "cul-de-sac-coach",
+        "bytes": 1063454
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "coach-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\coach-noon-eye.png",
+      "sha256": "a21da25d072e5c6f545724ff6bfdc53fa9461054af8fc7e3718152e89e8f5f33",
+      "bytes": 1280364,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "coach-noon-eye.png",
+        "id": "coach-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level side view of a cream-and-silver 1950s Greyhound-style intercity tour coach with maroon swoosh, chrome belt trim, riveted panels, round headlights, parked on a desert show-town street.",
+        "route": "A",
+        "subject": "cul-de-sac-coach",
+        "bytes": 1280364
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "coach-noon-low.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\coach-noon-low.png",
+      "sha256": "8c951df9cc0b688ed393d229f71db881e690e0f3ebc45a830479e72dcd9cf31d",
+      "bytes": 1190297,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "low",
+        "filename": "coach-noon-low.png",
+        "id": "coach-noon-low",
+        "light": "harsh-noon",
+        "prompt": "Low angle view of the vintage tour coach, chrome and glass gleaming against a hazy blue sky.",
+        "route": "A",
+        "subject": "cul-de-sac-coach",
+        "bytes": 1190297
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "cul-de-sac-lowsun-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\cul-de-sac-lowsun-eye.png",
+      "sha256": "7892fcbe40da5f1f59d8d98b3428dbc7305ac077b447a221d114a3274b34d5b5",
+      "bytes": 1141319,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "cul-de-sac-lowsun-eye.png",
+        "id": "culdesac-lowsun-eye",
+        "light": "low-sun",
+        "prompt": "Eye-level view of the cul-de-sac at golden-hour low sun, long vehicle shadows across the turning head, warm light.",
+        "route": "A",
+        "subject": "cul-de-sac-coach",
+        "bytes": 1141319
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "cul-de-sac-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\cul-de-sac-noon-eye.png",
+      "sha256": "04bda7f589cd237ec888a172a3e8c89d8d9e3ab07092364dc4b351288f67767d",
+      "bytes": 1132752,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "cul-de-sac-noon-eye.png",
+        "id": "culdesac-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level view from the road stem toward the cul-de-sac turning head with parked vintage coach and cars, show homes flanking, bleached concrete kerbs.",
+        "route": "A",
+        "subject": "cul-de-sac-coach",
+        "bytes": 1132752
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "cul-de-sac-noon-high34.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\cul-de-sac-noon-high34.png",
+      "sha256": "6e42ebb4ea41d99fae7488118c26aeda0a1acadaeac5da49d4476a8b7ce77ac3",
+      "bytes": 1698110,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "high-three-quarter",
+        "filename": "cul-de-sac-noon-high34.png",
+        "id": "culdesac-noon-high34",
+        "light": "harsh-noon",
+        "prompt": "High three-quarter view of a lollipop cul-de-sac closing a short residential street: circular kerbed turning head with a cream-and-maroon 1950s intercity coach and two classic cars, modernist show homes on both sides.",
+        "route": "A",
+        "subject": "cul-de-sac-coach",
+        "bytes": 1698110
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "mannequin-close-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\mannequin-close-noon-eye.png",
+      "sha256": "0d9892116e585cb049be05a41b07a84ad03de87d62c414837d7d9bdd5076b6a9",
+      "bytes": 1502029,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "close-up",
+        "filename": "mannequin-close-noon-eye.png",
+        "id": "mannequin-close-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Close-up of two 1960s mannequin faces and upper bodies, glossy fibreglass, painted features, period clothing detail.",
+        "route": "A",
+        "subject": "mannequins",
+        "bytes": 1502029
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "mannequins-lowsun-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\mannequins-lowsun-eye.png",
+      "sha256": "990c9fb2c165d83291979cde9aceae13fe0d4802c83fd42be15cfd57742daffb",
+      "bytes": 1240073,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "mannequins-lowsun-eye.png",
+        "id": "mannequins-lowsun-eye",
+        "light": "low-sun",
+        "prompt": "Mannequin family group at golden-hour low sun, long shadows, warm rim light on fibreglass figures.",
+        "route": "A",
+        "subject": "mannequins",
+        "bytes": 1240073
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "mannequins-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\mannequins-noon-eye.png",
+      "sha256": "eb8a18fc13304e0f1143a62ceadb35a066e880c4dc0d491c54068bba0d6cfc81",
+      "bytes": 1600260,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "mannequins-noon-eye.png",
+        "id": "mannequins-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level view of 1960s artist mannequins posed as a family on a show-town pavement: one in a purple shift dress, others in period casuals, painted faces, crisp noon shadows.",
+        "route": "A",
+        "subject": "mannequins",
+        "bytes": 1600260
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "mannequins-overcast-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\mannequins-overcast-eye.png",
+      "sha256": "95bf6c83d95667e9e9984e851b152bdabf2b4a524abcb19095be36c637694e1d",
+      "bytes": 1417169,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "mannequins-overcast-eye.png",
+        "id": "mannequins-overcast-eye",
+        "light": "overcast",
+        "prompt": "Mannequin family group under flat overcast light, soft shadowless modelling of faces and clothes.",
+        "route": "A",
+        "subject": "mannequins",
+        "bytes": 1417169
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "orange-house-lowsun-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\orange-house-lowsun-eye.png",
+      "sha256": "d72333dba6839021e971c517774a666639f2ed6d0bb9c843f3ee1371bf433fff",
+      "bytes": 1519865,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "orange-house-lowsun-eye.png",
+        "id": "orange-lowsun-eye",
+        "light": "low-sun",
+        "prompt": "Eye-level view of the butterfly-roof show home at golden-hour low sun, long shadows across the lawn, warm raking light on the terracotta panels.",
+        "route": "A",
+        "subject": "orange-house",
+        "bytes": 1519865
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "orange-house-lowsun-low.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\orange-house-lowsun-low.png",
+      "sha256": "92c2ba9ba66d8cc673bce7aab3b0ae2427a478b4372298f75beb76b3a8d3061c",
+      "bytes": 1152482,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "low",
+        "filename": "orange-house-lowsun-low.png",
+        "id": "orange-lowsun-low",
+        "light": "low-sun",
+        "prompt": "Low angle view of the butterfly-roof house against a low orange desert sun, butterfly roof edge lit gold.",
+        "route": "A",
+        "subject": "orange-house",
+        "bytes": 1152482
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "orange-house-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\orange-house-noon-eye.png",
+      "sha256": "4b9a0f2667585c5822b98b74a5444d25887e35f457ab654d05bd6e9c68b735fa",
+      "bytes": 1707910,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "orange-house-noon-eye.png",
+        "id": "orange-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level street view of a two-storey 1960s show home with a dramatic swooping white butterfly roof cantilevered over a terracotta burnt-orange panelised upper wall with a band of tall narrow windows, cream ground floor, bleached concrete drive, bright green mown lawn.",
+        "route": "A",
+        "subject": "orange-house",
+        "bytes": 1707910
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "orange-house-noon-high34.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\orange-house-noon-high34.png",
+      "sha256": "6c162acc4f5b47882ca16dd36bac1ffd507780e6e3dda9fa213da2292559833f",
+      "bytes": 1805316,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "high-three-quarter",
+        "filename": "orange-house-noon-high34.png",
+        "id": "orange-noon-high34",
+        "light": "harsh-noon",
+        "prompt": "High three-quarter view of the butterfly-roof show home showing roof geometry, solar panels on the low roof slope, driveway, lawn and street.",
+        "route": "A",
+        "subject": "orange-house",
+        "bytes": 1805316
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "orange-house-noon-low.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\orange-house-noon-low.png",
+      "sha256": "3d94f0e6ac4a9e58fa5653b9169bf567bb9e89613e9df3d8ec960a762de36750",
+      "bytes": 1334021,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "low",
+        "filename": "orange-house-noon-low.png",
+        "id": "orange-noon-low",
+        "light": "harsh-noon",
+        "prompt": "Low worm's-eye view looking up at the butterfly-roof show home, roof sweeping upward against a hazy blue desert noon sky, terracotta walls glowing in harsh sunlight.",
+        "route": "A",
+        "subject": "orange-house",
+        "bytes": 1334021
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "orange-house-noon-rear.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\orange-house-noon-rear.png",
+      "sha256": "405580d2b6ffcedb08ddbb4ca7e88a8450bff7e6a8fa9886a32ebb8236625c0d",
+      "bytes": 1627569,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level-rear",
+        "filename": "orange-house-noon-rear.png",
+        "id": "orange-noon-rear",
+        "light": "harsh-noon",
+        "prompt": "Eye-level rear view of the butterfly-roof house from its back yard: wooden exterior staircase on the left to a railed deck, dark barrel-vault garage bays on the right, circular concrete patio at the stair foot.",
+        "route": "A",
+        "subject": "orange-house",
+        "bytes": 1627569
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "orange-house-noon-roof-detail.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\orange-house-noon-roof-detail.png",
+      "sha256": "878503f68d69df5926fa75902f05bd73aa9e3ad9b8df77c23752ac052a289339",
+      "bytes": 1425238,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "close-up",
+        "filename": "orange-house-noon-roof-detail.png",
+        "id": "orange-noon-roof-detail",
+        "light": "harsh-noon",
+        "prompt": "Close-up detail of the butterfly roof valley, dark solar panels, cream fascia and tall narrow window band with vertical mullions, crisp material detail.",
+        "route": "A",
+        "subject": "orange-house",
+        "bytes": 1425238
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "orange-house-overcast-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\orange-house-overcast-eye.png",
+      "sha256": "3fbefb41f29a77fa0abc7a7456c3cb0fe1b2b3d270f0fd82d4795daf3575dc32",
+      "bytes": 1338226,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "orange-house-overcast-eye.png",
+        "id": "orange-overcast-eye",
+        "light": "overcast",
+        "prompt": "Eye-level view of the butterfly-roof house under flat overcast desert light, soft shadowless modelling of roof and panel walls.",
+        "route": "A",
+        "subject": "orange-house",
+        "bytes": 1338226
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "plaza-dome-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\plaza-dome-noon-eye.png",
+      "sha256": "54a4a9293d818e35133020d32caacca6af800ead01d61d6d11daafbcf6a89e95",
+      "bytes": 868291,
+      "size": [
+        1024,
+        576
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "plaza-dome-noon-eye.png",
+        "id": "plaza-dome-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level view of a silver geodesic dome pavilion in the show-town plaza with flag poles and bleached concrete forecourt.",
+        "route": "A",
+        "subject": "plaza-pylon",
+        "bytes": 868291
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "plaza-pylon-lowsun-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\plaza-pylon-lowsun-eye.png",
+      "sha256": "cf26b4712741bf81411ed1502150863c80cfd0d408988d248991fa6d82ef25c2",
+      "bytes": 798243,
+      "size": [
+        1024,
+        576
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "plaza-pylon-lowsun-eye.png",
+        "id": "plaza-lowsun-eye",
+        "light": "low-sun",
+        "prompt": "Eye-level view of the entrance plaza at golden-hour low sun, neon sign starting to glow, long shadows across bleached concrete.",
+        "route": "A",
+        "subject": "plaza-pylon",
+        "bytes": 798243
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "plaza-pylon-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\plaza-pylon-noon-eye.png",
+      "sha256": "995dc582f1429a2ebe5d9fbce3067fc6d435012db1b9a5cf5e2780a1457d6566",
+      "bytes": 1756497,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "plaza-pylon-noon-eye.png",
+        "id": "plaza-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level view of the 1960s show-town entrance plaza: tall neon pylon sign with pink script and atom-and-orbit sphere, vintage tour coach, teal classic car on a display plinth, geodesic dome and space-needle tower behind.",
+        "route": "A",
+        "subject": "plaza-pylon",
+        "bytes": 1756497
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "plaza-pylon-noon-high34.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\plaza-pylon-noon-high34.png",
+      "sha256": "96df9981fb9d67dcd8f96849c1128dfab6809987862eae1771c6c0e6cf095175",
+      "bytes": 1055618,
+      "size": [
+        1024,
+        576
+      ],
+      "manifestEntry": {
+        "angle": "high-three-quarter",
+        "filename": "plaza-pylon-noon-high34.png",
+        "id": "plaza-noon-high34",
+        "light": "harsh-noon",
+        "prompt": "High three-quarter view of the whole entrance plaza: pylon sign, coach, display cars, dome, saucer house, tower, flag rows.",
+        "route": "A",
+        "subject": "plaza-pylon",
+        "bytes": 1055618
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "plaza-pylon-noon-low.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\plaza-pylon-noon-low.png",
+      "sha256": "da7bceb7c5e5a9fe600b9ef02a9569595a6d0c95ae62c05d3220ae3cb5351891",
+      "bytes": 708256,
+      "size": [
+        1024,
+        576
+      ],
+      "manifestEntry": {
+        "angle": "low",
+        "filename": "plaza-pylon-noon-low.png",
+        "id": "plaza-noon-low",
+        "light": "harsh-noon",
+        "prompt": "Low angle view of the entrance plaza looking up at the neon pylon sign against a hazy blue noon sky, flags on poles, coach below.",
+        "route": "A",
+        "subject": "plaza-pylon",
+        "bytes": 708256
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "plaza-saucer-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\plaza-saucer-noon-eye.png",
+      "sha256": "cdcc8339ed3e71afd891735035d4525133e100156ae1d3b8a91ca5a45c5ad291",
+      "bytes": 1030525,
+      "size": [
+        1024,
+        576
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "plaza-saucer-noon-eye.png",
+        "id": "plaza-saucer-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level view of a flying-saucer house on slim legs, cream with a dark window band, 1950s cars parked beneath, desert plaza.",
+        "route": "A",
+        "subject": "plaza-pylon",
+        "bytes": 1030525
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "plaza-tower-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\plaza-tower-noon-eye.png",
+      "sha256": "bc795afe50d19f623fa538e6526fcdbe8e45d2b0c0afec52b90ea50d804de3c2",
+      "bytes": 968837,
+      "size": [
+        1024,
+        576
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "plaza-tower-noon-eye.png",
+        "id": "plaza-tower-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level view of a slender space-needle observation tower over the show-town plaza, 1960s Googie styling, tiny human figures for scale.",
+        "route": "A",
+        "subject": "plaza-pylon",
+        "bytes": 968837
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "pylon-sign-noon-low.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\pylon-sign-noon-low.png",
+      "sha256": "a16629d7f723111a2585f22fd81e86e134f6dee3dd363ec08ab1e2687a42b430",
+      "bytes": 1083731,
+      "size": [
+        768,
+        1024
+      ],
+      "manifestEntry": {
+        "angle": "low",
+        "filename": "pylon-sign-noon-low.png",
+        "id": "pylon-sign-noon-low",
+        "light": "harsh-noon",
+        "prompt": "Close low-angle view of the neon pylon sign alone: pink neon script with tagline, maroon atom-and-orbit sphere on top, teal oval badge below, two-post trapezoid frame.",
+        "route": "A",
+        "subject": "plaza-pylon",
+        "bytes": 1083731
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "street-elevation-lowsun-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\street-elevation-lowsun-eye.png",
+      "sha256": "35f89743517ae04b1e7c40518481d44dd9e903c85a6f82f28aa79b30780f9635",
+      "bytes": 1199914,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "street-elevation-lowsun-eye.png",
+        "id": "street-lowsun-eye",
+        "light": "low-sun",
+        "prompt": "Facing-houses street view at golden-hour low sun with long shadows down the road.",
+        "route": "A",
+        "subject": "street-elevation",
+        "bytes": 1199914
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "street-elevation-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\street-elevation-noon-eye.png",
+      "sha256": "9148ed7f0f891d9f054b7bcdc4aa49802740bc5a25f601c4800b2ce3f6523e97",
+      "bytes": 1518657,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "street-elevation-noon-eye.png",
+        "id": "street-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level street elevation of two modernist show homes facing each other across a short road: terracotta appliance bank on one lawn, blue on the other, chain-and-post lawn edging, clipped hedges.",
+        "route": "A",
+        "subject": "street-elevation",
+        "bytes": 1518657
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "street-noon-plan.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\street-noon-plan.png",
+      "sha256": "d6e9f5e92beceb3e7408676141cb93d89042a5026ac7cce00e15322cb9aede2b",
+      "bytes": 2121504,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "angle": "plan",
+        "filename": "street-noon-plan.png",
+        "id": "street-noon-plan",
+        "light": "harsh-noon",
+        "prompt": "Near-top-down plan view of the short show-town street: two facing houses, mow-striped lawns, road stem, cul-de-sac turning head with parked coach.",
+        "route": "A",
+        "subject": "street-elevation",
+        "bytes": 2121504
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "surround-lowsun-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\surround-lowsun-eye.png",
+      "sha256": "3c86450ceaffe0cc81ec58cb407076fad6be3d7fdf5f9019911da363c2d67be1",
+      "bytes": 1600465,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "surround-lowsun-eye.png",
+        "id": "surround-lowsun-eye",
+        "light": "low-sun",
+        "prompt": "Eye-level desert-edge view past the town boundary fence toward layered blue-grey mountains at golden low sun.",
+        "route": "A",
+        "subject": "surround",
+        "bytes": 1600465
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "surround-mountains-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\surround-mountains-noon-eye.png",
+      "sha256": "5d2c7353cb699acfb301b2f1ca9a32c25060821ebca48edde6a678421483a1a0",
+      "bytes": 1392280,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "surround-mountains-noon-eye.png",
+        "id": "surround-mountains-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level panorama of blue-grey desert mountains with atmospheric haze above a bleached concrete town edge, big rounded deciduous trees.",
+        "route": "A",
+        "subject": "surround",
+        "bytes": 1392280
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "surround-noon-high34.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\surround-noon-high34.png",
+      "sha256": "fd33ff68c22c29b80a1047aaffd7e9c9fe6299a1d60b51c7f942a77051e9a662",
+      "bytes": 1319614,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "high-three-quarter",
+        "filename": "surround-noon-high34.png",
+        "id": "surround-noon-high34",
+        "light": "harsh-noon",
+        "prompt": "High three-quarter vista of the show town in its desert bowl: two show homes and street in the foreground, blue-grey mountains and hazy distant city skyline on every horizon, noon haze.",
+        "route": "A",
+        "subject": "surround",
+        "bytes": 1319614
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "surround-overcast-high34.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\surround-overcast-high34.png",
+      "sha256": "65b51c49deb31812ccc8ea156d384306fecd7377c08e1d8169964cf75f76c33f",
+      "bytes": 1526778,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "high-three-quarter",
+        "filename": "surround-overcast-high34.png",
+        "id": "surround-overcast-high34",
+        "light": "overcast",
+        "prompt": "High three-quarter view of the whole show town under overcast skies, muted desert tones, town oval glowing green against grey-brown desert.",
+        "route": "A",
+        "subject": "surround",
+        "bytes": 1526778
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "test-route-a.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\test-route-a.png",
+      "sha256": "066a6962ebe77054d58c8ae8ab47f28384525637e824fce66d4d1759c53d231c",
+      "bytes": 991344,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "test-route-a.png",
+        "id": "test-route-a",
+        "light": "harsh-noon",
+        "prompt": "Route-A capability test: 1960s 'world of tomorrow' show-town street with two modernist show homes facing each other across a short road, bright hazy desert noon light, bleached concrete, saturated accents.",
+        "route": "A",
+        "subject": "street-elevation",
+        "bytes": 991344
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "turning-head-noon-plan.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\turning-head-noon-plan.png",
+      "sha256": "70f55444b149e18ba23865840ec85690a7a4adcc87fa69f6ff5a7ad7a4db77f5",
+      "bytes": 1717305,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "angle": "plan",
+        "filename": "turning-head-noon-plan.png",
+        "id": "turning-head-noon-plan",
+        "light": "harsh-noon",
+        "prompt": "Near-top-down plan view of the circular kerbed cul-de-sac turning head with parked coach and cars, mow-striped lawns, pale concrete aprons.",
+        "route": "A",
+        "subject": "cul-de-sac-coach",
+        "bytes": 1717305
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "vehicles-lineup-lowsun-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\vehicles-lineup-lowsun-eye.png",
+      "sha256": "d90080c4696e2da6bdb98669c53d9a2c2ab3816fc03a2aa4c98d4d5db6fecd67",
+      "bytes": 1608348,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "vehicles-lineup-lowsun-eye.png",
+        "id": "vehicles-lineup-lowsun-eye",
+        "light": "low-sun",
+        "prompt": "Low-sun lineup of three 1950s cars (teal sedan, maroon sedan, cream classic pickup) on bleached concrete, long shadows, golden light on chrome.",
+        "route": "A",
+        "subject": "vehicles",
+        "bytes": 1608348
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "vehicles-maroon-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\vehicles-maroon-noon-eye.png",
+      "sha256": "887d1c3ce9b636846db5fac0b37c55d445284473b98fed4b47aa604b8b5d0706",
+      "bytes": 1464095,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "vehicles-maroon-noon-eye.png",
+        "id": "vehicles-maroon-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level view of a maroon 1950s classic sedan with chrome fins and whitewalls parked on a show-town street.",
+        "route": "A",
+        "subject": "vehicles",
+        "bytes": 1464095
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "vehicles-noon-low.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\vehicles-noon-low.png",
+      "sha256": "06734d76ce98a2186e8291f324ad67ed5d764bcce59596898f10b32c18f816a9",
+      "bytes": 1366707,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "low",
+        "filename": "vehicles-noon-low.png",
+        "id": "vehicles-noon-low",
+        "light": "harsh-noon",
+        "prompt": "Low angle view of a cream 1950s pickup truck front three-quarter, chrome grille gleaming against a hazy blue sky.",
+        "route": "A",
+        "subject": "vehicles",
+        "bytes": 1366707
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "vehicles-teal-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\vehicles-teal-noon-eye.png",
+      "sha256": "39c8d1f1dc5fd2e6cb6dae77cc5c3141d6b5812bf5f0a5141c7bda5d37cb6db2",
+      "bytes": 1429403,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "vehicles-teal-noon-eye.png",
+        "id": "vehicles-teal-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level view of a teal-turquoise 1950s classic American car with heavy chrome and whitewall tyres on a display plinth with an info placard, desert show-town plaza.",
+        "route": "A",
+        "subject": "vehicles",
+        "bytes": 1429403
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "white-house-lowsun-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\white-house-lowsun-eye.png",
+      "sha256": "767ae7e48a834059390b7937aa974d83f1f7a31812f752f875ca93143f0b531b",
+      "bytes": 1506921,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "white-house-lowsun-eye.png",
+        "id": "white-lowsun-eye",
+        "light": "low-sun",
+        "prompt": "Eye-level view of the white capsule house at golden-hour low sun, long shadows, warm light on white stucco and blue trim.",
+        "route": "A",
+        "subject": "white-house",
+        "bytes": 1506921
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "white-house-lowsun-high34.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\white-house-lowsun-high34.png",
+      "sha256": "a4d07a2fed63bc5ef5a780c3c4d5841c53cdf357c58bb1724af1f409d02e5e20",
+      "bytes": 1683861,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "high-three-quarter",
+        "filename": "white-house-lowsun-high34.png",
+        "id": "white-lowsun-high34",
+        "light": "low-sun",
+        "prompt": "High three-quarter view of the white capsule house at low sun, glowing white curves, long garden shadows.",
+        "route": "A",
+        "subject": "white-house",
+        "bytes": 1683861
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "white-house-noon-detail.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\white-house-noon-detail.png",
+      "sha256": "4efebcf84a105577e7b595d98598120db3e8fd71690dd06cd22c19ad42b355f4",
+      "bytes": 1190739,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "close-up",
+        "filename": "white-house-noon-detail.png",
+        "id": "white-noon-detail",
+        "light": "harsh-noon",
+        "prompt": "Close-up detail of a white capsule wall junction: blue trim band, porthole window with chrome ring, smooth stucco, crisp material detail.",
+        "route": "A",
+        "subject": "white-house",
+        "bytes": 1190739
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "white-house-noon-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\white-house-noon-eye.png",
+      "sha256": "f08376d8aff4607ad85d7270fe9492c85ca388bf528ac5392fc56609c5e052d1",
+      "bytes": 1608770,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "white-house-noon-eye.png",
+        "id": "white-noon-eye",
+        "light": "harsh-noon",
+        "prompt": "Eye-level street view of a white streamline-moderne show home of rounded capsule forms with blue trim, curved corners, porthole windows and flat cantilevered porch canopy, bright green lawn.",
+        "route": "A",
+        "subject": "white-house",
+        "bytes": 1608770
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "white-house-noon-high34.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\white-house-noon-high34.png",
+      "sha256": "608a1d61bc6d1b977e81126988144a0c2ee30bd68f2f0ffbc64abfd9f6838e1a",
+      "bytes": 1716997,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "high-three-quarter",
+        "filename": "white-house-noon-high34.png",
+        "id": "white-noon-high34",
+        "light": "harsh-noon",
+        "prompt": "High three-quarter view of the white capsule house showing rounded roof forms, driveway, lawn and street.",
+        "route": "A",
+        "subject": "white-house",
+        "bytes": 1716997
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "white-house-noon-low.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\white-house-noon-low.png",
+      "sha256": "56c15242046b6f6ad74da01a154a5788212e929cdb5032604e084505799e7bda",
+      "bytes": 1423233,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "low",
+        "filename": "white-house-noon-low.png",
+        "id": "white-noon-low",
+        "light": "harsh-noon",
+        "prompt": "Low worm's-eye view of the white capsule show home, rounded white volumes and blue trim against a hazy blue noon sky.",
+        "route": "A",
+        "subject": "white-house",
+        "bytes": 1423233
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "white-house-noon-rear.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\white-house-noon-rear.png",
+      "sha256": "7eeec8e2de4b6d27661591c39e1480d1083cab8056eacf40fe69a5499bffcb68",
+      "bytes": 1578417,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level-rear",
+        "filename": "white-house-noon-rear.png",
+        "id": "white-noon-rear",
+        "light": "harsh-noon",
+        "prompt": "Eye-level photographic rear view of the white streamline-moderne show home from its back yard: rear deck with steps down, round garden pod, tan sand pit, shuffleboard court, stepping stones. (First attempt arrived as a blank black render and was regenerated.)",
+        "route": "A",
+        "subject": "white-house",
+        "bytes": 1578417
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept",
+      "file": "white-house-overcast-eye.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept\\white-house-overcast-eye.png",
+      "sha256": "e860fe011e7ae5374e030f35c77baf5f2a5e6424a2ec9ce8bea8eac5cc0f9c09",
+      "bytes": 1608505,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "angle": "eye-level",
+        "filename": "white-house-overcast-eye.png",
+        "id": "white-overcast-eye",
+        "light": "overcast",
+        "prompt": "Eye-level view of the white capsule house under flat overcast light, soft modelling of the rounded volumes.",
+        "route": "A",
+        "subject": "white-house",
+        "bytes": 1608505
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "east-eave-lowsun-low-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\east-eave-lowsun-low-01.png",
+      "sha256": "007fde3252b05077330d1ad0663990d7b850bfa6ee1699a5500f63078fc0190a",
+      "bytes": 1436184,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "east-eave-lowsun-low-01",
+        "file": "east-eave-lowsun-low-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, low worm's-eye view up the gable and eave side of a Googie show house, east-side timber fence and hedge silhouetted, concrete kerb in foreground, low-sun golden raking light with long shadows.",
+        "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+        "subject": "eave",
+        "angle": "low",
+        "light": "low-sun"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "east-fence-noon-high34-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\east-fence-noon-high34-01.png",
+      "sha256": "523ba9d5c124dfd77735cc2051732f760e0ff91459b16e4c37e9a588e1a5762d",
+      "bytes": 1252189,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "east-fence-noon-high34-01",
+        "file": "east-fence-noon-high34-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, high three-quarter view over the east flank side yards, fence returns and gates, hedge lines, kerbs and rooflines, harsh desert noon.",
+        "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+        "subject": "fence",
+        "angle": "high34",
+        "light": "harsh-noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "east-gable-noon-axis-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\east-gable-noon-axis-01.png",
+      "sha256": "ca94327dce0c221e339f5bc10632a6fe61b75467e4f65f3686f9515b5efd53bb",
+      "bytes": 1311665,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "east-gable-noon-axis-01",
+        "file": "east-gable-noon-axis-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, gable and eave side of a Googie show house seen straight down the street axis at street level, east-side timber fence returning to the house corner, hedge and concrete kerb leading the eye, harsh desert noon.",
+        "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+        "subject": "gable",
+        "angle": "axis",
+        "light": "harsh-noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "east-passage-noon-hero-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\east-passage-noon-hero-01.png",
+      "sha256": "9f66797f9a4f525fa49efe035e9c7cf07e80fba4bdd96dd94bf87586469defcd",
+      "bytes": 1605799,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "east-passage-noon-hero-01",
+        "file": "east-passage-noon-hero-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, angled hero view of the runnable passage between two Googie show houses, east-side timber fence with gates on both sides, hedges, kerbs and pale paving, harsh desert noon.",
+        "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+        "subject": "passage",
+        "angle": "hero",
+        "light": "harsh-noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "east-roofline-overcast-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\east-roofline-overcast-eye-01.png",
+      "sha256": "6500a3fcc85f17172f086d8517043edd3124d267a3191b7e0cd2cf252d521321",
+      "bytes": 1374545,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "east-roofline-overcast-eye-01",
+        "file": "east-roofline-overcast-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, eye-level view along east-flank rooflines from the street axis, east-side timber fence, hedge and kerb below, flat overcast desert light, soft shadowless modelling.",
+        "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+        "subject": "roofline",
+        "angle": "eye",
+        "light": "overcast"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "east-sideyard-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\east-sideyard-noon-eye-01.png",
+      "sha256": "27ff667a4266c8e349346741ccd6aba5b54f84e591bba2be41429f432e77ca44",
+      "bytes": 1260328,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "east-sideyard-noon-eye-01",
+        "file": "east-sideyard-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, east side yard running beside a Googie show-house gable end, runnable passage with east-side timber fence and gate, dark hedge line, concrete kerb and pale paving slabs, eye-level street view, harsh desert noon short shadows.",
+        "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 (local RTX 5080 via agy)",
+        "subject": "sideyard",
+        "angle": "eye",
+        "light": "harsh-noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "east-test-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\east-test-01.png",
+      "sha256": "78551e1e21c2c74065a1a205da480385300169047b171877eabe6213fea390f8",
+      "bytes": 1720141,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "east-test-01",
+        "file": "east-test-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, east side yard running beside a Googie show house gable end, weathered east-side timber fence with a gate, dark hedge line, concrete kerb and pale paving, harsh desert noon short shadows.",
+        "route": "Imagen 3 (imagen-3.0-generate-002) via agy native image tool",
+        "subject": "route-test",
+        "angle": "eye",
+        "light": "harsh-noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-asphalt-lowsun-low-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-asphalt-lowsun-low-01.png",
+      "sha256": "ddab040a521a6fd49c1577601b113a2d64de76521762f1d9392a76952f89e287",
+      "bytes": 1302091,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-asphalt-lowsun-low-01",
+        "file": "ground-asphalt-lowsun-low-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low-angle asphalt with tyre-polish arcs glowing in low warm sun, oil spots 100-200mm, long shadows, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+        "subject": "asphalt-tyre-polish",
+        "angle": "low",
+        "light": "lowsun"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-asphalt-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-asphalt-noon-eye-01.png",
+      "sha256": "78de6e4fbec8afb4e8579292f86f0b20fca3c3c00cbbf55eab2322285b242572",
+      "bytes": 1742809,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-asphalt-noon-eye-01",
+        "file": "ground-asphalt-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Desert-show-town asphalt close-up with polished dark tyre arcs and two oil spots 100-200mm across, aggregate glinting, bleached concrete kerb at frame edge, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+        "subject": "asphalt-tyre-polish",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-asphalt-noon-low-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-asphalt-noon-low-01.png",
+      "sha256": "5d269596c099c83b00761c58df7860491ca7c1c8e4dfaa8caa65e4815a325560",
+      "bytes": 1670932,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-asphalt-noon-low-01",
+        "file": "ground-asphalt-noon-low-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low-angle view down asphalt with long tyre-polish arcs curving away, oil spots 100-200mm, harsh desert noon hard shadows, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+        "subject": "asphalt-tyre-polish",
+        "angle": "low",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-kerb-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-kerb-noon-eye-01.png",
+      "sha256": "699bf326929fbf32253f0e8ba8184ea4ab87b97452477518df24032adf2d8e29",
+      "bytes": 1588383,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-kerb-noon-eye-01",
+        "file": "ground-kerb-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Concrete kerb seen on three faces, top worn pale by foot traffic, face with grit wash darkening the bottom 40mm, joints every 900mm, meeting pale paving slabs and asphalt, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+        "subject": "kerb-three-faces",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-kerb-noon-macro-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-kerb-noon-macro-01.png",
+      "sha256": "b35c0ae6e630dfa24f23f22e0034c6b5318341ce00f68a38308b3f50485c8e24",
+      "bytes": 1699647,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-kerb-noon-macro-01",
+        "file": "ground-kerb-noon-macro-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Extreme macro of one kerb joint, worn pale top edge, grit wash on bottom 40mm of face, sand grains lodged in joint, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+        "subject": "kerb-three-faces",
+        "angle": "macro",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-lawnedge-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-lawnedge-noon-eye-01.png",
+      "sha256": "e545f1a7e84f310df7c8738113539d780b40905bf37bb6b233826e543124f8a4",
+      "bytes": 1534351,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-lawnedge-noon-eye-01",
+        "file": "ground-lawnedge-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Lawn-to-slab edging, mown green lawn with visible mow stripes meeting pale concrete slabs, grass edges brown-frayed, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+        "subject": "lawn-to-slab-edging",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-lawnedge-noon-macro-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-lawnedge-noon-macro-01.png",
+      "sha256": "2e8079e298e563b1b5266519c676b04733908819b3e68269a5fabad02cbb7ef8",
+      "bytes": 1620012,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-lawnedge-noon-macro-01",
+        "file": "ground-lawnedge-noon-macro-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Macro of lawn-to-slab edge, individual grass blades, brown-frayed tips, grit on slab edge, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+        "subject": "lawn-to-slab-edging",
+        "angle": "macro",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-patio-lowsun-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-patio-lowsun-eye-01.png",
+      "sha256": "fce02fb19a30774b4421aed54a1aa69dbf80d5e2719341cc37b6abe8b43a5b6d",
+      "bytes": 1554632,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-patio-lowsun-eye-01",
+        "file": "ground-patio-lowsun-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Patio paving with moss growing in joints, low warm evening sun raking across, long soft shadows, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+        "subject": "patio-moss-joints",
+        "angle": "eye",
+        "light": "lowsun"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-paving-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-paving-noon-eye-01.png",
+      "sha256": "5dcd5667d4e228d3f9bbd542c2ba97459f34a78e5f3e9e0b56e517596f0c9d3b",
+      "bytes": 1694541,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-paving-noon-eye-01",
+        "file": "ground-paving-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Close-up eye-level study of big-slab pale concrete paving with 600-900mm module and grit-dark joints, slight tonal variation slab to slab, harsh desert noon hard short shadows, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (gemini-3.1-flash-image, native generate_image)",
+        "subject": "paving-slabs",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-paving-noon-low-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-paving-noon-low-01.png",
+      "sha256": "3258be71a335539c6e068bbe22e019e978ca7f7009f2805ba42e6a096123d44c",
+      "bytes": 1623467,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-paving-noon-low-01",
+        "file": "ground-paving-noon-low-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low raking-angle view across big-slab pale paving, 600-900mm module, grit-dark joints catching shadow, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (gemini-3.1-flash-image, native generate_image)",
+        "subject": "paving-slabs",
+        "angle": "low",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-sandspill-noon-macro-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-sandspill-noon-macro-01.png",
+      "sha256": "9d8d413258e572d9915e0341de7d4cad852b5f8f04836ddd5a2c67e1c6736bfb",
+      "bytes": 1658487,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-sandspill-noon-macro-01",
+        "file": "ground-sandspill-noon-macro-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Macro of sand spilling from a childrens sand pit across pale paving joints, fine grains and small drifts, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+        "subject": "sand-pit-spill",
+        "angle": "macro",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-stepping-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-stepping-noon-eye-01.png",
+      "sha256": "4314fbe04ed4a9e2d0d0ff2050599e96bc0d1120aaa4b8013afecc652d0a7abe",
+      "bytes": 1765591,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-stepping-noon-eye-01",
+        "file": "ground-stepping-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Round stepping stones set IN a mown lawn, grass growing to stone edges, harsh desert noon, macro material detail, sharp focus on surface texture. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (Juggernaut-XL v9 SDXL, local RTX 5080 render)",
+        "subject": "stepping-stones-in-lawn",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "ground-test-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\ground-test-01.png",
+      "sha256": "7caa5db8d35bb305564826625a682b38b978a6f8f449087d1269ea835492a6ce",
+      "bytes": 1791535,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "ground-test-01",
+        "file": "ground-test-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Close-up ground-level study of big-slab pale concrete paving with 600-900mm module and grit-dark joints, macro material detail, harsh desert noon hard short shadows. Original design only, no logos, no signage, no people.",
+        "route": "agy CLI (Imagen 3 via Antigravity Image Generation Tool)",
+        "subject": "route-test",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-ceiling-noon-low-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-ceiling-noon-low-01.png",
+      "sha256": "bdb22e153cd725c9133db3427a6ccfa33d7cab8e9ca15740429f6c9250d84b58",
+      "bytes": 1335075,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "interior-ceiling-noon-low-01",
+        "file": "interior-ceiling-noon-low-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low-angle interior of a 1960s show-home ceiling showing the butterfly-V roof underside, exposed timber-grain beams fanning to a central valley, harsh desert noon light washing the stucco soffit through tall narrow mullioned windows, enamel pendant lamps.",
+        "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+        "subject": "ceiling",
+        "angle": "low",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-kitchen-blue-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-kitchen-blue-noon-eye-01.png",
+      "sha256": "fc6e8768bcb5c48f56290ae36c613df7d55fb01710c535c8e0dd7fc1e6b49cdd",
+      "bytes": 1112035,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "interior-kitchen-blue-noon-eye-01",
+        "file": "interior-kitchen-blue-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level interior of a 1960s show-home kitchen, chest-height bank of retro appliances topped in blue, blue tops only and never red-pink, harsh desert noon light through tall narrow mullioned windows, white enamel doors, timber-grain shelving, stucco walls.",
+        "route": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+        "subject": "kitchen-blue",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-kitchen-blue-overcast-detail-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-kitchen-blue-overcast-detail-01.png",
+      "sha256": "da4e196a8e098f005bd632aa3b9ef8e665b71b3efa1aecd7464973c0aca7d603",
+      "bytes": 1451150,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "interior-kitchen-blue-overcast-detail-01",
+        "file": "interior-kitchen-blue-overcast-detail-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Soft overcast daylight instead of harsh noon. Macro detail of a 1960s show-home kitchen appliance bank with blue tops, blue only and never red-pink, chrome dial, enamel edge, rubber gasket and hinge in sharp focus, timber grain beside.",
+        "route": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+        "subject": "kitchen-blue",
+        "angle": "detail",
+        "light": "overcast"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-kitchen-red-noon-detail-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-kitchen-red-noon-detail-01.png",
+      "sha256": "7241149e2100b434ccc0cac924143f08e2ac9c099f752862d6d46629ad2835ab",
+      "bytes": 1562587,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "interior-kitchen-red-noon-detail-01",
+        "file": "interior-kitchen-red-noon-detail-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Macro detail of a 1960s show-home kitchen appliance bank with red-pink enamel cabinet doors, red-pink only and never blue, chrome handles, hinges and rubber gaskets in sharp focus, harsh desert noon side-light raking across enamel and timber grain.",
+        "route": "agy --model gemini-3.7-flash-high -> native generate_image (gemini-3.1-flash-image)",
+        "subject": "kitchen-red",
+        "angle": "detail",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-kitchen-red-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-kitchen-red-noon-eye-01.png",
+      "sha256": "68fe4c926f26024e9533f4132e105aad5125ce06c0371fff1a5d2ef52137b4f5",
+      "bytes": 1595038,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "interior-kitchen-red-noon-eye-01",
+        "file": "interior-kitchen-red-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level interior of a 1960s show-home kitchen, chest-height bank of retro appliances with red-pink enamel cabinets, red-pink cabinets only and never blue, harsh desert noon light through a tall narrow mullioned window, timber-grain breakfast bar, stucco walls, glass sky reflection.",
+        "route": "agy --model gemini-3.7-flash-high -> native generate_image (gemini-3.1-flash-image)",
+        "subject": "kitchen-red",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-living-lowsun-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-living-lowsun-eye-01.png",
+      "sha256": "5e4a547c9dfee83d897107ff7332f8ac7cc762c9f3bcbe2118200869ee7f82c8",
+      "bytes": 1687457,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "interior-living-lowsun-eye-01",
+        "file": "interior-living-lowsun-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low evening sun raking through the glass instead of noon. Eye-level interior of a 1960s show-home living room, tall narrow windows with vertical mullions, long raking amber shadows across timber-grain floor and stucco walls, enamel cabinet catching warm light, glass sky reflection.",
+        "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+        "subject": "living",
+        "angle": "eye",
+        "light": "lowsun"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-living-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-living-noon-eye-01.png",
+      "sha256": "41098b2c4793f74ae502083d8477ccbc380ef4203b7886cf2f5adbe559a7414d",
+      "bytes": 1307922,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "interior-living-noon-eye-01",
+        "file": "interior-living-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Interior of a 1960s show-home living room at eye level, tall narrow windows with vertical mullions, harsh desert noon light streaming through glass casting mullion shadows on stucco walls, enamel sideboard, timber-grain lounge chairs, glass reflecting pale sky.",
+        "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+        "subject": "living",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-living-noon-low-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-living-noon-low-01.png",
+      "sha256": "43d905bd7eaf577b90ab97d055e2c48790ff07c7d3074f22186db8f878cbb3bd",
+      "bytes": 1161995,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "interior-living-noon-low-01",
+        "file": "interior-living-noon-low-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low-angle interior of a 1960s show-home living room looking up past timber-grain furniture toward tall narrow windows with vertical mullions, harsh desert noon light flooding through glass, stucco ceiling with butterfly-V underside, enamel lamp bases gleaming.",
+        "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+        "subject": "living",
+        "angle": "low",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-living-overcast-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-living-overcast-eye-01.png",
+      "sha256": "ec2e1fa13a478f6bca765d8b0eb2e4b80fa60f708e651e37f924fb2567f6fb2d",
+      "bytes": 1196773,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "interior-living-overcast-eye-01",
+        "file": "interior-living-overcast-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Soft overcast daylight instead of harsh noon. Eye-level interior of a 1960s show-home living room, tall narrow windows with vertical mullions under flat soft light, matte stucco walls, enamel surfaces, timber-grain furniture, muted glass reflections.",
+        "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+        "subject": "living",
+        "angle": "eye",
+        "light": "overcast"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-reveal-lowsun-detail-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-reveal-lowsun-detail-01.png",
+      "sha256": "9d92c315d5d3d655423ce27619562bebb895645aa453ddf0c61f45d6fb215ba3",
+      "bytes": 1841008,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "interior-reveal-lowsun-detail-01",
+        "file": "interior-reveal-lowsun-detail-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low evening sun raking through the glass instead of noon. Macro detail of a 1960s show-home window reveal, vertical mullion shadow stretching across deep stucco jamb, amber raking light on enamel latch, timber grain and glass sky reflection.",
+        "route": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+        "subject": "reveal",
+        "angle": "detail",
+        "light": "lowsun"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-reveal-noon-detail-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-reveal-noon-detail-01.png",
+      "sha256": "80d6ab71dbbd663f0493b7626c39b83a58bfb1f003807d5e5b79e66369b576fa",
+      "bytes": 1650202,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "interior-reveal-noon-detail-01",
+        "file": "interior-reveal-noon-detail-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Macro detail of a 1960s show-home window reveal, deep stucco jamb with vertical timber mullion casting a crisp shadow line, harsh desert noon light, enamel latch and glass edge reflecting pale sky, plaster texture sharp.",
+        "route": "agy --model gemini-3.7-flash-high -> local ComfyUI SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2.safetensors)",
+        "subject": "reveal",
+        "angle": "detail",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-stair-lowsun-low-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-stair-lowsun-low-01.png",
+      "sha256": "c3a43a3f9745d2015db677e4dffa1c38f0c6af1ae915926e02ce989d5d2cf728",
+      "bytes": 1425032,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "interior-stair-lowsun-low-01",
+        "file": "interior-stair-lowsun-low-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low evening sun raking through the glass instead of noon. Low-angle interior of a 1960s show-home stair and deck junction, timber-grain stair risers, tall narrow mullioned glass door to deck, long amber shadows, stucco and enamel details.",
+        "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+        "subject": "stair",
+        "angle": "low",
+        "light": "lowsun"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-stair-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-stair-noon-eye-01.png",
+      "sha256": "5b5d168fb7f14530d417e0ca3c2550e13b5c695870fbde686317fc50902669aa",
+      "bytes": 1530813,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "interior-stair-noon-eye-01",
+        "file": "interior-stair-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level interior of a 1960s show-home stair and deck junction, timber-grain staircase meeting a sun-deck door wall of tall narrow mullioned glass, harsh desert noon light striping the steps with mullion shadows, stucco wall, enamel handrail brackets.",
+        "route": "agy --model gemini-3.7-flash-high -> local SDXL (Juggernaut-XL_v9_RunDiffusionPhoto_v2)",
+        "subject": "stair",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "interior-test-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\interior-test-01.png",
+      "sha256": "5ba55478aed36b3ae92261e9e79c13c95522044d929dfe5372cdae083cc821a8",
+      "bytes": 1598557,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "interior-test-01",
+        "file": "interior-test-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Interior of a 1960s show-home living room, tall narrow windows with vertical mullions, harsh desert noon light streaming through glass, stucco walls, enamel surfaces, timber grain furniture, glass sky reflection.",
+        "route": "agy --model gemini-3.7-flash-high -> native generate_image (Imagen 3)",
+        "subject": "route-test",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "mannequin-bare-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\mannequin-bare-noon-eye-01.png",
+      "sha256": "845377db1b315522fcf59df709cac0c147107909ed74d9ecb0fd8737cdae4ae2",
+      "bytes": 1350191,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "mannequin-bare-noon-eye-01",
+        "file": "mannequin-bare-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Bare ivory-fibreglass articulated display mannequin with no clothes, standing full-figure at eye level on a desert show-town plaza of bleached concrete, Googie pylon behind, glossy torso with visible shoulder wrist and knee joints, scuff-blackened feet, harsh desert noon light.",
+        "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+        "subject": "bare-figure",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "mannequin-cloth-noon-macro-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\mannequin-cloth-noon-macro-01.png",
+      "sha256": "06e3a77165242c5d42a7e94edcf73e1fdec6742109ca7320d3abb731e8021f3b",
+      "bytes": 1313227,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "mannequin-cloth-noon-macro-01",
+        "file": "mannequin-cloth-noon-macro-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Close macro study of matte purple shift-dress cloth against a glossy bare fibreglass shoulder and collarbone of an articulated display mannequin, woven texture versus smooth gel-coat shine, dust film on the shoulder, harsh desert noon light.",
+        "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+        "subject": "cloth-detail",
+        "angle": "macro",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "mannequin-couple-lowsun-low-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\mannequin-couple-lowsun-low-01.png",
+      "sha256": "3a36c84b92b230f4ac3d7460a5d4ac6046f817650f47937c2ece2af063b2bbf8",
+      "bytes": 1207887,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "mannequin-couple-lowsun-low-01",
+        "file": "mannequin-couple-lowsun-low-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise; low-sun light slot. Pair of articulated display mannequins, one in a magenta shift dress and one bare fibreglass, standing on a lawn edge by a Googie show home at golden-hour low sun, low camera angle, long shadows, warm rim light.",
+        "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+        "subject": "couple",
+        "angle": "low",
+        "light": "lowsun"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "mannequin-family-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\mannequin-family-noon-eye-01.png",
+      "sha256": "751d45f7f0be188dd69d1b9bacd7e36005a5f646eb730777ee9b9a9e82f5ca9a",
+      "bytes": 1514557,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "mannequin-family-noon-eye-01",
+        "file": "mannequin-family-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Articulated display mannequin family posed as neighbours on a mown lawn beside a Googie show home, full figures at eye level, one woman figure in a magenta-purple shift dress, others in plain period casual shirts and slacks, glossy fibreglass faces with painted features, visible elbow and knee joints, crisp harsh-noon shadows.",
+        "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+        "subject": "family",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "mannequin-family-overcast-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\mannequin-family-overcast-eye-01.png",
+      "sha256": "e0c99dfeb51583be078fac84048c3f8fcddc32bb93e2ba7506d99437b2059176",
+      "bytes": 1205127,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "mannequin-family-overcast-eye-01",
+        "file": "mannequin-family-overcast-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise; overcast light slot. Articulated display mannequin family posed on a residential street under flat overcast desert light, soft shadowless modelling of painted faces and plain period clothes, one figure in a purple shift dress, bleached concrete and Googie rooflines behind, eye level.",
+        "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+        "subject": "family",
+        "angle": "eye",
+        "light": "overcast"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "mannequin-group-lowsun-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\mannequin-group-lowsun-eye-01.png",
+      "sha256": "3e7ff527b16a01e7b99e49fa5ee0007087c5a1550476b10a5971eed52937d125",
+      "bytes": 1416255,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "mannequin-group-lowsun-eye-01",
+        "file": "mannequin-group-lowsun-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise; low-sun light slot. Group of five articulated display mannequins posed as a crowd on a desert show-town plaza at golden-hour low sun, mixed dressed figures including one in a purple shift dress and bare fibreglass figures, long raking shadows across bleached concrete, warm rim light on glossy shoulders, eye level.",
+        "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+        "subject": "group",
+        "angle": "eye",
+        "light": "lowsun"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "mannequin-knee-noon-macro-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\mannequin-knee-noon-macro-01.png",
+      "sha256": "bf2101ee7a3d9d232a8be74973bb877a60020de33f0f368622fe4f3c4c2cb93e",
+      "bytes": 1393367,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "mannequin-knee-noon-macro-01",
+        "file": "mannequin-knee-noon-macro-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Extreme macro detail of an articulated display mannequin knee seam and lower legs, glossy fibreglass joint line, scuff-blackened feet on bleached concrete, dust stipple, harsh desert noon light with hard shadows.",
+        "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+        "subject": "knee-seam",
+        "angle": "macro",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "mannequin-neck-noon-macro-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\mannequin-neck-noon-macro-01.png",
+      "sha256": "b5089b8de9fe91bbaf674e250effc60f86ca2676622ba0ce245d31b693a29ca1",
+      "bytes": 1250162,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "mannequin-neck-noon-macro-01",
+        "file": "mannequin-neck-noon-macro-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Extreme macro detail of an articulated display mannequin neck and shoulder seam, glossy ivory fibreglass ring joint with a fine dust film on the shoulders, shallow depth of field, harsh desert noon side light raking across the seam.",
+        "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+        "subject": "neck-seam",
+        "angle": "macro",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "mannequin-pair-noon-low-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\mannequin-pair-noon-low-01.png",
+      "sha256": "734743a5faf89ac776cb86359f7ce4c669faf1b40e666379d70ff221729463a1",
+      "bytes": 1489246,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "mannequin-pair-noon-low-01",
+        "file": "mannequin-pair-noon-low-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Two articulated display mannequins, one bare ivory fibreglass and one dressed in plain period casuals, standing on a bleached-concrete street by a kerb, full figures from a low worm's-eye angle against a harsh desert noon sky, crisp short shadows.",
+        "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+        "subject": "pair",
+        "angle": "low",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "mannequin-test-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\mannequin-test-01.png",
+      "sha256": "fa23af6007182c3edfa1d73795d139a784d971543716665ce4fc024779ae2632",
+      "bytes": 1519833,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "mannequin-test-01",
+        "file": "mannequin-test-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Articulated display mannequin family posed as neighbours on a mown lawn beside a Googie show home, full figures eye-level, one figure in a purple shift dress, others in plain period casuals, glossy fibreglass faces with painted features, visible limb joints, crisp harsh-noon shadows on grass and bleached concrete.",
+        "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Imagen 3 (Antigravity Image Generation Tool)",
+        "subject": "route-test",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "mannequin-wrist-noon-macro-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\mannequin-wrist-noon-macro-01.png",
+      "sha256": "7e9d268132378df052884643f0d6fdbb1a024e8c80d46fe0c15e31c27d723aef",
+      "bytes": 1287147,
+      "size": [
+        1024,
+        1024
+      ],
+      "manifestEntry": {
+        "id": "mannequin-wrist-noon-macro-01",
+        "file": "mannequin-wrist-noon-macro-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Extreme macro detail of an articulated display mannequin wrist joint, glossy fibreglass ball seam between hand and the cuff of a plain period shirt, crisp harsh-noon highlight, shallow depth of field.",
+        "route": "A (agy CLI --model gemini-3.7-flash-high --effort high) via Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL local on RTX 5080",
+        "subject": "wrist-joint",
+        "angle": "macro",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "third-approach-lowsun-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\third-approach-lowsun-eye-01.png",
+      "sha256": "874c71a55086782cecdce556d366d2541bb8d80cb1c614a4f400e2e7152a0edf",
+      "bytes": 1233038,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "third-approach-lowsun-eye-01",
+        "file": "third-approach-lowsun-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, eye-level approach view toward the third-house massing beyond the turning head at low sun, east-side timber fence, hedge and kerb glowing warm, long shadows.",
+        "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+        "subject": "approach",
+        "angle": "eye",
+        "light": "low-sun"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "third-massing-noon-hero-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\third-massing-noon-hero-01.png",
+      "sha256": "3e8f9f52022500fa87ebfe00c2e6ad510007684f55e5d482ff4f6b9e11108da9",
+      "bytes": 1361206,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "third-massing-noon-hero-01",
+        "file": "third-massing-noon-hero-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, angled hero view of the third-house massing beyond the turning head, Googie roofline, east-side timber fence and hedge in the midground, concrete kerb, harsh desert noon.",
+        "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+        "subject": "massing",
+        "angle": "hero",
+        "light": "harsh-noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "third-street-noon-high34-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\third-street-noon-high34-01.png",
+      "sha256": "019bad11eaa03a814eb9f8029b1e4a0aca04d8cd2f89f229c4cc4a41c3333cff",
+      "bytes": 1523621,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "third-street-noon-high34-01",
+        "file": "third-street-noon-high34-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, high three-quarter view down the street axis over rooflines toward the third-house massing closing the vista, fence lines, hedges and kerbs, harsh desert noon.",
+        "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+        "subject": "street",
+        "angle": "high34",
+        "light": "harsh-noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "third-vista-noon-axis-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\third-vista-noon-axis-01.png",
+      "sha256": "2192a8e4bc32ae91c1bab27bd5a1149c20aa845fc5df87b7b132759a1b509929",
+      "bytes": 1250356,
+      "size": [
+        1344,
+        768
+      ],
+      "manifestEntry": {
+        "id": "third-vista-noon-axis-01",
+        "file": "third-vista-noon-axis-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise, third house closing the vista beyond the turning head, street-axis view past east-side timber fence, hedge and concrete kerb, third-house massing centred at the end of the street, harsh desert noon.",
+        "route": "Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL (local RTX 5080 via agy)",
+        "subject": "vista",
+        "angle": "axis",
+        "light": "harsh-noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "turn-vehicles-lowsun-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\turn-vehicles-lowsun-eye-01.png",
+      "sha256": "c03ea638bb69edf40d8f6a72a754f4e3f5fc9fe7b482b2ee4b45240233dd4663",
+      "bytes": 1478470,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "turn-vehicles-lowsun-eye-01",
+        "file": "turn-vehicles-lowsun-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Light slot says otherwise: low sun, long warm raking evening light. Eye-level view of a small-town roundabout traffic circle, circular ring road with round concrete kerb island, cream intercity coach with maroon swoosh casting a long shadow across the asphalt, white box truck and dark saloon parked at the kerb, glowing horizon behind the show-town rooftops.",
+        "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+        "subject": "lowsun-long-shadow-coach",
+        "angle": "eye",
+        "light": "lowsun"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "turn-vehicles-lowsun-low-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\turn-vehicles-lowsun-low-01.png",
+      "sha256": "549e7d53cba1e23e6cf082c5caaccb7abc47907d1e58ca0e0cc69d7fe77e14b4",
+      "bytes": 1501362,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "turn-vehicles-lowsun-low-01",
+        "file": "turn-vehicles-lowsun-low-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Light slot says otherwise: low sun, warm side light with long shadows. Low camera angle at the curved kerb of a roundabout traffic circle, rounded kerb edge sweeping in an arc, dark saloon and coach wheels rimmed with warm light on the circular ring road, dust glowing in the air.",
+        "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+        "subject": "lowsun-kerb-dust",
+        "angle": "low",
+        "light": "lowsun"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "turn-vehicles-noon-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\turn-vehicles-noon-eye-01.png",
+      "sha256": "563c44c5efcf35f8186a9a69dcf45bb6d48cd27eb94d9c8bc7e8406f5f18ef85",
+      "bytes": 1209340,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "turn-vehicles-noon-eye-01",
+        "file": "turn-vehicles-noon-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level view of a small-town roundabout traffic circle, circular ring road of asphalt around a round concrete kerb island, cream intercity coach with maroon swoosh parked at the kerb, coach flank against asphalt, kerb grit wash, tyre-polish arcs, oil spots.",
+        "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+        "subject": "coach-flank-kerb-grit",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "turn-vehicles-noon-eye-02.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\turn-vehicles-noon-eye-02.png",
+      "sha256": "9174df5a41a174d226178ad697fcac29574674a2436cd5aa6ddf682e4d067d06",
+      "bytes": 1265106,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "turn-vehicles-noon-eye-02",
+        "file": "turn-vehicles-noon-eye-02.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level view across a small-town roundabout traffic circle, white box truck and dark saloon parked nose-to-kerb on the circular ring road, round concrete kerb island at the centre, desert noon shadows, empty shopfront colonnade behind.",
+        "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+        "subject": "truck-saloon-nose-to-kerb",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "turn-vehicles-noon-eye-03.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\turn-vehicles-noon-eye-03.png",
+      "sha256": "d01ce9a5a67b7d619fc86e8656ebaafcd74cd3f191082b74785b82211fbe6435",
+      "bytes": 1386771,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "turn-vehicles-noon-eye-03",
+        "file": "turn-vehicles-noon-eye-03.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level view along the curving asphalt of a roundabout traffic circle ring road, dark tyre-polish arcs and scattered oil spots curving around the round concrete kerb island, cream intercity coach with maroon swoosh and dark saloon parked at opposite kerbs.",
+        "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+        "subject": "tyre-arcs-oil-spots",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "turn-vehicles-noon-eye-04.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\turn-vehicles-noon-eye-04.png",
+      "sha256": "fc39cf28a51560e26002b5f9bebb35ca3e5f4e2e2c89c5b01166e87e12f47e58",
+      "bytes": 1630275,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "turn-vehicles-noon-eye-04",
+        "file": "turn-vehicles-noon-eye-04.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Eye-level close view of the round concrete kerb island of a roundabout traffic circle, curved bleached-concrete kerb with grit wash and paint scuffs sweeping through frame, dark saloon parked tight to the kerb on the circular ring road, white box truck beyond.",
+        "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+        "subject": "kerb-island-close",
+        "angle": "eye",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "turn-vehicles-noon-high34-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\turn-vehicles-noon-high34-01.png",
+      "sha256": "2605179f3b55b1d3da8b614291ce0490e73795b7fc87d26718980be30d02f615",
+      "bytes": 1459894,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "turn-vehicles-noon-high34-01",
+        "file": "turn-vehicles-noon-high34-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Elevated three-quarter view of a whole small-town roundabout traffic circle, circular ring road with round concrete kerb island at the centre, cream intercity coach with maroon swoosh, white box truck and dark saloon parked around the ring, tyre-polish arcs and oil spots on the asphalt.",
+        "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+        "subject": "full-circle-all-vehicles",
+        "angle": "high34",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "turn-vehicles-noon-low-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\turn-vehicles-noon-low-01.png",
+      "sha256": "94336aa390f37e0296afe7107e04951ff535d0902d0eee64c4d746a6d3c608df",
+      "bytes": 1446988,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "turn-vehicles-noon-low-01",
+        "file": "turn-vehicles-noon-low-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Low camera angle at the rounded kerb of a roundabout traffic circle, curved kerb sweeping in an arc through the foreground with grit wash and stained concrete, cream intercity coach with maroon swoosh parked above at the kerb, wheel and chrome bumper detail.",
+        "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+        "subject": "low-kerb-coach-looming",
+        "angle": "low",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "turn-vehicles-noon-plan-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\turn-vehicles-noon-plan-01.png",
+      "sha256": "02a2b9b04c42a2f224cc48ee271c18f4198929866a1da7fefb84c0f7f952c0b2",
+      "bytes": 1762891,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "turn-vehicles-noon-plan-01",
+        "file": "turn-vehicles-noon-plan-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. True overhead aerial photograph looking straight down, map-like flat view with no horizon and no sky: a small-town roundabout traffic circle seen as a perfect flat asphalt ring with a round pale-concrete island filling the centre, cream intercity coach with maroon swoosh, white box truck and dark saloon parked small like toys on the ring, desert ground and flat rooftops around the outer edge, all vehicles and buildings blank and unmarked.",
+        "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+        "subject": "overhead-flat-ring",
+        "angle": "plan",
+        "light": "noon"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    },
+    {
+      "family": "concept2",
+      "file": "turn-vehicles-overcast-eye-01.png",
+      "source": "C:\\Users\\david\\Desktop\\stuff\\nuketown\\docs\\reference\\concept2\\turn-vehicles-overcast-eye-01.png",
+      "sha256": "4b40c12ebe87aed002823df2335b00d61f789104242406cf44d09c53932d450a",
+      "bytes": 1093072,
+      "size": [
+        1376,
+        768
+      ],
+      "manifestEntry": {
+        "id": "turn-vehicles-overcast-eye-01",
+        "file": "turn-vehicles-overcast-eye-01.png",
+        "prompt": "Original concept photograph, 1960s American 'world of tomorrow' nuclear-test show town in desert, Googie and streamline moderne architecture, bleached concrete, saturated accent colours, harsh desert noon unless light slot says otherwise. Light slot says otherwise: flat overcast daylight, soft shadowless grey sky. Eye-level view of a small-town roundabout traffic circle, circular ring road with round concrete kerb island, cream intercity coach with maroon swoosh, white box truck and dark saloon parked around the ring, muted bleached concrete under cloud.",
+        "route": "agy CLI --model gemini-3.7-flash-high (Juggernaut-XL_v9_RunDiffusionPhoto_v2 SDXL, local RTX 5080 render)",
+        "subject": "overcast-flat-circle",
+        "angle": "eye",
+        "light": "overcast"
+      },
+      "claimState": "VERIFIED filesystem/hash; visual review separately"
+    }
+  ],
+  "sheets": [
+    "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-salvage-20260926\\captures\\concept-review-20260927\\sheet-1.jpg",
+    "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-salvage-20260926\\captures\\concept-review-20260927\\sheet-2.jpg",
+    "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-salvage-20260926\\captures\\concept-review-20260927\\sheet-3.jpg",
+    "C:\\Users\\david\\Desktop\\stuff\\worktrees\\nuketown-salvage-20260926\\captures\\concept-review-20260927\\sheet-4.jpg"
+  ],
+  "missingManifestFiles": {
+    "concept": [],
+    "concept2": []
+  }
+}

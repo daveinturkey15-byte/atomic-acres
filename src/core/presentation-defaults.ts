@@ -1,12 +1,13 @@
-/** September20's accepted 4238 dressing plus the 4248 baked room. The rejected
- * operator anatomy experiment, optional FX experiments and unaccepted terrain
- * are deliberately absent. Explicit per-feature comparisons always win. */
+/** Authored dressing plus the September27 isolated polish candidate. Retained
+ * previews keep their own compiled defaults. Explicit comparisons always win;
+ * rejected anatomy/terrain remain absent. Pixel acceptance is recorded separately. */
 export const AUTHORED_PRESENTATION_DEFAULTS: Readonly<Record<string, string>> = Object.freeze({
   lighting: 'authored', glazing: 'canary', motion: 'canary', architecture: 'canary',
   'facade-kit': 'canary', foliage: 'canary', hands: 'rifle-canary',
   'street-lamps': 'canary', coach: 'canary', 'weapon-finish': 'canary',
   operator: 'authored', lawn: 'canary', audiobank: '2', 'fence-art': 'canary',
   room: 'authored', 'room-light': 'baked',
+  'surface-finish': 'canary', 'weapon-fx': 'canary',
 });
 
 /** Pure boot transformation. `art=baseline` retains the original no-flag path. */

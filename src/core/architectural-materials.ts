@@ -5,12 +5,13 @@
 import * as THREE from 'three';
 import type { MeshStandardNodeMaterial } from 'three/webgpu';
 import {
-  cameraViewMatrix, materialColor, normalWorldGeometry, positionWorld,
+  cameraViewMatrix, float, materialColor, normalWorldGeometry, positionWorld,
   texture, vec2, vec3, vec4,
 } from 'three/tsl';
 import type { MaterialLibrary } from './materials';
 import { PAL } from './palette';
 import { orangeRoomAmbientNode } from './orange-room-ambient';
+import { isSurfaceFinishEnabled, surfaceDustNode, surfaceFinishProfile } from './surface-weathering';
 
 type Surface = THREE.MeshStandardMaterial & Pick<MeshStandardNodeMaterial,
   'colorNode' | 'roughnessNode' | 'normalNode' | 'aoNode'>;
@@ -42,6 +43,7 @@ export interface ArchitecturalMaterials {
   readonly textures: readonly THREE.Texture[];
   readonly materialCount: number;
   readonly runtimeBytes: number;
+  readonly surfaceFinish: 'baseline' | 'canary';
   dispose(): void;
 }
 
@@ -53,7 +55,9 @@ export function isArchitectureEnabled(search = globalThis.location?.search ?? ''
  * tangent normals as if their three coordinate frames were the same.
  * Squared/squared weights keep planar detail crisp and capsule joins smooth.
  */
-function nodes(surface: THREE.Texture, normal: THREE.Texture, profile: Profile) {
+function nodes(surface: THREE.Texture, normal: THREE.Texture, profile: Profile, finishEnabled: boolean) {
+  const finish = finishEnabled ? surfaceFinishProfile(profile.key) : null;
+  const detail = finish ?? profile;
   const p = positionWorld;
   const n = normalWorldGeometry;
   const weight = n.abs().pow(4);
@@ -78,17 +82,27 @@ function nodes(surface: THREE.Texture, normal: THREE.Texture, profile: Profile) 
   // the geometric normal; flat maps therefore reproduce n on every face.
   const gradient = gx.mul(w.x).add(gy.mul(w.y)).add(gz.mul(w.z));
   const relief = gradient.sub(n.mul(gradient.dot(n)));
-  const perturbed = n.add(relief.mul(profile.normal)).normalize();
+  const perturbed = n.add(relief.mul(detail.normal)).normalize();
   // Scan packing removes broad captured staining and normal bias. Application
   // wear therefore lives at building scale, not in a repeating one-metre tile.
   // Two oblique long waves have no aligned repeat over a house; amplitude is
   // bounded to +/-1.7%, so they cannot become dark wet/mould stripes.
   const wear = p.dot(vec3(0.11, 0.07, 0.17)).sin().mul(0.012)
     .add(p.dot(vec3(0.31, 0.23, 0.13)).sin().mul(0.005));
-  const variation = scan.r.mul(2).sub(1).mul(profile.contrast).add(1).add(wear);
+  const variation = scan.r.mul(2).sub(1).mul(detail.contrast).add(1).add(wear);
+  let color = materialColor.rgb.mul(variation);
+  const baseRoughness = scan.g.mul(detail.roughMax - detail.roughMin).add(detail.roughMin);
+  const dust = finish && finish.dustDarkening > 0 ? surfaceDustNode(finish.side) : float(0);
+  if (finish) {
+    // Reuse the existing metre-scale signal; no added texture samples or grain.
+    // Only the dry, low wall film dims albedo, by at most 4.5%; no global wash.
+    color = color.mul(float(1).sub(dust.mul(finish.dustDarkening)));
+  }
+  const roughness = finish ? baseRoughness.add(wear.mul(finish.macroRoughness / .017))
+    .add(dust.mul(finish.dustRoughness)).clamp(.04, 1) : baseRoughness;
   return {
-    colorNode: vec4(materialColor.rgb.mul(variation), 1),
-    roughnessNode: scan.g.mul(profile.roughMax - profile.roughMin).add(profile.roughMin),
+    colorNode: vec4(color, 1),
+    roughnessNode: roughness,
     normalNode: cameraViewMatrix.mul(vec4(perturbed, 0)).xyz.normalize(),
   };
 }
@@ -114,6 +128,7 @@ async function install(library: Library, loadTexture?: (url: string) => Promise<
   // The aperture experiment did not meet the visible-gain bar. Retain it for
   // reproducible diagnosis, but do not silently ship it with the furniture.
   const query = new URLSearchParams(globalThis.location?.search ?? '');
+  const finishEnabled = isSurfaceFinishEnabled();
   const roomAmbient = query.get('room') === 'authored' && query.get('room-light') === 'aperture';
   const materials = PROFILES.map(p => library[p.key] as Surface);
   if (materials.some(m => !m.isMeshStandardMaterial) || new Set(materials).size !== materials.length) {
@@ -165,7 +180,7 @@ async function install(library: Library, loadTexture?: (url: string) => Promise<
     m.color.multiply(new THREE.Color(profile.palette));
     m.map = m.roughnessMap = m.normalMap = null;
     const offset = profile.timber ? 2 : 0;
-    Object.assign(m, nodes(textures[offset], textures[offset + 1], profile));
+    Object.assign(m, nodes(textures[offset], textures[offset + 1], profile, finishEnabled));
     if (roomAmbient) m.aoNode = orangeRoomAmbientNode();
     // r180 RenderObject hashes arbitrary object-valued properties as '{}'. The
     // borrowed standard material's default key does NOT hash these node hooks,
@@ -173,12 +188,14 @@ async function install(library: Library, loadTexture?: (url: string) => Promise<
     // Cache the complete key once: stable across frames, no per-draw allocation.
     // Texture identities also prevent a rebuilt library from inheriting a cached
     // node-builder state whose literal texture bindings belonged to its disposer.
-    const programKey = `${m.customProgramCacheKey()}|architecture-v2/${profile.key}/${textures[offset].uuid}/${textures[offset + 1].uuid}${roomAmbient ? '/room-ambient-v1' : ''}`;
+    const finishKey = finishEnabled && surfaceFinishProfile(profile.key) ? '/surface-finish-v1' : '';
+    const programKey = `${m.customProgramCacheKey()}|architecture-v2/${profile.key}/${textures[offset].uuid}/${textures[offset + 1].uuid}${roomAmbient ? '/room-ambient-v1' : ''}${finishKey}`;
     m.customProgramCacheKey = () => programKey;
     m.needsUpdate = true;
   }
   controller = {
     textures, materialCount: materials.length,
+    surfaceFinish: finishEnabled ? 'canary' : 'baseline',
     runtimeBytes: Math.ceil(DIMENSIONS.reduce((total, [w, h]) => total + w * h * 4 * 4 / 3, 0)),
     dispose() {
       if (!active.has(library)) return;

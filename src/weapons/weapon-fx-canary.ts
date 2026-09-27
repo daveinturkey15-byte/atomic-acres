@@ -214,12 +214,14 @@ export class WeaponFxCanary {
     this.up.set(0, 1, 0).applyQuaternion(orientation);
     for (let k = 0; k < 6; k++) {
       const angle = (this.tick + k) * GOLDEN, side = Math.cos(angle) * (0.16 + k * 0.035), lift = Math.sin(angle) * 0.18;
-      const speed = k < 3 ? 2.7 - k * 0.4 : 0.65 + k * 0.07;
+      // Short forward gas jet followed by a lighter residual plume. Both use
+      // the existing six slots; the muzzle remains readable under hard noon.
+      const speed = k < 3 ? 3.2 - k * 0.5 : 0.55 + k * 0.06;
       this.p.copy(point).addScaledVector(this.n, 0.025 + k * 0.015);
       this.gas.add(this.p, this.n.x * speed + this.right.x * side + this.up.x * lift,
         this.n.y * speed + this.right.y * side + this.up.y * lift + 0.08,
         this.n.z * speed + this.right.z * side + this.up.z * lift,
-        0.19 + k * 0.044, 0.065 + k * 0.009, 0.32 + k * 0.035, k < 3 ? 0.46 : 0.29,
+        0.13 + k * 0.045, 0.055 + k * 0.008, 0.28 + k * 0.03, k < 3 ? 0.33 : 0.18,
         5.5, -0.35, angle, (k % 2 ? 1 : -1) * 0.8, 1.15 + k * 0.09, 0.9);
     }
   }

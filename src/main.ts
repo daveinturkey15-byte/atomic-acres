@@ -672,12 +672,12 @@ function frame(): void {
       // Host-authoritative selected weapon: a pickup swap re-dresses the
       // figure in place; rearm no-ops while the archetype is unchanged.
       if (b.weaponId) characters.rearm(h, b.weaponId);
-      presentBody(h, b, now);
-      h.input.speed = b.alive ? b.speed : 0;
+      const presentedSpeed = presentBody(h, b, now);
+      h.input.speed = b.alive ? presentedSpeed : 0;
       // Presentation-only hysteresis separates the authoritative 4.8 m/s jog
       // from 6.6 m/s sprint without changing movement or the network protocol.
       h.input.sprinting = b.alive && b.stance === 'stand'
-        && b.speed > (h.input.sprinting ? 5.3 : 5.5);
+        && presentedSpeed > (h.input.sprinting ? 5.3 : 5.5);
       h.input.crouch = b.stance === 'crouch';
       h.input.prone = b.stance === 'prone';
       if (b.alive && h.rig.isDead) h.rig.revive();

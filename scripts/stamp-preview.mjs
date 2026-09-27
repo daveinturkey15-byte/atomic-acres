@@ -9,7 +9,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 // A canary can be built separately while the owner's accepted dist stays served.
 const distArg = process.argv.indexOf('--dist');
 const distName = distArg < 0 ? 'dist' : process.argv[distArg + 1];
-if (!['dist', 'dist-next'].includes(distName)) throw new Error('Expected dist or dist-next.');
+if (!['dist', 'dist-next', 'dist-polish'].includes(distName)) throw new Error('Expected dist, dist-next or dist-polish.');
 const dist = resolve(root, distName);
 const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', windowsHide: true }).trim();
 const runtime = ['src', 'public', 'index.html', 'package.json', 'package-lock.json', 'vite.config.ts'];

@@ -378,7 +378,14 @@ export class WeaponEffects {
         this.flashA.visible = false;
         this.flashB.visible = false;
       } else {
-        const s = (0.55 + 0.45 * (this.flashLife / this.flashSpan)) * this.flashScale;
+        const remaining = this.flashLife / this.flashSpan;
+        // The optional gas pass supplies the longer tail. Let its ordinary
+        // muzzle core collapse quickly instead of holding a broad HDR star
+        // across most of the shot. Grenade and retained baseline are exact.
+        const core = this.canary && this.flashScale === 1 && this.flashSpan === FLASH_LIFE
+          ? 0.12 + 0.88 * Math.min(1, remaining) ** 2
+          : 0.55 + 0.45 * remaining;
+        const s = core * this.flashScale;
         this.flashA.scale.set(0.55 * s, 1.6 * s, 1);
         this.flashB.scale.set(1.6 * s, 0.55 * s, 1);
       }

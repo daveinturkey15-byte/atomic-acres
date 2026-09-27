@@ -733,10 +733,10 @@ export class WeaponsController {
     if (this.motionCanary) {
       // Presentation reads the existing state; it never advances or admits events.
       this.motion.update(
-        dt, time, FAMILY_FALLBACK[weaponFamily(def.id)], this.adsT, this.sprintBlend,
+        dt, time, weaponFamily(def.id), this.adsT, this.sprintBlend,
         this.bobPhase, this.bobScale, reloadPoseProgress, this.handLower,
         this.kickPitch, this.camera.rotation.x, this.camera.rotation.y,
-        this.crouched, move.prone === true,
+        this.crouched, move.prone === true, move.grounded,
       );
       cur.rig.hands?.updatePose?.(this.motion.crouch, this.motion.prone, this.handLower);
       this.tmpOffset.copy(this.motion.offset);
