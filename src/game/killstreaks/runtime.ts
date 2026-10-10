@@ -48,6 +48,7 @@ import { createCounterRecon, jamsTeam, stepCounterRecon, type CounterReconState 
 import { createSentry, stepSentry, validateSentryPlacement, type SentryState, type SentryTarget } from './effects/sentry';
 import { createMortar, stepMortar, type MortarState } from './effects/mortar';
 import { createDart, dartPaints, stepDart, type DartState } from './effects/dart';
+import { createScreen, publishScreenVolumes, screenVolumeEvents, stepScreen, type ScreenState } from './effects/screen';
 
 export { STREAK_CLAIM_REJECTS, STREAK_CLAIM_REJECT_LABELS, type ActivationContext, type StreakClaimReject } from './gate';
 
@@ -69,18 +70,19 @@ export const ADVANCE_DT_CAP_MS = 250;
 export const MAX_LADDER_KILLS = 100_000;
 
 /** The wiring table: the only place a streak id meets a stepper. */
-const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar' | 'dart'>> = Object.freeze({
+const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar' | 'dart' | 'screen'>> = Object.freeze({
   'recon-sweep': 'recon',
   'signal-jam': 'counter-recon',
   'sentry-post': 'sentry',
   'blast-mortar': 'mortar',
   'tracker-dart': 'dart',
+  'fallout-screen': 'screen',
 });
 
 /** Derived, never authored: what this build can bring into the world. */
 export const WIRED_STREAK_IDS: readonly string[] = Object.freeze(Object.keys(EFFECT_KIND));
 
-export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState | DartState;
+export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState | DartState | ScreenState;
 
 /** What the host must know about an actor for a sentry to shoot it. */
 export type StreakTarget = SentryTarget;
@@ -297,7 +299,7 @@ export class StreakRuntime {
     const kind = EFFECT_KIND[streakId];
     const anchor = intent.anchor ?? intent.origin;
     let placed: { x: number; y: number; z: number } | null = null;
-    if (kind === 'sentry' || kind === 'mortar' || kind === 'dart') {
+    if (kind === 'sentry' || kind === 'mortar' || kind === 'dart' || kind === 'screen') {
       const p = validateSentryPlacement(anchor.x, anchor.z, world);
       if (!p.ok) return reject('no-placement', streakId);
       placed = { x: p.x, y: p.y, z: p.z };
@@ -311,7 +313,7 @@ export class StreakRuntime {
     a.lastSeq = intent.seq;
     this.rememberClaim(intent.claimId);
 
-    this.live.set(instanceId, kind === 'recon'
+    const instance: LiveInstance = kind === 'recon'
       ? createRecon(instanceId, a.actorId, a.team, streakId, def.durationMs, seed)
       : kind === 'counter-recon'
         ? createCounterRecon(instanceId, a.actorId, a.team, streakId, def.durationMs)
@@ -319,12 +321,25 @@ export class StreakRuntime {
           ? createMortar(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
           : kind === 'dart'
             ? createDart(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
-            : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
+            : kind === 'screen'
+              ? createScreen(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, now)
+              : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed);
+    this.live.set(instanceId, instance);
+
+    // Screens exist as smoke from tick zero: publish to sight and announce
+    // the volumes beside the activation, so bots and the volumetric pass see
+    // the wall in the same event batch the HUD celebrates.
+    const extra: GameEvent[] = [];
+    if (instance.kind === 'screen') {
+      publishScreenVolumes(instance, world, now);
+      for (const v of screenVolumeEvents(instance, now)) extra.push(v);
+    }
 
     const e: StreakActivatedEvent = Object.freeze({ type: 'streak-activated', at: now, actorId: a.actorId, team: a.team, streakId, slot: intent.slot, chargesLeft, instanceId });
     a.cause = e;
     a.at = now;
-    return Object.freeze({ accepted: true as const, streakId, instanceId, chargesLeft, events: Object.freeze([e as GameEvent]) });
+    const all: GameEvent[] = [e as GameEvent, ...extra];
+    return Object.freeze({ accepted: true as const, streakId, instanceId, chargesLeft, events: Object.freeze(all) });
   }
 
   /**
@@ -350,7 +365,9 @@ export class StreakRuntime {
             ? stepMortar(instance, dt, { now, targets: aimed })
             : instance.kind === 'dart'
               ? stepDart(instance, dt, { now, world, targets: aimed })
-              : stepSentry(instance, dt, { now, world, targets: aimed });
+              : instance.kind === 'screen'
+                ? stepScreen(instance, dt, { now, world })
+                : stepSentry(instance, dt, { now, world, targets: aimed });
       for (const e of tick.events) {
         if (e.type === 'damage') health.set((e as DamageEvent).victimId, (e as DamageEvent).healthAfter);
         events.push(e);
