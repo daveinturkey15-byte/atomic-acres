@@ -32,7 +32,7 @@ import type { ShotClaim } from '../weapons/controller';
 import { BotDirector, nextBotTeam, type BotActorView } from './bots';
 import { loadLoadout, resolveLoadout } from './loadout';
 import { GameClient } from './client';
-import type { ActorId, GameEvent, TeamId, WorldQuery } from './events';
+import type { ActorId, GameEvent, TeamId, Vec3, WorldQuery } from './events';
 import { GameHost } from './host';
 import type { HostSnapshot, ShotAdmission } from './host-ports';
 import { STREAK_CATALOG } from './killstreaks/catalog';
@@ -88,7 +88,7 @@ export interface SoloDriver extends MatchDriver {
   /** The room integrated this seat to here. Called once per room tick. */
   remotePose(id: ActorId, x: number, y: number, z: number, yaw: number): void;
   remoteShot(id: ActorId, claim: ShotMsg, receivedAt: number): ShotAdmission | null;
-  remoteStreak(id: ActorId, slot: number, toggle: boolean): void;
+  remoteStreak(id: ActorId, slot: number, toggle: boolean, anchor?: Vec3 | null): void;
   /** Every event the host produced, after the local client has seen it. One sink. */
   setEventSink(sink: EventSink | null): void;
   matchState(): MatchStateMsg | null;
@@ -314,6 +314,9 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     pressStreak(slot): void {
       if (host !== null) host.submitStreakIntent(localId, { type: 'streak-intent', slot, toggle: false });
     },
+    pressStreakAt(slot, anchor): void {
+      if (host !== null) host.submitStreakIntent(localId, { type: 'streak-intent', slot, toggle: false, anchor });
+    },
 
     bots(): readonly BotBody[] {
       if (director !== null) {
@@ -371,8 +374,8 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       return host.submitShot(id, claim, receivedAt);
     },
 
-    remoteStreak(id, slot, toggle): void {
-      if (host !== null && seats.has(id)) host.submitStreakIntent(id, { type: 'streak-intent', slot, toggle });
+    remoteStreak(id, slot, toggle, anchor): void {
+      if (host !== null && seats.has(id)) host.submitStreakIntent(id, { type: 'streak-intent', slot, toggle, anchor: anchor ?? null });
     },
 
     setEventSink(s): void { sink = s; },

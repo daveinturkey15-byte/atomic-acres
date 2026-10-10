@@ -212,6 +212,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     pressStreak(slot): void {
       guest.sendGame({ type: 'streak-intent', slot, toggle: false });
     },
+    pressStreakAt(slot, anchor): void {
+      guest.sendGame({ type: 'streak-intent', slot, toggle: false, anchor });
+    },
 
     tick(now, x, y, z, yaw, pitch): void {
       if (disposed) return;

@@ -16,7 +16,7 @@
 import type { MatchStateMsg } from '../net/protocol';
 import type { ShotClaim } from '../weapons/controller';
 import type { GameClient } from './client';
-import type { ActorId, TeamId } from './events';
+import type { ActorId, TeamId, Vec3 } from './events';
 import type { HostStats } from './host-ports';
 
 /**
@@ -73,6 +73,12 @@ export interface MatchDriver {
   localShot(claim: ShotClaim): void;
   /** A streak key press from the human. */
   pressStreak(slot: number): void;
+  /**
+   * A streak press with an aimed ground placement from targeting mode.
+   * Instant streaks ignore the anchor path and keep `pressStreak`; the host
+   * re-validates placement before any charge moves, so this stays advisory.
+   */
+  pressStreakAt(slot: number, anchor: Vec3): void;
   bots(): readonly BotBody[];
   /** The authoritative snapshot (host drivers) or the guest's projection of it. */
   snapshot(): SessionSnapshot;

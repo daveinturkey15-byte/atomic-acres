@@ -102,7 +102,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
 
   const onGame = (playerId: string, msg: GameNetMessage): void => {
     if (msg.type === 'shot') solo.remoteShot(playerId, msg, performance.now());
-    else if (msg.type === 'streak-intent') solo.remoteStreak(playerId, msg.slot, msg.toggle);
+    else if (msg.type === 'streak-intent') solo.remoteStreak(playerId, msg.slot, msg.toggle, msg.anchor ?? null);
   };
 
   solo.setEventSink(sink);
@@ -121,6 +121,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
     snapshot: () => solo.snapshot(),
     localShot: (claim: ShotClaim) => solo.localShot(claim),
     pressStreak: (slot) => solo.pressStreak(slot),
+    pressStreakAt: (slot, anchor) => solo.pressStreakAt(slot, anchor),
     netLine(now): string | null {
       const s = room.diag.snapshot(now);
       const rtt = s.rttMs === null ? '--' : s.rttMs.toFixed(0);

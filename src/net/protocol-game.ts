@@ -89,7 +89,17 @@ export interface KillMsg { type: 'kill'; kill: KillEvent | null; death: DeathEve
 export interface SpawnMsg { type: 'spawn'; e: SpawnEvent }
 
 /** Guest -> host: a streak slot press. `toggle` is the gate's control-toggle exemption. */
-export interface StreakIntentMsg { type: 'streak-intent'; slot: number; toggle: boolean }
+export interface StreakIntentMsg {
+  type: 'streak-intent';
+  slot: number;
+  toggle: boolean;
+  /**
+   * Aimed ground placement from the presser's targeting mode, or absent/null
+   * for the legacy feet fallback. Advisory only: the host finite-guards it
+   * and the runtime re-validates placement before any charge moves.
+   */
+  anchor?: { x: number; y: number; z: number } | null;
+}
 
 /** One slot of the host streak ledger, projected onto the wire. */
 export interface StreakSlotState { streakId: string; slot: number; charges: number }
@@ -269,6 +279,17 @@ function isStreakSlot(v: unknown): boolean {
   );
 }
 
+/**
+ * Absent/null anchor (legacy feet fallback) or three finite metres. Finite,
+ * not safe-integer: world metres are fractional. Range clamping is the host's
+ * job at submit time; the wire only keeps NaN/Infinity/objects out.
+ */
+function isOptAnchor(v: unknown): boolean {
+  if (v === undefined || v === null) return true;
+  if (!isObj(v)) return false;
+  return Number.isFinite(v['x']) && Number.isFinite(v['y']) && Number.isFinite(v['z']);
+}
+
 function isScoreRow(v: unknown): boolean {
   return (
     isObj(v) &&
@@ -331,7 +352,7 @@ export function isGameMessage(m: Record<string, unknown>): boolean {
     case 'spawn':
       return isSpawnEvent(m['e']);
     case 'streak-intent':
-      return Number.isSafeInteger(m['slot']) && typeof m['toggle'] === 'boolean';
+      return Number.isSafeInteger(m['slot']) && typeof m['toggle'] === 'boolean' && isOptAnchor(m['anchor']);
     case 'streak-state':
       return (
         isNum(m['at']) &&
