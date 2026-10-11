@@ -69,6 +69,10 @@ export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
   // hidden state (`''`) stays distinguishable from it.
   let cScore: string | null = null;
   let cStreak: string | null = null;
+  // Previous per-slot charges, aligned with n.streakSlots. Lets a 0 -> >0
+  // transition flash once (hud-streak-new) without timers: still-ready on the
+  // next push drops back to plain hud-streak-ready. Null = nothing shown.
+  let cStreakCharges: readonly number[] | null = null;
   let cBannerText: string | null = null;
   let cBannerSub = '';
   let cRespawn = -2;
@@ -114,7 +118,9 @@ export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
       if (v === null) {
         if (cStreak === '') return;
         cStreak = '';
+        cStreakCharges = null;
         n.streak.classList.add('hud-hidden');
+        n.streak.classList.remove('hud-streak-anyready');
         return;
       }
       let sig = String(v.kills);
@@ -123,19 +129,32 @@ export function bindMatchSurfaces(n: HudNodes): MatchSurfaces {
       cStreak = sig;
       n.streak.classList.remove('hud-hidden');
       n.streakKills.textContent = String(v.kills);
+      const prev = cStreakCharges;
+      const next: number[] = [];
+      let anyReady = false;
       for (let i = 0; i < n.streakSlots.length; i++) {
         const el = n.streakSlots[i];
         const s = v.slots[i];
+        next.push(s ? s.charges : 0);
         if (!s) {
           el.classList.add('hud-hidden');
+          el.classList.remove('hud-streak-ready', 'hud-streak-new');
           continue;
         }
         el.classList.remove('hud-hidden');
-        el.classList.toggle('hud-streak-ready', s.charges > 0);
+        const ready = s.charges > 0;
+        if (ready) anyReady = true;
+        // One-update flash on the 0 -> >0 edge, timer-free and deterministic:
+        // a still-ready slot on the next push keeps the steady ready style.
+        const becameReady = ready && (prev === null || (prev[i] ?? 0) === 0);
+        el.classList.toggle('hud-streak-ready', ready);
+        el.classList.toggle('hud-streak-new', becameReady);
         const key = String(i + 3);
         el.textContent = key + ' ' + s.label + (s.charges > 1 ? ' x' + s.charges : '');
         el.title = `Press ${key}: ${s.label}${s.charges > 0 ? ` (${s.charges} ready)` : ''}`;
       }
+      n.streak.classList.toggle('hud-streak-anyready', anyReady);
+      cStreakCharges = next;
     },
 
     setBanner(text: string | null, sub = ''): void {
