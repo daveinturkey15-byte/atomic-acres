@@ -39,7 +39,7 @@ import {
 } from '../events';
 import type { StreakSlotState, StreakStateMsg } from '../../net/protocol';
 import {
-  DEFAULT_STREAK_LOADOUT, STREAK_CATALOG, streakById, validateStreakLoadout,
+  DEFAULT_STREAK_LOADOUT, REWARD_SOURCE_ID, STREAK_CATALOG, streakById, validateStreakLoadout,
   type StreakCatalog, type StreakLoadout,
 } from './catalog';
 import { evaluateActivation, rejectedOutcome, type ActivationContext, type StreakClaimReject } from './gate';
@@ -48,6 +48,7 @@ import { createCounterRecon, jamsTeam, stepCounterRecon, type CounterReconState 
 import { createSentry, stepSentry, validateSentryPlacement, type SentryState, type SentryTarget } from './effects/sentry';
 import { createMortar, stepMortar, type MortarState } from './effects/mortar';
 import { createDart, dartPaints, stepDart, type DartState } from './effects/dart';
+import { createSupply, stepSupply, type SupplyState } from './effects/supply';
 
 export { STREAK_CLAIM_REJECTS, STREAK_CLAIM_REJECT_LABELS, type ActivationContext, type StreakClaimReject } from './gate';
 
@@ -69,18 +70,19 @@ export const ADVANCE_DT_CAP_MS = 250;
 export const MAX_LADDER_KILLS = 100_000;
 
 /** The wiring table: the only place a streak id meets a stepper. */
-const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar' | 'dart'>> = Object.freeze({
+const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar' | 'dart' | 'supply'>> = Object.freeze({
   'recon-sweep': 'recon',
   'signal-jam': 'counter-recon',
   'sentry-post': 'sentry',
   'blast-mortar': 'mortar',
   'tracker-dart': 'dart',
+  'supply-crate': 'supply',
 });
 
 /** Derived, never authored: what this build can bring into the world. */
 export const WIRED_STREAK_IDS: readonly string[] = Object.freeze(Object.keys(EFFECT_KIND));
 
-export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState | DartState;
+export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState | DartState | SupplyState;
 
 /** What the host must know about an actor for a sentry to shoot it. */
 export type StreakTarget = SentryTarget;
@@ -297,7 +299,7 @@ export class StreakRuntime {
     const kind = EFFECT_KIND[streakId];
     const anchor = intent.anchor ?? intent.origin;
     let placed: { x: number; y: number; z: number } | null = null;
-    if (kind === 'sentry' || kind === 'mortar' || kind === 'dart') {
+    if (kind === 'sentry' || kind === 'mortar' || kind === 'dart' || kind === 'supply') {
       const p = validateSentryPlacement(anchor.x, anchor.z, world);
       if (!p.ok) return reject('no-placement', streakId);
       placed = { x: p.x, y: p.y, z: p.z };
@@ -319,7 +321,9 @@ export class StreakRuntime {
           ? createMortar(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
           : kind === 'dart'
             ? createDart(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
-            : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
+            : kind === 'supply'
+              ? createSupply(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed, a.loadout)
+              : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
 
     const e: StreakActivatedEvent = Object.freeze({ type: 'streak-activated', at: now, actorId: a.actorId, team: a.team, streakId, slot: intent.slot, chargesLeft, instanceId });
     a.cause = e;
@@ -342,6 +346,65 @@ export class StreakRuntime {
     const events: GameEvent[] = [];
     for (const [id, instance] of [...this.live]) {
       const aimed = targets.map((t) => ({ ...t, health: health.get(t.id) ?? t.health }));
+      if (instance.kind === 'supply') {
+        const tick = stepSupply(instance, dt, { now, targets: aimed });
+        const grant = tick.grant;
+        if (grant !== null) {
+          const opener = this.actors.get(grant.openerId);
+          // The crate was stocked from its OWNER's ladder, but the bonus must
+          // land in the OPENER's bank: remap a foreign grantId into the opener
+          // pool with the match seed so every host answers the same id. An
+          // opener with no grantable slot keeps the crate for the next toucher.
+          let grantId = grant.grantId;
+          if (opener !== undefined && opener.loadout.findIndex((entry) => entry === grantId) < 0) {
+            const pool = opener.loadout.filter((entry) => entry !== REWARD_SOURCE_ID);
+            const remapped = pool.length === 0 ? undefined : pool[hash32(this.seed, id, opener.actorId) % pool.length];
+            if (remapped === undefined) {
+              const left = instance.remainingMs - dt;
+              if (left > 0) {
+                this.live.set(id, Object.freeze({ ...tick.state, remainingMs: left }));
+                continue;
+              }
+              events.push(this.retire(id, tick.state, now, 'expired'));
+              continue;
+            }
+            grantId = remapped;
+          }
+          const slot = opener === undefined ? -1 : opener.loadout.findIndex((entry) => entry === grantId);
+          const held = opener === undefined ? 0 : (opener.charges.get(grantId) ?? 0);
+          // Ledger invariants, same as the ladder's Rule 2: the grant lands
+          // only in a loadout slot with room for one more charge. A capped,
+          // full-banked or unknown opener keeps the crate for the next
+          // toucher — relived with the time decayed, not zeroed.
+          if (opener !== undefined && slot >= 0 && held < MAX_CHARGES_PER_STREAK
+            && (held > 0 || opener.charges.size < MAX_BANKED_STREAKS)) {
+            const charges = held + 1;
+            opener.charges.set(grantId, charges);
+            const earned: StreakEarnedEvent = Object.freeze({
+              type: 'streak-earned', at: now, actorId: opener.actorId, team: opener.team,
+              streakId: grantId, slot: slot + 1, charges,
+            });
+            events.push(earned);
+            opener.cause = earned;
+            opener.at = now;
+            // Claimed, not timed out: `vocab.ts:STREAK_END_REASONS` has no
+            // word for "opened", and `destroyed` is its word for an entity
+            // removed by interaction rather than by the clock.
+            events.push(this.retire(id, tick.state, now, 'destroyed'));
+            continue;
+          }
+          const left = instance.remainingMs - dt;
+          if (left > 0) {
+            this.live.set(id, Object.freeze({ ...tick.state, remainingMs: left }));
+            continue;
+          }
+          events.push(this.retire(id, tick.state, now, 'expired'));
+          continue;
+        }
+        if (tick.state.remainingMs > 0) this.live.set(id, tick.state);
+        else events.push(this.retire(id, tick.state, now, 'expired'));
+        continue;
+      }
       const tick = instance.kind === 'recon'
         ? stepRecon(instance, dt, { now })
         : instance.kind === 'counter-recon'
