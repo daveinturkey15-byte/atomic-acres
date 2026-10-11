@@ -56,6 +56,27 @@ if (!handedness.every(Boolean)) {
 const world = createWorld(document.body);
 const mat = buildMaterials();
 const player = new Player(world.camera, world.renderer.domElement);
+// ---- First-paint budget. The static #start overlay parses early, but this
+// module then runs one long synchronous stretch (world + materials + ten
+// builders, then a 350 kB clip fetch, then rig construction) before the event
+// loop turns again, so a cold load sits unpainted until ALL of it resolves.
+// Two yields bracket the heavy phases so the menu paints first. `ready`
+// still flips last, so every harness gate measures the same complete world.
+const bootT0 = performance.now();
+const bootMs: Record<string, number> = {};
+// NOTE: executor form, not Promise.withResolvers — tsconfig lib is ES2022
+// and withResolvers is ES2024. Do not "modernise" without widening the lib.
+function nextPaint(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+  });
+}
+// Fire the clip fetch before the synchronous builder stretch so its network
+// time overlaps CPU work instead of serialising after it. Awaited below where
+// the clips are actually required; same promise, same bytes, earlier start.
+const clipsReady = loadBakedClips();
+bootMs['world'] = +(performance.now() - bootT0).toFixed(1);
+await nextPaint();
 
 const colliders: AABB[] = [];
 /** which module contributed colliders[i]. Answers "what IS that?" in one step
@@ -88,6 +109,8 @@ for (const [name, build] of BUILDERS) {
   };
 }
 player.setColliders(colliders);
+bootMs['builders'] = +(performance.now() - bootT0).toFixed(1);
+await nextPaint();
 
 // Characters lane, wired per the contract documented in src/characters/index.ts.
 // Materials are ctx.mat singletons: painted() with a new uniform set is fine, a new
@@ -95,9 +118,13 @@ player.setColliders(colliders);
 // so a figure cannot spawn inside a wall.
 // Baked Kimodo clips must be resident BEFORE the first CharacterSystem is built:
 // CharacterRig creates one AnimationAction per clip in its constructor. Fifteen
-// glTF clips, 350 kB, generated locally (public/anim/LICENCES.md). Top-level await
-// is fine here - tsconfig and vite both target es2022.
-await loadBakedClips();
+// glTF clips, 350 kB, generated locally (public/anim/LICENCES.md). The fetch
+// fired above the builder stretch (clipsReady) so its network time overlapped
+// CPU work; this await only pays the remainder. Top-level await is fine here -
+// tsconfig and vite both target es2022.
+const clipsT0 = performance.now();
+await clipsReady;
+bootMs['clips'] = +(performance.now() - clipsT0).toFixed(1);
 const characters = createCharacterSystem(world.scene, {
   // `material` is the shipped path: ONE ctx.mat singleton for the whole figure,
   // with the dress carried per-vertex by the baked skinned mesh, so a figure is
@@ -136,6 +163,7 @@ for (const [cx, cz, cyaw] of [
 ] as const) {
   characters.spawn(cx, cz, cyaw);
 }
+bootMs['characters'] = +(performance.now() - bootT0).toFixed(1);
 player.teleport(SPAWN_A.x, 0, SPAWN_A.z, SPAWN_A.yaw);
 // The trigger is a CLAIM, not a verdict: the host resolves damage (IMPORT-PLAN s2).
 let match: LocalMatch | null = null;
@@ -382,6 +410,8 @@ interface QA {
   stats: () => Record<string, unknown>;
   moduleStats: typeof moduleStats;
   colliderCount: number;
+  /** Cumulative boot phase timings in ms. Additive; harnesses ignore it. */
+  bootMs: Record<string, number>;
   render: () => void;
   probeReset: (x: number, z: number) => void;
   probeWalkTo: (tx: number, tz: number, maxSteps: number) => boolean;
@@ -397,6 +427,7 @@ interface QA {
   ordnance: () => Record<string, unknown>;
 }
 
+bootMs['total'] = +(performance.now() - bootT0).toFixed(1);
 const qa: QA = {
   ready: true,
   stations: STATIONS,
@@ -468,6 +499,8 @@ const qa: QA = {
   },
   moduleStats,
   colliderCount: colliders.length,
+  /** Cumulative boot phase timings (world/builders/clips/characters/total ms). */
+  bootMs,
   render() {
     // Must be world.render(), not renderer.render(): the capture harness drives
     // this, and for the whole life of the project it was photographing the scene
