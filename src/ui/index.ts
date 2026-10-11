@@ -63,7 +63,14 @@ export interface UiHandle {
   bindMatch(match: LocalMatch | null): void;
   /** Roster display names, id → name. The HUD never invents one. */
   setNames(names: Iterable<readonly [string, string]>): void;
+  /**
+   * Streak id in a 1-based loadout slot, from the last pushed client view.
+   * Targeting mode reads this to decide aim-vs-instant; null when unknown.
+   */
+  streakIdForSlot(slot: number): string | null;
 }
+/** Latest streak loadout order, refreshed by `pushView` every client tick. */
+let lastStreakIds: readonly string[] = [];
 
 /** Mode labels. A `Record<MatchMode, …>` so a new mode fails to compile here. */
 const MODE_LABEL: Record<MatchMode, string> = {
@@ -142,6 +149,7 @@ export function pushView(hud: HudApi, v: ClientView, names: ReadonlyMap<string, 
     kills: v.streak.kills,
     slots: v.streak.slots.map((s) => ({ label: streakById(s.streakId)?.displayName ?? s.streakId, charges: s.charges })),
   };
+  lastStreakIds = v.streak.slots.map((s) => s.streakId);
   hud.setStreak(v.streak.slots.length === 0 ? null : streak);
 }
 
@@ -191,6 +199,10 @@ export function initUI(deps: UiDeps): UiHandle {
     setNames(entries) {
       for (const [id, name] of entries) names.set(id, name);
       client?.setNames(entries);
+    },
+    streakIdForSlot(slot) {
+      if (!Number.isSafeInteger(slot) || slot < 1 || slot > lastStreakIds.length) return null;
+      return lastStreakIds[slot - 1] ?? null;
     },
   };
 

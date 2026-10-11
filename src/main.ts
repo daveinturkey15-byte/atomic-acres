@@ -19,6 +19,9 @@ import { createCharacterSystem, type CharacterHandle } from './characters';
 import { loadBakedClips } from './characters/kimodo-clips';
 import { createLocalMatch, type LocalMatch, type MatchUi } from './game/session';
 import { PAL } from './core/palette';
+import { streakById } from './game/killstreaks/catalog';
+import { createWorldQuery } from './game/world-query';
+import { StreakTargeting } from './ui/streak-targeting';
 
 import { buildGround } from './build/ground';
 import { buildOrangeHouse } from './build/orange-house';
@@ -180,6 +183,14 @@ const ordnance = new OrdnanceScene({ scene: world.scene, mat, colliders, hud: ga
 // Live smoke feed: game smoke events drive the volumetric pass (pull route,
 // zero alloc, no light-set change). Null client reads as empty.
 world.atmosphere.smoke.bind(() => ordnance.smokes);
+// ---- Killstreak targeting (aim → ghost → one click deploys). The query is a
+// second read-only port over the same collider array the session built its
+// own from; both answer groundY/inBounds off identical boxes, so the ghost's
+// green is the host's accept. Presentation only — the anchor stays advisory.
+const targetingQuery = createWorldQuery(colliders);
+const targeting = new StreakTargeting();
+world.scene.add(targeting.group);
+const aimDir = new THREE.Vector3();
 const matchUi: MatchUi = {
   bindClient: (c) => { ordnance.bind(c); ui.bindClient(c); },
   setNames: (n) => ui.setNames(n),
@@ -207,6 +218,31 @@ world.renderer.domElement.addEventListener('click', () => {
   startOverlay.style.display = 'none';
   match?.begin();
 });
+// ---- Killstreak targeting input. A second press of the armed slot (or Esc)
+// stands down with no press — a cancel is never a claim, and the host's
+// exactly-once window never sees it.
+function armStreakTargeting(slot: number): void {
+  if (match === null) return;
+  if (targeting.activeSlot === slot) {
+    targeting.cancel();
+    gameHud.setBanner(null);
+    return;
+  }
+  const id = ui.streakIdForSlot(slot);
+  if (id === null) {
+    targeting.cancel();
+    match.pressStreak(slot);
+    return;
+  }
+  const def = streakById(id);
+  if (def === null || (def.activation !== 'target-point' && def.activation !== 'target-line')) {
+    targeting.cancel();
+    match.pressStreak(slot);
+    return;
+  }
+  targeting.begin(slot, id);
+  gameHud.setBanner(`${def.displayName} — CLICK TO DEPLOY`, 'ESC CANCELS · RED RING = NO PLACEMENT');
+}
 // H toggles the key legend. Owned here, not in Player, because the legend is DOM.
 addEventListener('keydown', (e) => {
   if (e.code === 'KeyH' && !e.repeat) {
@@ -217,6 +253,18 @@ addEventListener('keydown', (e) => {
 // requestPointerLock) so capture-harness probes never trip on missing APIs.
 const canvas = world.renderer.domElement;
 canvas.addEventListener('mousedown', (e) => {
+  // Armed targeting eats the deploy click: valid anchor submits once and
+  // stands down; anything else holds the mode so the red ghost can explain.
+  // Either way an arming click never fires the weapon.
+  if (targeting.active && e.button === 0) {
+    const a = targeting.anchor();
+    if (a !== null && targeting.anchorValid() && match !== null) {
+      match.pressStreakAt(targeting.activeSlot, { x: a.x, y: a.y, z: a.z });
+      targeting.cancel();
+      gameHud.setBanner(null);
+    }
+    return;
+  }
   try {
     if (e.button === 0 || e.button === 2) weapons.pointerDown(e.button);
   } catch { /* headless: no pointer, no weapon input */ }
@@ -239,8 +287,14 @@ addEventListener('keydown', (e) => {
   }
   // 3-6 are the four killstreak slots. A press always answers, even when it
   // is refused - a dead key is the defect IMPORT-PLAN s5.4 is written about.
+  // Target-point / target-line slots arm the aim ghost instead of firing at
+  // the feet; the deploy click submits the anchor. Instant slots press direct.
   const slot = ['Digit3', 'Digit4', 'Digit5', 'Digit6'].indexOf(e.code);
-  if (slot >= 0) match?.pressStreak(slot + 1);
+  if (slot >= 0) armStreakTargeting(slot + 1);
+  if (e.code === 'Escape' && targeting.active) {
+    targeting.cancel();
+    gameHud.setBanner(null);
+  }
 });
 addEventListener('keyup', (e) => {
   try { weapons.keyUp(e.code); } catch { /* headless-safe */ }
@@ -327,6 +381,13 @@ function frame(): void {
     const st = player.state;
     match.tick(now, st.pos.x, st.pos.y, st.pos.z, st.yaw, st.pitch);
     ordnance.update(dt, now, st.pos.x, st.pos.y, st.pos.z);
+    // Armed streak ghost rides the view ray. Camera already synced by
+    // player.update above, so its position IS the eye and its -Z IS the aim.
+    if (targeting.active) {
+      world.camera.getWorldDirection(aimDir);
+      const cp = world.camera.position;
+      targeting.update(cp.x, cp.y, cp.z, aimDir.x, aimDir.y, aimDir.z, targetingQuery);
+    }
     for (const b of match.bots()) {
       let h = botBodies.get(b.id);
       if (!h) { h = characters.spawn(b.x, b.z, b.yaw); botBodies.set(b.id, h); }

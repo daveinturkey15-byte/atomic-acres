@@ -30,7 +30,7 @@ import { LobbySession } from '../net/lobby-session';
 import { createHostDriver } from '../net/match-host';
 import { createGuestDriver } from '../net/match-guest';
 import { MAX_PLAYERS } from '../net/protocol';
-import type { ActorId } from './events';
+import type { ActorId, Vec3 } from './events';
 import { DEFAULT_SOLO_SETUP, TEAM_A, sanitizeSoloSetup, type SoloSetup } from './rules';
 import { createSessionLog } from './session-log';
 import { createSoloDriver, REMATCH_MS } from './session-solo';
@@ -192,6 +192,7 @@ export function createLocalMatch(opts: LocalMatchOptions): LocalMatch {
 
     localShot(claim: ShotClaim): void { driver?.localShot(claim); },
     pressStreak(slot): void { driver?.pressStreak(slot); },
+    pressStreakAt(slot, anchor): void { driver?.pressStreakAt(slot, anchor); },
     bots(): readonly BotBody[] { return driver === null ? NO_BODIES : driver.bots(); },
     snapshot(): SessionSnapshot {
       if (driver === null) throw new Error('[session] no match yet - call begin() first');

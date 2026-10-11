@@ -69,7 +69,23 @@ const WEAPON_BY_ID: ReadonlyMap<string, WeaponDef> = new Map(WEAPONS.map((w) => 
 /** The one shape of "yes". A refusal always carries its reason and label. */
 const ADMITTED: ShotAdmission = Object.freeze({ accepted: true, reason: null, label: null });
 
-/** mulberry32. Small, seeded, and NOT `Math.random` — the world is deterministic. */
+/** Absolute wire-anchor clamp, metres. Inside it every arena fits twice over. */
+const ANCHOR_CLAMP_M = 500;
+/**
+ * Wire anchor → press anchor. Non-finite or missing components fall back to
+ * null (the feet placement the runtime has always used); finite ones are
+ * clamped so a forged value stays on speakable ground. Bounds and footing
+ * are still the runtime's `validateSentryPlacement` call, not this.
+ */
+function cleanAnchor(a: StreakIntentMsg['anchor']): { x: number; y: number; z: number } | null {
+  if (a === undefined || a === null) return null;
+  if (!Number.isFinite(a.x) || !Number.isFinite(a.y) || !Number.isFinite(a.z)) return null;
+  return {
+    x: Math.max(-ANCHOR_CLAMP_M, Math.min(ANCHOR_CLAMP_M, a.x)),
+    y: Math.max(-ANCHOR_CLAMP_M, Math.min(ANCHOR_CLAMP_M, a.y)),
+    z: Math.max(-ANCHOR_CLAMP_M, Math.min(ANCHOR_CLAMP_M, a.z)),
+  };
+}
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
@@ -170,13 +186,17 @@ export class GameHost {
     const a = this.life.actors.get(id);
     if (!a) return null;
     const p = a.poses.at(this.clock);
+    // Advisory aimed placement. Finite-guarded and range-clamped HERE so a
+    // forged wire value can at worst shift a placement the runtime then
+    // re-validates before any charge moves — never NaN, never off-world.
+    const anchor = cleanAnchor(msg.anchor);
     const press = {
       actorId: id, slot: msg.slot, toggle: msg.toggle === true,
       life: a.health.life, seq: ++a.streakSeq,
       claimId: streakClaimId(id, a.health.life, a.streakSeq),
       alive: a.health.alive, matchPhase: this.match.phase,
       origin: p === null ? { x: 0, y: 0, z: 0 } : { x: p.x, y: p.y, z: p.z },
-      aimYaw: a.yaw, anchor: null,
+      aimYaw: a.yaw, anchor,
     };
     // §5.4: a player-initiated action never fails silently, not even when the
     // lane that would satisfy it is absent.
