@@ -39,9 +39,9 @@ export interface SettingsPanel {
   capturing(): boolean;
 }
 
-export const SETTINGS_TABS = ['graphics', 'controls', 'audio', 'access'] as const;
+export const SETTINGS_TABS = ['graphics', 'controls', 'audio', 'access', 'network'] as const;
 export type SettingsTab = (typeof SETTINGS_TABS)[number];
-const TAB_LABEL: Record<SettingsTab, string> = { graphics: 'Graphics', controls: 'Controls', audio: 'Audio', access: 'Accessibility' };
+const TAB_LABEL: Record<SettingsTab, string> = { graphics: 'Graphics', controls: 'Controls', audio: 'Audio', access: 'Accessibility', network: 'Network' };
 
 function stop(e: Event): void {
   e.stopPropagation();
@@ -169,6 +169,25 @@ export function buildSettingsPanel(deps: SettingsPanelDeps): SettingsPanel {
     return sel;
   }
 
+  function field(
+    into: HTMLElement, label: string, type: string, max: number,
+    get: (s: Settings) => string, patch: (v: string) => Partial<Settings>,
+  ): void {
+    const row = document.createElement('label');
+    row.className = 'aa-setting aa-setting-row';
+    const name = document.createElement('span');
+    name.textContent = label;
+    const input = document.createElement('input');
+    input.type = type;
+    input.maxLength = max;
+    input.setAttribute('aria-label', label);
+    input.addEventListener('click', stop);
+    input.addEventListener('change', (e) => { stop(e); deps.write(patch(input.value)); });
+    row.append(name, input);
+    into.append(row);
+    refreshers.push(() => { if (document.activeElement !== input) input.value = get(deps.read()); });
+  }
+
   const one = (v: number): string => v.toFixed(1);
   const pct = (v: number): string => Math.round(v * 100) + '%';
   const cap = (s: string): string => s[0].toUpperCase() + s.slice(1);
@@ -223,6 +242,15 @@ export function buildSettingsPanel(deps: SettingsPanelDeps): SettingsPanel {
   toggle(x, 'reducedMotion', 'Reduced motion', (s) => s.reducedMotion, (v) => ({ reducedMotion: v }));
   slider(x, 'damageFlashScale', 'Damage flash', 0, 1, 0.05, (s) => s.damageFlashScale, (v) => ({ damageFlashScale: v }), pct);
   slider(x, 'weaponMotionScale', 'Weapon motion', 0, 1, 0.05, (s) => s.weaponMotionScale, (v) => ({ weaponMotionScale: v }), pct);
+  // ---- network: ICE only (no graphics knob; qualityOf untouched) ------------
+  const n = page('network');
+  const nh = document.createElement('div');
+  nh.className = 'aa-hint';
+  nh.textContent = 'STUN is on by default; TURN stays empty until you paste your own below.';
+  n.append(nh);
+  field(n, 'TURN URL', 'text', 256, (s) => s.turnUrl, (v) => ({ turnUrl: v }));
+  field(n, 'TURN username', 'text', 64, (s) => s.turnUsername, (v) => ({ turnUsername: v }));
+  field(n, 'TURN credential', 'password', 256, (s) => s.turnCredential, (v) => ({ turnCredential: v }));
 
   showTab(current);
   const refresh = (): void => {

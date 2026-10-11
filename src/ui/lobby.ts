@@ -19,6 +19,7 @@ import { LINK_LABELS, LINK_TIERS } from '../net/lobby-session';
 import { LOBBY_CAPACITIES, SOLO_MAX_BOTS, type SoloSetup } from '../game/rules';
 import { formatClock } from '../game/match';
 import type { Settings } from './settings';
+import { iceServersFor } from './settings';
 
 export interface LobbyPanelDeps {
   session(): LobbySession | null;
@@ -162,21 +163,23 @@ export function buildLobbyPanel(deps: LobbyPanelDeps): LobbyPanel {
     const s = deps.session();
     if (s === null) return;
     const st = deps.settings();
-    s.host({ name: st.callsign, tier: st.linkTier, signalUrl: st.signalUrl, capacity: Number(cap.value), bots: Number(bots.value) });
+    s.host({ name: st.callsign, tier: st.linkTier, signalUrl: st.signalUrl, iceServers: iceServersFor(st), capacity: Number(cap.value), bots: Number(bots.value) });
     refresh();
   }
   function join(): void {
     const s = deps.session();
     if (s === null) return;
     const st = deps.settings();
-    s.join(code.value, { name: st.callsign, tier: st.linkTier, signalUrl: st.signalUrl });
+    s.join(code.value, { name: st.callsign, tier: st.linkTier, signalUrl: st.signalUrl, iceServers: iceServersFor(st) });
     refresh();
   }
   function rejoin(): void {
     const s = deps.session();
     const c = s?.rejoinCandidate() ?? null;
     if (s === null || c === null) return;
-    s.join(c.code, { name: c.name, tier: c.tier, signalUrl: c.signalUrl });
+    // TURN belongs to the present, not the saved room: rebuild ICE from
+    // current settings so rotated credentials take effect on rejoin.
+    s.join(c.code, { name: c.name, tier: c.tier, signalUrl: c.signalUrl, iceServers: iceServersFor(deps.settings()) });
     refresh();
   }
 

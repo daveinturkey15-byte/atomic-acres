@@ -25,6 +25,10 @@
  *   reducedMotion, damageFlashScale       — `ui/hud.ts`.
  *   weaponMotionScale                     — NOBODY YET (weapons lane's one-line read).
  *   netOverlay, callsign, linkTier, signalUrl — the menu and the lobby.
+ *   turnUrl, turnUsername, turnCredential — the lobby's ICE list
+ *     (`iceServersFor`, below). STUN is always on; TURN stays empty until the
+ *     owner pastes his own. The whole record persists in localStorage, so the
+ *     TURN credential is stored beside the callsign, not in code.
  */
 
 import { DEFAULT_BINDINGS, sanitizeBindings, type Bindings } from './bindings';
@@ -111,6 +115,17 @@ export interface Settings extends Accessibility, GraphicsKnobs {
   callsign: string;
   linkTier: LinkTierSetting;
   signalUrl: string;
+  /**
+   * Optional TURN server for play across NATs. Default '' (unused): with no
+   * TURN the ICE list is STUN-only and LAN/tabs behave exactly as today.
+   * Sanitised like `signalUrl` (URL origin) for http(s), kept verbatim for
+   * `turn:`/`turns:` URIs, anything else reset to ''.
+   */
+  turnUrl: string;
+  /** TURN username. Plain string, trimmed, capped at 64. Default ''. */
+  turnUsername: string;
+  /** TURN credential. Plain string, length-capped at 256, never trimmed. Default ''. */
+  turnCredential: string;
   reducedMotion: boolean;
   damageFlashScale: number;
   weaponMotionScale: number;
@@ -132,6 +147,9 @@ export const DEFAULT_SETTINGS: Settings = Object.freeze({
   callsign: 'player',
   linkTier: 'tabs' as LinkTierSetting,
   signalUrl: 'http://127.0.0.1:4310',
+  turnUrl: '',
+  turnUsername: '',
+  turnCredential: '',
   reducedMotion: false,
   damageFlashScale: 1,
   weaponMotionScale: 1,
@@ -171,6 +189,23 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
       signalUrl = d.signalUrl;
     }
   }
+  let turnUrl = '';
+  if (typeof r['turnUrl'] === 'string' && r['turnUrl'].trim() !== '') {
+    const rawTurn = r['turnUrl'].trim();
+    if (/^turns?:/i.test(rawTurn)) {
+      // A TURN URI is not an http(s) origin; keep it verbatim, capped.
+      turnUrl = rawTurn.slice(0, 256);
+    } else {
+      try {
+        const origin = new URL(rawTurn).origin;
+        turnUrl = origin === 'null' ? '' : origin;
+      } catch {
+        turnUrl = '';
+      }
+    }
+  }
+  const turnUsername = typeof r['turnUsername'] === 'string' ? r['turnUsername'].trim().slice(0, 64) : '';
+  const turnCredential = typeof r['turnCredential'] === 'string' ? r['turnCredential'].slice(0, 256) : '';
   return {
     sensitivity: num(r['sensitivity'], 0.1, 5, d.sensitivity),
     invertY: bool(r['invertY'], d.invertY),
@@ -187,6 +222,9 @@ export function sanitizeSettings(raw: Partial<Settings> | Record<string, unknown
     callsign: callsign || d.callsign,
     linkTier: r['linkTier'] === 'lan' ? 'lan' : 'tabs',
     signalUrl,
+    turnUrl,
+    turnUsername,
+    turnCredential,
     // A first-time player inherits the OS reduced-motion preference rather
     // than being shown flashes once and asked to opt out afterwards.
     reducedMotion: typeof r['reducedMotion'] === 'boolean' ? r['reducedMotion'] : prefersReducedMotion(),
@@ -202,6 +240,30 @@ export function accessibilityOf(s: Settings): Accessibility {
     damageFlashScale: s.damageFlashScale,
     weaponMotionScale: s.weaponMotionScale,
   };
+}
+
+// ---------------------------------------------------------------------------
+// ICE servers: the lobby's WebRTC list, derived from settings, never stored.
+// ---------------------------------------------------------------------------
+
+/** The STUN server every room uses, with or without TURN. */
+export const DEFAULT_STUN_URL = 'stun:stun.l.google.com:19302';
+
+/**
+ * The `RTCPeerConnection` ICE list for these settings: always STUN, plus the
+ * TURN entry only when the owner pasted a `turnUrl`. Pure: no DOM, no
+ * storage, so the LAN/tabs path with TURN empty is byte-identical to today.
+ */
+export function iceServersFor(s: Settings): RTCIceServer[] {
+  const servers: RTCIceServer[] = [{ urls: [DEFAULT_STUN_URL] }];
+  if (s.turnUrl !== '') {
+    servers.push({
+      urls: [s.turnUrl],
+      username: s.turnUsername || undefined,
+      credential: s.turnCredential || undefined,
+    });
+  }
+  return servers;
 }
 
 /** The four graphics knobs of a preset, as a settings patch. */
