@@ -46,6 +46,8 @@ export * from './host-ports';
 export * from './host-streaks';
 
 import { WEAPONS, type WeaponDef } from '../weapons/catalog';
+import { resolveDamage } from './damage';
+import { wallThicknessM } from './world-query';
 import {
   SHOT_REJECT_LABELS,
   type ActorId, type GameEvent, type StreakDenialReason, type TeamId, type WorldQuery,
@@ -246,12 +248,43 @@ export class GameHost {
       if (pose !== null) candidates.push({ id: v.id, pose });
     }
     // Geometry last: the actor sweep is the cheap test that can refuse, and
-    // `lineOfSight` is the expensive one. A wall between them is a miss.
+    // `lineOfSight` is the expensive one. A wall between them is a miss —
+    // unless the round defeats it: a blocked ray still lands when the gun's
+    // `penetrationM` covers `wallThicknessM` from muzzle to hit, at halved
+    // damage (`damage.ts:wallbang`). A 0 budget never wallbangs, and an
+    // unmeasurable wall (null) stays a miss.
     const hit = pickTarget(claim, candidates);
     const victim = hit === null ? undefined : this.life.actors.get(hit.id);
-    if (hit !== null && victim !== undefined &&
-        this.world.lineOfSight({ x: claim.ox, y: claim.oy, z: claim.oz }, { x: hit.x, y: hit.y, z: hit.z })) {
+    const muzzle = { x: claim.ox, y: claim.oy, z: claim.oz };
+    const point = hit === null ? null : { x: hit.x, y: hit.y, z: hit.z };
+    if (hit !== null && victim !== undefined && point !== null && this.world.lineOfSight(muzzle, point)) {
       this.life.hit(victim, shooter, hit.zone, hit.distance, claim.weaponId, 'bullet', receivedAt, claim.ox, claim.oz);
+      return ADMITTED;
+    }
+    if (hit !== null && victim !== undefined && point !== null) {
+      const def = WEAPON_BY_ID.get(claim.weaponId);
+      const thickness = def !== undefined && def.penetrationM > 0
+        ? wallThicknessM(this.world, muzzle, point)
+        : null;
+      if (def !== undefined && thickness !== null && thickness <= def.penetrationM) {
+        // The number `life.hit` would have computed on the clear path, halved:
+        // replicate its input (the hostility verdict, the bot handicap) with
+        // `wallbang` set, and write the admitted amount down the pre-resolved
+        // seam — the one channel into `hit` that carries a computed number.
+        // Refused (spawn protection, friendly) stays out: no event, no stat.
+        const hostile = this.areHostile(shooter, victim);
+        const res = resolveDamage({
+          def, distance: hit.distance, zone: hit.zone, cause: 'bullet',
+          attackerTeam: shooter.team, victimTeam: victim.team,
+          victimInvulnUntil: victim.health.invulnerableUntil, now: receivedAt,
+          friendlyFire: hostile || this.rules.friendlyFire,
+          attackerIsBot: shooter.bot === true && !victim.bot,
+          wallbang: true,
+        });
+        if (res.blocked === undefined) {
+          this.life.hit(victim, shooter, hit.zone, hit.distance, claim.weaponId, 'bullet', receivedAt, claim.ox, claim.oz, res.damage);
+        }
+      }
     }
     return ADMITTED;
   }
