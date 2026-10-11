@@ -136,6 +136,10 @@ export const BOT_EXCLUDED_WEAPON_IDS: readonly string[] = Object.freeze([
   // The pistol is every kit's sidearm (`game/loadout.ts:SIDEARM_IDS`); a bot
   // that drew it as a primary would be carrying the backup gun and nothing else.
   'duster',
+  // Rare map pickups (`game/loadout.ts:PICKUP_ONLY_IDS`): earned off a
+  // pedestal by a player, never dealt from the arsenal.
+  'railgun',
+  'flamethrower',
 ]);
 
 /** Guard against the exclusion list going stale, which is the §5.5 failure in

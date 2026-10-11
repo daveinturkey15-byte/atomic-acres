@@ -13,9 +13,9 @@ function check(name: string, cond: boolean): void {
 }
 
 const ids = WEAPONS.map((w) => w.id);
-check('seven guns ship', WEAPONS.length === 7);
+check('nine guns ship', WEAPONS.length === 9);
 check('ids unique', new Set(ids).size === ids.length);
-for (const id of ['longhorn', 'rattler', 'coachman', 'deadeye', 'duster', 'stampede', 'varmint']) {
+for (const id of ['longhorn', 'rattler', 'coachman', 'deadeye', 'duster', 'stampede', 'varmint', 'railgun', 'flamethrower']) {
   check(`roster keeps ${id}`, ids.includes(id));
 }
 
@@ -54,6 +54,37 @@ if (varmint !== undefined) {
     check('varmint cycles faster than the bolt', varmint.interval < deadeye.interval);
     check('varmint aims tighter than the bolt class below it', varmint.adsFov > deadeye.adsFov);
   }
+}
+
+// Railgun: the instant-fire rare (old RAILGUN_DAMAGE 50, RAILGUN_RECHAMBER_MS
+// 1500, RAILGUN_TOTAL_ROUNDS 8). Semi at a 1.5 s rechamber, flat 50 to any
+// range the map can show, an 8-round pool with no reserve to reload from.
+// No charge state: the controller's tryFire branch fires it on pull already.
+const railgun = byId('railgun');
+check('railgun exists', railgun !== undefined);
+if (railgun !== undefined) {
+  check('railgun is instant-fire semi at ~40 rpm', !railgun.auto && Math.abs(railgun.interval - 1.5) < 1e-9);
+  check('railgun carries 8+0', railgun.magSize === 8 && railgun.startReserve === 0);
+  check('railgun hits a flat 50 up close', damageAt(railgun, 10) === 50);
+  check('railgun hits a flat 50 past 512 m', damageAt(railgun, 600) === 50);
+  check('railgun reload punishes the empty tank', railgun.reloadTime >= 1.5 && railgun.emptyReloadTime > railgun.reloadTime);
+  check('railgun blooms nothing', railgun.spread.bloom === 0 && railgun.spread.bloomMax === 0);
+  check('railgun recoils pitch-only', railgun.recoil.yawRandom === 0 && railgun.recoil.patternAmp === 0);
+}
+
+// Flamethrower: the timed-map hose (old 100-round tank, pickup-only). Auto at
+// 600 rpm, full damage inside 8 m, nothing past 18 m, a 100-round tank with
+// no reserve, and the slowest reload on the roster.
+const flamethrower = byId('flamethrower');
+check('flamethrower exists', flamethrower !== undefined);
+if (flamethrower !== undefined) {
+  check('flamethrower is automatic at 600 rpm', flamethrower.auto && Math.abs(flamethrower.interval - 0.1) < 1e-9);
+  check('flamethrower carries the 100-tank', flamethrower.magSize === 100 && flamethrower.startReserve === 0);
+  check('flamethrower hits 81 inside 8 m', damageAt(flamethrower, 5) === 81);
+  check('flamethrower falls to 0 past 18 m', damageAt(flamethrower, 30) === 0);
+  const mid = damageAt(flamethrower, 13);
+  check('flamethrower falls off monotonically', mid < 81 && mid > 0);
+  check('flamethrower reload punishes the tank', flamethrower.reloadTime >= 3.8 && flamethrower.emptyReloadTime > flamethrower.reloadTime);
 }
 
 // Every gun: the controller's timer and HUD math stay finite.

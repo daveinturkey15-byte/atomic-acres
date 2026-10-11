@@ -35,6 +35,15 @@ export const DROP_SCAVENGE_VERTICAL_M = 2.4;
 export const DROP_PROMPT_RANGE_M = 6;
 /** Grenade pouches on a fresh drop. Old `replenishGrenadeFromCorpse`: one corpse, one grenade. */
 export const DROP_GRENADE_POUCHES = 1;
+/** `RAILGUN_PICKUP_RANGE` / `TIMED_MAP_WEAPON_PICKUP_RANGE`: the old 2.65 m
+ * claim reach both rare map weapons shared. Map pickups use this; death
+ * drops keep `DROP_SWAP_RANGE_M` above. */
+export const RARE_PICKUP_RANGE_M = 2.65;
+/** Map pickups never expire (`dropExpired` exempts them by flag); `diesAt` is
+ * a far-future sentinel so countdown, display and wire math stay finite. */
+export const MAP_PICKUP_LIFETIME_MS = 86_400_000;
+/** `ownerId` carried on a house-spawned map pickup, which has no corpse. */
+export const MAP_PICKUP_OWNER_ID = 'map';
 
 const WEAPON_BY_ID: ReadonlyMap<string, WeaponDef> = new Map(WEAPONS.map((w) => [w.id, w]));
 
@@ -57,6 +66,9 @@ export interface Drop {
   x: number; y: number; z: number;
   readonly bornAt: number;
   diesAt: number;
+  /** House-spawned rare: never expires and never counts toward the death cap.
+   * Cleared by `swap`, which turns the pedestal into ordinary loot. */
+  isMapPickup: boolean;
 }
 
 export function createDrop(
@@ -70,10 +82,23 @@ export function createDrop(
     grenades: DROP_GRENADE_POUCHES,
     x: Number.isFinite(x) ? x : 0, y: Number.isFinite(y) ? y : 0, z: Number.isFinite(z) ? z : 0,
     bornAt: now, diesAt: now + DROP_LIFETIME_MS,
+    isMapPickup: false,
   };
 }
 
+/** A house-spawned rare pickup: full issue, no corpse, no expiry, no cap. */
+export function createMapDrop(
+  id: number, weaponId: string, rounds: number,
+  x: number, y: number, z: number, now: number,
+): Drop {
+  const d = createDrop(id, MAP_PICKUP_OWNER_ID, weaponId, rounds, x, y, z, now);
+  d.isMapPickup = true;
+  d.diesAt = now + MAP_PICKUP_LIFETIME_MS;
+  return d;
+}
+
 export function dropExpired(d: Drop, now: number): boolean {
+  if (d.isMapPickup) return false;
   return now >= d.diesAt;
 }
 
@@ -172,7 +197,14 @@ export function swap(d: Drop, carry: Carry, feetX: number, feetY: number, feetZ:
   const taken: Swapped = { weaponId: d.weaponId, rounds: d.rounds, leftWeaponId: carry.primaryId };
   d.weaponId = carry.primaryId;
   d.rounds = Math.max(0, Math.min(fullRounds(carry.primaryId), Math.floor(carry.rounds)));
-  d.x = feetX; d.y = feetY; d.z = feetZ;
+  if (d.isMapPickup) {
+    // A pedestal claim: the rare gun leaves, yours stays where the pedestal
+    // was instead of teleporting to your feet, and the drop becomes ordinary
+    // loot with a fresh lifetime, so you can swap straight back.
+    d.isMapPickup = false;
+  } else {
+    d.x = feetX; d.y = feetY; d.z = feetZ;
+  }
   d.diesAt = now + DROP_LIFETIME_MS;
   return taken;
 }
