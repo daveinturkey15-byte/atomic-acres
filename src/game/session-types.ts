@@ -73,6 +73,13 @@ export interface MatchDriver {
   localShot(claim: ShotClaim): void;
   /** A streak key press from the human. */
   pressStreak(slot: number): void;
+  /**
+   * A streak press with an aimed ground placement (and optional gunner
+   * caliber) from a targeting surface or a possessed gun. Advisory: the
+   * host finite-guards it and the runtime re-validates before anything
+   * moves or fires.
+   */
+  pressStreakAt(slot: number, anchor: { x: number; y: number; z: number }, gun?: string | null): void;
   bots(): readonly BotBody[];
   /** The authoritative snapshot (host drivers) or the guest's projection of it. */
   snapshot(): SessionSnapshot;

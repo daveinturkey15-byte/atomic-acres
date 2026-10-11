@@ -89,7 +89,23 @@ export interface KillMsg { type: 'kill'; kill: KillEvent | null; death: DeathEve
 export interface SpawnMsg { type: 'spawn'; e: SpawnEvent }
 
 /** Guest -> host: a streak slot press. `toggle` is the gate's control-toggle exemption. */
-export interface StreakIntentMsg { type: 'streak-intent'; slot: number; toggle: boolean }
+export interface StreakIntentMsg {
+  type: 'streak-intent';
+  slot: number;
+  toggle: boolean;
+  /**
+   * Aimed ground placement (targeting surfaces, gunner fire missions), or
+   * absent/null for the legacy feet fallback. Advisory: finite-guarded by
+   * the host, re-validated by the runtime before anything moves.
+   */
+  anchor?: { x: number; y: number; z: number } | null;
+  /**
+   * Gunner fire caliber for possessed gunships ('105mm' | '40mm' | '25mm').
+   * Absent except on gunner fire missions; membership enforced by the
+   * runtime that owns the calibers, never here.
+   */
+  gun?: string | null;
+}
 
 /** One slot of the host streak ledger, projected onto the wire. */
 export interface StreakSlotState { streakId: string; slot: number; charges: number }
@@ -149,6 +165,24 @@ export interface MatchStateMsg {
  * ordnance lane's report.
  */
 export interface OrdnanceMsg { type: 'ordnance'; e: OrdnanceEvent }
+/**
+ * Host -> all: one live gunship pose per room tick (CHOPPER LANE, additive).
+ * Positions are the host sim's closed-form answer, not a claim: guests never
+ * steer by them, they render the camera and the HUD from them. Counters are
+ * frozen host-domain values like the match-state clock (never Infinity,
+ * never NaN). `cx/cz` is the orbit centre: the gunner camera aims at the
+ * anchor-side ground point, which no single pose can locate alone.
+ */
+export interface StreakPoseMsg {
+  type: 'streak-pose';
+  instanceId: number;
+  streakId: string;
+  x: number; y: number; z: number; yaw: number;
+  cx: number; cz: number;
+  remainingMs: number;
+  rocketsLeft: number;
+  cooldownMs: number;
+}
 
 /** Every gameplay discriminant. `protocol.ts` routes these tags to `isGameMessage`. */
 export const GAME_MESSAGE_TYPES = [
@@ -159,8 +193,8 @@ export const GAME_MESSAGE_TYPES = [
   'spawn',
   'streak-intent',
   'streak-state',
+  'streak-pose',
   'match-state',
-  'ordnance',
 ] as const;
 export type GameMessageType = (typeof GAME_MESSAGE_TYPES)[number];
 
@@ -172,6 +206,7 @@ export type GameNetMessage =
   | SpawnMsg
   | StreakIntentMsg
   | StreakStateMsg
+  | StreakPoseMsg
   | MatchStateMsg
   | OrdnanceMsg;
 
@@ -268,6 +303,22 @@ function isStreakSlot(v: unknown): boolean {
     Number.isSafeInteger(v['charges'])
   );
 }
+/**
+ * Absent/null anchor (legacy feet fallback) or three finite metres. Finite,
+ * not safe-integer: world metres are fractional. Range clamping is the
+ * host's job at submit time; the wire only keeps NaN/Infinity/objects out.
+ */
+function isOptAnchor(v: unknown): boolean {
+  if (v === undefined || v === null) return true;
+  if (!isObj(v)) return false;
+  return Number.isFinite(v['x']) && Number.isFinite(v['y']) && Number.isFinite(v['z']);
+}
+
+/** Absent/null gun, or a short caliber tag (membership is the runtime's). */
+function isOptGun(v: unknown): boolean {
+  if (v === undefined || v === null) return true;
+  return typeof v === 'string' && v.length >= 1 && v.length <= 16;
+}
 
 function isScoreRow(v: unknown): boolean {
   return (
@@ -331,7 +382,8 @@ export function isGameMessage(m: Record<string, unknown>): boolean {
     case 'spawn':
       return isSpawnEvent(m['e']);
     case 'streak-intent':
-      return Number.isSafeInteger(m['slot']) && typeof m['toggle'] === 'boolean';
+      return Number.isSafeInteger(m['slot']) && typeof m['toggle'] === 'boolean'
+        && isOptAnchor(m['anchor']) && isOptGun(m['gun']);
     case 'streak-state':
       return (
         isNum(m['at']) &&

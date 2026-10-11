@@ -102,7 +102,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
 
   const onGame = (playerId: string, msg: GameNetMessage): void => {
     if (msg.type === 'shot') solo.remoteShot(playerId, msg, performance.now());
-    else if (msg.type === 'streak-intent') solo.remoteStreak(playerId, msg.slot, msg.toggle);
+    else if (msg.type === 'streak-intent') solo.remoteStreak(playerId, msg.slot, msg.toggle, msg.anchor ?? null, msg.gun ?? null);
   };
 
   solo.setEventSink(sink);
@@ -121,6 +121,7 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
     snapshot: () => solo.snapshot(),
     localShot: (claim: ShotClaim) => solo.localShot(claim),
     pressStreak: (slot) => solo.pressStreak(slot),
+    pressStreakAt: (slot, anchor, gun) => solo.pressStreakAt(slot, anchor, gun),
     netLine(now): string | null {
       const s = room.diag.snapshot(now);
       const rtt = s.rttMs === null ? '--' : s.rttMs.toFixed(0);
@@ -135,6 +136,10 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
         if (connected) solo.remotePose(id, p.x, p.y, p.z, p.yaw);
       });
       solo.tick(now, x, y, z, yaw, pitch);
+      // Gunship poses ride every room tick while one flies (nothing when the
+      // sky is empty): the possessed camera needs ~frame-rate poses and each
+      // message is twelve numbers. Guests prune past half a second.
+      for (const pose of solo.ac130Poses()) room.broadcast(pose);
       if (phaseEdge || now - lastMatchAt >= MATCH_STATE_MS) {
         const m = solo.matchState();
         if (m !== null) {

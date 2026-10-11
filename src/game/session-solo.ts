@@ -26,7 +26,7 @@
  * bug than not shipping the end condition at all.
  */
 
-import { MAX_PLAYERS, type MatchStateMsg, type PlayerSample, type ShotMsg, type StreakStateMsg } from '../net/protocol';
+import { MAX_PLAYERS, type MatchStateMsg, type PlayerSample, type ShotMsg, type StreakPoseMsg, type StreakStateMsg } from '../net/protocol';
 import { TICK_HZ } from '../net/snapshot';
 import type { ShotClaim } from '../weapons/controller';
 import { BotDirector, nextBotTeam, type BotActorView } from './bots';
@@ -88,11 +88,13 @@ export interface SoloDriver extends MatchDriver {
   /** The room integrated this seat to here. Called once per room tick. */
   remotePose(id: ActorId, x: number, y: number, z: number, yaw: number): void;
   remoteShot(id: ActorId, claim: ShotMsg, receivedAt: number): ShotAdmission | null;
-  remoteStreak(id: ActorId, slot: number, toggle: boolean): void;
+  remoteStreak(id: ActorId, slot: number, toggle: boolean, anchor?: { x: number; y: number; z: number } | null, gun?: string | null): void;
   /** Every event the host produced, after the local client has seen it. One sink. */
   setEventSink(sink: EventSink | null): void;
   matchState(): MatchStateMsg | null;
   streakStateFor(id: ActorId, now: number): StreakStateMsg | null;
+  /** Live gunship poses for guests (room broadcast) — empty when none fly. */
+  ac130Poses(): readonly StreakPoseMsg[];
   stampSample(s: PlayerSample): PlayerSample;
   /** Bots as wire samples, for a room that must show them to guests. */
   botSamples(into: PlayerSample[]): void;
@@ -236,6 +238,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       at: now, match: after.match,
       streak: streaks === null ? null : streaks.streakStateFor(localId, now),
       players: samples(h, d),
+      poses: streaks === null ? undefined : streaks.ac130Poses(),
     });
   };
 
@@ -314,6 +317,9 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     pressStreak(slot): void {
       if (host !== null) host.submitStreakIntent(localId, { type: 'streak-intent', slot, toggle: false });
     },
+    pressStreakAt(slot, anchor, gun): void {
+      if (host !== null) host.submitStreakIntent(localId, { type: 'streak-intent', slot, toggle: false, anchor, gun: gun ?? null });
+    },
 
     bots(): readonly BotBody[] {
       if (director !== null) {
@@ -371,13 +377,14 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       return host.submitShot(id, claim, receivedAt);
     },
 
-    remoteStreak(id, slot, toggle): void {
-      if (host !== null && seats.has(id)) host.submitStreakIntent(id, { type: 'streak-intent', slot, toggle });
+    remoteStreak(id, slot, toggle, anchor, gun): void {
+      if (host !== null && seats.has(id)) host.submitStreakIntent(id, { type: 'streak-intent', slot, toggle, anchor: anchor ?? null, gun: gun ?? null });
     },
 
     setEventSink(s): void { sink = s; },
     matchState: () => lastMatch,
     streakStateFor: (id, now) => (streaks === null ? null : streaks.streakStateFor(id, now)),
+    ac130Poses: () => (streaks === null ? [] : streaks.ac130Poses()),
     stampSample: (s) => (host === null ? s : host.stampSample(s)),
     botSamples(into): void {
       if (director === null || host === null) return;

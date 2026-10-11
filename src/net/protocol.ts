@@ -28,6 +28,7 @@ import {
   type ShotRejectMsg,
   type SpawnMsg,
   type StreakIntentMsg,
+  type StreakPoseMsg,
   type StreakStateMsg,
 } from './protocol-game';
 
@@ -250,6 +251,7 @@ export type NetMessage =
   | KillMsg
   | SpawnMsg
   | StreakIntentMsg
+  | StreakPoseMsg
   | StreakStateMsg
   | MatchStateMsg
   | OrdnanceMsg;

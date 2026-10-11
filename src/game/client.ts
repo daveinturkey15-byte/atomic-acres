@@ -34,10 +34,11 @@ import type {
   TeamId,
 } from './events';
 import type { MatchMode } from './rules';
-import type { MatchStateMsg, PlayerSample, ScoreRow, StreakSlotState, StreakStateMsg } from '../net/protocol';
+import type { MatchStateMsg, PlayerSample, ScoreRow, StreakPoseMsg, StreakSlotState, StreakStateMsg } from '../net/protocol';
 import { SHOT_REJECT_LABELS } from './events';
 import { BannerArbiter, feedLineForDamage, feedLineForDeath, feedLineForKill, feedLineForStreakActivated, feedLineForStreakDenied, feedLineForStreakEarned, type FeedContext } from './feed';
 import { shouldRevealEnemy, type MapBlip } from './minimap';
+import { AC130_CALIBERS, type Ac130Caliber } from './killstreaks/effects/ac130';
 import { OrdnanceView, decorateKillLine, isOrdnanceEvent } from './ordnance-view';
 
 // ---------------------------------------------------------------------------
@@ -65,6 +66,22 @@ export interface StreakView {
   readonly ready: number;
 }
 
+/**
+ * The gunner's seat in a live AC-130. Additive: nothing that reads
+ * `ClientView` today changes. `possessed` is host-authored (activation /
+ * end / death edges); caliber, zoom and thermal are the gunner's own seat
+ * controls, written locally by `main.ts` and never wired. `activatedAt`
+ * starts the HUD lifetime countdown; `updatedAt` drives the stale prune.
+ */
+export interface GunnerView {
+  readonly possessed: boolean;
+  readonly caliber: Ac130Caliber;
+  readonly zoomStep: number;
+  readonly thermal: boolean;
+  readonly activatedAt: number;
+  readonly updatedAt: number;
+}
+
 export interface ClientView {
   readonly selfId: ActorId;
   readonly team: TeamId | null;
@@ -73,6 +90,10 @@ export interface ClientView {
   readonly alive: boolean;
   readonly match: MatchView;
   readonly streak: StreakView;
+  /** The AC-130 gunner seat. Additive: existing readers ignore it. */
+  readonly gunner: GunnerView;
+  /** Latest gunship pose for the possession camera, or null. Additive. */
+  readonly ac130Pose: { x: number; y: number; z: number; yaw: number; cx: number; cz: number } | null;
   readonly blips: readonly MapBlip[];
   /** Milliseconds until respawn, or null when none is scheduled. */
   readonly respawnMs: number | null;
@@ -92,6 +113,8 @@ export interface ClientSnapshot {
   readonly match?: MatchStateMsg | null;
   readonly streak?: StreakStateMsg | null;
   readonly players?: readonly PlayerSample[];
+  /** Live gunship poses, latest per instance. Absent until the pose stream lands. */
+  readonly poses?: readonly StreakPoseMsg[];
 }
 
 const EMPTY_MATCH: MatchView = Object.freeze({
@@ -107,6 +130,16 @@ const EMPTY_MATCH: MatchView = Object.freeze({
 });
 
 const EMPTY_STREAK: StreakView = Object.freeze({ kills: 0, slots: Object.freeze([]), ready: 0 });
+const EMPTY_GUNNER: GunnerView = Object.freeze({
+  possessed: false, caliber: '40mm', zoomStep: 0, thermal: false, activatedAt: 0, updatedAt: 0,
+});
+
+/**
+ * Stale prune: a possessed seat with no host level for this long is a dead
+ * platform (rematch, host drop). Levels arrive every tick in a live match,
+ * so an idle gunner never trips it.
+ */
+export const GUNNER_STALE_MS = 15_000;
 
 /** Banner ids are local and monotonic; the arbiter only needs them distinct. */
 let nextBannerId = 1;
@@ -135,6 +168,12 @@ export class GameClient {
   private alive = true;
   private match: MatchView = EMPTY_MATCH;
   private streak: StreakView = EMPTY_STREAK;
+  /** The AC-130 gunner seat. Host edges own `possessed`; the seat owns the rest. */
+  private gunner: GunnerView = EMPTY_GUNNER;
+  /** Latest gunship pose for the possession camera. Separate from the seat:
+   *  truth arrives on the pose stream, seat state on the event edges. */
+  private ac130Pose: { x: number; y: number; z: number; yaw: number; cx: number; cz: number } | null = null;
+  private ac130PoseAt = 0;
   private respawnAt: number | null = null;
   private now = 0;
   private blips: readonly MapBlip[] = [];
@@ -152,6 +191,32 @@ export class GameClient {
   /** Streak titles arrive from the streak catalog, which lane C owns. */
   setStreakNames(names: Iterable<readonly [string, string]>): void {
     for (const [id, name] of names) this.streakNames.set(id, name);
+  }
+
+  /** Presentation read for `main.ts` possession + the gunner HUD. */
+  gunnerView(): GunnerView {
+    return this.gunner;
+  }
+
+  /** Seat controls. Local, never wired; each refreshes the stale clock. */
+  gunnerSelectCaliber(caliber: Ac130Caliber): void {
+    if (!AC130_CALIBERS.includes(caliber)) return;
+    this.gunner = { ...this.gunner, caliber, updatedAt: this.now };
+  }
+
+  gunnerSetZoom(zoomStep: number): void {
+    const z = Math.max(0, Math.min(2, Math.floor(zoomStep)));
+    this.gunner = { ...this.gunner, zoomStep: z, updatedAt: this.now };
+  }
+
+  gunnerSetThermal(thermal: boolean): void {
+    this.gunner = { ...this.gunner, thermal: thermal === true, updatedAt: this.now };
+  }
+
+  /** The slot-key dismount flips host and seat with the same press. */
+  gunnerDismount(): void {
+    if (!this.gunner.possessed) return;
+    this.gunner = { ...this.gunner, possessed: false, thermal: false, updatedAt: this.now };
   }
 
   private ctx(): FeedContext {
@@ -207,6 +272,7 @@ export class GameClient {
           this.alive = false;
           this.health = 0;
           this.respawnAt = e.respawnAt;
+          this.gunner = { ...this.gunner, possessed: false, thermal: false, updatedAt: e.at };
           this.ordnance.note(e.at, 'death you by=' + String(e.killerId) + ' ' + e.cause);
         }
         this.pushLine(feedLineForDeath(e, this.ctx()));
@@ -233,12 +299,21 @@ export class GameClient {
         const l = feedLineForStreakActivated(e, this.ctx());
         this.pushLine(l);
         this.raiseBanner(l.text, 'KILLSTREAK', 'announcement', BANNER_ANNOUNCE_MS);
+        if (e.actorId === this.selfId && e.streakId === 'ac130-gunship') {
+          this.gunner = {
+            possessed: true, caliber: '40mm', zoomStep: 0, thermal: false,
+            activatedAt: e.at, updatedAt: e.at,
+          };
+        }
         return;
       }
       case 'streak-denied':
         this.pushLine(feedLineForStreakDenied(e, this.ctx()));
         return;
       case 'streak-ended':
+        if (e.actorId === this.selfId && e.streakId === 'ac130-gunship') {
+          this.gunner = { ...this.gunner, possessed: false, thermal: false, updatedAt: e.at };
+        }
         return;
       case 'match-phase':
         return this.onPhase(e.phase, e.winner, e.winnerId, e.endReason);
@@ -292,6 +367,9 @@ export class GameClient {
     if (s.streak && s.streak.actorId === this.selfId) {
       const slots = s.streak.slots;
       this.streak = { kills: s.streak.kills, slots, ready: slots.filter((x) => x.charges > 0).length };
+      // The ledger level is the seat's liveness: every level refreshes the
+      // stale clock, so only a truly dead platform trips the prune below.
+      if (this.gunner.possessed) this.gunner = { ...this.gunner, updatedAt: s.at };
       if (s.streak.cause) this.applyEvent(s.streak.cause);
     }
     if (s.players) {
@@ -304,6 +382,13 @@ export class GameClient {
         if (self.hp !== undefined) this.health = self.hp;
         if (self.team !== undefined) this.team = self.team;
         if (self.alive !== undefined) this.alive = self.alive;
+      }
+    }
+    if (s.poses !== undefined) {
+      for (const pose of s.poses) {
+        if (pose.streakId !== 'ac130-gunship') continue;
+        this.ac130Pose = { x: pose.x, y: pose.y, z: pose.z, yaw: pose.yaw, cx: pose.cx, cz: pose.cz };
+        this.ac130PoseAt = s.at;
       }
     }
     this.blips = this.computeBlips();
@@ -358,6 +443,11 @@ export class GameClient {
   /** Advance time without a snapshot: keeps the respawn clock and banners live. */
   tick(now: number): void {
     if (now > this.now) this.now = now;
+    if (this.gunner.possessed && this.now - this.gunner.updatedAt > GUNNER_STALE_MS) {
+      this.gunner = { ...EMPTY_GUNNER, updatedAt: this.now };
+    }
+    // Poses ride the room tick; a silent half-second is a dead airframe.
+    if (this.ac130Pose !== null && this.now - this.ac130PoseAt > 500) this.ac130Pose = null;
     this.applyBanner(this.banners.tick(this.now));
   }
 
@@ -369,6 +459,8 @@ export class GameClient {
       alive: this.alive,
       match: this.match,
       streak: this.streak,
+      gunner: this.gunner,
+      ac130Pose: this.ac130Pose,
       blips: this.blips,
       respawnMs: this.respawnAt === null ? null : Math.max(0, this.respawnAt - this.now),
       banner: this.banner,

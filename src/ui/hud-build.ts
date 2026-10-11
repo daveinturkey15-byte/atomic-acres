@@ -73,8 +73,15 @@ export interface HudNodes {
   readonly grenadeTactical: HTMLElement;
   readonly flash: HTMLElement;
   readonly prompt: HTMLElement;
+  /** AC-130 gunner overlay: built once here, written only by `hud.ts`. */
+  readonly gunner: HTMLElement;
+  readonly gunnerReticle: HTMLElement;
+  readonly gunnerCals: readonly HTMLElement[];
+  readonly gunnerFills: readonly HTMLElement[];
+  readonly gunnerZoom: HTMLElement;
+  readonly gunnerThermal: HTMLElement;
+  readonly gunnerLife: HTMLElement;
 }
-
 function el(tag: string, cls: string, text?: string): HTMLElement {
   const e = document.createElement(tag);
   e.className = cls;
@@ -226,8 +233,34 @@ export function buildHud(root: HTMLElement, crosshair: HTMLElement | null): HudN
     + 'background:rgba(0,0,0,0.35);';
   prompt.setAttribute('role', 'status');
 
+  // --- AC-130 gunner overlay (possession only; hidden otherwise). Classes
+  // only here; `hud.css` owns the look, `hud.ts` the writes.
+  const gunner = el('div', 'hud-own hud-gunner hud-hidden');
+  gunner.setAttribute('role', 'status');
+  gunner.setAttribute('aria-label', 'AC-130 gunner');
+  const gunnerReticle = el('div', 'hud-gunner-reticle hud-cal-40');
+  gunnerReticle.setAttribute('aria-hidden', 'true');
+  const gunnerStrip = el('div', 'hud-gunner-strip');
+  const gunnerCals: HTMLElement[] = [];
+  const gunnerFills: HTMLElement[] = [];
+  for (const label of ['105', '40', '25']) {
+    const cal = el('div', 'hud-gunner-cal');
+    cal.append(span('hud-gunner-cal-label', label));
+    const bar = el('div', 'hud-gunner-bar');
+    const fill = el('div', 'hud-gunner-fill');
+    bar.appendChild(fill);
+    cal.appendChild(bar);
+    gunnerStrip.appendChild(cal);
+    gunnerCals.push(cal);
+    gunnerFills.push(fill);
+  }
+  const gunnerZoom = el('div', 'hud-gunner-zoom', '60');
+  const gunnerThermal = el('div', 'hud-gunner-thermal', 'WHOT');
+  const gunnerLife = el('div', 'hud-gunner-life', '40');
+  gunner.append(gunnerReticle, gunnerStrip, gunnerZoom, gunnerThermal, gunnerLife);
+
   root.append(weapon, ammo, health, vignette, dmgdir, hit, bar, banner, respawn, streak, mapWrap, scoreboard,
-    grenades, flash, prompt);
+    grenades, flash, prompt, gunner);
   root.classList.add('hud-debug-hidden');
 
   return {
@@ -266,5 +299,12 @@ export function buildHud(root: HTMLElement, crosshair: HTMLElement | null): HudN
     grenadeTactical,
     flash,
     prompt,
+    gunner,
+    gunnerReticle,
+    gunnerCals,
+    gunnerFills,
+    gunnerZoom,
+    gunnerThermal,
+    gunnerLife,
   };
 }

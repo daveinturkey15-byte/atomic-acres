@@ -80,6 +80,22 @@ function mulberry32(seed: number): () => number {
   };
 }
 
+/** Absolute wire-anchor clamp, metres. Inside it every arena fits twice over. */
+const ANCHOR_CLAMP_M = 500;
+/**
+ * Wire anchor → press anchor. Non-finite components fall back to null (the
+ * feet placement the runtime has always used); finite ones are clamped.
+ * Bounds and footing stay the runtime's placement call, not this.
+ */
+function cleanAnchor(a: StreakIntentMsg['anchor']): { x: number; y: number; z: number } | null {
+  if (a === undefined || a === null) return null;
+  if (!Number.isFinite(a.x) || !Number.isFinite(a.y) || !Number.isFinite(a.z)) return null;
+  return {
+    x: Math.max(-ANCHOR_CLAMP_M, Math.min(ANCHOR_CLAMP_M, a.x)),
+    y: Math.max(-ANCHOR_CLAMP_M, Math.min(ANCHOR_CLAMP_M, a.y)),
+    z: Math.max(-ANCHOR_CLAMP_M, Math.min(ANCHOR_CLAMP_M, a.z)),
+  };
+}
 export class GameHost {
   private readonly world: WorldQuery;
   private readonly deps: HostDeps;
@@ -170,13 +186,19 @@ export class GameHost {
     const a = this.life.actors.get(id);
     if (!a) return null;
     const p = a.poses.at(this.clock);
+    // Advisory aimed placement + gunner caliber. Finite-guarded and clamped
+    // HERE so a forged wire value can at worst shift a placement the runtime
+    // re-validates — never NaN, never off-world. Caliber membership is the
+    // runtime's (it owns the gun list); the wire only keeps strings short.
+    const anchor = cleanAnchor(msg.anchor);
     const press = {
       actorId: id, slot: msg.slot, toggle: msg.toggle === true,
       life: a.health.life, seq: ++a.streakSeq,
       claimId: streakClaimId(id, a.health.life, a.streakSeq),
       alive: a.health.alive, matchPhase: this.match.phase,
       origin: p === null ? { x: 0, y: 0, z: 0 } : { x: p.x, y: p.y, z: p.z },
-      aimYaw: a.yaw, anchor: null,
+      aimYaw: a.yaw, anchor,
+      gun: typeof msg.gun === 'string' ? msg.gun : null,
     };
     // §5.4: a player-initiated action never fails silently, not even when the
     // lane that would satisfy it is absent.

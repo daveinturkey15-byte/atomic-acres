@@ -19,6 +19,24 @@ import { createCharacterSystem, type CharacterHandle } from './characters';
 import { loadBakedClips } from './characters/kimodo-clips';
 import { createLocalMatch, type LocalMatch, type MatchUi } from './game/session';
 import { PAL } from './core/palette';
+import { createWorldQuery } from './game/world-query';
+import type { GameClient } from './game/client';
+import {
+  AC130_105_RELOAD_MS,
+  AC130_25_CADENCE_MS,
+  AC130_25_COOL_MS,
+  AC130_25_OVERHEAT_ROUNDS,
+  AC130_40_CADENCE_MS,
+  AC130_40_CLIP,
+  AC130_40_RELOAD_MS,
+  AC130_CALIBERS,
+  AC130_DURATION_MS,
+  AC130_ZOOM_FOVS,
+  ac130PoseAt,
+  createAc130,
+  type Ac130Caliber,
+  type Ac130State,
+} from './game/killstreaks/effects/ac130';
 
 import { buildGround } from './build/ground';
 import { buildOrangeHouse } from './build/orange-house';
@@ -180,8 +198,166 @@ const ordnance = new OrdnanceScene({ scene: world.scene, mat, colliders, hud: ga
 // Live smoke feed: game smoke events drive the volumetric pass (pull route,
 // zero alloc, no light-set change). Null client reads as empty.
 world.atmosphere.smoke.bind(() => ordnance.smokes);
+// ---- AC-130 possession (gunner seat). The host owns damage; this owns the
+// camera, the seat controls and the overlay, and submits aimed fire missions
+// (crosshair anchor + caliber) that the host resolves through the same
+// stepper the autopilot uses. The client handle arrives over the session's
+// `bindClient` seam — the same seam ordnance uses. Seat truth (possessed)
+// stays host-authored in `game/client.ts`; caliber/zoom/thermal are
+// seat-local, caliber included, and the anchor rides the mission press.
+let gunnerClient: GameClient | null = null;
+// Read-only collider port for the gunner's crosshair solve. Same boxes the
+// session built its own port from, so the seat and the host name one ground.
+const gunnerQuery = createWorldQuery(colliders);
+const gunnerAimDir = new THREE.Vector3();
+/**
+ * Crosshair ray → ground column for fire missions. Marches until the ray
+ * sinks to standable ground, else the farthest standable column on a
+ * level aim; sky aim names nothing and the trigger holds its fire.
+ */
+function solveGunnerAnchor(): { x: number; y: number; z: number } | null {
+  world.camera.getWorldDirection(gunnerAimDir);
+  const cp = world.camera.position;
+  const len = gunnerAimDir.length();
+  if (!Number.isFinite(len) || len < 1e-6) return null;
+  const nx = gunnerAimDir.x / len;
+  const ny = gunnerAimDir.y / len;
+  const nz = gunnerAimDir.z / len;
+  let farthest: { x: number; y: number; z: number } | null = null;
+  for (let t = 0.5; t <= 120; t += 0.5) {
+    const x = cp.x + nx * t;
+    const z = cp.z + nz * t;
+    const g = gunnerQuery.groundY(x, z);
+    if (!Number.isFinite(g)) continue;
+    if (gunnerQuery.inBounds(x, z)) farthest = { x, y: g, z };
+    if (cp.y + ny * t <= g + 0.15) return { x, y: g, z };
+  }
+  if (ny > 0.05) return null;
+  return farthest;
+}
+const gunner = {
+  active: false,
+  slot: 0,
+  pendingSlot: 0,
+  mountedAt: 0,
+  orbit: null as Ac130State | null,
+  caliber: '40mm' as Ac130Caliber,
+  zoomStep: 0,
+  thermal: false,
+  savedFov: 72,
+  triggerHeld: false,
+  firingUntil: 0,
+  last105: Number.NEGATIVE_INFINITY,
+  last40: Number.NEGATIVE_INFINITY,
+  last25: Number.NEGATIVE_INFINITY,
+  clip40: AC130_40_CLIP,
+  reloadUntil40: 0,
+  heat25: 0,
+  overheatUntil25: 0,
+};
+
+/** Local mirror of the sim's per-gun gates, so the HUD reload bars and the
+ *  trigger tell the truth about the seat. Same constants, same rules. */
+function gunnerTickMirror(now: number): void {
+  if (gunner.clip40 === 0 && now >= gunner.reloadUntil40) gunner.clip40 = AC130_40_CLIP;
+  if (gunner.overheatUntil25 > 0 && now >= gunner.overheatUntil25) {
+    gunner.heat25 = 0;
+    gunner.overheatUntil25 = 0;
+  }
+}
+
+function gunnerCanFire(caliber: Ac130Caliber, now: number): boolean {
+  if (caliber === '105mm') return now - gunner.last105 >= AC130_105_RELOAD_MS;
+  if (caliber === '40mm') {
+    return now >= gunner.reloadUntil40 && gunner.clip40 > 0 && now - gunner.last40 >= AC130_40_CADENCE_MS;
+  }
+  return now >= gunner.overheatUntil25 && now - gunner.last25 >= AC130_25_CADENCE_MS;
+}
+
+function gunnerRecordFire(caliber: Ac130Caliber, now: number): void {
+  if (caliber === '105mm') {
+    gunner.last105 = now;
+  } else if (caliber === '40mm') {
+    gunner.last40 = now;
+    gunner.clip40 -= 1;
+    if (gunner.clip40 <= 0) gunner.reloadUntil40 = now + AC130_40_RELOAD_MS;
+  } else {
+    gunner.last25 = now;
+    gunner.heat25 += 1;
+    if (gunner.heat25 >= AC130_25_OVERHEAT_ROUNDS) gunner.overheatUntil25 = now + AC130_25_COOL_MS;
+  }
+  gunner.firingUntil = now + 150;
+}
+
+function gunnerReady(caliber: Ac130Caliber, now: number): number {
+  const clamp01 = (v: number): number => Math.max(0, Math.min(1, v));
+  if (caliber === '105mm') return clamp01((now - gunner.last105) / AC130_105_RELOAD_MS);
+  if (caliber === '40mm') {
+    if (now < gunner.reloadUntil40) return clamp01(1 - (gunner.reloadUntil40 - now) / AC130_40_RELOAD_MS);
+    return gunner.clip40 / AC130_40_CLIP;
+  }
+  if (gunner.overheatUntil25 > now) return clamp01(1 - (gunner.overheatUntil25 - now) / AC130_25_COOL_MS);
+  return 1 - gunner.heat25 / AC130_25_OVERHEAT_ROUNDS;
+}
+
+function mountGunner(): void {
+  const st = player.state;
+  gunner.active = true;
+  gunner.slot = gunner.pendingSlot;
+  gunner.mountedAt = performance.now();
+  gunner.orbit = createAc130(0, 'you', 0, 'ac130-gunship', AC130_DURATION_MS,
+    { x: st.pos.x, y: st.pos.y, z: st.pos.z }, 0);
+  gunner.caliber = '40mm';
+  gunner.zoomStep = 0;
+  gunner.thermal = false;
+  gunner.triggerHeld = false;
+  gunner.last105 = Number.NEGATIVE_INFINITY;
+  gunner.last40 = Number.NEGATIVE_INFINITY;
+  gunner.last25 = Number.NEGATIVE_INFINITY;
+  gunner.clip40 = AC130_40_CLIP;
+  gunner.reloadUntil40 = 0;
+  gunner.heat25 = 0;
+  gunner.overheatUntil25 = 0;
+  gunner.savedFov = world.camera.fov;
+  world.camera.fov = AC130_ZOOM_FOVS[0] as number;
+  world.camera.updateProjectionMatrix();
+}
+
+function dismountGunner(): void {
+  if (!gunner.active) return;
+  gunner.active = false;
+  gunner.triggerHeld = false;
+  gunner.orbit = null;
+  try { gunnerClient?.gunnerDismount(); } catch { /* headless-safe */ }
+  try { world.post.setThermal(false); } catch { /* headless-safe */ }
+  world.camera.fov = gunner.savedFov;
+  world.camera.updateProjectionMatrix();
+  gameHud.setGunner(null);
+}
+
+function selectGunnerCaliber(caliber: Ac130Caliber): void {
+  if (!AC130_CALIBERS.includes(caliber)) return;
+  gunner.caliber = caliber;
+  try { gunnerClient?.gunnerSelectCaliber(caliber); } catch { /* headless-safe */ }
+}
+
+function setGunnerZoom(zoomStep: number): void {
+  const z = Math.max(0, Math.min(AC130_ZOOM_FOVS.length - 1, Math.floor(zoomStep)));
+  if (z === gunner.zoomStep) return;
+  gunner.zoomStep = z;
+  try { gunnerClient?.gunnerSetZoom(z); } catch { /* headless-safe */ }
+  world.camera.fov = AC130_ZOOM_FOVS[z] as number;
+  world.camera.updateProjectionMatrix();
+}
+
+function setGunnerThermal(on: boolean): void {
+  gunner.thermal = on === true;
+  try { gunnerClient?.gunnerSetThermal(gunner.thermal); } catch { /* headless-safe */ }
+  try { world.post.setThermal(gunner.thermal); } catch { /* headless-safe */ }
+}
+
 const matchUi: MatchUi = {
-  bindClient: (c) => { ordnance.bind(c); ui.bindClient(c); },
+  bindClient: (c) => { gunnerClient = c; if (c === null) dismountGunner(); ordnance.bind(c); ui.bindClient(c); },
   setNames: (n) => ui.setNames(n),
 };
 // ---- The match. Host + local player + bots, started by the same click that
@@ -217,11 +393,22 @@ addEventListener('keydown', (e) => {
 // requestPointerLock) so capture-harness probes never trip on missing APIs.
 const canvas = world.renderer.domElement;
 canvas.addEventListener('mousedown', (e) => {
+  // Possession owns the trigger: LMB holds the guns, RMB cycles the caliber.
+  // Nothing reaches the weapons controller while riding the gun.
+  if (gunner.active) {
+    if (e.button === 0) gunner.triggerHeld = true;
+    else if (e.button === 2) {
+      const i = AC130_CALIBERS.indexOf(gunner.caliber);
+      selectGunnerCaliber(AC130_CALIBERS[(i + 1) % AC130_CALIBERS.length] as Ac130Caliber);
+    }
+    return;
+  }
   try {
     if (e.button === 0 || e.button === 2) weapons.pointerDown(e.button);
   } catch { /* headless: no pointer, no weapon input */ }
 });
 addEventListener('mouseup', (e) => {
+  if (e.button === 0) gunner.triggerHeld = false;
   try {
     if (e.button === 0 || e.button === 2) weapons.pointerUp(e.button);
   } catch { /* headless: no pointer, no weapon input */ }
@@ -229,6 +416,22 @@ addEventListener('mouseup', (e) => {
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 addEventListener('keydown', (e) => {
   if (e.repeat) return;
+  // Possession owns Digit1-3 (calibers), T (thermal) and the owning slot key
+  // (dismount). Everything else a gunner presses is suppressed: the body
+  // stays where it was left, and no second platform stacks onto this one.
+  if (gunner.active) {
+    const owned = ['Digit3', 'Digit4', 'Digit5', 'Digit6'].indexOf(e.code) + 1;
+    if (owned === gunner.slot && owned >= 1) {
+      match?.pressStreak(gunner.slot);
+      dismountGunner();
+      return;
+    }
+    if (e.code === 'Digit1') { selectGunnerCaliber('105mm'); return; }
+    if (e.code === 'Digit2') { selectGunnerCaliber('40mm'); return; }
+    if (e.code === 'Digit3' && gunner.slot !== 1) { selectGunnerCaliber('25mm'); return; }
+    if (e.code === 'KeyT') { setGunnerThermal(!gunner.thermal); return; }
+    return;
+  }
   if (e.code === 'KeyR' || e.code === 'Digit1' || e.code === 'Digit2') {
     try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
   }
@@ -240,12 +443,20 @@ addEventListener('keydown', (e) => {
   // 3-6 are the four killstreak slots. A press always answers, even when it
   // is refused - a dead key is the defect IMPORT-PLAN s5.4 is written about.
   const slot = ['Digit3', 'Digit4', 'Digit5', 'Digit6'].indexOf(e.code);
-  if (slot >= 0) match?.pressStreak(slot + 1);
+  if (slot >= 0) {
+    gunner.pendingSlot = slot + 1;
+    match?.pressStreak(slot + 1);
+  }
 });
 addEventListener('keyup', (e) => {
   try { weapons.keyUp(e.code); } catch { /* headless-safe */ }
 });
 canvas.addEventListener('wheel', (e) => {
+  // Possession owns the wheel: three FOV steps, in on wheel-up, out on down.
+  if (gunner.active) {
+    setGunnerZoom(gunner.zoomStep + (e.deltaY < 0 ? 1 : -1));
+    return;
+  }
   if (player.getMode() !== 'walk') return;
   try { weapons.wheel(e.deltaY); } catch { /* headless-safe */ }
 }, { passive: true });
@@ -291,6 +502,63 @@ function frame(): void {
       sprinting: speed > 6.5,
       grounded: player.state.grounded,
     });
+    // POSSESSION. After the player writes the camera, the gun takes it: ride
+    // the locally mirrored pylon turn and look down the column. The seat
+    // mounts on the host activation edge (seen via the client projection)
+    // and leaves on death, expiry, match end — or the owning slot key.
+    if (gunnerClient !== null) {
+      const seat = gunnerClient.gunnerView();
+      if (!gunner.active && seat.possessed) mountGunner();
+    }
+    if (gunner.active) {
+      const seat = gunnerClient === null ? null : gunnerClient.gunnerView();
+      const view = gunnerClient === null ? null : gunnerClient.view();
+      const lifetimeLeft = AC130_DURATION_MS - (now - gunner.mountedAt);
+      if (seat === null || !seat.possessed || view === null || !view.alive
+        || view.match.phase !== 'active' || lifetimeLeft <= 0) {
+        dismountGunner();
+      } else {
+        gunnerTickMirror(now);
+        // Live fire mission: crosshair anchor + seat caliber, throttled by
+        // the same mirror the HUD bars read. The host resolves damage
+        // through the gun stepper; the mirror only paces submissions.
+        if (gunner.triggerHeld && gunnerCanFire(gunner.caliber, now) && match !== null) {
+          const aim = solveGunnerAnchor();
+          if (aim !== null) {
+            match.pressStreakAt(gunner.slot, aim, gunner.caliber);
+            gunnerRecordFire(gunner.caliber, now);
+          }
+        }
+        // Host truth steers the camera: the seat mirror's local orbit is
+        // display-only fallback until the first pose lands. Ground point is
+        // the orbit centre the host publishes with every pose.
+        const pose = view.ac130Pose;
+        if (pose !== null) {
+          world.camera.position.set(pose.x, pose.y, pose.z);
+          const gy = match?.groundY(pose.cx, pose.cz) ?? 0;
+          world.camera.lookAt(pose.cx, gy, pose.cz);
+        } else {
+          const orbit = gunner.orbit;
+          if (orbit !== null) {
+            const fallback = ac130PoseAt(orbit, now - gunner.mountedAt);
+            world.camera.position.set(fallback.x, fallback.y, fallback.z);
+            world.camera.lookAt(orbit.centreX, orbit.centreY, orbit.centreZ);
+          }
+        }
+        gameHud.setGunner({
+          caliber: gunner.caliber,
+          zoomFov: AC130_ZOOM_FOVS[gunner.zoomStep] as number,
+          thermal: gunner.thermal,
+          remainingMs: lifetimeLeft,
+          firing: now < gunner.firingUntil,
+          ready: [
+            gunnerReady('105mm', now),
+            gunnerReady('40mm', now),
+            gunnerReady('25mm', now),
+          ],
+        });
+      }
+    }
     // RENDER PATH. The world goes through the post chain (GTAO / SSR / bloom / vignette),
     // and the viewmodel composites over the finished frame with depth cleared so the
     // gun can never intersect the map. `?post=off` and `?post=ao` swap the chain's

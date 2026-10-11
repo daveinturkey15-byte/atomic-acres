@@ -123,6 +123,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
       case 'streak-state':
         client.applySnapshot({ at: performance.now(), streak: msg });
         break;
+      case 'streak-pose':
+        client.applySnapshot({ at: performance.now(), poses: [msg] });
+        break;
       case 'ordnance':
         record(msg.e as GameEvent);
         break;
@@ -211,6 +214,9 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     },
     pressStreak(slot): void {
       guest.sendGame({ type: 'streak-intent', slot, toggle: false });
+    },
+    pressStreakAt(slot, anchor, gun): void {
+      guest.sendGame({ type: 'streak-intent', slot, toggle: false, anchor, gun: gun ?? null });
     },
 
     tick(now, x, y, z, yaw, pitch): void {

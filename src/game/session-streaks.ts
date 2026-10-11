@@ -32,6 +32,9 @@ export function streakPort(rt: StreakRuntime, matchEpoch: number): StreakRuntime
       actorId: p.actorId, slot: p.slot, seq: p.seq, claimId: p.claimId,
       matchEpoch, toggle: p.toggle,
       origin: p.origin, aimYaw: p.aimYaw, anchor: p.anchor,
+      // Gunner fire caliber, or null. The runtime checks membership against
+      // the gun list; the port carries it opaquely like the anchor.
+      gun: p.gun ?? null,
       // Lane C documents `StreakRuntime.lifeOf` as "the life epoch the host
       // must echo in a claim", and echoing is the only thing that works: the
       // runtime advances its epoch at DEATH (`recordDeath`) while `health.ts`

@@ -61,6 +61,8 @@ export interface StreakPress {
   readonly aimYaw: number;
   /** An explicit placement, when a targeting surface produced one. */
   readonly anchor: Vec3 | null;
+  /** Gunner fire caliber for possessed gunships; membership is the runtime's. */
+  readonly gun?: string | null;
 }
 
 /**

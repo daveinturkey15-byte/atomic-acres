@@ -137,13 +137,13 @@ export const MUTUAL_EXCLUSIONS: readonly (readonly [string, string, string])[] =
 ]);
 
 /**
- * THE ROSTER. Ten rows. Base weights are relative shares, chosen so the
+ * THE ROSTER. Eleven rows. Base weights are relative shares, chosen so the
  * weighted total is 100 — which is not required by the arithmetic but makes
  * every projected percentage a terminating decimal, so a review can read the
  * pool without a calculator.
  *
  * Costs are a ladder a player can finish inside one good life on a map this
- * small: 3 / 4 / 4 / 5 / 5 / 7 / 8 / 9. The old project's ladder was 3–15 on a
+ * small: 3 / 4 / 4 / 5 / 5 / 7 / 8 / 9 / 9. The old project's ladder was 3–15 on a
  * map with aircraft; 15 here would never be reached.
  */
 export const STREAKS = Object.freeze([
@@ -155,6 +155,7 @@ export const STREAKS = Object.freeze([
   { id: 'fallout-screen', displayName: 'Fallout Screen', cost: 7, tier: 'high', availability: 'selectable', activation: 'target-point', durationMs: 20_000, repeatable: false, baseWeightUnits: 9 },
   { id: 'blast-mortar', displayName: 'Blast Mortar', cost: 8, tier: 'high', availability: 'selectable', activation: 'target-point', durationMs: 15_000, repeatable: false, baseWeightUnits: 5 },
   { id: 'strike-relay', displayName: 'Strike Relay', cost: 9, tier: 'high', availability: 'selectable', activation: 'target-line', durationMs: 18_000, repeatable: false, baseWeightUnits: 2 },
+  { id: 'ac130-gunship', displayName: 'AC-130 Gunship', cost: 9, tier: 'high', availability: 'selectable', activation: 'possession', durationMs: 40_000, repeatable: false, baseWeightUnits: 0 },
   { id: 'field-repair', displayName: 'Field Repair', cost: 0, tier: 'mid', availability: 'reward-only', activation: 'instant', durationMs: 0, repeatable: true, baseWeightUnits: 0 },
   { id: 'last-resort', displayName: 'Last Resort', cost: 0, tier: 'top', availability: 'reward-only', activation: 'instant', durationMs: 0, repeatable: false, baseWeightUnits: 0 },
 ] as const satisfies readonly StreakSource[]);
@@ -258,7 +259,11 @@ export function createStreakCatalog<const Id extends string>(
       if (s.baseWeightUnits !== 0) throw new Error(`${s.id} must carry zero base weight`);
       continue;
     }
-    if (s.baseWeightUnits <= 0) throw new Error(`${s.id} is pool-eligible and requires a positive base weight`);
+    // Zero is earned-only, never pooled: its derived weight is zero, so the
+    // entries loop skips it and the pool total is unchanged. `supply-crate`
+    // is the same shape via the reward-source rule; this generalises it to
+    // high-tier platforms that are earned, never crate-granted. (Negatives
+    // are already rejected by `validateSource`.)
     baseWeightTotal = safeAdd(baseWeightTotal, s.baseWeightUnits, 'pool base total');
   }
   if (baseWeightTotal <= 0) throw new Error('reward pool requires a positive weighted base total');

@@ -50,6 +50,7 @@ import {
   XH_GAP_STILL,
   palCss,
 } from './layout';
+import { AC130_CALIBERS, type Ac130Caliber } from '../game/killstreaks/effects/ac130';
 
 export type HitKind = 'body' | 'head' | 'kill';
 
@@ -95,6 +96,22 @@ export interface HudApi {
   setFlash(opacity: number): void;
   /** Ordnance lane: the pickup prompt ("HOLD E TO SWAP · LONGHORN"); `null` hides. Level. */
   setPrompt(text: string | null): void;
+  /** AC-130 gunner overlay. `null` hides. Level, pushed by `main.ts` while possessing. */
+  setGunner(v: GunnerHudView | null): void;
+}
+
+/**
+ * Everything the gunner overlay renders, in one push. `ready` is the ready
+ * fraction per caliber in strip order [105, 40, 25], 0..1, mirrored locally
+ * by the gunner input (the host owns damage, this owns the seat).
+ */
+export interface GunnerHudView {
+  readonly caliber: Ac130Caliber;
+  readonly zoomFov: number;
+  readonly thermal: boolean;
+  readonly remainingMs: number;
+  readonly firing: boolean;
+  readonly ready: readonly [number, number, number];
 }
 
 /**
@@ -137,6 +154,7 @@ function noopApi(): HudApi {
     setGrenades: noop,
     setFlash: noop,
     setPrompt: noop,
+    setGunner: noop,
   };
 }
 
@@ -189,6 +207,7 @@ export function initHud(): HudApi {
   let cGrenades = '';
   let cFlash = -1;
   let cPrompt: string | null = '';
+  let cGunner: string | null = null;
 
   const applyGap = (): void => {
     if (!n.crosshair) return;
@@ -384,6 +403,36 @@ export function initHud(): HudApi {
       }
       n.prompt.textContent = text;
       n.prompt.classList.remove('hud-hidden');
+    },
+
+    setGunner(v: GunnerHudView | null): void {
+      if (v === null) {
+        if (cGunner === '') return;
+        cGunner = '';
+        n.gunner.classList.add('hud-hidden');
+        return;
+      }
+      const pct = (f: number): number => Math.max(0, Math.min(100, Math.round(f * 100)));
+      const sig = v.caliber + '|' + v.zoomFov + '|' + (v.thermal ? 'T' : 't')
+        + '|' + Math.max(0, Math.ceil(v.remainingMs / 250))
+        + '|' + (v.firing ? 'F' : 'f')
+        + '|' + pct(v.ready[0] ?? 1) + ',' + pct(v.ready[1] ?? 1) + ',' + pct(v.ready[2] ?? 1);
+      if (sig === cGunner) return;
+      cGunner = sig;
+      n.gunner.classList.remove('hud-hidden');
+      for (let i = 0; i < n.gunnerCals.length; i++) {
+        const cal = n.gunnerCals[i];
+        const fill = n.gunnerFills[i];
+        if (cal === undefined) continue;
+        cal.classList.toggle('hud-gunner-active', AC130_CALIBERS[i] === v.caliber);
+        // scaleX keeps the bar on the compositor; width would lay out every shot.
+        if (fill !== undefined) fill.style.transform = 'scaleX(' + (v.ready[i] ?? 1) + ')';
+      }
+      n.gunnerZoom.textContent = String(v.zoomFov);
+      n.gunnerThermal.classList.toggle('hud-gunner-on', v.thermal);
+      n.gunnerLife.textContent = String(Math.max(0, Math.ceil(v.remainingMs / 1000)));
+      n.gunnerReticle.className = 'hud-gunner-reticle hud-cal-' + v.caliber.replace('mm', '')
+        + (v.firing ? ' hud-firing' : '');
     },
   };
 }

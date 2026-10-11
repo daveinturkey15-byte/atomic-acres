@@ -89,6 +89,17 @@ export interface PostChain {
   /** The analytic haze on/off (a uniform). Smoke volumes are gameplay and never switch off. */
   setFog: (enabled: boolean) => void;
   getFog: () => boolean;
+  /**
+   * AC-130 WhiteHot monochrome grade, off by default. One uniform(0/1) scalar
+   * mixed into the SAME output node the beauty frame already builds: a toggle
+   * writes the uniform and nothing else — no node, no material, no target,
+   * no program-count growth (the single `PostChainOutput` material stays
+   * single). At 0 the mix is bit-identical to the unthermal frame, so the
+   * infantry path is untouched. Diagnostics (`?post=ao/off/fog/smoke`) bypass
+   * it on purpose: they photograph raw terms, not presentation grades.
+   */
+  setThermal: (on: boolean) => void;
+  getThermal: () => boolean;
   /** Time of day + weather, forwarded to core/atmosphere.ts. Returns false on an unknown name. */
   setAtmosphere: (preset: TodName, weather: WeatherName) => boolean;
 }
@@ -132,6 +143,8 @@ export function buildPost(
   // The options toggles have nothing to drive here; they are remembered and reported.
   const effects: PostEffects = { ao: true, ssr: true, bloom: true };
   let fogOn = true;
+  // No chain, no grade: remembered and reported, like the effect toggles.
+  let thermalOn = false;
   return {
     render: () => {
       renderer.render(scene, camera);
@@ -148,6 +161,8 @@ export function buildPost(
     getEffects: () => ({ ...effects }),
     setFog: (v) => { fogOn = v; },
     getFog: () => fogOn,
+    setThermal: (on) => { thermalOn = on === true; },
+    getThermal: () => thermalOn,
     setAtmosphere: (p, w) => atmosphere.set(p) && atmosphere.setWeather(w),
   };
 }
@@ -497,6 +512,8 @@ function buildChain(
     const ssrOn = uniform(1);
     const bloomOn = uniform(1);
     const fogOn = uniform(1);
+    // AC-130 WhiteHot: off (0) by default. Mixed into the beauty output only.
+    const thermalOn = uniform(0);
     const occlusionOn = mix(float(1), occlusion, aoOn);
     // Work on rgb only. `color.mul(occlusion)` also multiplies ALPHA, and this canvas
     // is not opaque - a frame at alpha 0.6 composites against the page background.
@@ -575,7 +592,14 @@ function buildChain(
     // `?post=smoke` the smoke opacity 1 - T. Both display-valued like `?post=ao`.
     else if (debug === 'fog') outputNode = vec4(vec3(fx.hazeFactor), float(1));
     else if (debug === 'smoke') outputNode = vec4(vec3(float(1).sub(fx.smoke.a)), float(1));
-    else outputNode = vec4(bloomed.mul(shade), float(1));
+    else {
+      // WhiteHot monochrome grade, reused from the graded colour: no new
+      // target, no new material, one uniform. At thermalOn 0 the mix is the
+      // unthermal frame exactly.
+      const beauty = bloomed.mul(shade);
+      const lum = beauty.r.mul(0.299).add(beauty.g.mul(0.587)).add(beauty.b.mul(0.114));
+      outputNode = vec4(mix(beauty, vec3(lum), thermalOn), float(1));
+    }
 
     // Our own full-screen quad, NOT PostProcessing — see note 2 at the top of this
     // file. The node is LINEAR; the renderer's output pass applies ACES + sRGB once,
@@ -637,6 +661,8 @@ function buildChain(
       getEffects: () => ({ ...effects }),
       setFog: (v) => { fogOn.value = v ? 1 : 0; },
       getFog: () => fogOn.value > 0.5,
+      setThermal: (on) => { thermalOn.value = on === true ? 1 : 0; },
+      getThermal: () => thermalOn.value > 0.5,
       setAtmosphere: (p, w) => atmosphere.set(p) && atmosphere.setWeather(w),
     };
 }

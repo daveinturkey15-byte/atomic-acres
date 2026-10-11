@@ -353,3 +353,46 @@
 #hud.hud-reduced-motion .hud-hitmarker.hm-kill {
   animation-duration: 90ms;
 }
+
+/* --- AC-130 gunner overlay (possession only): caliber strip, zoom, thermal,
+ * lifetime, per-caliber reticle. Motion rule: transform and opacity only. */
+#hud .hud-gunner { position: fixed; inset: 0; pointer-events: none; }
+#hud .hud-gunner-reticle {
+  position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  border: 2px solid rgba(240, 236, 226, 0.85); border-radius: 50%;
+  opacity: 0.9; will-change: transform, opacity;
+}
+#hud .hud-gunner-reticle.hud-cal-105 { width: 132px; height: 132px; }
+#hud .hud-gunner-reticle.hud-cal-40 { width: 88px; height: 88px; }
+#hud .hud-gunner-reticle.hud-cal-25 { width: 52px; height: 52px; }
+#hud .hud-gunner-reticle.hud-firing { border-color: var(--aa-accent, #d8b23a); opacity: 1; }
+#hud .hud-gunner-strip {
+  position: fixed; left: 50%; bottom: 108px; transform: translateX(-50%);
+  display: flex; gap: 14px;
+}
+#hud .hud-gunner-cal {
+  min-width: 64px; text-align: center; font-size: 15px; letter-spacing: 0.18em;
+  padding: 4px 8px; border: 1px solid rgba(240, 236, 226, 0.35); border-radius: 3px;
+  background: rgba(0, 0, 0, 0.35); opacity: 0.65;
+}
+#hud .hud-gunner-cal.hud-gunner-active { opacity: 1; border-color: var(--aa-accent, #d8b23a); }
+#hud .hud-gunner-bar { height: 3px; margin-top: 3px; background: rgba(255, 255, 255, 0.15); }
+#hud .hud-gunner-fill {
+  height: 100%; transform: scaleX(1); transform-origin: left center;
+  background: var(--aa-accent, #d8b23a); will-change: transform;
+}
+#hud .hud-gunner-zoom {
+  position: fixed; right: 22px; top: 44%; font-size: 15px; letter-spacing: 0.18em;
+  padding: 4px 10px; border: 1px solid rgba(240, 236, 226, 0.35); border-radius: 3px;
+  background: rgba(0, 0, 0, 0.35);
+}
+#hud .hud-gunner-thermal {
+  position: fixed; left: 22px; top: 44%; font-size: 15px; letter-spacing: 0.22em;
+  padding: 4px 10px; border: 1px solid rgba(240, 236, 226, 0.35); border-radius: 3px;
+  background: rgba(0, 0, 0, 0.35); opacity: 0.45;
+}
+#hud .hud-gunner-thermal.hud-gunner-on { opacity: 1; color: #fff; border-color: #fff; }
+#hud .hud-gunner-life {
+  position: fixed; left: 50%; top: 56px; transform: translateX(-50%);
+  font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 0.2em;
+}
