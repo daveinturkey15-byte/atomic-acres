@@ -172,6 +172,8 @@ export class WeaponsController {
   private tmpDir = new THREE.Vector3();
   private tmpOffset = new THREE.Vector3();
   private tmpMuzzle = new THREE.Vector3();
+  /** Shell-eject origin: tmpMuzzle is the barrel tip and must not be reused here. */
+  private tmpEject = new THREE.Vector3();
   private tmpEnd = new THREE.Vector3();
   private tmpNormal = new THREE.Vector3();
   private tmpEuler = new THREE.Euler(0, 0, 0, 'YXZ');
@@ -291,13 +293,23 @@ export class WeaponsController {
     // ADS on the weapon's own timer: FOV, spread, pose and moveScale ride adsT.
     const adsTarget = this.adsOn ? 1 : 0;
     if (this.adsT !== adsTarget) {
-      const step = dt / def.adsTime;
+      // A zero catalog time snaps instead of dividing (dt / 0 is Infinity,
+      // and 0 / 0 is NaN when the frame carries no time).
+      const step = def.adsTime > 0 ? dt / def.adsTime : 1;
       this.adsT = adsTarget > this.adsT
         ? Math.min(adsTarget, this.adsT + step)
         : Math.max(adsTarget, this.adsT - step);
     }
+    // Hip-idle hands off camera.fov: capture stations (core/stations.ts, set
+    // via main.ts after setVisible(false)) and the FOV setting shim
+    // (ui/settings-apply.ts wraps updateProjectionMatrix, never the field)
+    // own the field while un-ADSed, and the every-frame write would clobber
+    // them one frame later. ADS transitions write exactly as before. The only
+    // other writers are the constructor (initial default) and the explicit
+    // setVisible(false)/switchTo resets, which no reader depends on here.
+    const idleHip = this.adsT === 0 && !this.adsOn;
     const fov = BASE_FOV + (def.adsFov - BASE_FOV) * this.adsT;
-    if (Math.abs(this.camera.fov - fov) > 0.01) {
+    if (!idleHip && Math.abs(this.camera.fov - fov) > 0.01) {
       this.camera.fov = fov;
       this.camera.updateProjectionMatrix();
     }
@@ -328,7 +340,7 @@ export class WeaponsController {
     let reloadDip = 0;
     if (cur.reloading) {
       cur.reloadT -= dt;
-      const progress = 1 - Math.max(0, cur.reloadT) / cur.reloadDur;
+      const progress = cur.reloadDur > 0 ? 1 - Math.max(0, cur.reloadT) / cur.reloadDur : 1;
       reloadDip = Math.sin(Math.min(1, Math.max(0, progress)) * Math.PI);
       if (cur.reloadT <= 0) {
         cur.reloading = false;
@@ -775,8 +787,12 @@ export class WeaponsController {
         this.impactHead = (this.impactHead + 1) % IMPACT_RING;
         this.impactTotal++;
       } else {
+        // Converging tracer: the miss endpoint sits on the crosshair ray at
+        // MISS_DISTANCE, so the slug runs muzzle -> crosshair point instead of
+        // parallel to the shot. tracer() normalizes the direction itself.
         this.tmpEnd.copy(this.tmpDir).multiplyScalar(MISS_DISTANCE).add(this.camera.position);
-        this.effects.tracer(this.tmpMuzzle, this.tmpDir, MISS_DISTANCE);
+        this.tmpEnd.sub(this.tmpMuzzle);
+        this.effects.tracer(this.tmpMuzzle, this.tmpEnd, this.tmpEnd.length());
       }
     }
     if (anyHit) {
@@ -790,10 +806,14 @@ export class WeaponsController {
     }
 
     this.effects.flashAt(this.tmpMuzzle, this.camera.quaternion);
-    cur.rig.eject.getWorldPosition(this.tmpMuzzle);
-    this.tmpDir.set(1, 0, 0).applyQuaternion(this.camera.quaternion);
-    this.tmpEnd.set(0, 1, 0).applyQuaternion(this.camera.quaternion);
-    this.effects.shell(this.tmpMuzzle, this.tmpDir, this.tmpEnd);
+    cur.rig.eject.getWorldPosition(this.tmpEject);
+    // Shell frame off the eject/rig world matrix (fresh: getWorldPosition
+    // refreshes the chain above), not the camera: the up impulse rides the
+    // gun's own up, and a sprint-lowered or rolled gun throws brass with it.
+    const ejectM = cur.rig.eject.matrixWorld.elements;
+    this.tmpDir.set(ejectM[0], ejectM[1], ejectM[2]);
+    this.tmpEnd.set(ejectM[4], ejectM[5], ejectM[6]);
+    this.effects.shell(this.tmpEject, this.tmpDir, this.tmpEnd);
 
     // Two-part recoil: deterministic climb pattern in pitch, bounded random
     // yaw. Most of each shot lands as fast kick; a fraction accumulates as

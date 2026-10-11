@@ -212,7 +212,9 @@ export class WeaponEffects {
       m.visible = true;
     }
     this.flashScale = scale;
-    this.flashSpan = life;
+    // Floored: update() divides flashLife by flashSpan, and a zero-life pop
+    // would leave a 0/0 span behind for the next scaled frame.
+    this.flashSpan = life > 1e-4 ? life : 1e-4;
     this.flashLife = life;
   }
 

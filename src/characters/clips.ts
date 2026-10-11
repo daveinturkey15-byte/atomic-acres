@@ -242,7 +242,8 @@ function onceClip(
     const times = new Float32Array(hipsDY.length);
     const values = new Float32Array(hipsDY.length * 3);
     for (let i = 0; i < hipsDY.length; i++) {
-      times[i] = (i / (hipsDY.length - 1)) * duration;
+      // A single-keyframe height holds at t=0 instead of dividing by zero.
+      times[i] = (i / (hipsDY.length > 1 ? hipsDY.length - 1 : 1)) * duration;
       values[i * 3 + 1] = HIPS_Y + hipsDY[i];
     }
     tracks.push(new THREE.VectorKeyframeTrack('Hips.position', times, values));
