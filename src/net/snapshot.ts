@@ -27,6 +27,25 @@ export const TICK_DT = 1 / TICK_HZ;
  * our 20 Hz tick without the adaptation state machine.
  */
 export const INTERP_DELAY_MS = 100;
+/** Adaptive interp floor: never below today's fixed delay. Locked by proof. */
+export const INTERP_MIN_MS = 100;
+/** Adaptive interp ceiling: 5 ticks. Past this the game feels drunk, and the
+ *  WAN lane (TURN/relay path) owns anything worse, not the interpolator. */
+export const INTERP_MAX_MS = 250;
+/** Retune cadence: jitter statistics move slowly; the render point must not
+ *  chase noise frame to frame. */
+export const INTERP_TUNE_MS = 500;
+
+/**
+ * Render-point delay target from snapshot age p95: one extra tick of margin
+ * over the 95th percentile staleness, so 19 of 20 frames interpolate inside
+ * buffered brackets instead of holding newest (the visible snap). Non-finite
+ * statistics hold today's delay; the ceiling binds WAN outliers.
+ */
+export function interpTargetMs(ageP95Ms: number, tickHz: number = TICK_HZ): number {
+  if (!Number.isFinite(ageP95Ms) || !Number.isFinite(tickHz) || tickHz <= 0) return INTERP_DELAY_MS;
+  return Math.max(INTERP_MIN_MS, Math.min(INTERP_MAX_MS, ageP95Ms + 1000 / tickHz));
+}
 
 /**
  * Per-remote snapshot ring capacity. 64 samples ≈ 3.2 s at 20 Hz: deep enough

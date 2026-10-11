@@ -33,7 +33,7 @@ import type { ShotClaim } from '../weapons/controller';
 import type { GameNetMessage, MatchStateMsg, PlayerSample } from './protocol';
 import type { GuestClient } from './room';
 import { createPose, intentFromVelocity, type Pose } from './room-core';
-import { INTERP_DELAY_MS, TICK_HZ } from './snapshot';
+import { INTERP_DELAY_MS, INTERP_TUNE_MS, TICK_HZ, interpTargetMs } from './snapshot';
 
 const TICK_MS = 1000 / TICK_HZ;
 /** Divergence between the body and the host's acked seat that earns a teleport. */
@@ -74,6 +74,11 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   const scratch: Pose = createPose();
   const named = new Set<ActorId>();
   let frame = 0;
+  // Adaptive render-point delay: retuned twice a second from snapshot-age
+  // p95 toward one extra tick of margin. Clean links sit on INTERP_DELAY_MS
+  // exactly as before; only jittered links pay the extra latency.
+  let interpDelayMs = INTERP_DELAY_MS;
+  let lastTuneMs = 0;
 
   const pushNames = (): void => {
     const names: [string, string][] = [];
@@ -229,7 +234,18 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
     },
 
     bots(): readonly BotBody[] {
-      const renderAt = performance.now() + guest.hostClockOffset() - INTERP_DELAY_MS;
+      const tnow = performance.now();
+      // Twice a second, ease the render point toward one extra tick over the
+      // measured p95 staleness. Slew-rate limited so a single bad sample
+      // cannot yank every remote; empty statistics hold today's delay.
+      if (tnow - lastTuneMs >= INTERP_TUNE_MS) {
+        lastTuneMs = tnow;
+        const stat = guest.diag.snapshot(tnow);
+        const target = stat.ageN === 0 ? INTERP_DELAY_MS : interpTargetMs(stat.ageP95);
+        interpDelayMs += (target - interpDelayMs) * 0.3;
+        if (Math.abs(target - interpDelayMs) < 0.5) interpDelayMs = target;
+      }
+      const renderAt = tnow + guest.hostClockOffset() - interpDelayMs;
       for (const p of guest.latestPlayers()) {
         if (p.id === selfId) continue;
         const b = body(p.id);
@@ -270,7 +286,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
       const s = guest.diag.snapshot(now);
       const rtt = s.rttMs === null ? '--' : s.rttMs.toFixed(0);
       const age = s.ageN === 0 ? '--/--' : s.ageP50.toFixed(0) + '/' + s.ageP95.toFixed(0);
-      return `guest ${selfId} · rtt ${rtt} ms · snap ${s.tickHz.toFixed(1)} Hz · age p50/p95 ${age} ms · snaps ${snaps} · offset ${guest.hostClockOffset().toFixed(0)} ms`;
+      return `guest ${selfId} · rtt ${rtt} ms · snap ${s.tickHz.toFixed(1)} Hz · age p50/p95 ${age} ms · interp ${Math.round(interpDelayMs)} ms · snaps ${snaps} · offset ${guest.hostClockOffset().toFixed(0)} ms`;
     },
 
     dispose(): void {
