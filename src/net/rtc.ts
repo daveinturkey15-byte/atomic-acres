@@ -18,9 +18,10 @@
  * SIGNALLING ONLY CARRIES SDP AND ICE. Once the channels are up the relay
  * sees nothing; it can go away and the match continues. The guest offers,
  * the host answers — the guest knows who it wants to talk to and the host
- * learns of a guest by its offer. No STUN/TURN: host candidates only, which is
- * the LAN / same-machine tier this build proves; a WAN tier adds an
- * `iceServers` list here and nothing else.
+ * learns of a guest by its offer. The WAN tier: every peer is built with the
+ * caller's `iceServers` list (`ui/settings.ts:iceServersFor` — STUN always,
+ * TURN only when the owner pasted one). What remains for online play is
+ * outside this file: TURN credentials and a public signal host.
  */
 import type { NetMessage } from './protocol';
 import type { PeerId, Transport, TransportHandler } from './transport';
@@ -30,6 +31,12 @@ export interface RtcOptions {
   readonly code: string;
   readonly signalUrl: string;
   readonly localId: PeerId;
+  /**
+   * The ICE list for every peer this transport builds. REQUIRED: each
+   * construction names its path (`iceServersFor(settings)` from the menu,
+   * `[]` in proofs), so no silent default hides here.
+   */
+  readonly iceServers: readonly RTCIceServer[];
 }
 
 export interface RtcStats {
@@ -134,7 +141,7 @@ export function createRtcTransport(opts: RtcOptions): RtcTransport {
 
   const newPeer = (id: PeerId): Peer => {
     peers.get(id)?.pc.close();
-    const pc = new RTCPeerConnection({ iceServers: [] });
+    const pc = new RTCPeerConnection({ iceServers: [...opts.iceServers] });
     const p: Peer = { pc, ctl: null, fast: null, queue: [] };
     peers.set(id, p);
     pc.onicecandidate = (ev) => post(id, { kind: 'ice', candidate: ev.candidate === null ? null : ev.candidate.toJSON() });

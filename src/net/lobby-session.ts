@@ -67,8 +67,8 @@ export interface LobbyView {
   readonly linkOk: boolean;
 }
 
-export interface HostArgs { name: string; tier: LinkTier; signalUrl?: string; capacity?: number; bots?: number }
-export interface JoinArgs { name: string; tier: LinkTier; signalUrl?: string }
+export interface HostArgs { name: string; tier: LinkTier; signalUrl?: string; iceServers?: readonly RTCIceServer[]; capacity?: number; bots?: number }
+export interface JoinArgs { name: string; tier: LinkTier; signalUrl?: string; iceServers?: readonly RTCIceServer[] }
 export interface RejoinCandidate { code: string; name: string; tier: LinkTier; signalUrl: string }
 
 interface SavedIdentity extends RejoinCandidate, ResumeClaim { savedAt: number }
@@ -143,7 +143,7 @@ export class LobbySession {
     return { code: v.code, name: v.name, tier: v.tier, signalUrl: v.signalUrl };
   }
 
-  private link(role: 'host' | 'guest', code: string, tier: LinkTier, signalUrl: string | undefined): LobbyRefusal | null {
+  private link(role: 'host' | 'guest', code: string, tier: LinkTier, signalUrl: string | undefined, iceServers: readonly RTCIceServer[] | undefined): LobbyRefusal | null {
     const id = role === 'host' ? 'host' : 'g-' + createJoinCode().toLowerCase();
     if (tier === 'lan') {
       if (!rtcAvailable()) return 'no-webrtc';
@@ -153,7 +153,7 @@ export class LobbySession {
       } catch {
         return 'bad-signal-url';
       }
-      this.rtc = createRtcTransport({ role, code, signalUrl: url, localId: id });
+      this.rtc = createRtcTransport({ role, code, signalUrl: url, localId: id, iceServers: iceServers ?? [] });
       this.transport = this.rtc;
       return null;
     }
@@ -169,7 +169,7 @@ export class LobbySession {
     if (this.active()) return 'in-room';
     this.error = null;
     const code = createJoinCode();
-    const refusal = this.link('host', code, a.tier, a.signalUrl);
+    const refusal = this.link('host', code, a.tier, a.signalUrl, a.iceServers);
     if (refusal !== null) {
       this.error = LOBBY_REFUSAL_LABELS[refusal];
       this.changed();
@@ -194,7 +194,7 @@ export class LobbySession {
       this.changed();
       return 'bad-code';
     }
-    const refusal = this.link('guest', code, a.tier, a.signalUrl);
+    const refusal = this.link('guest', code, a.tier, a.signalUrl, a.iceServers);
     if (refusal !== null) {
       this.error = LOBBY_REFUSAL_LABELS[refusal];
       this.changed();
