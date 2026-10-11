@@ -194,6 +194,9 @@ export class WeaponsController {
       else if (def.id === 'duster') rig = buildPistolViewmodel(opts.mat);
       else if (def.id === 'stampede') rig = buildLmgViewmodel(opts.mat);
       else if (def.id === 'varmint') rig = buildMarksmanViewmodel(opts.mat);
+      // No dedicated builders this lane: the pickup-only rares ride the rifle
+      // fallback like every other unbuilt long gun, with the generic report.
+      else if (def.id === 'railgun' || def.id === 'flamethrower') rig = buildRifleViewmodel(opts.mat);
       else rig = buildRifleViewmodel(opts.mat);
       return {
         def,

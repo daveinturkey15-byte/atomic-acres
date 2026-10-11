@@ -43,6 +43,15 @@ import { WEAPONS, type WeaponDef } from '../weapons/catalog';
 export const SIDEARM_IDS: readonly string[] = Object.freeze(['duster']);
 
 /**
+ * Pickup-only rares: house-spawned map pickups, never issued. Menus cannot
+ * store them in a custom slot (`sanitizeCustom` refuses them), no kit names
+ * one, `PRIMARY_IDS` excludes them so the host ledger never adopts one as a
+ * primary, and the range bays (which resolve through this file) never list
+ * them. The only way to hold one is the held-key pedestal claim.
+ */
+export const PICKUP_ONLY_IDS: readonly string[] = Object.freeze(['railgun', 'flamethrower']);
+
+/**
  * The tactical slot. DECLARED, NOT IMPLEMENTED: nothing in this project throws
  * a grenade yet, and `weapons/catalog.ts` has no ordnance. The ids exist so a
  * kit row has somewhere to point and so `damage.ts:BLAST_*` has a consumer when
@@ -52,9 +61,9 @@ export const SIDEARM_IDS: readonly string[] = Object.freeze(['duster']);
 export const GRENADE_IDS = ['frag', 'flash', 'smoke'] as const;
 export type GrenadeId = (typeof GRENADE_IDS)[number];
 
-/** Every weapon that is not a sidearm. DERIVED — a new catalog entry joins by existing. */
+/** Every weapon that is neither a sidearm nor a pickup-only rare. DERIVED — a new catalog entry joins by existing. */
 export const PRIMARY_IDS: readonly string[] = Object.freeze(
-  WEAPONS.filter((w) => !SIDEARM_IDS.includes(w.id)).map((w) => w.id),
+  WEAPONS.filter((w) => !SIDEARM_IDS.includes(w.id) && !PICKUP_ONLY_IDS.includes(w.id)).map((w) => w.id),
 );
 
 function weaponById(id: string): WeaponDef | undefined {
@@ -64,6 +73,11 @@ function weaponById(id: string): WeaponDef | undefined {
 // Fail loud at load rather than shipping a kit whose pistol does not exist.
 for (const id of SIDEARM_IDS) {
   if (!weaponById(id)) throw new Error(`loadout: SIDEARM_IDS names '${id}', which weapons/catalog.ts does not define`);
+}
+
+// Fail loud at load rather than letting a pickup-only rare drift issuable.
+for (const id of PICKUP_ONLY_IDS) {
+  if (!weaponById(id)) throw new Error(`loadout: PICKUP_ONLY_IDS names '${id}', which weapons/catalog.ts does not define`);
 }
 
 // ---------------------------------------------------------------------------
@@ -234,14 +248,14 @@ export function defaultLoadoutStore(): LoadoutStore {
 
 /**
  * Resolve the stored selection into the three weapons a life carries. A custom
- * slot that is empty, or names a weapon the catalog no longer defines, falls
- * back to the default kit rather than issuing nothing — an unarmed spawn is a
- * worse failure than a wrong gun.
+ * slot that is empty, names a weapon the catalog no longer defines, or names
+ * a pickup-only rare, falls back to the default kit rather than issuing
+ * nothing — an unarmed spawn is a worse failure than a wrong gun.
  */
 export function resolveLoadout(store: LoadoutStore): Loadout {
   if (store.selected.kind === 'custom') {
     const slot = store.custom[store.selected.slot];
-    if (slot && weaponById(slot.primary)) {
+    if (slot && weaponById(slot.primary) && !PICKUP_ONLY_IDS.includes(slot.primary)) {
       return { primary: slot.primary, sidearm: sidearmForPrimary(slot.primary), grenade: slot.grenade };
     }
   } else {
@@ -289,7 +303,7 @@ function ambientStorage(): LoadoutStorage | null {
 function sanitizeCustom(value: unknown): CustomLoadout | null {
   if (typeof value !== 'object' || value === null) return null;
   const v = value as Record<string, unknown>;
-  if (typeof v.primary !== 'string' || !weaponById(v.primary)) return null;
+  if (typeof v.primary !== 'string' || !weaponById(v.primary) || PICKUP_ONLY_IDS.includes(v.primary)) return null;
   const grenade = (GRENADE_IDS as readonly string[]).includes(v.grenade as string)
     ? (v.grenade as GrenadeId)
     : GRENADE_IDS[0];

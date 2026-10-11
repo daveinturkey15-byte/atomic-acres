@@ -107,6 +107,40 @@ const STREET: readonly Template[] = [
   { id: 'street-west', x: ROAD_X_MIN + 4.0, z: 0, area: 'street', floor: 0 },
 ];
 
+/**
+ * Rare map-pickup sites: the four upper-room pedestals, one railgun and one
+ * flamethrower per match (`game/host-drops.ts` picks two distinct ones).
+ *
+ * Orange upper front reuses the proven `house-upper` template spot; orange
+ * upper rear sits clear of the living-room void (x >= 1.8 cut) and the
+ * stairwell (x >= ~4.6, z -22.0…-24.8 cut), inside the rear sitting room
+ * (x -0.5…6.4, z -26.6…-20.6) two metres from its partition door. White is
+ * the same plan rotated 180° about the origin — a rotation, never a mirror,
+ * so the garage stays on the project's invariant hand. `y` is the upper
+ * floor plus the old 0.7 m pedestal float. The third house is out-of-bounds
+ * scenery and never a site; every room here is door-verified (front/back
+ * porch doors, the 1.1 m garage-kitchen door, the 1.9 m hall doorway, the
+ * 1.6 m upper deck doorway).
+ */
+export interface RarePickupSite {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+}
+
+const RARE_Y = FLOOR_H + 0.7;
+
+export const RARE_PICKUP_SITES: readonly RarePickupSite[] = Object.freeze([
+  // Orange upper front, over the living room.
+  { x: -HOUSE_HALF_LEN * 0.55, y: RARE_Y, z: -(FRONT_LAWN_OUTER + 2.8) },
+  // Orange upper rear sitting room.
+  { x: HOUSE_HALF_LEN * 0.31, y: RARE_Y, z: -(HOUSE_BACK - 3.1) },
+  // White upper front: orange front rotated 180°.
+  { x: HOUSE_HALF_LEN * 0.55, y: RARE_Y, z: FRONT_LAWN_OUTER + 2.8 },
+  // White upper rear: orange rear rotated 180°.
+  { x: -HOUSE_HALF_LEN * 0.31, y: RARE_Y, z: HOUSE_BACK - 3.1 },
+]);
+
 function buildPoints(): readonly SpawnPoint[] {
   const out: SpawnPoint[] = [];
   const push = (p: Omit<SpawnPoint, 'index'>): void => {

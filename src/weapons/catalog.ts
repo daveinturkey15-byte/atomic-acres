@@ -1,9 +1,12 @@
 /**
  * Weapons lane — the weapon table. One object per weapon, in one file, so
- * adding an eighth is one entry here plus one viewmodel builder. `stampede`
+ * adding a tenth is one entry here plus one viewmodel builder. `stampede`
  * and `varmint` are long guns, so until their builders exist they ride the
  * controller's rifle-viewmodel fallback (the same fallback every unknown id
- * already gets) with the generic shot report.
+ * already gets) with the generic shot report. `railgun` and `flamethrower`
+ * are pickup-only map spawns (`game/loadout.ts:PICKUP_ONLY_IDS`): they ship
+ * in this table so the host, the drops and the controller all resolve them,
+ * but no kit, custom slot or bot arsenal may issue them.
  * All angles are radians. Damage is per pellet (the shotgun fires 8).
  * rpm is expressed as seconds between shots (`interval`) because that is
  * what the controller's timer consumes — rpm is in the comment.
@@ -196,6 +199,40 @@ export const WEAPONS: readonly WeaponDef[] = [
     adsMoveScale: 0.62,
     spread: { hip: 3.0 * DEG, ads: 0.08 * DEG, move: 1.6 * DEG, bloom: 0.6 * DEG, bloomMax: 1.6 * DEG, crouchMult: 0.65 },
     recoil: { pitch: 0.9 * DEG, yawRandom: 0.1 * DEG, patternAmp: 0.15, patternLen: 4, recovery: 4 },
+  },
+  {
+    id: 'railgun',
+    name: 'Railgun',
+    auto: false, // instant-fire semi: every pull is one round, no charge state anywhere
+    interval: 1.5, // ~40 rpm rechamber
+    pellets: 1,
+    damage: { base: 50, fall: 50, nearRange: 512, farRange: 512 },
+    magSize: 8,
+    startReserve: 0,
+    reloadTime: 1.5,
+    emptyReloadTime: 1.75,
+    adsTime: 0.28,
+    adsFov: 24,
+    adsMoveScale: 0.55,
+    spread: { hip: 0.4 * DEG, ads: 0, move: 1.0 * DEG, bloom: 0, bloomMax: 0, crouchMult: 0.7 },
+    recoil: { pitch: 1.5 * DEG, yawRandom: 0, patternAmp: 0, patternLen: 4, recovery: 3.5 },
+  },
+  {
+    id: 'flamethrower',
+    name: 'Flamethrower',
+    auto: true, // hold the trigger, hose the room; the tank is the reload
+    interval: 0.1, // 600 rpm
+    pellets: 1,
+    damage: { base: 81, fall: 0, nearRange: 8, farRange: 18 },
+    magSize: 100,
+    startReserve: 0,
+    reloadTime: 3.8,
+    emptyReloadTime: 4.2,
+    adsTime: 0.25,
+    adsFov: 60,
+    adsMoveScale: 0.82,
+    spread: { hip: 3.0 * DEG, ads: 2.0 * DEG, move: 1.5 * DEG, bloom: 0.3 * DEG, bloomMax: 2.0 * DEG, crouchMult: 0.8 },
+    recoil: { pitch: 0.15 * DEG, yawRandom: 0.1 * DEG, patternAmp: 0.2, patternLen: 6, recovery: 6 },
   },
 ];
 
