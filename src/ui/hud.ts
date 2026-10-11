@@ -55,6 +55,9 @@ export type HitKind = 'body' | 'head' | 'kill';
 
 const HIT_MS: Readonly<Record<HitKind, number>> = { body: HIT_BODY_MS, head: HIT_HEAD_MS, kill: HIT_KILL_MS };
 
+/** How long the gunner entry/exit line holds. The streak announcement window, deliberately. */
+const GUNNER_BANNER_MS = 2_600;
+
 /**
  * The match-state surfaces live in `hud-match.ts` (the pair passed the 400-line
  * cap). Their view types are re-exported here so `HudApi` remains the single
@@ -95,6 +98,21 @@ export interface HudApi {
   setFlash(opacity: number): void;
   /** Ordnance lane: the pickup prompt ("HOLD E TO SWAP · LONGHORN"); `null` hides. Level. */
   setPrompt(text: string | null): void;
+  /** Chopper lane: gunner overlay; `null` hides. Level, every frame while possessing. */
+  setGunner(s: GunnerHudState | null): void;
+}
+
+/**
+ * Gunner overlay level, pushed per frame while possessing. Counters are null
+ * when the pose stream has not delivered them yet; the overlay still shows
+ * possession. `banner` is the entry/exit line; null hides it.
+ */
+export interface GunnerHudState {
+  readonly rocketsLeft: number | null;
+  /** 0..1, 1 = cannon ready. */
+  readonly cooldownFrac: number | null;
+  readonly remainingMs: number | null;
+  readonly banner: string | null;
 }
 
 /**
@@ -137,6 +155,7 @@ function noopApi(): HudApi {
     setGrenades: noop,
     setFlash: noop,
     setPrompt: noop,
+    setGunner: noop,
   };
 }
 
@@ -189,6 +208,8 @@ export function initHud(): HudApi {
   let cGrenades = '';
   let cFlash = -1;
   let cPrompt: string | null = '';
+  let cGunner: string | null = null;
+  let gunnerBannerTimer = 0;
 
   const applyGap = (): void => {
     if (!n.crosshair) return;
@@ -384,6 +405,34 @@ export function initHud(): HudApi {
       }
       n.prompt.textContent = text;
       n.prompt.classList.remove('hud-hidden');
+    },
+
+    setGunner(s: GunnerHudState | null): void {
+      const sig = s === null
+        ? ''
+        : (s.rocketsLeft ?? '-') + '|' + (s.cooldownFrac ?? '-') + '|' + (s.remainingMs ?? '-') + '|' + (s.banner ?? '');
+      if (sig === cGunner) return;
+      cGunner = sig;
+      if (s === null) {
+        n.gunner.classList.add('hud-hidden');
+        return;
+      }
+      n.gunner.classList.remove('hud-hidden');
+      n.gunnerRockets.textContent = s.rocketsLeft === null ? 'ROCKETS --' : 'ROCKETS ' + s.rocketsLeft;
+      // scaleX keeps the fill on the compositor; width would lay out every frame.
+      const frac = s.cooldownFrac === null ? 1 : Math.max(0, Math.min(1, s.cooldownFrac));
+      n.gunnerCooldown.style.transform = 'scaleX(' + frac + ')';
+      n.gunnerLife.textContent = s.remainingMs === null ? '' : (s.remainingMs / 1000).toFixed(0) + 's';
+      if (s.banner === null) {
+        n.gunnerBanner.classList.add('hud-hidden');
+        return;
+      }
+      n.gunnerBanner.textContent = s.banner;
+      n.gunnerBanner.classList.remove('hud-hidden');
+      window.clearTimeout(gunnerBannerTimer);
+      gunnerBannerTimer = window.setTimeout(() => {
+        n.gunnerBanner.classList.add('hud-hidden');
+      }, GUNNER_BANNER_MS);
     },
   };
 }

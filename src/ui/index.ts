@@ -143,6 +143,48 @@ export function pushView(hud: HudApi, v: ClientView, names: ReadonlyMap<string, 
     slots: v.streak.slots.map((s) => ({ label: streakById(s.streakId)?.displayName ?? s.streakId, charges: s.charges })),
   };
   hud.setStreak(v.streak.slots.length === 0 ? null : streak);
+  pushGunner(hud, v);
+}
+/** Entry banner hold: the hud timer hides the line, the cache holds the text. */
+const GUNNER_BANNER_HOLD_MS = 2_600;
+let lastGunnerKey: number | null = null;
+let lastGunnerSince = 0;
+let lastAircraft: ClientView['aircraft'] = [];
+let lastGunner: ClientView['gunner'] = null;
+
+/**
+ * Gunner overlay level from the client projection. Entry raises the banner;
+ * the text holds 2.6 s so the hud's own hide timer (not a sig change) ends
+ * it. Null gunner hides the overlay and resets the edge.
+ */
+export function pushGunner(hud: HudApi, v: ClientView): void {
+  lastAircraft = v.aircraft;
+  lastGunner = v.gunner;
+  const g = v.gunner;
+  if (g === null) {
+    lastGunnerKey = null;
+    hud.setGunner(null);
+    return;
+  }
+  if (lastGunnerKey !== g.instanceId) {
+    lastGunnerKey = g.instanceId;
+    lastGunnerSince = performance.now();
+  }
+  const ac = v.aircraft.find((a) => a.instanceId === g.instanceId) ?? null;
+  const banner = performance.now() - lastGunnerSince < GUNNER_BANNER_HOLD_MS
+    ? 'CHOPPER GUNNER — STREAK KEY EXITS'
+    : null;
+  hud.setGunner({
+    rocketsLeft: ac?.rocketsLeft ?? null,
+    cooldownFrac: ac === null ? null : (ac.cooldownMs <= 0 ? 1 : 0),
+    remainingMs: ac?.remainingMs ?? null,
+    banner,
+  });
+}
+
+/** Latest gunner projection for the possession camera. Read-only refs. */
+export function gunnerView(): { readonly aircraft: ClientView['aircraft']; readonly gunner: ClientView['gunner'] } {
+  return { aircraft: lastAircraft, gunner: lastGunner };
 }
 
 /** Edges → HUD. One call per edge, in the order the host produced them. */

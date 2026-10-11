@@ -28,6 +28,7 @@ import {
   type ShotRejectMsg,
   type SpawnMsg,
   type StreakIntentMsg,
+  type StreakPoseMsg,
   type StreakStateMsg,
 } from './protocol-game';
 
@@ -250,6 +251,7 @@ export type NetMessage =
   | KillMsg
   | SpawnMsg
   | StreakIntentMsg
+  | StreakPoseMsg
   | StreakStateMsg
   | MatchStateMsg
   | OrdnanceMsg;
@@ -350,8 +352,8 @@ export function isNetMessage(v: unknown): v is NetMessage {
     case 'spawn':
     case 'streak-intent':
     case 'streak-state':
+    case 'streak-pose':
     case 'match-state':
-    case 'ordnance':
       return isGameMessage(m);
     case 'ping':
       return isFiniteNum(m['t']);

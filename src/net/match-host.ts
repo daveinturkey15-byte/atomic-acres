@@ -135,6 +135,10 @@ export function createHostDriver(room: HostRoom, solo: SoloDriver, opts: { world
         if (connected) solo.remotePose(id, p.x, p.y, p.z, p.yaw);
       });
       solo.tick(now, x, y, z, yaw, pitch);
+      // Gunship poses ride every room tick while one flies (nothing when the
+      // sky is empty): the possessed camera needs ~frame-rate poses and each
+      // message is twelve numbers. Guests prune past 500 ms on their side.
+      for (const pose of solo.chopperPoses()) room.broadcast(pose);
       if (phaseEdge || now - lastMatchAt >= MATCH_STATE_MS) {
         const m = solo.matchState();
         if (m !== null) {

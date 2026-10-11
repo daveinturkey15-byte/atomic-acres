@@ -34,7 +34,7 @@ import type {
   TeamId,
 } from './events';
 import type { MatchMode } from './rules';
-import type { MatchStateMsg, PlayerSample, ScoreRow, StreakSlotState, StreakStateMsg } from '../net/protocol';
+import type { MatchStateMsg, PlayerSample, ScoreRow, StreakPoseMsg, StreakSlotState, StreakStateMsg } from '../net/protocol';
 import { SHOT_REJECT_LABELS } from './events';
 import { BannerArbiter, feedLineForDamage, feedLineForDeath, feedLineForKill, feedLineForStreakActivated, feedLineForStreakDenied, feedLineForStreakEarned, type FeedContext } from './feed';
 import { shouldRevealEnemy, type MapBlip } from './minimap';
@@ -65,6 +65,28 @@ export interface StreakView {
   readonly ready: number;
 }
 
+export interface AircraftView {
+  readonly instanceId: number;
+  readonly streakId: string;
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly yaw: number;
+  /** Orbit centre: the gunner camera aims at this ground point. */
+  readonly cx: number;
+  readonly cz: number;
+  /** Frozen host-domain display levels, shown as-is. */
+  readonly remainingMs: number;
+  readonly rocketsLeft: number;
+  readonly cooldownMs: number;
+}
+
+/** The possessed gunship, when the owner holds one. Counters ride the aircraft entry. */
+export interface GunnerView {
+  readonly instanceId: number;
+  readonly streakId: string;
+}
+
 export interface ClientView {
   readonly selfId: ActorId;
   readonly team: TeamId | null;
@@ -77,6 +99,10 @@ export interface ClientView {
   /** Milliseconds until respawn, or null when none is scheduled. */
   readonly respawnMs: number | null;
   readonly banner: { readonly text: string; readonly sub: string } | null;
+  /** Live gunship poses, latest per instance. Empty until the pose stream lands. */
+  readonly aircraft: readonly AircraftView[];
+  /** Non-null while the owner possesses a gunship. */
+  readonly gunner: GunnerView | null;
 }
 
 /** One-shot presentation events. Consumed by `drain()`, never replayed. */
@@ -92,6 +118,8 @@ export interface ClientSnapshot {
   readonly match?: MatchStateMsg | null;
   readonly streak?: StreakStateMsg | null;
   readonly players?: readonly PlayerSample[];
+  /** Live gunship poses, latest per instance. Absent until the pose stream lands. */
+  readonly poses?: readonly StreakPoseMsg[];
 }
 
 const EMPTY_MATCH: MatchView = Object.freeze({
@@ -115,6 +143,8 @@ let nextBannerId = 1;
 export const BANNER_ANNOUNCE_MS = 2_600;
 /** Match phase changes hold longer — they are the thing players wait for. */
 export const BANNER_MATCH_MS = 3_200;
+/** A gunship pose older than this is dropped: at 20 Hz it is ten missed ticks, a dead airframe. */
+export const POSE_STALE_MS = 500;
 
 // ---------------------------------------------------------------------------
 // The client
@@ -139,6 +169,11 @@ export class GameClient {
   private now = 0;
   private blips: readonly MapBlip[] = [];
   private banner: { text: string; sub: string } | null = null;
+  /** Latest gunship pose per instance, with the receipt time. Pruned in tick(). */
+  private readonly aircraftById = new Map<number, { pose: AircraftView; rxAt: number }>();
+  /** Chopper instanceIds this client has seen created, with the newest event `at` each. Never shrinks mid-match. */
+  private readonly choppersSeen = new Map<number, number>();
+  private possessed: GunnerView | null = null;
 
   constructor(readonly selfId: ActorId) {
     this.ordnance = new OrdnanceView(selfId);
@@ -207,6 +242,8 @@ export class GameClient {
           this.alive = false;
           this.health = 0;
           this.respawnAt = e.respawnAt;
+          // The runtime dismounts a dead owner silently; the death event is the notice.
+          this.possessed = null;
           this.ordnance.note(e.at, 'death you by=' + String(e.killerId) + ' ' + e.cause);
         }
         this.pushLine(feedLineForDeath(e, this.ctx()));
@@ -233,12 +270,14 @@ export class GameClient {
         const l = feedLineForStreakActivated(e, this.ctx());
         this.pushLine(l);
         this.raiseBanner(l.text, 'KILLSTREAK', 'announcement', BANNER_ANNOUNCE_MS);
+        this.noteChopperActivated(e.actorId, e.streakId, e.instanceId, e.at);
         return;
       }
       case 'streak-denied':
         this.pushLine(feedLineForStreakDenied(e, this.ctx()));
         return;
       case 'streak-ended':
+        this.noteChopperEnded(e.instanceId);
         return;
       case 'match-phase':
         return this.onPhase(e.phase, e.winner, e.winnerId, e.endReason);
@@ -270,6 +309,12 @@ export class GameClient {
     endReason: MatchEndReason | null,
   ): void {
     this.match = { ...this.match, phase, winner, winnerId, endReason };
+    // Instances never survive a match end (the runtime retires them all), and
+    // instance ids restart at 1 — so a new match must forget the old airframes
+    // or a creation would misread as a possess toggle.
+    this.choppersSeen.clear();
+    this.possessed = null;
+    this.aircraftById.clear();
     if (phase === 'active') this.raiseBanner('ENGAGE', '', 'match-flow', BANNER_MATCH_MS);
     if (phase === 'ended') {
       const sub = endReason === 'time' ? 'TIME' : endReason === 'score' ? 'SCORE LIMIT' : '';
@@ -282,6 +327,32 @@ export class GameClient {
     if (winnerId !== null) return winnerId === this.selfId ? 'VICTORY' : 'DEFEAT';
     if (winner === null || this.team === null) return 'MATCH OVER';
     return winner === this.team ? 'VICTORY' : 'DEFEAT';
+  }
+
+  /**
+   * Own gunship activation: the FIRST event per instance is the creation, a
+   * NEWER one for a known instance is the possess toggle. Compared on `at`,
+   * so the streak-state edge replaying the same event object is a no-op and a
+   * re-possess after a dismount still toggles. Other actors' gunships are
+   * ignored: possession is first-person state.
+   */
+  private noteChopperActivated(actorId: ActorId, streakId: string, instanceId: number, at: number): void {
+    if (actorId !== this.selfId || streakId !== 'chopper-gunner') return;
+    const last = this.choppersSeen.get(instanceId);
+    if (last === undefined) {
+      this.choppersSeen.set(instanceId, at);
+      return;
+    }
+    if (at <= last) return;
+    this.choppersSeen.set(instanceId, at);
+    this.possessed = this.possessed?.instanceId === instanceId
+      ? null
+      : { instanceId, streakId };
+  }
+
+  /** Dismount and expiry both clear a held platform. Idempotent: replays no-op. */
+  private noteChopperEnded(instanceId: number): void {
+    if (this.possessed?.instanceId === instanceId) this.possessed = null;
   }
 
   // -------------------------------------------------------------------------
@@ -304,6 +375,18 @@ export class GameClient {
         if (self.hp !== undefined) this.health = self.hp;
         if (self.team !== undefined) this.team = self.team;
         if (self.alive !== undefined) this.alive = self.alive;
+      }
+    }
+    if (s.poses) {
+      for (const p of s.poses) {
+        this.aircraftById.set(p.instanceId, {
+          pose: {
+            instanceId: p.instanceId, streakId: p.streakId,
+            x: p.x, y: p.y, z: p.z, yaw: p.yaw, cx: p.cx, cz: p.cz,
+            remainingMs: p.remainingMs, rocketsLeft: p.rocketsLeft, cooldownMs: p.cooldownMs,
+          },
+          rxAt: s.at,
+        });
       }
     }
     this.blips = this.computeBlips();
@@ -359,9 +442,15 @@ export class GameClient {
   tick(now: number): void {
     if (now > this.now) this.now = now;
     this.applyBanner(this.banners.tick(this.now));
+    for (const [id, entry] of this.aircraftById) {
+      if (this.now - entry.rxAt > POSE_STALE_MS) this.aircraftById.delete(id);
+    }
   }
 
   view(): ClientView {
+    const aircraft: AircraftView[] = [];
+    for (const entry of this.aircraftById.values()) aircraft.push(entry.pose);
+    aircraft.sort((a, b) => a.instanceId - b.instanceId);
     return {
       selfId: this.selfId,
       team: this.team,
@@ -372,6 +461,8 @@ export class GameClient {
       blips: this.blips,
       respawnMs: this.respawnAt === null ? null : Math.max(0, this.respawnAt - this.now),
       banner: this.banner,
+      aircraft,
+      gunner: this.possessed,
     };
   }
 

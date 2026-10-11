@@ -155,6 +155,7 @@ export const STREAKS = Object.freeze([
   { id: 'fallout-screen', displayName: 'Fallout Screen', cost: 7, tier: 'high', availability: 'selectable', activation: 'target-point', durationMs: 20_000, repeatable: false, baseWeightUnits: 9 },
   { id: 'blast-mortar', displayName: 'Blast Mortar', cost: 8, tier: 'high', availability: 'selectable', activation: 'target-point', durationMs: 15_000, repeatable: false, baseWeightUnits: 5 },
   { id: 'strike-relay', displayName: 'Strike Relay', cost: 9, tier: 'high', availability: 'selectable', activation: 'target-line', durationMs: 18_000, repeatable: false, baseWeightUnits: 2 },
+  { id: 'chopper-gunner', displayName: 'Chopper Gunner', cost: 9, tier: 'high', availability: 'selectable', activation: 'possession', durationMs: 30_000, repeatable: false, baseWeightUnits: 2 },
   { id: 'field-repair', displayName: 'Field Repair', cost: 0, tier: 'mid', availability: 'reward-only', activation: 'instant', durationMs: 0, repeatable: true, baseWeightUnits: 0 },
   { id: 'last-resort', displayName: 'Last Resort', cost: 0, tier: 'top', availability: 'reward-only', activation: 'instant', durationMs: 0, repeatable: false, baseWeightUnits: 0 },
 ] as const satisfies readonly StreakSource[]);

@@ -73,6 +73,12 @@ export interface HudNodes {
   readonly grenadeTactical: HTMLElement;
   readonly flash: HTMLElement;
   readonly prompt: HTMLElement;
+  /** Chopper lane: gunner overlay — title, rockets-left, cannon cooldown fill, lifetime, entry/exit line. */
+  readonly gunner: HTMLElement;
+  readonly gunnerRockets: HTMLElement;
+  readonly gunnerCooldown: HTMLElement;
+  readonly gunnerLife: HTMLElement;
+  readonly gunnerBanner: HTMLElement;
 }
 
 function el(tag: string, cls: string, text?: string): HTMLElement {
@@ -225,9 +231,20 @@ export function buildHud(root: HTMLElement, crosshair: HTMLElement | null): HudN
     + 'letter-spacing:0.18em;padding:6px 14px;border:1px solid rgba(240,236,226,0.55);border-radius:3px;'
     + 'background:rgba(0,0,0,0.35);';
   prompt.setAttribute('role', 'status');
+  // --- gunner (chopper lane): hidden panel, shown while possessing -----------
+  const gunner = el('div', 'hud-own hud-gunner hud-hidden');
+  gunner.append(el('div', 'hud-gunner-title', 'CHOPPER GUNNER'));
+  const gunnerRockets = span('hud-gunner-rockets', '');
+  const gunnerCooldownTrack = el('div', 'hud-gunner-cooldown-track');
+  const gunnerCooldown = el('div', 'hud-gunner-cooldown-fill');
+  gunnerCooldownTrack.appendChild(gunnerCooldown);
+  const gunnerLife = span('hud-gunner-life', '');
+  const gunnerBanner = el('div', 'hud-gunner-banner hud-hidden');
+  gunnerBanner.setAttribute('role', 'status');
+  gunner.append(gunnerRockets, gunnerCooldownTrack, gunnerLife, gunnerBanner);
 
   root.append(weapon, ammo, health, vignette, dmgdir, hit, bar, banner, respawn, streak, mapWrap, scoreboard,
-    grenades, flash, prompt);
+    grenades, flash, prompt, gunner);
   root.classList.add('hud-debug-hidden');
 
   return {
@@ -266,5 +283,10 @@ export function buildHud(root: HTMLElement, crosshair: HTMLElement | null): HudN
     grenadeTactical,
     flash,
     prompt,
+    gunner,
+    gunnerRockets,
+    gunnerCooldown,
+    gunnerLife,
+    gunnerBanner,
   };
 }

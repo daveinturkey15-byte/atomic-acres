@@ -37,7 +37,7 @@ import {
   type StreakActivatedEvent, type StreakDeniedEvent, type StreakDenialReason, type StreakEarnedEvent,
   type StreakEndReason, type StreakEndedEvent, type TeamId, type Vec3, type WorldQuery,
 } from '../events';
-import type { StreakSlotState, StreakStateMsg } from '../../net/protocol';
+import type { StreakPoseMsg, StreakSlotState, StreakStateMsg } from '../../net/protocol';
 import {
   DEFAULT_STREAK_LOADOUT, STREAK_CATALOG, streakById, validateStreakLoadout,
   type StreakCatalog, type StreakLoadout,
@@ -48,6 +48,7 @@ import { createCounterRecon, jamsTeam, stepCounterRecon, type CounterReconState 
 import { createSentry, stepSentry, validateSentryPlacement, type SentryState, type SentryTarget } from './effects/sentry';
 import { createMortar, stepMortar, type MortarState } from './effects/mortar';
 import { createDart, dartPaints, stepDart, type DartState } from './effects/dart';
+import { chopperPoseAt, createChopper, stepChopper, type ChopperState } from './effects/chopper';
 
 export { STREAK_CLAIM_REJECTS, STREAK_CLAIM_REJECT_LABELS, type ActivationContext, type StreakClaimReject } from './gate';
 
@@ -69,18 +70,19 @@ export const ADVANCE_DT_CAP_MS = 250;
 export const MAX_LADDER_KILLS = 100_000;
 
 /** The wiring table: the only place a streak id meets a stepper. */
-const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar' | 'dart'>> = Object.freeze({
+const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar' | 'dart' | 'chopper'>> = Object.freeze({
   'recon-sweep': 'recon',
   'signal-jam': 'counter-recon',
   'sentry-post': 'sentry',
   'blast-mortar': 'mortar',
   'tracker-dart': 'dart',
+  'chopper-gunner': 'chopper',
 });
 
 /** Derived, never authored: what this build can bring into the world. */
 export const WIRED_STREAK_IDS: readonly string[] = Object.freeze(Object.keys(EFFECT_KIND));
 
-export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState | DartState;
+export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState | DartState | ChopperState;
 
 /** What the host must know about an actor for a sentry to shoot it. */
 export type StreakTarget = SentryTarget;
@@ -219,7 +221,7 @@ export class StreakRuntime {
     if (!a) return [];
     this.nowMs = a.at = at;
     a.kills = a.cycle = 0;
-    a.life += 1; a.lastSeq = -1; a.earned.clear();
+    this.dismountOwned(actorId);
     return [];
   }
 
@@ -227,7 +229,23 @@ export class StreakRuntime {
   recordDisconnect(actorId: ActorId, _at?: number): GameEvent[] {
     const a = this.actors.get(actorId);
     if (a) a.lastSeq = -1;
+    this.dismountOwned(actorId);
     return [];
+  }
+
+  /**
+   * The airframe outlives its owner (Rule 1: paid-for entities keep running),
+   * but possession does not: a dead or dropped owner is dismounted, silently.
+   * Silent because the death event already tells every client, and no
+   * vocabulary names "dismount" — the toggle path's streak-ended covers the
+   * live, deliberate case. Expiry needs nothing: retire() deletes the instance.
+   */
+  private dismountOwned(actorId: ActorId): void {
+    for (const instance of this.live.values()) {
+      if (instance.kind === 'chopper' && instance.actorId === actorId && instance.ownerPossessing) {
+        this.live.set(instance.instanceId, Object.freeze({ ...instance, ownerPossessing: false }));
+      }
+    }
   }
 
   /** Life epoch the host must echo in a claim. */
@@ -270,6 +288,50 @@ export class StreakRuntime {
     const streakId = a.loadout[intent.slot - 1];
     const def = streakById(streakId, this.catalog);
     if (!def) return reject('malformed-claim');
+    // Chopper toggle, BEFORE the gate: a press on the gunship's own slot while
+    // the owner's airframe lives flips possession instead of spending again —
+    // no second airframe, no second charge. It runs before the verdict because
+    // the spent charge would read as NOT EARNED below. A plain press is folded
+    // in here (the solo/guest press path carries no toggle bit); the toggle
+    // pre-check enforces exactly the gate conditions an explicit controlToggle
+    // still answers to (dead, match-inactive, input, menu, targeting), so the
+    // fold changes nothing a real toggle would not. Exactly-once bookkeeping
+    // still moves, so a retried press cannot double-flip.
+    if (EFFECT_KIND[streakId] === 'chopper') {
+      for (const instance of this.live.values()) {
+        if (instance.kind !== 'chopper' || instance.actorId !== intent.actorId || instance.streakId !== streakId) continue;
+        const toggleVerdict = evaluateActivation({
+          ...intent.context,
+          streakId,
+          slot: intent.slot,
+          arenaSupported: true,
+          hasAuthoritySnapshot: true,
+          earned: true,
+          controlToggle: true,
+        });
+        if (!toggleVerdict.allowed) {
+          const e: StreakDeniedEvent = Object.freeze({ type: 'streak-denied', at: now, actorId: intent.actorId, streakId, slot: intent.slot, reason: toggleVerdict.reason });
+          a.cause = e;
+          a.at = now;
+          return Object.freeze({ accepted: false as const, outcome: 'denied' as const, reason: toggleVerdict.reason, label: STREAK_DENIAL_LABELS[toggleVerdict.reason], events: Object.freeze([e as GameEvent]) });
+        }
+        const possessing = !instance.ownerPossessing;
+        this.live.set(instance.instanceId, Object.freeze({ ...instance, ownerPossessing: possessing }));
+        const chargesLeft = a.charges.get(streakId) ?? 0;
+        a.lastSeq = intent.seq;
+        this.rememberClaim(intent.claimId);
+        if (possessing) {
+          const e: StreakActivatedEvent = Object.freeze({ type: 'streak-activated', at: now, actorId: a.actorId, team: a.team, streakId, slot: intent.slot, chargesLeft, instanceId: instance.instanceId });
+          a.cause = e;
+          a.at = now;
+          return Object.freeze({ accepted: true as const, streakId, instanceId: instance.instanceId, chargesLeft, events: Object.freeze([e as GameEvent]) });
+        }
+        const e: StreakEndedEvent = Object.freeze({ type: 'streak-ended', at: now, actorId: a.actorId, streakId, instanceId: instance.instanceId, reason: 'expired' });
+        a.cause = e;
+        a.at = now;
+        return Object.freeze({ accepted: true as const, streakId, instanceId: instance.instanceId, chargesLeft, events: Object.freeze([e as GameEvent]) });
+      }
+    }
 
     // The gate decides everything a player may see a label for. `earned` and
     // `hasAuthoritySnapshot` come from the LEDGER: a claim asserting its own
@@ -297,7 +359,7 @@ export class StreakRuntime {
     const kind = EFFECT_KIND[streakId];
     const anchor = intent.anchor ?? intent.origin;
     let placed: { x: number; y: number; z: number } | null = null;
-    if (kind === 'sentry' || kind === 'mortar' || kind === 'dart') {
+    if (kind === 'sentry' || kind === 'mortar' || kind === 'dart' || kind === 'chopper') {
       const p = validateSentryPlacement(anchor.x, anchor.z, world);
       if (!p.ok) return reject('no-placement', streakId);
       placed = { x: p.x, y: p.y, z: p.z };
@@ -319,7 +381,9 @@ export class StreakRuntime {
           ? createMortar(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
           : kind === 'dart'
             ? createDart(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
-            : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
+            : kind === 'chopper'
+              ? createChopper(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
+              : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
 
     const e: StreakActivatedEvent = Object.freeze({ type: 'streak-activated', at: now, actorId: a.actorId, team: a.team, streakId, slot: intent.slot, chargesLeft, instanceId });
     a.cause = e;
@@ -350,7 +414,9 @@ export class StreakRuntime {
             ? stepMortar(instance, dt, { now, targets: aimed })
             : instance.kind === 'dart'
               ? stepDart(instance, dt, { now, world, targets: aimed })
-              : stepSentry(instance, dt, { now, world, targets: aimed });
+              : instance.kind === 'chopper'
+                ? stepChopper(instance, dt, { now, world, targets: aimed })
+                : stepSentry(instance, dt, { now, world, targets: aimed });
       for (const e of tick.events) {
         if (e.type === 'damage') health.set((e as DamageEvent).victimId, (e as DamageEvent).healthAfter);
         events.push(e);
@@ -372,6 +438,32 @@ export class StreakRuntime {
   /** Read-only view of what is in the world, for presentation to draw. */
   liveInstances(): readonly LiveInstance[] {
     return [...this.live.values()];
+  }
+
+  /**
+   * Live gunship poses for the `streak-pose` wire message, computed from the
+   * same closed-form as the stepper (no extra state, no drift). Read-only and
+   * additive: the solo driver will feed the local client and the room host
+   * will broadcast them. Part of the advance surface, not a second registry.
+   */
+  chopperPoses(): readonly StreakPoseMsg[] {
+    const out: StreakPoseMsg[] = [];
+    for (const instance of this.live.values()) {
+      if (instance.kind !== 'chopper') continue;
+      const durationMs = Math.max(1, instance.remainingMs + instance.elapsedMs);
+      const pose = chopperPoseAt(instance, instance.elapsedMs, durationMs);
+      out.push(Object.freeze({
+        type: 'streak-pose' as const,
+        instanceId: instance.instanceId,
+        streakId: instance.streakId,
+        x: pose.x, y: pose.y, z: pose.z, yaw: pose.yaw,
+        cx: instance.centreX, cz: instance.centreZ,
+        remainingMs: Math.max(0, instance.remainingMs),
+        rocketsLeft: Math.max(0, instance.ammoRockets - instance.aiRocketsSpent),
+        cooldownMs: Math.max(0, instance.gunCooldownMs),
+      }));
+    }
+    return Object.freeze(out);
   }
 
   /** The ONE place recon and counter-recon combine; checking one alone is half the pair. */

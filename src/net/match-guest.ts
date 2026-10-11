@@ -30,7 +30,7 @@ import type { SessionLog } from '../game/session-log';
 import { displayNameFor } from '../game/session-solo';
 import type { BotBody, MatchDriver, MatchUi, SessionActor, SessionSnapshot } from '../game/session-types';
 import type { ShotClaim } from '../weapons/controller';
-import type { GameNetMessage, MatchStateMsg, PlayerSample } from './protocol';
+import type { GameNetMessage, MatchStateMsg, PlayerSample, StreakPoseMsg } from './protocol';
 import type { GuestClient } from './room';
 import { createPose, intentFromVelocity, type Pose } from './room-core';
 import { INTERP_DELAY_MS, TICK_HZ } from './snapshot';
@@ -74,6 +74,8 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
   const scratch: Pose = createPose();
   const named = new Set<ActorId>();
   let frame = 0;
+  /** Latest gunship pose per instance, forwarded to the client snapshot in tick(). Bounded: one airframe per live gunship. */
+  const poses = new Map<number, StreakPoseMsg>();
 
   const pushNames = (): void => {
     const names: [string, string][] = [];
@@ -125,6 +127,11 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
         break;
       case 'ordnance':
         record(msg.e as GameEvent);
+        break;
+      case 'streak-pose':
+        // Dormant until the room forwards the tag (see the lane report): then
+        // the latest pose per airframe waits here for the next tick's snapshot.
+        poses.set(msg.instanceId, msg);
         break;
       default:
         break;
@@ -225,6 +232,7 @@ export function createGuestDriver(guest: GuestClient, opts: GuestDriverOptions):
         sample(now);
       }
       reconcile();
+      if (poses.size > 0) client.applySnapshot({ at: performance.now(), poses: [...poses.values()] });
       client.tick(now);
     },
 

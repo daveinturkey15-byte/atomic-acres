@@ -26,7 +26,7 @@
  * bug than not shipping the end condition at all.
  */
 
-import { MAX_PLAYERS, type MatchStateMsg, type PlayerSample, type ShotMsg, type StreakStateMsg } from '../net/protocol';
+import { MAX_PLAYERS, type MatchStateMsg, type PlayerSample, type ShotMsg, type StreakPoseMsg, type StreakStateMsg } from '../net/protocol';
 import { TICK_HZ } from '../net/snapshot';
 import type { ShotClaim } from '../weapons/controller';
 import { BotDirector, nextBotTeam, type BotActorView } from './bots';
@@ -93,6 +93,8 @@ export interface SoloDriver extends MatchDriver {
   setEventSink(sink: EventSink | null): void;
   matchState(): MatchStateMsg | null;
   streakStateFor(id: ActorId, now: number): StreakStateMsg | null;
+  /** Live gunship poses for guests (room broadcast) — empty when none fly. */
+  chopperPoses(): readonly StreakPoseMsg[];
   stampSample(s: PlayerSample): PlayerSample;
   /** Bots as wire samples, for a room that must show them to guests. */
   botSamples(into: PlayerSample[]): void;
@@ -236,6 +238,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
       at: now, match: after.match,
       streak: streaks === null ? null : streaks.streakStateFor(localId, now),
       players: samples(h, d),
+      poses: streaks === null ? undefined : streaks.chopperPoses(),
     });
   };
 
@@ -376,6 +379,7 @@ export function createSoloDriver(opts: SoloDriverOptions): SoloDriver {
     },
 
     setEventSink(s): void { sink = s; },
+    chopperPoses: () => (streaks === null ? [] : streaks.chopperPoses()),
     matchState: () => lastMatch,
     streakStateFor: (id, now) => (streaks === null ? null : streaks.streakStateFor(id, now)),
     stampSample: (s) => (host === null ? s : host.stampSample(s)),

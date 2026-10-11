@@ -13,7 +13,7 @@ import { SPAWN_A, SPAWN_B, EYE_HEIGHT, HOUSES, garageIsOnTheRight } from './core
 import { STATIONS, type Station } from './core/stations';
 import { WeaponsController } from './weapons/controller';
 import { OrdnanceScene } from './weapons/ordnance-scene';
-import { initUI } from './ui/index';
+import { gunnerView, initUI } from './ui/index';
 import { wireNetcode } from './net/wire';
 import { createCharacterSystem, type CharacterHandle } from './characters';
 import { loadBakedClips } from './characters/kimodo-clips';
@@ -217,6 +217,9 @@ addEventListener('keydown', (e) => {
 // requestPointerLock) so capture-harness probes never trip on missing APIs.
 const canvas = world.renderer.domElement;
 canvas.addEventListener('mousedown', (e) => {
+  // Possessed: the cannon fires itself and rockets await the input lane —
+  // infantry trigger pulls from the gunner seat must reach nothing.
+  if (wasPossessing) return;
   try {
     if (e.button === 0 || e.button === 2) weapons.pointerDown(e.button);
   } catch { /* headless: no pointer, no weapon input */ }
@@ -229,13 +232,17 @@ addEventListener('mouseup', (e) => {
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 addEventListener('keydown', (e) => {
   if (e.repeat) return;
-  if (e.code === 'KeyR' || e.code === 'Digit1' || e.code === 'Digit2') {
-    try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
-  }
-  // G/Q grenades, V knife, E use - on foot only: E and Q are fly-mode
-  // up/down in core/player.ts, and a knife thrown from noclip is not a game.
-  if ((e.code === 'KeyG' || e.code === 'KeyQ' || e.code === 'KeyV' || e.code === 'KeyE') && player.getMode() === 'walk') {
-    try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
+  // Possessed: reloads, swaps, grenades, knife and use stay on the ground —
+  // only the streak slots stay live (a press dismounts via the toggle fold).
+  if (!wasPossessing) {
+    if (e.code === 'KeyR' || e.code === 'Digit1' || e.code === 'Digit2') {
+      try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
+    }
+    // G/Q grenades, V knife, E use - on foot only: E and Q are fly-mode
+    // up/down in core/player.ts, and a knife thrown from noclip is not a game.
+    if ((e.code === 'KeyG' || e.code === 'KeyQ' || e.code === 'KeyV' || e.code === 'KeyE') && player.getMode() === 'walk') {
+      try { weapons.keyDown(e.code); } catch { /* headless-safe */ }
+    }
   }
   // 3-6 are the four killstreak slots. A press always answers, even when it
   // is refused - a dead key is the defect IMPORT-PLAN s5.4 is written about.
@@ -266,6 +273,10 @@ let lastSpeed = -1;
  * photographs the spawn view - identical stats at every station is the tell.
  */
 let cameraHeldByQA = false;
+// Gunner possession owns the camera while held. It reuses the QA flag the
+// player sync already respects (capture never possesses, so they never
+// fight); only this lane's own acquisition is ever released here.
+let wasPossessing = false;
 
 function frame(): void {
   const now = performance.now();
@@ -282,6 +293,28 @@ function frame(): void {
   // final quad pass - 1 draw call, 2 triangles - which is why triangles read 0.
   if (world.renderer.info.autoReset) world.renderer.info.autoReset = false;
   world.renderer.info.reset();
+  // Possession camera: ride the airframe, look down at the orbit centre.
+  // Closed-form orbit poses are smooth by construction; solo snapshots land
+  // every frame, room poses every room tick. Infantry sync stays parked via
+  // the flag above until the gunner view clears (dismount, death, match end).
+  const gv = gunnerView();
+  const craft = gv.gunner === null
+    ? null
+    : (gv.aircraft.find((a) => gv.gunner !== null && a.instanceId === gv.gunner.instanceId) ?? null);
+  if (craft !== null) {
+    if (!wasPossessing) {
+      wasPossessing = true;
+      cameraHeldByQA = true;
+      try { weapons.setVisible(false); } catch { /* headless-safe */ }
+    }
+    const gy = match?.groundY(craft.cx, craft.cz) ?? 0;
+    world.camera.position.set(craft.x, craft.y + 2, craft.z);
+    world.camera.lookAt(craft.cx, gy, craft.cz);
+  } else if (wasPossessing) {
+    wasPossessing = false;
+    cameraHeldByQA = false;
+    try { weapons.setVisible(true); } catch { /* headless-safe */ }
+  }
 
   if (!cameraHeldByQA) {
     player.update(dt);

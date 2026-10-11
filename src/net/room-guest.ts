@@ -57,7 +57,7 @@ export interface SelfAck {
 
 /** Game-tag message tags a guest forwards to its match driver. */
 const GAME_TAGS: ReadonlySet<string> = new Set([
-  'shot-reject', 'damage', 'kill', 'spawn', 'streak-state', 'match-state', 'ordnance',
+  'shot-reject', 'damage', 'kill', 'spawn', 'streak-state', 'streak-pose', 'match-state', 'ordnance',
 ]);
 
 export class GuestClient {

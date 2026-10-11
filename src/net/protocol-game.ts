@@ -150,7 +150,31 @@ export interface MatchStateMsg {
  */
 export interface OrdnanceMsg { type: 'ordnance'; e: OrdnanceEvent }
 
-/** Every gameplay discriminant. `protocol.ts` routes these tags to `isGameMessage`. */
+/**
+ * Host -> all: one live gunship pose per room tick (CHOPPER LANE, additive).
+ * Positions are the host sim's closed-form answer, not a claim: guests never
+ * steer by them, they render the camera and the HUD from them. Counters are
+ * frozen host-domain values like the match-state clock (never Infinity, never
+ * NaN), so a guest displays them as-is instead of doing cross-clock math.
+ * `cx/cz` is the orbit centre: the gunner camera aims at the anchor-side
+ * ground point, which no single pose can locate alone.
+ *
+ * ROUTING: same shape as the ordnance lane's note above — `protocol.ts` owns
+ * `isNetMessage` and `GAME_TAGS` in `room-guest.ts` owns guest forwarding;
+ * both need the one-line `streak-pose` addition before this flows. Named in
+ * the lane report as the two out-of-scope lines.
+ */
+export interface StreakPoseMsg {
+  type: 'streak-pose';
+  instanceId: number;
+  streakId: string;
+  x: number; y: number; z: number; yaw: number;
+  cx: number; cz: number;
+  remainingMs: number;
+  rocketsLeft: number;
+  cooldownMs: number;
+}
+
 export const GAME_MESSAGE_TYPES = [
   'shot',
   'shot-reject',
@@ -159,6 +183,7 @@ export const GAME_MESSAGE_TYPES = [
   'spawn',
   'streak-intent',
   'streak-state',
+  'streak-pose',
   'match-state',
   'ordnance',
 ] as const;
@@ -172,6 +197,7 @@ export type GameNetMessage =
   | SpawnMsg
   | StreakIntentMsg
   | StreakStateMsg
+  | StreakPoseMsg
   | MatchStateMsg
   | OrdnanceMsg;
 
@@ -298,6 +324,21 @@ function isOrdnanceEvent(v: unknown): boolean {
 }
 
 /**
+ * Host-authored gunship pose: every field a finite number, ids well-formed.
+ * The three counters are display levels, so negatives fail closed rather than
+ * rendering a wrapped counter.
+ */
+function isStreakPose(m: Record<string, unknown>): boolean {
+  if (!Number.isSafeInteger(m['instanceId']) || typeof m['streakId'] !== 'string') return false;
+  if (!isNum(m['x']) || !isNum(m['y']) || !isNum(m['z']) || !isNum(m['yaw'])) return false;
+  if (!isNum(m['cx']) || !isNum(m['cz'])) return false;
+  if (!isNum(m['remainingMs']) || m['remainingMs'] < 0) return false;
+  if (!isNum(m['rocketsLeft']) || m['rocketsLeft'] < 0) return false;
+  if (!isNum(m['cooldownMs']) || m['cooldownMs'] < 0) return false;
+  return true;
+}
+
+/**
  * Structural check for every gameplay message. Called by `isNetMessage` after
  * it has matched the tag; returns false for any tag it does not own, so a typo
  * in the caller's case list fails closed rather than admitting garbage.
@@ -341,6 +382,8 @@ export function isGameMessage(m: Record<string, unknown>): boolean {
         (m['slots'] as unknown[]).every(isStreakSlot) &&
         isStreakCause(m['cause'])
       );
+    case 'streak-pose':
+      return isStreakPose(m);
     case 'match-state':
       return (
         isNum(m['at']) &&
