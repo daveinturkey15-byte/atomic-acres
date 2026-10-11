@@ -157,6 +157,7 @@ export const STREAKS = Object.freeze([
   { id: 'strike-relay', displayName: 'Strike Relay', cost: 9, tier: 'high', availability: 'selectable', activation: 'target-line', durationMs: 18_000, repeatable: false, baseWeightUnits: 2 },
   { id: 'field-repair', displayName: 'Field Repair', cost: 0, tier: 'mid', availability: 'reward-only', activation: 'instant', durationMs: 0, repeatable: true, baseWeightUnits: 0 },
   { id: 'last-resort', displayName: 'Last Resort', cost: 0, tier: 'top', availability: 'reward-only', activation: 'instant', durationMs: 0, repeatable: false, baseWeightUnits: 0 },
+  { id: 'drone-swarm', displayName: 'Drone Swarm', cost: 6, tier: 'mid', availability: 'selectable', activation: 'target-point', durationMs: 30_000, repeatable: false, baseWeightUnits: 7 },
 ] as const satisfies readonly StreakSource[]);
 
 export type StreakId = (typeof STREAKS)[number]['id'];

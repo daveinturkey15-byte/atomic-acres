@@ -48,6 +48,7 @@ import { createCounterRecon, jamsTeam, stepCounterRecon, type CounterReconState 
 import { createSentry, stepSentry, validateSentryPlacement, type SentryState, type SentryTarget } from './effects/sentry';
 import { createMortar, stepMortar, type MortarState } from './effects/mortar';
 import { createDart, dartPaints, stepDart, type DartState } from './effects/dart';
+import { createDrone, stepDrone, type DroneSwarmState } from './effects/drone';
 
 export { STREAK_CLAIM_REJECTS, STREAK_CLAIM_REJECT_LABELS, type ActivationContext, type StreakClaimReject } from './gate';
 
@@ -69,18 +70,19 @@ export const ADVANCE_DT_CAP_MS = 250;
 export const MAX_LADDER_KILLS = 100_000;
 
 /** The wiring table: the only place a streak id meets a stepper. */
-const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar' | 'dart'>> = Object.freeze({
+const EFFECT_KIND: Readonly<Record<string, 'recon' | 'counter-recon' | 'sentry' | 'mortar' | 'dart' | 'drone'>> = Object.freeze({
   'recon-sweep': 'recon',
   'signal-jam': 'counter-recon',
   'sentry-post': 'sentry',
   'blast-mortar': 'mortar',
   'tracker-dart': 'dart',
+  'drone-swarm': 'drone',
 });
 
 /** Derived, never authored: what this build can bring into the world. */
 export const WIRED_STREAK_IDS: readonly string[] = Object.freeze(Object.keys(EFFECT_KIND));
 
-export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState | DartState;
+export type LiveInstance = ReconState | CounterReconState | SentryState | MortarState | DartState | DroneSwarmState;
 
 /** What the host must know about an actor for a sentry to shoot it. */
 export type StreakTarget = SentryTarget;
@@ -297,7 +299,7 @@ export class StreakRuntime {
     const kind = EFFECT_KIND[streakId];
     const anchor = intent.anchor ?? intent.origin;
     let placed: { x: number; y: number; z: number } | null = null;
-    if (kind === 'sentry' || kind === 'mortar' || kind === 'dart') {
+    if (kind === 'sentry' || kind === 'mortar' || kind === 'dart' || kind === 'drone') {
       const p = validateSentryPlacement(anchor.x, anchor.z, world);
       if (!p.ok) return reject('no-placement', streakId);
       placed = { x: p.x, y: p.y, z: p.z };
@@ -319,7 +321,9 @@ export class StreakRuntime {
           ? createMortar(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
           : kind === 'dart'
             ? createDart(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
-            : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
+            : kind === 'drone'
+              ? createDrone(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, seed)
+              : createSentry(instanceId, a.actorId, a.team, streakId, def.durationMs, placed!, intent.aimYaw, seed));
 
     const e: StreakActivatedEvent = Object.freeze({ type: 'streak-activated', at: now, actorId: a.actorId, team: a.team, streakId, slot: intent.slot, chargesLeft, instanceId });
     a.cause = e;
@@ -350,7 +354,9 @@ export class StreakRuntime {
             ? stepMortar(instance, dt, { now, targets: aimed })
             : instance.kind === 'dart'
               ? stepDart(instance, dt, { now, world, targets: aimed })
-              : stepSentry(instance, dt, { now, world, targets: aimed });
+              : instance.kind === 'drone'
+                ? stepDrone(instance, dt, { now, world, targets: aimed })
+                : stepSentry(instance, dt, { now, world, targets: aimed });
       for (const e of tick.events) {
         if (e.type === 'damage') health.set((e as DamageEvent).victimId, (e as DamageEvent).healthAfter);
         events.push(e);
