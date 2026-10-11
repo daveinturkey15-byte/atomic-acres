@@ -77,6 +77,9 @@ interface Overlay {
   elapsed: number;
   /** Fade the overlay in/out over this long at each end (seconds). */
   fade: number;
+  /** Clip-time rate: elapsed advances by dt * timeScale, so a reload one-shot
+   *  can be stretched onto the firing weapon's own reload duration. 1 = authored rate. */
+  timeScale: number;
 }
 
 const _q = new THREE.Quaternion();
@@ -228,6 +231,15 @@ function pickLocomotion(speed: number, crouch: boolean): LocomotionName {
   return 'sprint';
 }
 
+/**
+ * Interval-scaled recoil decay: the exponential rate is this many nepers per
+ * shot-interval, so a full-auto burst (rattler 0.075 s) and a slow semi share
+ * the same per-shot envelope instead of the autos pinning at full kick.
+ * 2 nepers/interval leaves ~0.14 kick after one interval (still a visible
+ * punch) and ~0.02 after two (no lock-up).
+ */
+const RECOIL_INTERVAL_SCALE = 2;
+
 export class CharacterRig {
   readonly mixer: THREE.AnimationMixer;
   private readonly actions = new Map<ClipName, THREE.AnimationAction>();
@@ -236,6 +248,14 @@ export class CharacterRig {
   private dead = false;
   private upper: Overlay | null = null;
   private recoil = 0;
+  /**
+   * Third-person recoil decay rate (per second). <= 0 selects the legacy
+   * 0.22 s linear decay, which is what every existing caller gets until it
+   * passes a cadence. Set via fire(interval) or setRecoilRate().
+   */
+  private recoilRate = 0;
+  /** Third-person recoil twist magnitude (radians at full kick). Legacy look. */
+  private recoilTwist = 0.22;
   /** Smoothed weapon-carry weight. Ramped, never stepped: a carry that snaps
    *  to 0 on death teleports the arms out of the weapon. */
   private carry = 1;
@@ -293,7 +313,7 @@ export class CharacterRig {
     action.reset();
     action.setLoop(THREE.LoopOnce, 1);
     action.play();
-    this.air = { clip, elapsed: 0, fade: 0.08 };
+    this.air = { clip, elapsed: 0, fade: 0.08, timeScale: 1 };
     this.external = null;
   }
 
@@ -319,10 +339,21 @@ export class CharacterRig {
     this.actions.get(this.locomotion)?.reset().play();
   }
 
-  /** Upper-body one-shot (reload, hit-react): sampled, masked, timed. */
-  playUpper(clip: 'reload' | 'hit-react'): void {
+  /**
+   * Upper-body one-shot (reload, hit-react): sampled, masked, timed.
+   * `duration` is the wall-clock time the pose must fill (the firing
+   * weapon's reloadTime/emptyReloadTime); the clip is rate-mapped with
+   * timeScale = clip.duration / duration. Omitted (or non-positive) means
+   * the authored rate, exactly as before.
+   */
+  playUpper(clip: 'reload' | 'hit-react', duration?: number): void {
     const spec = this.library[clip];
-    this.upper = { clip, elapsed: 0, fade: Math.min(0.12, spec.clip.duration / 4) };
+    const clipDur = spec.clip.duration;
+    const fade = Math.max(0.001, Math.min(0.12, clipDur / 4));
+    const timeScale = duration !== undefined && duration > 0 && Number.isFinite(duration) && clipDur > 0
+      ? clipDur / duration
+      : 1;
+    this.upper = { clip, elapsed: 0, fade, timeScale };
   }
 
   /**
@@ -362,9 +393,35 @@ export class CharacterRig {
     this.actions.get(this.locomotion)?.reset().play();
   }
 
-  /** Aim is continuous: weight-driven, not a one-shot. */
-  fire(): void {
+  /**
+   * Aim is continuous: weight-driven, not a one-shot.
+   *
+   * SEAM (gun-feel numbers lane). The first-person WeaponsController owns no
+   * CharacterRig, and the rig owner (characters/system.ts) is out of lane, so
+   * no caller can thread a weapon interval through the fire path today: the
+   * only in-repo caller is the demo photo helper with no weapon. `interval`
+   * (seconds between shots) therefore opts in per call and defaults to the
+   * legacy 0.22 s linear decay; `twist` overrides the recoil twist magnitude
+   * (radians, catalog pitch side) and likewise defaults to the shipped 0.22.
+   * setRecoilRate() below is the standing escape hatch for the future
+   * system.ts wiring: one call per weapon equip, no per-shot threading.
+   */
+  fire(interval?: number, twist?: number): void {
     this.recoil = 1;
+    if (interval !== undefined && interval > 0 && Number.isFinite(interval)) {
+      this.recoilRate = RECOIL_INTERVAL_SCALE / interval;
+    }
+    if (twist !== undefined && twist > 0 && Number.isFinite(twist)) this.recoilTwist = twist;
+  }
+
+  /**
+   * Standing escape hatch for the cadence wiring described on fire(): an
+   * explicit exponential decay rate (per second). Non-positive/non-finite
+   * restores the legacy linear decay. Never called by the controller today
+   * (it owns no rig); kept for the system.ts equip path without touching it.
+   */
+  setRecoilRate(rate: number): void {
+    this.recoilRate = rate > 0 && Number.isFinite(rate) ? rate : 0;
   }
 
   /** Live weapon-carry weight, for the QA surface and the surface audit. */
@@ -430,7 +487,17 @@ export class CharacterRig {
         action.timeScale = 1;
       }
     }
-    if (this.recoil > 0) this.recoil = Math.max(0, this.recoil - dt / 0.22);
+    // Recoil decay: interval-scaled exponential once a caller passes a cadence
+    // (autos share the per-shot envelope instead of pinning at full kick);
+    // otherwise the legacy 0.22 s linear ramp, bit-identical to before.
+    if (this.recoil > 0) {
+      if (this.recoilRate > 0) {
+        this.recoil *= Math.exp(-this.recoilRate * dt);
+        if (this.recoil < 0.001) this.recoil = 0;
+      } else {
+        this.recoil = Math.max(0, this.recoil - dt / 0.22);
+      }
+    }
 
     this.mixer.update(dt);
 
@@ -448,7 +515,9 @@ export class CharacterRig {
 
     // ---- upper-body layer, sampled then masked onto upper bones only
     if (this.upper) {
-      this.upper.elapsed += dt;
+      // Elapsed runs in clip time: a reload stretched onto the weapon's own
+      // duration (playUpper timeScale) clears exactly when the gun does.
+      this.upper.elapsed += dt * this.upper.timeScale;
       const dur = this.library[this.upper.clip].clip.duration;
       if (this.upper.elapsed >= dur) this.upper = null;
     }
@@ -464,7 +533,7 @@ export class CharacterRig {
       const pitchOn = Math.abs(input.aimPitch) > 1e-4;
       const recoilOn = this.recoil > 0.001;
       if (pitchOn) _qPitch.setFromEuler(_eScratch.set(input.aimPitch * 0.7, 0, 0));
-      if (recoilOn) _qRecoil.setFromEuler(_eScratch.set(0.22 * this.recoil, 0, 0));
+      if (recoilOn) _qRecoil.setFromEuler(_eScratch.set(this.recoilTwist * this.recoil, 0, 0));
       const blend = Math.max(w, this.recoil * 0.85);
       for (const [name, bone] of Object.entries(this.bones)) {
         if (UPPER_BODY[name] !== true) continue;

@@ -174,7 +174,7 @@ export const WEAPONS: readonly WeaponDef[] = [
     startReserve: 180,
     reloadTime: 3.4,
     emptyReloadTime: 3.9,
-    adsTime: 0.3,
+    adsTime: 0.28, // BO2 band 0.20-0.28: code over the old 0.3 comment outlier.
     adsFov: 55,
     adsMoveScale: 0.6,
     spread: { hip: 2.2 * DEG, ads: 0.5 * DEG, move: 1.4 * DEG, bloom: 0.1 * DEG, bloomMax: 1.2 * DEG, crouchMult: 0.7 },
