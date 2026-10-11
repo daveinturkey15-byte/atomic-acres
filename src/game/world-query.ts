@@ -49,11 +49,19 @@ export const STANDABLE_MAX_Y = 3.6;
  */
 export const GROUND_SLACK_M = 0.01;
 
-/** Ray/AABB slab intersection over the segment [0,1]. `true` = the box is hit. */
+/** Ray/AABB slab intersection over the segment [0,1]. `true` = the box is hit.
+ *
+ * `out` is the wallbang lane's read-out and nothing else: on a hit it carries
+ * the entry/exit parameters (`near`/`far`, clipped to [0,1]) so the caller can
+ * measure chord length without re-deriving the slab math below. Untouched on a
+ * miss — read it only when this returns true. Omitted on the `lineOfSight`
+ * path, which stays allocation-free.
+ */
 function segmentHitsBox(
   ox: number, oy: number, oz: number,
   dx: number, dy: number, dz: number,
   box: AABB,
+  out?: { near: number; far: number },
 ): boolean {
   let near = 0;
   let far = 1;
@@ -80,6 +88,10 @@ function segmentHitsBox(
     if (t0 > near) near = t0;
     if (t1 < far) far = t1;
     if (near > far) return false;
+  }
+  if (out !== undefined) {
+    out.near = near;
+    out.far = far;
   }
   return true;
 }
@@ -231,6 +243,11 @@ export class SightField {
   }
 }
 
+/** The port plus the collider set it was built from. Structurally still a `WorldQuery`. */
+export interface WorldQueryWithColliders extends WorldQuery {
+  readonly colliders: readonly AABB[];
+}
+
 /** The port plus the field it carries. Structurally still a `WorldQuery`. */
 export interface WorldQueryWithSight extends WorldQuery {
   readonly sight: SightField;
@@ -251,16 +268,102 @@ export function losBlockedBySmoke(world: WorldQuery, a: Vec3, b: Vec3): boolean 
   return sightOf(world)?.losBlockedBySmoke(a, b) ?? false;
 }
 
+/** The collider set on a world, or null for a port built elsewhere without one. */
+export function collidersOf(world: WorldQuery): readonly AABB[] | null {
+  const c = (world as Partial<WorldQueryWithColliders>).colliders;
+  return Array.isArray(c) ? c : null;
+}
+
+/**
+ * Metres of collider interior along the segment from→to — the wallbang
+ * budget's measure of "how much wall is in the way".
+ *
+ * The same AABB set `lineOfSight` answers from, so cover and sight cannot
+ * disagree about what a wall is; each chord comes out of `segmentHitsBox`
+ * (no second copy of the ray-box math). Overlapping chords merge, so two
+ * boxes sharing interior count once, and abutting boxes count end to end.
+ *
+ * Pure. The 0/1-chord fast path allocates nothing; two or more chords take
+ * one small scratch array for the merge. The host calls this only for a
+ * LOS-blocked ray with a penetrating gun, never on the LOS-clear path.
+ *
+ * Returns null when the port carries no collider set, or when the segment is
+ * not measurable (a non-finite endpoint): the caller cannot prove the budget
+ * covers the wall, so it must read null as a miss. A measurable segment that
+ * touches no interior is exactly 0, and a zero-length segment is 0 too.
+ */
+export function wallThicknessM(world: WorldQuery, from: Vec3, to: Vec3): number | null {
+  const colliders = collidersOf(world);
+  if (colliders === null) return null;
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const dz = to.z - from.z;
+  if (!Number.isFinite(dx) || !Number.isFinite(dy) || !Number.isFinite(dz)) return null;
+  if (!Number.isFinite(from.x) || !Number.isFinite(from.y) || !Number.isFinite(from.z)) return null;
+  const segLen = Math.hypot(dx, dy, dz);
+  if (!(segLen > 0)) return 0;
+  const chord = { near: 0, far: 1 };
+  let firstNear = 0;
+  let firstFar = -1;
+  let rest: number[] | null = null;
+  for (let i = 0; i < colliders.length; i++) {
+    chord.near = 0;
+    chord.far = 1;
+    if (!segmentHitsBox(from.x, from.y, from.z, dx, dy, dz, colliders[i], chord)) continue;
+    if (firstFar < 0) {
+      firstNear = chord.near;
+      firstFar = chord.far;
+    } else {
+      if (rest === null) rest = [firstNear, firstFar];
+      rest.push(chord.near, chord.far);
+    }
+  }
+  if (firstFar < 0) return 0;
+  if (rest === null) return (firstFar - firstNear) * segLen;
+  // Insertion sort on packed (start, end) pairs, then a one-pass merge.
+  for (let i = 2; i < rest.length; i += 2) {
+    const s = rest[i];
+    const e = rest[i + 1];
+    let j = i - 2;
+    while (j >= 0 && rest[j] > s) {
+      rest[j + 2] = rest[j];
+      rest[j + 3] = rest[j + 1];
+      j -= 2;
+    }
+    rest[j + 2] = s;
+    rest[j + 3] = e;
+  }
+  let total = 0;
+  let curNear = rest[0];
+  let curFar = rest[1];
+  for (let i = 2; i < rest.length; i += 2) {
+    const s = rest[i];
+    const e = rest[i + 1];
+    if (s > curFar) {
+      total += curFar - curNear;
+      curNear = s;
+      curFar = e;
+    } else if (e > curFar) {
+      curFar = e;
+    }
+  }
+  return (total + curFar - curNear) * segLen;
+}
+
 /**
  * The port. Three methods, and only three — a fourth would be the callback bag
  * IMPORT-PLAN §5.3 forbids, and every extra answer the host is allowed to ask
  * for is a piece of the world it then depends on. The `sight` field beside
  * them is not a method and not a callback: it is the smoke the host put in the
- * world, carried where every reader of the world already looks.
+ * world, carried where every reader of the world already looks. The
+ * `colliders` field is the same kind of thing: the set this port answers
+ * from, carried so `wallThicknessM` can measure over it without a fourth
+ * method. Neither field is callable, so neither is a door back into a caller.
  */
-export function createWorldQuery(colliders: readonly AABB[]): WorldQueryWithSight {
+export function createWorldQuery(colliders: readonly AABB[]): WorldQueryWithSight & WorldQueryWithColliders {
   return {
     sight: new SightField(),
+    colliders,
 
     /**
      * Clear line between two world points. Colliders only: this is the same

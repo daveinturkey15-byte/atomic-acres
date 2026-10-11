@@ -175,13 +175,19 @@ export interface DamageInput {
   readonly friendlyFire?: boolean;
   /** Applies `BOT_DAMAGE_MULTIPLIER`. */
   readonly attackerIsBot?: boolean;
+  /**
+   * Through-wall hit: the round defeated cover on the way in (`host.ts`
+   * measured `wallThicknessM` against the gun's `penetrationM`). The old
+   * through-wall rule halves the scaled amount; the floor below still
+   * applies, so a landed wallbang is never a 0-damage tickle.
+   */
+  readonly wallbang?: boolean;
   /** Required by `cause: 'fall'`; ignored otherwise. Vertical impact speed, m/s. */
   readonly impactSpeed?: number;
   /** Optional blast envelope for `cause: 'explosion'` / `'streak'`. */
   readonly blastMaxDamage?: number;
   readonly blastRadius?: number;
 }
-
 export interface DamageResult {
   /** Admitted damage. Always 0 when `blocked` is set, never 0 otherwise except a soft fall. */
   readonly damage: number;
@@ -210,7 +216,7 @@ const NO_DAMAGE_RANGE: DamageResult = Object.freeze({ damage: 0, blocked: 'out-o
  *     long shot is weak, not refused.
  *
  * Then the amount: the cause's base, times the zone, times the bot scalar,
- * clamped into `[MIN_LANDED_DAMAGE, MAX_HEALTH]`.
+ * halved for a wallbang, clamped into `[MIN_LANDED_DAMAGE, MAX_HEALTH]`.
  */
 export function resolveDamage(input: DamageInput): DamageResult {
   const cause: DamageCause = input.cause ?? 'bullet';
@@ -258,6 +264,10 @@ export function resolveDamage(input: DamageInput): DamageResult {
   // multiplier would make the zone a lottery on a ragdoll's pose.
   const zoned = cause === 'bullet' ? base * zoneMultiplier(input.def, input.zone) : base;
   const scaled = input.attackerIsBot === true ? zoned * BOT_DAMAGE_MULTIPLIER : zoned;
+  // The old through-wall rule: a round that defeated cover does half damage.
+  // `admitted` still floors at `MIN_LANDED_DAMAGE`, so a landed wallbang is
+  // never a 0-damage tickle — the same floor the blast path lands through.
+  const penetrated = input.wallbang === true ? scaled / 2 : scaled;
 
-  return { damage: admitted(scaled) };
+  return { damage: admitted(penetrated) };
 }

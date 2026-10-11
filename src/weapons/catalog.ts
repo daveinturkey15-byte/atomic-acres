@@ -58,6 +58,19 @@ export interface WeaponDef {
   readonly interval: number;
   /** projectiles per trigger pull (8 on the shotgun, 1 elsewhere) */
   readonly pellets: number;
+  /**
+   * Metres of wall the round defeats (`game/world-query.ts:wallThicknessM`
+   * must come in at or under this for a LOS-blocked ray to land at halved
+   * damage). 0 is solid cover: the round never wallbangs.
+   *
+   * Old policy, kept in order: the railgun (a map pickup) defeated full-map
+   * depth, rifles pierced thin cover only, and pistols, shotguns and the
+   * flamer never pierced anything. The railgun row itself (budget 20, from
+   * its 64-surface lineage) arrives with the gun on its own lane's rebase —
+   * until then the deadeye is the deepest-penetrating gun in the table and
+   * no budget here exceeds thin-interior-wall depth.
+   */
+  readonly penetrationM: number;
   readonly damage: DamageFalloff;
   readonly magSize: number;
   readonly startReserve: number;
@@ -84,6 +97,7 @@ export const WEAPONS: readonly WeaponDef[] = [
     auto: true,
     interval: 0.1, // 600 rpm
     pellets: 1,
+    penetrationM: 0.25, // rifle: thin interior walls only
     damage: { base: 34, fall: 18, nearRange: 20, farRange: 45 },
     magSize: 30,
     startReserve: 120,
@@ -101,6 +115,7 @@ export const WEAPONS: readonly WeaponDef[] = [
     auto: true,
     interval: 0.075, // 800 rpm
     pellets: 1,
+    penetrationM: 0.1, // SMG: the thinnest cover only
     damage: { base: 25, fall: 12, nearRange: 12, farRange: 30 },
     magSize: 32,
     startReserve: 128,
@@ -118,6 +133,7 @@ export const WEAPONS: readonly WeaponDef[] = [
     auto: false, // pump: one pull, rechamber pause
     interval: 0.8, // ~75 rpm
     pellets: 8,
+    penetrationM: 0, // shotgun: solid cover, never wallbangs
     damage: { base: 12, fall: 4, nearRange: 6, farRange: 16 },
     magSize: 6,
     startReserve: 24,
@@ -135,6 +151,7 @@ export const WEAPONS: readonly WeaponDef[] = [
     auto: false, // bolt: one round, long cycle
     interval: 1.3, // ~46 rpm
     pellets: 1,
+    penetrationM: 0.4, // bolt sniper: deepest in the table until the railgun rebase
     damage: { base: 150, fall: 90, nearRange: 40, farRange: 80 },
     magSize: 5,
     startReserve: 15,
@@ -152,6 +169,7 @@ export const WEAPONS: readonly WeaponDef[] = [
     auto: false, // semi: every pull is one round
     interval: 0.12,
     pellets: 1,
+    penetrationM: 0, // pistol: solid cover, never wallbangs
     damage: { base: 30, fall: 15, nearRange: 15, farRange: 35 },
     magSize: 12,
     startReserve: 48,
@@ -169,6 +187,7 @@ export const WEAPONS: readonly WeaponDef[] = [
     auto: true, // LMG: hold the trigger, own the lane; the belt is the reload
     interval: 0.0833, // 720 rpm
     pellets: 1,
+    penetrationM: 0.2, // LMG: light cover only
     damage: { base: 27, fall: 17, nearRange: 25, farRange: 55 },
     magSize: 60,
     startReserve: 180,
@@ -186,6 +205,7 @@ export const WEAPONS: readonly WeaponDef[] = [
     auto: false, // semi marksman: every pull is one aimed round, fast follow-up
     interval: 0.4, // ~150 rpm
     pellets: 1,
+    penetrationM: 0.25, // marksman: thin interior walls only
     damage: { base: 45, fall: 28, nearRange: 30, farRange: 70 },
     magSize: 10,
     startReserve: 40,
