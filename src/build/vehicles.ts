@@ -337,18 +337,20 @@ function makeCoach(ctx: BuildContext): Vehicle {
   // Side glazing and its mullions follow the tumblehome, so they are authored as
   // a cross section swept along the coach. A plain box would be flush at the belt
   // and burst 6 cm out of the hull at the top of the band.
-  const bandSec = (pad: number): Pt[] => {
+  const bandSec = (pad: number, yPad = 0): Pt[] => {
     const h = (y: number): number => flankHalf(y) + pad;
     return [
-      [-h(2.05), 2.05], [h(2.05), 2.05], [h(2.45), 2.45],
-      [h(2.82), 2.82], [-h(2.82), 2.82], [-h(2.45), 2.45],
+      [-h(2.05 - yPad), 2.05 - yPad], [h(2.05 - yPad), 2.05 - yPad], [h(2.45), 2.45],
+      [h(2.82 + yPad), 2.82 + yPad], [-h(2.82 + yPad), 2.82 + yPad], [-h(2.45), 2.45],
     ];
   };
   const band = extrude(bandSec(0.012), 8.2, glazing);
   band.rotation.y = Math.PI / 2;
   band.position.x = -0.35;
   g.add(band);
-  const mullGeo = extrude(bandSec(0.030), 0.07, ctx.mat.chrome).geometry;
+  // zfight pass: the chrome mullions stand 1 mm proud of the glass band top and
+  // bottom (2.05/2.82) instead of ending flush on those planes - mesh only.
+  const mullGeo = extrude(bandSec(0.030, 0.001), 0.07, ctx.mat.chrome).geometry;
   mullGeo.rotateY(Math.PI / 2);
   const mull: THREE.Matrix4[] = [];
   for (let i = 0; i < 9; i++) mull.push(xform(-4.25 + i * 0.98, 0, 0));
@@ -534,18 +536,19 @@ function makeSecondBus(ctx: BuildContext): Vehicle {
   ], 2 * (flankHalf(1.40) + 0.030), banner));
 
   // dark glazing band + mullions, same tumblehome-following section as makeCoach
-  const bandSec = (pad: number): Pt[] => {
+  const bandSec = (pad: number, yPad = 0): Pt[] => {
     const h = (y: number): number => flankHalf(y) + pad;
     return [
-      [-h(2.05), 2.05], [h(2.05), 2.05], [h(2.45), 2.45],
-      [h(2.82), 2.82], [-h(2.82), 2.82], [-h(2.45), 2.45],
+      [-h(2.05 - yPad), 2.05 - yPad], [h(2.05 - yPad), 2.05 - yPad], [h(2.45), 2.45],
+      [h(2.82 + yPad), 2.82 + yPad], [-h(2.82 + yPad), 2.82 + yPad], [-h(2.45), 2.45],
     ];
   };
   const band = extrude(bandSec(0.012), 8.2, glazing);
   band.rotation.y = Math.PI / 2;
   band.position.x = -0.35;
   g.add(band);
-  const mullGeo = extrude(bandSec(0.030), 0.07, ctx.mat.chrome).geometry;
+  // zfight pass: chrome mullions stand 1 mm proud of the band planes, as in makeCoach
+  const mullGeo = extrude(bandSec(0.030, 0.001), 0.07, ctx.mat.chrome).geometry;
   mullGeo.rotateY(Math.PI / 2);
   const mull: THREE.Matrix4[] = [];
   for (let i = 0; i < 9; i++) mull.push(xform(-4.25 + i * 0.98, 0, 0));
@@ -685,9 +688,12 @@ function makeBoxTruck(ctx: BuildContext): Vehicle {
   for (const y of railY) for (const s of [-1, 1]) rails.push(xform(BOX_X, y, s * (W / 2 + 0.015)));
   g.add(inst(new THREE.BoxGeometry(BOX_L - 0.1, 0.045, 0.03), alloy, rails));
 
-  // bulbous COE cab: rounded snub nose, high roof (flanks at +-1.22)
+  // bulbous COE cab: rounded snub nose, high roof (flanks at +-1.22).
+  // zfight pass: the bottom edge rides at 0.602, 2 mm above the chassis rail's
+  // bottom face (0.6) it used to share a plane with - mesh only, colliders below
+  // are authored from len/wid/hgt and untouched.
   const cab: Pt[] = [
-    [2.0, 0.6], [4.3, 0.6], [4.68, 0.95], [4.7, 1.6],
+    [2.0, 0.602], [4.3, 0.602], [4.68, 0.95], [4.7, 1.6],
     [4.5, 2.3], [4.0, 2.72], [3.3, 2.88], [2.0, 2.88],
   ];
   g.add(extrude(cab, W - 0.06, navy));
