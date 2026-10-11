@@ -225,12 +225,19 @@ export const buildWhiteHouse: Builder = (ctx) => {
    * coplanar textured faces over each other for 0.156 m out of every 0.55 m: 488 such
    * pairs and 66 m2 of stucco fighting itself (scripts/_ownerfix-geom.mjs coplanar).
    */
+  /**
+   * zfight pass: `yJog` staggers alternate chords 1 mm vertically so neighbours
+   * sharing a joint never share a top/bottom plane; `lenEps` lengthens a layer
+   * so stacked layers on one chord (cill over wall, trim over wall) end on
+   * different end-cap planes on straight runs. Pure mesh offsets (<= 2.4 mm);
+   * colliders come from the separate COARSE loop and are untouched.
+   */
   const run = (b: Batch, a: THREE.Vector2, c: THREE.Vector2, p: Plan,
     y0: number, y1: number, t: number, out: number, grow = 0, mitre: [number, number] = [1, 1],
-    extra: [number, number] = [0, 0]): void => {
+    extra: [number, number] = [0, 0], yJog = 0, lenEps = 0): void => {
     const dx = c.x - a.x, dz = c.y - a.y, L = Math.hypot(dx, dz);
     if (L < 1e-3 || y1 - y0 < 0.04) return;
-    const ea = mitre[0] * t * 0.3 + extra[0], ec = mitre[1] * t * 0.3 + extra[1];
+    const ea = mitre[0] * t * 0.3 + extra[0] + lenEps, ec = mitre[1] * t * 0.3 + extra[1] + lenEps;
     const shift = (ec - ea) * 0.5 / L;                       // centre slides toward the longer end
     const mx = (a.x + c.x) * 0.5, mz = (a.y + c.y) * 0.5;
     // `out` is measured along the CHORD'S perpendicular, oriented away from the plan
@@ -239,7 +246,7 @@ export const buildWhiteHouse: Builder = (ctx) => {
     // 48 mm along the wall (and left 5 mm coplanar overlaps between neighbours).
     let nx = -dz / L, nz = dx / L;
     if (nx * (mx - p.cx) + nz * (mz - p.cz) < 0) { nx = -nx; nz = -nz; }
-    b.add(L + ea + ec + grow, y1 - y0, t, mx + dx * shift + nx * out, (y0 + y1) * 0.5,
+    b.add(L + ea + ec + grow, y1 - y0, t, mx + dx * shift + nx * out, (y0 + y1) * 0.5 + yJog,
       mz + dz * shift + nz * out, Math.atan2(-dz, dx));
   };
   /** Per-end mitre flags for chord i of a closed loop: 0 where the neighbour is collinear. */
@@ -254,8 +261,10 @@ export const buildWhiteHouse: Builder = (ctx) => {
     return [turns(p, a, c), turns(a, c, q)];
   };
 
-  /** Capsule shell: wall/glazing bands, trim, door holes; chords inside a neighbour drop out. */
-  const shell = (p: Plan, top: number, twoStorey: boolean, holes: Hole[], others: Plan[]): void => {
+  /** Capsule shell: wall/glazing bands, trim, door holes; chords inside a neighbour drop out.
+   * `yBias` separates the two capsules' bands: REAR builds at bias 0, FRONT 0.5 mm
+   * higher, so near-duplicate chords where the capsules meet share no plane. */
+  const shell = (p: Plan, top: number, twoStorey: boolean, holes: Hole[], others: Plan[], yBias = 0): void => {
     const loop = planLoop(p, CHORD);
     const n = loop.length;
     const midOf = (j: number): [number, number] => {
@@ -280,13 +289,19 @@ export const buildWhiteHouse: Builder = (ctx) => {
       if (dropped(i)) continue;
       const m = mitreOf(loop, i);
       const hole = holeOf(i);
+      // zfight pass: alternate chords ride 1 mm apart vertically (neighbours share
+      // no top/bottom plane) and each stacked layer gets its own length so same-chord
+      // end caps separate on straight runs: wall 0, cill +1.2 mm, trim +2.4 mm, and
+      // the full-height mullion recesses 1 mm into its band (its ends already sit
+      // inside the neighbouring bands' boxes, so nothing shows).
+      const jog = (i % 2) * 0.001 + yBias;
       const put = (y0: number, y1: number, glass: boolean): void => {
         const cut = hole !== null && y1 > hole.y0 && y0 < hole.y1;
         const glazed = glass && !(i % PIER_EVERY === 0 && !cut);
         const b = glazed ? bGlaz : bWall, t = glazed ? GLAZ_T : WALL_T, o = glazed ? -GLAZ_IN : 0;
         if (cut && hole) {
-          if (y0 < hole.y0) run(b, a, c, p, y0, hole.y0, t, o, 0, m);
-          if (y1 > hole.y1) run(b, a, c, p, hole.y1, y1, t, o, 0, m);
+          if (y0 < hole.y0) run(b, a, c, p, y0, hole.y0, t, o, 0, m, [0, 0], jog);
+          if (y1 > hole.y1) run(b, a, c, p, hole.y1, y1, t, o, 0, m, [0, 0], jog);
           return;
         }
         // At a door jamb or a capsule junction the run simply stops, and every layer -
@@ -294,22 +309,24 @@ export const buildWhiteHouse: Builder = (ctx) => {
         // plane at every jamb. Here the pane reaches 10 mm past the jamb line and the
         // cill and drip stop 10 mm short of it, so each end face has its own plane.
         const ex: [number, number] = [absent(i - 1, y0, y1) ? 1 : 0, absent(i + 1, y0, y1) ? 1 : 0];
-        run(b, a, c, p, y0, y1, t, o, 0, m, glazed ? [ex[0] * 0.01, ex[1] * 0.01] : [0, 0]);
+        run(b, a, c, p, y0, y1, t, o, 0, m, glazed ? [ex[0] * 0.01, ex[1] * 0.01] : [0, 0], jog);
         if (!glazed) return;
         const back: [number, number] = [ex[0] * -0.01, ex[1] * -0.01];
-        run(bTrim, a, c, p, y1 - 0.06, y1 + 0.1, WALL_T + 0.14, 0.04, 0, m, back); // head drip
-        run(bWall, a, c, p, y0 - 0.12, y0 + 0.06, WALL_T + 0.24, 0.05, 0, m, back); // deep cill
+        run(bTrim, a, c, p, y1 - 0.06, y1 + 0.1, WALL_T + 0.14, 0.04, 0, m, back, jog, 0.0012); // head drip
+        run(bWall, a, c, p, y0 - 0.12, y0 + 0.06, WALL_T + 0.24, 0.05, 0, m, back, jog, 0.0006); // deep cill
         const ym = y0 + (y1 - y0) * 0.61;
-        run(bTrim, a, c, p, ym - 0.05, ym + 0.05, WALL_T * 0.8, -GLAZ_IN * 0.5, 0, m); // transom
-        // mullion: a short strip inside ONE pane, so it keeps its own width regardless of mitre
-        if (i % 2 === 0) run(bTrim, a, c, p, y0, y1, WALL_T * 0.7, -GLAZ_IN * 0.45, -CHORD + 0.12);
+        run(bTrim, a, c, p, ym - 0.05, ym + 0.05, WALL_T * 0.8, -GLAZ_IN * 0.5, 0, m, [0, 0], jog, 0.0012); // transom
+        // mullion: a short strip inside ONE pane, so it keeps its own width regardless of mitre.
+        // zfight pass: recessed 2 mm into its band - the sill-line height is bridged by
+        // third-party tessellation in the coplanar clustering, so 1 mm still reported.
+        if (i % 2 === 0) run(bTrim, a, c, p, y0, y1, WALL_T * 0.7, -GLAZ_IN * 0.45, -CHORD + 0.12, m, [0, 0], jog - 0.002);
       };
       put(0, G_SILL, false); put(G_SILL, G_HEAD, true); put(G_HEAD, twoStorey ? FLOOR_H : top, false);
       if (twoStorey) {
         put(FLOOR_H, U_SILL, false); put(U_SILL, U_HEAD, true); put(U_HEAD, top, false);
-        run(bTrim, a, c, p, FLOOR_H - 0.16, FLOOR_H + 0.12, WALL_T + 0.14, 0, 0, m);
+        run(bTrim, a, c, p, FLOOR_H - 0.16, FLOOR_H + 0.12, WALL_T + 0.14, 0, 0, m, [0, 0], jog, 0.0012);
       }
-      run(bTrim, a, c, p, top - 0.3, top + (twoStorey ? 0.1 : 0.34), WALL_T + 0.14, 0, 0, m);
+      run(bTrim, a, c, p, top - 0.3, top + (twoStorey ? 0.1 : 0.34), WALL_T + 0.14, 0, 0, m, [0, 0], jog, 0.0012);
     }
     // Colliders: the EXACT axis-aligned bound of each wall chord. These used to be
     // 1.344 m squares standing on a 0.26 m wall - a phantom metre of solid all round
@@ -363,7 +380,7 @@ export const buildWhiteHouse: Builder = (ctx) => {
     { x: GEW * rearX(GAR_DOOR_Z), z: GAR_DOOR_Z, r: 0.8, y0: 0, y1: G_HEAD },
   ], [FRONT]);
   shell(FRONT, H_FRONT, false,
-    [{ x: FRONT_DOOR_X, z: Z_FRONT, r: DOOR_HALF, y0: 0, y1: G_HEAD }], [REAR]);
+    [{ x: FRONT_DOOR_X, z: Z_FRONT, r: DOOR_HALF, y0: 0, y1: G_HEAD }], [REAR], 0.0005);
 
   // No floor prisms. The two 0.1 m ground prisms were entirely inside ground.ts's 0.154 m
   // interior floor pad (never visible), and the 0.22 m concrete prism at FLOOR_H - the
@@ -383,7 +400,8 @@ export const buildWhiteHouse: Builder = (ctx) => {
   g.add(prism(glaze, 0.1, PANE_Y, ctx.mat.glass, 10));
   const glazLoop = planLoop(glaze, CHORD * 1.6);
   for (let i = 0; i < glazLoop.length; i++) {
-    run(bWall, glazLoop[i], glazLoop[(i + 1) % glazLoop.length], glaze, H_REAR + 0.02, PANE_Y + 0.26, 0.22, 0, 0, mitreOf(glazLoop, i));
+    // zfight pass: alternate-chord 1 mm jog, same idiom as shell()
+    run(bWall, glazLoop[i], glazLoop[(i + 1) % glazLoop.length], glaze, H_REAR + 0.02, PANE_Y + 0.26, 0.22, 0, 0, mitreOf(glazLoop, i), [0, 0], (i % 2) * 0.001);
   }
   for (let k = -2; k <= 2; k++) { // longitudinal bars, clipped to the stadium
     const dz = k * glazHz * 0.36;
@@ -414,8 +432,10 @@ export const buildWhiteHouse: Builder = (ctx) => {
   cowl.position.set(drumX, H_REAR + 0.16 + drumH + 0.25, REAR.cz); cowl.castShadow = true;
   g.add(cowl);
   // duct from the drum toward the lantern kerb: starts OUTSIDE the glazed pane (it used
-  // to run 0.77 m across the glass, sitting on the same 6.36 plane as the pane's base)
-  bDark.add(1.3, 0.28, 0.42, drumX - drumR + 0.95, H_REAR + 0.3, REAR.cz);
+  // to run 0.77 m across the glass, sitting on the same 6.36 plane as the pane's base).
+  // zfight pass: rides 1 mm above the drum's bottom-cap plane (6.36) its underside
+  // shared - mesh only, collider below untouched.
+  bDark.add(1.3, 0.28, 0.42, drumX - drumR + 0.95, H_REAR + 0.301, REAR.cz);
   colliders.push(aabbSlab(drumX, H_REAR, REAR.cz, drumR * 2, drumH, drumR * 2));
 
   // --- garage wing: flat shallow-crowned roof, 3 recessed bays ------------------
@@ -434,8 +454,9 @@ export const buildWhiteHouse: Builder = (ctx) => {
       if (S * (mz - GAR_CZ) < 0 && Math.abs(mx - bayCx(k)) < bayHalf) bay = true;
     }
     const m = mitreOf(garLoop, i);
-    if (bay) run(bWall, a, c, GAR_PLAN, bayTop, GARAGE_H, WALL_T, 0, 0, m);
-    else run(bWall, a, c, GAR_PLAN, 0, GARAGE_H, WALL_T, 0, 0, m);
+    const gjog = (i % 2) * 0.001;   // zfight pass: alternate-chord 1 mm jog
+    if (bay) run(bWall, a, c, GAR_PLAN, bayTop, GARAGE_H, WALL_T, 0, 0, m, [0, 0], gjog);
+    else run(bWall, a, c, GAR_PLAN, 0, GARAGE_H, WALL_T, 0, 0, m, [0, 0], gjog);
   }
   // Garage face reads from the street per f-FKQOEO-1ceE-060 (ribbed sectionals +
   // beams + cabinets), f-aICKIbuo8zQ-190 (blank vs ribbed bays, one open bay with
@@ -843,8 +864,10 @@ export const buildWhiteHouse: Builder = (ctx) => {
   // capsule shell draws round every other opening in this house
   for (const [xa, xb] of faceOpen) {
     if (xb - xa < 0.12) continue;
-    // 30 mm short at each end: at the stairwell cut its end face was the pane's end face
-    bWall.add(xb - xa - 0.06, 0.18, WALL_T + 0.24, (xa + xb) / 2, U_SILL - 0.03, faceCz);
+    // 30 mm short at each end: at the stairwell cut its end face was the pane's end face.
+    // zfight pass: rides 0.5 mm above the shell cills' planes (3.9755/4.1555) whose end
+    // zones it overlaps - mesh only, colliders above untouched.
+    bWall.add(xb - xa - 0.06, 0.18, WALL_T + 0.24, (xa + xb) / 2, U_SILL - 0.03 + 0.0005, faceCz);
   }
   bTrim.add(faceHX * 2, 0.16, WALL_T + 0.14, 0, U_HEAD + 0.02, faceCz);
   bTrim.add(faceHX * 2 - 0.04, 0.18, WALL_T + 0.14, 0, FLOOR_H + 0.06, faceCz);   // skirting line, inside the slab's edge
