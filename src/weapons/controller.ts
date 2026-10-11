@@ -37,6 +37,7 @@ import {
 import { buildLmgViewmodel, buildMarksmanViewmodel } from './viewmodel-specialists';
 import { WeaponEffects } from './effects';
 import { OrdnanceInput } from './ordnance-input';
+import { AudioBus, registerAudioBus } from './audio-bus';
 
 const DEG = Math.PI / 180;
 const BASE_FOV = 72;
@@ -177,14 +178,14 @@ export class WeaponsController {
   private tmpEuler = new THREE.Euler(0, 0, 0, 'YXZ');
   private tmpQuat = new THREE.Quaternion();
 
-  private audio: AudioContext | null = null;
-  private noiseBuf: AudioBuffer | null = null;
+  private readonly audioBus = new AudioBus();
 
   constructor(opts: ControllerOpts) {
     this.camera = opts.camera;
     this.targets = opts.targets;
     this.onHud = opts.onHud;
     this.onShot = opts.onShot ?? null;
+    registerAudioBus(this.audioBus);
 
     this.weapons = WEAPONS.map((def) => {
       let rig: ViewmodelRig;
@@ -336,7 +337,7 @@ export class WeaponsController {
         const take = Math.min(need, cur.reserve);
         cur.mag += take;
         cur.reserve -= take;
-        this.click(660, 0.05, 0.12);
+        this.audioBus.playReload('seated');
         this.pushHud();
       }
     }
@@ -682,7 +683,7 @@ export class WeaponsController {
     // round's head start.
     cur.reloadDur = cur.mag === 0 ? cur.def.emptyReloadTime : cur.def.reloadTime;
     cur.reloadT = cur.reloadDur;
-    this.click(440, 0.05, 0.12);
+    this.audioBus.playReload('start');
     this.pushHud(true);
     return true;
   }
@@ -715,7 +716,7 @@ export class WeaponsController {
       cur.cool = def.interval;
     }
     if (cur.mag <= 0) {
-      this.click(1200, 0.03, 0.1);
+      this.audioBus.playDryFire();
       this.pushHud();
       return false;
     }
@@ -858,90 +859,14 @@ export class WeaponsController {
     }
   }
 
-  private ensureAudio(): AudioContext | null {
-    try {
-      if (this.audio) {
-        if (this.audio.state === 'suspended') void this.audio.resume().catch(() => undefined);
-        return this.audio;
-      }
-      if (typeof window === 'undefined') return null;
-      const AC = window.AudioContext
-        ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!AC) return null;
-      const ctx = new AC();
-      this.audio = ctx;
-      const len = Math.floor(ctx.sampleRate * 0.25);
-      this.noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
-      const data = this.noiseBuf.getChannelData(0);
-      for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-      return ctx;
-    } catch {
-      return null;
-    }
-  }
-
   private playShot(id: string): void {
-    // Free synth only: per-family filter/decay over the shared noise buffer.
-    // Sniper booms low and long, SMG barks high and short.
-    let freq = 1700;
-    let vol = 0.3;
-    let decay = 0.14;
-    if (id === 'deadeye') {
-      freq = 900;
-      vol = 0.34;
-      decay = 0.24;
-    } else if (id === 'coachman') {
-      freq = 1200;
-      vol = 0.34;
-      decay = 0.2;
-    } else if (id === 'rattler') {
-      freq = 2200;
-      vol = 0.24;
-      decay = 0.1;
-    } else if (id === 'duster') {
-      freq = 2600;
-      vol = 0.22;
-      decay = 0.09;
-    }
-    try {
-      const ctx = this.ensureAudio();
-      if (!ctx || !this.noiseBuf) return;
-      const src = ctx.createBufferSource();
-      src.buffer = this.noiseBuf;
-      const filter = ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = freq;
-      const gain = ctx.createGain();
-      const t = ctx.currentTime;
-      gain.gain.setValueAtTime(vol, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + decay);
-      src.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      src.start(t, this.rand() * 0.1);
-      src.stop(t + 0.2);
-    } catch {
-      // Audio is garnish; a headless harness has no AudioContext.
-    }
-  }
-
-  private click(freq: number, dur: number, vol: number): void {
-    try {
-      const ctx = this.ensureAudio();
-      if (!ctx) return;
-      const osc = ctx.createOscillator();
-      osc.type = 'square';
-      osc.frequency.value = freq;
-      const gain = ctx.createGain();
-      const t = ctx.currentTime;
-      gain.gain.setValueAtTime(vol, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + dur + 0.01);
-    } catch {
-      // Audio is garnish; a headless harness has no AudioContext.
-    }
+    // Per-family lowpass cutoff over the bus's shared noise buffer (900-2600 Hz).
+    // Sniper booms low, the pistol cracks high; the bus owns the voice itself.
+    let cutoff = 1700;
+    if (id === 'deadeye') cutoff = 900;
+    else if (id === 'coachman') cutoff = 1200;
+    else if (id === 'rattler') cutoff = 2200;
+    else if (id === 'duster') cutoff = 2600;
+    this.audioBus.playShot(id, cutoff);
   }
 }

@@ -30,6 +30,7 @@
 import type { HudApi } from './hud';
 import { remapTable } from './bindings';
 import { accessibilityOf, type Settings } from './settings';
+import { getAudioBus } from '../weapons/audio-bus';
 
 /** `weapons/controller.ts:BASE_FOV`. A mirror, flagged: the setter request retires it. */
 const CONTROLLER_BASE_FOV = 72;
@@ -158,6 +159,11 @@ export function applySettings(s: Settings, t: ApplyTargets): void {
     /* no hooks */
   }
   remap = t.player.setBindings ? new Map() : remapTable(s.bindings);
+  try {
+    getAudioBus()?.setVolumes(s.masterVolume, s.effectsVolume);
+  } catch {
+    /* audio not ready; the next change applies it */
+  }
   t.hud.setAccessibility(accessibilityOf(s));
 }
 
